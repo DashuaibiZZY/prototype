@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>产品原型总览</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f5f7fb;
+            padding: 2rem 1.5rem;
+            color: #1e293b;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #1e3c72, #2b4c7c);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .subhead {
+            color: #475569;
+            border-left: 4px solid #3b82f6;
+            padding-left: 1rem;
+            margin-bottom: 2rem;
+            font-weight: 400;
+        }
+
+        .prototype-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 1.2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: all 0.25s ease;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.1);
+            border-color: #cbd5e1;
+        }
+
+        .card-content {
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.35rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-title .emoji {
+            font-size: 1.5rem;
+        }
+
+        .card-desc {
+            color: #475569;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin-bottom: 1.2rem;
+        }
+
+        .card-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: #f1f5f9;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            color: #1e40af;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .card-link:hover {
+            background: #e2e8f0;
+            color: #0f2b6d;
+        }
+
+        .footer-note {
+            margin-top: 3rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #62748c;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 2rem;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 1.2rem;
+            }
+            .prototype-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📦 产品原型目录</h1>
+    <div class="subhead">点击卡片进入对应的原型演示 / 说明页面</div>
+
+    <div class="prototype-grid" id="prototype-list">
+        <!-- 这里由 JavaScript 动态生成，也可以直接写静态 HTML，但动态方便维护 -->
+    </div>
+    <div class="footer-note">
+        ⚡ 维护提示：编辑下方 `prototypes` 数组即可增删卡片 | GitHub Pages 自动部署
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    // 维护区：你只需要在这里增删或修改下面的数组项
+    // 每一项对应一个原型产品
+    // ============================================================
+    const prototypes = [
+        {
+            name: "NFT 售卖",
+            emoji: "🖼️",
+            desc: "NFT 市场原型，展示卡片、购买交互（示例）",
+            link: "nft/nft_index.html"     // 相对路径：根目录下 nft 文件夹里的 nft_index.html
+        },
+        {
+            name: "内测白名单激活码-管理后台",
+            emoji: "",
+            desc: "后台支持激活码批量生成、使用次数上限配置",
+            link: "whitelist/admin_dashboard.html"     // 相对路径：根目录下 nft 文件夹里的 nft_index.html
+        },
+        {
+            name: "内测白名单激活码-前端交互验证",
+            emoji: "",
+            desc: "新用户首次连接钱包后必须通过“内测激活码”校验方可完成账号创建",
+            link: "whitelist/trading_hall.html"     // 相对路径：根目录下 nft 文件夹里的 nft_index.html
+        },
+        // 你可以继续添加更多原型，例如：
+        // {
+        //     name: "元宇宙展厅",
+        //     emoji: "🌌",
+        //     desc: "3D 空间展示，基于 Three.js",
+        //     link: "metaverse/index.html"
+        // },
+        // {
+        //     name: "DAO 投票面板",
+        //     emoji: "🗳️",
+        //     desc: "去中心化投票界面原型",
+        //     link: "dao/vote.html"
+        // }
+    ];
+
+    // 渲染函数
+    function renderCards() {
+        const container = document.getElementById('prototype-list');
+        if (!container) return;
+
+        if (prototypes.length === 0) {
+            container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem;">暂无原型，请在代码中添加 prototypes 项</div>';
+            return;
+        }
+
+        let html = '';
+        for (let item of prototypes) {
+            html += `
+                <div class="card">
+                    <div class="card-content">
+                        <div class="card-title">
+                            <span class="emoji">${item.emoji || '📄'}</span>
+                            <span>${escapeHtml(item.name)}</span>
+                        </div>
+                        <div class="card-desc">${escapeHtml(item.desc || '点击查看原型详情')}</div>
+                        <a href="${escapeHtml(item.link)}" class="card-link" target="_blank">
+                            🔗 访问原型 →
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+        container.innerHTML = html;
+    }
+
+    // 简单的防XSS辅助函数
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+
+    renderCards();
+</script>
+</body>
+</html>
