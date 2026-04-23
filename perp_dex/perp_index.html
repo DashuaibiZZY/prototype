@@ -196,24 +196,73 @@
                 <span onclick="switchDataTab('hist-trade')" id="tab-data-hist-trade" class="cursor-pointer h-8 flex items-center shrink-0">歷史成交</span>
                 <span onclick="switchDataTab('hist-pos')" id="tab-data-hist-pos" class="cursor-pointer h-8 flex items-center shrink-0">歷史持倉</span>
                 <span onclick="switchDataTab('asset-log')" id="tab-data-asset-log" class="cursor-pointer h-8 flex items-center shrink-0">資金流水</span>
+                <!-- 右側：隱藏其他合約 (靠右出現) -->
+                <div class="flex items-center space-x-1.5 pl-4 border-l border-gray-100 ml-4 shrink-0">
+                    <input type="checkbox" id="hide-other" class="w-3 h-3 rounded-full border-gray-300 accent-black cursor-pointer appearance-none checked:bg-black checked:border-black border relative focus:outline-none transition-all">
+                    <label for="hide-other" class="text-[9px] font-bold cursor-pointer whitespace-nowrap text-gray-400 hover:text-black">隐藏其他合约</label>
+                </div>
             </div>
             <div class="flex-1 overflow-auto" id="data-container">
-                <table class="w-full text-left text-[9px]">
-                    <thead class="bg-gray-50 sticky top-0 text-gray-400 border-b border-gray-100">
+                <table class="w-full text-left text-[9px] border-collapse min-w-[1000px]">
+                    <thead class="bg-gray-50 sticky top-0 text-gray-400 border-b border-gray-100 z-10">
                     <tr id="data-header">
-                        <th class="px-4 py-2">合約</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">開倉均價</th><th class="px-4 py-2">標記價格</th><th class="px-4 py-2">盈虧平衡價</th><th class="px-4 py-2">預估強平價</th><th class="px-4 py-2">盈虧 (ROE%)</th><th class="px-4 py-2 text-right">操作</th>
+                        <th class="px-3 py-2 font-medium">合約</th>
+                        <th class="px-3 py-2 font-medium">數量</th>
+                        <th class="px-3 py-2 font-medium">開倉均價</th>
+                        <th class="px-3 py-2 font-medium">標記價格</th>
+                        <th class="px-3 py-2 font-medium">盈虧平衡價</th>
+                        <th class="px-3 py-2 font-medium">預估強平價</th>
+                        <th class="px-3 py-2 font-medium">保證金比率</th>
+                        <th class="px-3 py-2 font-medium">保證金</th>
+                        <th class="px-3 py-2 font-medium">盈虧 (ROE%)</th>
+                        <th class="px-3 py-2 font-medium">止盈/止損</th>
+                        <th class="px-3 py-2 font-medium">倉位止盈止損</th>
+                        <th class="px-3 py-2 text-right">
+                            <button class="bg-gray-100 text-black px-2 py-0.5 rounded-[1px] hover:bg-gray-200 transition">一鍵平倉</button>
+                        </th>
                     </tr>
                     </thead>
-                    <tbody id="data-body">
-                    <tr class="border-b border-gray-50 hover:bg-gray-50">
-                        <td class="px-4 py-2.5 font-bold">BTCUSDT 永續 <span class="text-green-500 bg-green-50 px-1 rounded">20x</span></td>
-                        <td class="px-4 py-2.5">0.500 BTC</td>
-                        <td class="px-4 py-2.5">65,100.5</td>
-                        <td class="px-4 py-2.5">65,432.1</td>
-                        <td class="px-4 py-2.5">65,120.0</td>
-                        <td class="px-4 py-2.5 text-orange-500 font-bold">62,400.0</td>
-                        <td class="px-4 py-2.5 font-black text-green-500">+166.05 USDT (+25.4%)</td>
-                        <td class="px-4 py-2.5 text-right"><button class="text-blue-500 hover:underline">限價/市價平倉</button></td>
+                    <tbody id="data-body" class="divide-y divide-gray-50">
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-3 py-2.5 whitespace-nowrap">
+                            <div class="font-bold text-black text-[10px]">BTCUSDT <span class="text-green-500 bg-green-50 px-1 rounded-[1px]">20x</span></div>
+                        </td>
+                        <td class="px-3 py-2.5 whitespace-nowrap font-medium text-gray-900">
+                            <div class="flex items-center">
+                                0.500 BTC
+                                <button onclick="toggleModal('modal-unit-switch')" class="ml-1.5 p-0.5 hover:bg-gray-100 rounded text-gray-400 transition-colors">
+                                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                        <path d="M4 11H13.5M13.5 11L11 8.5M13.5 11L11 13.5M12 5H2.5M2.5 5L5 2.5M2.5 5L5 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,100.5</td>
+                        <td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,432.1</td>
+                        <td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,120.0</td>
+                        <td class="px-3 py-2.5 whitespace-nowrap text-orange-500 font-bold">62,400.0</td>
+                        <td class="px-3 py-2.5 whitespace-nowrap text-green-500 font-medium">1.25%</td>
+                        <td class="px-3 py-2.5 whitespace-nowrap text-gray-900">1,627.50 USDT</td>
+                        <td class="px-3 py-2.5 whitespace-nowrap">
+                            <div class="text-green-500 font-black">+166.05 USDT</div>
+                            <div class="text-green-500 text-[8px]">(+25.40%)</div>
+                        </td>
+                        <td class="px-3 py-2.5 whitespace-nowrap">
+                            <button class="text-blue-500 hover:text-blue-700 flex items-center group">
+                                <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                設置
+                            </button>
+                        </td>
+                        <td class="px-3 py-2.5 whitespace-nowrap">
+                            <button class="text-blue-500 hover:text-blue-700 flex items-center">
+                                <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                                設置
+                            </button>
+                        </td>
+                        <td class="px-3 py-2.5 text-right whitespace-nowrap space-x-2">
+                            <button class="text-gray-900 hover:text-blue-600 font-bold">限價</button>
+                            <button class="text-gray-900 hover:text-blue-600 font-bold">市價</button>
+                        </td>
                     </tr>
                     </tbody>
                 </table>
@@ -369,6 +418,28 @@
     </div>
 </div>
 
+<!-- 彈窗: 選擇倉位單位 -->
+<div id="modal-unit-switch" class="modal-overlay">
+    <div class="bn-modal" style="width: 360px;">
+        <div class="flex justify-between items-center px-6 py-4 border-b border-gray-50">
+            <span class="text-sm font-black">选择仓位单位</span>
+            <span class="cursor-pointer text-gray-400 hover:text-black" onclick="toggleModal('modal-unit-switch')">✕</span>
+        </div>
+        <div class="p-6">
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1 py-2 text-center border-2 border-blue-600 bg-blue-50 text-blue-600 font-bold rounded-[2px] cursor-pointer">BTC</div>
+                <div class="flex-1 py-2 text-center border border-gray-100 text-gray-400 rounded-[2px] cursor-pointer hover:bg-gray-50 transition">USDT</div>
+            </div>
+            <p class="text-[10px] text-gray-400 leading-relaxed bg-gray-50 p-3 rounded-sm border border-gray-100">
+                单位变更适用于所有合约仓位，但不会改变订单中的单位设置。合约交易单位为USDT等稳定币单位时，显示的持仓数量是根据实际币本位数量换算而来的，数值随着合约最新价格变动而变动。
+            </p>
+        </div>
+        <div class="p-6 pt-0">
+            <button class="w-full bg-blue-600 text-white font-bold py-2.5 rounded-[4px] shadow-sm hover:bg-blue-700 transition" onclick="toggleModal('modal-unit-switch')">确认</button>
+        </div>
+    </div>
+</div>
+
 <script>
     function toggleModal(id) {
         const modal = document.getElementById(id);
@@ -391,8 +462,8 @@
         const b = document.getElementById('data-body');
 
         if (tabId === 'pos') {
-            h.innerHTML = '<th class="px-4 py-2">合約</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">開倉均價</th><th class="px-4 py-2">標記價格</th><th class="px-4 py-2">盈虧平衡價</th><th class="px-4 py-2">預估強平價</th><th class="px-4 py-2">盈虧 (ROE%)</th><th class="px-4 py-2 text-right">操作</th>';
-            b.innerHTML = '<tr class="border-b border-gray-50"><td class="px-4 py-3 font-bold">BTCUSDT 永續 <span class="text-green-500">20x</span></td><td class="px-4 py-3">0.500 BTC</td><td class="px-4 py-3">65,100.5</td><td class="px-4 py-3">65,432.1</td><td class="px-4 py-3">65,120.0</td><td class="px-4 py-3 text-orange-500 font-bold">62,400.0</td><td class="px-4 py-3 font-black text-green-500">+166.05 USDT (+25.4%)</td><td class="px-4 py-3 text-right"><button class="text-blue-500 hover:underline">平倉</button></td></tr>';
+            h.innerHTML = '<th class="px-3 py-2 font-medium">合約</th><th class="px-3 py-2 font-medium">數量</th><th class="px-3 py-2 font-medium">開倉均價</th><th class="px-3 py-2 font-medium">標記價格</th><th class="px-3 py-2 font-medium">盈虧平衡價</th><th class="px-3 py-2 font-medium">預估強平價</th><th class="px-3 py-2 font-medium">保證金比率</th><th class="px-3 py-2 font-medium">保證金</th><th class="px-3 py-2 font-medium">盈虧 (ROE%)</th><th class="px-3 py-2 font-medium">止盈/止損</th><th class="px-3 py-2 font-medium">倉位止盈止損</th><th class="px-3 py-2 text-right"><button class="bg-gray-100 text-black px-2 py-0.5 rounded-[1px] hover:bg-gray-200 transition">一鍵平倉</button></th>';
+            b.innerHTML = '<tr class="hover:bg-gray-50 transition-colors border-b border-gray-50"><td class="px-3 py-2.5 whitespace-nowrap"><div class="font-bold text-black text-[10px]">BTCUSDT <span class="text-green-500 bg-green-50 px-1 rounded-[1px]">20x</span></div></td><td class="px-3 py-2.5 whitespace-nowrap font-medium text-gray-900"><div class="flex items-center">0.500 BTC<button onclick="toggleModal(\'modal-unit-switch\')" class="ml-1.5 p-0.5 hover:bg-gray-100 rounded text-gray-400"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 11H13.5M13.5 11L11 8.5M13.5 11L11 13.5M12 5H2.5M2.5 5L5 2.5M2.5 5L5 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></td><td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,100.5</td><td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,432.1</td><td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,120.0</td><td class="px-3 py-2.5 whitespace-nowrap text-orange-500 font-bold">62,400.0</td><td class="px-3 py-2.5 whitespace-nowrap text-green-500 font-medium">1.25%</td><td class="px-3 py-2.5 whitespace-nowrap text-gray-900">1,627.50 USDT</td><td class="px-3 py-2.5 whitespace-nowrap"><div class="text-green-500 font-black">+166.05 USDT</div><div class="text-green-500 text-[8px]">(+25.40%)</div></td><td class="px-3 py-2.5 whitespace-nowrap"><button class="text-blue-500 hover:text-blue-700">設置</button></td><td class="px-3 py-2.5 whitespace-nowrap"><button class="text-blue-500 hover:text-blue-700">設置</button></td><td class="px-3 py-2.5 text-right whitespace-nowrap space-x-2"><button class="text-gray-900 hover:text-blue-600 font-bold">限價</button><button class="text-gray-900 hover:text-blue-600 font-bold">市價</button></td></tr>';
         } else if (tabId === 'order' || tabId === 'hist-order') {
             h.innerHTML = '<th class="px-4 py-2">時間</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">方向</th><th class="px-4 py-2">平均價格</th><th class="px-4 py-2">價格</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">只減倉</th><th class="px-4 py-2">觸發條件</th><th class="px-4 py-2">狀態</th>';
             b.innerHTML = '<tr><td colspan="11" class="p-10 text-center text-gray-300 italic">暫無委託數據</td></tr>';
