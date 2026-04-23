@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX Points - Airdrop Season</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #111827; }
+        .stats-card { background: white; border: 1px solid #f1f1f1; border-radius: 4px; }
+        .tab-active { color: #000; border-bottom: 2px solid #000; font-weight: 800; }
+        .task-card { background: #fcfcfc; border: 1px solid #f3f4f6; transition: all 0.2s; }
+        .task-card:hover { border-color: #2563eb; transform: translateY(-2px); }
+        .point-glow { text-shadow: 0 0 20px rgba(37, 99, 235, 0.1); }
+        .multiplier-badge { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col text-[12px]">
+
+<!-- 1. 頂部導航欄 (全站統一) -->
+<nav class="h-12 bg-white border-b border-gray-100 flex items-center px-6 justify-between shrink-0 z-50">
+    <div class="flex items-center space-x-8">
+        <span class="font-black text-xl tracking-tighter text-black cursor-pointer">ForX</span>
+        <div class="flex space-x-5 text-[12px] font-medium">
+            <a href="perp_index.html" class="text-gray-400 hover:text-black">交易</a>
+            <a href="portfolio.html" class="text-gray-400 hover:text-black">投資組合</a>
+            <a href="points.html" class="text-black font-bold relative">積分<span class="absolute -top-1 -right-5 bg-red-500 text-white px-1 text-[8px] rounded-sm scale-90">NEW</span></a>
+            <a href="referral.html" class="text-gray-400 hover:text-black relative">邀請返佣 <span class="absolute -top-1 -right-5 bg-red-500 text-white px-1 text-[8px] rounded-sm scale-90">40%</span></a>
+            <a href="funding.html" class="text-gray-400 hover:text-black">資金費率</a>
+            <a href="leaderboard.html" class="text-gray-400 hover:text-black">排行榜</a>
+        </div>
+    </div>
+    <button class="bg-black text-white px-4 py-1.5 rounded-sm text-[11px] font-bold">0xd593...2Dd2</button>
+</nav>
+
+<main class="flex-1 overflow-y-auto">
+    <div class="max-w-[1100px] mx-auto p-8 space-y-10">
+
+        <!-- 2. 標題與空投宣言 -->
+        <div class="text-center space-y-3 py-6">
+            <h1 class="text-4xl font-black tracking-tighter uppercase italic point-glow">ForX Points Center</h1>
+            <p class="text-gray-500 text-sm font-medium max-w-2xl mx-auto leading-relaxed">
+                積分即價值。ForX 積分是衡量用戶貢獻的核心指標，<span class="text-black font-black underline decoration-blue-500 underline-offset-4">未來的治理代幣將根據積分權重進行空投分配</span>
+            </p>
+        </div>
+
+        <!-- 3. 個人積分看板 -->
+        <div class="stats-card p-8 border-l-[6px] border-l-blue-600 shadow-xl flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="space-y-4 flex-1">
+                <p class="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">我的總積分 (Total Points)</p>
+                <div class="flex items-baseline space-x-4">
+                    <span class="text-6xl font-black text-gray-900 tracking-tighter">234,124</span>
+                    <button onclick="toggleModal('modal-points-detail')" class="text-blue-600 font-bold text-[11px] uppercase hover:underline border border-blue-100 px-3 py-1 rounded-full bg-blue-50">
+                        查看發放詳情 &rarr;
+                    </button>
+                </div>
+                <div class="flex items-center space-x-2 text-[11px] font-bold text-gray-400 uppercase">
+                    <span>其中 <b class="text-black">23,125</b> 來自好友邀請</span>
+                    <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                    <span>排名 <b class="text-black">#1,240</b></span>
+                </div>
+            </div>
+
+            <div class="w-px h-20 bg-gray-100 hidden md:block"></div>
+
+            <div class="text-center md:text-right space-y-2">
+                <p class="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">當前積分加成</p>
+                <div class="text-6xl font-black text-blue-600 tracking-tighter italic">1.5X</div>
+                <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Multiplier Active</p>
+            </div>
+        </div>
+
+        <!-- 4. 如何獲取積分 (任務矩陣) -->
+        <div class="space-y-6">
+            <div class="flex items-center space-x-3">
+                <span class="w-2 h-5 bg-black"></span>
+                <h2 class="text-xl font-black uppercase tracking-tight">如何快速獲取積分</h2>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- 每週瓜分 -->
+                <div class="task-card p-6 flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-start">
+                            <h3 class="text-sm font-black uppercase">每週瓜分池</h3>
+                            <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-sm font-bold text-[9px]">循环发放</span>
+                        </div>
+                        <p class="text-gray-400 font-medium leading-relaxed">
+                            系統將根據以下行為指標，每週三自動結算並分發 100,000 積分池：
+                        </p>
+                        <div class="flex flex-wrap gap-2 pt-2">
+                            <span class="border border-gray-200 px-2 py-1 rounded-sm font-bold text-gray-600">交易量</span>
+                            <span class="border border-gray-200 px-2 py-1 rounded-sm font-bold text-gray-600">持倉時長</span>
+                            <span class="border border-gray-200 px-2 py-1 rounded-sm font-bold text-gray-600">盈亏</span>
+                            <span class="border border-gray-200 px-2 py-1 rounded-sm font-bold text-gray-600">存款金額</span>
+                            <span class="border border-gray-200 px-2 py-1 rounded-sm font-bold text-gray-600">好友邀請</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 新人任務 -->
+                <div class="task-card p-6 space-y-4">
+                    <div class="flex justify-between items-start">
+                        <h3 class="text-sm font-black uppercase">新人專屬任務</h3>
+                        <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-sm font-bold text-[9px]">单次奖励</span>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between bg-white p-3 border border-gray-50 rounded-sm">
+                            <div class="flex flex-col">
+                                <span class="font-bold text-gray-900">首次交易獎勵</span>
+                                <span class="text-[10px] text-gray-400">充值 100 USDT 並完成任意一筆交易</span>
+                            </div>
+                            <span class="text-blue-600 font-black text-sm">+10 Pts</span>
+                        </div>
+                        <div class="flex items-center justify-between bg-white p-3 border border-gray-50 rounded-sm">
+                            <div class="flex flex-col">
+                                <span class="font-bold text-gray-900">推廣先鋒獎勵</span>
+                                <span class="text-[10px] text-gray-400">邀請 3 名有效好友 (充值 100 USDT 並交易)</span>
+                            </div>
+                            <span class="text-blue-600 font-black text-sm">+20 Pts</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. 全局統計數據 -->
+        <div class="stats-card grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-50">
+            <div class="p-6 space-y-2 text-center md:text-left">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">已產生總積分量</p>
+                <p class="text-2xl font-black text-gray-900 tracking-tight">12,450,234,124</p>
+            </div>
+            <div class="p-6 space-y-2 text-center md:text-left">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">積分發放時間</p>
+                <p class="text-2xl font-black text-gray-900 tracking-tight">每週三</p>
+            </div>
+            <div class="p-6 space-y-2 text-center md:text-left">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">下次發放總量</p>
+                <p class="text-2xl font-black text-blue-600 tracking-tight">100,000</p>
+            </div>
+        </div>
+
+        <!-- 6. FAQ 常見問題 -->
+        <div class="space-y-6">
+            <div class="flex items-center space-x-3">
+                <span class="w-2 h-5 bg-black"></span>
+                <h2 class="text-xl font-black uppercase tracking-tight">常見問題 (FAQ)</h2>
+            </div>
+            <div class="stats-card p-6 divide-y divide-gray-50">
+                <div class="py-4 first:pt-0">
+                    <h4 class="font-black text-sm mb-2">積分什麼時候會轉換成代幣？</h4>
+                    <p class="text-gray-500 font-medium leading-relaxed">具體空投時間將隨治理代幣 TGE 計劃公佈。目前的積分代表您在生態中的貢獻權重，權重越高，獲得的代幣份額越多。</p>
+                </div>
+                <div class="py-4">
+                    <h4 class="font-black text-sm mb-2">什麼是「有效好友」？</h4>
+                    <p class="text-gray-500 font-medium leading-relaxed">有效好友是指使用您的鏈結註冊，並完成至少 100 USDT 充值且產生真實交易額的用戶。</p>
+                </div>
+                <div class="py-4 last:pb-0">
+                    <h4 class="font-black text-sm mb-2">積分加成倍率 (Multiplier) 如何獲得？</h4>
+                    <p class="text-gray-500 font-medium leading-relaxed">加成倍率可以通過特定的限時活動、持有特定資產或作爲核心合夥人獲得，它將成倍提升您每週獲得的新積分。</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<!-- 彈窗: 積分發放詳情 -->
+<div id="modal-points-detail" class="modal-overlay" style="display: none; background: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; align-items: center; justify-content: center;">
+    <div class="bn-modal" style="background: #fff; width: 500px; border-radius: 4px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+        <!-- Header -->
+        <div class="flex justify-between items-center px-6 py-4 border-b border-gray-50">
+            <span class="text-sm font-black uppercase tracking-tight">積分發放明細</span>
+            <span class="cursor-pointer text-gray-400 hover:text-black" onclick="toggleModal('modal-points-detail')">✕</span>
+        </div>
+
+        <!-- Table Content -->
+        <div class="max-h-[400px] overflow-y-auto scrollbar-hide">
+            <table class="w-full text-left text-[11px]">
+                <thead class="bg-gray-50 sticky top-0 border-b border-gray-100">
+                <tr class="text-gray-400 font-black uppercase">
+                    <th class="px-6 py-3">積分</th>
+                    <th class="px-6 py-3">時間</th>
+                    <th class="px-6 py-3">積分活動</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 font-black text-blue-600">+1,250.00</td>
+                    <td class="px-6 py-4 text-gray-500">2023-11-01 12:00</td>
+                    <td class="px-6 py-4 font-bold">每週交易量瓜分獎勵</td>
+                </tr>
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 font-black text-blue-600">+500.00</td>
+                    <td class="px-6 py-4 text-gray-500">2023-10-31 09:15</td>
+                    <td class="px-6 py-4 font-bold">成功邀請好友註冊 (0x...2Dd2)</td>
+                </tr>
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 font-black text-blue-600">+10.00</td>
+                    <td class="px-6 py-4 text-gray-500">2023-10-25 15:40</td>
+                    <td class="px-6 py-4 font-bold">新人入金首筆交易獎勵</td>
+                </tr>
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 font-black text-blue-600">+2,400.00</td>
+                    <td class="px-6 py-4 text-gray-500">2023-10-24 12:00</td>
+                    <td class="px-6 py-4 font-bold">持倉時長權益加成結算</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer: 替換為分頁組件 -->
+        <div class="p-4 border-t border-gray-100 bg-white flex justify-between items-center">
+            <!-- 左側：記錄數統計 -->
+            <span class="text-[10px] text-gray-400 font-black uppercase tracking-tighter">顯示 1-10 條，共 124 筆記錄</span>
+            <!-- 右側：分頁按鈕組 -->
+            <div class="flex space-x-1">
+                <!-- 上一頁 -->
+                <button class="w-6 h-6 flex items-center justify-center border border-gray-100 rounded-sm text-gray-400 hover:bg-gray-50 transition-colors">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+
+                <!-- 頁碼 -->
+                <button class="w-6 h-6 flex items-center justify-center bg-black text-white rounded-sm text-[10px] font-black">1</button>
+                <button class="w-6 h-6 flex items-center justify-center border border-gray-100 rounded-sm text-gray-700 font-bold text-[10px] hover:bg-gray-50">2</button>
+                <button class="w-6 h-6 flex items-center justify-center border border-gray-100 rounded-sm text-gray-700 font-bold text-[10px] hover:bg-gray-50">3</button>
+
+                <!-- 下一頁 -->
+                <button class="w-6 h-6 flex items-center justify-center border border-gray-100 rounded-sm text-gray-400 hover:bg-gray-50 transition-colors">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleModal(id) {
+        const modal = document.getElementById(id);
+        if (modal.style.display === 'flex') {
+            modal.style.display = 'none';
+        } else {
+            modal.style.display = 'flex';
+        }
+    }
+</script>
+
+</body>
+</html>
