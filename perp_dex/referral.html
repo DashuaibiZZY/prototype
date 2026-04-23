@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX Referral - Professional Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #111827; }
+        .tab-active { color: #000; border-bottom: 2px solid #000; font-weight: 800; }
+        .tool-box { background: #fcfcfc; border: 1px solid #f1f1f1; border-radius: 2px; }
+        .tier-node { position: relative; display: flex; flex-direction: column; align-items: center; flex: 1; }
+        .tier-line { position: absolute; top: 12px; left: 50%; width: 100%; height: 2px; background: #f3f4f6; z-index: 0; }
+        .tier-node:last-child .tier-line { display: none; }
+        .tier-circle { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #f3f4f6; background: white; z-index: 1; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #d1d5db; }
+        .tier-node.active .tier-circle { border-color: #000; color: #000; }
+        .tier-node.earned .tier-circle { background: #000; border-color: #000; color: #fff; }
+        .tier-node.earned .tier-line { background: #000; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+<!-- 1. 頂部導航欄 (全站一致) -->
+<nav class="h-10 border-b border-gray-100 flex items-center px-4 justify-between shrink-0">
+    <div class="flex items-center space-x-6">
+        <span class="font-black text-lg tracking-tighter cursor-pointer">ForX</span>
+        <div class="flex space-x-5 text-[12px] font-medium">
+            <a href="perp_index.html" class="text-gray-400 hover:text-black">交易</a>
+            <a href="portfolio.html" class="text-gray-400 hover:text-black">投資組合</a>
+            <a href="#" class="text-gray-400 hover:text-black">积分</a>
+            <a href="referral.html" class="text-black font-bold relative">邀請返佣 <span class="absolute -top-1 -right-5 bg-red-500 text-white px-1 text-[8px] rounded-sm scale-90">40%</span></a>
+            <a href="funding.html" class="text-gray-400 hover:text-black">資金費率</a>
+            <a href="leaderboard.html" class="text-gray-400 hover:text-black">排行榜</a>
+        </div>
+    </div>
+    <button class="bg-black text-white px-3 py-1 rounded text-[11px] font-bold">連接錢包</button>
+</nav>
+
+<main class="flex-1 overflow-y-auto">
+    <div class="max-w-[1400px] mx-auto p-8">
+
+        <!-- 2. 頂部快訊條 (替代大標題) -->
+        <div class="flex items-center justify-between border-b border-gray-100 pb-4 mb-8">
+            <div class="flex items-center space-x-4">
+                <span class="text-xl font-black tracking-tight">邀請推薦中心</span>
+                <div class="h-4 w-[1px] bg-gray-200"></div>
+                <div class="flex items-center space-x-2 text-[11px]">
+                    <span class="text-gray-400 font-bold uppercase">我的推薦人:</span>
+                    <span class="font-black text-blue-600 cursor-pointer hover:underline">0x8917******3f662</span>
+                </div>
+            </div>
+            <!-- <div class="text-[11px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-sm">推薦人已為您激活 +30% 積分加成</div> -->
+        </div>
+
+        <!-- 3. 非對稱雙欄佈局 -->
+        <div class="flex flex-col lg:flex-row gap-8">
+
+            <!-- 左側：推廣工具與升級路徑 (佔 65%) -->
+            <div class="flex-1 space-y-8">
+
+                <!-- 邀請工具箱 -->
+                <div class="tool-box p-6 border-l-4 border-l-blue-600 shadow-sm">
+                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">立即邀請</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase">我的推薦鏈結</label>
+                            <div class="flex bg-white border border-gray-100 p-2 items-center justify-between">
+                                <span class="text-[11px] font-medium text-gray-500 truncate">forx.finance/?ref=E6DL28G</span>
+                                <button class="text-blue-600 font-bold text-[10px] hover:underline">複製</button>
+                            </div>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase">專屬邀請碼</label>
+                            <div class="flex gap-2">
+                                <div class="flex-1 bg-white border border-gray-100 p-2 font-black text-center tracking-widest text-sm">E6DL28G</div>
+                                <button class="px-6 bg-black text-white text-[10px] font-bold rounded-sm">分享</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 佣金級別路徑圖 (Roadmap Style) -->
+                <div class="tool-box p-6">
+                    <div class="flex justify-between items-center mb-10">
+                        <h3 class="text-xs font-black text-gray-900 uppercase tracking-tight">佣金等級成長路徑</h3>
+                        <span class="text-[10px] font-bold text-gray-400">當前狀態: 10% 佣金</span>
+                    </div>
+
+                    <div class="flex px-4 mb-12">
+                        <!-- Node 1 -->
+                        <div class="tier-node earned">
+                            <div class="tier-line"></div>
+                            <div class="tier-circle">✓</div>
+                            <span class="mt-2 text-[11px] font-black">10%</span>
+                            <span class="text-[9px] text-gray-400 font-bold">已達標</span>
+                        </div>
+                        <!-- Node 2 -->
+                        <div class="tier-node active">
+                            <div class="tier-line"></div>
+                            <div class="tier-circle">2</div>
+                            <span class="mt-2 text-[11px] font-black">15%</span>
+                            <span class="text-[9px] text-blue-600 font-bold">下一級</span>
+                        </div>
+                        <!-- Node 3 -->
+                        <div class="tier-node">
+                            <div class="tier-line"></div>
+                            <div class="tier-circle">3</div>
+                            <span class="mt-2 text-[11px] font-black">20%</span>
+                        </div>
+                        <!-- Node 4 -->
+                        <div class="tier-node">
+                            <div class="tier-line"></div>
+                            <div class="tier-circle">4</div>
+                            <span class="mt-2 text-[11px] font-black">25%</span>
+                        </div>
+                    </div>
+
+                    <!-- 升級任務清單 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-4 border border-gray-50 rounded-sm">
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-[10px] font-bold">
+                                <span class="text-gray-500 uppercase">活躍好友目標</span>
+                                <span class="text-black">0 / 3</span>
+                            </div>
+                            <div class="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="bg-black h-full" style="width: 20%"></div>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-[10px] font-bold">
+                                <span class="text-gray-500 uppercase">交易量目標 (USDT)</span>
+                                <span class="text-black">$0 / $2.5M</span>
+                            </div>
+                            <div class="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="bg-black h-full" style="width: 5%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側：數據統計矩陣 (佔 35%) -->
+            <div class="w-full lg:w-[420px] space-y-6">
+                <!-- 收益核心數據 -->
+                <div class="bg-black p-6 rounded-sm text-white space-y-6 shadow-xl">
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">累計推廣收益 (USDT)</p>
+                        <p class="text-4xl font-black tracking-tight">$0.00</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 border-t border-white/10 pt-4">
+                        <div>
+                            <p class="text-[9px] text-gray-500 font-bold uppercase">本週收益</p>
+                            <p class="text-lg font-black">$0.00</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] text-gray-500 font-bold uppercase">待結算金額</p>
+                            <p class="text-lg font-black">$0.00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 數據指標矩陣 -->
+                <div class="tool-box p-6 grid grid-cols-2 gap-y-8">
+                    <div class="border-r border-gray-50">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase">直邀人數</p>
+                        <p class="text-xl font-black">0</p>
+                    </div>
+                    <div class="pl-6">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase">間邀人數</p>
+                        <p class="text-xl font-black">0</p>
+                    </div>
+                    <div class="border-r border-gray-50">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase">累積好友交易量</p>
+                        <p class="text-xl font-black">$0.00</p>
+                    </div>
+                    <div class="pl-6">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase">手續費貢獻</p>
+                        <p class="text-xl font-black">$0.00</p>
+                    </div>
+                </div>
+
+                <!-- 大使模式廣告位 -->
+                <div class="tool-box p-6 bg-blue-600 text-white relative overflow-hidden group cursor-pointer">
+                    <div class="relative z-10">
+                        <p class="text-[10px] font-black text-blue-200 uppercase mb-2">ForX 大使申請</p>
+                        <p class="text-sm font-bold leading-tight mb-4">如果您有市场影响力，或具备交易社区资源，請申請解鎖 40% 佣金與現金獎勵。</p>
+                        <button class="bg-white text-blue-600 px-4 py-1.5 rounded-sm font-black text-[10px] uppercase">立即申請 &rarr;</button>
+                    </div>
+                    <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-white opacity-10 rounded-full blur-2xl"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. 底部數據列表 -->
+        <div class="tool-box !p-0 mt-8 overflow-hidden shadow-sm">
+            <div class="h-12 border-b border-gray-50 flex items-center px-6 justify-between bg-white">
+                <div class="flex space-x-10 text-[11px] font-black text-gray-400">
+                    <span class="tab-active h-12 flex items-center cursor-pointer">好友名單詳情</span>
+                    <span class="hover:text-black h-12 flex items-center cursor-pointer">返佣結算記錄</span>
+                </div>
+            </div>
+            <div class="min-h-[300px] flex flex-col items-center justify-center py-12">
+                <svg class="w-12 h-12 text-gray-50 mb-3" fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5c-1.66 0-3 1.34-3 3s1.34 3 8 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                <span class="text-gray-200 font-black uppercase text-[11px] tracking-widest">No matching data found</span>
+            </div>
+        </div>
+
+    </div>
+</main>
+</body>
+</html>
