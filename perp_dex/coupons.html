@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX Coupon Center - My Rewards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f9fafb; color: #111827; }
+        .tab-active { color: #000; border-bottom: 2px solid #000; font-weight: 800; }
+        .coupon-card { background: white; border: 1px solid #f1f1f1; border-radius: 4px; position: relative; overflow: hidden; }
+        .coupon-card::before, .coupon-card::after { content: ''; position: absolute; width: 12px; height: 12px; background: #f9fafb; border-radius: 50%; top: 50%; margin-top: -6px; border: 1px solid #f1f1f1; }
+        .coupon-card::before { left: -7px; }
+        .coupon-card::after { right: -7px; }
+        .status-tab { cursor: pointer; transition: all 0.2s; }
+        .status-tab:hover { color: #000; }
+        .dropdown-content { display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #f1f1f1; box-shadow: 0 4px 12px rgba(0,0,0,0.05); min-width: 140px; z-index: 100; }
+        .group:hover .dropdown-content { display: block; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col text-[12px]">
+
+<!-- 1. 頂部導航欄 (全站統一) -->
+<nav class="h-10 border-b border-gray-100 flex items-center px-4 justify-between shrink-0">
+    <div class="flex items-center space-x-6">
+        <span class="font-black text-lg tracking-tighter cursor-pointer">ForX</span>
+        <div class="flex space-x-5 text-[12px] font-medium">
+            <a href="perp_index.html" class="text-gray-400 hover:text-black">交易</a>
+            <a href="portfolio.html" class="text-gray-400 hover:text-black">投資組合</a>
+            <a href="points.html" class="text-gray-400 hover:text-black relative">積分<span class="absolute -top-1 -right-5 bg-red-500 text-white px-1 text-[8px] rounded-sm scale-90">NEW</span></a>
+            <a href="referral.html" class="text-gray-400 hover:text-black relative">邀請返佣 <span class="absolute -top-1 -right-5 bg-red-500 text-white px-1 text-[8px] rounded-sm scale-90">40%</span></a>
+            <a href="funding.html" class="text-gray-400 hover:text-black">資金費率</a>
+            <a href="leaderboard.html" class="text-gray-400 hover:text-black">排行榜</a>
+            <!-- 更多下拉菜單組件 -->
+            <div class="relative group h-full flex items-center">
+                <!-- 觸發文字 -->
+                <span class="text-black font-bold cursor-pointer flex items-center text-[12px] font-medium transition-colors">
+                更多
+                <svg class="w-3 h-3 ml-1 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 9l-7 7-7-7" stroke-width="3"/>
+                </svg>
+            </span>
+
+                <!-- 下拉菜單容器 (純 Tailwind 控制顯隱與定位) -->
+                <div class="absolute top-full left-0 hidden group-hover:block pt-2 z-[100]">
+                    <div class="bg-white border border-gray-100 rounded-sm py-1 shadow-lg min-w-[140px] overflow-hidden">
+                        <a href="coupons.html" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 font-bold transition-colors">卡券中心</a>
+                        <a href="#" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 transition-colors">文檔</a>
+                        <a href="#" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 transition-colors">活動</a>
+                        <a href="#" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 transition-colors">公告</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button class="bg-black text-white px-4 py-1.5 rounded-sm text-[11px] font-bold">0xd593...2Dd2</button>
+</nav>
+
+<main class="flex-1 overflow-y-auto">
+    <div class="max-w-[1200px] mx-auto p-8 space-y-8">
+
+        <!-- 2. 頁面標題與類型切換 -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div class="space-y-4">
+                <h1 class="text-3xl font-black tracking-tight">卡券中心</h1>
+                <div class="flex space-x-8 text-[13px] font-bold text-gray-400 border-b border-gray-50">
+                    <span class="tab-active pb-3 cursor-pointer">合約體驗金</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. 狀態過濾器 -->
+        <div class="flex space-x-6 text-[11px] font-black text-gray-400 uppercase tracking-wider">
+            <span class="text-black cursor-pointer">可使用</span>
+            <span class="status-tab">已使用</span>
+            <span class="status-tab">已過期</span>
+            <span class="status-tab">已失效</span>
+        </div>
+
+        <!-- 4. 卡券列表矩陣 (Grid) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <!-- 卡片 1: 可使用 (待激活) -->
+            <div class="coupon-card p-6 flex flex-col justify-between h-44 shadow-sm border-l-4 border-l-blue-600">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] font-black text-gray-400 uppercase mb-1">永續合約體驗金</p>
+                        <h2 class="text-3xl font-black text-gray-900">50.00 <span class="text-sm font-medium text-gray-400 uppercase">USDT</span></h2>
+                    </div>
+                    <button class="px-4 py-1.5 bg-blue-600 text-white rounded-sm font-black text-[10px] hover:bg-blue-700 transition">開啟使用</button>
+                </div>
+                <div class="pt-4 border-t border-gray-50">
+                    <p class="text-[10px] font-bold text-gray-400">激活截止時間：<span class="text-gray-700">2023-11-10 12:00</span></p>
+                </div>
+            </div>
+
+            <!-- 卡片 2: 已使用 (去交易) -->
+            <div class="coupon-card p-6 flex flex-col justify-between h-44 shadow-sm border-l-4 border-l-green-500">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] font-black text-gray-400 uppercase mb-1">永續合約體驗金</p>
+                        <h2 class="text-3xl font-black text-gray-900">100.00 <span class="text-sm font-medium text-gray-400 uppercase">USDT</span></h2>
+                        <span class="inline-block mt-1 px-1.5 py-0.5 bg-green-50 text-green-600 text-[9px] font-black rounded-sm">正在使用中</span>
+                    </div>
+                    <button class="px-4 py-1.5 bg-black text-white rounded-sm font-black text-[10px] hover:bg-gray-800 transition uppercase tracking-tighter">去交易</button>
+                </div>
+                <div class="pt-4 border-t border-gray-50">
+                    <p class="text-[10px] font-bold text-gray-400">回收截止時間：<span class="text-gray-700">2023-11-15 18:00</span></p>
+                </div>
+            </div>
+
+            <!-- 卡片 3: 已過期 -->
+            <div class="coupon-card p-6 flex flex-col justify-between h-44 opacity-60 grayscale border-l-4 border-l-gray-300 bg-gray-50/50">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] font-black text-gray-400 uppercase mb-1">永續合約體驗金</p>
+                        <h2 class="text-3xl font-black text-gray-400">20.00 <span class="text-sm font-medium uppercase">USDT</span></h2>
+                    </div>
+                    <span class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm font-black text-[9px] uppercase">已過期</span>
+                </div>
+                <div class="pt-4 border-t border-gray-100">
+                    <p class="text-[10px] font-bold text-gray-400">激活截止時間：<span class="text-gray-400 line-through">2023-10-20 00:00</span></p>
+                </div>
+            </div>
+
+            <!-- 卡片 4: 已失效 -->
+            <div class="coupon-card p-6 flex flex-col justify-between h-44 opacity-60 grayscale border-l-4 border-l-red-200 bg-gray-50/50">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] font-black text-gray-400 uppercase mb-1">永續合約體驗金</p>
+                        <h2 class="text-3xl font-black text-gray-400">200.00 <span class="text-sm font-medium uppercase">USDT</span></h2>
+                    </div>
+                    <span class="px-3 py-1 border border-red-100 text-red-300 rounded-sm font-black text-[9px] uppercase">已失效</span>
+                </div>
+                <div class="pt-4 border-t border-gray-100">
+                    <p class="text-[10px] font-bold text-gray-400">回收截止時間：<span class="text-gray-400 line-through">2023-10-25 15:00</span></p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 5. 底部提示 -->
+        <div class="bg-gray-50 p-6 rounded-sm border border-gray-100 space-y-3">
+            <h3 class="font-black text-xs uppercase flex items-center">
+                <svg class="w-4 h-4 mr-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/></svg>
+                溫馨提示
+            </h3>
+            <ul class="list-disc list-inside text-[11px] text-gray-500 space-y-1.5 font-medium">
+                <li>合約體驗金僅可用於合約交易保證金，不可提現。</li>
+                <li>體驗金產生的盈利部分支持提現，但提現動作將導致剩餘未消耗體驗金立即失效。</li>
+                <li>請注意每張卡券的「激活截止時間」與「回收截止時間」，逾期將自動清零。</li>
+            </ul>
+        </div>
+
+    </div>
+</main>
+
+</body>
+</html>
