@@ -12,6 +12,10 @@
         .tab-active { color: #000; border-bottom: 2px solid #000; font-weight: 800; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .divider-v { width: 1px; height: 24px; background-color: #f3f4f6; margin: 0 24px; }
+        .input-row { background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 6px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+        .input-row:hover { background: #f3f4f6; }
+        .btn-step { background: #f1f1f1; color: #111827; border-radius: 6px; width: 100%; text-align: left; padding: 12px; transition: all 0.2s; border: 1px solid transparent; }
+        .btn-step:hover { border-color: #d1d5db; background: #fff; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -62,7 +66,7 @@
                 <div class="flex flex-col">
                     <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">總資產價值</span>
                     <div class="flex items-baseline space-x-2">
-                        <span class="text-2xl font-black">0.00 <span class="text-sm font-medium text-gray-400">USD</span></span>
+                        <span class="text-2xl font-black">0.00 <span class="text-sm font-medium text-gray-400">USDT</span></span>
                         <span class="text-[11px] font-bold text-gray-400 whitespace-nowrap">今日盈虧 <span class="text-green-500">0.00 (0.00%)</span></span>
                     </div>
                 </div>
@@ -73,19 +77,19 @@
                 <div class="flex space-x-10">
                     <div class="flex flex-col">
                         <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">總充值</span>
-                        <span class="text-sm font-black text-gray-800">0.00 <span class="text-[9px] font-medium text-gray-400">USD</span></span>
+                        <span class="text-sm font-black text-gray-800">0.00 <span class="text-[9px] font-medium text-gray-400">USDT</span></span>
                     </div>
                     <div class="flex flex-col">
                         <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">總提現</span>
-                        <span class="text-sm font-black text-gray-800">0.00 <span class="text-[9px] font-medium text-gray-400">USD</span></span>
+                        <span class="text-sm font-black text-gray-800">0.00 <span class="text-[9px] font-medium text-gray-400">USDT</span></span>
                     </div>
                 </div>
             </div>
 
             <!-- 資金操作 -->
             <div class="flex space-x-2 mt-4 lg:mt-0">
-                <button class="px-5 py-2 border border-gray-200 rounded-sm font-bold text-[11px] hover:bg-gray-50 transition">提現</button>
-                <button class="px-5 py-2 bg-blue-600 text-white rounded-sm font-bold text-[11px] hover:bg-blue-700 shadow-sm transition">充值</button>
+                <button onclick="openModal('withdraw')" class="px-5 py-2 border border-gray-200 rounded-sm font-bold text-[11px] hover:bg-gray-50 transition">提現</button>
+                <button onclick="openModal('deposit')" class="px-5 py-2 bg-blue-600 text-white rounded-sm font-bold text-[11px] hover:bg-blue-700 shadow-sm transition">充值</button>
             </div>
         </div>
 
@@ -239,12 +243,13 @@
         <!-- 5. 底部詳細流水標籤頁 -->
         <div class="stats-card !p-0 overflow-hidden">
             <div class="h-10 border-b border-gray-100 flex items-center px-4 space-x-8 text-[11px] font-bold text-gray-400 overflow-x-auto scrollbar-hide bg-white">
-                <span class="tab-active h-10 flex items-center shrink-0 cursor-pointer">合約倉位</span>
-                <span class="hover:text-black cursor-pointer h-10 flex items-center shrink-0">當前委託</span>
+                <span class="tab-active h-10 flex items-center shrink-0 cursor-pointer">當前持倉 (1)</span>
+                <span class="hover:text-black cursor-pointer h-10 flex items-center shrink-0">當前委託 (0)</span>
                 <span class="hover:text-black cursor-pointer h-10 flex items-center shrink-0">歷史委託</span>
                 <span class="hover:text-black cursor-pointer h-10 flex items-center shrink-0">成交歷史</span>
-                <span class="hover:text-black cursor-pointer h-10 flex items-center shrink-0">資金費率歷史</span>
+                <span class="hover:text-black cursor-pointer h-10 flex items-center shrink-0">歷史持倉</span>
                 <span class="hover:text-black cursor-pointer h-10 flex items-center shrink-0">資產充提記錄</span>
+                <span class="hover:text-black cursor-pointer h-10 flex items-center shrink-0">資金流水</span>
             </div>
             <!-- 空數據列表 -->
             <div class="min-h-[260px] flex flex-col items-center justify-center bg-white">
@@ -252,9 +257,203 @@
                 <span class="text-gray-200 font-bold uppercase tracking-tighter text-[11px]">No active data in this section</span>
             </div>
         </div>
-
     </div>
 </main>
 
+<!-- 充提統一彈窗容器 -->
+<div id="finance-modal" class="modal-overlay" style="display: none; background: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; align-items: center; justify-content: center;">
+    <div class="bn-modal" style="background: #fff; width: 420px; border-radius: 8px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.15); border: 1px solid #f1f1f1;">
+        <!-- 動態內容區 -->
+        <div id="modal-dynamic-content"></div>
+    </div>
+</div>
+<script>
+    // 彈窗內容模板庫
+    const financeTemplates = {
+        // --- 存款 ---
+    deposit_init: `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-black uppercase">充值</h2>
+                <span class="cursor-pointer text-gray-400" onclick="closeFinanceModal()">✕</span>
+            </div>
+            <div class="space-y-3">
+                <button onclick="updateModal('deposit_wallet')" class="btn-step flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-[13px]">從已連接錢包充值</div>
+                        <div class="text-[11px] text-gray-400 mt-1">使用 MetaMask, OKX 或其他連接的錢包</div>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+                </button>
+                <div class="flex items-center py-2"><div class="flex-1 border-t border-dashed border-gray-100"></div><span class="px-4 text-[10px] text-gray-300 font-bold">OR</span><div class="flex-1 border-t border-dashed border-gray-100"></div></div>
+                <button onclick="updateModal('deposit_external')" class="btn-step flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-[13px]">從外部錢包/交易所充值</div>
+                        <div class="text-[11px] text-gray-400 mt-1">通過掃碼或複製地址從 Binance 等外部轉帳</div>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+        </div>
+    `,
+    deposit_wallet: `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center"><span class="cursor-pointer mr-3 text-gray-400" onclick="updateModal('deposit_init')">←</span><h2 class="text-lg font-black">錢包充值</h2></div>
+                <span class="cursor-pointer text-gray-400" onclick="closeFinanceModal()">✕</span>
+            </div>
+            <div class="space-y-4">
+                <div class="input-row"><span class="text-[11px] font-bold text-gray-400">資產</span><span class="font-black text-[12px]">USDT</span></div>
+                <div class="input-row"><span class="text-[11px] font-bold text-gray-400">鏈</span><span class="font-black text-[12px]">Arbitrum</span></div>
+                <div class="bg-gray-50 p-3 rounded-md border border-gray-100">
+                    <div class="flex justify-between items-center mb-2"><input type="text" placeholder="數量" class="bg-transparent font-black outline-none w-1/2 text-sm"><span class="text-blue-600 font-bold text-[11px]">最大</span></div>
+                    <div class="flex justify-between text-[10px] text-gray-400 border-t border-gray-200/50 pt-2"><span>可用</span><span>0.00 USDT</span></div>
+                </div>
+                <div class="bg-orange-50 border border-orange-100 p-3 rounded-md flex gap-2">
+                    <span class="text-orange-500 text-sm">⚠️</span>
+                    <p class="text-[10px] text-orange-700 leading-tight">請勿使用無私鑰錢包進行充值，否則資金將無法找回。</p>
+                </div>
+                <div class="space-y-1.5 pt-2">
+                    <div class="flex justify-between text-[11px]"><span class="text-gray-400">到帳時間</span><span class="font-bold">5~15 分鐘</span></div>
+                </div>
+                <button class="w-full py-3 bg-blue-600 text-white font-black rounded-md shadow-lg">確認充值</button>
+            </div>
+        </div>
+    `,
+    deposit_external: `
+    <div class="p-6">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center"><span class="cursor-pointer mr-3 text-gray-400" onclick="updateModal('deposit_init')">←</span><h2 class="text-lg font-black">外部充值</h2></div>
+            <span class="cursor-pointer text-gray-400" onclick="closeFinanceModal()">✕</span>
+        </div>
+        <div class="space-y-4">
+            <!-- 拆分為兩個獨立選擇框 -->
+            <div class="input-row"><span class="text-[11px] font-bold text-gray-400">資產</span><span class="font-black text-[12px]">USDT</span></div>
+            <div class="input-row"><span class="text-[11px] font-bold text-gray-400">鏈</span><span class="font-black text-[12px]">Arbitrum</span></div>
+
+            <div class="flex flex-col items-center py-4 bg-gray-50 rounded-md border border-dashed border-gray-200">
+                <div class="w-32 h-32 bg-white p-2 border border-gray-100 mb-3 flex items-center justify-center font-bold text-gray-300">QR CODE</div>
+                <div class="text-[11px] font-black text-gray-900 break-all px-6 text-center select-all">0xF235BE4440Cf7CDbDdd9f7F6Fc062B8297e37Eae</div>
+                <button class="mt-2 text-blue-600 font-bold text-[10px] uppercase">點擊複製地址</button>
+            </div>
+            <div class="bg-blue-50 border border-blue-100 p-3 rounded-md flex gap-2">
+                <span class="text-blue-500 text-sm">ℹ️</span>
+                <p class="text-[10px] text-blue-700 leading-tight">僅支援發送 <b class="text-blue-900">USDT (Arbitrum)</b> 資產到此地址。發送錯誤資產將無法找回。</p>
+            </div>
+            <div class="space-y-1.5 pt-2">
+                    <div class="flex justify-between text-[11px]"><span class="text-gray-400">到帳時間</span><span class="font-bold">5~15 分鐘</span></div>
+                </div>
+            <button class="w-full py-3 border border-gray-200 font-black rounded-md text-[12px]" onclick="closeFinanceModal()">完成</button>
+        </div>
+    </div>
+    `,
+        // --- 提現 ---
+    withdraw_init: `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-black uppercase">提現</h2>
+                <span class="cursor-pointer text-gray-400" onclick="closeFinanceModal()">✕</span>
+            </div>
+            <div class="space-y-3">
+                <button onclick="updateModal('withdraw_wallet')" class="btn-step flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-[13px]">提現至已連接錢包</div>
+                        <div class="text-[11px] text-gray-400 mt-1">提現至當前登錄的 MetaMask 或其他錢包</div>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+                </button>
+                <div class="flex items-center py-2"><div class="flex-1 border-t border-dashed border-gray-100"></div><span class="px-4 text-[10px] text-gray-300 font-bold">OR</span><div class="flex-1 border-t border-dashed border-gray-100"></div></div>
+                <button onclick="updateModal('withdraw_external')" class="btn-step flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-[13px]">提現至外部帳戶</div>
+                        <div class="text-[11px] text-gray-400 mt-1">手動輸入接收地址 (交易所或第三方錢包)</div>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+        </div>
+    `,
+    withdraw_wallet: `
+    <div class="p-6">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center"><span class="cursor-pointer mr-3 text-gray-400" onclick="updateModal('withdraw_init')">←</span><h2 class="text-lg font-black">提現至錢包</h2></div>
+            <span class="cursor-pointer text-gray-400" onclick="closeFinanceModal()">✕</span>
+        </div>
+        <div class="space-y-4">
+            <div class="input-row"><span class="text-[11px] font-bold text-gray-400">從</span><span class="font-black text-[12px]">合約帳戶</span></div>
+            <div class="input-row"><span class="text-[11px] font-bold text-gray-400">資產</span><span class="font-black text-[12px]">USDT</span></div>
+            <div class="input-row"><span class="text-[11px] font-bold text-gray-400">鏈</span><span class="font-black text-[12px]">Arbitrum</span></div>
+
+            <!-- 數量輸入區 -->
+            <div class="bg-gray-50 p-3 rounded-md border border-gray-100">
+                <div class="flex justify-between items-center mb-2">
+                    <input type="text" placeholder="數量" class="bg-transparent font-black outline-none w-1/2 text-sm">
+                    <span class="text-blue-600 font-bold text-[11px] cursor-pointer hover:text-blue-800">最大</span>
+                </div>
+                <div class="flex justify-between text-[10px] text-gray-400 border-t border-gray-200/50 pt-2">
+                    <span>可用餘額</span><span>12,450.00 USDT</span>
+                </div>
+            </div>
+
+            <!-- 提現細節 -->
+            <div class="space-y-1.5 pt-2 text-[11px]">
+                <div class="flex justify-between"><span class="text-gray-400">網絡手續費</span><span class="font-bold">0.00 USDT</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">預計到帳</span><span class="font-black text-gray-900">0.00 USDT</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">到帳速度</span><span class="text-green-600 font-bold">5~10 分鐘</span></div>
+            </div>
+
+            <div class="bg-gray-50 p-3 rounded-md border border-gray-100">
+                <p class="text-[10px] text-gray-400 leading-tight">
+                    資產將直接提取至您當前連接的錢包地址：<br>
+                    <b class="text-gray-900 break-all">0xF235BE4440Cf7CDbDdd9f7F6Fc062B8297e37Eae</b>
+                </p>
+            </div>
+
+            <button class="w-full py-3 bg-blue-600 text-white font-black rounded-md shadow-lg hover:bg-blue-700 transition">確認提現</button>
+        </div>
+    </div>
+    `,
+    withdraw_external: `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center"><span class="cursor-pointer mr-3 text-gray-400" onclick="updateModal('withdraw_init')">←</span><h2 class="text-lg font-black">提現至外部地址</h2></div>
+                <span class="cursor-pointer text-gray-400" onclick="closeFinanceModal()">✕</span>
+            </div>
+            <div class="space-y-4">
+                <div class="input-row"><span class="text-[11px] font-bold text-gray-400">資產</span><span class="font-black text-[12px]">USDT</span></div>
+                <div class="input-row"><span class="text-[11px] font-bold text-gray-400">鏈</span><span class="font-black text-[12px]">Ethereum</span></div>
+                <div class="bg-gray-50 border border-gray-100 h-10 flex items-center px-3 rounded-md">
+                    <input type="text" placeholder="輸入接收地址" class="bg-transparent w-full outline-none font-bold text-[11px]">
+                </div>
+                <div class="bg-gray-50 p-3 rounded-md border border-gray-100">
+                    <div class="flex justify-between items-center mb-2"><input type="text" placeholder="提現數量" class="bg-transparent font-black outline-none w-1/2 text-sm"><span class="text-blue-600 font-bold text-[11px]">最大</span></div>
+                    <div class="flex justify-between text-[10px] text-gray-400 border-t border-gray-200/50 pt-2"><span>可用</span><span>12,000.00 USDT</span></div>
+                </div>
+                <div class="space-y-1.5 pt-2 text-[11px]">
+                    <div class="flex justify-between"><span class="text-gray-400">網絡手續費</span><span class="font-bold">2.50 USDT</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">預計到帳</span><span class="font-black text-gray-900">0.00 USDT</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">到帳速度</span><span class="text-green-600 font-bold">5~10 分鐘</span></div>
+                </div>
+                <button class="w-full py-3 bg-black text-white font-black rounded-md">確認提現申請</button>
+            </div>
+        </div>
+    `
+    };
+
+    function openModal(type) {
+        const content = document.getElementById('modal-dynamic-content');
+        const overlay = document.getElementById('finance-modal');
+        content.innerHTML = type === 'deposit' ? financeTemplates.deposit_init : financeTemplates.withdraw_init;
+        overlay.style.display = 'flex';
+    }
+
+    function updateModal(templateKey) {
+        document.getElementById('modal-dynamic-content').innerHTML = financeTemplates[templateKey];
+    }
+
+    function closeFinanceModal() {
+        document.getElementById('finance-modal').style.display = 'none';
+    }
+</script>
 </body>
 </html>
