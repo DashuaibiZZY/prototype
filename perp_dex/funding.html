@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ForX Funding Center - Arbitrage & History</title>
+    <title>ForX Funding Center - Rates & History</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #111827; }
         .tab-active { color: #000; border-bottom: 3px solid #000; font-weight: 900; }
         .filter-box { background: #ffffff; border: 1px solid #f1f1f1; border-radius: 2px; }
+        .stats-card { background: #ffffff; border: 1px solid #f1f1f1; border-radius: 2px; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col text-[12px]">
@@ -26,28 +27,21 @@
             <a href="funding.html" class="text-black font-bold">資金費率</a>
             <a href="leaderboard.html" class="text-gray-400 hover:text-black">排行榜</a>
         </div>
-        <!-- 更多下拉菜單組件 -->
         <div class="relative group h-full flex items-center">
-            <!-- 觸發文字 -->
             <span class="text-gray-400 hover:text-black cursor-pointer flex items-center text-[12px] font-medium transition-colors">
                 更多
                 <svg class="w-3 h-3 ml-1 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path d="M19 9l-7 7-7-7" stroke-width="3"/>
                 </svg>
             </span>
-
-            <!-- 下拉菜單容器 (純 Tailwind 控制顯隱與定位) -->
             <div class="absolute top-full left-0 hidden group-hover:block pt-2 z-[100]">
                 <div class="bg-white border border-gray-100 rounded-sm py-1 shadow-lg min-w-[140px] overflow-hidden">
                     <a href="coupons.html" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 font-bold transition-colors">卡券中心</a>
                     <a href="#" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 transition-colors">文檔</a>
-                    <a href="#" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 transition-colors">活動</a>
-                    <a href="#" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 transition-colors">公告</a>
                 </div>
             </div>
         </div>
     </div>
-
     <button class="bg-black text-white px-4 py-1.5 rounded-sm text-[11px] font-bold">0xd593...2Dd2</button>
 </nav>
 
@@ -57,40 +51,13 @@
         <!-- 2. 標題與核心 Tab -->
         <div class="flex items-end justify-between border-b border-gray-100">
             <div class="flex space-x-10">
-                <button onclick="switchTab('realtime')" id="btn-realtime" class="tab-active pb-4 text-sm font-black uppercase tracking-tight">實時資金費率</button>
+                <button onclick="switchTab('realtime')" id="btn-realtime" class="tab-active pb-4 text-sm font-black uppercase tracking-tight">實時資金費率对比</button>
                 <button onclick="switchTab('history')" id="btn-history" class="text-gray-400 hover:text-black pb-4 text-sm font-black uppercase tracking-tight transition-colors">資金費率歷史記錄</button>
             </div>
             <div class="pb-4 text-[11px] text-gray-400 font-bold uppercase">数据更新时间：10秒前</div>
         </div>
 
-        <!-- 3. ForX 套利洞察區 (取代 GRVT 佈局) -->
-        <div id="arbitrage-insights" class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-            <div class="lg:col-span-3 bg-black rounded-sm p-5 text-white flex items-center justify-between shadow-xl">
-                <div class="space-y-1">
-                    <span class="text-blue-400 text-[10px] font-black uppercase tracking-widest">市場套利機會</span>
-                    <p class="text-lg font-bold">
-                        當前最優路徑：在 <span class="text-blue-400">ForX 做多</span> / <span class="text-gray-400">Binance 做空</span>
-                    </p>
-                </div>
-                <div class="flex items-center space-x-8">
-                    <div class="text-center">
-                        <p class="text-[10px] text-gray-500 font-bold uppercase">預估單次價差</p>
-                        <p class="text-xl font-black text-green-500">0.0500%</p>
-                    </div>
-                    <div class="w-[1px] h-10 bg-white/10"></div>
-                    <div class="text-center">
-                        <p class="text-[10px] text-gray-500 font-bold uppercase">預估年化收益 (APY)</p>
-                        <p class="text-2xl font-black text-blue-400">54.75%</p>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-gray-50 border border-gray-100 p-5 rounded-sm flex flex-col justify-center">
-                <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">中性區間 (Neutral Range)</p>
-                <p class="text-xs font-black text-gray-600 tracking-tight">APY < 10.95% 為非套利區間</p>
-            </div>
-        </div>
-
-        <!-- 4. 實時費率過濾與列表 (與歷史頁面共用部分結構) -->
+        <!-- 3. 實時費率頁面 -->
         <div id="content-realtime" class="space-y-6">
             <div class="flex items-center justify-between filter-box p-3">
                 <div class="flex items-center space-x-4">
@@ -99,43 +66,60 @@
                         <input type="checkbox" class="accent-black"> <span>僅顯示我的收藏</span>
                     </div>
                 </div>
-                <div class="flex items-center space-x-2 text-[11px] font-bold">
-                    <span class="text-gray-400">結算間隔:</span>
-                    <span class="bg-gray-100 px-3 py-1 rounded-sm">8H</span>
-                </div>
             </div>
             <!-- 數據表格 (實時) -->
             <div class="border border-gray-100 rounded-sm overflow-hidden">
                 <table class="w-full text-left">
                     <thead class="bg-gray-50 text-[10px] font-black text-gray-400 uppercase">
                     <tr>
-                        <th class="px-6 py-4">資產市場</th><th class="px-6 py-4 text-right">未平倉合約量</th><th class="px-6 py-4 text-right text-black">ForX 費率</th><th class="px-6 py-4 text-right">Binance</th><th class="px-6 py-4 text-right">Bybit</th><th class="px-6 py-4 text-right">Hyperliquid</th>
+                        <th class="px-6 py-4">資產市場</th>
+                        <th class="px-6 py-4 text-right">未平倉合約量</th>
+                        <th class="px-6 py-4 text-right">時間間隔</th>
+                        <th class="px-6 py-4 text-right text-black">ForX 资金費率</th>
+                        <th class="px-6 py-4 text-right">預估 APY</th>
                     </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50 font-medium">
-                    <tr class="hover:bg-gray-50"><td class="px-6 py-4 font-black">BTCUSDT</td><td class="px-6 py-4 text-right">1.2B</td><td class="px-6 py-4 text-right text-blue-600 font-black">0.0100%</td><td class="px-6 py-4 text-right text-green-500">+0.012%</td><td class="px-6 py-4 text-right text-red-500">-0.005%</td><td class="px-6 py-4 text-right text-gray-300">0.000%</td></tr>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-black">BTCUSDT</td>
+                        <td class="px-6 py-4 text-right">1.2B</td>
+                        <td class="px-6 py-4 text-right">8h</td>
+                        <td class="px-6 py-4 text-right text-blue-600 font-black">0.0100%</td>
+                        <td class="px-6 py-4 text-right text-green-500 font-black">10.95%</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-black">ETHUSDT</td>
+                        <td class="px-6 py-4 text-right">850M</td>
+                        <td class="px-6 py-4 text-right">8h</td>
+                        <td class="px-6 py-4 text-right text-red-500 font-black">-0.0250%</td>
+                        <td class="px-6 py-4 text-right text-red-500 font-black">-27.37%</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-black">SOLUSDT</td>
+                        <td class="px-6 py-4 text-right">320M</td>
+                        <td class="px-6 py-4 text-right">1h</td>
+                        <td class="px-6 py-4 text-right text-blue-600 font-black">0.0500%</td>
+                        <td class="px-6 py-4 text-right text-green-500 font-black">438.00%</td>
+                    </tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- 5. 歷史費率頁面 (初始隱藏) -->
+        <!-- 4. 歷史費率頁面 -->
         <div id="content-history" class="hidden space-y-6">
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <!-- 左側過濾控制 -->
-                <div class="stats-card p-5 space-y-6 flex flex-col justify-between">
+                <div class="stats-card p-5 space-y-6">
                     <div class="space-y-4">
                         <label class="block text-[10px] font-black text-gray-400 uppercase">選擇合約</label>
                         <div class="bg-gray-50 p-2 font-black border border-gray-100 rounded-sm">BTCUSDT 永續</div>
 
-                        <label class="block text-[10px] font-black text-gray-400 uppercase">回溯次數</label>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase">回溯時間</label>
                         <div class="flex bg-gray-100 p-1 rounded-sm">
                             <button class="flex-1 py-1 text-[10px] font-bold text-gray-400">最近 7 日</button>
                             <button class="flex-1 py-1 text-[10px] font-bold bg-white shadow-sm rounded-sm">最近 30 日</button>
                         </div>
-
-                        <label class="block text-[10px] font-black text-gray-400 uppercase">時間間隔</label>
-                        <div class="bg-gray-50 p-2 font-bold border border-gray-100 rounded-sm">8H</div>
                     </div>
                 </div>
 
@@ -144,9 +128,7 @@
                     <div class="flex justify-between items-center mb-6">
                         <span class="font-black text-sm">歷史費率波動趨勢圖</span>
                         <div class="flex space-x-4 text-[10px] font-bold">
-                            <div class="flex items-center"><span class="w-2 h-2 bg-blue-600 mr-1.5"></span>ForX</div>
-                            <div class="flex items-center text-gray-300"><span class="w-2 h-2 bg-gray-200 mr-1.5"></span>Binance</div>
-                            <div class="flex items-center text-gray-300"><span class="w-2 h-2 bg-gray-100 mr-1.5"></span>Bybit</div>
+                            <div class="flex items-center"><span class="w-2 h-2 bg-blue-600 mr-1.5"></span>ForX 资金費率</div>
                         </div>
                     </div>
                     <!-- SVG 折線圖模擬 -->
@@ -168,15 +150,26 @@
                     <thead class="bg-gray-50 text-[10px] font-black text-gray-400 uppercase">
                     <tr>
                         <th class="px-6 py-4">結算時間</th>
-                        <th class="px-6 py-4 text-right text-black">ForX</th>
-                        <th class="px-6 py-4 text-right">Binance</th>
-                        <th class="px-6 py-4 text-right">Bybit</th>
-                        <th class="px-6 py-4 text-right">Hyperliquid</th>
+                        <th class="px-6 py-4 text-right">時間間隔</th>
+                        <th class="px-6 py-4 text-right text-black">ForX 资金費率</th>
                     </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50 font-bold text-[11px]">
-                    <tr class="hover:bg-gray-50"><td class="px-6 py-3 text-gray-500">2026-04-23 16:00:00</td><td class="px-6 py-3 text-right text-blue-600">-0.0004%</td><td class="px-6 py-3 text-right">-0.0035%</td><td class="px-6 py-3 text-right">-0.0053%</td><td class="px-6 py-3 text-right">0.0046%</td></tr>
-                    <tr class="hover:bg-gray-50"><td class="px-6 py-3 text-gray-500">2026-04-23 08:00:00</td><td class="px-6 py-3 text-right text-blue-600">-0.0138%</td><td class="px-6 py-3 text-right">-0.0078%</td><td class="px-6 py-3 text-right">-0.0061%</td><td class="px-6 py-3 text-right">-0.0088%</td></tr>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-3 text-gray-500">2026-04-23 16:00:00</td>
+                        <td class="px-6 py-3 text-right">8h</td>
+                        <td class="px-6 py-3 text-right text-blue-600">-0.0004%</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-3 text-gray-500">2026-04-23 08:00:00</td>
+                        <td class="px-6 py-3 text-right">8h</td>
+                        <td class="px-6 py-3 text-right text-blue-600">-0.0138%</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-3 text-gray-500">2026-04-23 00:00:00</td>
+                        <td class="px-6 py-3 text-right">8h</td>
+                        <td class="px-6 py-3 text-right text-red-500">0.0100%</td>
+                    </tr>
                     </tbody>
                 </table>
             </div>
@@ -192,7 +185,6 @@
         document.getElementById('btn-history').className = !isRealtime ? 'tab-active pb-4 text-sm font-black uppercase tracking-tight' : 'text-gray-400 hover:text-black pb-4 text-sm font-black uppercase tracking-tight transition-colors';
 
         document.getElementById('content-realtime').classList.toggle('hidden', !isRealtime);
-        document.getElementById('arbitrage-insights').classList.toggle('hidden', !isRealtime);
         document.getElementById('content-history').classList.toggle('hidden', isRealtime);
     }
 </script>
