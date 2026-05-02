@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX Notifications</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+
+        .phone-shell { width: 375px; height: 812px; background: #000; border-radius: 50px; padding: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative; border: 4px solid #333; }
+        .screen { width: 100%; height: 100%; background: #fff; border-radius: 38px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+
+        /* 页面切换动画 */
+        .page { position: absolute; inset: 0; background: white; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 10; }
+        .page-hidden { transform: translateX(100%); }
+        .page-active { transform: translateX(0); }
+
+        .tab-active { color: #000; font-weight: 800; position: relative; }
+        .tab-active::after { content: ''; position: absolute; bottom: -8px; left: 25%; width: 50%; height: 2px; background: #000; }
+    </style>
+</head>
+<body>
+
+<div class="phone-shell">
+    <div class="screen">
+
+        <!-- 1. 公告列表页 -->
+        <div id="page-list" class="page page-active flex flex-col">
+            <!-- 顶部导航栏 -->
+            <header class="pt-12 pb-4 px-5 flex items-center justify-between border-b border-gray-50">
+                <button onclick="window.history.back()" class="p-1 -ml-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <h2 class="font-bold text-base">公告通知</h2>
+                <button class="flex items-center space-x-1 text-gray-400 hover:text-black">
+                    <span class="text-[11px] font-bold">全部已讀</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7m-6 0l-4 4-4-4"/></svg>
+                </button>
+            </header>
+
+            <!-- Tab 标签栏 -->
+            <div class="flex space-x-6 px-6 py-4 border-b border-gray-50 overflow-x-auto no-scrollbar whitespace-nowrap">
+                <button class="tab-active text-[13px]">全部</button>
+                <button class="text-gray-400 text-[13px]">活動獎勵</button>
+                <button class="text-gray-400 text-[13px]">新幣上線</button>
+                <button class="text-gray-400 text-[13px]">下架通知</button>
+            </div>
+
+            <!-- 通知列表 -->
+            <div class="flex-1 overflow-y-auto no-scrollbar">
+                <!-- 消息条目 1 -->
+                <div onclick="openDetail('關於 ForX 永續合約系統升級維護公告', '2024-05-20')" class="flex items-center justify-between p-5 border-b border-gray-50 active:bg-gray-50">
+                    <div class="flex-1 pr-4">
+                        <p class="text-[13px] font-semibold text-gray-800 line-clamp-1 mb-1">關於 ForX 永續合約系統升級維護公告</p>
+                        <p class="text-[10px] text-gray-400 font-medium">2024-05-20</p>
+                    </div>
+                    <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- 消息条目 2 -->
+                <div onclick="openDetail('新幣上線：PEPE 永續合約正式開啟交易', '2024-05-18')" class="flex items-center justify-between p-5 border-b border-gray-50 active:bg-gray-50">
+                    <div class="flex-1 pr-4">
+                        <p class="text-[13px] font-semibold text-gray-800 line-clamp-1 mb-1 text-blue-600">新幣上線：PEPE 永續合約正式開啟交易</p>
+                        <p class="text-[10px] text-gray-400 font-medium">2024-05-18</p>
+                    </div>
+                    <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- 消息条目 3 -->
+                <div onclick="openDetail('邀請返佣比例提升：最高可享 40% 返現', '2024-05-15')" class="flex items-center justify-between p-5 border-b border-gray-50 active:bg-gray-50">
+                    <div class="flex-1 pr-4">
+                        <p class="text-[13px] font-semibold text-gray-800 line-clamp-1 mb-1">邀請返佣比例提升：最高可享 40% 返現</p>
+                        <p class="text-[10px] text-gray-400 font-medium">2024-05-15</p>
+                    </div>
+                    <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. 公告详情页 -->
+        <div id="page-detail" class="page page-hidden flex flex-col">
+            <!-- 详情页导航栏 -->
+            <header class="pt-12 pb-4 px-5 flex items-center border-b border-gray-50">
+                <button onclick="closeDetail()" class="p-1 -ml-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <h2 class="flex-1 text-center font-bold text-sm pr-6 text-gray-400">公告詳情</h2>
+            </header>
+
+            <div class="flex-1 overflow-y-auto no-scrollbar p-6">
+                <!-- 详情标题 -->
+                <h1 id="detail-title" class="text-xl font-black leading-tight mb-3">
+                    關於 ForX 永續合約系統升級維護公告
+                </h1>
+                <!-- 详情时间 -->
+                <p id="detail-date" class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-8">
+                    2024-05-20
+                </p>
+
+                <!-- 正文内容 -->
+                <article class="text-[14px] text-gray-600 leading-relaxed space-y-4">
+                    <p>親愛的 ForX 用戶：</p>
+                    <p>為了提供更穩定的交易體驗，ForX 將於 2024 年 05 月 20 日 14:00 (UTC+8) 進行系統維護升級。預計維護時間為 2 小時。</p>
+                    <p>維护期間，以下功能將受到影響：</p>
+                    <ul class="list-disc pl-5 space-y-2">
+                        <li>永續合約開倉與平倉</li>
+                        <li>劃轉與資金提現</li>
+                        <li>API 交易服務</li>
+                    </ul>
+                    <p>請提前管理您的倉位以避免不必要的風險。感謝您的支持與配合！</p>
+                    <p class="pt-4 font-bold text-black">ForX 團隊</p>
+                </article>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // 切换到详情页并填充内容
+    function openDetail(title, date) {
+        document.getElementById('detail-title').innerText = title;
+        document.getElementById('detail-date').innerText = date;
+
+        document.getElementById('page-detail').classList.remove('page-hidden');
+        document.getElementById('page-detail').classList.add('page-active');
+    }
+
+    // 关闭详情页
+    function closeDetail() {
+        document.getElementById('page-detail').classList.remove('page-active');
+        document.getElementById('page-detail').classList.add('page-hidden');
+    }
+</script>
+
+</body>
+</html>
