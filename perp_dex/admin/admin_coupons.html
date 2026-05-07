@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX 后台管理 - 合约体验金系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .sidebar-item-active { background-color: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        /* 自定義開關樣式 */
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #3b82f6; }
+        input:checked + .slider:before { transform: translateX(20px); }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+<!-- 侧边导航栏 -->
+<aside class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0">
+    <div class="p-6">
+        <span class="text-white font-black text-2xl tracking-tighter italic uppercase">ForX Admin</span>
+    </div>
+    <nav class="flex-1 px-4 space-y-1">
+        <div class="py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">合约体验金管理</div>
+        <button onclick="showPage('page-config')" id="nav-config" class="sidebar-item-active w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            卡组配置
+        </button>
+        <button onclick="showPage('page-issue')" id="nav-issue" class="w-full flex items-center px-4 py-3 text-sm font-medium hover:bg-slate-800 rounded-lg transition-colors">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+            批量发放
+        </button>
+    </nav>
+</aside>
+
+<!-- 主体内容 -->
+<main class="flex-1 flex flex-col overflow-hidden">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+        <h1 id="page-title" class="text-xl font-bold text-slate-800">卡组配置</h1>
+        <div class="flex items-center space-x-4">
+            <span class="text-sm text-slate-500 font-medium">管理员: Admin_User</span>
+            <div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">AU</div>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8">
+
+        <!-- 页面 1: 卡组配置 -->
+        <div id="page-config" class="block space-y-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-700">卡组参数列表</h2>
+                    <p class="text-sm text-slate-400">设置合约体验金的生命周期与风险抵扣规则。</p>
+                </div>
+                <button onclick="openModal('modal-new-config')" class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-lg hover:bg-blue-700 transition-all">
+                    + 新建卡组配置
+                </button>
+            </div>
+
+            <div class="card overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                        <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">卡组名称</th>
+                        <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">卡券有效期</th>
+                        <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">开仓有效期</th>
+                        <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">亏损抵扣上限</th>
+                        <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-right">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-sm">
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-6 py-4 font-bold text-slate-700">标准新人礼包组</td>
+                        <td class="px-6 py-4 text-slate-500 font-medium">7 天</td>
+                        <td class="px-6 py-4 text-slate-500 font-medium">30 天</td>
+                        <td class="px-6 py-4 text-green-600 font-bold">开启 (20%)</td>
+                        <td class="px-6 py-4 text-right"><button class="text-blue-600 font-bold hover:underline">编辑</button></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 页面 2: 批量发放 -->
+        <div id="page-issue" class="hidden space-y-6">
+            <div class="card p-8 max-w-5xl">
+                <div class="mb-8 border-b border-slate-100 pb-4">
+                    <h2 class="text-lg font-bold text-slate-700">执行合约体验金发放</h2>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- 方式切换 -->
+                    <div class="flex space-x-2 bg-slate-100 p-1 rounded-lg w-fit">
+                        <button onclick="switchIssueTab('manual')" id="tab-manual" class="px-6 py-2 text-sm font-bold bg-white rounded-md shadow-sm">方式1：手动录入</button>
+                        <button onclick="switchIssueTab('excel')" id="tab-excel" class="px-6 py-2 text-sm font-bold text-slate-500 rounded-md">方式2：Excel 导入</button>
+                    </div>
+
+                    <!-- 手动录入 -->
+                    <div id="issue-manual" class="space-y-4">
+                        <div class="grid grid-cols-1 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">钱包地址,金额 (每行一个，使用英文逗号分隔)</label>
+                                <textarea placeholder="範例：&#10;0x123...abc,100&#10;0x456...def,250" class="w-full h-48 border border-slate-200 rounded-lg p-3 text-sm font-mono focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">合约体验金所属活动名称</label>
+                                <input type="text" placeholder="例如：社區 KOL 合作激勵" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Excel 导入 (占位) -->
+                    <div id="issue-excel" class="hidden py-16 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center">
+                        <p class="text-sm text-slate-500 font-bold mb-2">拖拽 Excel 文件至此或点击上传</p>
+                        <span class="text-[10px] text-slate-400">需包含列：wallet_address, amount, activity_name</span>
+                        <button class="mt-4 bg-slate-100 px-4 py-2 rounded text-xs font-bold text-slate-600">选择文件</button>
+                    </div>
+
+                    <!-- 关联卡组 -->
+                    <div class="pt-6 border-t border-slate-100">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2 tracking-wider font-black">第二步：关联已配置的卡组参数</label>
+                        <select class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none bg-white font-medium">
+                            <option>--- 请选择配置组 ---</option>
+                            <option>标准新人礼包组 (7天激活/30天开仓)</option>
+                            <option>KOL大额专属组 (14天激活/60天开仓)</option>
+                        </select>
+                    </div>
+
+                    <button onclick="openModal('modal-confirm')" class="w-full bg-slate-900 text-white py-4 rounded-lg font-bold hover:bg-slate-800 transition-all shadow-xl">
+                        预览并发放
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- 弹窗 1: 新建卡组配置 -->
+<div id="modal-new-config" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-[600px] overflow-hidden">
+        <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="text-lg font-bold text-slate-800">新建卡组配置</h3>
+            <button onclick="closeModal('modal-new-config')" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+        </div>
+        <div class="p-8 space-y-6">
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">卡组配置名称</label>
+                <input type="text" placeholder="例如：新人 100U 活动组" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
+            </div>
+
+            <div class="grid grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">参数 1：卡券有效期 (天)</label>
+                    <input type="number" placeholder="天数" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
+                    <p class="text-[10px] text-slate-400 mt-1">用户需在发放后 X 天内激活</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">参数 2：开仓有效期 (天)</label>
+                    <input type="number" placeholder="天数" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
+                    <p class="text-[10px] text-slate-400 mt-1">激活后需在 X 天内开仓交易</p>
+                </div>
+            </div>
+
+            <!-- 亏损抵扣上限 -->
+            <div class="p-4 bg-slate-50 rounded-xl space-y-3">
+                <div class="flex justify-between items-center">
+                    <label class="text-sm font-bold text-slate-700">参数 3：亏损抵扣上限</label>
+                    <label class="switch">
+                        <input type="checkbox" checked onchange="toggleInput(this, 'loss-limit')">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div id="loss-limit" class="flex items-center space-x-3">
+                    <span class="text-xs text-slate-500 whitespace-nowrap">累计亏损达面额的</span>
+                    <div class="relative w-24">
+                        <input type="number" value="20" class="w-full border border-slate-200 rounded-lg p-2 text-sm pr-6 outline-none">
+                        <span class="absolute right-2 top-2 text-xs text-slate-400">%</span>
+                    </div>
+                    <span class="text-xs text-slate-500 whitespace-nowrap">时，强制回收</span>
+                </div>
+            </div>
+
+            <!-- 费用抵扣上限 -->
+            <div class="p-4 bg-slate-50 rounded-xl space-y-3">
+                <div class="flex justify-between items-center">
+                    <label class="text-sm font-bold text-slate-700">参数 4：费用抵扣上限</label>
+                    <label class="switch">
+                        <input type="checkbox" onchange="toggleInput(this, 'fee-limit')">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div id="fee-limit" class="hidden flex items-center space-x-3">
+                    <span class="text-xs text-slate-500 whitespace-nowrap">累计手续费/资金费达面额的</span>
+                    <div class="relative w-24">
+                        <input type="number" value="10" class="w-full border border-slate-200 rounded-lg p-2 text-sm pr-6 outline-none">
+                        <span class="absolute right-2 top-2 text-xs text-slate-400">%</span>
+                    </div>
+                    <span class="text-xs text-slate-500 whitespace-nowrap">时，强制回收</span>
+                </div>
+            </div>
+        </div>
+        <div class="p-6 bg-slate-50 flex space-x-3 justify-end">
+            <button onclick="closeModal('modal-new-config')" class="px-6 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-500">取消</button>
+            <button onclick="alert('配置保存成功！'); closeModal('modal-new-config');" class="px-6 py-2 bg-blue-600 rounded-lg text-sm font-bold text-white shadow-lg">确认保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 弹窗 2: 发放确认框 -->
+<div id="modal-confirm" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-[480px] overflow-hidden">
+        <div class="p-8 text-center">
+            <div class="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold mb-2">确认批量发放？</h3>
+            <p class="text-sm text-slate-400 mb-8">系统将根据您录入的地址和金额进行 1:1 发放。</p>
+
+            <div class="bg-slate-50 rounded-xl p-6 text-left space-y-3">
+                <div class="flex justify-between text-sm"><span class="text-slate-500">总名单人数</span><span class="font-black">120 人</span></div>
+                <div class="flex justify-between text-sm items-center pb-2 border-b"><span class="text-slate-500">总计发放额度</span><span class="text-blue-600 font-black text-xl">12,540.00 USDT</span></div>
+                <p class="text-[10px] text-slate-400 font-bold uppercase mt-2">规则卡组：标准新人礼包组</p>
+            </div>
+        </div>
+        <div class="p-6 bg-slate-50 flex space-x-3">
+            <button onclick="closeModal('modal-confirm')" class="flex-1 py-3 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-500">返回修改</button>
+            <button onclick="alert('发放任务已提交！'); closeModal('modal-confirm');" class="flex-1 py-3 bg-slate-900 text-white rounded-lg text-sm font-bold shadow-xl">确认执行</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showPage(pageId) {
+        document.getElementById('page-config').classList.add('hidden');
+        document.getElementById('page-issue').classList.add('hidden');
+        document.getElementById(pageId).classList.remove('hidden');
+
+        const navConfig = document.getElementById('nav-config');
+        const navIssue = document.getElementById('nav-issue');
+        const titleEl = document.getElementById('page-title');
+
+        if(pageId === 'page-config') {
+            navConfig.className = "sidebar-item-active w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors";
+            navIssue.className = "w-full flex items-center px-4 py-3 text-sm font-medium hover:bg-slate-800 rounded-lg transition-colors";
+            titleEl.innerText = '卡组配置';
+        } else {
+            navIssue.className = "sidebar-item-active w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors";
+            navConfig.className = "w-full flex items-center px-4 py-3 text-sm font-medium hover:bg-slate-800 rounded-lg transition-colors";
+            titleEl.innerText = '批量发放体验金';
+        }
+    }
+
+    function switchIssueTab(type) {
+        const manualBtn = document.getElementById('tab-manual');
+        const excelBtn = document.getElementById('tab-excel');
+        const manualContent = document.getElementById('issue-manual');
+        const excelContent = document.getElementById('issue-excel');
+
+        if(type === 'manual') {
+            manualBtn.className = "px-6 py-2 text-sm font-bold bg-white rounded-md shadow-sm text-slate-900";
+            excelBtn.className = "px-6 py-2 text-sm font-bold text-slate-500 rounded-md";
+            manualContent.classList.remove('hidden');
+            excelContent.classList.add('hidden');
+        } else {
+            excelBtn.className = "px-6 py-2 text-sm font-bold bg-white rounded-md shadow-sm text-slate-900";
+            manualBtn.className = "px-6 py-2 text-sm font-bold text-slate-500 rounded-md";
+            excelContent.classList.remove('hidden');
+            manualContent.classList.add('hidden');
+        }
+    }
+
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function toggleInput(checkbox, targetId) {
+        const el = document.getElementById(targetId);
+        if(checkbox.checked) {
+            el.classList.remove('hidden');
+            el.classList.add('flex');
+        } else {
+            el.classList.add('hidden');
+            el.classList.remove('flex');
+        }
+    }
+</script>
+</body>
+</html>
