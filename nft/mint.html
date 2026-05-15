@@ -1,229 +1,288 @@
 <!DOCTYPE html>
-
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Chitan 盲盒铸造 | ForX x Chitan</title>
-<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.3.4.3.js"></script>
-<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.1.0.7.js"></script>
-<style>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>解锁 Chitan 盲盒 | ForX x Chitan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+
         @keyframes box-shake {
-            0%, 100% { transform: rotate(0); }
-            20% { transform: rotate(-5deg); }
-            40% { transform: rotate(5deg); }
-            60% { transform: rotate(-5deg); }
-            80% { transform: rotate(5deg); }
+            0%, 100% { transform: rotate(0) scale(1); }
+            20% { transform: rotate(-8deg) scale(1.05); }
+            40% { transform: rotate(8deg) scale(1.05); }
+            60% { transform: rotate(-8deg) scale(1.1); }
+            80% { transform: rotate(8deg) scale(1.1); }
         }
-        .animate-shake { animation: box-shake 0.5s infinite; }
-        
+        .animate-shake { animation: box-shake 0.6s infinite ease-in-out; }
+
         .rarity-legendary { background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #fff; }
         .rarity-epic { background: linear-gradient(135deg, #9B51E0 0%, #6F35A1 100%); color: #fff; }
         .rarity-rare { background: linear-gradient(135deg, #2D9CDB 0%, #1A6B9E 100%); color: #fff; }
         .rarity-common { background: linear-gradient(135deg, #BDBDBD 0%, #757575 100%); color: #fff; }
 
-        .confetti {
-            position: absolute; width: 10px; height: 10px; z-index: 100;
-            animation: fall 3s infinite linear;
-        }
-        @keyframes fall {
-            to { transform: translateY(100vh) rotate(360deg); opacity: 0; }
-        }
+        .confetti { position: absolute; width: 10px; height: 10px; z-index: 100; animation: fall 3s infinite linear; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
+
+        .countdown-box { background: #333; color: #FFD700; padding: 10px 15px; border-radius: 12px; font-family: monospace; font-size: 24px; font-weight: 900; }
     </style>
 </head>
-<body class="bg-[#FFFCF5] min-h-screen flex items-center justify-center p-6">
-<!-- 1. 白名单验证页面 -->
+<body class="bg-[#FFFCF5] min-h-screen flex items-center justify-center p-6 overflow-hidden">
+
+<!-- 1. 资格验证与倒计时页面 -->
 <div class="max-w-md w-full text-center space-y-8" id="whitelist-page">
-<div class="w-32 h-32 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
-<iconify-icon class="text-6xl text-[#FFD700]" icon="ph:shield-check-fill"></iconify-icon>
-</div>
-<h2 class="text-3xl font-black">白名单验证</h2>
-<p class="text-gray-500">检测到您的地址：<span class="font-mono text-sm block mt-2">0x7f...8a2e</span></p>
-<div class="bg-green-50 border border-green-200 p-4 rounded-2xl text-green-700 text-sm font-medium">
-            恭喜！您已获得创世公售参与资格。
+    <div class="w-32 h-32 bg-yellow-100 rounded-[40px] flex items-center justify-center mx-auto mb-6 shadow-inner">
+        <iconify-icon class="text-6xl text-[#FFD700]" icon="ph:fingerprint-bold"></iconify-icon>
+    </div>
+    <h2 class="text-3xl font-black text-[#333]">探索资格验证</h2>
+
+    <div id="whitelist-status">
+        <!-- 状态 A: 白名单用户 -->
+        <div id="status-eligible" class="space-y-6">
+            <div class="bg-green-50 border border-green-200 p-5 rounded-3xl text-green-700 text-sm font-bold flex items-center space-x-3">
+                <iconify-icon icon="ph:check-circle-fill" class="text-xl"></iconify-icon>
+                <span>恭喜！您在白名单名单中，可提前参与。</span>
+            </div>
+            <button class="w-full bg-[#333] text-white py-5 rounded-[2rem] font-black text-xl hover:bg-black transition-all shadow-xl" onclick="checkLimit()">
+                进入开盒通道
+            </button>
         </div>
-<button class="w-full bg-[#333] text-white py-5 rounded-3xl font-bold text-xl hover:bg-black transition-all" onclick="checkLimit()">
-            进入铸造
-        </button>
-<a class="block text-gray-400 hover:text-gray-600 text-sm" href="nft_index.html">返回首页</a>
+
+        <!-- 状态 B: 普通用户 (倒计时) - 初始隐藏，JS控制切换 -->
+        <div id="status-countdown" class="hidden space-y-6">
+            <p class="text-gray-400 font-bold text-xs uppercase tracking-widest">距离全员公售开启还有</p>
+            <div class="flex justify-center space-x-2">
+                <div class="countdown-box" id="timer-h">04</div>
+                <div class="text-2xl font-black mt-2">:</div>
+                <div class="countdown-box" id="timer-m">42</div>
+                <div class="text-2xl font-black mt-2">:</div>
+                <div class="countdown-box" id="timer-s">53</div>
+            </div>
+            <button class="w-full bg-gray-200 text-gray-400 py-5 rounded-[2rem] font-black text-xl cursor-not-allowed" disabled>
+                暂无开启资格
+            </button>
+            <p class="text-[10px] text-gray-400 italic">只有获得先锋白名单的用户可提前 24 小时开盒</p>
+        </div>
+    </div>
+
+    <div class="flex flex-col space-y-4 pt-4">
+        <button onclick="toggleUserType()" class="text-blue-600 font-bold text-xs underline uppercase tracking-widest">切换测试：非白名单视角</button>
+        <a class="text-gray-400 hover:text-gray-600 text-sm font-bold" href="nft_index.html">放弃并返回首页</a>
+    </div>
 </div>
-<!-- 2. 购买限制页面 -->
-<div class="hidden max-w-md w-full text-center space-y-8" id="limit-page">
-<div class="w-32 h-32 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-<iconify-icon class="text-6xl text-red-500" icon="ph:warning-circle-fill"></iconify-icon>
+
+<!-- 2. 购买受限页面 -->
+<div class="hidden max-w-md w-full text-center space-y-8 animate-in fade-in" id="limit-page">
+    <div class="w-32 h-32 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+        <iconify-icon class="text-6xl text-red-500" icon="ph:lock-keyhole-fill"></iconify-icon>
+    </div>
+    <h2 class="text-3xl font-black">限购提示</h2>
+    <p class="text-gray-600 leading-relaxed font-medium">为了确保社区分布公平，<br/><span class="text-black font-black">每个地址仅限开启 1 枚盲盒。</span><br/>检测到您已持有 Chitan NFT。</p>
+    <div class="flex flex-col space-y-4 pt-4">
+        <a class="w-full bg-[#333] text-white py-5 rounded-3xl font-bold text-xl text-center shadow-lg" href="#">查看我的收藏</a>
+        <a class="text-gray-400 font-bold text-sm" href="nft_index.html">返回首页</a>
+    </div>
 </div>
-<h2 class="text-3xl font-black">购买受限</h2>
-<p class="text-gray-600">为了公平起见，本系列 NFT <b>每人仅限铸造 1 份</b>。检测到您已持有 Chitan NFT。</p>
-<p class="text-xs text-gray-400">（本系列严禁二级交易与转让）</p>
-<div class="flex flex-col space-y-4 pt-4">
-<a class="w-full bg-[#333] text-white py-5 rounded-3xl font-bold text-xl text-center" href="assets.html">查看我的资产</a>
-<a class="text-gray-400 hover:text-gray-600" href="nft_index.html">返回首页</a>
-</div>
-</div>
+
 <!-- 3. 支付确认页面 -->
-<div class="hidden max-w-md w-full text-center space-y-8" id="payment-page">
-<div class="relative w-64 h-64 mx-auto">
-<img alt="Box" class="w-full h-full object-contain" src="https://modao.cc/agent-py/media/generated_images/2026-04-06/8462b6695b2e454b965d022dcc7a881a.jpg"/>
-<div class="absolute -top-4 -right-4 bg-[#E63946] text-white px-4 py-1 rounded-full text-sm font-bold rotate-12">MYSTERY BOX</div>
+<div class="hidden max-w-md w-full text-center space-y-8 animate-in zoom-in" id="payment-page">
+    <div class="relative w-64 h-64 mx-auto">
+        <img alt="Mystery Box" class="w-full h-full object-contain drop-shadow-2xl" src="https://img.icons8.com/plasticine/400/gift.png"/>
+        <div class="absolute -top-2 -right-2 bg-[#E63946] text-white px-4 py-1 rounded-full text-[10px] font-black tracking-widest rotate-12 shadow-lg">CHITAN EXPLORER</div>
+    </div>
+    <div>
+        <h2 class="text-3xl font-black mb-2">确认开盒</h2>
+        <p class="text-gray-400 font-bold">解锁价格：<span class="text-3xl font-black text-[#333] ml-1">300 USDT</span></p>
+    </div>
+    <button class="w-full bg-[#FFD700] text-[#333] py-5 rounded-[2.5rem] font-black text-2xl shadow-[0_20px_40px_-10px_rgba(255,215,0,0.5)] hover:scale-105 transition-all" onclick="startMinting()">
+        立即支付并开盒
+    </button>
 </div>
-<div>
-<h2 class="text-3xl font-black mb-2">确认支付</h2>
-<p class="text-gray-500">价格：<span class="text-2xl font-black text-[#333]">300 USDT</span></p>
+
+<!-- 4. 正在召唤中页面 -->
+<div class="hidden max-w-md w-full text-center space-y-10" id="minting-page">
+    <div class="w-64 h-64 mx-auto animate-shake">
+        <img alt="Shaking Box" class="w-full h-full object-contain" src="https://img.icons8.com/plasticine/400/gift.png"/>
+    </div>
+    <div class="space-y-3">
+        <h2 class="text-3xl font-black text-[#333]">正在召唤伙伴...</h2>
+        <p class="text-gray-400 font-medium">区块链正在确认您的开盒请求，请稍后</p>
+    </div>
+    <div class="max-w-xs mx-auto">
+        <div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden p-1 border border-white">
+            <div class="bg-gradient-to-r from-[#FFD700] to-[#E63946] h-full rounded-full transition-all duration-[4000ms] ease-linear" id="mint-progress" style="width: 0%"></div>
+        </div>
+    </div>
 </div>
-<button class="w-full bg-[#FFD700] text-[#333] py-5 rounded-3xl font-black text-2xl shadow-xl hover:scale-105 transition-all" onclick="startMinting()">
-            确认并扣款
-        </button>
-<p class="text-xs text-gray-400">Gas 预估：~0.005 ETH</p>
+
+<!-- 5. 开盒结果页面 (整合等级与权益) -->
+<div class="hidden max-w-md w-full text-center" id="result-page">
+    <div class="rounded-[50px] p-8 shadow-2xl relative overflow-hidden transition-all duration-1000 transform scale-90 opacity-0" id="result-card">
+        <!-- 顶部标识 -->
+        <div class="inline-block px-5 py-1.5 rounded-full text-[10px] font-black tracking-[0.2em] mb-6 border border-white/50 bg-white/20 uppercase" id="rarity-tag">LEVEL: ???</div>
+
+        <!-- NFT 形象 -->
+        <div class="w-48 h-48 mx-auto mb-4 rounded-[32px] overflow-hidden border-4 border-white/40 shadow-2xl">
+            <img alt="NFT Image" class="w-full h-full object-cover" id="result-img" src=""/>
+        </div>
+
+        <!-- 名称与描述 -->
+        <h3 class="text-3xl font-black mb-1 tracking-tighter" id="result-name">Chitan #???</h3>
+        <p class="text-xs opacity-80 mb-6 font-bold italic" id="result-desc"></p>
+
+        <!-- 新增：整合权益区 -->
+        <div class="space-y-2 mb-8 text-left" id="integrated-benefits">
+            <!-- 这里由 JS 动态生成权益行 -->
+        </div>
+
+        <!-- 底部操作 -->
+        <div class="grid grid-cols-2 gap-3">
+            <button class="bg-white text-[#333] py-4 rounded-3xl font-black text-[11px] uppercase tracking-widest hover:bg-gray-100 transition-all shadow-lg" onclick="location.reload()">
+                再抽一盒
+            </button>
+            <a class="flex items-center justify-center border-2 border-white/30 py-4 rounded-3xl font-black text-[11px] uppercase tracking-widest hover:bg-white/10 transition-all text-white" href="assets.html">
+                查看资产
+            </a>
+        </div>
+    </div>
 </div>
-<!-- 4. 铸造中页面 -->
-<div class="hidden max-w-md w-full text-center space-y-8" id="minting-page">
-<div class="w-64 h-64 mx-auto animate-shake">
-<img alt="Shaking Box" class="w-full h-full object-contain" src="https://modao.cc/agent-py/media/generated_images/2026-04-06/e89a69fe2d8f46ac819f323d3eb68a12.jpg"/>
+
+<!-- 6. 等级特权详情页面 -->
+<div class="hidden max-w-md w-full text-center space-y-8 animate-in slide-in-from-bottom duration-500" id="benefits-page">
+    <h2 class="text-3xl font-black text-[#333]">您的专享特权</h2>
+    <div class="space-y-4 text-left" id="benefits-list">
+        <!-- 动态生成 -->
+    </div>
+    <button class="w-full bg-[#333] text-white py-5 rounded-3xl font-black text-xl shadow-xl" onclick="location.reload()">完成体验</button>
 </div>
-<div>
-<h2 class="text-3xl font-black mb-2">正在开盒...</h2>
-<p class="text-gray-500">Chitan 正在为您寻找独一无二的伙伴</p>
-</div>
-<div class="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
-<div class="bg-[#FFD700] h-full transition-all duration-[3000ms] ease-linear" id="mint-progress" style="width: 0%"></div>
-</div>
-</div>
-<!-- 5. 结果显示页面 (4种等级) -->
-<div class="hidden max-w-md w-full text-center space-y-6" id="result-page">
-<div class="rounded-[40px] p-8 shadow-2xl relative overflow-hidden transition-all duration-700 transform scale-90 opacity-0" id="result-card">
-<div class="inline-block px-4 py-1 rounded-full text-xs font-bold mb-6" id="rarity-tag">LEVEL: ???</div>
-<div class="w-56 h-56 mx-auto mb-6 rounded-3xl overflow-hidden border-4 border-white/50 shadow-inner">
-<img alt="NFT Image" class="w-full h-full object-cover" id="result-img" src=""/>
-</div>
-<h3 class="text-3xl font-black mb-2" id="result-name">Chitan #???</h3>
-<p class="text-sm opacity-90 mb-8 font-medium" id="result-desc"></p>
-<div class="space-y-3">
-<button class="w-full bg-white text-[#333] py-4 rounded-2xl font-bold hover:bg-gray-100 transition-colors" onclick="switchPage('benefits-page')">
-                    查看等级权益
-                </button>
-<a class="block w-full border-2 border-white/30 py-4 rounded-2xl font-bold hover:bg-white/10 transition-colors" href="assets.html">
-                    进入我的资产
-                </a>
-</div>
-</div>
-</div>
-<!-- 6. 权益详情页面 -->
-<div class="hidden max-w-md w-full text-center space-y-8" id="benefits-page">
-<h2 class="text-3xl font-black">专享权益</h2>
-<div class="space-y-4 text-left" id="benefits-list">
-<!-- Dynamic Benefits -->
-</div>
-<a class="block w-full bg-[#333] text-white py-5 rounded-3xl font-bold text-xl" href="assets.html">完成铸造</a>
-</div>
+
 <script>
-        const rarities = [
-            {
-                id: 'legendary',
-                name: '传说 (Legendary)',
-                tagName: 'LEGENDARY',
-                desc: '本系列极其稀有的顶级藏品',
-                img: '/agent-py/media/generated_images/2026-04-06/50f7f41ab57a4ab7848cf3a6675dc32b.jpg',
-                benefits: ['终身节点收益分红', 'Chitan线下咖啡馆免单', '1:1 实体纯金徽章寄送', '顶级社区DAO投票权']
-            },
-            {
-                id: 'epic',
-                name: '史诗 (Epic)',
-                tagName: 'EPIC',
-                desc: '具有极高实用价值的限定版',
-                img: '/agent-py/media/generated_images/2026-04-06/8a67aa9c568d498abacb0f37b0a5ac0a.jpg',
-                benefits: ['治理代币空投加成', '官方周边优先购买权', '专属Discord身份标识', '季度定制周边大礼包']
-            },
-            {
-                id: 'rare',
-                name: '稀有 (Rare)',
-                tagName: 'RARE',
-                desc: '开启进阶探索的必备通行证',
-                img: '/agent-py/media/generated_images/2026-04-06/e89a69fe2d8f46ac819f323d3eb68a12.jpg',
-                benefits: ['盲盒开箱概率补偿', '早期测试网准入资格', '联名潮玩 8 折优惠']
-            },
-            {
-                id: 'common',
-                name: '普通 (Common)',
-                tagName: 'COMMON',
-                desc: 'Chitan 宇宙的基础探索成员',
-                img: '/agent-py/media/generated_images/2026-04-06/8462b6695b2e454b965d022dcc7a881a.jpg',
-                benefits: ['元宇宙数字头像通行证', '社群基础准入资格', '不定期随机空投抽奖']
-            }
-        ];
-
-        let currentRarity = null;
-        // 模拟限购：实际开发中通过合约读取
-        let hasPurchased = false; 
-
-        function switchPage(pageId) {
-            document.querySelectorAll('body > div').forEach(div => div.classList.add('hidden'));
-            document.getElementById(pageId).classList.remove('hidden');
+    const rarities = [
+        {
+            id: 'legendary',
+            name: '传说 (Legendary)',
+            tagName: 'SP LEVEL',
+            desc: '本系列最稀有的探险先锋',
+            benefits: ['VIP 2 交易费率 (终身)', '40% 邀请返佣比例', '$10万 空投最高权重', '1:1 实体纯金徽章']
+        },
+        {
+            id: 'epic',
+            name: '史诗 (Epic)',
+            tagName: 'SSR LEVEL',
+            desc: '具有极高实用价值的限定版',
+            benefits: ['VIP 1 交易费率 (终身)', '35% 邀请返佣比例', '5% 积分持续加成', '联名周边优先申领']
+        },
+        {
+            id: 'rare',
+            name: '稀有 (Rare)',
+            tagName: 'SR LEVEL',
+            desc: '开启进阶探索的必备通行证',
+            benefits: ['30% 邀请返佣比例', '5% 积分持续加成', '$10万 空投瓜分资格']
+        },
+        {
+            id: 'common',
+            name: '普通 (Common)',
+            tagName: 'R LEVEL',
+            desc: 'Chitan 宇宙的基础探索成员',
+            benefits: ['25% 邀请返佣比例', '3% 积分持续加成', '社群专属身份标识']
         }
+    ];
 
-        function checkLimit() {
-            if (hasPurchased) {
-                switchPage('limit-page');
-            } else {
-                switchPage('payment-page');
-            }
+    // 模拟倒计时
+    function startCountdown() {
+        let h = 4, m = 42, s = 53;
+        setInterval(() => {
+            s--;
+            if(s<0) { s=59; m--; }
+            document.getElementById('timer-h').innerText = String(h).padStart(2, '0');
+            document.getElementById('timer-m').innerText = String(m).padStart(2, '0');
+            document.getElementById('timer-s').innerText = String(s).padStart(2, '0');
+        }, 1000);
+    }
+    startCountdown();
+
+    // 切换用户类型（仅为原型演示）
+    function toggleUserType() {
+        const el1 = document.getElementById('status-eligible');
+        const el2 = document.getElementById('status-countdown');
+        el1.classList.toggle('hidden');
+        el2.classList.toggle('hidden');
+    }
+
+    function switchPage(pageId) {
+        document.querySelectorAll('body > div').forEach(div => div.classList.add('hidden'));
+        document.getElementById(pageId).classList.remove('hidden');
+    }
+
+    function checkLimit() {
+        // 模拟逻辑：如果已购买则跳到受限页
+        switchPage('payment-page');
+    }
+
+    function startMinting() {
+        switchPage('minting-page');
+        setTimeout(() => {
+            document.getElementById('mint-progress').style.width = '100%';
+        }, 100);
+
+        setTimeout(() => {
+            showResult();
+        }, 4500); // 增加开盒等待仪式感
+    }
+
+    function showResult() {
+        const rand = Math.random();
+        let currentRarity;
+        // 概率模拟
+        if (rand < 0.05) currentRarity = rarities[0];      // Legendary
+        else if (rand < 0.20) currentRarity = rarities[1]; // Epic
+        else if (rand < 0.50) currentRarity = rarities[2]; // Rare
+        else currentRarity = rarities[3];                 // Common
+
+        const card = document.getElementById('result-card');
+
+        // 1. 设置卡片背景色
+        card.className = `rounded-[50px] p-8 shadow-2xl relative overflow-hidden transition-all duration-1000 transform scale-90 opacity-0 rarity-${currentRarity.id}`;
+
+        // 2. 填充基础信息
+        document.getElementById('rarity-tag').innerText = currentRarity.tagName;
+        document.getElementById('result-img').src = currentRarity.img; // 这里记得确保图片路径正确
+        document.getElementById('result-name').innerText = `Chitan #${Math.floor(Math.random()*500) + 100}`;
+        document.getElementById('result-desc').innerText = currentRarity.desc;
+
+        // 3. 核心：动态填充权益列表 (直接渲染到卡片内)
+        const benefitsContainer = document.getElementById('integrated-benefits');
+        benefitsContainer.innerHTML = currentRarity.benefits.map(b => `
+        <div class="flex items-center space-x-3 bg-black/10 backdrop-blur-sm p-3 rounded-2xl border border-white/10">
+            <iconify-icon class="text-lg text-white" icon="ph:sparkle-fill"></iconify-icon>
+            <span class="font-bold text-white text-[11px] tracking-tight">${b}</span>
+        </div>
+    `).join('');
+
+        // 4. 执行切换动画
+        switchPage('result-page');
+        setTimeout(() => {
+            card.classList.remove('scale-90', 'opacity-0');
+            card.classList.add('scale-100', 'opacity-100');
+            createConfetti(); // 撒花庆祝
+        }, 100);
+
+        hasPurchased = true;
+    }
+
+    function createConfetti() {
+        for(let i=0; i<60; i++) {
+            const c = document.createElement('div');
+            c.className = 'confetti';
+            c.style.left = Math.random() * 100 + 'vw';
+            c.style.animationDelay = Math.random() * 2 + 's';
+            c.style.backgroundColor = ['#FFD700', '#E63946', '#FFFFFF', '#9B51E0'][Math.floor(Math.random()*4)];
+            document.body.appendChild(c);
         }
-
-        function startMinting() {
-            switchPage('minting-page');
-            setTimeout(() => {
-                document.getElementById('mint-progress').style.width = '100%';
-            }, 50);
-
-            setTimeout(() => {
-                showResult();
-            }, 3500);
-        }
-
-        function showResult() {
-            // 模拟随机稀有度 (0-20% legendary, 21-40% epic, 41-70% rare, 71-100% common)
-            const rand = Math.random();
-            if (rand < 0.1) currentRarity = rarities[0];
-            else if (rand < 0.3) currentRarity = rarities[1];
-            else if (rand < 0.6) currentRarity = rarities[2];
-            else currentRarity = rarities[3];
-
-            const card = document.getElementById('result-card');
-            card.className = `rounded-[40px] p-8 shadow-2xl relative overflow-hidden transition-all duration-700 transform scale-90 opacity-0 rarity-${currentRarity.id}`;
-            document.getElementById('rarity-tag').innerText = `LEVEL: ${currentRarity.tagName}`;
-            document.getElementById('result-img').src = currentRarity.img;
-            document.getElementById('result-name').innerText = `Chitan #${Math.floor(Math.random()*500) + 301}`;
-            document.getElementById('result-desc').innerText = currentRarity.desc;
-
-            // 渲染权益列表
-            const bList = document.getElementById('benefits-list');
-            bList.innerHTML = currentRarity.benefits.map(b => `
-                <div class="flex items-center space-x-3 bg-white/10 p-4 rounded-2xl border border-white/20">
-                    <iconify-icon class="text-xl" icon="ph:check-circle-bold"></iconify-icon>
-                    <span class="font-bold">${b}</span>
-                </div>
-            `).join('');
-
-            switchPage('result-page');
-            setTimeout(() => {
-                card.classList.remove('scale-90', 'opacity-0');
-                card.classList.add('scale-100', 'opacity-100');
-                createConfetti();
-            }, 100);
-
-            // 标记已购买（模拟）
-            hasPurchased = true;
-        }
-
-        function createConfetti() {
-            for(let i=0; i<80; i++) {
-                const c = document.createElement('div');
-                c.className = 'confetti';
-                c.style.left = Math.random() * 100 + 'vw';
-                c.style.animationDelay = Math.random() * 2 + 's';
-                c.style.backgroundColor = ['#FFD700', '#E63946', '#FFFFFF', '#9B51E0'][Math.floor(Math.random()*4)];
-                document.body.appendChild(c);
-            }
-        }
-    </script>
+    }
+</script>
 </body>
 </html>
