@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX BTC/USDT K-Line</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+
+        .phone-shell { width: 375px; height: 812px; background: #000; border-radius: 50px; padding: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative; border: 4px solid #333; }
+        .screen { width: 100%; height: 100%; background: #fff; border-radius: 38px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+
+        .tab-active { color: #000; font-weight: 800; }
+        .k-indicator { font-size: 9px; font-weight: 700; color: #9ca3af; margin-right: 8px; }
+        .k-indicator.active { color: #5b21b6; } /* MA颜色示例 */
+
+        /* 深度背景色块 */
+        .depth-bg-green { position: absolute; right: 0; top: 0; height: 100%; background: rgba(34, 197, 94, 0.1); z-index: 0; transition: width 0.3s; }
+        .depth-bg-red { position: absolute; left: 0; top: 0; height: 100%; background: rgba(239, 68, 68, 0.1); z-index: 0; transition: width 0.3s; }
+    </style>
+</head>
+<body>
+
+<div class="phone-shell">
+    <div class="screen flex flex-col">
+
+        <!-- 1. 頂部導航欄 -->
+        <header class="flex justify-between items-center px-4 pt-12 pb-2 shrink-0">
+            <button onclick="window.history.back()" class="p-1 -ml-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <div class="flex items-center space-x-2">
+                <div class="w-5 h-5 bg-orange-400 rounded-full flex items-center justify-center text-[10px] text-white font-black italic">B</div>
+                <h2 class="font-black text-base">BTCUSDT</h2>
+            </div>
+            <div class="flex items-center space-x-3">
+                <!-- 分享按鈕 -->
+                <button onclick="openShare()" class="p-1 active:opacity-50 transition-opacity">
+                    <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                    </svg>
+                </button>
+                <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+            </div>
+        </header>
+
+        <!-- 可滾動內容區 -->
+        <div class="flex-1 overflow-y-auto no-scrollbar pb-24">
+
+            <!-- 2. 價格信息內容框 (優化版) -->
+            <section class="flex px-4 py-3 space-x-2">
+                <!-- 左側價格 -->
+                <div class="flex-1 space-y-0.5">
+                    <p class="text-[9px] text-gray-400 font-black uppercase tracking-wider">最新成交價</p>
+                    <div class="flex items-baseline space-x-2">
+                        <!-- 縮小了價格字體至 2xl -->
+                        <span class="text-1xl font-black text-red-500 tracking-tighter">68000.00</span>
+                        <span class="text-[11px] font-bold text-red-500">-4.85%</span>
+                    </div>
+                    <p class="text-[9px] text-gray-400 font-bold uppercase">標記價格 <span class="text-gray-900 font-mono">67923.1</span></p>
+                </div>
+                <!-- 右側24h數據 -->
+                <div class="w-[40%] grid grid-cols-2 gap-x-1 gap-y-0.5 text-[9px] font-bold self-end pb-1">
+                    <div class="text-gray-400">24h最高</div><div class="text-right">71199</div>
+                    <div class="text-gray-400">24h最低</div><div class="text-right">63199</div>
+                    <div class="text-gray-400 text-[8px]">24h成交額</div><div class="text-right text-[8px] opacity-80">9.23億</div>
+                </div>
+            </section>
+
+            <!-- 3. K線專區 -->
+            <!-- 3. K線專區 (指標與時間軸優化版) -->
+            <section class="border-t border-gray-50">
+                <!-- K線時間Tab (保持不變) -->
+                <div class="flex justify-between items-center px-4 py-2 border-b border-gray-50 text-[11px] font-bold text-gray-400">
+                    <button>分時</button>
+                    <button class="text-black border-b-2 border-black px-1">15分</button>
+                    <button>1小時</button>
+                    <button>4小時</button>
+                    <button>1日</button>
+                    <button class="flex items-center">更多<svg class="w-3 h-3 ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg></button>
+                    <div class="w-px h-3 bg-gray-200"></div>
+                    <!-- 替換後的設置圖標按鈕 -->
+                    <a href="指标设置.html" class="text-gray-500 hover:text-black transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </a>
+                </div>
+
+                <!-- 模擬 K 線圖主體 -->
+                <div class="h-52 w-full bg-white relative py-4">
+                    <svg class="w-full h-full" viewBox="0 0 375 200">
+                        <!-- SVG 內容保持不變... -->
+                        <line x1="0" y1="50" x2="375" y2="50" stroke="#f9fafb" stroke-width="1"/>
+                        <line x1="0" y1="100" x2="375" y2="100" stroke="#f9fafb" stroke-width="1"/>
+                        <line x1="0" y1="150" x2="375" y2="150" stroke="#f9fafb" stroke-width="1"/>
+                        <g fill="#ef4444"><rect x="50" y="40" width="8" height="60" /><line x1="54" y1="30" x2="54" y2="110" stroke="#ef4444" /></g>
+                        <g fill="#22c55e"><rect x="110" y="110" width="8" height="20" /><line x1="114" y1="100" x2="114" y2="140" stroke="#22c55e" /></g>
+                        <path d="M0 80 Q 100 120, 200 100 T 375 140" fill="none" stroke="#fbbf24" stroke-width="1.5" />
+                    </svg>
+                </div>
+
+                <!-- 指標選擇：佈滿一行 -->
+                <div class="px-4 py-1.5 flex items-center justify-between border-t border-gray-50 bg-white">
+                    <span class="text-[9px] font-black text-purple-600">MA</span>
+                    <span class="text-[9px] font-black text-gray-400">EMA</span>
+                    <span class="text-[9px] font-black text-gray-400">BOLL</span>
+                    <div class="w-px h-2 bg-gray-100 mx-1"></div>
+                    <span class="text-[9px] font-black text-gray-900">VOL</span>
+                    <span class="text-[9px] font-black text-gray-400">MACD</span>
+                    <span class="text-[9px] font-black text-gray-400">KDJ</span>
+                    <span class="text-[9px] font-black text-gray-400">RSI</span>
+                </div>
+
+                <!-- 時間軸：顯示在指標下方 -->
+                <div class="px-4 pb-2 flex justify-between text-[8px] text-gray-300 font-bold uppercase">
+                    <span>06/03 18:00</span>
+                    <span>06/03 22:15</span>
+                    <span>06/04 00:30</span>
+                </div>
+            </section>
+
+            <!-- 4. 訂單簿 + 最新成交 (帶切換邏輯) -->
+            <section class="mt-2">
+                <div class="flex px-4 border-b border-gray-100">
+                    <button onclick="switchMarketTab('orderbook')" id="tab-btn-orderbook" class="py-3 mr-8 text-[13px] font-black border-b-2 border-black">訂單簿</button>
+                    <button onclick="switchMarketTab('trades')" id="tab-btn-trades" class="py-3 text-[13px] font-bold text-gray-400">最新成交</button>
+                </div>
+
+                <!-- 訂單簿內容 (原有內容) -->
+                <div id="content-orderbook" class="px-4 py-2 block">
+                    <div class="flex justify-between text-[10px] text-gray-400 font-bold uppercase mb-2">
+                        <span>數量</span><span class="flex-1 text-center px-4">價格</span><span class="text-right">數量</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-2">
+                        <!-- 买盘 (左) -->
+                        <div class="space-y-1">
+                            <!-- 行1 -->
+                            <div class="relative h-5 flex items-center justify-between text-[10px] font-bold">
+                                <div class="depth-bg-green" style="width: 20%;"></div>
+                                <span class="z-10 text-gray-900 ml-1">0.012</span>
+                                <span class="z-10 text-green-500">67893.2</span>
+                            </div>
+                            <div class="relative h-5 flex items-center justify-between text-[10px] font-bold">
+                                <div class="depth-bg-green" style="width: 45%;"></div>
+                                <span class="z-10 ml-1">0.112</span><span class="z-10 text-green-500">67891.2</span>
+                            </div>
+                            <div class="relative h-5 flex items-center justify-between text-[10px] font-bold">
+                                <div class="depth-bg-green" style="width: 70%;"></div>
+                                <span class="z-10 ml-1">1.112</span><span class="z-10 text-green-500">67890.2</span>
+                            </div>
+                            <div class="relative h-5 flex items-center justify-between text-[10px] font-bold">
+                                <div class="depth-bg-green" style="width: 90%;"></div>
+                                <span class="z-10 ml-1">13.00</span><span class="z-10 text-green-500">67889.2</span>
+                            </div>
+                        </div>
+
+                        <!-- 卖盘 (右) -->
+                        <div class="space-y-1">
+                            <div class="relative h-5 flex items-center justify-between text-[10px] font-bold">
+                                <div class="depth-bg-red" style="width: 15%;"></div>
+                                <span class="z-10 text-red-500">67894.2</span><span class="z-10 text-gray-900 mr-1">1.012</span>
+                            </div>
+                            <div class="relative h-5 flex items-center justify-between text-[10px] font-bold">
+                                <div class="depth-bg-red" style="width: 35%;"></div>
+                                <span class="z-10 text-red-500">67894.3</span><span class="z-10 text-gray-900 mr-1">3.012</span>
+                            </div>
+                            <div class="relative h-5 flex items-center justify-between text-[10px] font-bold">
+                                <div class="depth-bg-red" style="width: 60%;"></div>
+                                <span class="z-10 text-red-500">67894.4</span><span class="z-10 text-gray-900 mr-1">1.012</span>
+                            </div>
+                            <div class="relative h-5 flex items-center justify-between text-[10px] font-bold">
+                                <div class="depth-bg-red" style="width: 85%;"></div>
+                                <span class="z-10 text-red-500">67894.6</span><span class="z-10 text-gray-900 mr-1">15.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 最新成交內容 (新增) -->
+                <div id="content-trades" class="px-4 py-2 hidden animate-in fade-in duration-300">
+                    <table class="w-full text-left">
+                        <thead class="text-[10px] text-gray-400 font-black uppercase">
+                        <tr>
+                            <th class="py-2">價格(USDT)</th>
+                            <th class="py-2 text-right">數量(BTC)</th>
+                            <th class="py-2 text-right">時間</th>
+                        </tr>
+                        </thead>
+                        <tbody class="text-[11px] font-bold font-mono">
+                        <tr class="h-7"><td class="text-green-500">68001.2</td><td class="text-right">0.054</td><td class="text-right text-gray-400 font-normal">14:20:01</td></tr>
+                        <tr class="h-7"><td class="text-red-500">67998.5</td><td class="text-right">1.230</td><td class="text-right text-gray-400 font-normal">14:20:03</td></tr>
+                        <tr class="h-7"><td class="text-green-500">68002.0</td><td class="text-right">0.002</td><td class="text-right text-gray-400 font-normal">14:20:05</td></tr>
+                        <tr class="h-7"><td class="text-red-500">67995.1</td><td class="text-right">0.884</td><td class="text-right text-gray-400 font-normal">14:20:08</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- 5. 底部固定按鈕 -->
+        <footer class="absolute bottom-0 w-full bg-white border-t border-gray-100 p-4 pb-8 flex space-x-3 shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
+            <button class="flex-1 bg-green-500 text-white py-3 rounded-lg font-black text-sm uppercase shadow-lg shadow-green-500/20 active:scale-95 transition-all">
+                買入 / 開多
+            </button>
+            <button class="flex-1 bg-red-500 text-white py-3 rounded-lg font-black text-sm uppercase shadow-lg shadow-red-500/20 active:scale-95 transition-all">
+                賣出 / 開空
+            </button>
+        </footer>
+
+    </div>
+</div>
+
+<!-- 分享海報彈窗 (模擬截取頂部至指標欄內容) -->
+<div id="modal-share" class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6">
+    <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden flex flex-col animate-in zoom-in duration-200 shadow-2xl">
+
+        <!-- 海報生成的內容區域 (模擬截圖效果) -->
+        <div class="bg-white p-4 space-y-4 relative">
+            <!-- 頂部品牌標識 (海報特有) -->
+            <div class="flex justify-between items-center pb-2 border-b border-gray-50">
+                <div class="flex items-center space-x-1">
+                    <span class="font-black text-sm tracking-tighter">ForX</span>
+                    <span class="text-[8px] bg-black text-white px-1 rounded-sm font-bold">PERP DEX</span>
+                </div>
+                <span class="text-[9px] text-gray-400 font-mono">2024.06.03 14:20 (UTC)</span>
+            </div>
+
+            <!-- 1. 幣對信息 (複刻頂部) -->
+            <div class="flex items-center space-x-2">
+                <div class="w-5 h-5 bg-orange-400 rounded-full flex items-center justify-center text-[10px] text-white font-black italic">B</div>
+                <h2 class="font-black text-base italic">BTCUSDT</h2>
+            </div>
+
+            <!-- 2. 價格信息 (複刻價格框) -->
+            <div class="flex justify-between items-end bg-slate-50 p-3 rounded-sm">
+                <div>
+                    <p class="text-[8px] text-gray-400 font-black uppercase">最新成交價</p>
+                    <div class="flex items-baseline space-x-2">
+                        <span class="text-2xl font-black text-red-500 tracking-tighter">68000.00</span>
+                        <span class="text-[11px] font-bold text-red-500">-4.85%</span>
+                    </div>
+                </div>
+                <div class="text-right space-y-0.5">
+                    <p class="text-[8px] text-gray-400 font-bold uppercase">24h 最高: <span class="text-black">71199</span></p>
+                    <p class="text-[8px] text-gray-400 font-bold uppercase">24h 最低: <span class="text-black">63199</span></p>
+                </div>
+            </div>
+
+            <!-- 3. K 線與指標 (模擬 K 線區) -->
+            <div class="space-y-2">
+                <!-- 簡化版 K 線 SVG -->
+                <div class="h-32 w-full bg-white border border-gray-50 rounded-sm py-2">
+                    <svg class="w-full h-full" viewBox="0 0 375 100">
+                        <g fill="#ef4444" opacity="0.8">
+                            <rect x="50" y="20" width="8" height="40" /><rect x="70" y="50" width="8" height="20" />
+                        </g>
+                        <g fill="#22c55e" opacity="0.8">
+                            <rect x="90" y="40" width="8" height="30" /><rect x="110" y="30" width="8" height="50" />
+                        </g>
+                        <path d="M0 40 Q 100 60, 200 40 T 375 70" fill="none" stroke="#fbbf24" stroke-width="1.5" />
+                    </svg>
+                </div>
+
+                <!-- 指標欄 (需求終點) -->
+                <div class="flex justify-between items-center px-1 text-[8px] font-black text-gray-400 uppercase border-b border-gray-50 pb-2">
+                    <span class="text-purple-600">MA</span><span>EMA</span><span>BOLL</span><span class="text-gray-900">VOL</span><span>MACD</span><span>KDJ</span><span>RSI</span>
+                </div>
+            </div>
+
+            <!-- 底部二維碼與引導 (海報特有) -->
+            <div class="flex justify-between items-center pt-2">
+                <div class="space-y-1">
+                    <p class="text-[10px] font-black italic">Trade like a Pro.</p>
+                    <p class="text-[8px] text-gray-400 font-medium leading-tight">掃描二維碼立即體驗<br>新一代去中心化永續合約交易所</p>
+                </div>
+                <div class="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center border border-gray-100">
+                    <svg class="w-8 h-8 text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M3 3h6v6H3V3zm2 2v2h2V5H5zm8-2h6v6h-6V3zm2 2v2h2V5h-2zM3 15h6v6H3v-6zm2 2v2h2v-2H5zm10 0h2v2h-2v-2zm2-2h2v2h-2v-2zm0 4h2v2h-2v-2zM13 15h2v2h-2v-2zm2 2h2v2h-2v-2z"/></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- 按鈕區 -->
+        <div class="p-6 bg-slate-50 grid grid-cols-2 gap-4">
+            <button onclick="closeShare()" class="py-3 border border-gray-200 rounded-xl font-bold text-gray-400 text-[11px] uppercase">取消</button>
+            <button onclick="alert('海報已保存至相冊並調用系統分享')" class="py-3 bg-black text-white rounded-xl font-bold text-[11px] uppercase shadow-lg active:scale-95 transition-all">分享海報</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function switchMarketTab(tab) {
+    const ob = document.getElementById('content-orderbook');
+    const tr = document.getElementById('content-trades');
+    const btnOb = document.getElementById('tab-btn-orderbook');
+    const btnTr = document.getElementById('tab-btn-trades');
+
+    if(tab === 'orderbook') {
+    ob.classList.replace('hidden', 'block');
+    tr.classList.replace('block', 'hidden');
+    btnOb.className = "py-3 mr-8 text-[13px] font-black border-b-2 border-black";
+    btnTr.className = "py-3 text-[13px] font-bold text-gray-400";
+    } else {
+    tr.classList.replace('hidden', 'block');
+    ob.classList.replace('block', 'hidden');
+    btnTr.className = "py-3 text-[13px] font-black border-b-2 border-black";
+    btnOb.className = "py-3 mr-8 text-[13px] font-bold text-gray-400";
+    }
+    }
+
+    function openShare() { document.getElementById('modal-share').classList.remove('hidden'); }
+    function closeShare() { document.getElementById('modal-share').classList.add('hidden'); }
+</script>
+
+</body>
+</html>

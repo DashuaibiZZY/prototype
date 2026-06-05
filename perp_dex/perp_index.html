@@ -218,14 +218,14 @@
                 </div>
                 <!-- 訂單類型 -->
                 <div class="flex items-center space-x-3 text-[10px] font-bold text-gray-400 mb-3 border-b border-gray-50 pb-1">
-                    <span class="text-black border-b-2 border-black pb-1">限價</span>
-                    <span class="hover:text-black cursor-pointer">市價</span>
+                    <span onclick="switchOrderMode('limit')" class="text-black border-b-2 border-black pb-1">限价</span>
+                    <span onclick="switchOrderMode('market')" class="hover:text-black cursor-pointer">市价</span>
                     <div class="flex items-center group cursor-pointer">
-                        <span>限價止盈止損</span><svg width="8" height="8" class="ml-0.5" viewBox="0 0 16 16"><path d="M8 11.2L3.2 6.4h9.6L8 11.2z" fill="currentColor"></path></svg>
+                        <span>限价止盈止損</span><svg width="8" height="8" class="ml-0.5" viewBox="0 0 16 16"><path d="M8 11.2L3.2 6.4h9.6L8 11.2z" fill="currentColor"></path></svg>
                     </div>
                 </div>
                 <!-- 輸入框 -->
-                <div class="flex gap-1.5 mb-2">
+                <div id="price-input-container" class="flex gap-1.5 mb-2">
                     <div class="flex-1 bg-gray-50 border border-gray-100 h-8 flex items-center px-2 relative">
                         <span class="text-[9px] text-gray-400 mr-2 shrink-0">價格</span>
                         <input class="w-full bg-transparent font-bold outline-none text-[11px]" value="65432.1">
@@ -283,6 +283,10 @@
                         </div>
                     </div>
                 </div>
+                <div class="mt-3 grid grid-cols-2 gap-2">
+                    <button onclick="openOrderConfirm('long')" class="py-2 bg-green-500 text-white font-black rounded shadow-sm">开多</button>
+                    <button onclick="openOrderConfirm('short')" class="py-2 bg-red-500 text-white font-black rounded shadow-sm">开空</button>
+                </div>
                 <!-- 數據面板 (雙列) -->
                 <div class="space-y-1 text-[9px] border-t border-gray-50 pt-2">
                     <div class="grid grid-cols-2 gap-x-4">
@@ -298,10 +302,6 @@
                         <div class="flex justify-between"><span class="text-gray-400">可開</span><span class="font-bold">0.00 USDT</span></div>
                     </div>
                     <div class="pt-1 text-[8px] text-gray-400">手續費率: <span class="text-gray-700">吃單 0.045% / 掛單 0.03%</span></div>
-                </div>
-                <div class="mt-3 grid grid-cols-2 gap-2">
-                    <button class="py-2 bg-green-500 text-white font-black rounded shadow-sm">買入 / 做多</button>
-                    <button class="py-2 bg-red-500 text-white font-black rounded shadow-sm">賣出 / 做空</button>
                 </div>
             </div>
         </aside>
@@ -375,8 +375,8 @@
                             </button>
                         </td>
                         <td class="px-3 py-2.5 text-right whitespace-nowrap space-x-2">
-                            <button class="text-gray-900 hover:text-blue-600 font-bold">限價</button>
-                            <button class="text-gray-900 hover:text-blue-600 font-bold">市價</button>
+                            <button class="text-gray-900 hover:text-blue-600 font-bold">限价</button>
+                            <button class="text-gray-900 hover:text-blue-600 font-bold">市价</button>
                         </td>
                     </tr>
                     </tbody>
@@ -502,7 +502,6 @@
             <div class="space-y-2 text-[10px] text-gray-400 leading-relaxed bg-gray-50 p-3 rounded border border-gray-100">
                 <div class="flex"><span class="mr-1">•</span><span>當前槓桿倍數最高可持有頭寸：<b class="text-black ml-1">100,000,000 USDT</b></span></div>
                 <div class="flex"><span class="mr-1">•</span><span>槓桿調整將同時影響當前倉位和掛單的槓桿。</span></div>
-                <div class="flex"><span class="mr-1">•</span><span>選擇超過 10x 槓桿交易會增加強行平倉風險，請注意風險。</span></div>
             </div>
         </div>
 
@@ -845,10 +844,76 @@
     </div>
 </div>
 
+<!-- 下單確認彈窗 -->
+<div id="modal-order-confirm" class="modal-overlay fixed inset-0 bg-black/40 z-[200] items-center justify-center backdrop-blur-sm" style="display: none;">
+    <div class="bg-white w-[320px] rounded-sm shadow-2xl overflow-hidden animate-in zoom-in duration-200">
+        <!-- Header -->
+        <div class="px-5 py-4 border-b border-gray-50 flex justify-between items-center bg-slate-50">
+            <h3 id="confirm-title" class="text-[13px] font-black uppercase italic">BTCUSDT 開多</h3>
+            <button onclick="toggleModal('modal-order-confirm')" class="text-gray-400 hover:text-black font-bold text-lg">✕</button>
+        </div>
+
+        <!-- Content -->
+        <div class="p-5 space-y-4">
+            <div class="space-y-2 text-[11px]">
+                <div class="flex justify-between font-bold">
+                    <span class="text-gray-400">價格</span>
+                    <span id="confirm-price" class="text-gray-900 font-mono">52600.00 USDT</span>
+                </div>
+                <div class="flex justify-between font-bold">
+                    <span class="text-gray-400">數量</span>
+                    <span id="confirm-amount" class="text-gray-900 font-mono">800.00 USDT</span>
+                </div>
+                <div class="flex justify-between font-bold">
+                    <span class="text-gray-400">保證金</span>
+                    <span id="confirm-margin" class="text-gray-900 font-mono">5600.00 USDT</span>
+                </div>
+                <div class="flex justify-between font-bold">
+                    <span class="text-gray-400">標記價格</span>
+                    <span id="confirm-mark-price" class="text-gray-900 font-mono">52648.00 USDT</span>
+                </div>
+                <div class="flex justify-between font-bold pt-2 border-t border-gray-50">
+                    <span class="text-gray-400">預估強平價格</span>
+                    <span id="confirm-liq-price" class="text-red-500 font-black font-mono">42648.00 USDT</span>
+                </div>
+            </div>
+
+            <!-- 复选框 -->
+            <div class="flex items-center space-x-2 pt-2">
+                <input type="checkbox" id="no-confirm" class="w-3.5 h-3.5 accent-blue-600 rounded-none">
+                <label for="no-confirm" class="text-[10px] font-bold text-gray-500 cursor-pointer">
+                    不再为<span id="confirm-type-text">限价单</span>提示二次确认。您也可以在“偏好设置”中调整。
+                </label>
+            </div>
+
+            <!-- 确认按钮 -->
+            <button onclick="executeOrder()" id="confirm-action-btn" class="w-full bg-green-500 text-white py-3 rounded-sm font-black uppercase text-[12px] shadow-lg hover:opacity-90 transition-all">
+                确认
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 全局通知组件 (Toast) -->
+<div id="toast-notification" class="hidden fixed bottom-6 right-6 z-[300] bg-slate-900 text-white px-4 py-3 rounded-sm shadow-2xl flex items-center space-x-3 animate-in slide-in-from-left duration-300">
+    <!-- 成功图标 -->
+    <div class="flex-shrink-0 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+        <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+            <path d="M5 13l4 4L19 7"></path>
+        </svg>
+    </div>
+    <!-- 文案 -->
+    <span id="toast-message" class="text-[11px] font-bold tracking-wider">下单成功</span>
+</div>
+
 <script>
     function toggleModal(id) {
         const modal = document.getElementById(id);
-        modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
+        if (modal.style.display === 'flex') {
+            modal.style.display = 'none';
+        } else {
+            modal.style.display = 'flex';
+        }
     }
 
     function toggleTPSL() {
@@ -941,20 +1006,6 @@
         document.getElementById('btn-connect-wallet').classList.remove('hidden');
         document.getElementById('user-account-wrapper').classList.add('hidden');
     }
-    // 通用彈窗切換 (如果你已經有了，確保它支持 flex)
-    function toggleModal(id) {
-        const modal = document.getElementById(id);
-        modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
-    }
-
-    function toggleModal(id) {
-        const modal = document.getElementById(id);
-        if (modal.style.display === 'flex') {
-            modal.style.display = 'none';
-        } else {
-            modal.style.display = 'flex';
-        }
-    }
 
     /**
      * 模拟整体订单状态 (用于原型演示)
@@ -1012,6 +1063,79 @@
             btnMarket.className = "px-3 py-0.5 text-[9px] font-bold bg-white shadow-sm rounded-sm";
             btnLimit.className = "px-3 py-0.5 text-[9px] font-bold text-gray-400 hover:text-black";
         }
+    }
+
+    let currentOrderMode = 'limit'; // 默認限價
+
+    // 1. 切換限價/市價模式
+    function switchOrderMode(mode) {
+        currentOrderMode = mode;
+        const priceBox = document.getElementById('price-input-container');
+        const tabLimit = document.getElementById('tab-limit');
+        const tabMarket = document.getElementById('tab-market');
+
+        if (mode === 'market') {
+            priceBox.classList.add('hidden'); // 隱藏價格輸入框
+            tabMarket.className = "text-black border-b-2 border-black pb-1 cursor-pointer";
+            tabLimit.className = "hover:text-black cursor-pointer text-gray-400";
+        } else {
+            priceBox.classList.remove('hidden'); // 顯示價格輸入框
+            tabLimit.className = "text-black border-b-2 border-black pb-1 cursor-pointer";
+            tabMarket.className = "hover:text-black cursor-pointer text-gray-400";
+        }
+    }
+
+    // 1. 修改打开逻辑：只需调用 toggleModal 即可
+    function openOrderConfirm(direction) {
+        const title = document.getElementById('confirm-title');
+        const priceText = document.getElementById('confirm-price');
+        const typeText = document.getElementById('confirm-type-text');
+        const actionBtn = document.getElementById('confirm-action-btn');
+
+        // 逻辑填充
+        if (direction === 'long') {
+            title.innerText = "BTCUSDT 開多";
+            title.className = "text-[13px] font-black uppercase italic text-green-500";
+            actionBtn.className = "w-full bg-green-500 text-white py-3 rounded-sm font-black uppercase text-[12px] shadow-lg";
+        } else {
+            title.innerText = "BTCUSDT 開空";
+            title.className = "text-[13px] font-black uppercase italic text-red-500";
+            actionBtn.className = "w-full bg-red-500 text-white py-3 rounded-sm font-black uppercase text-[12px] shadow-lg";
+        }
+
+        if (currentOrderMode === 'market') {
+            priceText.innerText = "市價";
+            typeText.innerText = "市價單";
+        } else {
+            priceText.innerText = "52600.00 USDT";
+            typeText.innerText = "限價單";
+        }
+
+        // 调用您的统一函数
+        toggleModal('modal-order-confirm');
+    }
+
+    // 2. 修改“确认”按钮后的执行逻辑
+    function executeOrder() {
+        // 关闭弹窗
+        toggleModal('modal-order-confirm');
+
+        // 显示右下角通知
+        showNotification("下单成功");
+    }
+
+    // 3. 通知显示函数
+    function showNotification(msg) {
+        const toast = document.getElementById('toast-notification');
+        const toastMsg = document.getElementById('toast-message');
+
+        toastMsg.innerText = msg;
+        toast.style.display = 'flex'; // 显示
+
+        // 2秒后自动消失
+        setTimeout(() => {
+            toast.style.display = 'none'; // 隐藏
+        }, 2000);
     }
 </script>
 </body>

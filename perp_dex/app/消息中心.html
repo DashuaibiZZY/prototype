@@ -1,0 +1,3276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ForX 消息中心</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #12182a;
+            --bg-card: #1a2035;
+            --bg-card-hover: #222a42;
+            --text-primary: #ffffff;
+            --text-secondary: #8a94a6;
+            --text-muted: #5a6275;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-orange: #f59e0b;
+            --accent-purple: #8b5cf6;
+            --border-color: #2a3148;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            max-width: 375px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: var(--bg-primary);
+            position: relative;
+        }
+
+        /* 首页顶部导航 */
+        .home-header {
+            background: linear-gradient(180deg, #0f1524 0%, var(--bg-primary) 100%);
+            padding: 12px 16px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .home-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 1px;
+        }
+
+        .search-box {
+            flex: 1;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .search-box svg {
+            width: 16px;
+            height: 16px;
+            opacity: 0.6;
+        }
+
+        .bell-btn {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .bell-btn:active {
+            transform: scale(0.95);
+            background: var(--bg-card);
+        }
+
+        .bell-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--text-secondary);
+        }
+
+        .bell-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: var(--accent-red);
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 9px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0 5px;
+            border: 2px solid var(--bg-primary);
+        }
+
+        .bell-badge.show {
+            display: flex;
+            animation: badgePulse 0.3s ease;
+        }
+
+        @keyframes badgePulse {
+            0% { transform: scale(0.8); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* 首页占位内容 */
+        .home-content {
+            padding: 20px 16px;
+        }
+
+        .home-placeholder {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .home-placeholder-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            border-radius: 16px;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .home-placeholder-icon svg {
+            width: 32px;
+            height: 32px;
+            color: white;
+        }
+
+        .home-placeholder h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .home-placeholder p {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        /* 消息中心页面 */
+        .message-center {
+            display: none;
+            min-height: 100vh;
+            background: var(--bg-primary);
+        }
+
+        .message-center.active {
+            display: block;
+        }
+
+        .mc-header {
+            background: linear-gradient(180deg, #0f1524 0%, var(--bg-primary) 100%);
+            padding: 12px 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .mc-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 16px;
+        }
+
+        .back-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .back-btn:active {
+            background: var(--bg-card);
+        }
+
+        .back-btn svg {
+            width: 22px;
+            height: 22px;
+            color: var(--text-primary);
+        }
+
+        .mc-title {
+            font-size: 17px;
+            font-weight: 600;
+            flex: 1;
+            text-align: center;
+            padding-right: 36px;
+        }
+
+        .mark-all-btn {
+            font-size: 13px;
+            color: var(--accent-blue);
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .mark-all-btn:active {
+            background: var(--bg-card);
+        }
+
+        .mark-all-btn.disabled {
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .unread-summary {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .unread-summary.all-read {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .unread-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .unread-summary.all-read .unread-icon {
+            background: linear-gradient(135deg, var(--accent-green) 0%, #059669 100%);
+        }
+
+        .unread-icon svg {
+            width: 20px;
+            height: 20px;
+            color: white;
+        }
+
+        .unread-text {
+            flex: 1;
+        }
+
+        .unread-text .count {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        .unread-summary.all-read .unread-text .count {
+            color: var(--accent-green);
+        }
+
+        .unread-text .label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Tab 栏 */
+        .tabs-container {
+            background: var(--bg-primary);
+            position: sticky;
+            top: 100px;
+            z-index: 99;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tabs {
+            display: flex;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding: 0 12px;
+        }
+
+        .tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab {
+            flex-shrink: 0;
+            padding: 14px 12px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            position: relative;
+            transition: color 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 24px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+            border-radius: 2px;
+        }
+
+        .tab .tab-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 18px;
+            height: 18px;
+            background: var(--bg-card);
+            border-radius: 9px;
+            font-size: 11px;
+            margin-left: 4px;
+            padding: 0 5px;
+        }
+
+        .tab.active .tab-count {
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+            color: white;
+        }
+
+        /* 消息列表 */
+        .message-list {
+            padding: 12px 16px;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom, 20px));
+        }
+
+        .message-card {
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 16px;
+            padding-left: 20px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .message-card:active {
+            transform: scale(0.98);
+            background: var(--bg-card-hover);
+        }
+
+        .message-card.unread {
+            border-color: rgba(59, 130, 246, 0.2);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%);
+        }
+
+        .message-card.unread .msg-title {
+            font-weight: 700;
+        }
+
+        .message-card.read {
+            opacity: 0.65;
+        }
+
+        .message-card.p0 {
+            border-color: rgba(239, 68, 68, 0.3);
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(139, 92, 246, 0.05) 100%);
+        }
+
+        .message-card.p0.unread {
+            animation: p0Glow 2s ease-in-out infinite;
+        }
+
+        @keyframes p0Glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+            50% { box-shadow: 0 0 20px 0 rgba(239, 68, 68, 0.2); }
+        }
+
+        .message-card.p0::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--accent-red) 0%, #dc2626 100%);
+        }
+
+        .message-card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .msg-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .msg-icon svg {
+            width: 22px;
+            height: 22px;
+            color: white;
+        }
+
+        .msg-icon.system { background: linear-gradient(135deg, #64748b 0%, #475569 100%); }
+        .msg-icon.asset { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .msg-icon.contract { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .msg-icon.risk { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+        .msg-icon.security { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .msg-icon.activity { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+
+        .msg-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .msg-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .msg-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .msg-tag {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .msg-tag.risk {
+            background: rgba(239, 68, 68, 0.25);
+            color: #ff6b6b;
+        }
+
+        .msg-tag.priority {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--accent-orange);
+        }
+
+        .msg-tag.category {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .msg-summary {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .msg-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .msg-time {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .msg-arrow {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .unread-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .message-card.unread .unread-dot {
+            display: block;
+        }
+
+        .message-card:not(.unread) .unread-dot {
+            display: none;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            display: none;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .empty-state.show {
+            display: block;
+        }
+
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--bg-card);
+            border-radius: 20px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .empty-icon svg {
+            width: 40px;
+            height: 40px;
+            color: var(--text-muted);
+        }
+
+        .empty-icon.success svg {
+            color: var(--accent-green);
+        }
+
+        .empty-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .empty-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* 消息详情页 */
+        .message-detail {
+            display: none;
+            min-height: 100vh;
+            background: var(--bg-primary);
+        }
+
+        .message-detail.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-header {
+            background: linear-gradient(180deg, #0f1524 0%, var(--bg-primary) 100%);
+            padding: 12px 16px;
+            padding-top: calc(12px + env(safe-area-inset-top, 0));
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .detail-back {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .detail-back:active {
+            background: var(--bg-card);
+        }
+
+        .detail-back svg {
+            width: 22px;
+            height: 22px;
+            color: var(--text-primary);
+        }
+
+        .detail-title {
+            flex: 1;
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .detail-action-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .detail-action-btn:active {
+            background: var(--bg-card);
+        }
+
+        .detail-action-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--text-secondary);
+        }
+
+        .detail-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 16px;
+            padding-bottom: 100px;
+        }
+
+        .detail-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .detail-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .detail-icon svg {
+            width: 28px;
+            height: 28px;
+            color: white;
+        }
+
+        .detail-meta-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .detail-meta-info h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            word-break: break-word;
+        }
+
+        .detail-meta-info .time {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .detail-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: var(--accent-green);
+            margin-top: 4px;
+        }
+
+        .detail-status.unread {
+            color: var(--accent-blue);
+        }
+
+        /* 详情信息卡片 */
+        .detail-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .detail-card-title {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .detail-card-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-card-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .detail-card-row:first-child {
+            padding-top: 0;
+        }
+
+        .detail-card-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        .detail-card-value {
+            font-size: 13px;
+            color: var(--text-primary);
+            font-weight: 500;
+            text-align: right;
+            word-break: break-all;
+            margin-left: 12px;
+        }
+
+        .detail-card-value.highlight {
+            color: var(--accent-blue);
+        }
+
+        .detail-card-value.danger {
+            color: var(--accent-red);
+        }
+
+        .detail-card-value.success {
+            color: var(--accent-green);
+        }
+
+        .detail-card-value.mono {
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        /* 详情正文 */
+        .detail-content-text {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .detail-content-text p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 12px;
+        }
+
+        .detail-content-text p:last-child {
+            margin-bottom: 0;
+        }
+
+        .detail-content-text p.key-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* 风险提示卡片 */
+        .risk-alert-card {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.05) 100%);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .risk-alert-card .alert-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent-red);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .risk-alert-card .alert-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 13px;
+        }
+
+        .risk-alert-card .alert-label {
+            color: var(--text-secondary);
+        }
+
+        .risk-alert-card .alert-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .risk-alert-card .alert-value.danger {
+            color: var(--accent-red);
+            font-weight: 700;
+        }
+
+        /* 底部固定按钮 */
+        .detail-footer {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 375px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 12px 16px;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom, 12px));
+            z-index: 100;
+        }
+
+        .detail-action-btn-text {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: opacity 0.2s;
+        }
+
+        .detail-action-btn-text:active {
+            opacity: 0.85;
+        }
+
+        .detail-action-btn-text.secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .detail-action-btn-text.danger {
+            background: var(--accent-red);
+        }
+
+        /* 异常状态页 */
+        .error-state {
+            display: none;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .error-state.show {
+            display: block;
+        }
+
+        .error-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 20px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .error-icon svg {
+            width: 40px;
+            height: 40px;
+            color: var(--accent-red);
+        }
+
+        .error-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--accent-red);
+        }
+
+        .error-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* 弹窗 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: 20px 20px 0px 0;
+            width: 100%;
+            max-width: 375px;
+            padding: 24px 20px;
+            padding-bottom: calc(24px + env(safe-area-inset-bottom, 0));
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-handle {
+            width: 40px;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            margin: 0 auto 20px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .modal-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .modal-btns {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .modal-btn.cancel {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .modal-btn.cancel:active {
+            background: var(--bg-card-hover);
+        }
+
+        .modal-btn.confirm {
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+            color: white;
+        }
+
+        .modal-btn.confirm:active {
+            opacity: 0.9;
+        }
+
+        .modal-btn.danger {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        /* Action Sheet */
+        .action-sheet {
+            padding: 16px 0;
+            padding-bottom: calc(16px + env(safe-area-inset-bottom, 16px));
+        }
+
+        .action-sheet-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-radius: 0;
+        }
+
+        .action-sheet-item:active {
+            background: var(--bg-card);
+        }
+
+        .action-sheet-item svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .action-sheet-item.primary {
+            color: var(--accent-blue);
+        }
+
+        .action-sheet-item.danger {
+            color: var(--accent-red);
+        }
+
+        .action-sheet-item.cancel {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-top: 8px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            margin-left: 16px;
+            margin-right: 16px;
+        }
+
+        .action-sheet-item + .action-sheet-item {
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-size: 14px;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success {
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .toast.success svg {
+            color: var(--accent-green);
+        }
+
+        .toast.error {
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .toast.error svg {
+            color: var(--accent-red);
+        }
+
+        .toast.info {
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .toast.info svg {
+            color: var(--accent-blue);
+        }
+
+        .toast svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* 首页隐藏 */
+        .home-page.hidden {
+            display: none;
+        }
+
+        /* 动画 */
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        /* 滚动内容区域 */
+        .scroll-content {
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* 箭头图标 */
+        .icon-arrow {
+            width: 16px;
+            height: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 首页 -->
+        <div class="home-page" id="homePage">
+            <header class="home-header">
+                <nav class="home-nav">
+                    <div class="logo">ForX</div>
+                    <div class="bell-btn" id="bellBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <span class="bell-badge" id="bellBadge">8</span>
+                    </div>
+                </nav>
+            </header>
+            <div class="home-content">
+                <div class="home-placeholder">
+                    <div class="home-placeholder-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                    </div>
+                    <h3>合约交易</h3>
+                    <p>点击顶部铃铛查看消息中心</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 消息中心 -->
+        <div class="message-center" id="messageCenter">
+            <header class="mc-header">
+                <nav class="mc-nav">
+                    <div class="back-btn" id="backBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                    </div>
+                    <div class="mc-title">消息中心</div>
+                    <div class="mark-all-btn" id="markAllBtn">全部已读</div>
+                </nav>
+                <div class="unread-summary" id="unreadSummary">
+                    <div class="unread-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                    </div>
+                    <div class="unread-text">
+                        <div class="count" id="unreadCount">8</div>
+                        <div class="label" id="unreadLabel">条未读消息</div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="tabs-container">
+                <div class="tabs" id="tabs"></div>
+            </div>
+
+            <div class="scroll-content">
+                <div class="message-list" id="messageList"></div>
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-icon" id="emptyIcon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                    </div>
+                    <div class="empty-title" id="emptyTitle">暂无消息</div>
+                    <div class="empty-desc" id="emptyDesc">当前分类下没有消息</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 消息详情 -->
+        <div class="message-detail" id="messageDetail">
+            <header class="detail-header">
+                <div class="detail-back" id="detailBack">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                </div>
+                <div class="detail-title">消息详情</div>
+                <div class="detail-actions">
+                    <div class="detail-action-btn" id="moreBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="1"></circle>
+                            <circle cx="12" cy="5" r="1"></circle>
+                            <circle cx="12" cy="19" r="1"></circle>
+                        </svg>
+                    </div>
+                </div>
+            </header>
+            <div class="detail-body" id="detailBody">
+                <div class="detail-content" id="detailContent"></div>
+            </div>
+            <div class="detail-footer" id="detailFooter" style="display: none;">
+                <button class="detail-action-btn-text" id="actionBtn">我知道了</button>
+            </div>
+            <div class="error-state" id="errorState">
+                <div class="error-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 8v4M12 16h.01"></path>
+                    </svg>
+                </div>
+                <div class="error-title" id="errorTitle">消息不存在</div>
+                <div class="error-desc" id="errorDesc">该消息可能已被删除或过期</div>
+            </div>
+        </div>
+
+        <!-- 全部已读弹窗 -->
+        <div class="modal-overlay" id="markAllModal">
+            <div class="modal">
+                <div class="modal-handle"></div>
+                <div class="modal-title">全部已读</div>
+                <div class="modal-desc" id="markAllDesc">确定要将所有消息标记为已读吗？</div>
+                <div class="modal-btns">
+                    <button class="modal-btn cancel" id="markAllCancel">取消</button>
+                    <button class="modal-btn confirm" id="markAllConfirm">确定</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 删除弹窗 -->
+        <div class="modal-overlay delete-modal" id="deleteModal">
+            <div class="modal">
+                <div class="modal-handle"></div>
+                <div class="modal-title">删除消息</div>
+                <div class="modal-desc">确定要删除这条消息吗？删除后无法恢复。</div>
+                <div class="modal-btns">
+                    <button class="modal-btn cancel" id="deleteCancel">取消</button>
+                    <button class="modal-btn danger" id="deleteConfirm">删除</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Sheet -->
+        <div class="modal-overlay" id="actionSheet">
+            <div class="modal" style="padding: 0;">
+                <div class="action-sheet" id="actionSheetContent">
+                    <div class="action-sheet-item primary" id="markReadItem">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span>标记为已读</span>
+                    </div>
+                    <div class="action-sheet-item danger" id="deleteItem">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        <span>删除消息</span>
+                    </div>
+                    <div class="action-sheet-item cancel" id="cancelItem">取消</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast -->
+        <div class="toast" id="toast">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span id="toastText">操作成功</span>
+        </div>
+    </div>
+
+    <script>
+        // Mock 数据
+        const mockMessages = [
+            // 系统公告
+            {
+                id: 1,
+                type: 'system',
+                category: '系统',
+                title: '系统维护公告',
+                summary: 'ForX 将于 6 月 10 日 02:00-04:00 进行系统升级维护，届时暂停所有交易功能。',
+                businessData: {
+                    maintainTime: '2026-06-10 02:00 - 04:00',
+                    affectedServices: ['合约交易下单', '资产划转', '充值提现', 'App登录'],
+                    notice: '请提前做好仓位管理'
+                },
+                actionType: 'system',
+                time: '10分钟前',
+                priority: 2,
+                unread: true
+            },
+            {
+                id: 2,
+                type: 'system',
+                category: '系统',
+                title: '合约交易规则调整公告',
+                summary: 'BTC/USDT 永续合约杠杆调整，最高杠杆从 125x 调整为 100x。',
+                businessData: {
+                    adjustments: [
+                        { pair: 'BTC/USDT 永续', change: '125x → 100x' },
+                        { pair: 'ETH/USDT 永续', change: '100x → 75x' },
+                        { pair: 'SOL/USDT 永续', change: '新增，最高 50x' }
+                    ],
+                    effectiveTime: '2026-06-15 08:00'
+                },
+                actionType: 'system',
+                time: '1小时前',
+                priority: 2,
+                unread: true
+            },
+            {
+                id: 3,
+                type: 'system',
+                category: '系统',
+                title: 'ETH/USDT 永续合约正式上线',
+                summary: 'ETH/USDT 永续合约已正式上线，支持最高 75x 杠杆交易。',
+                businessData: {
+                    pair: 'ETH/USDT 永续',
+                    maxLeverage: '75x',
+                    fundingFee: '每 8 小时结算',
+                    launchPrice: '$3,845.50'
+                },
+                actionType: 'system',
+                time: '3小时前',
+                priority: 3,
+                unread: false
+            },
+            // 资产通知
+            {
+                id: 4,
+                type: 'asset',
+                category: '资产',
+                title: 'USDT 充值到账',
+                summary: '您的 5,000 USDT 已充值到账，充值哈希：0x8f2a...3b4c',
+                businessData: {
+                    type: 'deposit',
+                    coin: 'USDT',
+                    network: 'TRC20',
+                    amount: '5,000',
+                    txHash: '0x8f2a9c3b4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9',
+                    time: '2026-06-05 10:30'
+                },
+                actionType: 'viewDeposit',
+                time: '2小时前',
+                priority: 2,
+                unread: true
+            },
+            {
+                id: 5,
+                type: 'asset',
+                category: '资产',
+                title: '提现申请已提交',
+                summary: '您提交的 1,000 USDT 提现申请已受理，预计 1-3 分钟到账。',
+                businessData: {
+                    type: 'withdrawSubmit',
+                    coin: 'USDT',
+                    network: 'TRC20',
+                    amount: '1,000',
+                    fee: '1',
+                    actualAmount: '999',
+                    address: '0x7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5',
+                    orderId: 'WD20260605001',
+                    status: '处理中',
+                    eta: '1-3 分钟'
+                },
+                actionType: 'viewWithdraw',
+                time: '5小时前',
+                priority: 2,
+                unread: false
+            },
+            {
+                id: 6,
+                type: 'asset',
+                category: '资产',
+                title: '提现失败通知',
+                summary: '您的 2,000 USDT 提现申请因目标地址无效而失败，资金已退回。',
+                businessData: {
+                    type: 'withdrawFailed',
+                    coin: 'USDT',
+                    network: 'TRC20',
+                    amount: '2,000',
+                    reason: '目标地址格式无效',
+                    orderId: 'WD20260604001',
+                    status: '已退回',
+                    returnTime: '立即'
+                },
+                actionType: 'viewWithdraw',
+                time: '昨天',
+                priority: 0,
+                unread: true
+            },
+            {
+                id: 7,
+                type: 'asset',
+                category: '资产',
+                title: '活动奖励到账',
+                summary: '恭喜您获得"端午合约交易赛"一等奖，奖励 500 USDT 已发放至您的账户。',
+                businessData: {
+                    type: 'reward',
+                    activityName: '端午合约交易赛',
+                    rewardType: '一等奖（第1名）',
+                    amount: '500 USDT',
+                    time: '2026-06-05 08:00'
+                },
+                actionType: 'viewReward',
+                time: '1天前',
+                priority: 2,
+                unread: true
+            },
+            // 合约通知
+            {
+                id: 8,
+                type: 'contract',
+                category: '合约',
+                title: '限价委托成交',
+                summary: '您的 BTC/USDT 永续限价委托买单已成交，成交均价 $67,250.00，数量 0.5 BTC。',
+                businessData: {
+                    type: 'limitFill',
+                    pair: 'BTC/USDT 永续',
+                    side: '买入',
+                    leverage: '10x',
+                    orderPrice: '$67,200.00',
+                    fillPrice: '$67,250.00',
+                    quantity: '0.5 BTC',
+                    filledAmount: '$33,625.00',
+                    orderId: 'FC202606050001',
+                    fee: '-0.00025 BTC',
+                    time: '2026-06-05 11:30:25'
+                },
+                actionType: 'viewContractOrder',
+                time: '30分钟前',
+                priority: 2,
+                unread: true
+            },
+            {
+                id: 9,
+                type: 'contract',
+                category: '合约',
+                title: '市价委托成交',
+                summary: '您的 ETH/USDT 永续市价卖单已成交，成交价格 $3,892.50，数量 2 ETH。',
+                businessData: {
+                    type: 'marketFill',
+                    pair: 'ETH/USDT 永续',
+                    side: '卖出',
+                    leverage: '5x',
+                    fillPrice: '$3,892.50',
+                    quantity: '2 ETH',
+                    filledAmount: '$7,785.00',
+                    orderId: 'FC202606050002',
+                    fee: '-0.001 ETH',
+                    time: '2026-06-05 11:25:10'
+                },
+                actionType: 'viewContractOrder',
+                time: '45分钟前',
+                priority: 2,
+                unread: true
+            },
+            {
+                id: 10,
+                type: 'contract',
+                category: '合约',
+                title: '委托撤销成功',
+                summary: '您的 SOL/USDT 永续限价买单已撤销，释放保证金 500 USDT。',
+                businessData: {
+                    type: 'orderCancel',
+                    pair: 'SOL/USDT 永续',
+                    side: '买入',
+                    orderPrice: '$178.50',
+                    quantity: '100 SOL',
+                    releasedMargin: '500 USDT',
+                    orderId: 'FC202606050003',
+                    time: '2026-06-05 11:20:05'
+                },
+                actionType: 'viewContractOrder',
+                time: '1小时前',
+                priority: 3,
+                unread: false
+            },
+            {
+                id: 11,
+                type: 'contract',
+                category: '合约',
+                title: '止盈触发通知',
+                summary: '您的 BTC/USDT 永续多仓止盈触发，收益率 15.8%，盈利 $1,580.00。',
+                businessData: {
+                    type: 'takeProfit',
+                    pair: 'BTC/USDT 永续',
+                    side: '多仓',
+                    triggerPrice: '$68,000.00',
+                    fillPrice: '$68,050.00',
+                    quantity: '0.5 BTC',
+                    pnl: '+$1,580.00',
+                    pnlRate: '+15.8%',
+                    orderId: 'FC202606050004',
+                    time: '2026-06-05 11:15:30'
+                },
+                actionType: 'viewTPSL',
+                time: '2小时前',
+                priority: 2,
+                unread: true
+            },
+            {
+                id: 12,
+                type: 'contract',
+                category: '合约',
+                title: '止损触发通知',
+                summary: '您的 ETH/USDT 永续空仓止损触发，亏损 -$245.00，收益率 -5.2%。',
+                businessData: {
+                    type: 'stopLoss',
+                    pair: 'ETH/USDT 永续',
+                    side: '空仓',
+                    triggerPrice: '$3,920.00',
+                    fillPrice: '$3,925.00',
+                    quantity: '1 ETH',
+                    pnl: '-$245.00',
+                    pnlRate: '-5.2%',
+                    orderId: 'FC202606050005',
+                    time: '2026-06-05 10:45:20'
+                },
+                actionType: 'viewTPSL',
+                time: '4小时前',
+                priority: 2,
+                unread: false
+            },
+            // 风险提醒
+            {
+                id: 13,
+                type: 'risk',
+                category: '合约',
+                title: '⚠️ 保证金不足警告',
+                summary: '您的 BTC/USDT 永续仓位保证金率已降至 15%，请及时追加保证金。',
+                businessData: {
+                    type: 'marginLow',
+                    pair: 'BTC/USDT 永续',
+                    side: '多仓',
+                    marginRate: '15%',
+                    threshold: '20%',
+                    requiredMargin: '$120.00',
+                    availableBalance: '$85.00',
+                    suggestion: '请立即追加保证金，避免被强制平仓'
+                },
+                actionType: 'viewPosition',
+                time: '5分钟前',
+                priority: 0,
+                unread: true
+            },
+            {
+                id: 14,
+                type: 'risk',
+                category: '合约',
+                title: '🚨 强平风险提醒',
+                summary: '您的 ETH/USDT 永续仓位即将触发强平，保证金率仅剩 8%，请尽快处理！',
+                businessData: {
+                    type: 'liquidationRisk',
+                    pair: 'ETH/USDT 永续',
+                    side: '多仓',
+                    leverage: '20x',
+                    marginRate: '8%',
+                    estLiquidationPrice: '$3,680.00',
+                    currentPrice: '$3,712.50',
+                    distance: '0.87%'
+                },
+                actionType: 'viewPosition',
+                time: '8分钟前',
+                priority: 0,
+                unread: true
+            },
+            {
+                id: 15,
+                type: 'risk',
+                category: '合约',
+                title: '强制平仓完成通知',
+                summary: '您的 SOL/USDT 永续仓位已被强制平仓，平仓价格 $165.30，亏损 $320.00。',
+                businessData: {
+                    type: 'liquidation',
+                    pair: 'SOL/USDT 永续',
+                    side: '多仓',
+                    liquidationPrice: '$165.30',
+                    openPrice: '$178.50',
+                    quantity: '50 SOL',
+                    loss: '-$320.00',
+                    fee: '-$5.50',
+                    time: '2026-06-05 10:30:15'
+                },
+                actionType: 'viewContractOrder',
+                time: '6小时前',
+                priority: 0,
+                unread: false
+            },
+            {
+                id: 16,
+                type: 'risk',
+                category: '合约',
+                title: '价格剧烈波动提醒',
+                summary: 'BTC/USDT 永续合约价格在过去 5 分钟内波动超过 3%，请注意风险。',
+                businessData: {
+                    type: 'priceVolatility',
+                    pair: 'BTC/USDT 永续',
+                    change: '+3.2%',
+                    currentPrice: '$67,850.00',
+                    prevPrice: '$65,750.00',
+                    time: '2026-06-05 09:45'
+                },
+                actionType: 'none',
+                time: '8小时前',
+                priority: 1,
+                unread: false
+            },
+            {
+                id: 17,
+                type: 'risk',
+                category: '合约',
+                title: '资金费率结算通知',
+                summary: '本周期 BTC/USDT 永续资金费率已结算，多头向空头支付 0.015% 的资金费。',
+                businessData: {
+                    type: 'fundingFee',
+                    pair: 'BTC/USDT 永续',
+                    fundingRate: '-0.015%',
+                    side: '多头',
+                    amount: '-$5.25',
+                    settleTime: '2026-06-05 08:00',
+                    nextSettleTime: '2026-06-05 16:00'
+                },
+                actionType: 'viewFundingFee',
+                time: '12小时前',
+                priority: 3,
+                unread: false
+            },
+            // 安全通知
+            {
+                id: 18,
+                type: 'security',
+                category: '安全',
+                title: '🔐 钱包连接成功',
+                summary: '您的钱包已成功连接到 ForX DApp，连接地址：0x7a8b...f3e2',
+                businessData: {
+                    type: 'walletConnect',
+                    address: '0x7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5',
+                    dapp: 'ForX DEX',
+                    permissions: ['读取钱包地址', '发起交易'],
+                    network: 'Ethereum (ETH)',
+                    time: '2026-06-05 10:00'
+                },
+                actionType: 'viewSecurity',
+                time: '3小时前',
+                priority: 1,
+                unread: true
+            },
+            {
+                id: 19,
+                type: 'security',
+                category: '安全',
+                title: '⚠️ 钱包授权风险提醒',
+                summary: '您授权了一个未知合约，请核实该合约是否可信，警惕授权陷阱。',
+                businessData: {
+                    type: 'walletAuthorize',
+                    contractAddress: '0x1234...abcd',
+                    contractName: 'Unknown Contract',
+                    permissions: '转移无限代币',
+                    network: 'Ethereum (ETH)',
+                    time: '2026-06-05 09:30',
+                    warning: '此合约不在我们的白名单中'
+                },
+                actionType: 'viewWalletAuth',
+                time: '5小时前',
+                priority: 0,
+                unread: true
+            },
+            {
+                id: 20,
+                type: 'security',
+                category: '安全',
+                title: '🚨 异地登录提醒',
+                summary: '您的账户在非常用地点登录，登录地点：俄罗斯莫斯科，设备：Chrome on Windows。',
+                businessData: {
+                    type: 'abnormalLogin',
+                    location: '俄罗斯莫斯科',
+                    ip: '185.220.xxx.xxx',
+                    device: 'Chrome on Windows',
+                    browser: 'Chrome 125.0',
+                    time: '2026-06-05 08:30'
+                },
+                actionType: 'viewSecurity',
+                time: '昨天',
+                priority: 0,
+                unread: true
+            },
+            {
+                id: 21,
+                type: 'security',
+                category: '安全',
+                title: '新设备登录提醒',
+                summary: '您的新设备已登录 ForX，设备：Safari on iOS，位置：中国上海。',
+                businessData: {
+                    type: 'newDevice',
+                    device: 'Safari on iOS',
+                    deviceName: 'iPhone 15 Pro Max',
+                    location: '中国上海',
+                    time: '2026-06-04 20:15'
+                },
+                actionType: 'viewSecurity',
+                time: '2天前',
+                priority: 1,
+                unread: false
+            },
+            {
+                id: 22,
+                type: 'security',
+                category: '安全',
+                title: '登录密码已修改',
+                summary: '您的登录密码已于 2026-06-04 15:00 通过邮箱验证方式修改。',
+                businessData: {
+                    type: 'passwordChanged',
+                    method: '邮箱验证',
+                    ip: '114.85.xxx.xxx',
+                    time: '2026-06-04 15:00'
+                },
+                actionType: 'viewSecurity',
+                time: '3天前',
+                priority: 1,
+                unread: false
+            },
+            {
+                id: 23,
+                type: 'security',
+                category: '安全',
+                title: '绑定 Google 验证器提醒',
+                summary: '您已成功绑定 Google 验证器，账户安全等级已提升。',
+                businessData: {
+                    type: 'googleBound',
+                    device: 'iPhone 15 Pro',
+                    securityLevel: '高',
+                    time: '2026-06-03 10:00'
+                },
+                actionType: 'viewSecurity',
+                time: '1周前',
+                priority: 2,
+                unread: false
+            },
+            // 活动通知
+            {
+                id: 24,
+                type: 'activity',
+                category: '活动',
+                title: '🎉 新活动上线',
+                summary: '"夏季合约交易赛"已上线，总奖池 50,000 USDT，报名即送 10 USDT。',
+                businessData: {
+                    type: 'activityNew',
+                    activityName: '夏季合约交易赛',
+                    startTime: '2026-06-10',
+                    endTime: '2026-06-30',
+                    prizePool: '50,000 USDT',
+                    rewards: [
+                        { rank: '第1名', reward: '15,000 USDT' },
+                        { rank: '第2名', reward: '10,000 USDT' },
+                        { rank: '第3名', reward: '5,000 USDT' },
+                        { rank: '4-10名', reward: '各 1,000 USDT' }
+                    ],
+                    signupReward: '10 USDT'
+                },
+                actionType: 'viewActivity',
+                time: '1天前',
+                priority: 2,
+                unread: true
+            },
+            {
+                id: 25,
+                type: 'activity',
+                category: '活动',
+                title: '⏰ 活动即将结束',
+                summary: '"端午合约交易赛"将于 24 小时后结束，还没参加的赶紧上车！',
+                businessData: {
+                    type: 'activityEnding',
+                    activityName: '端午合约交易赛',
+                    endTime: '2026-06-06 00:00',
+                    remaining: '24 小时',
+                    currentRank: '第 15 名',
+                    currentProfit: '$2,380.00',
+                    targetRank: '前10名',
+                    targetDistance: '$620.00'
+                },
+                actionType: 'viewActivity',
+                time: '2天前',
+                priority: 2,
+                unread: false
+            },
+            {
+                id: 26,
+                type: 'activity',
+                category: '活动',
+                title: '🎁 活动奖励已发放',
+                summary: '"端午合约交易赛"奖励已发放，您获得 500 USDT，请查收。',
+                businessData: {
+                    type: 'activityReward',
+                    activityName: '端午合约交易赛',
+                    rank: '第 8 名',
+                    amount: '500 USDT',
+                    time: '2026-06-05 18:00'
+                },
+                actionType: 'viewReward',
+                time: '3天前',
+                priority: 2,
+                unread: false
+            },
+            {
+                id: 27,
+                type: 'activity',
+                category: '活动',
+                title: '工单回复通知',
+                summary: '您提交的工单 #TK-20260605001 已回复，请查看详情。',
+                businessData: {
+                    type: 'ticketReply',
+                    ticketId: 'TK-20260605001',
+                    subject: '合约交易问题咨询',
+                    status: '已回复',
+                    replyTime: '2026-06-05 15:30',
+                    reply: '您好，您的问题已确认。由于近期市场波动较大，建议您关注合约规则调整公告。'
+                },
+                actionType: 'viewTicket',
+                time: '4天前',
+                priority: 2,
+                unread: false
+            },
+            // 异常消息（不展示在列表中）
+            {
+                id: 28,
+                type: 'activity',
+                category: '活动',
+                title: '春节合约交易赛已结束',
+                summary: '活动已过期',
+                businessData: {},
+                actionType: 'none',
+                time: '2个月前',
+                priority: 3,
+                unread: false,
+                status: 'expired',
+                hidden: true
+            },
+            {
+                id: 29,
+                type: 'system',
+                category: '系统',
+                title: '系统升级公告（已撤回）',
+                summary: '此公告已撤回',
+                businessData: {},
+                actionType: 'none',
+                time: '1周前',
+                priority: 2,
+                unread: false,
+                status: 'revoked',
+                hidden: true
+            },
+            {
+                id: 30,
+                type: 'asset',
+                category: '资产',
+                title: '提现记录不存在',
+                summary: '相关记录已不存在',
+                businessData: {
+                    orderId: 'WD20260601001'
+                },
+                actionType: 'viewWithdraw',
+                time: '1个月前',
+                priority: 2,
+                unread: false,
+                status: 'notFound',
+                hidden: true
+            }
+        ];
+
+        // 分类配置
+        const categories = [
+            { id: 'all', name: '全部', icon: 'all' },
+            { id: 'system', name: '系统', icon: 'system' },
+            { id: 'asset', name: '资产', icon: 'asset' },
+            { id: 'contract', name: '合约', icon: 'contract' },
+            { id: 'security', name: '安全', icon: 'security' },
+            { id: 'activity', name: '活动', icon: 'activity' }
+        ];
+
+        // 图标 SVG
+        const icons = {
+            system: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path></svg>',
+            asset: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>',
+            contract: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>',
+            risk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><path d="M12 9v4M12 17h.01"></path></svg>',
+            security: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>',
+            activity: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>',
+            all: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>'
+        };
+
+        // 跳转文案映射
+        const actionTextMap = {
+            viewDeposit: '查看充值记录',
+            viewWithdraw: '查看提现记录',
+            viewReward: '查看奖励记录',
+            viewContractOrder: '查看合约订单',
+            viewPosition: '查看合约持仓',
+            viewTPSL: '查看止盈止损订单',
+            viewFundingFee: '查看资金费记录',
+            viewSecurity: '查看账户安全',
+            viewWalletAuth: '查看钱包授权',
+            viewActivity: '查看活动详情',
+            viewTicket: '查看工单详情',
+            system: '我知道了',
+            none: null
+        };
+
+        // 状态管理
+        let currentTab = 'all';
+        let messages = JSON.parse(JSON.stringify(mockMessages));
+        let currentMessageId = null;
+
+        // DOM 元素
+        const homePage = document.getElementById('homePage');
+        const bellBtn = document.getElementById('bellBtn');
+        const bellBadge = document.getElementById('bellBadge');
+        const messageCenter = document.getElementById('messageCenter');
+        const backBtn = document.getElementById('backBtn');
+        const tabs = document.getElementById('tabs');
+        const messageList = document.getElementById('messageList');
+        const emptyState = document.getElementById('emptyState');
+        const unreadSummary = document.getElementById('unreadSummary');
+        const unreadCount = document.getElementById('unreadCount');
+        const unreadLabel = document.getElementById('unreadLabel');
+        const markAllBtn = document.getElementById('markAllBtn');
+        const markAllModal = document.getElementById('markAllModal');
+        const markAllDesc = document.getElementById('markAllDesc');
+        const deleteModal = document.getElementById('deleteModal');
+        const messageDetail = document.getElementById('messageDetail');
+        const detailBack = document.getElementById('detailBack');
+        const detailContent = document.getElementById('detailContent');
+        const detailFooter = document.getElementById('detailFooter');
+        const actionBtn = document.getElementById('actionBtn');
+        const moreBtn = document.getElementById('moreBtn');
+        const actionSheet = document.getElementById('actionSheet');
+        const actionSheetContent = document.getElementById('actionSheetContent');
+        const markReadItem = document.getElementById('markReadItem');
+        const deleteItem = document.getElementById('deleteItem');
+        const cancelItem = document.getElementById('cancelItem');
+        const errorState = document.getElementById('errorState');
+        const errorTitle = document.getElementById('errorTitle');
+        const errorDesc = document.getElementById('errorDesc');
+        const toast = document.getElementById('toast');
+        const toastText = document.getElementById('toastText');
+        const emptyIcon = document.getElementById('emptyIcon');
+        const emptyTitle = document.getElementById('emptyTitle');
+        const emptyDesc = document.getElementById('emptyDesc');
+
+        // 初始化
+        function init() {
+            renderTabs();
+            renderMessages();
+            updateUnreadCount();
+            bindEvents();
+        }
+
+        // 渲染 Tab
+        function renderTabs() {
+            const counts = {};
+            categories.forEach(cat => {
+                if (cat.id === 'all') {
+                    counts[cat.id] = messages.filter(m => m.unread && !m.hidden).length;
+                } else {
+                    counts[cat.id] = messages.filter(m => m.category === cat.name && m.unread && !m.hidden).length;
+                }
+            });
+
+            tabs.innerHTML = categories.map(cat => `
+                <div class="tab ${cat.id === currentTab ? 'active' : ''}" data-tab="${cat.id}">
+                    ${cat.name}
+                    ${counts[cat.id] > 0 ? `<span class="tab-count">${counts[cat.id] > 99 ? '99+' : counts[cat.id]}</span>` : ''}
+                </div>
+            `).join('');
+
+            tabs.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    currentTab = tab.dataset.tab;
+                    renderTabs();
+                    renderMessages();
+                    updateMarkAllBtn();
+                });
+            });
+        }
+
+        // 更新全部已读按钮状态
+        function updateMarkAllBtn() {
+            const currentUnread = getCurrentCategoryUnreadCount();
+            if (currentUnread === 0) {
+                markAllBtn.classList.add('disabled');
+            } else {
+                markAllBtn.classList.remove('disabled');
+            }
+        }
+
+        // 获取当前分类未读数
+        function getCurrentCategoryUnreadCount() {
+            if (currentTab === 'all') {
+                return messages.filter(m => m.unread && !m.hidden).length;
+            } else {
+                const catName = categories.find(c => c.id === currentTab).name;
+                return messages.filter(m => m.category === catName && m.unread && !m.hidden).length;
+            }
+        }
+
+        // 渲染消息列表
+        function renderMessages() {
+            let filtered = messages.filter(m => !m.hidden);
+            if (currentTab !== 'all') {
+                const catName = categories.find(c => c.id === currentTab).name;
+                filtered = filtered.filter(m => m.category === catName);
+            }
+
+            // 排序
+            filtered = filtered.sort((a, b) => {
+                if (a.unread !== b.unread) return b.unread - a.unread;
+                if (a.priority !== b.priority) return a.priority - b.priority;
+                return b.id - a.id;
+            });
+
+            const currentUnread = getCurrentCategoryUnreadCount();
+
+            if (filtered.length === 0) {
+                messageList.innerHTML = '';
+                emptyState.classList.add('show');
+                emptyIcon.classList.remove('success');
+                emptyTitle.textContent = '暂无消息';
+                emptyDesc.textContent = '当前分类下没有消息';
+            } else {
+                emptyState.classList.remove('show');
+                messageList.innerHTML = filtered.map(msg => createMessageCard(msg)).join('');
+                bindMessageCardEvents();
+            }
+
+            updateUnreadSummary();
+        }
+
+        // 创建消息卡片 HTML
+        function createMessageCard(msg) {
+            const isP0 = msg.priority === 0;
+
+            return `
+                <div class="message-card ${msg.unread ? 'unread' : 'read'} ${isP0 ? 'p0' : ''}" data-id="${msg.id}">
+                    <div class="message-card-header">
+                        <div class="msg-icon ${msg.type}">
+                            ${icons[msg.type]}
+                        </div>
+                        <div class="msg-content">
+                            <div class="msg-title">
+                                ${escapeHtml(msg.title)}
+                                <div class="msg-tags">
+                                    ${isP0 && msg.unread ? '<span class="msg-tag risk">风险</span>' : ''}
+                                    ${msg.priority === 1 && msg.unread ? '<span class="msg-tag priority">重要</span>' : ''}
+                                </div>
+                            </div>
+                            <div class="msg-summary">${escapeHtml(msg.summary)}</div>
+                            <div class="msg-footer">
+                                <span class="msg-time">${msg.time}</span>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div class="unread-dot"></div>
+                                    <span class="msg-arrow">›</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // HTML 转义
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 格式化钱包地址
+        function formatAddress(address) {
+            if (!address) return '';
+            if (address.length <= 12) return address;
+            return address.slice(0, 6) + '...' + address.slice(-4);
+        }
+
+        // 绑定消息卡片事件
+        function bindMessageCardEvents() {
+            messageList.querySelectorAll('.message-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const id = parseInt(card.dataset.id);
+                    openDetail(id);
+                });
+            });
+        }
+
+        // 更新未读汇总
+        function updateUnreadSummary() {
+            const totalUnread = messages.filter(m => m.unread && !m.hidden).length;
+
+            unreadCount.textContent = totalUnread;
+
+            if (totalUnread === 0) {
+                unreadSummary.classList.add('all-read');
+                unreadLabel.textContent = '暂无未读消息';
+            } else {
+                unreadSummary.classList.remove('all-read');
+                unreadLabel.textContent = '条未读消息';
+            }
+        }
+
+        // 更新未读数
+        function updateUnreadCount() {
+            const count = messages.filter(m => m.unread && !m.hidden).length;
+            unreadCount.textContent = count;
+            if (count > 0) {
+                bellBadge.textContent = count > 99 ? '99+' : count;
+                bellBadge.classList.add('show');
+            } else {
+                bellBadge.classList.remove('show');
+            }
+            updateUnreadSummary();
+        }
+
+        // 打开详情
+        function openDetail(id) {
+            const msg = messages.find(m => m.id === id);
+            if (!msg) {
+                showError('notFound');
+                return;
+            }
+
+            // 检查异常状态
+            if (msg.status === 'expired') {
+                showError('expired');
+                return;
+            }
+            if (msg.status === 'revoked') {
+                showError('revoked');
+                return;
+            }
+            if (msg.status === 'notFound') {
+                showError('notFound');
+                return;
+            }
+
+            currentMessageId = id;
+
+            // 标记已读
+            if (msg.unread) {
+                msg.unread = false;
+                updateUnreadCount();
+                renderTabs();
+                renderMessages();
+                showToast('已标记为已读', 'info');
+            }
+
+            // 隐藏错误状态
+            errorState.classList.remove('show');
+            detailContent.style.display = 'block';
+
+            // 渲染详情
+            renderDetailContent(msg);
+
+            // 显示页面
+            homePage.addClass('hidden');
+            messageCenter.classList.remove('active');
+            messageDetail.classList.add('active');
+            messageDetail.classList.add('slide-in');
+
+            // 更新更多菜单状态
+            updateActionSheetItems(msg);
+        }
+
+        // 显示错误状态
+        function showError(type) {
+            detailContent.style.display = 'none';
+            detailFooter.style.display = 'none';
+            errorState.classList.add('show');
+
+            if (type === 'expired') {
+                errorTitle.textContent = '消息已过期';
+                errorDesc.textContent = '该活动消息已过期，不再展示';
+            } else if (type === 'revoked') {
+                errorTitle.textContent = '消息已撤回';
+                errorDesc.textContent = '该公告已被撤回';
+            } else if (type === 'notFound') {
+                errorTitle.textContent = '消息不存在';
+                errorDesc.textContent = '相关业务记录不存在或已删除';
+            } else {
+                errorTitle.textContent = '消息不存在';
+                errorDesc.textContent = '该消息可能已被删除';
+            }
+
+            homePage.addClass('hidden');
+            messageCenter.classList.remove('active');
+            messageDetail.classList.add('active');
+            messageDetail.classList.remove('slide-in');
+        }
+
+        // 渲染详情内容
+        function renderDetailContent(msg) {
+            let html = '';
+
+            // 基础信息
+            html += `
+                <div class="detail-meta">
+                    <div class="detail-icon ${msg.type}">
+                        ${icons[msg.type]}
+                    </div>
+                    <div class="detail-meta-info">
+                        <h2>${escapeHtml(msg.title)}</h2>
+                        <div class="time">${msg.time}</div>
+                        <div class="detail-status ${msg.unread ? 'unread' : ''}">
+                            ${msg.unread ? '● 未读' : '✓ 已读'}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 业务信息卡片
+            const bd = msg.businessData;
+            if (bd && Object.keys(bd).length > 0) {
+                html += renderBusinessCard(msg);
+            }
+
+            // 底部按钮
+            const actionText = actionTextMap[msg.actionType];
+            if (actionText) {
+                detailFooter.style.display = 'block';
+                actionBtn.textContent = actionText;
+                actionBtn.className = 'detail-action-btn-text';
+            } else {
+                detailFooter.style.display = 'block';
+                actionBtn.textContent = '我知道了';
+                actionBtn.className = 'detail-action-btn-text secondary';
+            }
+
+            detailContent.innerHTML = html;
+        }
+
+        // 渲染业务信息卡片
+        function renderBusinessCard(msg) {
+            const bd = msg.businessData;
+            const type = bd.type;
+            let html = '';
+
+            // 资产类
+            if (type === 'deposit') {
+                html = `
+                    <div class="detail-card">
+                        <div class="detail-card-title">充值信息</div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">币种</span>
+                            <span class="detail-card-value">${bd.coin}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">网络</span>
+                            <span class="detail-card-value">${bd.network}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">数量</span>
+                            <span class="detail-card-value highlight">${bd.amount} ${bd.coin}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">到账时间</span>
+                            <span class="detail-card-value">${bd.time}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">TxHash</span>
+                            <span class="detail-card-value mono">${formatAddress(bd.txHash)}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'withdrawSubmit' || type === 'withdrawFailed') {
+                html = `
+                    <div class="detail-card">
+                        <div class="detail-card-title">${type === 'withdrawFailed' ? '提现失败' : '提现信息'}</div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">币种</span>
+                            <span class="detail-card-value">${bd.coin}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">网络</span>
+                            <span class="detail-card-value">${bd.network}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">数量</span>
+                            <span class="detail-card-value ${type === 'withdrawFailed' ? 'danger' : ''}">${bd.amount} ${bd.coin}</span>
+                        </div>
+                        ${bd.fee ? `
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">手续费</span>
+                            <span class="detail-card-value">${bd.fee} ${bd.coin}</span>
+                        </div>
+                        ` : ''}
+                        ${bd.actualAmount ? `
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">实际到账</span>
+                            <span class="detail-card-value success">${bd.actualAmount} ${bd.coin}</span>
+                        </div>
+                        ` : ''}
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">提现地址</span>
+                            <span class="detail-card-value mono">${formatAddress(bd.address)}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">提现单号</span>
+                            <span class="detail-card-value">${bd.orderId}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">状态</span>
+                            <span class="detail-card-value ${type === 'withdrawFailed' ? 'danger' : 'highlight'}">${bd.status}</span>
+                        </div>
+                        ${bd.reason ? `
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">失败原因</span>
+                            <span class="detail-card-value danger">${bd.reason}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+            } else if (type === 'reward') {
+                html = `
+                    <div class="detail-card">
+                        <div class="detail-card-title">奖励信息</div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">活动名称</span>
+                            <span class="detail-card-value">${bd.activityName}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">奖励类型</span>
+                            <span class="detail-card-value">${bd.rewardType}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">奖励金额</span>
+                            <span class="detail-card-value success">${bd.amount}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">到账时间</span>
+                            <span class="detail-card-value">${bd.time}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            // 合约类
+            else if (type === 'limitFill' || type === 'marketFill') {
+                const isLong = bd.side === '买入';
+                html = `
+                    <div class="detail-card">
+                        <div class="detail-card-title">委托成交</div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">合约交易对</span>
+                            <span class="detail-card-value highlight">${bd.pair}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">方向</span>
+                            <span class="detail-card-value ${isLong ? 'success' : 'danger'}">${bd.side}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">杠杆</span>
+                            <span class="detail-card-value">${bd.leverage}</span>
+                        </div>
+                        ${bd.orderPrice ? `
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">委托价格</span>
+                            <span class="detail-card-value">${bd.orderPrice}</span>
+                        </div>
+                        ` : ''}
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">成交价格</span>
+                            <span class="detail-card-value">${bd.fillPrice}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">成交数量</span>
+                            <span class="detail-card-value">${bd.quantity}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">成交金额</span>
+                            <span class="detail-card-value">${bd.filledAmount}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">订单号</span>
+                            <span class="detail-card-value mono">${bd.orderId}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">手续费</span>
+                            <span class="detail-card-value danger">${bd.fee}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">成交时间</span>
+                            <span class="detail-card-value">${bd.time}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'orderCancel') {
+                html = `
+                    <div class="detail-card">
+                        <div class="detail-card-title">委托撤销</div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">合约交易对</span>
+                            <span class="detail-card-value highlight">${bd.pair}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">方向</span>
+                            <span class="detail-card-value">${bd.side}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">委托价格</span>
+                            <span class="detail-card-value">${bd.orderPrice}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">委托数量</span>
+                            <span class="detail-card-value">${bd.quantity}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">释放保证金</span>
+                            <span class="detail-card-value success">${bd.releasedMargin}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">订单号</span>
+                            <span class="detail-card-value mono">${bd.orderId}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">撤销时间</span>
+                            <span class="detail-card-value">${bd.time}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'takeProfit' || type === 'stopLoss') {
+                const isProfit = type === 'takeProfit';
+                html = `
+                    <div class="detail-card">
+                        <div class="detail-card-title">${isProfit ? '止盈' : '止损'}触发</div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">合约交易对</span>
+                            <span class="detail-card-value highlight">${bd.pair}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">方向</span>
+                            <span class="detail-card-value">${bd.side}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">触发价格</span>
+                            <span class="detail-card-value">${bd.triggerPrice}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">成交价格</span>
+                            <span class="detail-card-value">${bd.fillPrice}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">成交数量</span>
+                            <span class="detail-card-value">${bd.quantity}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">${isProfit ? '盈利' : '亏损'}</span>
+                            <span class="detail-card-value ${isProfit ? 'success' : 'danger'}" style="font-size: 16px; font-weight: 700;">${bd.pnl}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">收益率</span>
+                            <span class="detail-card-value ${isProfit ? 'success' : 'danger'}">${bd.pnlRate}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">订单号</span>
+                            <span class="detail-card-value mono">${bd.orderId}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">触发时间</span>
+                            <span class="detail-card-value">${bd.time}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            // 风险类
+            else if (type === 'marginLow') {
+                html = `
+                    <div class="risk-alert-card">
+                        <div class="alert-title">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                <path d="M12 9v4M12 17h.01"></path>
+                            </svg>
+                            保证金不足警告
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">合约交易对</span>
+                            <span class="alert-value">${bd.pair}</span>
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">方向</span>
+                            <span class="alert-value">${bd.side}</span>
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">当前保证金率</span>
+                            <span class="alert-value danger">${bd.marginRate}</span>
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">预警阈值</span>
+                            <span class="alert-value">${bd.threshold}</span>
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">所需维持保证金</span>
+                            <span class="alert-value">${bd.requiredMargin}</span>
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">可用余额</span>
+                            <span class="alert-value danger">${bd.availableBalance}</span>
+                        </div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-title">建议操作</div>
+                        <p style="color: var(--text-secondary); font-size: 13px; line-height: 1.6;">${bd.suggestion}</p>
+                    </div>
+                `;
+            } else if (type === 'liquidationRisk') {
+                html = `
+                    <div class="risk-alert-card">
+                        <div class="alert-title">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                <path d="M12 9v4M12 17h.01"></path>
+                            </svg>
+                            强平风险提醒
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">合约交易对</span>
+                            <span class="alert-value">${bd.pair}</span>
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">方向</span>
+                            <span class="alert-value">${bd.side}</span>
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">杠杆</span>
+                            <span class="alert-value">${bd.leverage}</span>
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">当前保证金率</span>
+                            <span class="alert-value danger">${bd.marginRate}</span>
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">预估强平价</span>
+                            <span class="alert-value danger">${bd.estLiquidationPrice}</span>
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">当前价格</span>
+                            <span class="alert-value">${bd.currentPrice}</span>
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">距强平价格</span>
+                            <span class="alert-value danger">${bd.distance}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'liquidation') {
+                html = `
+                    <div class="detail-card">
+                        <div class="detail-card-title">强制平仓完成</div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">合约交易对</span>
+                            <span class="detail-card-value highlight">${bd.pair}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">方向</span>
+                            <span class="detail-card-value">${bd.side}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">平仓价格</span>
+                            <span class="detail-card-value danger">${bd.liquidationPrice}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">原始开仓价</span>
+                            <span class="detail-card-value">${bd.openPrice}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">平仓数量</span>
+                            <span class="detail-card-value">${bd.quantity}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">亏损金额</span>
+                            <span class="detail-card-value danger">${bd.loss}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">手续费</span>
+                            <span class="detail-card-value danger">${bd.fee}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">平仓时间</span>
+                            <span class="detail-card-value">${bd.time}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'priceVolatility') {
+                html = `
+                    <div class="detail-card">
+                        <div class="detail-card-title">价格波动提醒</div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">合约交易对</span>
+                            <span class="detail-card-value highlight">${bd.pair}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">波动幅度</span>
+                            <span class="detail-card-value ${bd.change.startsWith('+') ? 'success' : 'danger'}">${bd.change}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">当前价格</span>
+                            <span class="detail-card-value">${bd.currentPrice}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">5分钟前价格</span>
+                            <span class="detail-card-value">${bd.prevPrice}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">提醒时间</span>
+                            <span class="detail-card-value">${bd.time}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'fundingFee') {
+                const isPositive = !bd.amount.startsWith('-');
+                html = `
+                    <div class="detail-card">
+                        <div class="detail-card-title">资金费率结算</div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">合约交易对</span>
+                            <span class="detail-card-value highlight">${bd.pair}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">资金费率</span>
+                            <span class="detail-card-value">${bd.fundingRate}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">您的持仓方向</span>
+                            <span class="detail-card-value">${bd.side}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">${isPositive ? '收取' : '支付'}</span>
+                            <span class="detail-card-value ${isPositive ? 'success' : 'danger'}">${bd.amount}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">结算时间</span>
+                            <span class="detail-card-value">${bd.settleTime}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">下次结算</span>
+                            <span class="detail-card-value">${bd.nextSettleTime}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            // 安全类
+            else if (type === 'walletConnect') {
+                html = `
+                    <div class="detail-card">
+                        <div class="detail-card-title">钱包连接</div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">连接地址</span>
+                            <span class="detail-card-value mono">${formatAddress(bd.address)}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">授权 DApp</span>
+                            <span class="detail-card-value">${bd.dapp}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">网络</span>
+                            <span class="detail-card-value highlight">${bd.network}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">权限</span>
+                            <span class="detail-card-value">${bd.permissions.join('、')}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">连接时间</span>
+                            <span class="detail-card-value">${bd.time}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'walletAuthorize') {
+                html = `
+                    <div class="risk-alert-card">
+                        <div class="alert-title">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                <path d="M12 9v4M12 17h.01"></path>
+                            </svg>
+                            钱包授权风险提醒
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">授权合约</span>
+                            <span class="alert-value mono">${formatAddress(bd.contractAddress)}</span>
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">合约名称</span>
+                            <span class="alert-value danger">${bd.contractName}</span>
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">授权权限</span>
+                            <span class="alert-value danger">${bd.permissions}</span>
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">网络</span>
+                            <span class="alert-value">${bd.network}</span>
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">授权时间</span>
+                            <span class="alert-value">${bd.time}</span>
+                        </div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-title">风险提示</div>
+                        <p style="color: var(--accent-red); font-size: 13px; line-height: 1.6;">${bd.warning}</p>
+                    </div>
+                `;
+            } else if (type === 'abnormalLogin') {
+                html = `
+                    <div class="risk-alert-card">
+                        <div class="alert-title">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                <path d="M12 9v4M12 17h.01"></path>
+                            </svg>
+                            异地登录提醒
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">登录地点</span>
+                            <span class="alert-value danger">${bd.location}</span>
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">登录 IP</span>
+                            <span class="alert-value">${bd.ip}</span>
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">设备</span>
+                            <span class="alert-value">${bd.device}</span>
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">浏览器</span>
+                            <span class="alert-value">${bd.browser}</span>
+                        </div>
+                        <div class="alert-row">
+                            <span class="alert-label">登录时间</span>
+                            <span class="alert-value">${bd.time}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'newDevice') {
+                html = `
+                    <div class="detail-card">
+                        <div class="detail-card-title">新设备登录</div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">登录设备</span>
+                            <span class="detail-card-value">${bd.device}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">设备名称</span>
+                            <span class="detail-card-value">${bd.deviceName}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">登录地点</span>
+                            <span class="detail-card-value">${bd.location}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">登录时间</span>
+                            <span class="detail-card-value">${bd.time}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'passwordChanged') {
+                html = `
+                    <div class="detail-card">
+                        <div class="detail-card-title">密码修改</div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">修改方式</span>
+                            <span class="detail-card-value">${bd.method}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">IP 地址</span>
+                            <span class="detail-card-value">${bd.ip}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">修改时间</span>
+                            <span class="detail-card-value">${bd.time}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'googleBound') {
+                html = `
+                    <div class="detail-card">
+                        <div class="detail-card-title">Google 验证器</div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">绑定设备</span>
+                            <span class="detail-card-value">${bd.device}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">安全等级</span>
+                            <span class="detail-card-value success">${bd.securityLevel}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">绑定时间</span>
+                            <span class="detail-card-value">${bd.time}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            // 活动类
+            else if (type === 'activityNew') {
+                html = `
+                    <div class="detail-card">
+                        <div class="detail-card-title">${bd.activityName}</div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">活动时间</span>
+                            <span class="detail-card-value">${bd.startTime} - ${bd.endTime}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">总奖池</span>
+                            <span class="detail-card-value highlight">${bd.prizePool}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">报名奖励</span>
+                            <span class="detail-card-value success">${bd.signupReward}</span>
+                        </div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-title">奖项设置</div>
+                        ${bd.rewards.map(r => `
+                            <div class="detail-card-row">
+                                <span class="detail-card-label">${r.rank}</span>
+                                <span class="detail-card-value">${r.reward}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (type === 'activityEnding') {
+                html = `
+                    <div class="detail-card">
+                        <div class="detail-card-title">${bd.activityName}</div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">结束时间</span>
+                            <span class="detail-card-value">${bd.endTime}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">剩余时间</span>
+                            <span class="detail-card-value danger">${bd.remaining}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">当前排名</span>
+                            <span class="detail-card-value">${bd.currentRank}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">当前收益</span>
+                            <span class="detail-card-value">${bd.currentProfit}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">距${bd.targetRank}</span>
+                            <span class="detail-card-value danger">${bd.targetDistance}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'activityReward') {
+                html = `
+                    <div class="detail-card">
+                        <div class="detail-card-title">活动奖励发放</div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">活动名称</span>
+                            <span class="detail-card-value">${bd.activityName}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">获奖名次</span>
+                            <span class="detail-card-value">${bd.rank}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">奖励金额</span>
+                            <span class="detail-card-value success" style="font-size: 16px; font-weight: 700;">${bd.amount}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">发放时间</span>
+                            <span class="detail-card-value">${bd.time}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'ticketReply') {
+                html = `
+                    <div class="detail-card">
+                        <div class="detail-card-title">工单信息</div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">工单编号</span>
+                            <span class="detail-card-value mono">${bd.ticketId}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">工单主题</span>
+                            <span class="detail-card-value">${bd.subject}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">处理状态</span>
+                            <span class="detail-card-value success">${bd.status}</span>
+                        </div>
+                        <div class="detail-card-row">
+                            <span class="detail-card-label">回复时间</span>
+                            <span class="detail-card-value">${bd.replyTime}</span>
+                        </div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-title">客服回复</div>
+                        <p style="color: var(--text-secondary); font-size: 13px; line-height: 1.6;">${bd.reply}</p>
+                    </div>
+                `;
+            }
+            // 系统类
+            else if (msg.category === '系统') {
+                if (bd.maintainTime) {
+                    html = `
+                        <div class="detail-card">
+                            <div class="detail-card-title">维护安排</div>
+                            <div class="detail-card-row">
+                                <span class="detail-card-label">维护时间</span>
+                                <span class="detail-card-value danger">${bd.maintainTime}</span>
+                            </div>
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-card-title">受影响功能</div>
+                            ${bd.affectedServices.map(s => `
+                                <div class="detail-card-row">
+                                    <span class="detail-card-label">• ${s}</span>
+                                    <span class="detail-card-value danger">暂停</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        ${bd.notice ? `
+                        <div class="detail-card">
+                            <div class="detail-card-title">温馨提示</div>
+                            <p style="color: var(--text-secondary); font-size: 13px; line-height: 1.6;">${bd.notice}</p>
+                        </div>
+                        ` : ''}
+                    `;
+                } else if (bd.adjustments) {
+                    html = `
+                        <div class="detail-card">
+                            <div class="detail-card-title">规则调整</div>
+                            ${bd.adjustments.map(a => `
+                                <div class="detail-card-row">
+                                    <span class="detail-card-label">${a.pair}</span>
+                                    <span class="detail-card-value">${a.change}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-card-title">生效时间</div>
+                            <div class="detail-card-row">
+                                <span class="detail-card-label">执行时间</span>
+                                <span class="detail-card-value">${bd.effectiveTime}</span>
+                            </div>
+                        </div>
+                    `;
+                } else if (bd.pair) {
+                    html = `
+                        <div class="detail-card">
+                            <div class="detail-card-title">新合约上线</div>
+                            <div class="detail-card-row">
+                                <span class="detail-card-label">交易对</span>
+                                <span class="detail-card-value highlight">${bd.pair}</span>
+                            </div>
+                            <div class="detail-card-row">
+                                <span class="detail-card-label">最高杠杆</span>
+                                <span class="detail-card-value">${bd.maxLeverage}</span>
+                            </div>
+                            <div class="detail-card-row">
+                                <span class="detail-card-label">资金费率</span>
+                                <span class="detail-card-value">${bd.fundingFee}</span>
+                            </div>
+                            <div class="detail-card-row">
+                                <span class="detail-card-label">上市价格</span>
+                                <span class="detail-card-value">${bd.launchPrice}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            return html;
+        }
+
+        // 更新 Action Sheet 项目
+        function updateActionSheetItems(msg) {
+            if (msg.unread) {
+                markReadItem.style.display = 'flex';
+            } else {
+                markReadItem.style.display = 'none';
+            }
+        }
+
+        // 显示 Toast
+        function showToast(text, type = 'success') {
+            toastText.textContent = text;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // 业务跳转
+        function doBusinessAction(actionType) {
+            const jumpMap = {
+                viewDeposit: '正在跳转充值记录...',
+                viewWithdraw: '正在跳转提现记录...',
+                viewReward: '正在跳转奖励记录...',
+                viewContractOrder: '正在跳转合约订单详情...',
+                viewPosition: '正在跳转合约持仓...',
+                viewTPSL: '正在跳转止盈止损订单...',
+                viewFundingFee: '正在跳转资金费记录...',
+                viewSecurity: '正在跳转账户安全...',
+                viewWalletAuth: '正在跳转钱包授权管理...',
+                viewActivity: '正在跳转活动详情...',
+                viewTicket: '正在跳转工单详情...'
+            };
+
+            if (actionType === 'none' || actionType === 'system') {
+                return;
+            }
+
+            const msg = jumpMap[actionType];
+            if (msg) {
+                showToast(msg, 'info');
+            }
+        }
+
+        // 绑定事件
+        function bindEvents() {
+            // 点击铃铛
+            bellBtn.addEventListener('click', () => {
+                homePage.addClass('hidden');
+                messageCenter.classList.add('active');
+                messageCenter.classList.add('fade-in');
+                renderTabs();
+                renderMessages();
+                updateMarkAllBtn();
+            });
+
+            // 返回
+            backBtn.addEventListener('click', () => {
+                messageCenter.classList.remove('active');
+                homePage.classList.remove('hidden');
+            });
+
+            detailBack.addEventListener('click', () => {
+                messageDetail.classList.remove('active');
+                messageDetail.classList.remove('slide-in');
+                messageCenter.classList.add('active');
+                renderTabs();
+                renderMessages();
+                updateMarkAllBtn();
+                currentMessageId = null;
+            });
+
+            // 底部操作按钮
+            actionBtn.addEventListener('click', () => {
+                const msg = messages.find(m => m.id === currentMessageId);
+                if (msg) {
+                    if (msg.actionType === 'none' || msg.actionType === 'system') {
+                        // 关闭详情页
+                        messageDetail.classList.remove('active');
+                        messageDetail.classList.remove('slide-in');
+                        messageCenter.classList.add('active');
+                    } else {
+                        doBusinessAction(msg.actionType);
+                    }
+                }
+            });
+
+            // 更多按钮
+            moreBtn.addEventListener('click', () => {
+                const msg = messages.find(m => m.id === currentMessageId);
+                if (msg) {
+                    updateActionSheetItems(msg);
+                    actionSheet.classList.add('show');
+                }
+            });
+
+            // Action Sheet 项目
+            markReadItem.addEventListener('click', () => {
+                const msg = messages.find(m => m.id === currentMessageId);
+                if (msg && msg.unread) {
+                    msg.unread = false;
+                    updateUnreadCount();
+                    renderTabs();
+                    renderMessages();
+                    updateActionSheetItems(msg);
+                    showToast('已标记为已读');
+                }
+                actionSheet.classList.remove('show');
+            });
+
+            deleteItem.addEventListener('click', () => {
+                actionSheet.classList.remove('show');
+                deleteModal.classList.add('show');
+            });
+
+            cancelItem.addEventListener('click', () => {
+                actionSheet.classList.remove('show');
+            });
+
+            // 全部已读
+            markAllBtn.addEventListener('click', () => {
+                const currentUnread = getCurrentCategoryUnreadCount();
+                if (currentUnread === 0) {
+                    showToast('暂无更多消息', 'error');
+                    return;
+                }
+
+                if (currentTab === 'all') {
+                    markAllDesc.textContent = '确定要将所有消息标记为已读吗？';
+                } else {
+                    const catName = categories.find(c => c.id === currentTab).name;
+                    markAllDesc.textContent = `确定要将「${catName}」分类下的所有消息标记为已读吗？`;
+                }
+                markAllModal.classList.add('show');
+            });
+
+            document.getElementById('markAllCancel').addEventListener('click', () => {
+                markAllModal.classList.remove('show');
+            });
+
+            document.getElementById('markAllConfirm').addEventListener('click', () => {
+                if (currentTab === 'all') {
+                    messages.forEach(m => { if (!m.hidden) m.unread = false; });
+                } else {
+                    const catName = categories.find(c => c.id === currentTab).name;
+                    messages.forEach(m => {
+                        if (m.category === catName && !m.hidden) m.unread = false;
+                    });
+                }
+                updateUnreadCount();
+                renderTabs();
+                renderMessages();
+                updateMarkAllBtn();
+                markAllModal.classList.remove('show');
+                showToast('已全部标记为已读');
+            });
+
+            // 删除消息
+            document.getElementById('deleteCancel').addEventListener('click', () => {
+                deleteModal.classList.remove('show');
+            });
+
+            document.getElementById('deleteConfirm').addEventListener('click', () => {
+                if (currentMessageId) {
+                    messages = messages.filter(m => m.id !== currentMessageId);
+                    updateUnreadCount();
+                    renderTabs();
+                    renderMessages();
+                    updateMarkAllBtn();
+                    deleteModal.classList.remove('show');
+                    messageDetail.classList.remove('active');
+                    messageDetail.classList.remove('slide-in');
+                    messageCenter.classList.add('active');
+                    currentMessageId = null;
+                    showToast('消息已删除');
+                }
+            });
+
+            // 点击遮罩关闭
+            markAllModal.addEventListener('click', (e) => {
+                if (e.target === markAllModal) {
+                    markAllModal.classList.remove('show');
+                }
+            });
+
+            deleteModal.addEventListener('click', (e) => {
+                if (e.target === deleteModal) {
+                    deleteModal.classList.remove('show');
+                }
+            });
+
+            actionSheet.addEventListener('click', (e) => {
+                if (e.target === actionSheet) {
+                    actionSheet.classList.remove('show');
+                }
+            });
+        }
+
+        // 添加类名的辅助函数
+        Element.prototype.addClass = function(className) {
+            if (className) this.classList.add(className);
+        };
+
+        Element.prototype.removeClass = function(className) {
+            if (className) this.classList.remove(className);
+        };
+
+        // 启动
+        init();
+    </script>
+</body>
+</html>
