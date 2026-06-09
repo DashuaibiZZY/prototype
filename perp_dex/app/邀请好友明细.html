@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ForX APP - 直邀好友明细</title>
+    <title>ForX APP - 直邀好友明細</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
@@ -11,6 +11,7 @@
         .phone-shell { width: 375px; height: 812px; background: #000; border-radius: 50px; padding: 12px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); position: relative; border: 4px solid #333; }
         .screen { width: 100%; height: 100%; background: #fff; border-radius: 38px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .active-tap:active { background-color: #f9fafb; }
     </style>
 </head>
 <body>
@@ -18,107 +19,123 @@
 <div class="phone-shell">
     <div class="screen flex flex-col">
 
-        <!-- 1. 顶部导航 -->
+        <!-- 1. 頂部導航 -->
         <header class="flex justify-between items-center px-6 pt-12 pb-4 shrink-0 bg-white border-b border-gray-50">
-            <button onclick="window.history.back()" class="active:scale-90 transition-transform">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            <button onclick="window.history.back()" class="active:scale-90 transition-transform p-1">
+                <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
             </button>
-            <h2 class="font-black text-base uppercase tracking-tighter">直邀好友明细</h2>
-            <div class="w-6"></div>
+            <h2 class="font-black text-sm uppercase tracking-widest">直邀好友明細</h2>
+            <div class="w-8"></div> <!-- 佔位符保持標題居中 -->
         </header>
 
-        <!-- 2. 头部汇总与搜索 -->
+        <!-- 2. 數據匯總與過濾 -->
         <div class="shrink-0 bg-white px-5 py-4 space-y-4 shadow-sm border-b border-gray-100">
-            <div class="flex divide-x divide-gray-100">
-                <div class="flex-1 px-2">
-                    <p class="text-[9px] text-gray-400 font-bold uppercase mb-1">总计邀请</p>
-                    <p class="text-xl font-black text-gray-900">124 <small class="text-[10px] font-normal opacity-50">人</small></p>
-                </div>
-                <div class="flex-1 px-4">
-                    <p class="text-[9px] text-gray-400 font-bold uppercase mb-1">本周活跃</p>
-                    <p class="text-xl font-black text-green-500">18 <small class="text-[10px] font-normal opacity-50">人</small></p>
-                </div>
-            </div>
-
-            <!-- 搜索框 -->
+            <!-- 搜索與排序切換 -->
             <div class="flex items-center space-x-3">
-                <div class="flex-1 relative bg-gray-100 rounded-xl px-4 py-2 flex items-center">
-                    <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2"/></svg>
-                    <input type="text" placeholder="搜索地址或UID" class="bg-transparent border-none text-[12px] w-full focus:ring-0 outline-none placeholder-gray-400 font-medium">
+                <div class="flex-1 relative bg-gray-100 rounded-xl px-4 py-2.5 flex items-center">
+                    <svg class="w-3.5 h-3.5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2.5"/></svg>
+                    <input type="text" placeholder="搜索錢包地址" class="bg-transparent border-none text-[11px] w-full focus:ring-0 outline-none placeholder-gray-400 font-bold">
                 </div>
-                <div class="flex items-center space-x-1.5 bg-gray-50 px-3 py-2 rounded-xl border border-gray-100">
-                    <input type="checkbox" class="w-3 h-3 rounded-sm accent-black">
-                    <span class="text-[10px] font-bold text-gray-500 uppercase">活跃</span>
-                </div>
+                <!-- 排序按鈕彈窗入口 -->
+                <button class="bg-gray-50 p-2.5 rounded-xl border border-gray-100 active:bg-gray-200 transition-colors">
+                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path></svg>
+                </button>
             </div>
         </div>
 
-        <!-- 3. 好友列表 (可滚动) -->
-        <div class="flex-1 overflow-y-auto no-scrollbar bg-slate-50">
-            <div class="divide-y divide-gray-100 bg-white">
+        <!-- 3. 好友列表 (全新數據結構) -->
+        <div class="flex-1 overflow-y-auto no-scrollbar bg-gray-50/50">
+            <div class="divide-y divide-gray-50 bg-white">
 
-                <!-- 模拟条目 1 -->
-                <div class="p-5 flex flex-col space-y-3 active:bg-gray-50 transition-colors">
-                    <div class="flex justify-between items-start">
-                        <div class="space-y-0.5">
-                            <p class="text-[13px] font-black text-gray-900 font-mono">0xd593...2Dd2</p>
-                            <p class="text-[10px] text-gray-400 font-medium">注册时间: 2024-05-22 14:20</p>
+                <!-- 模擬條目 1 -->
+                <div class="p-5 flex flex-col active-tap transition-colors">
+                    <!-- 頭部：地址與註冊時間 -->
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="space-y-1">
+                            <p class="text-[13px] font-black text-gray-900 font-mono tracking-tight">0xd593...Dd2</p>
+                            <p class="text-[10px] text-gray-400 font-bold">註冊時間: <span class="text-gray-500">2025-11-01</span></p>
                         </div>
-                        <span class="bg-green-100 text-green-600 text-[9px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-widest">Active</span>
                     </div>
-                    <div class="grid grid-cols-2 gap-4 pt-3 border-t border-gray-50">
+
+                    <!-- 數據網格 -->
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-4 pt-4 border-t border-gray-50">
                         <div>
-                            <p class="text-[9px] text-gray-400 font-bold uppercase mb-0.5">期间交易额</p>
-                            <p class="text-[12px] font-black text-gray-800">$1,240,000</p>
+                            <p class="text-[9px] text-gray-400 font-black uppercase mb-1">累計貢獻交易量</p>
+                            <p class="text-[12px] font-black text-gray-800">1,250,400.00 <span class="text-[8px] opacity-40">USDT</span></p>
                         </div>
                         <div class="text-right">
-                            <p class="text-[9px] text-gray-400 font-bold uppercase mb-0.5">贡献返佣</p>
-                            <p class="text-[12px] font-black text-blue-600">+$124.00</p>
+                            <p class="text-[9px] text-gray-400 font-black uppercase mb-1">過去30日交易量</p>
+                            <p class="text-[12px] font-black text-gray-800">50,400.00 <span class="text-[8px] opacity-40">USDT</span></p>
+                        </div>
+
+                        <!-- 佣金突出顯示 -->
+                        <div class="col-span-2 bg-gray-50/80 rounded-lg p-3 flex justify-between items-center mt-1 border border-gray-100/50">
+                            <span class="text-[9px] text-gray-500 font-black uppercase">已產生返佣</span>
+                            <span class="text-[13px] font-black text-blue-600">+125.04 <small class="text-[9px]">USDT</small></span>
                         </div>
                     </div>
                 </div>
 
-                <!-- 模拟条目 2 -->
-                <div class="p-5 flex flex-col space-y-3 active:bg-gray-50 transition-colors">
-                    <div class="flex justify-between items-start">
-                        <div class="space-y-0.5">
-                            <p class="text-[13px] font-black text-gray-900 font-mono">0x88e1...4F42</p>
-                            <p class="text-[10px] text-gray-400 font-medium">注册时间: 2024-05-20 09:12</p>
+                <!-- 模擬條目 2 -->
+                <div class="p-5 flex flex-col active-tap transition-colors">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="space-y-1">
+                            <p class="text-[13px] font-black text-gray-900 font-mono tracking-tight">0x882a...ba1</p>
+                            <p class="text-[10px] text-gray-400 font-bold">註冊時間: <span class="text-gray-500">2025-10-28</span></p>
                         </div>
-                        <span class="text-gray-300 text-[9px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-widest">Inactive</span>
                     </div>
-                    <div class="grid grid-cols-2 gap-4 pt-3 border-t border-gray-50">
+
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-4 pt-4 border-t border-gray-50">
                         <div>
-                            <p class="text-[9px] text-gray-400 font-bold uppercase mb-0.5">期间交易额</p>
-                            <p class="text-[12px] font-bold text-gray-400">$45,000</p>
+                            <p class="text-[9px] text-gray-400 font-black uppercase mb-1">累計貢獻交易量</p>
+                            <p class="text-[12px] font-black text-gray-800">45,000.50 <span class="text-[8px] opacity-40">USDT</span></p>
                         </div>
                         <div class="text-right">
-                            <p class="text-[9px] text-gray-400 font-bold uppercase mb-0.5">贡献返佣</p>
-                            <p class="text-[12px] font-bold text-gray-400">+$4.50</p>
+                            <p class="text-[9px] text-gray-400 font-black uppercase mb-1">過去30日交易量</p>
+                            <p class="text-[12px] font-black text-gray-800">12,000.50 <span class="text-[8px] opacity-40">USDT</span></p>
+                        </div>
+
+                        <div class="col-span-2 bg-gray-50/80 rounded-lg p-3 flex justify-between items-center mt-1 border border-gray-100/50">
+                            <span class="text-[9px] text-gray-500 font-black uppercase">已產生返佣</span>
+                            <span class="text-[13px] font-black text-blue-600">+4.50 <small class="text-[9px]">USDT</small></span>
                         </div>
                     </div>
                 </div>
 
-                <!-- 模拟条目 3 -->
-                <div class="p-5 flex flex-col space-y-3">
-                    <div class="flex justify-between items-start">
-                        <div class="space-y-0.5">
-                            <p class="text-[13px] font-black text-gray-900 font-mono">0x3f5c...882E</p>
-                            <p class="text-[10px] text-gray-400 font-medium">注册时间: 2024-05-18 18:30</p>
+                <!-- 模擬條目 3 (低活躍) -->
+                <div class="p-5 flex flex-col active-tap transition-colors opacity-70">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="space-y-1">
+                            <p class="text-[13px] font-black text-gray-900 font-mono tracking-tight">0x4e21...9C11</p>
+                            <p class="text-[10px] text-gray-400 font-bold">註冊時間: <span class="text-gray-500">2025-10-15</span></p>
                         </div>
-                        <span class="bg-green-100 text-green-600 text-[9px] font-black px-1.5 py-0.5 rounded-sm uppercase">Active</span>
                     </div>
-                    <div class="grid grid-cols-2 gap-4 pt-3 border-t border-gray-50">
-                        <div><p class="text-[9px] text-gray-400 font-bold uppercase">期间交易额</p><p class="text-[12px] font-black">$12,000</p></div>
-                        <div class="text-right"><p class="text-[9px] text-gray-400 font-bold uppercase">贡献返佣</p><p class="text-[12px] font-black text-blue-600">+$1.20</p></div>
+
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-4 pt-4 border-t border-gray-50">
+                        <div>
+                            <p class="text-[9px] text-gray-400 font-black uppercase mb-1">累計貢獻交易量</p>
+                            <p class="text-[12px] font-black text-gray-800">0.00</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[9px] text-gray-400 font-black uppercase mb-1">過去30日交易量</p>
+                            <p class="text-[12px] font-black text-gray-800">0.00</p>
+                        </div>
+
+                        <div class="col-span-2 bg-gray-50/80 rounded-lg p-3 flex justify-between items-center mt-1 border border-gray-100/50">
+                            <span class="text-[9px] text-gray-500 font-black uppercase">已產生返佣</span>
+                            <span class="text-[13px] font-black text-gray-400">+0.00</span>
+                        </div>
                     </div>
                 </div>
 
             </div>
 
-            <!-- 列表底部 -->
+            <!-- 底部加載提示 -->
             <div class="py-12 text-center">
-                <span class="text-[10px] font-bold text-gray-300 uppercase tracking-[0.3em]">No More Friends</span>
+                <div class="inline-flex flex-col items-center space-y-2">
+                    <div class="w-1 h-1 bg-gray-300 rounded-full shadow-[0_0_4px_rgba(0,0,0,0.1)]"></div>
+                    <span class="text-[9px] font-black text-gray-300 uppercase tracking-[0.4em]">End of List</span>
+                </div>
             </div>
         </div>
 

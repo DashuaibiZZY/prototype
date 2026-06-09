@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX Referral - Professional Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #111827; }
+
+        /* 導航 active 樣式 */
+        .tab-active { color: #000; border-bottom: 2px solid #000; font-weight: 800; }
+
+        /* 成長路徑節點 */
+        .tier-node { position: relative; display: flex; flex-direction: column; align-items: center; flex: 1; }
+        .tier-line { position: absolute; top: 12px; left: 50%; width: 100%; height: 2px; background: #f3f4f6; z-index: 0; }
+        .tier-node:last-child .tier-line { display: none; }
+        .tier-circle { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #f3f4f6; background: white; z-index: 1; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #d1d5db; }
+        .tier-node.active .tier-circle { border-color: #000; color: #000; }
+        .tier-node.earned .tier-circle { background: #000; border-color: #000; color: #fff; }
+        .tier-node.earned .tier-line { background: #000; }
+
+        /* 自定義滾動條 */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+        /* Tooltip 浮動框樣式 */
+        .tooltip-box {
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.2s;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+        .group:hover .tooltip-box {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative">
+
+<!-- 分享海報 Modal (隱藏狀態) -->
+<div id="modal-share" class="hidden fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-6">
+    <div class="bg-white w-[375px] rounded-3xl overflow-hidden shadow-2xl transition-all scale-100">
+        <!-- 海報內容區 -->
+        <div class="bg-black p-8 text-white space-y-8 relative overflow-hidden">
+            <div class="absolute -right-10 -top-10 w-40 h-40 bg-blue-600/30 rounded-full blur-3xl"></div>
+            <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 20px 20px;"></div>
+
+            <div class="flex justify-between items-center relative z-10">
+                <span class="font-black italic text-xl tracking-tighter">ForX</span>
+                <span class="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-sm font-black tracking-widest uppercase">Perp DEX</span>
+            </div>
+
+            <div class="space-y-2 relative z-10">
+                <p class="text-[10px] text-blue-400 font-black tracking-[0.3em]">探索無限，交易可能</p>
+                <p class="text-[12px] text-gray-400 font-medium leading-relaxed pt-2">
+                    體驗毫秒級訂單撮合與深度的去中心化流動性交易體驗
+                </p>
+            </div>
+
+            <!-- 中間示意圖 -->
+            <div class="relative z-10 py-2">
+                <div class="h-28 w-full bg-white/5 border border-white/10 rounded-xl flex flex-col justify-center px-4 space-y-4 overflow-hidden">
+                    <div class="flex items-end space-x-1 h-14">
+                        <div class="flex-1 bg-blue-500/40 h-8 rounded-t-sm"></div>
+                        <div class="flex-1 bg-blue-500/60 h-10 rounded-t-sm"></div>
+                        <div class="flex-1 bg-blue-500 h-12 rounded-t-sm"></div>
+                        <div class="flex-1 bg-blue-400/80 h-9 rounded-t-sm"></div>
+                        <div class="flex-1 bg-blue-500/30 h-6 rounded-t-sm"></div>
+                    </div>
+                    <div class="flex justify-between items-center text-[8px] font-black text-blue-400/50 uppercase tracking-widest">
+                        <span>Speed</span><span>Security</span><span>Transparency</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-end relative z-10 pt-4">
+                <div class="space-y-2">
+                    <p class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">我的邀請碼</p>
+                    <p class="text-2xl font-black tracking-[0.1em] text-white font-mono">E6DL28G</p>
+                </div>
+                <div class="w-16 h-16 bg-white p-1 rounded-lg flex items-center justify-center">
+                    <svg class="w-full h-full text-black" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M3 3h6v6H3V3zm2 2v2h2V5H5zm8-2h6v6h-6V3zm2 2v2h2V5h-2zM3 15h6v6H3v-6zm2 2v2h2v-2H5zm10 0h2v2h-2v-2zm2-2h2v2h-2v-2zm0 4h2v2h-2v-2zM13 15h2v2h-2v-2zm2 2h2v2h-2v-2z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        <!-- 按鈕區 -->
+        <div class="p-6 bg-slate-50 flex space-x-3">
+            <button onclick="toggleModal('modal-share')" class="flex-1 py-3 border border-gray-200 rounded-xl font-bold text-gray-400 text-xs uppercase">取消</button>
+            <button onclick="alert('海報已保存')" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-black text-xs shadow-xl active:scale-95 transition-all uppercase tracking-widest">保存圖片</button>
+        </div>
+    </div>
+</div>
+
+<!-- 1. 頂部導航欄 (全站統一) -->
+<nav class="h-12 bg-white border-b border-gray-100 flex items-center px-6 justify-between shrink-0 z-50">
+    <div class="flex items-center space-x-8">
+        <span class="font-black text-xl tracking-tighter text-black cursor-pointer">ForX</span>
+        <div class="flex space-x-5 text-[12px] font-medium">
+            <a href="合约交易.html" class="text-gray-400 hover:text-black">交易</a>
+            <a href="投资组合.html" class="text-gray-400 hover:text-black">投資組合</a>
+            <a href="积分.html" class="text-gray-400 hover:text-black">積分</a>
+            <a href="邀请返佣.html" class="text-black font-bold">邀請返佣</a>
+            <a href="#" class="text-gray-400 hover:text-black">活动</a>
+            <a href="排行榜.html" class="text-gray-400 hover:text-black">排行榜</a>
+            <!-- 更多下拉菜單組件 -->
+            <div class="relative group h-full flex items-center">
+            <span class="text-gray-400 hover:text-black cursor-pointer flex items-center text-[12px] font-medium transition-colors">
+                更多
+                <svg class="w-3 h-3 ml-1 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 9l-7 7-7-7" stroke-width="3"/>
+                </svg>
+            </span>
+                <div class="absolute top-full left-0 hidden group-hover:block pt-2 z-[100]">
+                    <div class="bg-white border border-gray-100 rounded-sm py-1 shadow-lg min-w-[140px] overflow-hidden">
+                        <a href="卡券中心.html" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 font-bold transition-colors">卡券中心</a>
+                        <a href="代理中心.html" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 font-bold transition-colors">代理中心</a>
+                        <a href="#" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 transition-colors">文檔</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="flex items-center space-x-3">
+        <!-- 1. 白夜/黑夜模式切換 (新功能) -->
+        <button class="text-gray-400 hover:text-black transition-colors" title="切換模式">
+            <!-- 這裡默認顯示太陽圖標 (日間模式) -->
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round"/>
+            </svg>
+        </button>
+
+        <!-- 2. 多語言選擇 (新功能) -->
+        <div class="relative group cursor-pointer">
+            <div class="flex items-center text-[11px] font-black text-gray-400 group-hover:text-black transition-colors">
+                简体中文
+                <svg class="w-3 h-3 ml-1 group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 9l-7 7-7-7" stroke-width="3"/>
+                </svg>
+            </div>
+            <!-- 語言下拉菜單 -->
+            <div class="absolute top-full right-0 hidden group-hover:block pt-2 z-[100]">
+                <div class="bg-white border border-gray-100 rounded-sm py-1 shadow-xl min-w-[80px] overflow-hidden">
+                    <a href="#" class="block px-3 py-1.5 text-[11px] text-black font-black bg-gray-50">简体中文</a>
+                    <a href="#" class="block px-3 py-1.5 text-[11px] text-gray-400 hover:text-black hover:bg-gray-50 font-bold uppercase transition-colors">繁体中文</a>
+                    <a href="#" class="block px-3 py-1.5 text-[11px] text-gray-400 hover:text-black hover:bg-gray-50 font-bold uppercase transition-colors">EN</a>
+                    <a href="#" class="block px-3 py-1.5 text-[11px] text-gray-400 hover:text-black hover:bg-gray-50 font-bold transition-colors">日本語</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- === 新增：支持鏈信息 (BNB Chain) === -->
+        <div class="flex items-center space-x-2 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-sm cursor-default group hover:bg-gray-100 transition-colors">
+            <!-- 鏈 Logo -->
+            <img src="bsc-logo.svg" class="w-4 h-4 object-contain" alt="BNB Chain">
+            <!-- 鏈 名稱 -->
+            <span class="text-[11px] font-black text-gray-900 tracking-tight">BNB Chain</span>
+            <!-- 連接狀態感小綠點 (選配，增加「連線感」) -->
+            <div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+        </div>
+
+        <!-- 狀態 B: 已連接 (初始隱藏) -->
+        <div id="user-account-wrapper" class="relative group h-12 flex items-center">
+            <!-- 導航欄顯示的縮略信息 -->
+            <button class="bg-gray-50 px-3 py-1.5 rounded-sm flex items-center space-x-2 border border-gray-100 hover:bg-gray-100 transition">
+                <div class="w-3 h-3 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
+                <span class="text-[11px] font-black text-gray-900">0xd593...2Dd2</span>
+                <svg class="w-3 h-3 text-gray-400 group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="3"/></svg>
+            </button>
+
+            <!-- 已登錄下拉菜單 -->
+            <div class="absolute top-full right-0 hidden group-hover:block pt-2 z-[110]">
+                <div class="bg-white border border-gray-100 rounded-sm shadow-2xl p-4 min-w-[240px] space-y-4">
+
+                    <!-- 1. 地址與複製 (移除了 UID) -->
+                    <div class="flex items-center justify-between pb-3 border-b border-gray-50">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 bg-blue-600 rounded-sm flex items-center justify-center text-white font-black text-[10px]">FX</div>
+                            <span class="text-[12px] font-black text-gray-900">0xd593...2Dd2</span>
+                        </div>
+                        <!-- 複製按鈕 -->
+                        <button class="text-gray-400 hover:text-blue-600 transition-colors p-1 hover:bg-gray-50 rounded-sm" title="複製地址">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- 2. 總資產與快速充值 (核心區域) -->
+                    <div class="bg-gray-50 p-3 rounded-sm border border-gray-100">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-gray-400 font-bold uppercase mb-1">總資產價值</span>
+                                <span class="text-xl font-black text-gray-900 leading-none">$12,450.50</span>
+                            </div>
+                            <!-- 快速充值按鈕 -->
+                            <button class="bg-blue-600 text-white px-3 py-1.5 rounded-sm font-black text-[10px] uppercase shadow-sm hover:bg-blue-700 transition">
+                                充值
+                            </button>
+                        </div>
+                        <!-- 進入投資組合入口 -->
+                        <a href="投资组合.html" class="flex items-center justify-between text-[10px] font-bold text-blue-600 hover:underline">
+                            查看詳情
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 18l6-6-6-6"/></svg>
+                        </a>
+                    </div>
+
+                    <!-- 3. 斷開連接 -->
+                    <div class="pt-1">
+                        <button onclick="mockDisconnect()" class="w-full flex items-center justify-between px-2 py-2 text-[11px] font-bold text-red-400 hover:text-red-600 hover:bg-red-50 transition rounded-sm group">
+                            <span>斷開連接</span>
+                            <svg class="w-4 h-4 opacity-50 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<main class="flex-1 overflow-y-auto bg-white">
+    <div class="max-w-[1200px] mx-auto p-8 space-y-6">
+
+        <!-- 2. 頂部工具條 (新增分享功能) -->
+        <!-- 2. 顶部工具条 -->
+        <div class="p-4 flex flex-col md:flex-row items-center justify-between border border-gray-100 bg-gray-50/50 rounded-sm">
+            <div class="flex items-center space-x-8">
+                <!-- 当前返佣比例 -->
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">當前返佣比例</span>
+                    <span class="text-xl font-black text-blue-600">10%</span>
+                </div>
+                <div class="w-[1px] h-8 bg-gray-200"></div>
+
+                <!-- 我的推荐人（新增） -->
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">我的推薦人</span>
+                    <!-- 有上级时显示脱敏地址，无上级时显示 -- -->
+                    <span id="referrer-address" class="text-[12px] font-medium text-gray-900">
+                0x1a2b...3c4d
+            </span>
+                    <!-- 当无上级时，可以用下方占位，隐藏上方： -->
+                    <!-- <span id="referrer-empty" class="text-[12px] font-medium text-gray-400">--</span> -->
+                </div>
+                <div class="w-[1px] h-8 bg-gray-200"></div>
+
+                <!-- 专属推荐链接 -->
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">專屬推薦連結</span>
+                    <div class="flex items-center space-x-3 mt-1">
+                        <span class="text-[12px] font-medium text-gray-900">forx.finance/?ref=E6DL28G</span>
+                        <button class="text-blue-600 font-bold text-[10px] uppercase hover:underline">複製</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex space-x-3 mt-4 md:mt-0">
+                <!-- 分享按钮保持不变 -->
+                <button onclick="toggleModal('modal-share')" class="flex items-center space-x-2 bg-black text-white px-4 py-2 rounded-sm hover:bg-gray-800 transition shadow-lg shadow-black/10">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                    </svg>
+                    <span class="text-[11px] font-black uppercase tracking-wider">分享海報</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. 核心數據看板 (整合後的黑金風格) -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 bg-black rounded-sm overflow-hidden shadow-2xl">
+            <!-- 累計收益 (主顯) -->
+            <div class="p-8 border-r border-white/5 bg-gradient-to-br from-gray-900 to-black">
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">累計返佣收益</p>
+                <div class="flex items-baseline space-x-1">
+                    <span class="text-4xl font-black text-white">324.13</span>
+                    <span class="text-xs font-bold text-gray-500 uppercase">USDT</span>
+                </div>
+                <p class="text-[9px] text-gray-600 mt-2 italic">每 5 分钟更新，实时统计</p>
+            </div>
+            <!-- 待結算 -->
+            <div class="p-8 border-r border-white/5">
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">待結算收益</p>
+                <div class="flex items-baseline space-x-1">
+                    <span class="text-2xl font-black text-green-400">124.52</span>
+                    <span class="text-xs font-bold text-gray-500 uppercase">USDT</span>
+                </div>
+                <p class="text-[9px] text-gray-600 mt-2 italic">每日 0 点（UTC+8）结算发放，届时自动到账</p>
+            </div>
+            <!-- 直接推薦 -->
+            <div class="p-8 border-r border-white/5">
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">直接推薦人數</p>
+                <div class="flex items-baseline space-x-1">
+                    <span class="text-2xl font-black text-white">12</span>
+                    <span class="text-xs font-bold text-gray-500 uppercase italic">Users</span>
+                </div>
+            </div>
+            <!-- 下級總交易量 -->
+            <div class="p-8">
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">下級累計交易量</p>
+                <div class="flex items-baseline space-x-1">
+                    <span class="text-2xl font-black text-white">1,502,400</span>
+                    <span class="text-xs font-bold text-gray-500 uppercase">USDT</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. 成長體系路徑 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- 左側：成長路徑 -->
+            <div class="lg:col-span-2 border border-gray-100 p-8 rounded-sm">
+                <div class="flex justify-between items-center mb-10">
+                    <h3 class="text-xs font-black text-gray-900 uppercase tracking-widest">佣金等級成長路徑</h3>
+                    <span class="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-sm uppercase">下一級目標: 15%</span>
+                </div>
+
+                <div class="flex px-4 mb-12 relative z-10">
+                    <div class="tier-node earned"><div class="tier-line"></div><div class="tier-circle">✓</div><span class="mt-2 text-[11px] font-black">10%</span></div>
+                    <div class="tier-node active"><div class="tier-line"></div><div class="tier-circle">2</div><span class="mt-2 text-[11px] font-black">15%</span><span class="text-[9px] text-blue-600 font-bold">進行中</span></div>
+                    <div class="tier-node"><div class="tier-line"></div><div class="tier-circle">3</div><span class="mt-2 text-[11px] font-black">20%</span></div>
+                    <div class="tier-node"><div class="tier-line"></div><div class="tier-circle">4</div><span class="mt-2 text-[11px] font-black">25%</span></div>
+                </div>
+
+                <!-- 任務進度 (含 Tooltip) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-gray-50">
+                    <div class="space-y-3">
+                        <div class="flex justify-between text-[10px] font-bold uppercase relative">
+                            <div class="flex items-center space-x-1 group">
+                                <span class="text-gray-500">活跃好友數</span>
+                                <!-- 感嘆號圖標 -->
+                                <div class="cursor-help text-gray-300 hover:text-black transition-colors">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                                <!-- 浮動框 -->
+                                <div class="tooltip-box absolute z-50 bg-black text-white text-[10px] px-3 py-2 rounded shadow-xl pointer-events-none">
+                                    单个好友在过去 30 天内累计交易额 ≥ 10,000 USDT，即被计为活跃好友。
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-black"></div>
+                                </div>
+                            </div>
+                            <span class="text-black">0 / 3</span>
+                        </div>
+                        <div class="w-full h-1 bg-gray-100 rounded-full overflow-hidden"><div class="bg-black h-full" style="width: 15%"></div></div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between text-[10px] font-bold uppercase"><span class="text-gray-500">下级总交易量</span><span class="text-black">0 USDT / 2.5M USDT</span></div>
+                        <div class="w-full h-1 bg-gray-100 rounded-full overflow-hidden"><div class="bg-black h-full" style="width: 5%"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側：大使入口 -->
+            <div class="bg-blue-600 p-8 rounded-sm text-white flex flex-col justify-center relative overflow-hidden group cursor-pointer shadow-xl shadow-blue-600/20">
+                <div class="relative z-10">
+                    <p class="text-[10px] font-black text-blue-200 uppercase mb-2">ForX 大使計劃</p>
+                    <p class="text-lg font-black leading-tight mb-6">具備交易社區資源？<br>申請解鎖最高 40% 返佣。</p>
+                    <button class="bg-white text-blue-600 px-6 py-2.5 rounded-sm font-black text-[10px] uppercase hover:bg-gray-100 transition shadow-lg">立即申請 &rarr;</button>
+                </div>
+                <div class="absolute -right-8 -bottom-8 w-48 h-48 bg-white opacity-10 rounded-full blur-3xl group-hover:opacity-20 transition-opacity"></div>
+            </div>
+        </div>
+
+        <!-- 5. 數據明細列表 -->
+        <div class="border border-gray-100 rounded-sm overflow-hidden shadow-sm">
+            <!-- 列表頭部：分頁標籤 + 搜尋/篩選 -->
+            <div class="h-14 border-b border-gray-100 flex items-center px-6 bg-white justify-between">
+                <div class="flex items-center">
+                    <span class="tab-active h-14 flex items-center text-[11px] font-black uppercase tracking-widest">直邀好友明細</span>
+                </div>
+
+                <!-- 右側工具欄：搜尋 + 篩選 -->
+                <div class="flex items-center space-x-6">
+                    <!-- 搜尋框 -->
+                    <div class="relative flex items-center">
+                        <svg class="w-3.5 h-3.5 text-gray-400 absolute left-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <input type="text" placeholder="搜尋錢包地址" class="bg-gray-50 border border-gray-100 text-[11px] font-bold rounded-sm py-1.5 pl-9 pr-3 w-64 focus:bg-white focus:ring-1 focus:ring-black outline-none transition-all placeholder-gray-400">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 數據表格 -->
+            <div class="overflow-x-auto scrollbar-hide">
+                <table class="w-full text-left text-[11px]">
+                    <thead class="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-tighter border-b border-gray-100">
+                    <tr>
+                        <th class="px-6 py-4">錢包地址</th>
+                        <th class="px-6 py-4">註冊時間</th>
+                        <th class="px-6 py-4 text-right">
+                            <button class="flex items-center justify-end space-x-1 w-full hover:text-black transition-colors">
+                                <span>累計貢獻交易量 (USDT)</span>
+                                <svg class="w-2.5 h-2.5 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21l-5-5h10l-5 5zM12 3l5 5H7l5-5z"/></svg>
+                            </button>
+                        </th>
+                        <th class="px-6 py-4 text-right">
+                            <button class="flex items-center justify-end space-x-1 w-full hover:text-black transition-colors">
+                                <span>過去30日交易量 (USDT)</span>
+                                <svg class="w-2.5 h-2.5 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21l-5-5h10l-5 5zM12 3l5 5H7l5-5z"/></svg>
+                            </button>
+                        </th>
+                        <th class="px-6 py-4 text-right">
+                            <button class="flex items-center justify-end space-x-1 w-full hover:text-black transition-colors">
+                                <span>已產生返佣 (USDT)</span>
+                                <svg class="w-2.5 h-2.5 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21l-5-5h10l-5 5zM12 3l5 5H7l5-5z"/></svg>
+                            </button>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50 font-medium">
+                    <tr class="hover:bg-gray-50/50 transition-colors">
+                        <td class="px-6 py-4 font-black text-gray-900">0xd593...Dd2</td>
+                        <td class="px-6 py-4 text-gray-400 font-bold">2025-11-01</td>
+                        <td class="px-6 py-4 text-right font-bold text-gray-700">1,250,400.00</td>
+                        <td class="px-6 py-4 text-right font-bold text-gray-700">50,400.00</td>
+                        <td class="px-6 py-4 text-right text-blue-600 font-black">+125.04</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50/50 transition-colors">
+                        <td class="px-6 py-4 font-black text-gray-900">0x882a...ba1</td>
+                        <td class="px-6 py-4 text-gray-400 font-bold">2025-10-28</td>
+                        <td class="px-6 py-4 text-right font-bold text-gray-700">45,000.50</td>
+                        <td class="px-6 py-4 text-right font-bold text-gray-700">12,000.50</td>
+                        <td class="px-6 py-4 text-right text-blue-600 font-black">+4.50</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 列表底部分頁 -->
+            <div class="h-12 border-t border-gray-100 flex items-center px-6 justify-between bg-white">
+        <span class="text-[10px] text-gray-400 font-black uppercase tracking-tighter">
+            顯示 1-10 條，共 124 名好友
+        </span>
+                <div class="flex space-x-1">
+                    <button class="w-6 h-6 flex items-center justify-center border border-gray-100 rounded-sm hover:bg-gray-50 transition-colors">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <button class="w-6 h-6 flex items-center justify-center bg-black text-white rounded-sm text-[10px] font-black">1</button>
+                    <button class="w-6 h-6 flex items-center justify-center border border-gray-100 rounded-sm text-gray-700 text-[10px] font-bold hover:bg-gray-50 transition-colors">2</button>
+                    <button class="w-6 h-6 flex items-center justify-center border border-gray-100 rounded-sm hover:bg-gray-50 transition-colors">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    function toggleModal(id) {
+        const modal = document.getElementById(id);
+        if (modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        } else {
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+    }
+</script>
+
+</body>
+</html>
