@@ -1,0 +1,2854 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX - 消息中心</title>
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1a2035;
+            --bg-card-hover: #232d47;
+            --bg-input: #0d1117;
+            --border-color: #2a3348;
+            --border-light: #363f57;
+            --text-primary: #ffffff;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --shadow-lg: 0 20px 40px rgba(0,0,0,0.5);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* 顶部导航栏 */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            z-index: 1000;
+        }
+
+        .navbar-left {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 14px;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 4px;
+        }
+
+        .nav-menu-item {
+            padding: 8px 16px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .nav-menu-item:hover {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .nav-menu-item.active {
+            color: var(--accent-cyan);
+        }
+
+        .navbar-center {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            padding: 0 40px;
+        }
+
+        .search-box {
+            width: 320px;
+            height: 40px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 8px;
+        }
+
+        .search-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-icon {
+            color: var(--text-muted);
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .wallet-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .wallet-status:hover {
+            background: rgba(59, 130, 246, 0.15);
+        }
+
+        .wallet-icon {
+            width: 20px;
+            height: 20px;
+            background: var(--accent-blue);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .wallet-address {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--accent-blue);
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+        }
+
+        .nav-icon-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            color: var(--text-secondary);
+        }
+
+        .nav-icon-btn:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary);
+        }
+
+        .nav-icon-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* 铃铛未读数 */
+        .unread-badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            min-width: 18px;
+            height: 18px;
+            background: var(--accent-red);
+            border-radius: 9px;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 5px;
+        }
+
+        /* 消息下拉浮层 */
+        .message-dropdown {
+            position: fixed;
+            top: 64px;
+            right: 80px;
+            width: 380px;
+            max-height: 520px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            display: none;
+            flex-direction: column;
+            z-index: 1001;
+            overflow: hidden;
+        }
+
+        .message-dropdown.show {
+            display: flex;
+        }
+
+        .dropdown-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .dropdown-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .dropdown-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .dropdown-mark-read {
+            font-size: 13px;
+            color: var(--accent-cyan);
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .dropdown-mark-read:hover {
+            opacity: 0.8;
+        }
+
+        .dropdown-unread-tip {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .dropdown-unread-tip span {
+            color: var(--accent-red);
+            font-weight: 500;
+        }
+
+        .dropdown-tabs {
+            display: flex;
+            gap: 4px;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+
+        .dropdown-tab {
+            padding: 6px 12px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .dropdown-tab:hover {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .dropdown-tab.active {
+            color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.1);
+        }
+
+        .dropdown-message-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .dropdown-message-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .dropdown-message-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .dropdown-message-list::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 2px;
+        }
+
+        .dropdown-message-item {
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            position: relative;
+        }
+
+        .dropdown-message-item:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .dropdown-message-item.unread {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .dropdown-message-item.p0 {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .dropdown-message-item.p0:hover {
+            background: rgba(239, 68, 68, 0.12);
+        }
+
+        .dropdown-msg-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .msg-type-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .msg-type-icon.system { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+        .msg-type-icon.asset { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .msg-type-icon.contract { background: rgba(245, 158, 11, 0.2); color: var(--accent-orange); }
+        .msg-type-icon.security { background: rgba(139, 92, 246, 0.2); color: var(--accent-purple); }
+        .msg-type-icon.activity { background: rgba(236, 72, 153, 0.2); color: #ec4899; }
+
+        .msg-title {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .unread-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-red);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .risk-tag {
+            padding: 2px 6px;
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+            font-size: 10px;
+            font-weight: 600;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .msg-summary {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+
+        .msg-time {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .dropdown-footer {
+            padding: 12px 20px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .view-all-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .view-all-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* 遮罩层 */
+        .overlay-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1000;
+            display: none;
+        }
+
+        .overlay-bg.show {
+            display: block;
+        }
+
+        /* 主内容区 - 三栏布局 */
+        .main-content {
+            margin-top: 64px;
+            min-height: calc(100vh - 64px);
+            background: var(--bg-primary);
+            display: none;
+        }
+
+        .main-content.show {
+            display: block;
+        }
+
+        .message-center {
+            max-width: 1440px;
+            margin: 0 auto;
+            height: calc(100vh - 64px);
+            display: flex;
+            padding: 16px;
+            gap: 16px;
+        }
+
+        /* 左侧分类栏 */
+        .category-sidebar {
+            width: 220px;
+            flex-shrink: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .category-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .category-item:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .category-item.active {
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+        }
+
+        .category-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .category-icon.all { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+        .category-icon.system { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+        .category-icon.asset { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .category-icon.contract { background: rgba(245, 158, 11, 0.2); color: var(--accent-orange); }
+        .category-icon.security { background: rgba(139, 92, 246, 0.2); color: var(--accent-purple); }
+        .category-icon.activity { background: rgba(236, 72, 153, 0.2); color: #ec4899; }
+
+        .category-name {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .category-unread {
+            padding: 2px 8px;
+            background: var(--accent-red);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 10px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        /* 中间消息列表 */
+        .message-list-panel {
+            width: 480px;
+            flex-shrink: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .list-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .list-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .list-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .list-unread-count {
+            font-size: 13px;
+            color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .list-tools {
+            display: flex;
+            gap: 8px;
+        }
+
+        .list-search {
+            flex: 1;
+            position: relative;
+        }
+
+        .list-search input {
+            width: 100%;
+            height: 36px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0 12px 0 36px;
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .list-search input:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        .list-search .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .filter-btn {
+            height: 36px;
+            padding: 0 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--border-light);
+            color: var(--text-primary);
+        }
+
+        .filter-btn.active {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.1);
+        }
+
+        .list-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .action-btn {
+            flex: 1;
+            height: 32px;
+            padding: 0 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            border-color: var(--border-light);
+            color: var(--text-primary);
+        }
+
+        .action-btn.danger:hover {
+            border-color: rgba(239, 68, 68, 0.3);
+            color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .message-list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .message-list-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .message-list-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .message-list-container::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        .message-card {
+            padding: 14px;
+            margin-bottom: 8px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .message-card:hover {
+            border-color: var(--border-light);
+            background: var(--bg-card-hover);
+        }
+
+        .message-card.selected {
+            border-color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.1);
+        }
+
+        .message-card.p0 {
+            border-left: 3px solid var(--accent-red);
+        }
+
+        .message-card.unread {
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .message-card.unread .message-card-title {
+            font-weight: 600;
+        }
+
+        .message-card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .message-card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .message-card-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .message-card-title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .message-card-title {
+            flex: 1;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .message-card-unread {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-red);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .message-card-body {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+
+        .message-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .message-card-time {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .message-card-more {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+
+        .message-card-more:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary);
+        }
+
+        /* 分页 */
+        .pagination {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .page-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            border-color: var(--border-light);
+            color: var(--text-primary);
+        }
+
+        .page-btn.active {
+            background: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            color: white;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .page-ellipsis {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+        }
+
+        /* 右侧详情区域 */
+        .message-detail-panel {
+            flex: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        .detail-panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .detail-panel-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .detail-panel-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .detail-action-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .detail-action-btn:hover {
+            border-color: var(--border-light);
+            color: var(--text-primary);
+        }
+
+        .detail-action-btn.danger:hover {
+            border-color: rgba(239, 68, 68, 0.3);
+            color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .detail-panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .detail-panel-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .detail-panel-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .detail-panel-content::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        .detail-header-info {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-icon-big {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .detail-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .detail-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .detail-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .detail-tag {
+            padding: 4px 10px;
+            border-radius: 100px;
+            font-size: 12px;
+        }
+
+        .detail-tag.type {
+            background: rgba(255,255,255,0.08);
+            color: var(--text-secondary);
+        }
+
+        .detail-tag.risk {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+            font-weight: 500;
+        }
+
+        .detail-tag.read {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-muted);
+        }
+
+        .detail-time {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .detail-body {
+            font-size: 15px;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .detail-body p {
+            margin-bottom: 12px;
+        }
+
+        .detail-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        .detail-body strong {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* 业务信息卡片 */
+        .business-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .business-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .business-card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .business-card-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+
+        .business-card-label {
+            color: var(--text-muted);
+        }
+
+        .business-card-value {
+            color: var(--text-primary);
+            font-weight: 500;
+            text-align: right;
+            max-width: 60%;
+        }
+
+        .business-card-value.hash,
+        .business-card-value.address,
+        .business-card-value.orderId {
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+            font-size: 13px;
+        }
+
+        .business-card-value.profit {
+            color: var(--accent-green);
+        }
+
+        .business-card-value.loss {
+            color: var(--accent-red);
+        }
+
+        /* 底部业务按钮 */
+        .detail-panel-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 12px;
+        }
+
+        .detail-footer-btn {
+            flex: 1;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .detail-footer-btn:hover {
+            border-color: var(--border-light);
+            background: var(--bg-card-hover);
+        }
+
+        .detail-footer-btn.primary {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            border: none;
+            color: white;
+        }
+
+        .detail-footer-btn.primary:hover {
+            opacity: 0.9;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            background: var(--bg-secondary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .empty-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* 异常状态 */
+        .exception-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        .exception-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+        }
+
+        .exception-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .exception-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* 弹窗 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            width: 400px;
+            max-width: 90%;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .modal-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .modal-btn.cancel {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-btn.cancel:hover {
+            border-color: var(--border-light);
+            color: var(--text-primary);
+        }
+
+        .modal-btn.confirm {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .modal-btn.confirm:hover {
+            opacity: 0.9;
+        }
+
+        .modal-btn.confirm-secondary {
+            background: var(--accent-cyan);
+            color: white;
+        }
+
+        .modal-btn.confirm-secondary:hover {
+            opacity: 0.9;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-lg);
+            z-index: 3000;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toast-icon.success {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+        }
+
+        .toast-icon.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+        }
+
+        .toast-message {
+            font-size: 14px;
+        }
+
+        /* 背景装饰 */
+        .bg-decoration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .bg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.3;
+        }
+
+        .bg-orb-1 {
+            width: 600px;
+            height: 600px;
+            background: var(--accent-cyan);
+            top: -200px;
+            right: -200px;
+        }
+
+        .bg-orb-2 {
+            width: 400px;
+            height: 400px;
+            background: var(--accent-purple);
+            bottom: -100px;
+            left: -100px;
+        }
+
+        /* 隐藏的详情独立页 */
+        .message-detail-overlay {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-decoration">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+    </div>
+
+    <!-- 顶部导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-left">
+            <div class="logo">
+                <div class="logo-icon">FX</div>
+                <span>ForX</span>
+            </div>
+            <div class="nav-menu">
+                <div class="nav-menu-item">Markets</div>
+                <div class="nav-menu-item active">Trade</div>
+                <div class="nav-menu-item">Earn</div>
+                <div class="nav-menu-item">Activity</div>
+                <div class="nav-menu-item">Assets</div>
+            </div>
+        </div>
+        <div class="navbar-center">
+            <div class="search-box">
+                <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input type="text" placeholder="搜索 BTC/USDT 永续">
+            </div>
+        </div>
+        <div class="navbar-right">
+            <div class="wallet-status">
+                <div class="wallet-icon">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
+                        <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path>
+                        <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path>
+                    </svg>
+                </div>
+                <span class="wallet-address">0xA91...8F3C</span>
+            </div>
+            <div class="nav-icon-btn" id="assetsBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect width="9" height="9" x="2" y="2" rx="2"></rect>
+                    <rect width="9" height="9" x="13" y="2" rx="2"></rect>
+                    <rect width="9" height="9" x="13" y="13" rx="2"></rect>
+                    <rect width="9" height="9" x="2" y="13" rx="2"></rect>
+                </svg>
+            </div>
+            <div class="nav-icon-btn" id="bellBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
+                    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
+                </svg>
+                <div class="unread-badge" id="bellBadge">14</div>
+            </div>
+            <div class="user-avatar">T</div>
+        </div>
+    </nav>
+
+    <!-- 消息下拉浮层 -->
+    <div class="message-dropdown" id="messageDropdown">
+        <div class="dropdown-header">
+            <div class="dropdown-header-top">
+                <span class="dropdown-title">消息中心</span>
+                <span class="dropdown-mark-read" id="dropdownMarkRead">全部已读</span>
+            </div>
+            <div class="dropdown-unread-tip">你有 <span id="dropdownUnreadCount">14</span> 条未读消息</div>
+        </div>
+        <div class="dropdown-tabs">
+            <button class="dropdown-tab active" data-tab="all">全部</button>
+            <button class="dropdown-tab" data-tab="system">系统</button>
+            <button class="dropdown-tab" data-tab="asset">资产</button>
+            <button class="dropdown-tab" data-tab="contract">合约</button>
+            <button class="dropdown-tab" data-tab="security">安全</button>
+            <button class="dropdown-tab" data-tab="activity">活动</button>
+        </div>
+        <div class="dropdown-message-list" id="dropdownMessageList">
+        </div>
+        <div class="dropdown-footer">
+            <button class="view-all-btn" id="viewAllBtn">
+                查看全部消息
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m9 18 6-6-6-6"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- 遮罩层 -->
+    <div class="overlay-bg" id="overlayBg"></div>
+
+    <!-- 消息中心 - 三栏布局 -->
+    <main class="main-content" id="mainContent">
+        <div class="message-center">
+            <!-- 左侧分类栏 -->
+            <aside class="category-sidebar">
+                <div class="sidebar-header">消息分类</div>
+                <div class="category-list">
+                    <div class="category-item active" data-category="all">
+                        <div class="category-icon all">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
+                        <span class="category-name">全部消息</span>
+                        <span class="category-unread" id="cat-unread-all">14</span>
+                    </div>
+                    <div class="category-item" data-category="system">
+                        <div class="category-icon system">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                        </div>
+                        <span class="category-name">系统通知</span>
+                        <span class="category-unread" id="cat-unread-system">2</span>
+                    </div>
+                    <div class="category-item" data-category="asset">
+                        <div class="category-icon asset">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23"></line>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                        </div>
+                        <span class="category-name">资产通知</span>
+                        <span class="category-unread" id="cat-unread-asset">2</span>
+                    </div>
+                    <div class="category-item" data-category="contract">
+                        <div class="category-icon contract">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="16 18 22 12 16 6"></polyline>
+                                <polyline points="8 6 2 12 8 18"></polyline>
+                            </svg>
+                        </div>
+                        <span class="category-name">合约通知</span>
+                        <span class="category-unread" id="cat-unread-contract">6</span>
+                    </div>
+                    <div class="category-item" data-category="security">
+                        <div class="category-icon security">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                <polyline points="9 12 11 14 15 10"></polyline>
+                            </svg>
+                        </div>
+                        <span class="category-name">安全通知</span>
+                        <span class="category-unread" id="cat-unread-security">2</span>
+                    </div>
+                    <div class="category-item" data-category="activity">
+                        <div class="category-icon activity">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                            </svg>
+                        </div>
+                        <span class="category-name">活动通知</span>
+                        <span class="category-unread" id="cat-unread-activity">2</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- 中间消息列表 -->
+            <section class="message-list-panel">
+                <div class="list-header">
+                    <div class="list-header-top">
+                        <div class="list-title" id="listTitle">全部消息</div>
+                        <div class="list-unread-count" id="listUnreadCount">14 条未读</div>
+                    </div>
+                    <div class="list-tools">
+                        <div class="list-search">
+                            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.35-4.35"></path>
+                            </svg>
+                            <input type="text" placeholder="搜索消息标题、订单号、交易对" id="searchInput">
+                        </div>
+                        <button class="filter-btn active" data-filter="all">全部</button>
+                        <button class="filter-btn" data-filter="unread">未读</button>
+                        <button class="filter-btn" data-filter="read">已读</button>
+                    </div>
+                    <div class="list-actions">
+                        <button class="action-btn" id="markAllReadBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                            全部已读
+                        </button>
+                        <button class="action-btn danger" id="clearAllBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            清空消息
+                        </button>
+                    </div>
+                </div>
+                <div class="message-list-container" id="messageListContainer">
+                </div>
+                <div class="pagination" id="pagination">
+                </div>
+            </section>
+
+            <!-- 右侧详情区域 -->
+            <section class="message-detail-panel">
+                <div class="detail-panel-header">
+                    <div class="detail-panel-title">消息详情</div>
+                    <div class="detail-panel-actions">
+                        <button class="detail-action-btn" id="markAsReadBtn" title="标记已读">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                        </button>
+                        <button class="detail-action-btn danger" id="deleteMsgBtn" title="删除消息">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="detail-panel-content" id="detailPanelContent">
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                        </div>
+                        <div class="empty-title">选择一条消息</div>
+                        <div class="empty-desc">在左侧选择一条消息查看详情</div>
+                    </div>
+                </div>
+                <div class="detail-panel-footer" id="detailFooter" style="display: none;">
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- 删除确认弹窗 -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <h3 class="modal-title">确认删除</h3>
+            <p class="modal-desc" id="deleteModalDesc">确定要删除这条消息吗？删除后仅从当前账户消息列表移除。</p>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" id="deleteCancel">取消</button>
+                <button class="modal-btn confirm" id="deleteConfirm">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 全部已读确认弹窗 -->
+    <div class="modal-overlay" id="markAllReadModal">
+        <div class="modal">
+            <h3 class="modal-title">确认全部已读</h3>
+            <p class="modal-desc" id="markAllReadDesc">确定要将所有消息标记为已读吗？</p>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" id="markAllReadCancel">取消</button>
+                <button class="modal-btn confirm-secondary" id="markAllReadConfirm">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 清空消息确认弹窗 -->
+    <div class="modal-overlay" id="clearAllModal">
+        <div class="modal">
+            <h3 class="modal-title">确认清空</h3>
+            <p class="modal-desc" id="clearAllDesc">确定要清空当前分类的所有消息吗？此操作不可撤销。</p>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" id="clearAllCancel">取消</button>
+                <button class="modal-btn confirm" id="clearAllConfirm">清空</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <div class="toast-icon success" id="toastIcon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        </div>
+        <span class="toast-message" id="toastMessage">操作成功</span>
+    </div>
+
+    <script>
+        // 消息类型配置
+        const MSG_TYPES = {
+            system: { icon: 'SYS', label: '系统通知', class: 'system' },
+            asset: { icon: '资', label: '资产通知', class: 'asset' },
+            contract: { icon: '合', label: '合约通知', class: 'contract' },
+            security: { icon: '安', label: '安全通知', class: 'security' },
+            activity: { icon: '活', label: '活动通知', class: 'activity' }
+        };
+
+        const CATEGORY_NAMES = {
+            all: '全部消息',
+            system: '系统通知',
+            asset: '资产通知',
+            contract: '合约通知',
+            security: '安全通知',
+            activity: '活动通知'
+        };
+
+        const PRIORITY_TAGS = {
+            'P0': { label: '紧急', class: 'risk' },
+            'P1': { label: '重要', class: 'important' },
+            'P2': { label: '普通', class: 'normal' },
+            'P3': { label: '通知', class: 'weak' }
+        };
+
+        // 业务按钮配置
+        const ACTION_BTN_CONFIG = {
+            depositSuccess: { primary: '查看充值记录', toast: '正在跳转充值记录...' },
+            withdrawRequest: { primary: '查看提现记录', toast: '正在跳转提现记录...' },
+            withdrawFail: { primary: '查看提现记录', toast: '正在跳转提现记录...' },
+            rewardArrive: { primary: '查看奖励记录', toast: '正在跳转奖励记录...' },
+            contractLimitDeal: { primary: '查看合约订单', toast: '正在跳转合约订单...' },
+            contractMarketDeal: { primary: '查看合约订单', toast: '正在跳转合约订单...' },
+            contractOrderCancel: { primary: '查看合约订单', toast: '正在跳转合约订单...' },
+            takeProfitHit: { primary: '查看止盈止损订单', toast: '正在跳转止盈止损订单...' },
+            stopLossHit: { primary: '查看止盈止损订单', toast: '正在跳转止盈止损订单...' },
+            fundingFee: { primary: '查看资金费记录', toast: '正在跳转资金费记录...' },
+            marginLow: { primary: '查看合约持仓', toast: '正在跳转合约持仓...' },
+            liquidationRisk: { primary: '查看合约持仓', toast: '正在跳转合约持仓...' },
+            liquidationComplete: { primary: '查看合约订单', toast: '正在跳转合约订单...' },
+            walletConnect: { primary: '查看账户安全', toast: '正在跳转账户安全...' },
+            walletAuthRisk: { primary: '查看钱包授权', toast: '正在跳转钱包授权管理...' },
+            remoteLogin: { primary: '查看账户安全', toast: '正在跳转账户安全...' },
+            newDeviceLogin: { primary: '查看账户安全', toast: '正在跳转账户安全...' },
+            activityOnline: { primary: '查看活动详情', toast: '正在跳转活动详情...' },
+            activityEnding: { primary: '查看活动详情', toast: '正在跳转活动详情...' },
+            activityReward: { primary: '查看活动详情', toast: '正在跳转活动详情...' },
+            systemAnnounce: { primary: '我知道了', toast: '已确认' }
+        };
+
+        // Mock 数据
+        let state = {
+            messages: [
+                {
+                    id: 'msg_001',
+                    type: 'contract',
+                    subtype: 'liquidationRisk',
+                    title: '⚠️ 强平风险预警',
+                    summary: '您的 BTC/USDT 永续合约持仓当前保证金率已接近预警线，请及时关注或追加保证金。',
+                    content: [
+                        '您的 BTC/USDT 永续合约（多仓）当前保证金率为 115%，已接近预警线 120%。',
+                        '当前持仓：0.50 BTC，开仓均价 68,500 USDT，标记价格 67,210 USDT',
+                        '预估强平价格：66,800 USDT，距离当前价格还有 0.61%',
+                        '建议您及时追加保证金或降低仓位以避免强制平仓。'
+                    ],
+                    time: new Date(Date.now() - 5 * 60 * 1000),
+                    read: false,
+                    priority: 'P0',
+                    businessData: {
+                        pair: 'BTC/USDT 永续',
+                        side: '多仓',
+                        leverage: '10x',
+                        currentMarginRate: '115%',
+                        liquidationPrice: '66,800 USDT',
+                        currentPrice: '67,210 USDT',
+                        distanceToLiq: '0.61%',
+                        availableBalance: '1,250.45 USDT'
+                    }
+                },
+                {
+                    id: 'msg_002',
+                    type: 'contract',
+                    subtype: 'contractLimitDeal',
+                    title: '限价委托已成交',
+                    summary: '您的 BTC/USDT 限价买单（价格 67,000）已全部成交。',
+                    content: [
+                        '您的限价委托已全部成交。',
+                        '订单方向：买入，合约：BTC/USDT 永续，委托价格：67,000.00 USDT',
+                        '成交价格：66,980.50 USDT，成交数量：0.20 BTC'
+                    ],
+                    time: new Date(Date.now() - 30 * 60 * 1000),
+                    read: false,
+                    priority: 'P1',
+                    businessData: {
+                        pair: 'BTC/USDT 永续',
+                        side: '买入',
+                        leverage: '5x',
+                        orderPrice: '67,000.00 USDT',
+                        dealPrice: '66,980.50 USDT',
+                        dealQty: '0.20 BTC',
+                        orderId: 'ORD20240605152300001',
+                        fee: '0.13396 USDT',
+                        dealTime: '2024-06-05 15:23:45'
+                    }
+                },
+                {
+                    id: 'msg_003',
+                    type: 'asset',
+                    subtype: 'depositSuccess',
+                    title: '充值成功',
+                    summary: '您的充值已到账：5,000 USDT（Arbitrum）。',
+                    content: [
+                        '您的充值已成功到账。',
+                        '币种：USDT，网络：Arbitrum One，数量：5,000.00 USDT',
+                        'TxHash：0xa2b3c4d5e6f7...8c9d0e1f'
+                    ],
+                    time: new Date(Date.now() - 2 * 60 * 60 * 1000),
+                    read: false,
+                    priority: 'P2',
+                    businessData: {
+                        coin: 'USDT',
+                        amount: '5,000.00 USDT',
+                        network: 'Arbitrum One',
+                        arriveTime: '2024-06-05 13:45:20',
+                        txHash: '0xa2b3c4d5e6f7123456789abcdef8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5'
+                    }
+                },
+                {
+                    id: 'msg_004',
+                    type: 'contract',
+                    subtype: 'takeProfitHit',
+                    title: '止盈单已触发成交',
+                    summary: 'ETH/USDT 多仓止盈单（价格 3,600）已触发成交，盈利 320.50 USDT。',
+                    content: [
+                        '恭喜！您的止盈委托已触发成交。',
+                        '合约：ETH/USDT 永续，方向：多仓，触发价格：3,600.00 USDT',
+                        '本次收益：+320.50 USDT（+8.5%）'
+                    ],
+                    time: new Date(Date.now() - 3 * 60 * 60 * 1000),
+                    read: true,
+                    priority: 'P1',
+                    businessData: {
+                        pair: 'ETH/USDT 永续',
+                        side: '多仓',
+                        triggerPrice: '3,600.00 USDT',
+                        dealPrice: '3,602.80 USDT',
+                        profit: '+320.50 USDT',
+                        profitRate: '+8.5%',
+                        orderId: 'ORD20240605121000002'
+                    }
+                },
+                {
+                    id: 'msg_005',
+                    type: 'security',
+                    subtype: 'remoteLogin',
+                    title: '异常登录提醒',
+                    summary: '检测到您的账户在新设备（Chrome/Mac）从香港登录。',
+                    content: [
+                        '检测到一次新的登录。',
+                        '设备：Chrome 125 / macOS 14，位置：中国香港，IP：123.45.67.89',
+                        '如果这不是您本人操作，请立即修改密码并联系客服。'
+                    ],
+                    time: new Date(Date.now() - 5 * 60 * 60 * 1000),
+                    read: false,
+                    priority: 'P0',
+                    businessData: {
+                        loginLocation: '中国香港',
+                        ip: '123.45.67.89',
+                        device: 'Chrome 125 / macOS 14',
+                        browser: 'Chrome',
+                        loginTime: '2024-06-05 11:30:15'
+                    }
+                },
+                {
+                    id: 'msg_006',
+                    type: 'contract',
+                    subtype: 'fundingFee',
+                    title: '资金费结算完成',
+                    summary: 'BTC/USDT 永续合约资金费已结算，您收取了 12.50 USDT。',
+                    content: [
+                        '资金费率结算完成。',
+                        '合约：BTC/USDT 永续，资金费率：+0.01%，您收取了 12.50 USDT'
+                    ],
+                    time: new Date(Date.now() - 8 * 60 * 60 * 1000),
+                    read: true,
+                    priority: 'P3',
+                    businessData: {
+                        pair: 'BTC/USDT 永续',
+                        fundingRate: '+0.01%',
+                        amount: '+12.50 USDT',
+                        settleTime: '2024-06-05 08:00:00',
+                        nextSettleTime: '2024-06-05 16:00:00'
+                    }
+                },
+                {
+                    id: 'msg_007',
+                    type: 'activity',
+                    subtype: 'activityOnline',
+                    title: '🎉 交易大赛火热开启',
+                    summary: 'ForX 夏季交易大赛已上线，奖池 100,000 USDT！',
+                    content: [
+                        'ForX 夏季交易大赛正式开启！',
+                        '活动时间：2024-06-05 至 2024-06-20',
+                        '总奖池：100,000 USDT，参赛即得奖励！'
+                    ],
+                    time: new Date(Date.now() - 12 * 60 * 60 * 1000),
+                    read: false,
+                    priority: 'P2',
+                    businessData: {
+                        activityName: 'ForX 夏季交易大赛',
+                        activityTime: '2024-06-05 至 2024-06-20',
+                        prizePool: '100,000 USDT',
+                        signUpReward: '5 USDT（净值 > 1000）'
+                    }
+                },
+                {
+                    id: 'msg_008',
+                    type: 'system',
+                    subtype: 'systemAnnounce',
+                    title: '系统升级维护通知',
+                    summary: '将于 6月6日 02:00-04:00 进行系统升级，提币功能将暂停。',
+                    content: [
+                        '系统升级维护通知。',
+                        '维护时间：2024-06-06 02:00 - 04:00 (UTC+8)',
+                        '影响范围：充值、提币功能暂停，交易不受影响。'
+                    ],
+                    time: new Date(Date.now() - 24 * 60 * 60 * 1000),
+                    read: true,
+                    priority: 'P2',
+                    businessData: null
+                },
+                {
+                    id: 'msg_009',
+                    type: 'asset',
+                    subtype: 'withdrawRequest',
+                    title: '提币申请已受理',
+                    summary: '您的 0.5 ETH 提币申请已受理，正在处理中。',
+                    content: [
+                        '您的提币申请已成功提交，正在处理中。',
+                        '币种：ETH，数量：0.50 ETH，网络：Optimism',
+                        '提币地址：0x742d...Ff4d'
+                    ],
+                    time: new Date(Date.now() - 28 * 60 * 60 * 1000),
+                    read: true,
+                    priority: 'P2',
+                    businessData: {
+                        coin: 'ETH',
+                        amount: '0.50 ETH',
+                        network: 'Optimism',
+                        address: '0x742d35Cc6634C0532925a3b844Bc454e4438Ff4d',
+                        fee: '0.001 ETH',
+                        withdrawId: 'WD20240604083000001',
+                        status: '处理中'
+                    }
+                },
+                {
+                    id: 'msg_010',
+                    type: 'contract',
+                    subtype: 'contractOrderCancel',
+                    title: '委托已撤销',
+                    summary: '您的 SOL/USDT 限价卖单已手动撤销，释放保证金 250 USDT。',
+                    content: [
+                        '您的委托订单已撤销。',
+                        '合约：SOL/USDT 永续，方向：卖出，委托价格：180.00 USDT，数量：10 SOL'
+                    ],
+                    time: new Date(Date.now() - 30 * 60 * 60 * 1000),
+                    read: true,
+                    priority: 'P3',
+                    businessData: {
+                        pair: 'SOL/USDT 永续',
+                        side: '卖出',
+                        orderPrice: '180.00 USDT',
+                        orderQty: '10 SOL',
+                        releaseMargin: '250.00 USDT',
+                        orderId: 'ORD20240604060000001',
+                        cancelTime: '2024-06-04 06:15:30'
+                    }
+                },
+                {
+                    id: 'msg_011',
+                    type: 'contract',
+                    subtype: 'stopLossHit',
+                    title: '止损单已触发成交',
+                    summary: 'DOGE/USDT 空仓止损已触发，亏损控制在计划范围内。',
+                    content: [
+                        '您的止损委托已触发成交。',
+                        '合约：DOGE/USDT 永续，方向：空仓，触发价格：0.1520 USDT',
+                        '本次盈亏：-45.00 USDT'
+                    ],
+                    time: new Date(Date.now() - 35 * 60 * 60 * 1000),
+                    read: true,
+                    priority: 'P1',
+                    businessData: {
+                        pair: 'DOGE/USDT 永续',
+                        side: '空仓',
+                        triggerPrice: '0.1520 USDT',
+                        dealPrice: '0.1525 USDT',
+                        loss: '-45.00 USDT',
+                        lossRate: '-3.2%',
+                        orderId: 'ORD20240604030000002'
+                    }
+                },
+                {
+                    id: 'msg_012',
+                    type: 'security',
+                    subtype: 'newDeviceLogin',
+                    title: '新设备登录确认',
+                    summary: '您的账户在 iPhone (Safari) 上成功登录。',
+                    content: [
+                        '新设备登录成功。',
+                        '设备：Safari / iOS 17，位置：上海市，IP：111.22.33.44',
+                        '时间：2024-06-04 00:35:20'
+                    ],
+                    time: new Date(Date.now() - 40 * 60 * 60 * 1000),
+                    read: false,
+                    priority: 'P2',
+                    businessData: {
+                        deviceName: 'iPhone 15 Pro / Safari',
+                        ip: '111.22.33.44',
+                        loginLocation: '中国上海市',
+                        loginTime: '2024-06-04 00:35:20'
+                    }
+                },
+                // 异常状态消息（默认不显示）
+                {
+                    id: 'msg_expired',
+                    type: 'activity',
+                    subtype: 'activityEnding',
+                    title: '活动即将结束',
+                    summary: '交易大赛将于明天结束。',
+                    content: ['活动即将结束'],
+                    time: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                    read: true,
+                    priority: 'P3',
+                    businessData: null,
+                    status: 'expired'
+                },
+                {
+                    id: 'msg_revoked',
+                    type: 'system',
+                    subtype: 'systemAnnounce',
+                    title: '已撤回公告',
+                    summary: '此公告已撤回。',
+                    content: ['此公告已撤回'],
+                    time: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+                    read: true,
+                    priority: 'P3',
+                    businessData: null,
+                    status: 'revoked'
+                }
+            ],
+            currentCategory: 'all',
+            currentFilter: 'all',
+            searchQuery: '',
+            selectedMessageId: null,
+            currentPage: 1,
+            pageSize: 10,
+            deleteTargetId: null,
+            showMainContent: false
+        };
+
+        // 格式化地址
+        function formatAddress(addr, prefix = 6, suffix = 4) {
+            if (!addr || addr.length <= prefix + suffix) return addr;
+            return addr.slice(0, prefix) + '...' + addr.slice(-suffix);
+        }
+
+        // 格式化时间
+        function formatTime(date) {
+            const now = new Date();
+            const diff = now - date;
+            const mins = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+            
+            if (mins < 1) return '刚刚';
+            if (mins < 60) return `${mins} 分钟前`;
+            if (hours < 24) return `${hours} 小时前`;
+            if (days < 7) return `${days} 天前`;
+            
+            return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatFullTime(date) {
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+        }
+
+        // 获取分类未读数
+        function getUnreadCount(category) {
+            if (category === 'all') {
+                return state.messages.filter(m => !m.read && m.status !== 'expired' && m.status !== 'revoked').length;
+            }
+            return state.messages.filter(m => m.type === category && !m.read && m.status !== 'expired' && m.status !== 'revoked').length;
+        }
+
+        // 更新未读数显示
+        function updateUnreadBadges() {
+            document.getElementById('bellBadge').textContent = getUnreadCount('all');
+            document.getElementById('dropdownUnreadCount').textContent = getUnreadCount('all');
+            ['all', 'system', 'asset', 'contract', 'security', 'activity'].forEach(cat => {
+                const el = document.getElementById(`cat-unread-${cat}`);
+                const count = getUnreadCount(cat);
+                el.textContent = count;
+                el.style.display = count > 0 ? 'flex' : 'none';
+            });
+            document.getElementById('listUnreadCount').textContent = `${getUnreadCount(state.currentCategory)} 条未读`;
+        }
+
+        // 获取当前筛选后的列表
+        function getFilteredMessages() {
+            let list = state.messages.filter(m => m.status !== 'expired' && m.status !== 'revoked');
+            
+            if (state.currentCategory !== 'all') {
+                list = list.filter(m => m.type === state.currentCategory);
+            }
+            
+            if (state.currentFilter === 'unread') {
+                list = list.filter(m => !m.read);
+            } else if (state.currentFilter === 'read') {
+                list = list.filter(m => m.read);
+            }
+            
+            if (state.searchQuery) {
+                const q = state.searchQuery.toLowerCase();
+                list = list.filter(m => 
+                    m.title.toLowerCase().includes(q) ||
+                    m.summary.toLowerCase().includes(q) ||
+                    (m.businessData && JSON.stringify(m.businessData).toLowerCase().includes(q))
+                );
+            }
+            
+            list.sort((a, b) => {
+                const p0A = a.priority === 'P0' ? 0 : 1;
+                const p0B = b.priority === 'P0' ? 0 : 1;
+                if (p0A !== p0B) return p0A - p0B;
+                return b.time - a.time;
+            });
+            
+            return list;
+        }
+
+        // 渲染下拉浮层列表
+        function renderDropdownList() {
+            const container = document.getElementById('dropdownMessageList');
+            const list = getFilteredMessages().slice(0, 5);
+            
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div style="padding:40px 20px;text-align:center;color:var(--text-muted);">
+                        暂无消息
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = list.map(msg => `
+                <div class="dropdown-message-item ${msg.unread ? 'unread' : ''} ${msg.priority === 'P0' ? 'p0' : ''}" data-id="${msg.id}">
+                    <div class="dropdown-msg-header">
+                        <div class="msg-type-icon ${MSG_TYPES[msg.type].class}">${MSG_TYPES[msg.type].icon}</div>
+                        <div class="msg-title">${msg.title}</div>
+                        ${msg.read ? '' : '<div class="unread-dot"></div>'}
+                        ${msg.priority === 'P0' ? '<span class="risk-tag">P0</span>' : ''}
+                    </div>
+                    <div class="msg-summary">${msg.summary}</div>
+                    <div class="msg-time">${formatTime(msg.time)}</div>
+                </div>
+            `).join('');
+            
+            container.querySelectorAll('.dropdown-message-item').forEach(el => {
+                el.addEventListener('click', () => {
+                    const id = el.dataset.id;
+                    markAsRead(id);
+                    enterMainPage();
+                    selectMessage(id);
+                });
+            });
+        }
+
+        // 渲染主列表
+        function renderMainList() {
+            const container = document.getElementById('messageListContainer');
+            const list = getFilteredMessages();
+            const totalPages = Math.max(1, Math.ceil(list.length / state.pageSize));
+            state.currentPage = Math.min(state.currentPage, totalPages);
+            
+            const start = (state.currentPage - 1) * state.pageSize;
+            const pageList = list.slice(start, start + state.pageSize);
+            
+            if (list.length === 0) {
+                let tip = '暂无消息';
+                if (state.searchQuery) tip = '未找到相关搜索结果';
+                else if (state.currentFilter === 'unread') tip = '暂无未读消息';
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M20 13V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                        </div>
+                        <div class="empty-title">${tip}</div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = pageList.map(msg => `
+                    <div class="message-card ${msg.read ? '' : 'unread'} ${msg.priority === 'P0' ? 'p0' : ''} ${state.selectedMessageId === msg.id ? 'selected' : ''}" data-id="${msg.id}">
+                        <div class="message-card-header">
+                            <div class="message-card-icon ${MSG_TYPES[msg.type].class}">${MSG_TYPES[msg.type].icon}</div>
+                            <div class="message-card-content">
+                                <div class="message-card-title-row">
+                                    <div class="message-card-title">${msg.title}</div>
+                                    ${msg.read ? '' : '<div class="message-card-unread"></div>'}
+                                </div>
+                                <div class="message-card-body">${msg.summary}</div>
+                                <div class="message-card-footer">
+                                    <span class="message-card-time">${formatTime(msg.time)}</span>
+                                    <button class="message-card-more" data-delete="${msg.id}" onclick="event.stopPropagation();">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="1"></circle>
+                                            <circle cx="19" cy="12" r="1"></circle>
+                                            <circle cx="5" cy="12" r="1"></circle>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            container.querySelectorAll('.message-card').forEach(el => {
+                el.addEventListener('click', () => {
+                    const id = el.dataset.id;
+                    markAsRead(id);
+                    selectMessage(id);
+                });
+            });
+            
+            container.querySelectorAll('.message-card-more').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = el.dataset.delete;
+                    showDeleteConfirm(id);
+                });
+            });
+            
+            renderPagination(totalPages);
+        }
+
+        // 渲染分页
+        function renderPagination(totalPages) {
+            const container = document.getElementById('pagination');
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            let pages = [];
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= state.currentPage - 2 && i <= state.currentPage + 2)) {
+                    pages.push(i);
+                } else if (pages[pages.length - 1] !== '...') {
+                    pages.push('...');
+                }
+            }
+            
+            container.innerHTML = `
+                <button class="page-btn" ${state.currentPage <= 1 ? 'disabled' : ''} data-page="prev">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                ${pages.map(p => p === '...' 
+                    ? '<div class="page-ellipsis">...</div>'
+                    : `<button class="page-btn ${p === state.currentPage ? 'active' : ''}" data-page="${p}">${p}</button>`
+                ).join('')}
+                <button class="page-btn" ${state.currentPage >= totalPages ? 'disabled' : ''} data-page="next">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            `;
+            
+            container.querySelectorAll('.page-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (btn.disabled) return;
+                    const page = btn.dataset.page;
+                    if (page === 'prev') state.currentPage--;
+                    else if (page === 'next') state.currentPage++;
+                    else state.currentPage = parseInt(page);
+                    renderMainList();
+                });
+            });
+        }
+
+        // 渲染详情
+        function renderDetail(msgId) {
+            const msg = state.messages.find(m => m.id === msgId);
+            const detailContent = document.getElementById('detailPanelContent');
+            const detailFooter = document.getElementById('detailFooter');
+            
+            if (!msg) {
+                detailContent.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                        </div>
+                        <div class="empty-title">选择一条消息</div>
+                        <div class="empty-desc">在左侧选择一条消息查看详情</div>
+                    </div>
+                `;
+                detailFooter.style.display = 'none';
+                return;
+            }
+            
+            if (msg.status === 'expired') {
+                detailContent.innerHTML = `
+                    <div class="exception-state">
+                        <div class="exception-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                        </div>
+                        <div class="exception-title">消息已过期</div>
+                        <div class="exception-desc">此消息已超过有效期，内容已隐藏</div>
+                    </div>
+                `;
+                detailFooter.style.display = 'none';
+                return;
+            }
+            
+            if (msg.status === 'revoked') {
+                detailContent.innerHTML = `
+                    <div class="exception-state">
+                        <div class="exception-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M19.36 2.64a4.87 4.87 0 0 1 0 6.87L12 16.87l-7.36-7.36a4.87 4.87 0 0 1 0-6.87 4.84 4.84 0 0 1 6.86 0l.5.5.5-.5a4.84 4.84 0 0 1 6.86 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="exception-title">消息已撤回</div>
+                        <div class="exception-desc">此消息已被撤回，不再展示</div>
+                    </div>
+                `;
+                detailFooter.style.display = 'none';
+                return;
+            }
+            
+            let businessCardHtml = '';
+            if (msg.businessData) {
+                let fields = [];
+                const data = msg.businessData;
+                switch (msg.subtype) {
+                    case 'depositSuccess':
+                        fields = [
+                            ['币种', data.coin],
+                            ['数量', data.amount],
+                            ['网络', data.network],
+                            ['到账时间', data.arriveTime],
+                            ['TxHash', data.txHash, 'hash']
+                        ];
+                        break;
+                    case 'withdrawRequest':
+                    case 'withdrawFail':
+                        fields = [
+                            ['币种', data.coin],
+                            ['数量', data.amount],
+                            ['网络', data.network],
+                            ['提币地址', data.address, 'address'],
+                            ['手续费', data.fee],
+                            ['提币单号', data.withdrawId, 'orderId'],
+                            ['处理状态', data.status]
+                        ];
+                        break;
+                    case 'rewardArrive':
+                        fields = [
+                            ['奖励类型', data.rewardType],
+                            ['奖励金额', data.amount],
+                            ['活动名称', data.activityName],
+                            ['到账时间', data.arriveTime]
+                        ];
+                        break;
+                    case 'contractLimitDeal':
+                    case 'contractMarketDeal':
+                        fields = [
+                            ['合约交易对', data.pair],
+                            ['方向', data.side],
+                            ['杠杆', data.leverage],
+                            ['委托价格', data.orderPrice],
+                            ['成交价格', data.dealPrice],
+                            ['成交数量', data.dealQty],
+                            ['订单号', data.orderId, 'orderId'],
+                            ['手续费', data.fee],
+                            ['成交时间', data.dealTime]
+                        ];
+                        break;
+                    case 'contractOrderCancel':
+                        fields = [
+                            ['合约交易对', data.pair],
+                            ['方向', data.side],
+                            ['委托价格', data.orderPrice],
+                            ['委托数量', data.orderQty],
+                            ['释放保证金', data.releaseMargin],
+                            ['订单号', data.orderId, 'orderId'],
+                            ['撤销时间', data.cancelTime]
+                        ];
+                        break;
+                    case 'takeProfitHit':
+                        fields = [
+                            ['合约交易对', data.pair],
+                            ['方向', data.side],
+                            ['触发价格', data.triggerPrice],
+                            ['成交价格', data.dealPrice],
+                            ['收益金额', data.profit, 'profit'],
+                            ['收益率', data.profitRate],
+                            ['订单号', data.orderId, 'orderId']
+                        ];
+                        break;
+                    case 'stopLossHit':
+                        fields = [
+                            ['合约交易对', data.pair],
+                            ['方向', data.side],
+                            ['触发价格', data.triggerPrice],
+                            ['成交价格', data.dealPrice],
+                            ['亏损金额', data.loss, 'loss'],
+                            ['收益率', data.lossRate],
+                            ['订单号', data.orderId, 'orderId']
+                        ];
+                        break;
+                    case 'fundingFee':
+                        fields = [
+                            ['合约交易对', data.pair],
+                            ['资金费率', data.fundingRate],
+                            ['收取/支付', data.amount],
+                            ['结算时间', data.settleTime],
+                            ['下次结算', data.nextSettleTime]
+                        ];
+                        break;
+                    case 'marginLow':
+                        fields = [
+                            ['合约交易对', data.pair],
+                            ['方向', data.side],
+                            ['当前保证金率', data.currentMarginRate],
+                            ['预警阈值', data.warnThreshold],
+                            ['可用余额', data.availableBalance],
+                            ['建议操作', data.suggestAction]
+                        ];
+                        break;
+                    case 'liquidationRisk':
+                        fields = [
+                            ['合约交易对', data.pair],
+                            ['方向', data.side],
+                            ['杠杆', data.leverage],
+                            ['当前保证金率', data.currentMarginRate],
+                            ['预估强平价', data.liquidationPrice],
+                            ['当前价格', data.currentPrice],
+                            ['距离强平', data.distanceToLiq]
+                        ];
+                        break;
+                    case 'liquidationComplete':
+                        fields = [
+                            ['合约交易对', data.pair],
+                            ['方向', data.side],
+                            ['强平价格', data.liquidationPrice],
+                            ['强平数量', data.liqQty],
+                            ['亏损金额', data.loss, 'loss'],
+                            ['手续费', data.fee],
+                            ['平仓时间', data.liqTime]
+                        ];
+                        break;
+                    case 'walletConnect':
+                        fields = [
+                            ['钱包地址', data.address, 'address'],
+                            ['网络', data.network],
+                            ['DApp名称', data.dappName],
+                            ['连接权限', data.perms],
+                            ['连接时间', data.connectTime]
+                        ];
+                        break;
+                    case 'walletAuthRisk':
+                        fields = [
+                            ['钱包地址', data.address, 'address'],
+                            ['授权合约', data.contract, 'address'],
+                            ['合约名称', data.contractName],
+                            ['授权权限', data.perms],
+                            ['网络', data.network],
+                            ['授权时间', data.authTime],
+                            ['风险提示', data.riskWarn]
+                        ];
+                        break;
+                    case 'remoteLogin':
+                        fields = [
+                            ['登录地点', data.loginLocation],
+                            ['IP地址', data.ip],
+                            ['设备', data.device],
+                            ['浏览器', data.browser],
+                            ['登录时间', data.loginTime]
+                        ];
+                        break;
+                    case 'newDeviceLogin':
+                        fields = [
+                            ['设备名称', data.deviceName],
+                            ['IP地址', data.ip],
+                            ['登录地点', data.loginLocation],
+                            ['登录时间', data.loginTime]
+                        ];
+                        break;
+                    case 'activityOnline':
+                    case 'activityEnding':
+                    case 'activityReward':
+                        if (data.activityName) fields.push(['活动名称', data.activityName]);
+                        if (data.activityTime) fields.push(['活动时间', data.activityTime]);
+                        if (data.prizePool) fields.push(['总奖池', data.prizePool]);
+                        if (data.signUpReward) fields.push(['报名奖励', data.signUpReward]);
+                        if (data.remainTime) fields.push(['剩余时间', data.remainTime]);
+                        if (data.currentRank) fields.push(['当前排名', data.currentRank]);
+                        if (data.currentProfit) fields.push(['当前收益', data.currentProfit]);
+                        if (data.rankGap) fields.push(['距离上一名', data.rankGap]);
+                        if (data.rewardRank) fields.push(['获奖名次', data.rewardRank]);
+                        if (data.rewardAmount) fields.push(['奖励金额', data.rewardAmount]);
+                        if (data.releaseTime) fields.push(['发放时间', data.releaseTime]);
+                        break;
+                }
+                
+                if (fields.length > 0) {
+                    businessCardHtml = `
+                        <div class="business-card">
+                            <div class="business-card-title">业务详情</div>
+                            <div class="business-card-list">
+                                ${fields.map(([label, value, type]) => {
+                                    let val = value;
+                                    let cls = '';
+                                    if (type === 'hash' || type === 'address' || type === 'orderId') {
+                                        val = type === 'address' ? formatAddress(value, 6, 4) : value;
+                                        cls = type;
+                                    }
+                                    if (type === 'profit' && String(val).startsWith('+')) cls = 'profit';
+                                    if (type === 'loss' && String(val).startsWith('-')) cls = 'loss';
+                                    return `
+                                        <div class="business-card-item">
+                                            <span class="business-card-label">${label}</span>
+                                            <span class="business-card-value ${cls}">${val}</span>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            detailContent.innerHTML = `
+                <div class="detail-header-info">
+                    <div class="detail-icon-big ${MSG_TYPES[msg.type].class}">${MSG_TYPES[msg.type].icon}</div>
+                    <div class="detail-info">
+                        <div class="detail-title">${msg.title}</div>
+                        <div class="detail-tags">
+                            <span class="detail-tag type">${MSG_TYPES[msg.type].label}</span>
+                            ${PRIORITY_TAGS[msg.priority] ? `<span class="detail-tag ${PRIORITY_TAGS[msg.priority].class}">${PRIORITY_TAGS[msg.priority].label}</span>` : ''}
+                            <span class="detail-tag read">${msg.read ? '已读' : '未读'}</span>
+                        </div>
+                        <div class="detail-time">${formatFullTime(msg.time)}</div>
+                    </div>
+                </div>
+                <div class="detail-body">
+                    ${msg.content.map(p => `<p>${p}</p>`).join('')}
+                </div>
+                ${businessCardHtml}
+            `;
+            
+            const btnConfig = ACTION_BTN_CONFIG[msg.subtype];
+            if (btnConfig) {
+                detailFooter.style.display = 'flex';
+                detailFooter.innerHTML = `
+                    <button class="detail-footer-btn" onclick="copyContent()">复制内容</button>
+                    <button class="detail-footer-btn primary" onclick="handleAction('${msg.subtype}')">${btnConfig.primary}</button>
+                `;
+            } else {
+                detailFooter.style.display = 'flex';
+                detailFooter.innerHTML = `
+                    <button class="detail-footer-btn" onclick="copyContent()">复制内容</button>
+                `;
+            }
+        }
+
+        function copyContent() {
+            const msg = state.messages.find(m => m.id === state.selectedMessageId);
+            if (!msg) return;
+            const text = `${msg.title}\n\n${msg.content.join('\n')}`;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('已复制到剪贴板', 'success');
+            });
+        }
+
+        function handleAction(subtype) {
+            const btnConfig = ACTION_BTN_CONFIG[subtype];
+            if (btnConfig) {
+                showToast(btnConfig.toast, 'success');
+            }
+        }
+
+        function selectMessage(id) {
+            state.selectedMessageId = id;
+            renderMainList();
+            renderDetail(id);
+        }
+
+        function markAsRead(id) {
+            const msg = state.messages.find(m => m.id === id);
+            if (msg && !msg.read) {
+                msg.read = true;
+                updateUnreadBadges();
+                renderDropdownList();
+                renderMainList();
+            }
+        }
+
+        function showDeleteConfirm(id) {
+            state.deleteTargetId = id;
+            document.getElementById('deleteModal').classList.add('show');
+        }
+
+        function hideDeleteConfirm() {
+            document.getElementById('deleteModal').classList.remove('show');
+            state.deleteTargetId = null;
+        }
+
+        function deleteMessage(id) {
+            const idx = state.messages.findIndex(m => m.id === id);
+            if (idx > -1) {
+                const wasUnread = !state.messages[idx].read;
+                state.messages.splice(idx, 1);
+                
+                if (state.selectedMessageId === id) {
+                    const list = getFilteredMessages();
+                    if (list.length > 0) {
+                        state.selectedMessageId = list[0].id;
+                    } else {
+                        state.selectedMessageId = null;
+                    }
+                    renderDetail(state.selectedMessageId);
+                }
+                
+                updateUnreadBadges();
+                renderDropdownList();
+                renderMainList();
+                showToast('消息已删除', 'success');
+            }
+        }
+
+        function markAllAsReadConfirm() {
+            const modal = document.getElementById('markAllReadModal');
+            const desc = document.getElementById('markAllReadDesc');
+            
+            if (state.currentCategory === 'all') {
+                desc.textContent = '确定要将所有消息标记为已读吗？';
+            } else {
+                desc.textContent = `确定要将「${CATEGORY_NAMES[state.currentCategory]}」分类下的所有消息标记为已读吗？`;
+            }
+            
+            modal.classList.add('show');
+        }
+
+        function markAllAsRead() {
+            let targetList = state.messages.filter(m => m.status !== 'expired' && m.status !== 'revoked');
+            if (state.currentCategory !== 'all') {
+                targetList = targetList.filter(m => m.type === state.currentCategory);
+            }
+            targetList.forEach(m => m.read = true);
+            
+            updateUnreadBadges();
+            renderDropdownList();
+            renderMainList();
+            document.getElementById('markAllReadModal').classList.remove('show');
+            showToast('已全部标记为已读', 'success');
+        }
+
+        function clearAllConfirm() {
+            const modal = document.getElementById('clearAllModal');
+            const desc = document.getElementById('clearAllDesc');
+            
+            if (state.currentCategory === 'all') {
+                desc.textContent = '确定要清空所有消息吗？此操作不可撤销。';
+            } else {
+                desc.textContent = `确定要清空「${CATEGORY_NAMES[state.currentCategory]}」分类下的所有消息吗？此操作不可撤销。`;
+            }
+            
+            modal.classList.add('show');
+        }
+
+        function clearAllMessages() {
+            if (state.currentCategory === 'all') {
+                state.messages = state.messages.filter(m => m.status === 'expired' || m.status === 'revoked');
+            } else {
+                state.messages = state.messages.filter(m => m.type !== state.currentCategory || m.status === 'expired' || m.status === 'revoked');
+            }
+            
+            state.selectedMessageId = null;
+            updateUnreadBadges();
+            renderDropdownList();
+            renderMainList();
+            renderDetail(null);
+            document.getElementById('clearAllModal').classList.remove('show');
+            showToast('已清空消息', 'success');
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const text = document.getElementById('toastMessage');
+            
+            text.textContent = msg;
+            icon.className = `toast-icon ${type}`;
+            icon.innerHTML = type === 'success'
+                ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+                : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+            
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        function enterMainPage() {
+            state.showMainContent = true;
+            document.getElementById('messageDropdown').classList.remove('show');
+            document.getElementById('overlayBg').classList.remove('show');
+            document.getElementById('mainContent').classList.add('show');
+            
+            if (!state.selectedMessageId) {
+                const list = getFilteredMessages();
+                if (list.length > 0) {
+                    state.selectedMessageId = list[0].id;
+                    if (!list[0].read) list[0].read = true;
+                    updateUnreadBadges();
+                }
+            }
+            
+            renderDropdownList();
+            renderMainList();
+            renderDetail(state.selectedMessageId);
+        }
+
+        function init() {
+            updateUnreadBadges();
+            renderDropdownList();
+            
+            document.getElementById('bellBtn').addEventListener('click', () => {
+                const dropdown = document.getElementById('messageDropdown');
+                const overlay = document.getElementById('overlayBg');
+                if (dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                    overlay.classList.remove('show');
+                } else {
+                    dropdown.classList.add('show');
+                    overlay.classList.add('show');
+                }
+            });
+            
+            document.getElementById('overlayBg').addEventListener('click', () => {
+                document.getElementById('messageDropdown').classList.remove('show');
+                document.getElementById('overlayBg').classList.remove('show');
+            });
+            
+            document.getElementById('viewAllBtn').addEventListener('click', enterMainPage);
+            
+            document.getElementById('dropdownMarkRead').addEventListener('click', () => {
+                markAllAsReadConfirm();
+                document.getElementById('messageDropdown').classList.remove('show');
+                document.getElementById('overlayBg').classList.remove('show');
+            });
+            
+            document.querySelectorAll('.dropdown-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.dropdown-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    state.currentCategory = tab.dataset.tab;
+                    renderDropdownList();
+                });
+            });
+            
+            document.querySelectorAll('.category-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.category-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    state.currentCategory = item.dataset.category;
+                    state.currentPage = 1;
+                    document.getElementById('listTitle').textContent = CATEGORY_NAMES[state.currentCategory];
+                    document.getElementById('listUnreadCount').textContent = `${getUnreadCount(state.currentCategory)} 条未读`;
+                    
+                    const list = getFilteredMessages();
+                    state.selectedMessageId = list.length > 0 ? list[0].id : null;
+                    if (state.selectedMessageId) {
+                        const msg = state.messages.find(m => m.id === state.selectedMessageId);
+                        if (msg && !msg.read) {
+                            msg.read = true;
+                            updateUnreadBadges();
+                        }
+                    }
+                    
+                    renderMainList();
+                    renderDetail(state.selectedMessageId);
+                });
+            });
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.currentFilter = btn.dataset.filter;
+                    state.currentPage = 1;
+                    renderMainList();
+                });
+            });
+            
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                state.searchQuery = e.target.value.trim();
+                state.currentPage = 1;
+                renderMainList();
+            });
+            
+            document.getElementById('markAllReadBtn').addEventListener('click', markAllAsReadConfirm);
+            document.getElementById('clearAllBtn').addEventListener('click', clearAllConfirm);
+            document.getElementById('markAsReadBtn').addEventListener('click', () => {
+                if (state.selectedMessageId) {
+                    markAsRead(state.selectedMessageId);
+                    renderDetail(state.selectedMessageId);
+                }
+            });
+            document.getElementById('deleteMsgBtn').addEventListener('click', () => {
+                if (state.selectedMessageId) {
+                    showDeleteConfirm(state.selectedMessageId);
+                }
+            });
+            
+            document.getElementById('deleteCancel').addEventListener('click', hideDeleteConfirm);
+            document.getElementById('deleteConfirm').addEventListener('click', () => {
+                if (state.deleteTargetId) {
+                    deleteMessage(state.deleteTargetId);
+                }
+                hideDeleteConfirm();
+            });
+            
+            document.getElementById('markAllReadCancel').addEventListener('click', () => {
+                document.getElementById('markAllReadModal').classList.remove('show');
+            });
+            document.getElementById('markAllReadConfirm').addEventListener('click', markAllAsRead);
+            
+            document.getElementById('clearAllCancel').addEventListener('click', () => {
+                document.getElementById('clearAllModal').classList.remove('show');
+            });
+            document.getElementById('clearAllConfirm').addEventListener('click', clearAllMessages);
+            
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('show');
+                    }
+                });
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>

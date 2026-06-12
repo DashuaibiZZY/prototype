@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX - 注册/登录</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0a0e17;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            width: 390px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0e17 0%, #0d1421 50%, #0a0e17 100%);
+            position: relative;
+            overflow: hidden;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Web3 背景效果 */
+        .bg-glow {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        .bg-glow-1 {
+            top: -100px;
+            right: -100px;
+            background: radial-gradient(circle, #00ff88, transparent);
+        }
+
+        .bg-glow-2 {
+            bottom: -150px;
+            left: -100px;
+            background: radial-gradient(circle, #6366f1, transparent);
+        }
+
+        .bg-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+
+        /* 页面容器 */
+        .page {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            min-height: 100vh;
+            padding: 20px;
+            padding-top: 60px;
+            padding-bottom: calc(40px + env(safe-area-inset-bottom));
+            position: relative;
+            z-index: 1;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(-20px); }
+        }
+
+        /* Logo */
+        .logo {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00ff88 0%, #6366f1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+
+        /* 返回按钮 */
+        .back-btn {
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* 首页 */
+        .home-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        .home-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .home-title {
+            font-size: 36px;
+            font-weight: 700;
+            margin-top: 80px;
+            margin-bottom: 12px;
+        }
+
+        .home-subtitle {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 60px;
+            line-height: 1.5;
+        }
+
+        /* 按钮 */
+        .btn {
+            width: 100%;
+            height: 52px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+            color: #0a0e17;
+            box-shadow: 0 4px 20px rgba(0, 255, 136, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 255, 136, 0.4);
+        }
+
+        .btn-primary:disabled {
+            background: rgba(0, 255, 136, 0.3);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-group {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        /* 协议勾选 */
+        .agreement {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.5;
+        }
+
+        .agreement input {
+            margin-top: 2px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #00ff88;
+        }
+
+        .agreement a {
+            color: #00ff88;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* 表单页 */
+        .form-page {
+            padding-top: 120px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .page-desc {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 40px;
+        }
+
+        /* 说明卡片 */
+        .info-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .info-card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #ffffff;
+        }
+
+        .info-card-list {
+            list-style: none;
+        }
+
+        .info-card-list li {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .info-card-list li:before {
+            content: '•';
+            position: absolute;
+            left: 8px;
+            color: #00ff88;
+        }
+
+        /* 输入框 */
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-field {
+            width: 100%;
+            height: 52px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 0 16px;
+            font-size: 16px;
+            color: #ffffff;
+            transition: all 0.2s ease;
+        }
+
+        .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .input-field.error {
+            border-color: #f87171;
+        }
+
+        .input-error {
+            font-size: 12px;
+            color: #f87171;
+            margin-top: 6px;
+            display: none;
+        }
+
+        .input-error.show {
+            display: block;
+        }
+
+        .code-input-wrapper {
+            display: flex;
+            gap: 12px;
+        }
+
+        .code-input-wrapper .input-field {
+            flex: 1;
+        }
+
+        .get-code-btn {
+            width: 120px;
+            height: 52px;
+            background: rgba(0, 255, 136, 0.15);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 12px;
+            font-size: 14px;
+            color: #00ff88;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .get-code-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .switch-link {
+            color: #00ff88;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        /* 成功页 */
+        .success-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding-top: 120px;
+        }
+
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 32px;
+            font-size: 48px;
+        }
+
+        .success-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .success-desc {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 60px;
+        }
+
+        /* 钱包列表 */
+        .wallet-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .wallet-card {
+            display: flex;
+            align-items: center;
+            padding: 18px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .wallet-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(0, 255, 136, 0.3);
+        }
+
+        .wallet-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            font-size: 22px;
+        }
+
+        .wallet-name {
+            flex: 1;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .wallet-arrow {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 20px;
+        }
+
+        .wallet-hint {
+            text-align: center;
+            font-size: 13px;
+            color: #f87171;
+            margin-top: 16px;
+            display: none;
+        }
+
+        .wallet-hint.show {
+            display: block;
+        }
+
+        /* 授权确认页 */
+        .auth-page {
+            padding-top: 120px;
+        }
+
+        .auth-wallet {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .auth-wallet-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            font-size: 36px;
+        }
+
+        .auth-wallet-address {
+            font-size: 16px;
+            font-family: monospace;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 16px;
+            border-radius: 8px;
+        }
+
+        .auth-notes {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .auth-note {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .auth-note:last-child {
+            margin-bottom: 0;
+        }
+
+        .auth-note-icon {
+            color: #00ff88;
+            font-size: 20px;
+            margin-top: 2px;
+        }
+
+        .auth-note-text {
+            flex: 1;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .auth-buttons .btn {
+            flex: 1;
+        }
+
+        .auth-test-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .auth-test-btn {
+            flex: 1;
+            height: 44px;
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            border-radius: 12px;
+            font-size: 13px;
+            color: #f87171;
+            cursor: pointer;
+        }
+
+        /* 首页占位页 */
+        .home-placeholder {
+            padding-top: 60px;
+            padding-bottom: calc(80px + env(safe-area-inset-bottom));
+        }
+
+        .placeholder-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .placeholder-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .placeholder-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .placeholder-card-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .placeholder-card-text {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* 底部 Tab 栏 */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 390px;
+            background: rgba(10, 14, 23, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom));
+            z-index: 100;
+        }
+
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-item.active {
+            color: #00ff88;
+        }
+
+        .tab-icon {
+            font-size: 22px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #ffffff;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            max-width: 320px;
+            text-align: center;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        /* Loading */
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top-color: #0a0e17;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 弹窗遮罩 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 底部弹窗 */
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%) translateY(100%);
+            width: 390px;
+            max-height: 80vh;
+            background: #111827;
+            border-radius: 24px 24px 0 0;
+            z-index: 2001;
+            transition: transform 0.3s ease;
+            padding: 20px;
+            padding-bottom: calc(20px + env(safe-area-inset-bottom));
+        }
+
+        .bottom-sheet.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .bottom-sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .bottom-sheet-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .bottom-sheet-close {
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .bottom-sheet-content {
+            max-height: 50vh;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 20px;
+        }
+
+        .bottom-sheet-content p {
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Web3 背景 -->
+        <div class="bg-glow bg-glow-1"></div>
+        <div class="bg-glow bg-glow-2"></div>
+        <div class="bg-lines"></div>
+
+        <!-- 页面 1：首页式注册/登录入口页 -->
+        <div id="page1" class="page home-page active">
+            <div style="text-align: center; margin-bottom: 40px;">
+                <div class="logo">ForX</div>
+            </div>
+            <div class="home-content">
+                <div class="home-title">Welcome to ForX</div>
+                <div class="home-subtitle">Trade Perpetuals On-chain,<br>Faster and Smarter</div>
+            </div>
+            <div style="width: 100%;">
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="emailBtn">邮箱注册 / 登录</button>
+                    <button class="btn btn-secondary" id="walletBtn">连接 Web3 钱包</button>
+                </div>
+                <label class="agreement">
+                    <input type="checkbox" id="agreeCheck">
+                    <span>我已阅读并同意<a onclick="openModal('userAgreement')">《用户协议》</a><a onclick="openModal('privacyPolicy')">《隐私政策》</a></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- 页面 2：邮箱登录页 -->
+        <div id="page2" class="page form-page">
+            <div class="back-btn" onclick="goBack()">←</div>
+            <div style="text-align: left;">
+                <div class="page-title">邮箱登录</div>
+            </div>
+            
+            <div class="info-card">
+                <div class="info-card-title">注册 / 登录说明</div>
+                <ul class="info-card-list">
+                    <li>如果邮箱已注册，将直接登录 ForX 账户</li>
+                    <li>如果邮箱未注册，将自动创建 ForX 账户</li>
+                    <li>Web3 钱包授权成功后，如钱包地址未注册，将自动创建账户</li>
+                    <li>本次授权不涉及链上转账，不消耗 Gas</li>
+                </ul>
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">邮箱地址</label>
+                <input type="email" class="input-field" id="emailInput" placeholder="请输入邮箱地址">
+                <div class="input-error" id="emailError">请输入正确的邮箱地址</div>
+            </div>
+            <div class="input-group">
+                <label class="input-label">验证码</label>
+                <div class="code-input-wrapper">
+                    <input type="text" class="input-field" id="codeInput" placeholder="请输入邮箱验证码">
+                    <button class="get-code-btn" id="getCodeBtn">获取验证码</button>
+                </div>
+                <div class="input-error" id="codeError">请输入邮箱验证码</div>
+            </div>
+            <button class="btn btn-primary" id="loginBtn" disabled>登录</button>
+            <div class="form-footer">
+                未注册邮箱将自动创建 ForX 账户<br>
+                或 <a class="switch-link" onclick="goToPage('page4')">使用 Web3 钱包登录</a>
+            </div>
+        </div>
+
+        <!-- 页面 3：登录成功页 -->
+        <div id="page3" class="page success-page">
+            <div class="success-icon">✓</div>
+            <div class="success-title">登录成功</div>
+            <div class="success-desc">已进入 ForX 账户</div>
+            <button class="btn btn-primary" onclick="goToPage('page6')">进入首页</button>
+        </div>
+
+        <!-- 页面 4：Web3 钱包连接页 -->
+        <div id="page4" class="page">
+            <div class="back-btn" onclick="goBack()">←</div>
+            <div style="padding-top: 60px; margin-bottom: 40px;">
+                <div class="page-title">连接 Web3 钱包</div>
+                <div class="page-desc">授权连接钱包后，可使用钱包地址注册或登录 ForX</div>
+            </div>
+            <div class="wallet-list">
+                <div class="wallet-card" onclick="selectWallet('MetaMask', '🦊')">
+                    <div class="wallet-icon">🦊</div>
+                    <div class="wallet-name">MetaMask</div>
+                    <div class="wallet-arrow">→</div>
+                </div>
+                <div class="wallet-card" onclick="selectWallet('OKX Wallet', '🔷')">
+                    <div class="wallet-icon">🔷</div>
+                    <div class="wallet-name">OKX Wallet</div>
+                    <div class="wallet-arrow">→</div>
+                </div>
+                <div class="wallet-card" onclick="selectWallet('WalletConnect', '🔗')">
+                    <div class="wallet-icon">🔗</div>
+                    <div class="wallet-name">WalletConnect</div>
+                    <div class="wallet-arrow">→</div>
+                </div>
+                <div class="wallet-card" onclick="selectWallet('Coinbase Wallet', '🔵')">
+                    <div class="wallet-icon">🔵</div>
+                    <div class="wallet-name">Coinbase Wallet</div>
+                    <div class="wallet-arrow">→</div>
+                </div>
+            </div>
+            <div class="wallet-hint" id="walletHint">你已取消钱包授权</div>
+        </div>
+
+        <!-- 页面 5：钱包授权确认页 -->
+        <div id="page5" class="page auth-page">
+            <div class="back-btn" onclick="goBack()">←</div>
+            <div style="padding-top: 60px;">
+                <div class="page-title">钱包授权确认</div>
+            </div>
+            <div class="auth-wallet">
+                <div class="auth-wallet-icon" id="authWalletIcon">🦊</div>
+                <div class="auth-wallet-address">0x8A3F...92C1</div>
+            </div>
+            <div class="auth-notes">
+                <div class="auth-note">
+                    <div class="auth-note-icon">✓</div>
+                    <div class="auth-note-text">本次授权仅用于账户注册 / 登录</div>
+                </div>
+                <div class="auth-note">
+                    <div class="auth-note-icon">✓</div>
+                    <div class="auth-note-text">不会发起链上转账</div>
+                </div>
+                <div class="auth-note">
+                    <div class="auth-note-icon">✓</div>
+                    <div class="auth-note-text">不会消耗 Gas</div>
+                </div>
+            </div>
+            <div class="auth-buttons">
+                <button class="btn btn-secondary" onclick="cancelAuth()">取消</button>
+                <button class="btn btn-primary" id="authBtn">确认授权</button>
+            </div>
+            <div class="auth-test-buttons">
+                <button class="auth-test-btn" onclick="simulateConnectionError()">模拟连接失败</button>
+                <button class="auth-test-btn" onclick="simulateAddressBound()">模拟地址已绑定</button>
+            </div>
+        </div>
+
+        <!-- 页面 6：App 首页占位页 -->
+        <div id="page6" class="page home-placeholder">
+            <div class="placeholder-header">
+                <div class="logo">ForX</div>
+                <div style="font-size: 24px;">🔔</div>
+            </div>
+            <div class="placeholder-content">
+                <div class="placeholder-card">
+                    <div class="placeholder-card-icon">📈</div>
+                    <div class="placeholder-card-text">合约交易</div>
+                </div>
+                <div class="placeholder-card">
+                    <div class="placeholder-card-icon">💰</div>
+                    <div class="placeholder-card-text">资产</div>
+                </div>
+                <div class="placeholder-card">
+                    <div class="placeholder-card-icon">🎉</div>
+                    <div class="placeholder-card-text">活动</div>
+                </div>
+                <div class="placeholder-card">
+                    <div class="placeholder-card-icon">👤</div>
+                    <div class="placeholder-card-text">我的</div>
+                </div>
+            </div>
+            <div class="tab-bar">
+                <div class="tab-item active">
+                    <div class="tab-icon">🏠</div>
+                    <div>Home</div>
+                </div>
+                <div class="tab-item">
+                    <div class="tab-icon">📊</div>
+                    <div>Markets</div>
+                </div>
+                <div class="tab-item">
+                    <div class="tab-icon">💹</div>
+                    <div>Trade</div>
+                </div>
+                <div class="tab-item">
+                    <div class="tab-icon">💼</div>
+                    <div>Assets</div>
+                </div>
+                <div class="tab-item">
+                    <div class="tab-icon">👤</div>
+                    <div>Me</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast -->
+        <div id="toast" class="toast"></div>
+
+        <!-- 弹窗遮罩 -->
+        <div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+
+        <!-- 用户协议弹窗 -->
+        <div class="bottom-sheet" id="userAgreementModal">
+            <div class="bottom-sheet-header">
+                <div class="bottom-sheet-title">用户协议</div>
+                <div class="bottom-sheet-close" onclick="closeModal()">✕</div>
+            </div>
+            <div class="bottom-sheet-content">
+                <p>欢迎使用 ForX 交易平台！</p>
+                <p>本用户协议（以下简称"协议"）是您与 ForX 平台之间关于使用本平台服务的法律协议。</p>
+                <p>1. 服务说明：ForX 是一个去中心化的永续合约交易平台，提供链上交易服务。</p>
+                <p>2. 用户资格：您必须年满18周岁，且具备完全民事行为能力才能使用本服务。</p>
+                <p>3. 账户安全：您有责任妥善保管您的账户信息和私钥，任何因保管不善造成的损失由您自行承担。</p>
+                <p>4. 交易风险：加密货币交易存在高风险，您应充分了解并自愿承担相关风险。</p>
+                <p>5. 合规要求：您承诺遵守所在国家和地区的相关法律法规。</p>
+            </div>
+            <button class="btn btn-primary" onclick="closeModal()">我已阅读</button>
+        </div>
+
+        <!-- 隐私政策弹窗 -->
+        <div class="bottom-sheet" id="privacyPolicyModal">
+            <div class="bottom-sheet-header">
+                <div class="bottom-sheet-title">隐私政策</div>
+                <div class="bottom-sheet-close" onclick="closeModal()">✕</div>
+            </div>
+            <div class="bottom-sheet-content">
+                <p>ForX 非常重视您的隐私保护。</p>
+                <p>本隐私政策说明了我们如何收集、使用和保护您的个人信息。</p>
+                <p>1. 信息收集：我们可能收集您的邮箱地址、钱包地址等必要信息以提供服务。</p>
+                <p>2. 信息使用：我们仅将收集的信息用于提供、维护和改进我们的服务。</p>
+                <p>3. 信息保护：我们采用业界标准的安全措施保护您的信息安全。</p>
+                <p>4. 信息共享：未经您的明确同意，我们不会向第三方分享您的个人信息。</p>
+                <p>5. 您的权利：您有权访问、更正或删除您的个人信息。</p>
+            </div>
+            <button class="btn btn-primary" onclick="closeModal()">我已阅读</button>
+        </div>
+
+        <!-- 地址已绑定弹窗 -->
+        <div class="bottom-sheet" id="addressBoundModal">
+            <div class="bottom-sheet-header">
+                <div class="bottom-sheet-title">钱包地址已绑定</div>
+                <div class="bottom-sheet-close" onclick="closeModal()">✕</div>
+            </div>
+            <div class="bottom-sheet-content">
+                <p style="text-align: center; margin: 40px 0;">
+                    当前钱包地址已绑定其他 ForX 账户，请更换钱包后重试
+                </p>
+            </div>
+            <button class="btn btn-primary" onclick="closeModal()">我知道了</button>
+        </div>
+    </div>
+
+    <script>
+        // 页面历史栈
+        let pageHistory = ['page1'];
+        let currentPage = 'page1';
+        let selectedWallet = { name: 'MetaMask', icon: '🦊' };
+        let codeCountdown = 0;
+
+        // 页面切换
+        function goToPage(pageId) {
+            const currentEl = document.getElementById(currentPage);
+            const nextEl = document.getElementById(pageId);
+            
+            currentEl.classList.remove('active');
+            nextEl.classList.add('active');
+            
+            if (pageId !== pageHistory[pageHistory.length - 2]) {
+                pageHistory.push(pageId);
+            }
+            
+            currentPage = pageId;
+        }
+
+        function goBack() {
+            if (pageHistory.length > 1) {
+                pageHistory.pop();
+                const prevPage = pageHistory[pageHistory.length - 1];
+                const currentEl = document.getElementById(currentPage);
+                const prevEl = document.getElementById(prevPage);
+                
+                currentEl.classList.remove('active');
+                prevEl.classList.add('active');
+                
+                currentPage = prevPage;
+            }
+        }
+
+        // Toast 提示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // 检查协议
+        function checkAgreement() {
+            const agreeCheck = document.getElementById('agreeCheck');
+            return agreeCheck.checked;
+        }
+
+        // 弹窗控制
+        let currentModal = null;
+        
+        function openModal(modalType) {
+            let modalId;
+            if (modalType === 'userAgreement') {
+                modalId = 'userAgreementModal';
+            } else if (modalType === 'privacyPolicy') {
+                modalId = 'privacyPolicyModal';
+            } else if (modalType === 'addressBound') {
+                modalId = 'addressBoundModal';
+            }
+            
+            if (modalId) {
+                document.getElementById('modalOverlay').classList.add('show');
+                document.getElementById(modalId).classList.add('show');
+                currentModal = modalId;
+            }
+        }
+        
+        function closeModal() {
+            if (currentModal) {
+                document.getElementById('modalOverlay').classList.remove('show');
+                document.getElementById(currentModal).classList.remove('show');
+                currentModal = null;
+            }
+        }
+
+        // 首页按钮事件
+        document.getElementById('emailBtn').addEventListener('click', function() {
+            if (!checkAgreement()) {
+                showToast('请先阅读并同意用户协议和隐私政策');
+                return;
+            } else {
+                goToPage('page2');
+            }
+        });
+
+        document.getElementById('walletBtn').addEventListener('click', function() {
+            if (!checkAgreement()) {
+                showToast('请先阅读并同意用户协议和隐私政策');
+                return;
+            } else {
+                goToPage('page4');
+            }
+        });
+
+        // 邮箱验证
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        // 获取验证码
+        const getCodeBtn = document.getElementById('getCodeBtn');
+
+        getCodeBtn.addEventListener('click', function() {
+            const email = document.getElementById('emailInput').value;
+            const emailError = document.getElementById('emailError');
+            const emailInput = document.getElementById('emailInput');
+
+            if (codeCountdown > 0) {
+                showToast('验证码已发送，请稍后重试');
+                return;
+            }
+
+            if (!email) {
+                emailInput.classList.add('error');
+                emailError.textContent = '请输入邮箱地址';
+                emailError.classList.add('show');
+                showToast('请输入邮箱地址');
+                return;
+            }
+
+            if (!validateEmail(email)) {
+                emailInput.classList.add('error');
+                emailError.textContent = '请输入正确的邮箱地址';
+                emailError.classList.add('show');
+                showToast('请输入正确的邮箱地址');
+                return;
+            }
+
+            emailInput.classList.remove('error');
+            emailError.classList.remove('show');
+
+            // 倒计时
+            codeCountdown = 60;
+            getCodeBtn.disabled = true;
+            getCodeBtn.textContent = `${codeCountdown}s`;
+
+            const timer = setInterval(() => {
+                codeCountdown--;
+                getCodeBtn.textContent = `${codeCountdown}s`;
+
+                if (codeCountdown <= 0) {
+                    clearInterval(timer);
+                    getCodeBtn.disabled = false;
+                    getCodeBtn.textContent = '获取验证码';
+                }
+            }, 1000);
+
+            showToast('验证码已发送');
+        });
+
+        // 输入框输入事件
+        const emailInput = document.getElementById('emailInput');
+        const codeInput = document.getElementById('codeInput');
+        const loginBtn = document.getElementById('loginBtn');
+
+        function checkLoginBtn() {
+            const email = emailInput.value;
+            const code = codeInput.value;
+            loginBtn.disabled = !(email && code);
+        }
+
+        emailInput.addEventListener('input', function() {
+            this.classList.remove('error');
+            document.getElementById('emailError').classList.remove('show');
+            checkLoginBtn();
+        });
+
+        codeInput.addEventListener('input', function() {
+            this.classList.remove('error');
+            document.getElementById('codeError').classList.remove('show');
+            checkLoginBtn();
+        });
+
+        // 登录按钮
+        loginBtn.addEventListener('click', function() {
+            const email = emailInput.value;
+            const code = codeInput.value;
+            const codeError = document.getElementById('codeError');
+            const codeInputEl = document.getElementById('codeInput');
+            const emailError = document.getElementById('emailError');
+            const emailInputEl = document.getElementById('emailInput');
+
+            if (!email) {
+                emailInputEl.classList.add('error');
+                emailError.textContent = '请输入邮箱地址';
+                emailError.classList.add('show');
+                showToast('请输入邮箱地址');
+                return;
+            }
+
+            if (!validateEmail(email)) {
+                emailInputEl.classList.add('error');
+                emailError.textContent = '请输入正确的邮箱地址';
+                emailError.classList.add('show');
+                showToast('请输入正确的邮箱地址');
+                return;
+            }
+
+            if (!code) {
+                codeInputEl.classList.add('error');
+                codeError.textContent = '请输入邮箱验证码';
+                codeError.classList.add('show');
+                showToast('请输入邮箱验证码');
+                return;
+            }
+
+            // 模拟验证码错误
+            if (code === '000000') {
+                codeInputEl.classList.add('error');
+                codeError.textContent = '验证码错误';
+                codeError.classList.add('show');
+                showToast('验证码错误，请重新输入');
+                return;
+            }
+
+            // 模拟验证码过期
+            if (code === '999999') {
+                codeInputEl.classList.add('error');
+                codeError.textContent = '验证码已过期';
+                codeError.classList.add('show');
+                showToast('验证码已过期，请重新获取');
+                return;
+            }
+
+            // Loading 状态
+            this.innerHTML = '<div class="loading-spinner"></div> 处理中...';
+            this.disabled = true;
+
+            setTimeout(() => {
+                this.innerHTML = '登录';
+                this.disabled = false;
+                goToPage('page3');
+            }, 1000);
+        });
+
+        // 选择钱包
+        function selectWallet(name, icon) {
+            selectedWallet = { name, icon };
+            document.getElementById('authWalletIcon').textContent = icon;
+            goToPage('page5');
+        }
+
+        // 取消授权
+        function cancelAuth() {
+            goToPage('page4');
+            setTimeout(() => {
+                const hint = document.getElementById('walletHint');
+                hint.classList.add('show');
+                setTimeout(() => {
+                    hint.classList.remove('show');
+                }, 3000);
+            }, 100);
+        }
+
+        // 模拟连接失败
+        function simulateConnectionError() {
+            showToast('钱包连接失败，请重试');
+        }
+
+        // 模拟地址已绑定
+        function simulateAddressBound() {
+            openModal('addressBound');
+        }
+
+        // 授权确认
+        document.getElementById('authBtn').addEventListener('click', function() {
+            this.innerHTML = '<div class="loading-spinner"></div> 处理中...';
+            this.disabled = true;
+
+            setTimeout(() => {
+                this.innerHTML = '确认授权';
+                this.disabled = false;
+                goToPage('page3');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
