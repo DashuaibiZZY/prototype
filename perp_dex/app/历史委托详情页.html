@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX - 訂單詳情 V3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+
+        .phone-shell { width: 375px; height: 812px; background: #000; border-radius: 50px; padding: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative; border: 4px solid #333; flex-shrink: 0; }
+        .screen { width: 100%; height: 100%; background: #fff; border-radius: 38px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+
+        /* 控制面板樣式 */
+        .control-panel { margin-left: 40px; display: flex; flex-direction: column; gap: 8px; max-width: 240px; }
+        .btn-ctrl { background: white; border: 1px solid #e5e7eb; padding: 10px 16px; border-radius: 8px; font-size: 11px; font-weight: 800; text-align: left; transition: all 0.2s; }
+        .btn-ctrl:hover { border-color: #3b82f6; color: #3b82f6; }
+        .btn-ctrl.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+
+        /* 動態進入動畫 */
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 複製圖標樣式 */
+        .copy-icon { width: 14px; height: 14px; color: #d1d5db; cursor: pointer; transition: color 0.2s; }
+        .copy-icon:hover { color: #000; }
+    </style>
+</head>
+<body>
+
+<div class="phone-shell">
+    <div class="screen" id="order-detail-screen">
+        <!-- 內容由 JS 動態注入 -->
+    </div>
+</div>
+
+<!-- 右側控制面板 -->
+<div class="control-panel">
+    <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">基礎訂單狀態</div>
+    <button onclick="updateView('basic_filled')" id="btn-basic_filled" class="btn-ctrl active">基礎單 - 全部成交</button>
+    <button onclick="updateView('basic_partial')" id="btn-basic_partial" class="btn-ctrl">基礎單 - 部分成交</button>
+    <button onclick="updateView('basic_cancelled')" id="btn-basic_cancelled" class="btn-ctrl">基礎單 - 已取消</button>
+    <button onclick="updateView('basic_invalid')" id="btn-basic_invalid" class="btn-ctrl">基礎單 - 已失效</button>
+    <button onclick="updateView('basic_liquidated')" id="btn-basic_liquidated" class="btn-ctrl">基礎單 - 全部成交&強平</button>
+
+    <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-4 mb-2">止盈止損單狀態</div>
+    <button onclick="updateView('tpsl_completed')" id="btn-tpsl_completed" class="btn-ctrl">止盈止損 - 已完成</button>
+    <button onclick="updateView('tpsl_invalid')" id="btn-tpsl_invalid" class="btn-ctrl">止盈止損 - 已失效</button>
+    <button onclick="updateView('tpsl_cancelled')" id="btn-tpsl_cancelled" class="btn-ctrl">止盈止損 - 已取消</button>
+</div>
+
+<script>
+    const COPY_SVG = `<svg class="copy-icon ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>`;
+    const CHECK_SVG = `<div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mb-2"><svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="4"><path d="M5 13l4 4L19 7"/></svg></div>`;
+    const CROSS_SVG = `<div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-2"><svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="4"><path d="M6 18L18 6M6 6l12 12"/></svg></div>`;
+    const ALERT_SVG = `<div class="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center mb-2 shadow-lg shadow-red-200"><svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></div>`;
+
+    function updateView(type) {
+        // 更新按鈕樣式
+        document.querySelectorAll('.btn-ctrl').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('btn-' + type).classList.add('active');
+
+        const screen = document.getElementById('order-detail-screen');
+        let content = '';
+
+        // 通用導航欄 (BNB版)
+        const headerBNB = `
+            <header class="flex justify-between items-center px-4 pt-12 pb-4 shrink-0 bg-white border-b border-gray-50">
+                <button onclick="window.history.back()" class="p-1 -ml-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg></button>
+                <div class="flex items-center space-x-1"><span class="font-black text-[15px]">BNBUSDT</span></div>
+                <button class="p-1"><svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg></button>
+            </header>`;
+
+        // 通用導航欄 (BTC版 for TPSL)
+        const headerBTC = headerBNB.replace('BNBUSDT', 'BTCUSDT');
+
+        const commonInfo = (id, typeDir, qty, price, reduce) => `
+            <div class="px-6 py-4 space-y-4 text-[12px]">
+                <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">訂單號</span><div class="flex items-center text-gray-900">${id} ${COPY_SVG}</div></div>
+                <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">類型</span><span class="text-gray-900">${typeDir}</span></div>
+                <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">數量 / 成交數量 (USDT)</span><span class="text-gray-900">${qty}</span></div>
+                <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">均價 / 價格</span><span class="text-gray-900 font-mono">${price}</span></div>
+                <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">只減倉</span><span class="text-gray-900">${reduce}</span></div>
+            </div>`;
+
+        const detailList = `
+            <div class="px-6 py-6 border-t-[8px] border-gray-50">
+                <div class="flex justify-between items-center mb-6"><h4 class="font-black text-sm uppercase tracking-tighter italic">成交明細</h4></div>
+                <div class="space-y-6">
+                    <div class="space-y-2">
+                        <p class="text-[10px] font-black text-gray-900">2026-06-11 18:58:30</p>
+                        <div class="grid grid-cols-2 gap-y-2 text-[11px] font-bold">
+                            <div class="flex justify-between pr-4"><span class="text-gray-400">數量</span><span class="text-gray-900">5.00 USDT</span></div>
+                            <div class="flex justify-between pl-4 border-l border-gray-100"><span class="text-gray-400">價格</span><span class="text-gray-900">500.00</span></div>
+                            <div class="flex justify-between pr-4"><span class="text-gray-400">盈虧</span><span class="text-gray-900">0.00</span></div>
+                            <div class="flex justify-between pl-4 border-l border-gray-100"><span class="text-gray-400">手續費</span><span class="text-gray-900">0.012</span></div>
+                            <div class="flex justify-between pr-4"><span class="text-gray-400">角色</span><span class="text-gray-900 italic">吃單</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+
+        switch(type) {
+            case 'basic_filled':
+                content = `
+                    ${headerBNB}
+                    <div class="flex-1 overflow-y-auto no-scrollbar fade-in">
+                        <div class="py-8 flex flex-col items-center border-b border-gray-50">${CHECK_SVG}<h3 class="font-black text-lg">全部成交 100%</h3></div>
+                        ${commonInfo('2938472941', '市價 / 平多', '5.00 / 5.00', '500.00 / 500.00', '是')}
+                        <div class="px-6 py-4 space-y-4 text-[12px] border-t border-gray-50">
+                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">手續費</span><span class="text-gray-900 font-mono">-0.0025</span></div>
+                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">已實現盈虧</span><span class="text-green-500 font-mono">+1.25</span></div>
+                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">創建時間</span><span class="text-gray-900">2026-06-11 18:58:20</span></div>
+                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">更新時間</span><span class="text-gray-900">2026-06-11 18:58:30</span></div>
+                        </div>
+                        ${detailList}
+                    </div>`;
+                break;
+            case 'basic_partial':
+                content = `
+                    ${headerBNB}
+                    <div class="flex-1 overflow-y-auto no-scrollbar fade-in">
+                        <div class="py-8 flex flex-col items-center border-b border-gray-50">
+                            <div class="relative w-12 h-12 mb-2 flex items-center justify-center">
+                                <svg class="absolute inset-0 w-full h-full -rotate-90"><circle cx="24" cy="24" r="20" stroke="#f3f4f6" stroke-width="4" fill="none"/><circle cx="24" cy="24" r="20" stroke="#22c55e" stroke-width="4" fill="none" stroke-dasharray="125" stroke-dashoffset="62"/></svg>
+                                <span class="text-[10px] font-black">50%</span>
+                            </div>
+                            <h3 class="font-black text-lg">部分成交 50%</h3>
+                        </div>
+                        ${commonInfo('2938472945', '限價 / 開多', '10.00 / 5.00', '500.00 / 500.00', '否')}
+                        ${detailList}
+                    </div>`;
+                break;
+            case 'basic_cancelled':
+            case 'basic_invalid':
+                const statusTxt = type === 'basic_cancelled' ? '已取消' : '已過期';
+                const timeLabel = type === 'basic_cancelled' ? '撤銷時間' : '過期時間';
+                content = `
+                    ${headerBNB}
+                    <div class="flex-1 overflow-y-auto no-scrollbar fade-in">
+                        <div class="py-8 flex flex-col items-center border-b border-gray-50">${CROSS_SVG}<h3 class="font-black text-lg text-gray-400">${statusTxt}</h3></div>
+                        ${commonInfo('2938472948', '限價 / 開多', '5.00 / 0.00', '-- / 500.00', '否')}
+                        <div class="px-6 py-4 space-y-4 text-[12px] border-t border-gray-50">
+                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">手續費</span><span class="text-gray-400 font-mono">--</span></div>
+                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">${timeLabel}</span><span class="text-gray-900">2026-06-11 19:10:00</span></div>
+                        </div>
+                        <div class="py-20 text-center text-gray-300 font-bold uppercase tracking-widest text-[10px]">已經全部加載完畢</div>
+                    </div>`;
+                break;
+            case 'basic_liquidated':
+                content = `
+                    ${headerBNB}
+                    <div class="flex-1 overflow-y-auto no-scrollbar fade-in">
+                        <div class="py-8 flex flex-col items-center border-b border-gray-50">${ALERT_SVG}<h3 class="font-black text-lg text-red-600 uppercase italic">強平委託成交</h3></div>
+                        ${commonInfo('LX-9283749', '強平委託 / 平多', '100.00 / 100.00', '650.00 / 645.00', '是')}
+                        <div class="px-6 py-4 space-y-4 text-[12px] border-t border-gray-50">
+                            <div class="flex justify-between font-bold"><span class="text-red-500 uppercase text-[10px] font-black">強平價格</span><span class="text-red-500 font-black font-mono">652.12</span></div>
+                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">已實現盈虧</span><span class="text-red-500 font-mono">-124.50</span></div>
+                        </div>
+                        ${detailList}
+                    </div>`;
+                break;
+            case 'tpsl_completed':
+            case 'tpsl_invalid':
+            case 'tpsl_cancelled':
+                const isComp = type === 'tpsl_completed';
+                const tStatus = isComp ? '已完成' : (type === 'tpsl_invalid' ? '已失效' : '已取消');
+                const tIcon = isComp ? CHECK_SVG : CROSS_SVG;
+                content = `
+                    ${headerBTC}
+                    <div class="flex-1 overflow-y-auto no-scrollbar fade-in">
+                        <div class="py-8 flex flex-col items-center border-b border-gray-50">${tIcon}<h3 class="font-black text-lg ${isComp?'':'text-gray-400'}">${tStatus}</h3></div>
+                        <div class="px-6 py-6 space-y-4 text-[12px]">
+                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">算法編號</span><div class="flex items-center text-gray-900">ALGO-9281 ${COPY_SVG}</div></div>
+                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">訂單號</span><div class="flex items-center text-gray-900">${isComp?'2938472941':'--'} ${isComp?COPY_SVG:''}</div></div>
+                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">類型</span><span class="text-gray-900">市價止盈 / 平空</span></div>
+                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">價格</span><span class="text-gray-900">市價</span></div>
+                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">觸發類型</span><span class="text-gray-900">最新價格 ≥ 61,150.30</span></div>
+                        </div>
+                        <div class="px-6 py-6 border-t-[8px] border-gray-50 space-y-4 text-[12px]">
+                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">創建時間</span><span class="text-gray-900">2026-06-11 18:00:00</span></div>
+                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">更新時間</span><span class="text-gray-900">2026-06-11 18:30:00</span></div>
+                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">觸發時間</span><span class="text-gray-900">${isComp?'2026-06-11 19:10:05':'--'}</span></div>
+                        </div>
+                    </div>`;
+                break;
+        }
+
+        screen.innerHTML = content;
+    }
+
+    // 初始進入：顯示基礎單成交
+    updateView('basic_filled');
+</script>
+
+</body>
+</html>

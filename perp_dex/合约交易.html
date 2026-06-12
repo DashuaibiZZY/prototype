@@ -1031,28 +1031,24 @@
 <!-- 弹窗：设置止盈止损 (支持设置前后状态切换) -->
 <div id="modal-tpsl" class="modal-overlay">
     <div class="bg-white w-[420px] rounded-sm shadow-2xl overflow-hidden animate-in zoom-in duration-200">
-        <!-- 头部 -->
+        <!-- 1. 头部 -->
         <div class="px-6 py-4 border-b border-gray-50 flex justify-between items-center bg-slate-50">
             <div class="flex items-center space-x-2">
                 <span class="text-sm font-black uppercase tracking-tight italic">止盈止損設置</span>
                 <div class="flex items-center space-x-1">
-                    <!-- 交易对 -->
                     <span class="text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-sm font-bold uppercase">BNB/USDT</span>
-                    <!-- 仓位模式：逐仓/全仓 -->
                     <span class="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-sm font-bold uppercase">逐倉</span>
-                    <!-- 杠杆倍数 -->
                     <span class="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-sm font-bold uppercase">20X</span>
                 </div>
             </div>
             <div class="flex items-center space-x-4">
-                <!-- 演示切换键：模拟后端有无订单的状态 -->
                 <button onclick="simulateOrderState(true)" class="text-[9px] text-gray-300 hover:text-blue-500 underline uppercase">模擬已設置</button>
                 <button onclick="toggleModal('modal-tpsl')" class="text-gray-400 hover:text-black font-bold">✕</button>
             </div>
         </div>
 
         <div class="p-6 space-y-6">
-            <!-- 持仓信息概览 (保持简洁) -->
+            <!-- 2. 持仓信息概览 -->
             <div class="flex justify-between items-center text-[11px] pb-4 border-b border-gray-50">
                 <div class="space-y-1">
                     <p class="text-gray-400 font-bold uppercase">開倉均價</p>
@@ -1068,9 +1064,9 @@
                 </div>
             </div>
 
-            <!-- 止盈区域 (TP) -->
+            <!-- 3. 止盈區域 (TP) -->
             <div id="tp-container" class="space-y-3">
-                <!-- 1. TP 设置状态 -->
+                <!-- TP 設置狀態 (動態預估) -->
                 <div id="tp-view-setup" class="block space-y-3">
                     <div class="flex justify-between items-center">
                         <label class="text-[11px] font-black text-gray-400 uppercase tracking-widest flex items-center">
@@ -1082,33 +1078,39 @@
                         </div>
                     </div>
                     <div class="flex items-center border border-gray-200 rounded-sm focus-within:border-black transition-all">
-                        <input type="number" placeholder="觸發價格" class="flex-1 px-3 py-2 text-[12px] font-black outline-none">
+                        <input type="number" placeholder="止盈觸發價格" class="flex-1 px-3 py-2 text-[12px] font-black outline-none font-mono">
                         <select class="bg-gray-50 text-[10px] font-bold px-2 py-2.5 border-r border-gray-200 outline-none"><option>標記價格</option><option>最新價格</option></select>
+                    </div>
+                    <!-- 新增：動態預估收益 -->
+                    <div class="flex justify-between items-center text-[10px] px-1">
+                        <span class="text-gray-400 font-bold uppercase">預估收益</span>
+                        <span class="text-green-500 font-black font-mono">+0.00 USDT</span>
                     </div>
                     <div id="tp-limit-input" class="hidden"><input type="number" placeholder="限價成交價格" class="w-full border border-blue-200 bg-blue-50/30 px-3 py-2 text-[12px] font-black rounded-sm outline-none"></div>
                 </div>
-                <!-- 2. TP 活跃状态 -->
+
+                <!-- TP 活躍狀態 (靜態展示) -->
                 <div id="tp-view-active" class="hidden bg-green-50/30 border border-green-100 p-3 rounded-sm">
                     <div class="flex justify-between items-start">
-                        <div class="space-y-1">
-                            <p class="text-[12px] font-black text-gray-900">觸發: 750.00 (標記價格)</p>
-                            <p class="text-[10px] text-gray-400 font-bold">類型: 市價單 | 數量: 0.142 BNB</p>
+                        <div class="space-y-1.5">
+                            <p class="text-[12px] font-black text-gray-900">觸發: 750.00 (標記)</p>
+                            <div class="flex items-center space-x-3">
+                                <p class="text-[10px] text-gray-400 font-bold uppercase">市價單</p>
+                                <span class="text-gray-200">|</span>
+                                <p class="text-[10px] text-green-600 font-black uppercase">預估收益: +39.23 USDT</p>
+                            </div>
                         </div>
                         <div class="flex space-x-2">
-                            <button onclick="editMode('tp')" class="p-1.5 bg-white border border-gray-200 rounded-sm hover:border-black transition-all" title="修改">
-                                <svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-width="2"/></svg>
-                            </button>
-                            <button onclick="cancelOrder('tp')" class="p-1.5 bg-white border border-gray-200 rounded-sm hover:border-red-500 group" title="撤銷">
-                                <svg class="w-3.5 h-3.5 text-gray-400 group-hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/></svg>
-                            </button>
+                            <button onclick="editMode('tp')" class="p-1.5 bg-white border border-gray-200 rounded-sm hover:border-black transition-all"><svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-width="2"/></svg></button>
+                            <button onclick="cancelOrder('tp')" class="p-1.5 bg-white border border-gray-200 rounded-sm hover:border-red-500 group"><svg class="w-3.5 h-3.5 text-gray-400 group-hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/></svg></button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 止损区域 (SL) -->
+            <!-- 4. 止損區域 (SL) -->
             <div id="sl-container" class="space-y-3">
-                <!-- 1. SL 设置状态 -->
+                <!-- SL 設置狀態 (動態預估) -->
                 <div id="sl-view-setup" class="block space-y-3">
                     <div class="flex justify-between items-center">
                         <label class="text-[11px] font-black text-gray-400 uppercase tracking-widest flex items-center">
@@ -1120,44 +1122,48 @@
                         </div>
                     </div>
                     <div class="flex items-center border border-gray-200 rounded-sm focus-within:border-black transition-all">
-                        <input type="number" placeholder="觸發價格" class="flex-1 px-3 py-2 text-[12px] font-black outline-none">
+                        <input type="number" placeholder="止損觸發價格" class="flex-1 px-3 py-2 text-[12px] font-black outline-none font-mono">
                         <select class="bg-gray-50 text-[10px] font-bold px-2 py-2.5 border-r border-gray-200 outline-none"><option>標記價格</option><option>最新價格</option></select>
+                    </div>
+                    <!-- 新增：動態預估虧損 -->
+                    <div class="flex justify-between items-center text-[10px] px-1">
+                        <span class="text-gray-400 font-bold uppercase">預估收益</span>
+                        <span class="text-red-500 font-black font-mono">-0.00 USDT</span>
                     </div>
                     <div id="sl-limit-input" class="hidden"><input type="number" placeholder="限價成交價格" class="w-full border border-red-200 bg-red-50/30 px-3 py-2 text-[12px] font-black rounded-sm outline-none"></div>
                 </div>
-                <!-- 2. SL 活跃状态 -->
+
+                <!-- SL 活躍狀態 (靜態展示) -->
                 <div id="sl-view-active" class="hidden bg-red-50/30 border border-red-100 p-3 rounded-sm">
                     <div class="flex justify-between items-start">
-                        <div class="space-y-1">
-                            <p class="text-[12px] font-black text-gray-900">觸發: 630.00 (標記價格)</p>
-                            <p class="text-[10px] text-gray-400 font-bold">類型: 限价單（$800.12） | 數量: 0.142 BNB</p>
+                        <div class="space-y-1.5">
+                            <p class="text-[12px] font-black text-gray-900">觸發: 630.00 (標記)</p>
+                            <div class="flex items-center space-x-3">
+                                <p class="text-[10px] text-gray-400 font-bold uppercase">限價單 ($800.12)</p>
+                                <span class="text-gray-200">|</span>
+                                <p class="text-[10px] text-red-600 font-black uppercase">預估收益: -19.23 USDT</p>
+                            </div>
                         </div>
                         <div class="flex space-x-2">
-                            <button onclick="editMode('sl')" class="p-1.5 bg-white border border-gray-200 rounded-sm hover:border-black" title="修改"><svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-width="2"/></svg></button>
-                            <button onclick="cancelOrder('sl')" class="p-1.5 bg-white border border-gray-200 rounded-sm hover:border-red-500 group" title="撤銷"><svg class="w-3.5 h-3.5 text-gray-400 group-hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/></svg></button>
+                            <button onclick="editMode('sl')" class="p-1.5 bg-white border border-gray-200 rounded-sm hover:border-black transition-all"><svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-width="2"/></svg></button>
+                            <button onclick="cancelOrder('sl')" class="p-1.5 bg-white border border-gray-200 rounded-sm hover:border-red-500 group"><svg class="w-3.5 h-3.5 text-gray-400 group-hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/></svg></button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 數量與滑動條 (帶輸入框優化版) -->
+            <!-- 5. 數量與滑動條 -->
             <div id="quantity-section" class="space-y-4 pt-4 border-t border-gray-50">
-                <!-- 標題與倉位參考 -->
                 <div class="flex justify-between items-end">
                     <label class="text-[11px] font-black text-gray-400 uppercase tracking-widest">數量</label>
-                    <p class="text-[10px] font-bold text-gray-400">倉位數量 <span class="text-black">0.142 BNB</span></p>
+                    <p class="text-[10px] font-bold text-gray-400">倉位數量 <span class="text-black font-mono">0.142 BNB</span></p>
                 </div>
-
-                <!-- 1. 數值輸入框 -->
                 <div class="relative flex items-center border border-gray-200 rounded-sm focus-within:border-black transition-all bg-white overflow-hidden">
-                    <input type="number" value="0.142" class="flex-1 px-3 py-2.5 text-[12px] font-black outline-none font-mono" placeholder="0.00">
-                    <span class="px-3 text-[10px] font-black text-gray-400 border-l border-gray-100 bg-slate-50/50">BNB</span>
+                    <input type="number" value="0.142" class="flex-1 px-3 py-2.5 text-[12px] font-black outline-none font-mono">
+                    <span class="px-3 text-[10px] font-black text-gray-400 border-l border-gray-100 bg-slate-50/50 italic">BNB</span>
                 </div>
-
-                <!-- 2. 滑動條 (位於輸入框正下方) -->
                 <div class="px-1">
                     <input type="range" class="w-full h-1 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-black" min="0" max="100" value="100">
-                    <!-- 刻度點樣式 -->
                     <div class="flex justify-between mt-2 px-0.5 relative">
                         <span class="w-1 h-1 rounded-full bg-black"></span>
                         <span class="w-1 h-1 rounded-full bg-gray-300"></span>
@@ -1165,26 +1171,16 @@
                         <span class="w-1 h-1 rounded-full bg-gray-300"></span>
                         <span class="w-1 h-1 rounded-full bg-gray-300"></span>
                     </div>
-                    <!-- 百分比文字提示 -->
-                    <div class="flex justify-between mt-1 text-[8px] font-bold text-gray-300 uppercase tracking-tighter">
-                        <span>0%</span>
-                        <span>25%</span>
-                        <span>50%</span>
-                        <span>75%</span>
-                        <span>100%</span>
-                    </div>
                 </div>
-
-                <!-- 價值換算 -->
                 <div class="flex justify-end">
-                    <p class="text-[10px] font-medium text-gray-400">預估價值: <span class="text-gray-900 font-bold">≈ 93.47 USDT</span></p>
+                    <p class="text-[10px] font-medium text-gray-400 uppercase tracking-tighter">預估總價值: <span class="text-gray-900 font-black font-mono">≈ 93.47 USDT</span></p>
                 </div>
             </div>
 
-            <!-- 底部按钮 -->
+            <!-- 6. 底部按鈕 -->
             <div class="pt-2">
-                <button onclick="toggleModal('modal-tpsl')" class="w-full bg-black text-white py-3.5 rounded-sm font-black uppercase tracking-[0.2em] hover:bg-gray-800 transition shadow-xl shadow-black/10">
-                    確認提交
+                <button onclick="openTPSLConfirm()" class="w-full bg-black text-white py-3.5 rounded-sm font-black uppercase tracking-[0.2em] hover:bg-gray-800 transition shadow-xl shadow-black/10">
+                    確認設置
                 </button>
             </div>
         </div>
@@ -1265,7 +1261,7 @@
             <!-- 确认按钮 -->
             <div class="pt-2">
                 <button onclick="toggleModal('modal-order-tpsl')" class="w-full bg-black text-white py-3.5 rounded-sm font-black uppercase tracking-[0.2em] hover:bg-gray-800 transition shadow-xl shadow-black/10">
-                    確認設置
+                    設置
                 </button>
             </div>
         </div>
@@ -1301,8 +1297,8 @@
                     <span id="confirm-mark-price" class="text-gray-900 font-mono">52648.00 USDT</span>
                 </div>
                 <div class="flex justify-between font-bold pt-2 border-t border-gray-50">
-                    <span class="text-gray-400">預估強平價格</span>
-                    <span id="confirm-liq-price" class="text-red-500 font-black font-mono">42648.00 USDT</span>
+                    <span class="text-gray-400">止盈/止损</span>
+                    <span id="confirm-liq-price" class="text-red-500 font-black font-mono"> 52600.00/52600.00 USDT</span>
                 </div>
             </div>
 
@@ -1318,6 +1314,104 @@
             <button onclick="executeOrder()" id="confirm-action-btn" class="w-full bg-green-500 text-white py-3 rounded-sm font-black uppercase text-[12px] shadow-lg hover:opacity-90 transition-all">
                 确认
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- 止盈止損訂單確認彈窗 -->
+<div id="modal-tpsl-confirm" class="modal-overlay fixed inset-0 bg-black/40 z-[210] flex items-center justify-center backdrop-blur-sm" style="display: none;">
+    <div class="bg-white w-[340px] rounded-sm shadow-2xl overflow-hidden animate-in zoom-in duration-200 border border-gray-100">
+
+        <!-- Header: 標題與合約名稱 -->
+        <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50">
+            <div class="flex items-center space-x-2">
+                <h3 class="text-[13px] font-black uppercase italic tracking-tighter">止盈止損確認</h3>
+                <span class="text-[9px] bg-green-500 text-white px-1 rounded-sm font-black italic">多單</span>
+            </div>
+            <button onclick="toggleModal('modal-tpsl-confirm')" class="text-gray-400 hover:text-black font-bold text-lg">✕</button>
+        </div>
+
+        <!-- Content -->
+        <div class="p-5 space-y-5">
+
+            <!-- 1. 基礎開倉信息 -->
+            <div class="grid grid-cols-2 gap-4 py-2 border-b border-gray-50">
+                <div class="space-y-1">
+                    <p class="text-[9px] text-gray-400 font-bold uppercase">合約</p>
+                    <p class="text-[12px] font-black text-gray-900">BNBUSDT 永續</p>
+                </div>
+                <div class="space-y-1 text-right">
+                    <p class="text-[9px] text-gray-400 font-bold uppercase">開倉價格</p>
+                    <p class="text-[12px] font-black text-gray-900 font-mono">650.90 <small class="text-gray-400 font-medium">USDT</small></p>
+                </div>
+            </div>
+
+            <!-- 2. 止盈區塊 (Take Profit) -->
+            <div class="space-y-2 bg-green-50/30 p-3 rounded-sm border border-green-100/50">
+                <p class="text-[10px] font-black text-green-600 uppercase flex items-center">
+                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>止盈 (Take Profit)
+                </p>
+                <div class="space-y-1.5 text-[11px]">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400 font-bold">觸發價格</span>
+                        <span class="text-gray-900 font-black font-mono">750.00 <small class="text-gray-400 font-medium">(標記)</small></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400 font-bold">委託價格</span>
+                        <span class="text-gray-900 font-black">市價</span>
+                    </div>
+                    <div class="flex justify-between pt-1 mt-1 border-t border-green-100/30">
+                        <span class="text-gray-400 font-bold">預估收益</span>
+                        <span class="text-green-600 font-black font-mono">+39.23 USDT</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 止損區塊 (Stop Loss) -->
+            <div class="space-y-2 bg-red-50/30 p-3 rounded-sm border border-red-100/50">
+                <p class="text-[10px] font-black text-red-600 uppercase flex items-center">
+                    <span class="w-1.5 h-1.5 bg-red-500 rounded-full mr-1.5"></span>止損 (Stop Loss)
+                </p>
+                <div class="space-y-1.5 text-[11px]">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400 font-bold">觸發價格</span>
+                        <span class="text-gray-900 font-black font-mono">650.00 <small class="text-gray-400 font-medium">(最新)</small></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400 font-bold">委託價格</span>
+                        <span class="text-gray-900 font-black font-mono">600.00</span>
+                    </div>
+                    <div class="flex justify-between pt-1 mt-1 border-t border-red-100/30">
+                        <span class="text-gray-400 font-bold">預估收益</span>
+                        <span class="text-red-600 font-black font-mono">-19.23 USDT</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. 下單數量 -->
+            <div class="flex justify-between items-center py-2">
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">下單數量</span>
+                <span class="text-[13px] font-black text-gray-900 font-mono">0.142 <small class="text-[10px] font-medium text-gray-400 italic">BNB</small></span>
+            </div>
+
+            <!-- 5. 下方勾選框與按鈕 -->
+            <div class="space-y-4 pt-2">
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" id="tpsl-no-confirm" class="w-3.5 h-3.5 accent-black rounded-none">
+                    <label for="tpsl-no-confirm" class="text-[10px] font-bold text-gray-400 cursor-pointer hover:text-gray-600">
+                        不再为止盈止损订单提示二次确认。您也可以在“偏好设置”中调整。
+                    </label>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="toggleModal('modal-tpsl-confirm')" class="flex-1 border border-gray-200 text-gray-400 py-3 rounded-sm font-black uppercase text-[11px] hover:bg-gray-50 transition-all">
+                        取消
+                    </button>
+                    <button onclick="executeTPSL()" class="flex-2 bg-black text-white py-3 px-10 rounded-sm font-black uppercase text-[11px] shadow-lg hover:bg-gray-800 transition-all tracking-widest">
+                        確認提交
+                    </button>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -1359,7 +1453,7 @@
                 <div class="space-y-5">
                     <!-- 開關項 -->
                     <div class="flex items-center justify-between">
-                        <span class="text-[12px] font-bold text-gray-700">限價單</span>
+                        <span class="text-[12px] font-bold text-gray-700">限价 订单</span>
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" class="sr-only peer" checked>
                             <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black"></div>
@@ -1367,7 +1461,7 @@
                     </div>
 
                     <div class="flex items-center justify-between">
-                        <span class="text-[12px] font-bold text-gray-700">市價單</span>
+                        <span class="text-[12px] font-bold text-gray-700">市价 订单</span>
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" class="sr-only peer" checked>
                             <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black"></div>
@@ -1375,15 +1469,7 @@
                     </div>
 
                     <div class="flex items-center justify-between">
-                        <span class="text-[12px] font-bold text-gray-700">限價止盈止損委託</span>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" class="sr-only peer">
-                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black"></div>
-                        </label>
-                    </div>
-
-                    <div class="flex items-center justify-between">
-                        <span class="text-[12px] font-bold text-gray-700">市價價格止損委託</span>
+                        <span class="text-[12px] font-bold text-gray-700">止盈止損 订单</span>
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" class="sr-only peer">
                             <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black"></div>
@@ -1685,6 +1771,28 @@
                 tabBtns.forEach(btn => btn.className = inactiveClass);
             }
         });
+    }
+
+    function openTPSLConfirm() {
+        // 1. 關閉止盈止損輸入框
+        const inputModal = document.getElementById('modal-order-tpsl');
+        if (inputModal) inputModal.style.display = 'none';
+
+        // 2. 開啟止盈止損確認框
+        const confirmModal = document.getElementById('modal-tpsl-confirm');
+        if (confirmModal) {
+            confirmModal.style.display = 'flex';
+            // 如果你的 confirmModal 初始類別有 hidden，也要移除
+            confirmModal.classList.remove('hidden');
+        }
+
+        // (可選) 在這裡你可以把輸入框裡的值，動態傳遞給確認框顯示
+    }
+
+    // 這是確認框最後點擊“確認提交”後的邏輯
+    function executeTPSL() {
+        alert("止盈止損訂單已下單！");
+        toggleModal('modal-tpsl-confirm'); // 關閉確認框
     }
 </script>
 </body>

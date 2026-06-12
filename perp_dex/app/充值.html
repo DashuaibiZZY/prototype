@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ForX App端充值页 - 原型交互图</title>
+<style>
+  :root{
+    --bg:#0b0f16;
+    --panel:#111827;
+    --panel2:#151f2f;
+    --card:#172133;
+    --card2:#1c2840;
+    --line:#2a3853;
+    --text:#eef4ff;
+    --muted:#94a3b8;
+    --weak:#64748b;
+    --brand:#3ddc97;
+    --brand2:#00d1ff;
+    --warn:#f59e0b;
+    --danger:#ef4444;
+    --success:#22c55e;
+    --blue:#60a5fa;
+    --disabled:#30384a;
+    --shadow:0 24px 70px rgba(0,0,0,.45);
+    --radius:18px;
+    --phoneW:390px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Arial,sans-serif;
+    background:radial-gradient(circle at top left,#1f3a5a 0,#0b0f16 34%,#070a0f 100%);
+    color:var(--text);
+  }
+  .wrap{max-width:1320px;margin:0 auto;padding:28px;display:grid;grid-template-columns:330px 1fr 320px;gap:24px;align-items:start}
+  .side,.spec{background:rgba(17,24,39,.82);border:1px solid rgba(148,163,184,.16);border-radius:24px;box-shadow:var(--shadow);padding:20px;position:sticky;top:24px;backdrop-filter:blur(18px)}
+  .side h1{font-size:20px;line-height:1.35;margin:0 0 8px}.side p{font-size:13px;line-height:1.7;color:var(--muted);margin:0 0 16px}.badge{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(61,220,151,.38);background:rgba(61,220,151,.09);color:#b7ffe3;border-radius:999px;padding:5px 10px;font-size:12px;margin-bottom:14px}.flow-title{font-size:13px;color:#cbd5e1;margin:18px 0 10px}.flow{display:flex;flex-direction:column;gap:8px}.flow button{width:100%;border:1px solid rgba(148,163,184,.16);background:rgba(15,23,42,.72);color:#cbd5e1;border-radius:14px;padding:12px 12px;text-align:left;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:space-between}.flow button.active{border-color:rgba(61,220,151,.68);background:linear-gradient(135deg,rgba(61,220,151,.18),rgba(0,209,255,.08));color:#fff}.flow button span{font-size:11px;color:var(--weak)}.note{margin-top:16px;border:1px dashed rgba(245,158,11,.35);background:rgba(245,158,11,.08);border-radius:14px;padding:12px;color:#f8d89b;font-size:12px;line-height:1.65}
+  .stage{display:flex;justify-content:center;align-items:flex-start;min-height:760px}.phone{width:var(--phoneW);height:812px;border-radius:42px;background:#05080d;border:10px solid #05070b;box-shadow:0 36px 100px rgba(0,0,0,.58),inset 0 0 0 1px rgba(255,255,255,.04);overflow:hidden;position:relative}.phone:before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:142px;height:28px;background:#05070b;border-bottom-left-radius:18px;border-bottom-right-radius:18px;z-index:30}.status{height:32px;padding:9px 22px 0;display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;color:#dbeafe;position:relative;z-index:20}.screen{height:calc(100% - 32px);background:linear-gradient(180deg,#0b111d 0%,#0e1523 45%,#09101a 100%);position:relative;overflow:hidden}.content{height:100%;overflow-y:auto;padding:0 16px 88px;scrollbar-width:none}.content::-webkit-scrollbar{display:none}.nav{height:54px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:12;background:linear-gradient(180deg,rgba(11,17,29,.97) 0,rgba(11,17,29,.9) 72%,rgba(11,17,29,0) 100%);padding-top:3px}.nav-title{text-align:center;flex:1;font-weight:700;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nav-sub{font-size:11px;color:var(--muted);font-weight:500;margin-top:2px}.icon-btn{border:0;background:rgba(148,163,184,.12);color:#e5e7eb;border-radius:12px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px}.icon-btn.ghost{background:transparent}.header-card{background:linear-gradient(135deg,rgba(61,220,151,.18),rgba(0,209,255,.08));border:1px solid rgba(61,220,151,.25);border-radius:22px;padding:18px;margin:8px 0 14px}.balance{font-size:30px;font-weight:800;margin:8px 0 2px}.muted{color:var(--muted)}.small{font-size:12px}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.primary{border:0;background:linear-gradient(135deg,var(--brand),#0ac7a0);color:#04100c;border-radius:16px;padding:13px 14px;font-weight:800;cursor:pointer;box-shadow:0 10px 24px rgba(61,220,151,.18)}.secondary{border:1px solid rgba(148,163,184,.22);background:rgba(148,163,184,.1);color:#e5e7eb;border-radius:16px;padding:12px 14px;font-weight:700;cursor:pointer}.dangerBtn{border:1px solid rgba(239,68,68,.38);background:rgba(239,68,68,.1);color:#fecaca;border-radius:16px;padding:12px 14px;font-weight:700;cursor:pointer}.primary:disabled,.secondary:disabled{opacity:.45;cursor:not-allowed}.quick{height:74px;background:rgba(23,33,51,.92);border:1px solid rgba(148,163,184,.14);border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;cursor:pointer}.quick b{font-size:14px}.quick span{font-size:12px;color:var(--muted)}.section-title{font-size:14px;font-weight:800;margin:18px 0 10px;color:#e2e8f0}.search{display:flex;align-items:center;gap:8px;background:rgba(15,23,42,.82);border:1px solid rgba(148,163,184,.18);border-radius:16px;padding:10px 12px;margin:8px 0 12px}.search input{flex:1;background:transparent;border:0;outline:0;color:#fff;font-size:14px;min-width:0}.search input::placeholder{color:#64748b}.clear{font-size:12px;color:#93c5fd;cursor:pointer;border:0;background:transparent}.coin,.network,.record,.detail-card,.rule-card{background:rgba(23,33,51,.92);border:1px solid rgba(148,163,184,.14);border-radius:18px;padding:14px;margin-bottom:10px}.coin{display:flex;align-items:center;justify-content:space-between;cursor:pointer}.coin.disabled,.network.disabled{opacity:.52;filter:grayscale(.4)}.coin-left{display:flex;align-items:center;gap:12px;min-width:0}.coin-icon{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;color:#08111c;background:linear-gradient(135deg,#60a5fa,#3ddc97);flex:0 0 38px}.coin-name{font-weight:800}.coin-full{font-size:12px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px}.tag{display:inline-flex;align-items:center;height:24px;border-radius:999px;padding:0 8px;font-size:11px;font-weight:700;white-space:nowrap}.tag.green{background:rgba(34,197,94,.12);color:#86efac}.tag.blue{background:rgba(96,165,250,.13);color:#bfdbfe}.tag.yellow{background:rgba(245,158,11,.13);color:#fde68a}.tag.red{background:rgba(239,68,68,.13);color:#fecaca}.tag.gray{background:rgba(148,163,184,.13);color:#cbd5e1}.network{cursor:pointer}.network-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.network-title{font-weight:900;font-size:16px}.network-sub{font-size:12px;color:var(--muted);margin-top:3px}.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.kv .item{background:rgba(15,23,42,.7);border-radius:12px;padding:9px}.kv .label{font-size:11px;color:var(--muted);margin-bottom:4px}.kv .value{font-size:12px;color:#e5e7eb;font-weight:700}.tip{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:#ffe7b8;border-radius:16px;padding:12px;font-size:12px;line-height:1.65;margin:12px 0}.tip.info{background:rgba(96,165,250,.08);border-color:rgba(96,165,250,.2);color:#dbeafe}.tip.danger{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.25);color:#fecaca}.address-card{background:linear-gradient(180deg,rgba(23,33,51,.96),rgba(15,23,42,.96));border:1px solid rgba(148,163,184,.18);border-radius:24px;padding:16px;margin:10px 0 12px}.pair-pill{display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid rgba(61,220,151,.3);background:rgba(61,220,151,.08);color:#d1fae5;border-radius:999px;padding:9px 10px;font-size:13px;font-weight:800;margin-bottom:14px;cursor:pointer}.qr{width:170px;height:170px;margin:0 auto 16px;background:#fff;border-radius:16px;padding:10px;display:grid;grid-template-columns:repeat(9,1fr);gap:4px}.qr i{display:block;border-radius:2px;background:#111827}.qr i.off{background:#fff}.addr-label{font-size:12px;color:var(--muted);margin:12px 0 7px}.address{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-size:12px;line-height:1.6;word-break:break-all;background:rgba(15,23,42,.8);border:1px solid rgba(148,163,184,.13);border-radius:14px;padding:12px;color:#e0f2fe}.copy-line{display:grid;grid-template-columns:1fr 92px;gap:8px;margin-top:8px}.mini-btn{border:1px solid rgba(148,163,184,.2);background:rgba(148,163,184,.1);color:#e5e7eb;border-radius:13px;padding:10px;font-weight:800;cursor:pointer;font-size:13px}.mini-btn.brand{background:rgba(61,220,151,.12);border-color:rgba(61,220,151,.35);color:#a7f3d0}.rule-card{font-size:13px;line-height:1.7}.rule-row{display:flex;justify-content:space-between;border-bottom:1px solid rgba(148,163,184,.08);padding:9px 0;gap:12px}.rule-row:last-child{border-bottom:0}.rule-row span:first-child{color:var(--muted)}.rule-row span:last-child{text-align:right;font-weight:800}.bottom-actions{position:absolute;left:0;right:0;bottom:0;z-index:18;background:linear-gradient(180deg,rgba(9,16,26,0),rgba(9,16,26,.95) 20%,#09101a 100%);padding:22px 16px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px}.bottom-actions.one{grid-template-columns:1fr}.empty{padding:34px 18px;text-align:center;color:var(--muted);background:rgba(23,33,51,.8);border:1px dashed rgba(148,163,184,.22);border-radius:20px}.empty .icon{font-size:34px;margin-bottom:10px}.record{cursor:pointer}.record-main{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.amount{font-weight:900;font-size:16px}.time{font-size:12px;color:var(--muted);margin-top:5px}.tx{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#93c5fd;font-size:11px;margin-top:9px;word-break:break-all}.status-card{text-align:center;background:rgba(23,33,51,.92);border:1px solid rgba(148,163,184,.14);border-radius:22px;padding:18px;margin:8px 0 12px}.status-card .big{font-size:20px;font-weight:900;margin:8px 0 6px}.progress{height:8px;background:rgba(148,163,184,.12);border-radius:999px;overflow:hidden;margin-top:10px}.progress b{display:block;height:100%;background:linear-gradient(90deg,var(--brand2),var(--brand));border-radius:999px}.form-field{margin:12px 0}.form-field label{display:block;color:var(--muted);font-size:12px;margin-bottom:7px}.input-wrap{display:flex;align-items:center;background:rgba(15,23,42,.86);border:1px solid rgba(148,163,184,.18);border-radius:16px;padding:12px}.input-wrap input{background:transparent;border:0;color:#fff;outline:0;flex:1;min-width:0;font-size:18px;font-weight:800}.input-wrap span{font-size:13px;color:#e5e7eb;font-weight:800}.toast{position:absolute;left:28px;right:28px;top:76px;z-index:70;background:rgba(15,23,42,.96);border:1px solid rgba(61,220,151,.38);box-shadow:0 14px 34px rgba(0,0,0,.38);border-radius:16px;padding:12px 14px;color:#d1fae5;font-size:13px;line-height:1.5;text-align:center;display:none}.toast.show{display:block;animation:fade .22s ease}.mask{position:absolute;inset:0;background:rgba(0,0,0,.62);z-index:80;display:none;align-items:flex-end;justify-content:center;padding:14px}.mask.show{display:flex}.modal{width:100%;background:#111827;border:1px solid rgba(148,163,184,.2);border-radius:24px;padding:18px;box-shadow:0 24px 80px rgba(0,0,0,.6);max-height:82%;overflow:auto}.modal.center{align-self:center}.modal h3{margin:0 0 10px;font-size:18px}.modal p,.modal li{font-size:13px;line-height:1.7;color:#cbd5e1}.modal ul{padding-left:18px;margin:10px 0}.modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.modal-actions.one{grid-template-columns:1fr}.filter-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.chip{border:1px solid rgba(148,163,184,.2);background:rgba(148,163,184,.08);color:#cbd5e1;border-radius:999px;padding:9px 8px;text-align:center;font-size:12px;cursor:pointer}.chip.on{border-color:rgba(61,220,151,.55);background:rgba(61,220,151,.13);color:#d1fae5}.spec h2{font-size:17px;margin:0 0 12px}.spec ul{margin:0;padding-left:18px;color:#cbd5e1;font-size:13px;line-height:1.8}.spec .check{margin-top:14px;border-radius:16px;padding:12px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.22);color:#bbf7d0;font-size:12px;line-height:1.7}.footer-note{font-size:11px;color:#64748b;margin-top:14px;line-height:1.65}@keyframes fade{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+  @media(max-width:1100px){.wrap{grid-template-columns:1fr;}.side,.spec{position:relative;top:0}.stage{min-height:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside class="side">
+    <div class="badge">PRD V1.0 对齐版</div>
+    <h1>ForX App端充值页<br/>原型交互图</h1>
+    <p>覆盖币种选择、网络选择、地址展示、Memo/Tag、快捷充值、充值记录、详情、异常处理与客服引导。</p>
+    <div class="flow-title">页面流转</div>
+    <div class="flow" id="flowNav"></div>
+    <div class="note">提示：所有主要按钮均已配置交互。置灰币种/网络会触发维护提示；复制、保存、筛选、快捷充值、区块浏览器和客服入口均有反馈。</div>
+  </aside>
+
+  <main class="stage">
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>ForX</span><span>5G 100%</span></div>
+      <div class="screen">
+        <div class="toast" id="toast"></div>
+        <div class="content" id="app"></div>
+        <div class="mask" id="mask"><div class="modal" id="modal"></div></div>
+      </div>
+    </div>
+  </main>
+
+  <aside class="spec">
+    <h2>本原型严格包含</h2>
+    <ul>
+      <li>P0：充值币种选择页、充值网络选择页、充值信息页、充值记录列表。</li>
+      <li>P1：充值详情页、快捷充值、异常引导与联系客服。</li>
+      <li>核心规则：coinId + chainId 查询地址、最小充值、确认数、维护状态、复制地址、二维码、Memo/Tag。</li>
+      <li>安全提示：错链错币、低于最小金额、外部浏览器确认、保存二维码提示。</li>
+    </ul>
+    <div class="check">自检结果：字段与 PRD 页面结构一致；按钮均有点击反馈或跳转；长地址自动换行；底部按钮不遮挡风险提示；小屏内容支持滚动。</div>
+    <div class="footer-note">原型为交互说明用 HTML，不接真实接口，不执行真实链上转账。</div>
+  </aside>
+</div>
+
+<script>
+const coins = [
+  {id:'usdt', symbol:'USDT', name:'Tether USD', icon:'U', enabled:true, recent:true, hot:true, sort:1, color:'linear-gradient(135deg,#2dd4bf,#22c55e)', networks:[
+    {id:'bsc', chainId:56, name:'BSC', protocol:'BEP20', enabled:true, min:'10', conf:15, curConf:8, time:'约1-5分钟', contract:'0x55d398326f99059fF775485246999027B3197955', address:'0x9F3aD2B1c8E4f5A6b7C89012D3eF4567890aBcDe', memo:'', wallet:true},
+    {id:'arb', chainId:42161, name:'Arbitrum', protocol:'ARB', enabled:true, min:'10', conf:20, curConf:5, time:'约2-8分钟', contract:'0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9', address:'0xA12cD4Ef567890bCDeF1234567890ABcDEF45678', memo:'', wallet:true},
+    {id:'op', chainId:10, name:'Optimism', protocol:'OP', enabled:true, min:'10', conf:20, curConf:3, time:'约2-8分钟', contract:'0x94b008aa00579c1307b0ef2c499ad98a8ce58e58', address:'0xB98dE7F6543210aBCdeF1234567890aBCdeF4321', memo:'', wallet:true},
+    {id:'eth', chainId:1, name:'Ethereum', protocol:'ERC20', enabled:false, min:'20', conf:12, curConf:0, time:'维护中', contract:'0xdAC17F958D2ee523a2206206994597C13D831ec7', address:'', memo:'', wallet:false, reason:'网络升级维护中'}
+  ]},
+  {id:'btc', symbol:'BTC', name:'Bitcoin', icon:'B', enabled:true, recent:true, hot:true, sort:2, color:'linear-gradient(135deg,#fbbf24,#f97316)', networks:[
+    {id:'btc-main', chainId:'btc', name:'Bitcoin', protocol:'BTC', enabled:true, min:'0.0001', conf:2, curConf:1, time:'约10-30分钟', contract:'', address:'bc1qforx7t4s8e9k2m5q3n0p8x6y4z2a1b9c0d3e5f', memo:'', wallet:false}
+  ]},
+  {id:'eth', symbol:'ETH', name:'Ethereum', icon:'E', enabled:true, recent:false, hot:true, sort:3, color:'linear-gradient(135deg,#a78bfa,#60a5fa)', networks:[
+    {id:'eth-main', chainId:1, name:'Ethereum', protocol:'ERC20', enabled:true, min:'0.005', conf:12, curConf:6, time:'约3-15分钟', contract:'', address:'0xE11aB2C3D4E5F678901234567890abcdefABCDEF', memo:'', wallet:true},
+    {id:'arb-eth', chainId:42161, name:'Arbitrum', protocol:'ARB', enabled:true, min:'0.003', conf:20, curConf:4, time:'约2-8分钟', contract:'', address:'0xE98aB76543210FEdcBA9876543210fedCBA98765', memo:'', wallet:true}
+  ]},
+  {id:'xrp', symbol:'XRP', name:'Ripple', icon:'X', enabled:true, recent:false, hot:false, sort:4, color:'linear-gradient(135deg,#94a3b8,#38bdf8)', networks:[
+    {id:'ripple', chainId:'xrp', name:'Ripple', protocol:'XRP', enabled:true, min:'20', conf:1, curConf:0, time:'约1-3分钟', contract:'', address:'rFORXDepositAddress8KpLx3T2yQ9', memo:'839204', wallet:false}
+  ]},
+  {id:'ton', symbol:'TON', name:'Toncoin', icon:'T', enabled:false, recent:false, hot:false, sort:5, color:'linear-gradient(135deg,#38bdf8,#0284c7)', networks:[]}
+];
+
+let records = [
+  {id:'D202606030001', coin:'usdt', network:'bsc', amount:'100.000000', credited:'100.000000', status:'SUCCESS', tx:'0x6a4b8c20c4d9f34eabc1234567890def1234567890abc56789def01234567890', from:'0x5B2c4D6e8F901234567890aBCDeF1234567890Ab', to:'0x9F3aD2B1c8E4f5A6b7C89012D3eF4567890aBcDe', memo:'', cur:15, req:15, created:'2026-06-03 18:00:00', creditedAt:'2026-06-03 18:03:00', reason:''},
+  {id:'D202606030002', coin:'usdt', network:'arb', amount:'50.000000', credited:'--', status:'CONFIRMING', tx:'0x8ff91234ab56cd78ef901234567890abcdef1234567890abcdef9876543210aa', from:'0xA0c1234567890aBCdEf1234567890ABcDEF1111', to:'0xA12cD4Ef567890bCDeF1234567890ABcDEF45678', memo:'', cur:8, req:20, created:'2026-06-03 18:10:00', creditedAt:'--', reason:''},
+  {id:'D202606030003', coin:'xrp', network:'ripple', amount:'15.000000', credited:'--', status:'ABNORMAL', tx:'A1B2C3D4E5F67890ABCDEF1234567890ABCDEF12', from:'rExternalWallet9xT5', to:'rFORXDepositAddress8KpLx3T2yQ9', memo:'', cur:1, req:1, created:'2026-06-03 17:32:00', creditedAt:'--', reason:'MISSING_MEMO'}
+];
+
+let state = {screen:'asset', stack:[], coin:null, network:null, search:'', recordFilter:'ALL', selectedRecord:null, walletConnected:true, walletAmount:'', riskAck:{}, modal:null};
+const routes = [
+  ['asset','资产首页入口','P0入口'],['coin','充值币种选择','P0'],['network','充值网络选择','P0'],['address','充值信息页','P0'],['records','充值记录列表','P0'],['detail','充值详情页','P1'],['wallet','快捷充值面板','P1']
+];
+const app = document.getElementById('app');
+const flowNav = document.getElementById('flowNav');
+const toastEl = document.getElementById('toast');
+const mask = document.getElementById('mask');
+const modal = document.getElementById('modal');
+
+function coinById(id){return coins.find(c=>c.id===id)}
+function netById(coinId, netId){const c=coinById(coinId); return c?c.networks.find(n=>n.id===netId):null}
+function activeCoin(){return coinById(state.coin)||coins[0]}
+function activeNet(){return netById(activeCoin().id,state.network)||activeCoin().networks[0]}
+function statusText(s){return {PENDING_DETECTED:'待识别',CONFIRMING:'确认中',PROCESSING:'处理中',SUCCESS:'已到账',REVIEWING:'审核中',ABNORMAL:'异常充值',RETURNED:'已退回',FAILED:'失败'}[s]||s}
+function statusClass(s){return s==='SUCCESS'?'green':s==='CONFIRMING'?'blue':s==='ABNORMAL'?'red':s==='REVIEWING'?'yellow':'gray'}
+function reasonText(r){return {AMOUNT_BELOW_MIN:'低于最小充值金额',WRONG_CHAIN:'网络不匹配',WRONG_COIN:'币种不匹配',MISSING_MEMO:'缺少Memo/Tag',WRONG_MEMO:'Memo/Tag错误',RISK_REVIEW:'安全审核中',DUPLICATE_TX:'重复交易',CHAIN_REORG:'链上状态变更',UNKNOWN:'未知异常'}[r]||r||'--'}
+function h(str){return String(str||'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]))}
+function go(screen, opts={}){ if(opts.push!==false) state.stack.push(state.screen); state.screen=screen; if(opts.coin) state.coin=opts.coin; if(opts.network) state.network=opts.network; if(opts.record) state.selectedRecord=opts.record; closeModal(); render(); }
+function back(){ if(state.screen==='asset'){toast('当前已是资产首页'); return;} const prev=state.stack.pop()||'asset'; state.screen=prev; closeModal(); render(); }
+function setSearch(v){state.search=v; render();}
+function toast(msg){toastEl.innerHTML=h(msg); toastEl.classList.add('show'); clearTimeout(window.__toast); window.__toast=setTimeout(()=>toastEl.classList.remove('show'),1800)}
+function copyText(text,msg){
+  const done=()=>toast(msg||'复制成功');
+  if(navigator.clipboard){navigator.clipboard.writeText(text).then(done).catch(()=>toast('复制失败，请重试'));}
+  else{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);done();}
+}
+function showModal(title, body, actions, center=false){
+  modal.className='modal'+(center?' center':'');
+  modal.innerHTML=`<h3>${title}</h3><div>${body}</div><div class="modal-actions ${actions.length===1?'one':''}">${actions.map(a=>`<button class="${a.cls||'secondary'}" onclick="${a.fn}">${a.text}</button>`).join('')}</div>`;
+  mask.classList.add('show');
+}
+function closeModal(){mask.classList.remove('show'); modal.innerHTML='';}
+mask.addEventListener('click',e=>{if(e.target===mask) closeModal()});
+function renderNav(title, sub='', right=''){
+  return `<div class="nav"><button class="icon-btn ghost" onclick="back()">‹</button><div class="nav-title">${title}${sub?`<div class="nav-sub">${sub}</div>`:''}</div>${right||'<button class="icon-btn ghost" style="visibility:hidden">·</button>'}</div>`
+}
+function renderQR(){
+  const pattern=[1,1,1,0,1,0,1,1,1,1,0,1,0,0,1,0,0,1,1,1,1,0,1,0,1,1,1,0,0,0,1,0,1,0,0,0,1,0,1,1,1,1,1,0,1,0,0,1,0,1,0,1,0,0,1,1,1,1,0,1,0,1,1,1,1,0,0,1,0,0,1,0,1,1,1,1,0,1,1,1,0,1];
+  return `<div class="qr" onclick="enlargeQR()">${pattern.map(v=>`<i class="${v?'':'off'}"></i>`).join('')}</div>`
+}
+function infoModal(title, content){showModal(title, `<p>${content}</p>`, [{text:'知道了',cls:'primary',fn:'closeModal()'}], true)}
+
+function renderFlow(){
+  flowNav.innerHTML=routes.map(r=>`<button class="${state.screen===r[0]?'active':''}" onclick="quickRoute('${r[0]}')">${r[1]}<span>${r[2]}</span></button>`).join('')
+}
+function quickRoute(screen){
+  if(screen==='network'&&!state.coin) state.coin='usdt';
+  if(screen==='address'){state.coin=state.coin||'usdt';state.network=state.network||'bsc'}
+  if(screen==='detail') state.selectedRecord=state.selectedRecord||records[0].id;
+  if(screen==='wallet'){state.coin=state.coin||'usdt';state.network=state.network||'bsc'}
+  state.screen=screen; state.stack=[]; closeModal(); render();
+}
+
+function assetPage(){
+  return `${renderNav('资产', '', '<button class="icon-btn" onclick="go(\'records\')">↗</button>')}
+  <div class="header-card"><div class="muted small">总资产估值</div><div class="balance">12,586.42 USDT</div><div class="muted small">充值能力用于链上入金、合约交易、活动资金入口</div></div>
+  <div class="grid2"><button class="quick" onclick="go('coin')"><b>充值</b><span>链上转入资产</span></button><button class="quick" onclick="toast('提现页不属于本次充值页原型范围')"><b>提现</b><span>外部转出</span></button></div>
+  <div class="section-title">资产快捷入口</div>
+  ${coinLine(coins[0],false,'go(\'network\',{coin:\'usdt\'})')}
+  ${coinLine(coins[1],false,'go(\'network\',{coin:\'btc\'})')}
+  <div class="tip info">从资产首页点击“充值”进入充值币种选择页；从币种详情点击“充值”可直接进入该币种网络选择页。</div>`
+}
+function coinLine(c, withStatus=true, onclick=''){
+  return `<div class="coin ${c.enabled?'':'disabled'}" onclick="${onclick || (c.enabled?`selectCoin('${c.id}')`:`toast('该币种充值暂未开放')`)}"><div class="coin-left"><div class="coin-icon" style="background:${c.color}">${c.icon}</div><div><div class="coin-name">${c.symbol}</div><div class="coin-full">${c.name}</div></div></div>${withStatus?`<span class="tag ${c.enabled?'green':'gray'}">${c.enabled?'可充值':'暂停充值'}</span>`:'<span>›</span>'}</div>`
+}
+function coinPage(){
+  const q=state.search.trim().toLowerCase();
+  const filtered=coins.filter(c=>!q||c.symbol.toLowerCase().includes(q)||c.name.toLowerCase().includes(q));
+  const recent=filtered.filter(c=>c.recent);
+  const hot=filtered.filter(c=>c.hot);
+  const all=[...filtered].sort((a,b)=> (a.enabled===b.enabled? a.sort-b.sort : a.enabled?-1:1));
+  return `${renderNav('充值', '', '<button class="icon-btn" onclick="go(\'records\')">记录</button>')}
+  <div class="search"><span>⌕</span><input value="${h(state.search)}" placeholder="搜索币种名称/简称" oninput="setSearch(this.value)" />${state.search?'<button class="clear" onclick="setSearch(\'\')">清空</button>':''}</div>
+  ${filtered.length?`${recent.length?`<div class="section-title">最近充值</div>${recent.slice(0,6).map(c=>coinLine(c)).join('')}`:''}
+  ${hot.length?`<div class="section-title">热门币种</div>${hot.map(c=>coinLine(c)).join('')}`:''}
+  <div class="section-title">全部币种</div>${all.map(c=>coinLine(c)).join('')}`:`<div class="empty"><div class="icon">🔎</div><b>未找到相关币种</b><p class="small">请更换币种名称或简称后重试。</p><button class="secondary" onclick="setSearch('')">清空搜索条件</button></div>`}`
+}
+function selectCoin(id){const c=coinById(id); if(!c.enabled){toast('该币种充值暂未开放');return;} state.coin=id; state.network=null; go('network')}
+function networkPage(){
+  const c=activeCoin();
+  return `${renderNav('选择网络', c.symbol)}
+  <div class="coin" onclick="back()"><div class="coin-left"><div class="coin-icon" style="background:${c.color}">${c.icon}</div><div><div class="coin-name">${c.symbol}</div><div class="coin-full">${c.name}</div></div></div><span class="tag blue">返回切换</span></div>
+  ${c.networks.length?c.networks.map(n=>networkCard(c,n)).join(''):'<div class="empty"><div class="icon">🛠</div><b>当前币种充值暂未开放</b><p class="small">请返回选择其他币种。</p></div>'}
+  <div class="tip">请确认转出平台选择相同网络，否则可能无法到账。网络名称、协议、最小充值金额、确认数均以当前页面展示为准。</div>`
+}
+function networkCard(c,n){
+  return `<div class="network ${n.enabled?'':'disabled'}" onclick="${n.enabled?`selectNetwork('${n.id}')`:`toast('当前网络充值维护中，请选择其他网络')`}">
+    <div class="network-top"><div><div class="network-title">${n.name}</div><div class="network-sub">${n.protocol} · ChainID ${n.chainId}</div></div><span class="tag ${n.enabled?'green':'yellow'}">${n.enabled?'可用':(n.reason||'维护中')}</span></div>
+    <div class="kv"><div class="item"><div class="label">最小充值</div><div class="value">${n.min} ${c.symbol}</div></div><div class="item"><div class="label">到账确认</div><div class="value">${n.conf} 个区块 <button class="clear" onclick="event.stopPropagation();infoModal('确认数说明','链上交易达到页面展示的确认数后，系统才会继续进行账务入账和风控校验。')">?</button></div></div><div class="item"><div class="label">预计到账</div><div class="value">${n.time}</div></div><div class="item"><div class="label">协议</div><div class="value">${n.protocol}</div></div></div>
+  </div>`
+}
+function selectNetwork(id){
+  const c=activeCoin(); const n=netById(c.id,id); if(!n.enabled){toast('当前网络充值维护中，请选择其他网络');return;} state.network=id;
+  const key=c.id+'_'+n.id;
+  if(!state.riskAck[key]) showRisk(c,n); else go('address');
+}
+function showRisk(c,n){
+  showModal('充值风险确认', `<ul><li>币种：${c.symbol}</li><li>网络：${n.name}/${n.protocol}</li><li>最小充值金额：${n.min} ${c.symbol}</li><li>请仅向该地址充值当前页面展示的币种，并确认转出平台选择相同网络。</li><li>若选择错误网络或充值其他币种，资产可能无法到账。</li></ul>`, [
+    {text:'返回选择网络',cls:'secondary',fn:'closeModal()'},
+    {text:'我已知晓',cls:'primary',fn:`ackRisk('${c.id}_${n.id}')`}
+  ])
+}
+function ackRisk(key){state.riskAck[key]=true; closeModal(); go('address')}
+function addressPage(){
+  const c=activeCoin(), n=activeNet();
+  return `${renderNav('充值 '+c.symbol, n.name+' / '+n.protocol, '<button class="icon-btn" onclick="go(\'records\')">记录</button>')}
+  <div class="pair-pill" onclick="go('network')">${c.symbol} - ${n.name}/${n.protocol} 　点击重新选择网络</div>
+  ${n.reason?`<div class="tip danger">${n.reason}</div>`:''}
+  <div class="address-card">
+    ${renderQR()}
+    <div class="grid2"><button class="mini-btn" onclick="enlargeQR()">放大二维码</button><button class="mini-btn" onclick="saveQR()">保存二维码</button></div>
+    <div class="addr-label">充值地址</div>
+    <div class="address">${h(n.address)}</div>
+    <div class="copy-line"><button class="mini-btn brand" onclick="copyText('${h(n.address)}','${c.symbol}-${n.name} 充值地址已复制')">复制地址</button><button class="mini-btn" onclick="simulateAddressFail()">重试地址</button></div>
+    ${n.memo?`<div class="addr-label">Memo/Tag</div><div class="address">${h(n.memo)}</div><div class="copy-line"><button class="mini-btn brand" onclick="copyText('${h(n.memo)}','Memo/Tag 已复制，请在转出平台准确填写。')">复制 Memo</button><button class="mini-btn" onclick="infoModal('Memo/Tag提醒','该网络充值需要填写 Memo/Tag，漏填或填错可能导致无法自动到账。')">查看说明</button></div>`:''}
+  </div>
+  <div class="rule-card">
+    <div class="rule-row"><span>最小充值金额</span><span>${n.min} ${c.symbol}</span></div>
+    <div class="rule-row"><span>到账确认</span><span>${n.conf} 个区块确认</span></div>
+    <div class="rule-row"><span>合约地址</span><span>${n.contract?'<button class="clear" onclick="copyText(\''+h(n.contract)+'\',\'合约地址已复制\')">复制合约地址</button>':'原生资产'}</span></div>
+    <div class="rule-row"><span>预计到账时间</span><span>${n.time}</span></div>
+  </div>
+  <div class="tip"><b>充值注意事项</b><br/>1. 请仅向该地址充值 ${c.symbol}，并确认转出平台选择 ${n.name}/${n.protocol}。<br/>2. 单笔充值金额需大于等于最小充值金额，低于最小金额可能无法自动入账。<br/>3. 充值到账需要区块确认，到账时间受链上拥堵影响。${n.memo?'<br/>4. 该网络充值必须填写 Memo/Tag。':''}</div>
+  <div class="bottom-actions"><button class="secondary" onclick="go('records')">查看充值记录</button><button class="primary" onclick="walletEntry()">连接钱包转入</button></div>`
+}
+function simulateAddressFail(){showModal('地址生成失败', '<p>地址生成失败，请稍后重试。</p><p>若连续失败，可联系客服协助核查。</p>', [{text:'联系客服',cls:'secondary',fn:'supportFromAddress()'},{text:'重试',cls:'primary',fn:'closeModal();toast(\'地址已刷新，当前地址可继续使用\')'}], true)}
+function supportFromAddress(){closeModal(); toast('已带入币种、网络、充值地址信息，准备联系客服')}
+function enlargeQR(){showModal('充值二维码', `${renderQR()}<p style="text-align:center">二维码内容与页面充值地址一致。保存图片时需包含币种、网络、地址、最小充值金额与风险提示。</p>`, [{text:'关闭',cls:'secondary',fn:'closeModal()'},{text:'保存二维码',cls:'primary',fn:'saveQR();closeModal()'}], true)}
+function saveQR(){toast('二维码图片已保存，请核对币种与网络')}
+function walletEntry(){
+  const c=activeCoin(), n=activeNet();
+  if(!state.walletConnected){toast('请先连接钱包');return;}
+  if(!n.wallet){toast('当前币种网络暂不支持快捷充值，请复制地址充值');return;}
+  go('wallet')
+}
+function walletPage(){
+  const c=activeCoin(), n=activeNet();
+  return `${renderNav('连接钱包转入', c.symbol+' - '+n.name)}
+  <div class="tip info">快捷充值用于已连接钱包的用户，在 App 内输入金额后唤起钱包完成链上转账。返回 TxID 只代表交易已提交，不代表到账成功。</div>
+  <div class="rule-card"><div class="rule-row"><span>当前钱包</span><span>0x5B2c...90Ab</span></div><div class="rule-row"><span>钱包网络</span><span>${n.name}/${n.protocol}</span></div><div class="rule-row"><span>可用余额</span><span>326.80 ${c.symbol}</span></div><div class="rule-row"><span>最小充值</span><span>${n.min} ${c.symbol}</span></div><div class="rule-row"><span>预计网络费</span><span>0.00042 BNB</span></div></div>
+  <div class="form-field"><label>充值金额</label><div class="input-wrap"><input id="amountInput" value="${h(state.walletAmount)}" inputmode="decimal" oninput="state.walletAmount=this.value" placeholder="请输入金额" /><span>${c.symbol}</span></div></div>
+  <div class="bottom-actions"><button class="secondary" onclick="back()">取消</button><button class="primary" onclick="walletConfirm()">确认充值</button></div>`
+}
+function walletConfirm(){
+  const c=activeCoin(), n=activeNet(); const val=parseFloat(state.walletAmount||'0'); const min=parseFloat(n.min);
+  if(!val){toast('请输入充值金额');return;} if(val<min){toast(`充值金额需大于等于 ${n.min} ${c.symbol}`);return;} if(val>326.8){toast('钱包余额不足');return;}
+  showModal('快捷充值确认', `<ul><li>币种：${c.symbol}</li><li>网络：${n.name}/${n.protocol}</li><li>金额：${state.walletAmount} ${c.symbol}</li><li>钱包地址：0x5B2c...90Ab</li><li>预计Gas：0.00042 BNB</li></ul>`, [
+    {text:'取消',cls:'secondary',fn:'closeModal()'},
+    {text:'唤起钱包',cls:'primary',fn:'submitWalletTx()'}
+  ])
+}
+function submitWalletTx(){
+  const c=activeCoin(), n=activeNet();
+  const id='D2026060300'+(records.length+1);
+  const newRecord={id,coin:c.id,network:n.id,amount:parseFloat(state.walletAmount).toFixed(6),credited:'--',status:'CONFIRMING',tx:'0xwalletsubmit'+Math.random().toString(16).slice(2,30),from:'0x5B2c4D6e8F901234567890aBCDeF1234567890Ab',to:n.address,memo:n.memo||'',cur:0,req:n.conf,created:'2026-06-03 18:20:00',creditedAt:'--',reason:''};
+  records.unshift(newRecord); state.selectedRecord=id; closeModal(); toast('链上交易已提交，请等待区块确认'); go('detail',{push:false});
+}
+function recordsPage(){
+  const list=records.filter(r=> state.recordFilter==='ALL'||r.status===state.recordFilter);
+  return `${renderNav('充值记录', '', '<button class="icon-btn" onclick="filterSheet()">筛选</button>')}
+  <div class="tip info">默认展示最近3个月充值记录。状态以服务端为准，App不本地推断到账成功。</div>
+  ${list.length?list.map(recordCard).join(''):`<div class="empty"><div class="icon">📭</div><b>暂无充值记录</b><p class="small">充值后可在这里查看确认数、到账状态和异常原因。</p><button class="primary" onclick="go('coin')">去充值</button></div>`}`
+}
+function recordCard(r){
+  const c=coinById(r.coin), n=netById(r.coin,r.network)||{name:'--',protocol:'--'};
+  return `<div class="record" onclick="go('detail',{record:'${r.id}'})"><div class="record-main"><div><div class="coin-name">${c.symbol} / ${n.name}</div><div class="time">${r.created}</div><div class="tx">${r.tx.slice(0,18)}...${r.tx.slice(-10)}</div></div><div style="text-align:right"><div class="amount">${r.amount} ${c.symbol}</div><div style="margin-top:8px"><span class="tag ${statusClass(r.status)}">${statusText(r.status)}</span></div></div></div></div>`
+}
+function filterSheet(){
+  const opts=[['ALL','全部'],['CONFIRMING','确认中'],['SUCCESS','已到账'],['ABNORMAL','异常'],['REVIEWING','审核中'],['FAILED','失败']];
+  showModal('筛选充值记录', `<p>状态筛选</p><div class="filter-grid">${opts.map(o=>`<button class="chip ${state.recordFilter===o[0]?'on':''}" onclick="setFilter('${o[0]}')">${o[1]}</button>`).join('')}</div><p>时间范围：最近3个月</p>`, [{text:'重置',cls:'secondary',fn:'setFilter(\'ALL\')'},{text:'确定',cls:'primary',fn:'closeModal()'}])
+}
+function setFilter(v){state.recordFilter=v; closeModal(); render(); if(state.screen==='records') filterSheet()}
+function detailPage(){
+  const r=records.find(x=>x.id===state.selectedRecord)||records[0]; const c=coinById(r.coin), n=netById(r.coin,r.network)||{name:'--',protocol:'--'}; const pct=Math.min(100, Math.round((r.cur/r.req)*100));
+  let main='';
+  if(r.status==='SUCCESS') main='充值成功，资产已入账。';
+  else if(r.status==='CONFIRMING') main='充值已识别，等待区块确认。';
+  else if(r.status==='ABNORMAL') main='充值暂未自动入账，请查看原因并联系客服处理。';
+  else main='系统正在处理该笔充值。';
+  return `${renderNav('充值详情')}
+  <div class="status-card"><span class="tag ${statusClass(r.status)}">${statusText(r.status)}</span><div class="big">${main}</div><div class="muted small">${r.status==='CONFIRMING'?`当前确认数 ${r.cur}/${r.req}`:''}${r.status==='ABNORMAL'?`异常原因：${reasonText(r.reason)}`:''}</div>${r.status==='CONFIRMING'?`<div class="progress"><b style="width:${pct}%"></b></div>`:''}</div>
+  <div class="rule-card"><div class="rule-row"><span>充值金额</span><span>${r.amount} ${c.symbol}</span></div><div class="rule-row"><span>实际入账金额</span><span>${r.credited} ${r.credited==='--'?'':c.symbol}</span></div><div class="rule-row"><span>币种/网络</span><span>${c.symbol} / ${n.name}-${n.protocol}</span></div><div class="rule-row"><span>订单号</span><span><button class="clear" onclick="copyText('${r.id}','订单号已复制')">${r.id}</button></span></div><div class="rule-row"><span>确认数</span><span>${r.cur}/${r.req}</span></div><div class="rule-row"><span>创建时间</span><span>${r.created}</span></div><div class="rule-row"><span>到账时间</span><span>${r.creditedAt}</span></div></div>
+  <div class="detail-card"><div class="addr-label">充值地址</div><div class="address">${h(r.to)}</div><button class="mini-btn brand" onclick="copyText('${h(r.to)}','充值地址已复制')">复制地址</button><div class="addr-label">转出地址</div><div class="address">${h(r.from)}</div><button class="mini-btn" onclick="copyText('${h(r.from)}','转出地址已复制')">复制转出地址</button><div class="addr-label">TxID</div><div class="address">${h(r.tx)}</div><div class="grid2" style="margin-top:8px"><button class="mini-btn brand" onclick="copyText('${h(r.tx)}','TxID已复制')">复制TxID</button><button class="mini-btn" onclick="browserConfirm()">区块浏览器</button></div>${r.memo?`<div class="addr-label">Memo/Tag</div><div class="address">${h(r.memo)}</div>`:''}</div>
+  ${r.status==='ABNORMAL'?`<div class="tip danger">${reasonText(r.reason)}。联系客服时将自动带入订单号、币种、网络、TxID、充值地址和金额。</div><div class="bottom-actions one"><button class="primary" onclick="contactSupport('${r.id}')">联系客服</button></div>`:`<div class="bottom-actions"><button class="secondary" onclick="go('records')">返回记录</button><button class="primary" onclick="go('coin')">再次充值</button></div>`}`
+}
+function browserConfirm(){showModal('外部链接确认', '<p>即将打开第三方区块浏览器。区块浏览器不属于 ForX App，请注意核对交易信息。</p>', [{text:'取消',cls:'secondary',fn:'closeModal()'},{text:'继续',cls:'primary',fn:'closeModal();toast(\'已打开区块浏览器确认页（原型反馈）\')'}], true)}
+function contactSupport(id){const r=records.find(x=>x.id===id); const c=coinById(r.coin), n=netById(r.coin,r.network); showModal('联系客服', `<p>已自动带入以下信息，提交后由客服协助核查，不承诺一定找回资产。</p><ul><li>订单号：${r.id}</li><li>币种/网络：${c.symbol} / ${n.name}</li><li>TxID：${r.tx.slice(0,24)}...</li><li>金额：${r.amount} ${c.symbol}</li><li>异常原因：${reasonText(r.reason)}</li></ul>`, [{text:'关闭',cls:'secondary',fn:'closeModal()'},{text:'提交工单',cls:'primary',fn:'closeModal();toast(\'工单已提交，客服将协助核查\')'}])}
+
+function render(){
+  renderFlow();
+  if(state.screen==='asset') app.innerHTML=assetPage();
+  if(state.screen==='coin') app.innerHTML=coinPage();
+  if(state.screen==='network') app.innerHTML=networkPage();
+  if(state.screen==='address') app.innerHTML=addressPage();
+  if(state.screen==='records') app.innerHTML=recordsPage();
+  if(state.screen==='detail') app.innerHTML=detailPage();
+  if(state.screen==='wallet') app.innerHTML=walletPage();
+}
+render();
+</script>
+</body>
+</html>

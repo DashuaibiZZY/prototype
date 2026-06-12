@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ForX App端“我的”页原型交互图</title>
+<style>
+  :root{
+    --page-bg:#0a0d14;
+    --phone-bg:#0b111c;
+    --card:#111a2a;
+    --card-2:#151f31;
+    --line:rgba(255,255,255,.08);
+    --text:#f4f7fb;
+    --muted:#8c98aa;
+    --muted-2:#667286;
+    --brand:#29e4a4;
+    --brand-2:#18b986;
+    --danger:#ff5b6e;
+    --warn:#ffbd4a;
+    --blue:#5aa7ff;
+    --purple:#a886ff;
+    --shadow:0 24px 70px rgba(0,0,0,.45);
+    --radius:18px;
+    --safe-top:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif;background:radial-gradient(circle at 50% 0%,#192238 0,#080b12 55%,#05070b 100%);color:var(--text);}
+  button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation;}
+  .workspace{min-height:100vh;display:flex;gap:28px;align-items:flex-start;justify-content:center;padding:28px 24px;}
+  .control-panel{width:300px;position:sticky;top:24px;background:rgba(13,20,33,.78);backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow)}
+  .control-panel h1{font-size:18px;margin:0 0 8px;line-height:1.35}
+  .control-panel p{margin:0 0 14px;color:var(--muted);font-size:13px;line-height:1.7}
+  .state-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+  .state-btn{height:36px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:#cdd6e5;font-size:12px;}
+  .state-btn.active{background:rgba(41,228,164,.16);border-color:rgba(41,228,164,.55);color:var(--brand)}
+  .check-list{border-top:1px solid var(--line);padding-top:12px;margin-top:12px;}
+  .check-list .item{display:flex;gap:8px;align-items:flex-start;color:#b7c1d1;font-size:12px;line-height:1.5;margin:8px 0;}
+  .check-dot{width:16px;height:16px;min-width:16px;border-radius:50%;background:rgba(41,228,164,.14);color:var(--brand);display:flex;align-items:center;justify-content:center;font-size:10px;margin-top:1px;}
+  .phone-shell{width:412px;height:844px;border-radius:42px;padding:12px;background:linear-gradient(145deg,#30384a,#0b0e15 38%,#242b3a);box-shadow:var(--shadow);position:relative;}
+  .phone{width:100%;height:100%;border-radius:34px;overflow:hidden;background:var(--phone-bg);border:1px solid rgba(255,255,255,.14);position:relative;}
+  .phone::before{content:"";position:absolute;top:8px;left:50%;transform:translateX(-50%);width:120px;height:24px;border-radius:0 0 18px 18px;background:#05070b;z-index:20;}
+  .app{height:100%;display:flex;flex-direction:column;position:relative;background:linear-gradient(180deg,#0e1727 0,#0a101b 30%,#08101a 100%);}
+  .statusbar{height:36px;padding:12px 22px 0;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#dce5f2;letter-spacing:.2px;z-index:2;}
+  .status-icons{display:flex;gap:6px;align-items:center;color:#f5f7fb;font-size:12px;}
+  .screen{flex:1;overflow-y:auto;scroll-behavior:smooth;padding-bottom:78px;position:relative;}
+  .screen::-webkit-scrollbar{display:none}
+  .topbar{position:sticky;top:0;z-index:10;padding:8px 18px 10px;background:linear-gradient(180deg,rgba(14,23,39,.98),rgba(14,23,39,.86));backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.03);}
+  .topbar h2{font-size:22px;margin:0;font-weight:700;letter-spacing:.2px}
+  .top-actions{display:flex;gap:10px;align-items:center;}
+  .icon-btn{width:34px;height:34px;border-radius:12px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;position:relative;color:#e9eef8;}
+  .icon-btn:active{transform:scale(.96)}
+  .badge{position:absolute;min-width:16px;height:16px;padding:0 4px;border-radius:99px;background:var(--danger);color:#fff;font-size:10px;line-height:16px;right:-4px;top:-4px;text-align:center;font-weight:700;}
+  .red-dot{position:absolute;width:8px;height:8px;border-radius:50%;background:var(--danger);right:4px;top:4px;border:1px solid var(--phone-bg);}
+  .content{padding:10px 16px 22px;}
+  .card{background:linear-gradient(180deg,var(--card),#0e1725);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 10px 26px rgba(0,0,0,.16);margin-bottom:12px;}
+  .account-card{padding:16px;position:relative;overflow:hidden;}
+  .account-card::after{content:"";position:absolute;right:-44px;top:-54px;width:148px;height:148px;border-radius:50%;background:radial-gradient(circle,rgba(41,228,164,.16),rgba(41,228,164,0) 68%);}
+  .account-main{display:flex;gap:12px;align-items:center;position:relative;z-index:1;}
+  .avatar{width:54px;height:54px;border-radius:18px;background:linear-gradient(135deg,#29354d,#182135);display:flex;align-items:center;justify-content:center;font-size:24px;border:1px solid rgba(255,255,255,.1);overflow:hidden;}
+  .avatar.logged{background:linear-gradient(135deg,#28e0a2,#3f76ff);font-weight:800;color:#061219;}
+  .account-info{min-width:0;flex:1;}
+  .name-row{display:flex;align-items:center;gap:8px;min-width:0;}
+  .name{font-size:17px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:154px;}
+  .vip-pill,.safe-pill,.chain-pill{height:22px;border-radius:99px;padding:0 8px;display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;border:1px solid transparent;white-space:nowrap;}
+  .vip-pill{background:rgba(255,189,74,.14);color:#ffd27c;border-color:rgba(255,189,74,.28)}
+  .safe-pill.high{background:rgba(41,228,164,.12);color:var(--brand);border-color:rgba(41,228,164,.25)}
+  .safe-pill.mid{background:rgba(255,189,74,.12);color:var(--warn);border-color:rgba(255,189,74,.25)}
+  .safe-pill.low{background:rgba(255,91,110,.12);color:var(--danger);border-color:rgba(255,91,110,.25)}
+  .chain-pill{background:rgba(90,167,255,.12);color:#9bcaff;border-color:rgba(90,167,255,.22)}
+  .sub-line{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;margin-top:6px;min-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mini-copy{height:22px;border-radius:8px;background:rgba(255,255,255,.06);padding:0 8px;color:#d9e3f3;font-size:11px;white-space:nowrap;}
+  .login-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;position:relative;z-index:1;}
+  .primary-btn,.secondary-btn{height:42px;border-radius:14px;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .primary-btn{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#06130f;}
+  .secondary-btn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#e8eef8;}
+  .wallet-tip{margin-top:12px;padding:10px 12px;border-radius:14px;background:rgba(90,167,255,.08);border:1px solid rgba(90,167,255,.18);display:flex;align-items:center;justify-content:space-between;color:#cfe3ff;font-size:12px;position:relative;z-index:1;}
+  .wallet-tip button{height:26px;padding:0 10px;border-radius:9px;background:rgba(90,167,255,.16);color:#bcd9ff;font-size:12px;}
+  .asset-card{padding:16px;}
+  .section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .section-title h3{margin:0;font-size:15px;font-weight:800;color:#eef3fb;}
+  .section-title .more{font-size:12px;color:var(--muted);}
+  .asset-value-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .asset-label{color:var(--muted);font-size:12px;display:flex;align-items:center;gap:6px;}
+  .eye-btn{width:24px;height:24px;border-radius:8px;background:rgba(255,255,255,.05);color:#cdd7e6;font-size:12px;}
+  .asset-value{font-size:28px;line-height:1.2;font-weight:900;letter-spacing:-.4px;margin-top:4px;word-break:break-all;}
+  .asset-unit{font-size:13px;color:var(--muted);font-weight:700;margin-left:4px;}
+  .pnl{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--muted);}
+  .pnl .positive{color:var(--brand);font-weight:700}.pnl .negative{color:var(--danger);font-weight:700}
+  .asset-error{display:none;margin-top:10px;padding:8px 10px;border-radius:12px;background:rgba(255,189,74,.1);border:1px solid rgba(255,189,74,.18);color:#ffd27c;font-size:12px;align-items:center;justify-content:space-between;}
+  .asset-error button{height:24px;border-radius:8px;padding:0 9px;background:rgba(255,189,74,.15);color:#ffe0a1;font-size:12px;}
+  .quick-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px;}
+  .quick-action{height:58px;border-radius:15px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:12px;color:#e9eef7;}
+  .quick-action .ico{font-size:18px;color:var(--brand)}
+  .grid-card{padding:14px 10px 12px;}
+  .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 4px;}
+  .feature{height:76px;border-radius:16px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:#e9eef7;}
+  .feature:active,.row:active,.quick-action:active{background:rgba(255,255,255,.08);transform:scale(.992)}
+  .feature .ficon{width:32px;height:32px;border-radius:12px;background:rgba(41,228,164,.1);display:flex;align-items:center;justify-content:center;color:var(--brand);font-size:17px;}
+  .feature .label{font-size:12px;white-space:nowrap;}
+  .feature .sub{font-size:10px;color:var(--muted);margin-top:-3px;max-width:82px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tag{position:absolute;top:6px;right:8px;min-width:16px;height:16px;padding:0 5px;border-radius:99px;background:var(--danger);font-size:10px;color:#fff;line-height:16px;font-weight:800;}
+  .tag.hot{background:var(--warn);color:#251900}.tag.new{background:var(--blue)}.tag.green{background:var(--brand);color:#052017}
+  .section-card{padding:2px 0;overflow:hidden;}
+  .section-header{padding:14px 16px 7px;color:#fff;font-size:15px;font-weight:800;}
+  .row{width:100%;min-height:54px;padding:0 16px;display:flex;align-items:center;gap:12px;border-top:1px solid rgba(255,255,255,.055);text-align:left;}
+  .row:first-of-type{border-top:0}
+  .row-icon{width:32px;height:32px;min-width:32px;border-radius:12px;background:rgba(255,255,255,.055);display:flex;align-items:center;justify-content:center;color:var(--brand);font-size:16px;}
+  .row-main{flex:1;min-width:0;}
+  .row-title{font-size:14px;color:#eef3fb;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .row-sub{font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .row-status{font-size:12px;color:var(--muted);white-space:nowrap;max-width:96px;overflow:hidden;text-overflow:ellipsis;}
+  .row-status.warn{color:var(--warn)}.row-status.green{color:var(--brand)}.row-status.danger{color:var(--danger)}
+  .arrow{color:var(--muted-2);font-size:18px;margin-left:2px;}
+  .logout-btn{width:100%;height:50px;color:var(--danger);font-weight:800;}
+  .bottom-nav{position:absolute;left:0;right:0;bottom:0;height:72px;background:rgba(9,14,23,.96);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:7px;z-index:15;}
+  .nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#667286;font-size:11px;}
+  .nav-item .nav-ico{font-size:18px;}.nav-item.active{color:var(--brand);font-weight:800}
+  .toast{position:absolute;left:50%;bottom:92px;transform:translateX(-50%) translateY(18px);padding:10px 14px;border-radius:14px;background:rgba(3,7,12,.88);color:#fff;font-size:12px;opacity:0;pointer-events:none;transition:.25s;z-index:60;box-shadow:0 10px 25px rgba(0,0,0,.35);white-space:nowrap;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .overlay{position:absolute;inset:0;background:rgba(0,0,0,.48);z-index:40;display:none;align-items:flex-end;}
+  .overlay.show{display:flex;}
+  .sheet{width:100%;background:#101929;border-radius:24px 24px 0 0;border:1px solid rgba(255,255,255,.09);padding:18px 18px 26px;box-shadow:0 -18px 40px rgba(0,0,0,.34);animation:rise .22s ease-out;}
+  @keyframes rise{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .sheet-title{font-size:18px;font-weight:900;margin-bottom:6px;}.sheet-desc{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:14px;}
+  .sheet-btn{width:100%;height:48px;border-radius:15px;margin-top:10px;display:flex;align-items:center;justify-content:center;font-weight:800;gap:8px;}
+  .sheet-btn.primary{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#06130f}.sheet-btn.secondary{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)}.sheet-btn.cancel{color:var(--muted);background:rgba(255,255,255,.03)}
+  .modal-wrap{align-items:center;justify-content:center;padding:26px;}
+  .modal{width:100%;border-radius:20px;background:#111b2b;border:1px solid rgba(255,255,255,.09);padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.44);animation:pop .18s ease-out;}
+  @keyframes pop{from{transform:scale(.94);opacity:.6}to{transform:scale(1);opacity:1}}
+  .modal-title{font-size:17px;font-weight:900;margin-bottom:8px}.modal-desc{font-size:12px;color:var(--muted);line-height:1.65;margin-bottom:16px;}
+  .modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.modal-actions button{height:42px;border-radius:13px;font-weight:800}.modal-cancel{background:rgba(255,255,255,.06);color:#d5deee}.modal-danger{background:rgba(255,91,110,.16);color:#ff8795;border:1px solid rgba(255,91,110,.28)}
+  .page-screen{display:none;position:absolute;inset:36px 0 72px;background:linear-gradient(180deg,#0e1727,#08101a);z-index:25;overflow-y:auto;}
+  .page-screen.show{display:block;}
+  .page-screen::-webkit-scrollbar{display:none}
+  .page-top{position:sticky;top:0;z-index:2;height:54px;display:flex;align-items:center;gap:10px;padding:0 16px;background:rgba(14,23,39,.96);border-bottom:1px solid var(--line);}
+  .back-btn{width:34px;height:34px;border-radius:12px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;}
+  .page-title{font-size:17px;font-weight:900}.page-body{padding:16px;}
+  .placeholder-card{border-radius:18px;background:var(--card);border:1px solid var(--line);padding:18px;margin-bottom:12px;}
+  .placeholder-title{font-size:18px;font-weight:900;margin-bottom:8px}.placeholder-desc{font-size:13px;line-height:1.65;color:var(--muted)}
+  .route-line{margin-top:12px;padding:10px 12px;border-radius:14px;background:rgba(41,228,164,.08);color:#bff6df;font-size:12px;border:1px solid rgba(41,228,164,.16);word-break:break-all;}
+  .settings-list .row{border:1px solid var(--line);border-radius:16px;margin-bottom:10px;background:rgba(255,255,255,.03)}
+  .inline-status{display:inline-flex;height:18px;padding:0 6px;border-radius:99px;background:rgba(41,228,164,.14);color:var(--brand);align-items:center;font-size:10px;font-weight:800;}
+  .top-alert{display:none;margin-bottom:12px;padding:10px 12px;border-radius:14px;border:1px solid rgba(255,189,74,.2);background:rgba(255,189,74,.1);font-size:12px;color:#ffe0a1;line-height:1.5;}
+  .top-alert.show{display:block;}
+  .skeleton{position:relative;overflow:hidden;background:rgba(255,255,255,.07)!important;color:transparent!important;border-radius:8px;}
+  .skeleton::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent);animation:skeleton 1.2s infinite;}
+  @keyframes skeleton{100%{transform:translateX(100%)}}
+  @media (max-width:820px){.workspace{flex-direction:column;align-items:center;padding:14px}.control-panel{position:relative;top:auto;width:100%;max-width:412px}.phone-shell{width:100%;max-width:412px;height:812px}.control-panel h1{font-size:16px}}
+</style>
+</head>
+<body>
+<div class="workspace">
+  <aside class="control-panel" aria-label="原型演示控制器">
+    <h1>ForX App端“我的”页原型</h1>
+    <p>左侧按钮用于切换 PRD 中的登录态/异常态；控制器不属于实际 App 页面。</p>
+    <div class="state-buttons">
+      <button class="state-btn active" data-state="guest">未登录</button>
+      <button class="state-btn" data-state="email">邮箱已登录</button>
+      <button class="state-btn" data-state="wallet">钱包已登录</button>
+      <button class="state-btn" data-state="full">完整态</button>
+      <button class="state-btn" data-state="token">Token失效</button>
+      <button class="state-btn" data-state="error">接口失败</button>
+    </div>
+    <div class="check-list">
+      <div class="item"><span class="check-dot">✓</span><span>顶部账户区、资产卡、权益快捷入口保留在“我的”首页；账户安全、交易偏好、服务支持、系统关于已收纳至右上角设置。</span></div>
+      <div class="item"><span class="check-dot">✓</span><span>登录引导、复制、资产隐藏、设置页跳转、退出登录、检查更新、页面返回均有交互。</span></div>
+      <div class="item"><span class="check-dot">✓</span><span>客服入口、社区入口已删除；未登录、邮箱登录、钱包登录、完整态、Token失效、接口失败状态可切换验证。</span></div>
+    </div>
+  </aside>
+
+  <main class="phone-shell">
+    <div class="phone">
+      <div class="app" id="app">
+        <div class="statusbar"><span>9:41</span><span class="status-icons">5G ▰▰▰ 🔋</span></div>
+        <div class="screen" id="mainScreen">
+          <header class="topbar" id="topbar">
+            <h2>我的</h2>
+            <div class="top-actions">
+              <button class="icon-btn" data-action="open-route" data-route="messages" aria-label="消息中心">🔔<span class="badge" id="msgBadge">12</span></button>
+              <button class="icon-btn" data-action="open-settings" aria-label="设置">⚙</button>
+            </div>
+          </header>
+          <div class="content">
+            <div class="top-alert" id="stateAlert"></div>
+
+            <section class="card account-card" id="accountCard">
+              <div class="account-main">
+                <button class="avatar" id="avatar" data-action="profile">👤</button>
+                <div class="account-info">
+                  <div class="name-row">
+                    <button class="name" id="displayName" data-action="profile">登录/注册</button>
+                    <button class="vip-pill" id="vipPill" data-action="open-route" data-route="vip">VIP费率</button>
+                    <button class="safe-pill low" id="safePill" data-action="need-login" data-route="security">未登录</button>
+                  </div>
+                  <div class="sub-line" id="identityLine">登录/注册后查看账户与资产</div>
+                  <div class="sub-line" id="uidLine" style="display:none;">UID：<span id="uidText">10002345</span><button class="mini-copy" data-action="copy" data-copy="UID 10002345">复制</button></div>
+                </div>
+              </div>
+              <div class="login-actions" id="loginActions">
+                <button class="primary-btn" data-action="login" data-login-type="email">邮箱登录/注册</button>
+                <button class="secondary-btn" data-action="login" data-login-type="wallet">连接钱包</button>
+              </div>
+              <div class="wallet-tip" id="walletTip" style="display:none;">
+                <span id="walletTipText">当前未连接钱包，连接后可管理链上地址</span>
+                <button data-action="login" data-login-type="wallet">连接</button>
+              </div>
+            </section>
+
+            <section class="card asset-card" id="assetCard">
+              <div class="section-title">
+                <h3>资产总览</h3>
+                <button class="more" data-action="open-route" data-route="assets">资产总览 ></button>
+              </div>
+              <div class="asset-value-row">
+                <div>
+                  <div class="asset-label">总资产估值 <button class="eye-btn" id="eyeBtn" data-action="toggle-eye">👁</button></div>
+                  <div class="asset-value"><span id="assetValue">登录后查看</span><span class="asset-unit" id="assetUnit"></span></div>
+                  <div class="pnl" id="pnlLine"><span>今日盈亏</span><span id="pnlValue">--</span></div>
+                </div>
+              </div>
+              <div class="asset-error" id="assetError"><span>资产数据获取失败</span><button data-action="refresh">刷新</button></div>
+              <div class="quick-actions">
+                <button onclick="window.location.href='充值.html'" class="quick-action" data-action="need-login" data-route="deposit"><span class="ico">⬇</span><span>充值</span></button>
+                <button onclick="window.location.href='提现.html'" class="quick-action" data-action="need-login" data-route="withdraw"><span class="ico">⬆</span><span>提现</span></button>
+                <button class="quick-action" data-action="need-login" data-route="transfer"><span class="ico">⇄</span><span>划转</span></button>
+              </div>
+            </section>
+
+            <section class="card grid-card">
+              <div class="section-title" style="padding:0 6px 2px;"><h3>权益快捷入口</h3><span class="more">红点/角标由后台配置</span></div>
+              <div class="feature-grid">
+                <button class="feature" data-action="need-login" data-route="rewards"><span class="ficon">🎁</span><span class="label">奖励</span><span class="sub" id="rewardSub">待领取 3</span><span class="tag" id="rewardTag">3</span></button>
+                <button class="feature" data-action="need-login" data-route="points"><span class="ficon">⭐</span><span class="label">积分</span><span class="sub" id="pointSub">12,800</span></button>
+                <button class="feature" data-action="open-route" data-route="vip"><span class="ficon">👑</span><span class="label">VIP费率</span><span class="sub" id="vipSub">VIP 1</span></button>
+                <button class="feature" data-action="need-login" data-route="referral"><span class="ficon">🤝</span><span class="label">邀请返佣</span><span class="sub" id="referralSub">35%</span></button>
+                <button class="feature" data-action="need-login" data-route="coupons"><span class="ficon">🎟</span><span class="label">优惠券/体验金</span><span class="sub" id="couponSub">2张可用</span><span class="tag hot" id="couponTag">2</span></button>
+                <button class="feature" data-action="open-route" data-route="activities"><span class="ficon">🔥</span><span class="label">活动中心</span><span class="sub">进行中</span><span class="tag new">New</span></button>
+              </div>
+            </section>
+
+            <!-- 账户与安全、交易与偏好设置、服务与支持、系统与关于：按最新要求统一收纳至右上角“设置”二级页，首页不再展示。 -->
+          </div>
+        </div>
+
+        <nav class="bottom-nav" aria-label="App底部导航">
+          <button class="nav-item" data-action="nav-tab" data-tab="home"><span class="nav-ico">⌂</span><span>首页</span></button>
+          <button class="nav-item" data-action="nav-tab" data-tab="market"><span class="nav-ico">≋</span><span>行情</span></button>
+          <button class="nav-item" data-action="nav-tab" data-tab="trade"><span class="nav-ico">⇅</span><span>交易</span></button>
+          <button class="nav-item" data-action="nav-tab" data-tab="assets"><span class="nav-ico">◆</span><span>资产</span></button>
+          <button class="nav-item active" data-action="nav-tab" data-tab="my"><span class="nav-ico">●</span><span>我的</span></button>
+        </nav>
+
+        <div class="page-screen" id="pageScreen">
+          <div class="page-top"><button class="back-btn" data-action="page-back">‹</button><span class="page-title" id="pageTitle">页面标题</span></div>
+          <div class="page-body" id="pageBody"></div>
+        </div>
+
+        <div class="overlay" id="loginOverlay">
+          <div class="sheet">
+            <div class="sheet-title">登录后继续操作</div>
+            <div class="sheet-desc" id="loginDesc">该入口需要登录。系统会记录 redirectUrl、source、moduleId，登录成功后自动回跳原目标页面。</div>
+            <button class="sheet-btn primary" data-action="login-confirm" data-login-type="email">📧 邮箱登录/注册</button>
+            <button class="sheet-btn secondary" data-action="login-confirm" data-login-type="wallet">🔗 钱包授权登录</button>
+            <button class="sheet-btn cancel" data-action="close-overlay">取消</button>
+          </div>
+        </div>
+
+        <div class="overlay" id="selectOverlay">
+          <div class="sheet" id="selectSheet"></div>
+        </div>
+
+        <div class="overlay modal-wrap" id="modalOverlay">
+          <div class="modal" id="modalBox"></div>
+        </div>
+        <div class="toast" id="toast">操作成功</div>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+(function(){
+  const routes = {
+    messages:{title:'消息中心',link:'forx://messages',desc:'展示系统消息、活动消息、公告消息。未读数返回后刷新“我的”页铃铛状态。'},
+    settings:{title:'设置',link:'forx://settings',desc:'账户与安全、交易与偏好设置、服务与支持、系统与关于统一收纳入口。'},
+    profile:{title:'账户资料',link:'forx://account/profile',desc:'展示头像、昵称、邮箱脱敏、钱包短地址、UID等资料，修改后返回刷新账户卡。'},
+    assets:{title:'资产总览',link:'forx://assets/overview',desc:'展示平台账户资产、钱包状态、折算计价、今日盈亏等信息。'},
+    deposit:{title:'充值页',link:'forx://assets/deposit',desc:'选择币种、网络、充值地址，支持充值记录跳转。'},
+    withdraw:{title:'提现页',link:'forx://assets/withdraw',desc:'选择币种、链、地址、数量，进入安全校验后提交提现。'},
+    transfer:{title:'划转页',link:'forx://assets/transfer',desc:'平台账户内部资金划转入口。'},
+    rewards:{title:'奖励页',link:'forx://rewards',desc:'展示待领取奖励、任务奖励、使用记录和过期提醒。'},
+    points:{title:'积分页',link:'forx://points',desc:'展示积分余额、积分明细、积分任务。积分数值由后台控制是否在入口处展示。'},
+    vip:{title:'VIP费率等级页',link:'forx://vip/fee',desc:'未登录也可查看平台费率；登录后展示当前等级、Maker/Taker费率与升级条件。'},
+    referral:{title:'邀请返佣页',link:'forx://referral',desc:'展示邀请码、邀请链接、返佣比例、邀请人数与累计返佣。支持复制邀请码。'},
+    coupons:{title:'优惠券/体验金',link:'forx://coupons',desc:'展示手续费抵扣券、体验金、可用/已用/过期状态。过期券不计入可用角标。'},
+    activities:{title:'活动中心',link:'forx://activities',desc:'展示进行中、即将开始、已结束活动；报名/任务操作按活动规则触发登录。'},
+    account:{title:'账户管理',link:'forx://account/manage',desc:'个人资料、绑定邮箱、账户注销等敏感操作。'},
+    walletManage:{title:'钱包管理',link:'forx://wallet/manage',desc:'查看已连接钱包、重新连接、断开连接、复制完整地址。断开连接需二次确认。'},
+    address:{title:'地址管理',link:'forx://assets/address-book',desc:'提现地址簿，支持新增、编辑、删除、链筛选与地址备注。'},
+    security:{title:'安全中心',link:'forx://security',desc:'展示安全等级、邮箱绑定、Google验证/2FA、资金密码、反钓鱼码、设备管理。'},
+    devices:{title:'设备管理',link:'forx://security/devices',desc:'展示当前登录设备与历史设备，支持移除非当前设备。'},
+    loginRecords:{title:'登录记录',link:'forx://security/login-records',desc:'展示历史登录时间、地点、设备、IP等风控信息。'},
+    tradeSettings:{title:'交易设置',link:'forx://trade/settings',desc:'交易确认、默认杠杆、仓位模式、滑点提醒、下单偏好等。'},
+    marketPreference:{title:'行情偏好',link:'forx://market/preference',desc:'K线、涨跌色、价格提醒、行情展示偏好。'},
+    notifications:{title:'通知设置',link:'forx://settings/notifications',desc:'配置推送、邮件、站内信、价格提醒、活动提醒等渠道。'},
+    help:{title:'帮助中心',link:'forx://support/help',desc:'FAQ、功能教程、常见问题，无需登录。'},
+    announcements:{title:'公告中心',link:'forx://announcements',desc:'系统公告、活动公告、版本更新公告。'},
+    feedback:{title:'反馈建议',link:'forx://support/feedback',desc:'提交产品建议、问题反馈或工单。'},
+    terms:{title:'用户协议',link:'forx://legal/terms',desc:'展示ForX用户协议，支持WebView打开。'},
+    privacy:{title:'隐私政策',link:'forx://legal/privacy',desc:'展示隐私政策与个人信息保护说明。'}
+  };
+
+  const stateMap = {
+    guest:{login:false, name:'登录/注册', avatar:'👤', identity:'登录/注册后查看账户与资产', uid:false, vip:'VIP费率', vipSub:'查看费率', safe:'未登录', safeClass:'low', asset:'登录后查看', unit:'', pnl:'--', pnlClass:'', reward:'登录后查看', point:'任务待开启', referral:'登录后查看', coupon:'登录后查看', wallet:'未连接', walletTip:true, accountStatus:'去登录', security:'未登录', msg:'', alert:'', logout:false},
+    email:{login:true, name:'ForX User', avatar:'F', identity:'ez***@gmail.com', uid:true, vip:'VIP 1', vipSub:'VIP 1', safe:'安全中', safeClass:'mid', asset:'12,580.46', unit:'USDT', pnl:'+236.90 USDT  +1.92%', pnlClass:'positive', reward:'待领取 3', point:'12,800', referral:'35%', coupon:'2张可用', wallet:'未连接', walletTip:true, accountStatus:'已绑定邮箱', security:'安全中', msg:'12', alert:'', logout:true},
+    wallet:{login:true, name:'0x12ab...89ef', avatar:'W', identity:'钱包登录 · BSC · 0x12ab...89ef', uid:true, vip:'VIP 0', vipSub:'VIP 0', safe:'待绑定邮箱', safeClass:'mid', asset:'8,902.10', unit:'USDT', pnl:'-42.60 USDT  -0.48%', pnlClass:'negative', reward:'待领取 1', point:'3,260', referral:'绑定邮箱后可用', coupon:'1张可用', wallet:'已连接', walletTip:false, accountStatus:'待绑定邮箱', security:'待完善', msg:'5', alert:'涉及邮件验证的操作需先绑定邮箱。', logout:true},
+    full:{login:true, name:'ForX User', avatar:'F', identity:'ez***@gmail.com · 0x12ab...89ef', uid:true, vip:'VIP 2', vipSub:'VIP 2', safe:'安全高', safeClass:'high', asset:'26,846.98', unit:'USDT', pnl:'+1,086.24 USDT  +4.21%', pnlClass:'positive', reward:'待领取 3', point:'28,600', referral:'40%', coupon:'2张可用', wallet:'已连接', walletTip:false, accountStatus:'资料完整', security:'安全高', msg:'99+', alert:'', logout:true},
+    token:{login:false, name:'登录失效', avatar:'!', identity:'Token已过期，请重新登录', uid:false, vip:'VIP费率', vipSub:'查看费率', safe:'需登录', safeClass:'low', asset:'******', unit:'', pnl:'******', pnlClass:'', reward:'重新登录', point:'重新登录', referral:'重新登录', coupon:'重新登录', wallet:'连接失效', walletTip:true, accountStatus:'重新登录', security:'需登录', msg:'', alert:'登录状态已失效。系统已清理资产、消息、奖励等敏感缓存，请重新登录。', logout:false},
+    error:{login:true, name:'ForX User', avatar:'F', identity:'ez***@gmail.com', uid:true, vip:'VIP 1', vipSub:'--', safe:'安全中', safeClass:'mid', asset:'--', unit:'', pnl:'--', pnlClass:'', reward:'--', point:'--', referral:'--', coupon:'--', wallet:'--', walletTip:false, accountStatus:'已绑定邮箱', security:'安全中', msg:'--', alert:'聚合接口失败：保留页面结构，资产与权益摘要展示占位，可下拉刷新或局部重试。', logout:true, error:true}
+  };
+
+  let currentState = 'guest';
+  let pendingRoute = null;
+  let hideAsset = false;
+  let currency = 'USDT';
+  const $ = (id) => document.getElementById(id);
+  function showToast(text){ const t=$('toast'); t.textContent=text; t.classList.add('show'); clearTimeout(t.timer); t.timer=setTimeout(()=>t.classList.remove('show'),1700); }
+  function setState(state){
+    currentState = state;
+    const s = stateMap[state];
+    document.querySelectorAll('.state-btn').forEach(b=>b.classList.toggle('active', b.dataset.state===state));
+    $('avatar').textContent = s.avatar;
+    $('avatar').classList.toggle('logged', s.login);
+    $('displayName').textContent = s.name;
+    $('identityLine').textContent = s.identity;
+    $('uidLine').style.display = s.uid ? 'flex' : 'none';
+    $('vipPill').textContent = s.vip;
+    $('safePill').textContent = s.safe;
+    $('safePill').className = 'safe-pill ' + s.safeClass;
+    $('safePill').dataset.action = s.login ? 'open-route' : 'need-login';
+    $('safePill').dataset.route = 'security';
+    $('loginActions').style.display = s.login ? 'none' : 'grid';
+    $('walletTip').style.display = s.walletTip ? 'flex' : 'none';
+    $('walletTipText').textContent = s.login ? '当前未连接钱包，连接后可管理链上地址' : '也可使用Web3钱包授权登录';
+    $('stateAlert').textContent = s.alert;
+    $('stateAlert').classList.toggle('show', !!s.alert);
+    $('assetError').style.display = s.error ? 'flex' : 'none';
+    const assetSensitive = hideAsset && s.login && !s.error;
+    $('assetValue').textContent = assetSensitive ? '******' : s.asset;
+    $('assetUnit').textContent = assetSensitive ? '' : s.unit;
+    $('pnlValue').textContent = assetSensitive ? '******' : s.pnl;
+    $('pnlValue').className = s.pnlClass || '';
+    $('eyeBtn').textContent = hideAsset ? '🙈' : '👁';
+    $('rewardSub').textContent = s.reward;
+    $('pointSub').textContent = s.point;
+    $('vipSub').textContent = s.vipSub;
+    $('referralSub').textContent = s.referral;
+    $('couponSub').textContent = s.coupon;
+    const walletStatusEl = $('walletStatus');
+    if(walletStatusEl){ walletStatusEl.textContent = s.wallet; walletStatusEl.className = 'row-status ' + (s.wallet==='已连接'?'green':s.wallet==='连接失效'?'danger':''); }
+    const walletSubEl = $('walletSub');
+    if(walletSubEl){ walletSubEl.textContent = s.wallet==='已连接' ? 'BSC · 0x12ab...89ef · 支持复制' : '连接、断开、复制钱包地址'; }
+    const accountStatusEl = $('accountStatus');
+    if(accountStatusEl){ accountStatusEl.textContent = s.accountStatus; }
+    const securityStatusEl = $('securityStatus');
+    if(securityStatusEl){ securityStatusEl.textContent = s.security; securityStatusEl.className = 'row-status ' + (s.safeClass==='high'?'green':s.safeClass==='mid'?'warn':'danger'); }
+    $('msgBadge').textContent = s.msg;
+    $('msgBadge').style.display = s.msg ? 'inline-block' : 'none';
+    const logoutBtnEl = $('logoutBtn');
+    if(logoutBtnEl){ logoutBtnEl.style.display = s.logout ? 'block' : 'none'; }
+    $('rewardTag').style.display = s.login && !s.error ? 'inline-block' : 'none';
+    $('couponTag').style.display = s.login && !s.error ? 'inline-block' : 'none';
+  }
+
+  function esc(text){ return String(text ?? '').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+  function statusClass(value){
+    if(value==='已连接' || value==='安全高' || value==='资料完整' || value==='已开启' || value==='最新') return 'green';
+    if(value==='待绑定邮箱' || value==='待完善' || value==='安全中' || value==='未连接') return 'warn';
+    if(value==='连接失效' || value==='需登录' || value==='未登录') return 'danger';
+    return '';
+  }
+  function settingRow({icon,title,sub,status,action='open-route',route='',sheet=''}){
+    const statusHtml = status ? '<span class="row-status '+statusClass(status)+'">'+esc(status)+'</span>' : '';
+    const routeAttr = route ? ' data-route="'+esc(route)+'"' : '';
+    const sheetAttr = sheet ? ' data-sheet="'+esc(sheet)+'"' : '';
+    return '<button class="row" data-action="'+esc(action)+'"'+routeAttr+sheetAttr+'><span class="row-icon">'+icon+'</span><span class="row-main"><span class="row-title">'+esc(title)+'</span><span class="row-sub">'+esc(sub)+'</span></span>'+statusHtml+'<span class="arrow">›</span></button>';
+  }
+  function settingSection(title, rows){
+    return '<section class="card section-card"><div class="section-header">'+esc(title)+'</div>'+rows.join('')+'</section>';
+  }
+  function renderSettingsPage(){
+    const st = stateMap[currentState];
+    const walletSub = st.wallet==='已连接' ? 'BSC · 0x12ab...89ef · 支持复制' : '连接、断开、复制钱包地址';
+    const loginAction = st.login ? 'open-route' : 'need-login';
+    const html = [
+      '<div class="placeholder-card"><div class="placeholder-title">设置</div><div class="placeholder-desc">按最新要求，“我的”首页不再直接展示账户安全、交易偏好、服务支持、系统关于；所有配置类与支持类入口统一收纳在右上角设置页。客服入口、社区入口已删除。</div><div class="route-line">DeepLink：forx://settings</div></div>',
+      settingSection('账户与安全', [
+        settingRow({icon:'👤',title:'账户管理',sub:'个人资料、绑定邮箱、头像昵称',status:st.accountStatus,action:loginAction,route:'account'}),
+        settingRow({icon:'🔗',title:'钱包管理',sub:walletSub,status:st.wallet,action:loginAction,route:'walletManage'}),
+        settingRow({icon:'📒',title:'地址管理',sub:'提现地址簿、链筛选、地址备注',status:'安全校验',action:loginAction,route:'address'}),
+        settingRow({icon:'🛡',title:'安全中心',sub:'2FA、资金密码、反钓鱼码',status:st.security,action:loginAction,route:'security'}),
+        settingRow({icon:'📱',title:'设备管理',sub:'当前设备、移除非当前设备',status:st.login?'可查看':'需登录',action:loginAction,route:'devices'}),
+        settingRow({icon:'🕓',title:'登录记录',sub:'历史登录时间、地点、设备',status:st.login?'可查看':'需登录',action:loginAction,route:'loginRecords'})
+      ]),
+      settingSection('交易与偏好设置', [
+        settingRow({icon:'⚙',title:'交易设置',sub:'交易确认、默认杠杆、下单偏好',status:st.login?'默认':'需登录',action:loginAction,route:'tradeSettings'}),
+        settingRow({icon:'📈',title:'行情偏好',sub:'K线、涨跌色、价格提醒',status:'已配置',action:'open-route',route:'marketPreference'}),
+        settingRow({icon:'💱',title:'计价货币',sub:'资产估值与金额折算',status:currency,action:'open-sheet',sheet:'currency'}),
+        settingRow({icon:'🔔',title:'通知设置',sub:'推送、邮件、站内信、活动提醒',status:'已开启',action:'open-route',route:'notifications'}),
+        settingRow({icon:'🌗',title:'语言/主题',sub:'语言、深浅色主题',status:window.currentThemeValue || '深色',action:'open-sheet',sheet:'theme'})
+      ]),
+      settingSection('服务与支持', [
+        settingRow({icon:'❓',title:'帮助中心',sub:'FAQ、功能教程、常见问题',action:'open-route',route:'help'}),
+        settingRow({icon:'📢',title:'公告中心',sub:'系统公告、活动消息、版本通知',action:'open-route',route:'announcements'}),
+        settingRow({icon:'📝',title:'反馈建议',sub:'提交工单与产品反馈',action:'open-route',route:'feedback'})
+      ]),
+      settingSection('系统与关于', [
+        settingRow({icon:'📄',title:'用户协议',sub:'ForX服务条款',action:'open-route',route:'terms'}),
+        settingRow({icon:'🔐',title:'隐私政策',sub:'个人信息保护与数据使用说明',action:'open-route',route:'privacy'}),
+        settingRow({icon:'⬆',title:'检查更新',sub:'当前版本 v1.0.0（Build 0603）',status:'最新',action:'check-update'}),
+        st.login ? '<button class="logout-btn" id="logoutBtn" data-action="logout">退出登录</button>' : ''
+      ])
+    ].join('');
+    $('pageTitle').textContent = '设置';
+    $('pageBody').innerHTML = html;
+    $('pageScreen').classList.add('show');
+  }
+  function openRoute(routeKey){
+    if(routeKey==='settings'){ renderSettingsPage(); return; }
+    const route = routes[routeKey] || {title:'页面', link:'forx://unknown', desc:'已进入目标页面。'};
+    $('pageTitle').textContent = route.title;
+    let extras = '';
+    if(routeKey==='referral') extras = '<button class="sheet-btn primary" style="margin-top:14px" data-action="copy" data-copy="邀请码 FX10002345">复制邀请码 FX10002345</button>';
+    if(routeKey==='walletManage' && stateMap[currentState].wallet==='已连接') extras = '<button class="sheet-btn secondary" style="margin-top:14px" data-action="copy" data-copy="钱包地址 0x12ab34cd56ef7890abcdef1234567890abcd89ef">复制钱包地址</button><button class="sheet-btn cancel" style="color:#ff8795" data-action="disconnect-wallet">断开钱包</button>';
+    $('pageBody').innerHTML = '<div class="placeholder-card"><div class="placeholder-title">'+route.title+'</div><div class="placeholder-desc">'+route.desc+'</div><div class="route-line">DeepLink：'+route.link+'</div></div><div class="placeholder-card"><div class="placeholder-title">交互说明</div><div class="placeholder-desc">本原型重点验证“我的”页入口、登录拦截、回跳与状态刷新。二级页面在实际项目中使用对应模块已有PRD和设计稿承接。</div></div>'+extras;
+    $('pageScreen').classList.add('show');
+  }
+  function openLogin(routeKey){
+    pendingRoute = routeKey || null;
+    const title = routeKey && routes[routeKey] ? routes[routeKey].title : '目标页面';
+    $('loginDesc').textContent = '即将进入「'+title+'」。登录成功后自动回跳原目标入口；取消后停留在“我的”页，不刷新页面。';
+    $('loginOverlay').classList.add('show');
+  }
+  function openSelect(type){
+    const sheet = $('selectSheet');
+    if(type==='currency'){
+      sheet.innerHTML = '<div class="sheet-title">选择计价货币</div><div class="sheet-desc">切换后资产估值与金额折算同步刷新。</div><button class="sheet-btn primary" data-action="select-currency" data-value="USDT">USDT</button><button class="sheet-btn secondary" data-action="select-currency" data-value="USD">USD</button><button class="sheet-btn secondary" data-action="select-currency" data-value="CNY">CNY</button><button class="sheet-btn cancel" data-action="close-overlay">取消</button>';
+    } else {
+      sheet.innerHTML = '<div class="sheet-title">语言/主题</div><div class="sheet-desc">原型展示深浅色主题入口，实际需与国际化资源、主题资源联动。</div><button class="sheet-btn primary" data-action="select-theme" data-value="深色">深色主题</button><button class="sheet-btn secondary" data-action="select-theme" data-value="浅色">浅色主题</button><button class="sheet-btn secondary" data-action="select-theme" data-value="English">English</button><button class="sheet-btn cancel" data-action="close-overlay">取消</button>';
+    }
+    $('selectOverlay').classList.add('show');
+  }
+  function openModal(kind){
+    const box = $('modalBox');
+    if(kind==='logout'){
+      box.innerHTML = '<div class="modal-title">确认退出登录？</div><div class="modal-desc">退出后将清理Token、账户缓存和敏感本地数据，资产、消息、奖励等信息不再展示。</div><div class="modal-actions"><button class="modal-cancel" data-action="close-overlay">取消</button><button class="modal-danger" data-action="logout-confirm">退出登录</button></div>';
+    } else if(kind==='update'){
+      box.innerHTML = '<div class="modal-title">当前已是最新版本</div><div class="modal-desc">App版本 v1.0.0（Build 0603）。如后台配置强更版本，此处将展示强制更新弹窗。</div><div class="modal-actions" style="grid-template-columns:1fr"><button class="modal-cancel" data-action="close-overlay">知道了</button></div>';
+    } else if(kind==='external'){
+      box.innerHTML = '<div class="modal-title">打开外部链接？</div><div class="modal-desc">外部链接由后台配置。当前原型模拟外链异常，点击继续将提示“暂时无法打开”。</div><div class="modal-actions"><button class="modal-cancel" data-action="close-overlay">取消</button><button class="modal-danger" data-action="external-confirm">继续</button></div>';
+    } else if(kind==='disconnect'){
+      box.innerHTML = '<div class="modal-title">断开钱包连接？</div><div class="modal-desc">断开后“我的”页钱包状态将刷新为未连接，钱包地址不再完整展示。</div><div class="modal-actions"><button class="modal-cancel" data-action="close-overlay">取消</button><button class="modal-danger" data-action="disconnect-confirm">断开</button></div>';
+    }
+    $('modalOverlay').classList.add('show');
+  }
+  function closeOverlays(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show')); }
+  document.body.addEventListener('click', function(e){
+    const el = e.target.closest('button'); if(!el) return;
+    const action = el.dataset.action;
+    const route = el.dataset.route;
+    if(el.classList.contains('state-btn')){ setState(el.dataset.state); return; }
+    switch(action){
+      case 'login': openLogin('profile'); break;
+      case 'login-confirm': closeOverlays(); setState(el.dataset.loginType==='wallet'?'wallet':'email'); showToast('登录成功，已回跳原目标入口'); if(pendingRoute) openRoute(pendingRoute); pendingRoute=null; break;
+      case 'need-login': stateMap[currentState].login ? openRoute(route) : openLogin(route); break;
+      case 'open-route': openRoute(route); break;
+      case 'open-settings': renderSettingsPage(); break;
+      case 'profile': stateMap[currentState].login ? openRoute('profile') : openLogin('profile'); break;
+      case 'copy': showToast((el.dataset.copy||'内容')+' 已复制'); break;
+      case 'toggle-eye': if(!stateMap[currentState].login){ openLogin('assets'); } else { hideAsset=!hideAsset; setState(currentState); showToast(hideAsset?'资产已隐藏':'资产已显示'); } break;
+      case 'refresh': showToast('刷新成功'); setState('email'); break;
+      case 'open-sheet': openSelect(el.dataset.sheet); break;
+      case 'select-currency': currency=el.dataset.value; closeOverlays(); if($('pageScreen').classList.contains('show') && $('pageTitle').textContent==='设置') renderSettingsPage(); showToast('计价货币已切换为 '+currency); break;
+      case 'select-theme': window.currentThemeValue = el.dataset.value; closeOverlays(); if($('pageScreen').classList.contains('show') && $('pageTitle').textContent==='设置') renderSettingsPage(); showToast('已选择 '+el.dataset.value); break;
+      case 'logout': openModal('logout'); break;
+      case 'logout-confirm': closeOverlays(); setState('guest'); showToast('已退出登录'); break;
+      case 'close-overlay': closeOverlays(); break;
+      case 'check-update': openModal('update'); break;
+      case 'external-link': openModal('external'); break;
+      case 'external-confirm': closeOverlays(); showToast('暂时无法打开，请稍后再试'); break;
+      case 'disconnect-wallet': openModal('disconnect'); break;
+      case 'disconnect-confirm': closeOverlays(); setState('email'); showToast('钱包已断开'); break;
+      case 'page-back': $('pageScreen').classList.remove('show'); break;
+      case 'nav-tab': if(el.dataset.tab==='my'){ $('mainScreen').scrollTo({top:0,behavior:'smooth'}); showToast('已回到顶部并轻量刷新'); } else { showToast('当前原型仅展示“我的”页'); } break;
+    }
+  });
+  $('loginOverlay').addEventListener('click', e=>{ if(e.target.id==='loginOverlay') closeOverlays(); });
+  $('selectOverlay').addEventListener('click', e=>{ if(e.target.id==='selectOverlay') closeOverlays(); });
+  $('modalOverlay').addEventListener('click', e=>{ if(e.target.id==='modalOverlay') closeOverlays(); });
+  setState('guest');
+})();
+</script>
+</body>
+</html>

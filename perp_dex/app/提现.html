@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ForX App端提现页原型交互图</title>
+<style>
+  :root{
+    --bg:#0B0F18;
+    --panel:#121826;
+    --panel-2:#171F31;
+    --card:#1B2437;
+    --line:#2A3448;
+    --text:#F4F7FB;
+    --muted:#8D98AD;
+    --sub:#B7C0D4;
+    --brand:#4D7CFE;
+    --brand-2:#6EA8FE;
+    --warn:#FFB020;
+    --danger:#FF5C5C;
+    --success:#30D158;
+    --green:#16C784;
+    --shadow:0 22px 70px rgba(0,0,0,.38);
+    --radius:18px;
+    --phone-w:390px;
+    --phone-h:844px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",Arial,sans-serif;
+    background:radial-gradient(circle at 20% 0%,#26375C 0,#111827 38%,#070A10 100%);
+    color:var(--text);
+  }
+  button,input{font:inherit}
+  button{border:0;cursor:pointer;color:inherit;background:none}
+  .workspace{
+    display:grid;
+    grid-template-columns:var(--phone-w) minmax(320px,460px);
+    gap:28px;
+    align-items:start;
+    justify-content:center;
+    padding:28px 20px 36px;
+  }
+  .phone{
+    width:var(--phone-w);
+    height:var(--phone-h);
+    border-radius:42px;
+    padding:13px;
+    background:linear-gradient(145deg,#111827,#02040A);
+    box-shadow:var(--shadow);
+    border:1px solid rgba(255,255,255,.08);
+    position:sticky;
+    top:20px;
+  }
+  .phone-screen{
+    width:100%;height:100%;overflow:hidden;border-radius:32px;background:var(--bg);position:relative;border:1px solid rgba(255,255,255,.05)
+  }
+  .statusbar{
+    height:32px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:12px;color:#E9EEF8;background:rgba(11,15,24,.96)
+  }
+  .status-icons{display:flex;gap:5px;align-items:center}.pill{width:18px;height:8px;border:1px solid #fff;border-radius:4px;position:relative}.pill:after{content:"";position:absolute;right:-3px;top:2px;width:2px;height:4px;background:#fff;border-radius:0 2px 2px 0}.signal{width:14px;height:9px;border-bottom:2px solid #fff;border-left:2px solid transparent;border-right:2px solid transparent;transform:skew(-12deg)}
+  .nav{height:48px;display:grid;grid-template-columns:56px 1fr 72px;align-items:center;padding:0 10px;border-bottom:1px solid rgba(255,255,255,.05);background:rgba(11,15,24,.96);position:relative;z-index:2}
+  .nav-title{text-align:center;font-size:17px;font-weight:700}.nav-btn{height:36px;border-radius:12px;color:#D7DEEC;font-size:14px;display:flex;align-items:center;justify-content:center;gap:4px}.nav-btn:hover{background:rgba(255,255,255,.06)}
+  .content{height:calc(100% - 80px);overflow-y:auto;padding:14px 14px 98px;scrollbar-width:none}.content::-webkit-scrollbar{display:none}
+  .content.no-bottom{padding-bottom:18px}
+  .section{margin-bottom:12px}.card{background:var(--panel);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:14px}.card + .card{margin-top:10px}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:12px}.row.start{align-items:flex-start}.row-left{display:flex;align-items:center;gap:10px;min-width:0}.row-title{font-size:15px;font-weight:700}.row-sub{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.3}.label{font-size:13px;color:var(--sub);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}.label strong{color:#fff;font-weight:600}.chev{color:#6F7C94;font-weight:700}.coin-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#26A17B,#114C3D);color:#fff;font-size:13px;font-weight:900;flex:none}.coin-icon.eth{background:linear-gradient(145deg,#627EEA,#2A3B8E)}.coin-icon.btc{background:linear-gradient(145deg,#F7931A,#8A4B00)}.coin-icon.xrp{background:linear-gradient(145deg,#7B8794,#303846)}
+  .field{width:100%;background:var(--panel-2);border:1px solid transparent;border-radius:14px;min-height:46px;padding:0 12px;color:var(--text);outline:none}.field:focus{border-color:rgba(77,124,254,.75);box-shadow:0 0 0 3px rgba(77,124,254,.14)}.field.error{border-color:rgba(255,92,92,.75);box-shadow:0 0 0 3px rgba(255,92,92,.12)}.field-wrap{position:relative}.field-actions{display:flex;gap:8px;margin-top:9px}.mini-btn{height:31px;padding:0 10px;border-radius:10px;background:rgba(255,255,255,.06);color:#D7DEEC;font-size:12px;border:1px solid rgba(255,255,255,.06)}.mini-btn.primary{background:rgba(77,124,254,.15);color:#AFC4FF;border-color:rgba(77,124,254,.3)}.mini-btn.warn{background:rgba(255,176,32,.12);color:#FFD58A;border-color:rgba(255,176,32,.22)}.mini-btn:active{transform:scale(.98)}
+  .input-line{display:grid;grid-template-columns:1fr auto;align-items:center;background:var(--panel-2);border:1px solid transparent;border-radius:14px;padding:0 10px}.input-line:focus-within{border-color:rgba(77,124,254,.75);box-shadow:0 0 0 3px rgba(77,124,254,.14)}.input-line.error{border-color:rgba(255,92,92,.75);box-shadow:0 0 0 3px rgba(255,92,92,.12)}.input-line input{height:48px;border:0;outline:0;background:transparent;color:var(--text);min-width:0}.unit{font-weight:700;color:#EAF0FF;font-size:14px}.all-btn{margin-left:8px;color:var(--brand-2);font-size:13px;font-weight:700}
+  .hint{font-size:12px;color:var(--muted);line-height:1.45;margin-top:8px}.hint.warn{color:#FFD58A}.hint.error{color:#FF8A8A}.hint.success{color:#86E29B}.divider{height:1px;background:rgba(255,255,255,.06);margin:12px 0}.kv{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin:8px 0;font-size:13px}.kv span:first-child{color:var(--muted);white-space:nowrap}.kv span:last-child{text-align:right;color:#E8EEFD;word-break:break-all}.kv.big span:last-child{font-size:17px;font-weight:900;color:#fff}.tag{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:3px 8px;font-size:11px;white-space:nowrap}.tag.ok{background:rgba(48,209,88,.12);color:#70E187}.tag.warn{background:rgba(255,176,32,.14);color:#FFD58A}.tag.err{background:rgba(255,92,92,.13);color:#FF9D9D}.tag.info{background:rgba(77,124,254,.13);color:#AFC4FF}.tag.gray{background:rgba(255,255,255,.07);color:#B7C0D4}.risk-box{background:rgba(255,176,32,.1);border:1px solid rgba(255,176,32,.22);border-radius:14px;padding:10px 12px;color:#FFE0A3;font-size:12px;line-height:1.5}.risk-box strong{color:#fff}.bottom-bar{position:absolute;left:0;right:0;bottom:0;padding:12px 14px 18px;background:linear-gradient(180deg,rgba(11,15,24,0),rgba(11,15,24,.94) 18%,#0B0F18 100%);z-index:4}.primary-btn{width:100%;height:48px;border-radius:15px;background:linear-gradient(135deg,var(--brand),#7B61FF);font-size:16px;font-weight:800;color:white;box-shadow:0 12px 28px rgba(77,124,254,.32)}.primary-btn:disabled{background:#273044;color:#707B91;box-shadow:none;cursor:not-allowed}.secondary-btn{width:100%;height:44px;border-radius:14px;background:rgba(255,255,255,.07);font-weight:700;color:#DDE5F6}.danger-btn{width:100%;height:44px;border-radius:14px;background:rgba(255,92,92,.14);font-weight:700;color:#FF9D9D}.two-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .search{position:sticky;top:0;z-index:1;background:var(--bg);padding-bottom:10px}.list-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06)}.list-item:last-child{border-bottom:0}.list-item.disabled{opacity:.46}.list-main{display:flex;align-items:center;gap:11px;min-width:0}.list-text{min-width:0}.list-name{font-size:15px;font-weight:800}.list-desc{font-size:12px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.list-right{text-align:right;min-width:88px}.list-num{font-size:13px;font-weight:700}.list-status{font-size:11px;color:var(--muted);margin-top:3px}.network-option{padding:13px;border-radius:16px;background:var(--panel);border:1px solid rgba(255,255,255,.07);margin-bottom:10px}.network-option.active{border-color:rgba(77,124,254,.75);box-shadow:0 0 0 3px rgba(77,124,254,.1)}.network-option.disabled{opacity:.45}.net-head{display:flex;align-items:center;justify-content:space-between}.net-name{font-weight:800}.net-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.net-meta{font-size:12px;color:var(--muted);line-height:1.4}.net-meta b{display:block;color:#E8EEF9;font-weight:700;margin-top:1px}.sheet-mask,.modal-mask{position:absolute;inset:0;background:rgba(0,0,0,.54);display:none;align-items:flex-end;z-index:9}.sheet-mask.show,.modal-mask.show{display:flex}.sheet{width:100%;max-height:76%;overflow:auto;background:#101725;border-top-left-radius:24px;border-top-right-radius:24px;padding:14px;border:1px solid rgba(255,255,255,.08);box-shadow:0 -20px 44px rgba(0,0,0,.45)}.sheet-title{display:flex;align-items:center;justify-content:space-between;font-size:17px;font-weight:900;margin-bottom:12px}.close{width:34px;height:34px;border-radius:12px;background:rgba(255,255,255,.06);font-size:20px}.modal-mask{align-items:center;justify-content:center;padding:20px}.modal{width:100%;background:#101725;border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:16px;box-shadow:0 20px 70px rgba(0,0,0,.52)}.modal-title{text-align:center;font-size:18px;font-weight:900;margin-bottom:12px}.check-row{display:flex;gap:9px;align-items:flex-start;background:rgba(255,176,32,.1);border:1px solid rgba(255,176,32,.2);border-radius:14px;padding:10px;margin:12px 0;color:#FFE0A3;font-size:12px;line-height:1.45}.checkbox{width:18px;height:18px;border-radius:5px;border:1px solid rgba(255,255,255,.35);flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px}.checkbox.on{background:var(--brand);border-color:var(--brand)}
+  .verify-code{display:grid;grid-template-columns:1fr 96px;gap:8px}.result-hero{text-align:center;padding:20px 4px}.result-icon{width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:34px}.result-icon.success{background:rgba(48,209,88,.13);color:#65E47C}.result-icon.warn{background:rgba(255,176,32,.13);color:#FFD16B}.result-title{font-size:20px;font-weight:900}.result-sub{color:var(--muted);font-size:13px;line-height:1.5;margin-top:8px}.timeline{position:relative;padding-left:18px}.timeline:before{content:"";position:absolute;left:5px;top:8px;bottom:8px;width:1px;background:rgba(255,255,255,.1)}.time-item{position:relative;padding:0 0 16px}.time-item:before{content:"";position:absolute;left:-18px;top:3px;width:11px;height:11px;border-radius:50%;background:#3B465D;border:2px solid var(--panel)}.time-item.done:before{background:var(--success)}.time-item.current:before{background:var(--warn)}.time-title{font-size:14px;font-weight:800}.time-desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.45}.filter-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}.filter{flex:none;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.06);font-size:12px;color:#C4CDE0}.filter.active{background:rgba(77,124,254,.18);color:#BFD0FF;border:1px solid rgba(77,124,254,.28)}.scan-box{height:260px;border-radius:22px;background:linear-gradient(135deg,#101829,#16233D);border:1px dashed rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}.scan-frame{width:178px;height:178px;border:2px solid rgba(77,124,254,.78);border-radius:18px;position:relative}.scan-frame:after{content:"";position:absolute;left:12px;right:12px;top:50%;height:2px;background:#30D158;box-shadow:0 0 16px #30D158}.corner{position:absolute;width:26px;height:26px;border-color:#fff}.corner.tl{left:-2px;top:-2px;border-left:4px solid;border-top:4px solid;border-radius:14px 0 0 0}.corner.tr{right:-2px;top:-2px;border-right:4px solid;border-top:4px solid;border-radius:0 14px 0 0}.corner.bl{left:-2px;bottom:-2px;border-left:4px solid;border-bottom:4px solid;border-radius:0 0 0 14px}.corner.br{right:-2px;bottom:-2px;border-right:4px solid;border-bottom:4px solid;border-radius:0 0 14px 0}.empty{padding:34px 10px;text-align:center;color:var(--muted);font-size:13px}.empty .icon{font-size:34px;margin-bottom:8px}.toast{position:absolute;left:20px;right:20px;bottom:94px;background:rgba(16,23,37,.96);border:1px solid rgba(255,255,255,.12);box-shadow:0 12px 35px rgba(0,0,0,.38);border-radius:14px;padding:12px;text-align:center;font-size:13px;color:#EEF3FF;opacity:0;transform:translateY(12px);pointer-events:none;transition:.25s;z-index:20}.toast.show{opacity:1;transform:translateY(0)}
+  .side{background:rgba(15,23,42,.78);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:18px;box-shadow:var(--shadow);backdrop-filter:blur(14px)}.side h1{font-size:22px;margin:0 0 8px}.side p{margin:0 0 14px;color:#B8C2D6;line-height:1.55;font-size:14px}.side-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:14px;margin-top:12px}.side-card h3{font-size:15px;margin:0 0 10px}.scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.scenario{height:38px;border-radius:12px;background:#182238;border:1px solid rgba(255,255,255,.08);color:#DDE5F6;font-size:12px;font-weight:700}.scenario:hover{border-color:rgba(77,124,254,.6)}.check-list{list-style:none;margin:0;padding:0}.check-list li{display:flex;align-items:flex-start;gap:8px;color:#C6D0E4;font-size:13px;line-height:1.45;margin:8px 0}.check-list li:before{content:"✓";color:#30D158;font-weight:900}.spec-table{width:100%;border-collapse:separate;border-spacing:0 8px;font-size:12px}.spec-table td{background:rgba(255,255,255,.05);padding:8px;color:#C6D0E4}.spec-table td:first-child{border-radius:10px 0 0 10px;color:#8FA0BF;white-space:nowrap}.spec-table td:last-child{border-radius:0 10px 10px 0;text-align:right;color:#EAF0FF}.footnote{font-size:12px;color:#7F8CA6;line-height:1.5;margin-top:12px}
+  @media(max-width:900px){.workspace{grid-template-columns:1fr;justify-items:center}.phone{position:relative;top:0}.side{width:min(var(--phone-w),100%)}}
+</style>
+</head>
+<body>
+<div class="workspace">
+  <div class="phone">
+    <div class="phone-screen" id="phone">
+      <div class="statusbar"><span>9:41</span><div class="status-icons"><span class="signal"></span><span>5G</span><span class="pill"></span></div></div>
+      <div id="app"></div>
+      <div class="sheet-mask" id="networkSheet"></div>
+      <div class="modal-mask" id="confirmModal"></div>
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+  <aside class="side">
+    <h1>ForX App 提现页原型交互图</h1>
+    <p>本原型按 PRD 的完整提现闭环制作：选币种、选网络、填地址、填金额、费用确认、安全验证、提交结果、记录追踪。按钮均已绑定交互，可按主流程点击体验。</p>
+    <div class="side-card">
+      <h3>快捷验收场景</h3>
+      <div class="scenario-grid">
+        <button class="scenario" onclick="scenarioHappy()">完整提现流程</button>
+        <button class="scenario" onclick="scenarioBadAddress()">地址错误</button>
+        <button class="scenario" onclick="scenarioLowAmount()">低于最小额</button>
+        <button class="scenario" onclick="scenarioMemo()">Memo 必填</button>
+        <button class="scenario" onclick="scenarioReview()">大额审核</button>
+        <button class="scenario" onclick="scenarioRecords()">提现记录</button>
+      </div>
+    </div>
+    <div class="side-card">
+      <h3>PRD 页面覆盖</h3>
+      <ul class="check-list">
+        <li>提现表单页：币种、网络、地址、Memo/Tag、金额、费用、风险提示、底部按钮。</li>
+        <li>选择币种页：搜索、资产列表、可用余额、不可提现/维护状态。</li>
+        <li>选择网络弹层：手续费、最小额、预计到账时间、维护/拥堵状态。</li>
+        <li>地址簿与扫码：地址回填、网络匹配、已连接钱包地址、权限/识别模拟。</li>
+        <li>确认弹窗：提现币种、网络、地址、数量、手续费、预计到账、风险声明。</li>
+        <li>安全验证页：邮箱验证码、Google OTP、资金密码、倒计时与错误提示。</li>
+        <li>结果页与记录详情：审核中/处理中/链上确认/成功/失败状态追踪。</li>
+      </ul>
+    </div>
+    <div class="side-card">
+      <h3>当前表单状态</h3>
+      <table class="spec-table" id="stateTable"></table>
+      <div class="footnote">所有币种、网络、手续费、限额、Memo 规则均模拟为“后台配置返回”，前端只负责展示、校验和确认。</div>
+    </div>
+  </aside>
+</div>
+<script>
+const coins=[
+  {coin:'USDT',name:'Tether USD',icon:'U',cls:'',enabled:true,balance:1280.55,precision:6,networks:['BSC','Arbitrum','Optimism','Ethereum']},
+  {coin:'ETH',name:'Ethereum',icon:'E',cls:'eth',enabled:true,balance:3.4821,precision:8,networks:['Arbitrum','Optimism','Ethereum']},
+  {coin:'BTC',name:'Bitcoin',icon:'B',cls:'btc',enabled:false,reason:'当前币种提现维护中',balance:0.2168,precision:8,networks:[]},
+  {coin:'XRP',name:'Memo/Tag 示例资产',icon:'X',cls:'xrp',enabled:true,balance:2688.24,precision:6,networks:['XRP Ledger']}
+];
+const networks={
+  'BSC':{name:'BNB Smart Chain',fee:0.5,min:10,max:50000,daily:100000,time:'约 5 分钟',enabled:true,status:'正常',memoSupported:false,memoRequired:false,addressRegex:/^0x[a-fA-F0-9]{40}$/},
+  'Arbitrum':{name:'Arbitrum One',fee:0.35,min:5,max:50000,daily:80000,time:'约 3 分钟',enabled:true,status:'正常',memoSupported:false,memoRequired:false,addressRegex:/^0x[a-fA-F0-9]{40}$/},
+  'Optimism':{name:'Optimism',fee:0.32,min:5,max:50000,daily:80000,time:'约 3 分钟',enabled:true,status:'拥堵中',memoSupported:false,memoRequired:false,addressRegex:/^0x[a-fA-F0-9]{40}$/},
+  'Ethereum':{name:'Ethereum',fee:6,min:20,max:30000,daily:50000,time:'约 15 分钟',enabled:false,status:'提现维护中，预计 18:00 恢复',memoSupported:false,memoRequired:false,addressRegex:/^0x[a-fA-F0-9]{40}$/},
+  'XRP Ledger':{name:'XRP Ledger',fee:0.25,min:20,max:100000,daily:100000,time:'约 2 分钟',enabled:true,status:'正常',memoSupported:true,memoRequired:true,memoAlias:'Destination Tag',addressRegex:/^r[1-9A-HJ-NP-Za-km-z]{25,35}$/}
+};
+const addresses=[
+  {label:'常用 BSC 钱包',network:'BSC',address:'0x8A2c9b8e7D0f4A5b6C7d8E9f0011223344556677',memo:'',risk:'已验证'},
+  {label:'Arbitrum 收款地址',network:'Arbitrum',address:'0x6F3c4d5E7A8b9C0D1e2F3344556677889900AaBb',memo:'',risk:'最近使用'},
+  {label:'XRP 交易所地址',network:'XRP Ledger',address:'rEb8TK3gBgk5auZkwc6sHnwrGVJH8DuaLh',memo:'102938',risk:'Memo必填'}
+];
+const records=[
+  {id:'WD202606030001',coin:'USDT',network:'BSC',amount:1000,fee:0.5,arrival:999.5,address:'0x8A2c9b8e7D0f4A5b6C7d8E9f0011223344556677',memo:'',status:'链上确认中',txId:'0x7a9c...2fe1',created:'2026-06-03 15:42:18',risk:'PASS'},
+  {id:'WD202606020086',coin:'USDT',network:'Arbitrum',amount:240,fee:0.35,arrival:239.65,address:'0x6F3c4d5E7A8b9C0D1e2F3344556677889900AaBb',memo:'',status:'提现成功',txId:'0x98d1...a7f3',created:'2026-06-02 21:08:36',risk:'PASS'},
+  {id:'WD202606010032',coin:'ETH',network:'Ethereum',amount:0.8,fee:0.006,arrival:0.794,address:'0x31B4cD7d90Af12e3456bC7890123456789aBcDeF',memo:'',status:'提现失败',txId:'待生成',created:'2026-06-01 10:28:12',risk:'DENY',fail:'当前网络提现维护中，资金已退回可用余额'}
+];
+let state={screen:'withdraw',history:[],coin:'USDT',network:'BSC',address:'',memo:'',amount:'',saveAddress:false,reviewMode:false,verify:{email:'',otp:'',password:'',sent:false,countdown:0},result:null,recordFilter:'全部',selectedRecord:null,coinSearch:''};
+const app=document.getElementById('app');
+const toastEl=document.getElementById('toast');
+const netSheet=document.getElementById('networkSheet');
+const confirmMask=document.getElementById('confirmModal');
+function ncfg(){return networks[state.network]||null}
+function coinObj(){return coins.find(c=>c.coin===state.coin)||coins[0]}
+function fmt(num,prec=6){if(num===''||num===null||num===undefined||isNaN(Number(num)))return '--'; return Number(num).toLocaleString('en-US',{maximumFractionDigits:prec,minimumFractionDigits:0})}
+function shortAddr(a){if(!a)return '';return a.length>18?a.slice(0,8)+'...'+a.slice(-8):a}
+function calc(){const c=coinObj(),net=ncfg(),amount=Number(state.amount||0); if(!net||!amount)return {fee:net?net.fee:0,arrival:0,max:0}; const max=Math.min(c.balance,net.max,net.daily); const fee=net.fee; const arrival=Math.max(0,amount-fee); return {fee,arrival,max}}
+function validate(){const c=coinObj(),net=ncfg(),errors=[]; if(!c.enabled)errors.push(c.reason||'当前币种提现暂不可用'); if(!net)errors.push('请选择提现网络'); if(net&&!net.enabled)errors.push('当前网络维护中，请更换网络或稍后重试'); if(!state.address)errors.push('请输入提现地址'); if(state.address&&net&&!net.addressRegex.test(state.address))errors.push('地址格式错误，请检查后重新输入'); if(net&&net.memoRequired&&!state.memo)errors.push('该网络提现必须填写 Memo/Tag'); const amount=Number(state.amount); if(!state.amount)errors.push('请输入提现数量'); if(state.amount && (isNaN(amount)||amount<=0))errors.push('请输入正确的提现数量'); if(net&&amount){ if(amount<net.min)errors.push(`最低提现数量为 ${net.min} ${state.coin}`); if(amount>Math.min(c.balance,net.max,net.daily))errors.push('已超过可提现额度，请修改提现数量'); if(amount-net.fee<=0)errors.push('预计到账数量需大于 0'); }
+  return errors;
+}
+function canSubmit(){return validate().length===0}
+function showToast(msg){toastEl.textContent=msg;toastEl.classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>toastEl.classList.remove('show'),2100)}
+function go(screen,push=true){if(push)state.history.push(state.screen);state.screen=screen;render()}
+function back(){if(state.screen==='withdraw'){showToast('返回上一页');return} const prev=state.history.pop()||'withdraw';state.screen=prev;render()}
+function render(){netSheet.className='sheet-mask';confirmMask.className='modal-mask'; if(state.screen==='withdraw') renderWithdraw(); if(state.screen==='coins') renderCoins(); if(state.screen==='addressBook') renderAddressBook(); if(state.screen==='scan') renderScan(); if(state.screen==='verify') renderVerify(); if(state.screen==='result') renderResult(); if(state.screen==='records') renderRecords(); if(state.screen==='recordDetail') renderRecordDetail(); renderStateTable();}
+function nav(title,right='',rightAction=''){
+  return `<div class="nav"><button class="nav-btn" onclick="back()">‹ 返回</button><div class="nav-title">${title}</div>${right?`<button class="nav-btn" onclick="${rightAction}">${right}</button>`:'<div></div>'}</div>`
+}
+function renderWithdraw(){const c=coinObj(),net=ncfg(),v=validate(),cal=calc(); const showMemo=net&&(net.memoSupported||net.memoRequired); const addressErr=state.address&&net&&!net.addressRegex.test(state.address); const amount=Number(state.amount||0); const amountErr=state.amount && (amount<net.min||amount>Math.min(c.balance,net.max,net.daily)||amount-net.fee<=0); app.innerHTML=`
+  ${nav('提现','记录','go(\'records\')')}
+  <div class="content">
+    <div class="section card" onclick="go('coins')">
+      <div class="label">提现币种 <span class="chev">切换 ›</span></div>
+      <div class="row">
+        <div class="row-left"><div class="coin-icon ${c.cls}">${c.icon}</div><div><div class="row-title">${c.coin}</div><div class="row-sub">可用余额 ${fmt(c.balance,c.precision)} ${c.coin}</div></div></div>
+        ${c.enabled?'<span class="tag ok">可提现</span>':`<span class="tag err">维护中</span>`}
+      </div>
+    </div>
+    <div class="section card" onclick="openNetworkSheet()">
+      <div class="label">提现网络 <span class="chev">选择 ›</span></div>
+      ${net?`<div class="row"><div><div class="row-title">${state.network}</div><div class="row-sub">${net.name} · 手续费 ${fmt(net.fee)} ${state.coin} · ${net.time}</div></div><span class="tag ${net.enabled?(net.status==='拥堵中'?'warn':'ok'):'err'}">${net.status}</span></div>`:'<div class="hint">请选择提现网络</div>'}
+    </div>
+    <div class="section card">
+      <div class="label">提现地址 <strong>${state.network||'未选网络'}</strong></div>
+      <input class="field ${addressErr?'error':''}" value="${state.address}" placeholder="请输入或粘贴提现地址" oninput="state.address=this.value.trim();render()" ${!net?'disabled':''}/>
+      ${addressErr?'<div class="hint error">提现地址格式错误，请检查后重新输入。</div>':'<div class="hint">支持手动输入、粘贴、扫码、地址簿或使用当前连接钱包地址。</div>'}
+      <div class="field-actions">
+        <button class="mini-btn primary" onclick="fillWallet(event)">当前钱包地址</button>
+        <button class="mini-btn" onclick="pasteAddress(event)">粘贴</button>
+        <button class="mini-btn" onclick="go('scan')">扫码</button>
+        <button class="mini-btn" onclick="go('addressBook')">地址簿</button>
+      </div>
+    </div>
+    ${showMemo?`<div class="section card">
+      <div class="label">${net.memoAlias||'Memo/Tag'} ${net.memoRequired?'<strong>必填</strong>':'<span>选填</span>'}</div>
+      <input class="field ${net.memoRequired&&!state.memo?'error':''}" value="${state.memo}" placeholder="请输入 ${net.memoAlias||'Memo/Tag'}" oninput="state.memo=this.value.trim();render()" />
+      <div class="hint warn">未填写或填写错误可能导致资产无法到账，请确认收款平台要求。</div>
+    </div>`:''}
+    <div class="section card">
+      <div class="label">提现数量 <strong>可用 ${fmt(c.balance,c.precision)} ${c.coin}</strong></div>
+      <div class="input-line ${amountErr?'error':''}"><input value="${state.amount}" inputmode="decimal" placeholder="最低提现 ${net?fmt(net.min):'--'} ${state.coin}" oninput="onAmountInput(this.value)"/><span class="unit">${state.coin}<button class="all-btn" onclick="fillAll(event)">全部</button></span></div>
+      <div class="hint ${amountErr?'error':''}">单笔最小 ${net?fmt(net.min):'--'}，单笔最大 ${net?fmt(net.max):'--'}，今日剩余额度 ${net?fmt(net.daily):'--'} ${state.coin}</div>
+    </div>
+    <div class="section card">
+      <div class="kv"><span>提现手续费</span><span>${net?fmt(cal.fee):'--'} ${state.coin}</span></div>
+      <div class="kv big"><span>预计到账</span><span>${state.amount?fmt(cal.arrival,c.precision):'--'} ${state.coin}</span></div>
+      <div class="kv"><span>预计到账时间</span><span>${net?net.time:'--'}</span></div>
+      <div class="kv"><span>扣费方式</span><span>从提现数量中扣除</span></div>
+    </div>
+    <div class="risk-box"><strong>风险提示：</strong>请确认提现网络与收款地址网络一致。链上提现一旦完成不可撤回，错误网络或错误地址可能导致资产无法找回。</div>
+    ${v.length?`<div class="hint error">${v[0]}</div>`:'<div class="hint success">信息已校验通过，可继续确认提现。</div>'}
+  </div>
+  <div class="bottom-bar"><button class="primary-btn" ${canSubmit()?'':'disabled'} onclick="openConfirmModal()">确认提现</button></div>`;
+}
+function onAmountInput(v){let c=coinObj(); v=v.replace(/[^0-9.]/g,''); const parts=v.split('.'); if(parts.length>2)v=parts[0]+'.'+parts.slice(1).join(''); if(v.includes('.')){let [a,b]=v.split('.'); b=(b||'').slice(0,c.precision); v=a+'.'+b;} state.amount=v; render();}
+function fillAll(e){e&&e.stopPropagation(); const max=calc().max; state.amount=String(max); render(); showToast('已按最大可提现数量填充')}
+function pasteAddress(e){e&&e.stopPropagation(); state.address='0x8A2c9b8e7D0f4A5b6C7d8E9f0011223344556677'; render(); showToast('已粘贴并识别地址')}
+function fillWallet(e){e&&e.stopPropagation(); state.address='0x31B4cD7d90Af12e3456bC7890123456789aBcDeF'; render(); showToast('已使用当前连接钱包地址，请确认网络')}
+function renderCoins(){let keyword=state.coinSearch.toLowerCase(); let list=coins.filter(c=>!keyword||c.coin.toLowerCase().includes(keyword)||c.name.toLowerCase().includes(keyword)); app.innerHTML=`${nav('选择币种')}<div class="content no-bottom"><div class="search"><input class="field" placeholder="搜索币种，如 USDT / BTC / ETH" value="${state.coinSearch}" oninput="state.coinSearch=this.value;render()"></div><div class="card">${list.length?list.map(c=>`<div class="list-item ${c.enabled?'':'disabled'}" onclick="selectCoin('${c.coin}')"><div class="list-main"><div class="coin-icon ${c.cls}">${c.icon}</div><div class="list-text"><div class="list-name">${c.coin}</div><div class="list-desc">${c.name}</div></div></div><div class="list-right"><div class="list-num">${fmt(c.balance,c.precision)}</div><div class="list-status">${c.enabled?'可提现':c.reason}</div></div></div>`).join(''):'<div class="empty"><div class="icon">∅</div>当前暂无匹配资产</div>'}</div></div>`}
+function selectCoin(coin){const c=coins.find(x=>x.coin===coin); if(!c.enabled){showToast(c.reason||'当前币种暂不可提现');return} state.coin=coin; state.network=c.networks.find(n=>networks[n].enabled)||c.networks[0]||''; state.address=''; state.memo=''; state.amount=''; state.coinSearch=''; state.history=[]; state.screen='withdraw'; render(); showToast('已切换币种，网络、地址与金额已刷新')}
+function openNetworkSheet(){const c=coinObj(); netSheet.className='sheet-mask show'; netSheet.innerHTML=`<div class="sheet"><div class="sheet-title"><span>选择提现网络</span><button class="close" onclick="closeSheets()">×</button></div>${c.networks.length?c.networks.map(n=>{const net=networks[n]; return `<div class="network-option ${state.network===n?'active':''} ${net.enabled?'':'disabled'}" onclick="selectNetwork('${n}')"><div class="net-head"><div><div class="net-name">${n}</div><div class="row-sub">${net.name}</div></div><span class="tag ${net.enabled?(net.status==='拥堵中'?'warn':'ok'):'err'}">${net.status}</span></div><div class="net-grid"><div class="net-meta">手续费<b>${fmt(net.fee)} ${state.coin}</b></div><div class="net-meta">最小提现<b>${fmt(net.min)} ${state.coin}</b></div><div class="net-meta">到账时间<b>${net.time}</b></div><div class="net-meta">Memo/Tag<b>${net.memoRequired?'必填':(net.memoSupported?'选填':'不需要')}</b></div></div></div>`}).join(''):'<div class="empty"><div class="icon">∅</div>当前币种暂无可用提现网络</div>'}<div class="risk-box">选择错误网络可能导致资产不可找回。请确认收款地址支持所选网络。</div></div>`}
+function selectNetwork(n){const net=networks[n]; if(!net.enabled){showToast(net.status||'当前网络维护中');return} state.network=n; if(!net.memoSupported)state.memo=''; closeSheets(); render(); if(net.status==='拥堵中')showToast('当前网络拥堵中，到账时间可能延迟'); else showToast('已切换提现网络，费用与限额已刷新')}
+function closeSheets(){netSheet.className='sheet-mask';confirmMask.className='modal-mask'}
+function renderAddressBook(){const list=addresses.filter(a=>!state.network||a.network===state.network||state.network==='XRP Ledger'); app.innerHTML=`${nav('地址簿')}<div class="content no-bottom"><div class="card"><div class="label">按当前币种/网络过滤 <strong>${state.coin} · ${state.network}</strong></div>${list.length?list.map((a,i)=>`<div class="list-item" onclick="selectAddress(${addresses.indexOf(a)})"><div class="list-text"><div class="list-name">${a.label}</div><div class="list-desc">${a.network} · ${shortAddr(a.address)}</div>${a.memo?`<div class="list-desc">Memo/Tag：${a.memo}</div>`:''}</div><span class="tag ${a.risk.includes('验证')?'ok':'info'}">${a.risk}</span></div>`).join(''):'<div class="empty"><div class="icon">∅</div>当前网络暂无地址</div>'}<div class="divider"></div><button class="secondary-btn" onclick="showToast('进入新增提现地址页面：需填写标签、网络、地址和 Memo/Tag')">新增提现地址</button></div></div>`}
+function selectAddress(i){const a=addresses[i]; state.network=a.network; state.address=a.address; state.memo=a.memo||''; state.screen='withdraw'; state.history=[]; render(); showToast('已回填地址、网络及 Memo/Tag')}
+function renderScan(){app.innerHTML=`${nav('扫码识别')}<div class="content no-bottom"><div class="scan-box"><div class="scan-frame"><span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span></div></div><div class="hint">将提现地址二维码放入框内，系统会自动识别地址并进行格式校验。</div><div class="card"><div class="kv"><span>相机权限</span><span>已允许</span></div><div class="kv"><span>识别内容</span><span>支持地址 / URL / 钱包协议解析</span></div></div><div class="two-btns"><button class="secondary-btn" onclick="showToast('相机权限引导已打开')">权限设置</button><button class="primary-btn" onclick="scanSuccess()">模拟识别</button></div></div>`}
+function scanSuccess(){state.address=state.network==='XRP Ledger'?'rEb8TK3gBgk5auZkwc6sHnwrGVJH8DuaLh':'0x8A2c9b8e7D0f4A5b6C7d8E9f0011223344556677'; state.screen='withdraw'; state.history=[]; render(); showToast('二维码识别成功，地址已回填')}
+function openConfirmModal(){if(!canSubmit()){showToast(validate()[0]);return} const c=coinObj(),net=ncfg(),cal=calc(); confirmMask.className='modal-mask show'; confirmMask.innerHTML=`<div class="modal"><div class="modal-title">提现确认</div><div class="kv"><span>提现币种</span><span>${state.coin}</span></div><div class="kv"><span>提现网络</span><span>${state.network} · ${net.name}</span></div><div class="kv"><span>提现地址</span><span onclick="showToast('完整地址：${state.address}')">${shortAddr(state.address)}</span></div>${net.memoSupported?`<div class="kv"><span>${net.memoAlias||'Memo/Tag'}</span><span>${state.memo||'--'}</span></div>`:''}<div class="kv"><span>提现数量</span><span>${fmt(state.amount,c.precision)} ${state.coin}</span></div><div class="kv"><span>手续费</span><span>${fmt(cal.fee)} ${state.coin}</span></div><div class="kv big"><span>预计到账</span><span>${fmt(cal.arrival,c.precision)} ${state.coin}</span></div><div class="check-row" onclick="toggleRiskCheck()"><span class="checkbox" id="riskCheck"></span><span>我已确认提现网络与收款地址网络一致，并知晓链上提现完成后不可撤回。</span></div><div class="two-btns"><button class="secondary-btn" onclick="closeSheets()">取消</button><button class="primary-btn" id="modalConfirm" disabled onclick="goVerify()">确认提现</button></div></div>`}
+function toggleRiskCheck(){const cb=document.getElementById('riskCheck'),btn=document.getElementById('modalConfirm'); cb.classList.toggle('on'); cb.textContent=cb.classList.contains('on')?'✓':''; btn.disabled=!cb.classList.contains('on')}
+function goVerify(){closeSheets(); state.verify={email:'',otp:'',password:'',sent:false,countdown:0}; go('verify')}
+function renderVerify(){const net=ncfg(); app.innerHTML=`${nav('安全验证')}<div class="content"><div class="risk-box"><strong>安全提示：</strong>普通提现默认进行邮箱验证码 + Google OTP + 资金密码校验；高风险或大额提现可能进入审核。</div><div class="card"><div class="label">邮箱验证码</div><div class="verify-code"><input class="field" placeholder="6位验证码" inputmode="numeric" value="${state.verify.email}" oninput="state.verify.email=this.value.replace(/\D/g,'').slice(0,6);render()"><button class="mini-btn primary" onclick="sendEmailCode()">${state.verify.countdown>0?state.verify.countdown+'s':'发送'}</button></div><div class="hint">验证码有效期以后台返回为准，支持重发频控。</div></div><div class="card"><div class="label">Google OTP</div><input class="field" placeholder="请输入 6 位动态码" inputmode="numeric" value="${state.verify.otp}" oninput="state.verify.otp=this.value.replace(/\D/g,'').slice(0,6);render()"></div><div class="card"><div class="label">资金密码</div><input class="field" type="password" placeholder="请输入资金密码" value="${state.verify.password}" oninput="state.verify.password=this.value.slice(0,20);render()"><div class="hint">连续错误将触发临时锁定。</div></div><div class="card"><button class="secondary-btn" onclick="fillVerifyDemo()">填入示例验证码</button></div></div><div class="bottom-bar"><button class="primary-btn" onclick="submitVerify()">提交验证</button></div>`}
+function sendEmailCode(){if(state.verify.countdown>0)return; state.verify.sent=true; state.verify.countdown=60; showToast('验证码已发送'); render(); clearInterval(window.__timer); window.__timer=setInterval(()=>{state.verify.countdown--; if(state.verify.countdown<=0){clearInterval(window.__timer);state.verify.countdown=0} if(state.screen==='verify')render();},1000)}
+function fillVerifyDemo(){state.verify.email='123456';state.verify.otp='654321';state.verify.password='888888';render();showToast('已填入示例安全验证信息')}
+function submitVerify(){if(state.verify.email.length!==6){showToast('请输入正确的邮箱验证码');return} if(state.verify.otp.length!==6){showToast('请输入正确的 Google OTP');return} if(!state.verify.password){showToast('请输入资金密码');return} const cal=calc(); let status=state.reviewMode||Number(state.amount)>20000?'审核中':'处理中'; state.result={status,orderId:'WD'+Date.now().toString().slice(-10),arrival:cal.arrival,fee:cal.fee,amount:Number(state.amount),coin:state.coin,network:state.network,address:state.address,memo:state.memo}; go('result')}
+function renderResult(){const r=state.result||{status:'审核中',arrival:0,fee:0,amount:0}; const isReview=r.status==='审核中'; app.innerHTML=`${nav('提交结果')}<div class="content no-bottom"><div class="result-hero"><div class="result-icon ${isReview?'warn':'success'}">${isReview?'!':'✓'}</div><div class="result-title">提现申请已提交</div><div class="result-sub">当前状态：${r.status}。${isReview?'该笔提现将进入系统或人工审核，请在提现记录中关注状态。':'审核通过后将进入链上广播与确认流程。'}</div></div><div class="card"><div class="kv"><span>订单号</span><span>${r.orderId}</span></div><div class="kv"><span>提现数量</span><span>${fmt(r.amount)} ${r.coin}</span></div><div class="kv"><span>手续费</span><span>${fmt(r.fee)} ${r.coin}</span></div><div class="kv big"><span>预计到账</span><span>${fmt(r.arrival)} ${r.coin}</span></div><div class="kv"><span>提现网络</span><span>${r.network}</span></div><div class="kv"><span>提现地址</span><span>${shortAddr(r.address)}</span></div>${r.memo?`<div class="kv"><span>Memo/Tag</span><span>${r.memo}</span></div>`:''}</div><div class="two-btns"><button class="secondary-btn" onclick="go('records')">查看记录</button><button class="primary-btn" onclick="resetWithdraw()">再次提现</button></div></div>`}
+function resetWithdraw(){state.screen='withdraw';state.history=[];state.amount='';state.address='';state.memo='';state.result=null;state.reviewMode=false;render()}
+function renderRecords(){let filters=['全部','审核中','处理中','链上确认中','提现成功','提现失败']; let local=[...records]; if(state.result)local.unshift({id:state.result.orderId,coin:state.result.coin,network:state.result.network,amount:state.result.amount,fee:state.result.fee,arrival:state.result.arrival,address:state.result.address,memo:state.result.memo,status:state.result.status,txId:'待生成',created:'刚刚',risk:state.reviewMode?'REVIEW':'PASS'}); let list=state.recordFilter==='全部'?local:local.filter(r=>r.status===state.recordFilter); app.innerHTML=`${nav('提现记录')}<div class="content no-bottom"><div class="filter-row">${filters.map(f=>`<button class="filter ${state.recordFilter===f?'active':''}" onclick="state.recordFilter='${f}';render()">${f}</button>`).join('')}</div><div class="card" style="margin-top:10px">${list.length?list.map((r,i)=>`<div class="list-item" onclick="openRecord('${r.id}')"><div class="list-text"><div class="list-name">${r.amount} ${r.coin} <span class="tag ${r.status==='提现成功'?'ok':r.status==='提现失败'?'err':r.status==='审核中'?'warn':'info'}">${r.status}</span></div><div class="list-desc">${r.network} · ${shortAddr(r.address)}</div><div class="list-desc">${r.created}</div></div><div class="chev">›</div></div>`).join(''):'<div class="empty"><div class="icon">∅</div>暂无提现记录</div>'}</div></div>`}
+function openRecord(id){let local=[...records]; if(state.result)local.unshift({id:state.result.orderId,coin:state.result.coin,network:state.result.network,amount:state.result.amount,fee:state.result.fee,arrival:state.result.arrival,address:state.result.address,memo:state.result.memo,status:state.result.status,txId:'待生成',created:'刚刚',risk:state.reviewMode?'REVIEW':'PASS'}); state.selectedRecord=local.find(r=>r.id===id)||local[0]; go('recordDetail')}
+function renderRecordDetail(){const r=state.selectedRecord||records[0]; const failed=r.status==='提现失败'; const success=r.status==='提现成功'; app.innerHTML=`${nav('提现详情')}<div class="content no-bottom"><div class="result-hero"><div class="result-icon ${failed?'warn':success?'success':'warn'}">${failed?'×':success?'✓':'!'}</div><div class="result-title">${r.status}</div><div class="result-sub">${failed?(r.fail||'提现失败，资金已按规则退回可用余额。'):'订单状态会随审核、处理和链上确认自动更新。'}</div></div><div class="card"><div class="kv"><span>订单号</span><span>${r.id}</span></div><div class="kv"><span>提现币种</span><span>${r.coin}</span></div><div class="kv"><span>提现网络</span><span>${r.network}</span></div><div class="kv"><span>提现数量</span><span>${fmt(r.amount)} ${r.coin}</span></div><div class="kv"><span>手续费</span><span>${fmt(r.fee)} ${r.coin}</span></div><div class="kv big"><span>到账数量</span><span>${fmt(r.arrival)} ${r.coin}</span></div><div class="kv"><span>提现地址</span><span>${r.address}</span></div>${r.memo?`<div class="kv"><span>Memo/Tag</span><span>${r.memo}</span></div>`:''}<div class="kv"><span>TxID</span><span>${r.txId}</span></div><div class="kv"><span>创建时间</span><span>${r.created}</span></div></div><div class="card"><div class="label">状态时间线</div><div class="timeline"><div class="time-item done"><div class="time-title">提现申请已提交</div><div class="time-desc">系统已生成提现订单。</div></div><div class="time-item ${r.status==='审核中'?'current':'done'}"><div class="time-title">系统风控审核</div><div class="time-desc">根据账户、地址、金额和设备环境进行校验。</div></div><div class="time-item ${['处理中','链上确认中','提现成功'].includes(r.status)?'done':failed?'':'current'}"><div class="time-title">出金处理中</div><div class="time-desc">审核通过后进入链上广播队列。</div></div><div class="time-item ${r.status==='链上确认中'?'current':success?'done':''}"><div class="time-title">链上确认</div><div class="time-desc">生成 TxID 后可打开区块浏览器查看。</div></div><div class="time-item ${success?'done':failed?'current':''}"><div class="time-title">${failed?'提现失败':'提现完成'}</div><div class="time-desc">${failed?'展示失败原因和资金退回状态。':'链上确认完成后更新成功状态。'}</div></div></div></div><div class="two-btns"><button class="secondary-btn" onclick="copyRecord()">复制订单号</button><button class="primary-btn" onclick="showToast('${r.txId==='待生成'?'TxID 尚未生成':'已打开区块浏览器'}')">区块浏览器</button></div></div>`}
+function copyRecord(){showToast('订单号已复制')}
+function renderStateTable(){const el=document.getElementById('stateTable'); if(!el)return; const net=ncfg(),cal=calc(),v=validate(); el.innerHTML=`<tr><td>币种</td><td>${state.coin}</td></tr><tr><td>网络</td><td>${state.network||'未选择'}</td></tr><tr><td>地址</td><td>${state.address?shortAddr(state.address):'未填写'}</td></tr><tr><td>金额</td><td>${state.amount||'未填写'}</td></tr><tr><td>手续费</td><td>${net?fmt(cal.fee)+' '+state.coin:'--'}</td></tr><tr><td>预计到账</td><td>${state.amount?fmt(cal.arrival)+' '+state.coin:'--'}</td></tr><tr><td>校验</td><td>${v.length?v[0]:'通过'}</td></tr>`}
+function scenarioHappy(){state={...state,screen:'withdraw',history:[],coin:'USDT',network:'BSC',address:'0x8A2c9b8e7D0f4A5b6C7d8E9f0011223344556677',memo:'',amount:'1000',reviewMode:false,result:null};render();showToast('已填入完整可提交示例')}
+function scenarioBadAddress(){state={...state,screen:'withdraw',history:[],coin:'USDT',network:'BSC',address:'wrong-address',memo:'',amount:'1000',result:null};render();showToast('已切换为地址错误场景')}
+function scenarioLowAmount(){state={...state,screen:'withdraw',history:[],coin:'USDT',network:'BSC',address:'0x8A2c9b8e7D0f4A5b6C7d8E9f0011223344556677',memo:'',amount:'3',result:null};render();showToast('已切换为低于最小提现额场景')}
+function scenarioMemo(){state={...state,screen:'withdraw',history:[],coin:'XRP',network:'XRP Ledger',address:'rEb8TK3gBgk5auZkwc6sHnwrGVJH8DuaLh',memo:'',amount:'100',result:null};render();showToast('已切换为 Memo/Tag 必填场景')}
+function scenarioReview(){state={...state,screen:'withdraw',history:[],coin:'USDT',network:'BSC',address:'0x8A2c9b8e7D0f4A5b6C7d8E9f0011223344556677',memo:'',amount:'30000',reviewMode:true,result:null};render();showToast('大额提现提交后将进入审核')}
+function scenarioRecords(){state.screen='records';state.history=[];render();showToast('已进入提现记录列表')}
+render();
+</script>
+</body>
+</html>
