@@ -177,8 +177,10 @@
         <div class="flex flex-col"><span class="text-gray-400 dashed-hint">指數價格</span><span class="text-gray-900 font-medium">65,391.3</span></div>
         <div class="flex flex-col"><span class="text-gray-400">24h 漲跌</span><span class="text-green-500 font-medium">-1.76%</span></div>
         <div class="flex flex-col"><span class="text-gray-400 dashed-hint">資金費率 / 倒計時</span><span class="text-blue-500 font-medium">0.0001% <span class="text-gray-400">00:25:13</span></span></div>
+        <div class="flex flex-col"><span class="text-gray-400 ">24h成交量 (USDT)</span><span class="text-gray-900 font-medium">60.23 M</span></div>
+        <div class="flex flex-col"><span class="text-gray-400 ">未平倉合約 (USDT)</span><span class="text-gray-900 font-medium">3.23 M</span></div>
         <div class="flex flex-col"><span class="text-gray-400">24h 最高價</span><span class="text-gray-900">66,332.5</span></div>
-        <div class="flex flex-col"><span class="text-gray-400 dashed-hint">未平倉合約(USDT)</span><span class="text-gray-900 font-medium">6,454,611.09</span></div>
+        <div class="flex flex-col"><span class="text-gray-400">24h 最低價</span><span class="text-gray-900">61,332.5</span></div>
     </div>
 </div>
 
@@ -735,87 +737,222 @@
         </aside>
     </div>
 
-    <!-- 下半區 -->
+    <!-- 下半区 -->
     <div class="flex-1 flex overflow-hidden">
-        <div class="flex-1 flex flex-col border-r border-gray-100 bg-white">
-            <div class="h-8 border-b border-gray-50 flex items-center px-4 space-x-5 text-[10px] font-bold text-gray-400 overflow-x-auto scrollbar-hide">
+        <!-- 左侧：数据表格区 -->
+        <div class="flex-1 flex flex-col border-r border-gray-100 bg-white overflow-hidden">
+            <!-- 主标签栏（持仓/委托/历史...） -->
+            <div class="h-8 border-b border-gray-50 flex items-center px-4 space-x-5 text-[10px] font-bold text-gray-400 overflow-x-auto scrollbar-hide shrink-0">
                 <span onclick="switchDataTab('pos')" id="tab-data-pos" class="tab-active cursor-pointer h-8 flex items-center shrink-0">當前持倉 (1)</span>
                 <span onclick="switchDataTab('order')" id="tab-data-order" class="cursor-pointer h-8 flex items-center shrink-0">當前委託 (1)</span>
                 <span onclick="switchDataTab('hist-order')" id="tab-data-hist-order" class="cursor-pointer h-8 flex items-center shrink-0">歷史委託</span>
                 <span onclick="switchDataTab('hist-trade')" id="tab-data-hist-trade" class="cursor-pointer h-8 flex items-center shrink-0">歷史成交</span>
                 <span onclick="switchDataTab('hist-pos')" id="tab-data-hist-pos" class="cursor-pointer h-8 flex items-center shrink-0">歷史持倉</span>
                 <span onclick="switchDataTab('asset-log')" id="tab-data-asset-log" class="cursor-pointer h-8 flex items-center shrink-0">資金流水</span>
-                <!-- 右側：隱藏其他合約 (靠右出現) -->
+                <span onclick="switchDataTab('funding-fee')" id="tab-data-funding-fee" class="cursor-pointer h-8 flex items-center shrink-0">資金費用</span>
+                <!-- 隐藏其他合约 -->
                 <div class="flex items-center space-x-1.5 pl-4 border-l border-gray-100 ml-4 shrink-0">
                     <input type="checkbox" id="hide-other" class="w-3 h-3 rounded-full border-gray-300 accent-black cursor-pointer appearance-none checked:bg-black checked:border-black border relative focus:outline-none transition-all">
                     <label for="hide-other" class="text-[9px] font-bold cursor-pointer whitespace-nowrap text-gray-400 hover:text-black">隐藏其他合约</label>
                 </div>
             </div>
+
+            <!-- 当前委托/历史委托 子标签（切换基础单/止盈止损单） -->
+            <div id="order-subtabs" class="flex space-x-4 px-4 py-2 border-b border-gray-50 bg-white text-[10px] font-bold hidden shrink-0">
+                <button id="subtab-order-base" onclick="switchOrderSubTab('base')" class="tab-active cursor-pointer pb-1">基礎單 (1)</button>
+                <button id="subtab-order-tpsl" onclick="switchOrderSubTab('tpsl')" class="cursor-pointer pb-1 text-gray-400 hover:text-black">止盈止損單 (2)</button>
+            </div>
+
+            <!-- 历史委托筛选栏（基础单/止盈止损单共用容器，由JS控制内部显示） -->
+            <div id="hist-order-filters" class="px-4 py-2 border-b border-gray-50 flex flex-wrap items-center space-x-2 text-[9px] font-bold hidden shrink-0">
+                <!-- 快捷时间按钮组 -->
+                <button class="px-2 py-1 rounded-sm bg-gray-900 text-white">近1日</button>
+                <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近7日</button>
+                <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近30日</button>
+                <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近90日</button>
+                <span class="text-gray-300">|</span>
+                <!-- 自定义日期 -->
+                <div class="relative">
+                    <button onclick="toggleDatePicker('hist-order-date')" class="flex items-center space-x-1 border border-gray-200 px-2 py-1 rounded-sm hover:border-black">
+                        <span>2026-06-14</span>
+                        <span class="text-gray-300">-</span>
+                        <span>2026-06-15</span>
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </button>
+                    <div id="hist-order-date-picker" class="absolute top-full mt-1 left-0 bg-white border border-gray-200 shadow-lg p-3 rounded-sm hidden z-50">
+                        <div class="flex space-x-2 items-center">
+                            <input type="date" class="border border-gray-200 px-2 py-1 text-[10px]"/>
+                            <span class="text-gray-400">至</span>
+                            <input type="date" class="border border-gray-200 px-2 py-1 text-[10px]"/>
+                            <button class="px-2 py-1 bg-black text-white rounded-sm text-[9px]">確定</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- 合约 -->
+                <select class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]">
+                    <option>合約</option>
+                    <option>BTCUSDT</option>
+                    <option>BNBUSDT</option>
+                </select>
+                <!-- 基础单专属：订单类型、方向 -->
+                <span id="hist-order-extra-filters" class="flex items-center space-x-2">
+                <select id="hist-order-type-filter" class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]">
+                    <option>訂單類型</option>
+                    <option>全部</option>
+                    <option>限價委託</option>
+                    <option>市價委託</option>
+                    <option>限價止損</option>
+                    <option>市價止損</option>
+                    <option>限價止盈</option>
+                    <option>市價止盈</option>
+                    <option>強平委託</option>
+                </select>
+                <select id="hist-order-dir-filter" class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]">
+                    <option>方向</option>
+                    <option>全部</option>
+                    <option>買入</option>
+                    <option>賣出</option>
+                </select>
+            </span>
+                <!-- 状态多选 -->
+                <div class="relative">
+                    <button onclick="toggleMultiSelect('hist-order-status-dropdown')" class="border border-gray-200 px-2 py-1 rounded-sm flex items-center space-x-1">
+                        <span>狀態</span>
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="hist-order-status-dropdown" class="absolute top-full mt-1 bg-white border border-gray-200 shadow-lg p-3 rounded-sm hidden z-50 text-[10px] space-y-1">
+                        <label class="flex items-center space-x-1"><input type="checkbox" checked> 完全成交</label>
+                        <label class="flex items-center space-x-1"><input type="checkbox"> 部分成交</label>
+                        <label class="flex items-center space-x-1"><input type="checkbox"> 已取消</label>
+                        <label class="flex items-center space-x-1"><input type="checkbox"> 已過期</label>
+                    </div>
+                </div>
+                <button class="px-3 py-1 bg-black text-white rounded-sm">查詢</button>
+                <button class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm">重置</button>
+            </div>
+
+            <!-- 历史成交筛选栏 -->
+            <div id="hist-trade-filters" class="px-4 py-2 border-b border-gray-50 flex flex-wrap items-center space-x-2 text-[9px] font-bold hidden shrink-0">
+                <button class="px-2 py-1 rounded-sm bg-gray-900 text-white">近1日</button>
+                <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近7日</button>
+                <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近30日</button>
+                <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近90日</button>
+                <span class="text-gray-300">|</span>
+                <div class="relative">
+                    <button onclick="toggleDatePicker('hist-trade-date')" class="flex items-center space-x-1 border border-gray-200 px-2 py-1 rounded-sm">
+                        <span>2026-06-14</span><span>-</span><span>2026-06-15</span>
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </button>
+                    <div id="hist-trade-date-picker" class="absolute top-full mt-1 left-0 bg-white border border-gray-200 shadow-lg p-3 rounded-sm hidden z-50">
+                        <div class="flex space-x-2"><input type="date" class="border px-2 py-1 text-[10px]"/><span>至</span><input type="date" class="border px-2 py-1 text-[10px]"/><button class="px-2 py-1 bg-black text-white text-[9px]">確定</button></div>
+                    </div>
+                </div>
+                <select class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]"><option>合約</option><option>BNBUSDT</option></select>
+                <select class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]"><option>方向</option><option>全部</option><option>買入</option><option>賣出</option></select>
+                <button class="px-3 py-1 bg-black text-white rounded-sm">查詢</button>
+                <button class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm">重置</button>
+            </div>
+
+            <!-- 历史持仓筛选栏 -->
+            <div id="hist-pos-filters" class="px-4 py-2 border-b border-gray-50 flex flex-wrap items-center space-x-2 text-[9px] font-bold hidden shrink-0">
+                <button class="px-2 py-1 rounded-sm bg-gray-900 text-white">近1日</button>
+                <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近7日</button>
+                <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近30日</button>
+                <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近90日</button>
+                <span class="text-gray-300">|</span>
+                <div class="relative">
+                    <button onclick="toggleDatePicker('hist-pos-date')" class="flex items-center space-x-1 border border-gray-200 px-2 py-1 rounded-sm">
+                        <span>2026-06-14</span><span>-</span><span>2026-06-15</span>
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </button>
+                    <div id="hist-pos-date-picker" class="absolute top-full mt-1 left-0 bg-white border border-gray-200 shadow-lg p-3 rounded-sm hidden z-50">
+                        <div class="flex space-x-2"><input type="date" class="border px-2 py-1 text-[10px]"/><span>至</span><input type="date" class="border px-2 py-1 text-[10px]"/><button class="px-2 py-1 bg-black text-white text-[9px]">確定</button></div>
+                    </div>
+                </div>
+                <select class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]"><option>合約</option><option>BTCUSDT</option></select>
+                <select class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]"><option>倉位模式</option><option>全部</option><option>逐倉</option><option>全倉</option></select>
+                <div class="relative">
+                    <button onclick="toggleMultiSelect('hist-pos-status-dropdown')" class="border border-gray-200 px-2 py-1 rounded-sm flex items-center space-x-1">
+                        <span>狀態</span>
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="hist-pos-status-dropdown" class="absolute top-full mt-1 bg-white border border-gray-200 shadow-lg p-3 rounded-sm hidden z-50 text-[10px] space-y-1">
+                        <label class="flex items-center space-x-1"><input type="checkbox"> 全部平倉</label>
+                        <label class="flex items-center space-x-1"><input type="checkbox"> 部分平倉</label>
+                    </div>
+                </div>
+                <button class="px-3 py-1 bg-black text-white rounded-sm">查詢</button>
+                <button class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm">重置</button>
+            </div>
+
+            <!-- 资金流水筛选栏 -->
+            <div id="asset-log-filters" class="px-4 py-2 border-b border-gray-50 flex flex-wrap items-center space-x-2 text-[9px] font-bold hidden shrink-0">
+                <button class="px-2 py-1 rounded-sm bg-gray-900 text-white">近1日</button>
+                <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近7日</button>
+                <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近30日</button>
+                <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近90日</button>
+                <span class="text-gray-300">|</span>
+                <div class="relative">
+                    <button onclick="toggleDatePicker('asset-log-date')" class="flex items-center space-x-1 border border-gray-200 px-2 py-1 rounded-sm">
+                        <span>2026-06-14</span><span>-</span><span>2026-06-15</span>
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </button>
+                    <div id="asset-log-date-picker" class="absolute top-full mt-1 left-0 bg-white border border-gray-200 shadow-lg p-3 rounded-sm hidden z-50">
+                        <div class="flex space-x-2"><input type="date" class="border px-2 py-1 text-[10px]"/><span>至</span><input type="date" class="border px-2 py-1 text-[10px]"/><button class="px-2 py-1 bg-black text-white text-[9px]">確定</button></div>
+                    </div>
+                </div>
+                <select class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]">
+                    <option>類型</option>
+                    <option>全部</option>
+                    <option>轉帳</option>
+                    <option>已實現盈虧</option>
+                    <option>手續費</option>
+                    <option>資金費用</option>
+                    <option>爆倉清算</option>
+                    <option>邀請返佣</option>
+                    <option>體驗金入帳</option>
+                    <option>體驗金回收</option>
+                </select>
+                <button class="px-3 py-1 bg-black text-white rounded-sm">查詢</button>
+                <button class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm">重置</button>
+            </div>
+
+            <div id="funding-fee-filters" class="px-4 py-2 border-b border-gray-50 flex flex-wrap items-center space-x-2 text-[9px] font-bold hidden shrink-0">
+                <button class="px-2 py-1 rounded-sm bg-gray-900 text-white">近1日</button>
+                <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近7日</button>
+                <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近30日</button>
+                <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近90日</button>
+                <span class="text-gray-300">|</span>
+                <div class="relative">
+                    <button onclick="toggleDatePicker('funding-fee-date-picker')" class="flex items-center space-x-1 border border-gray-200 px-2 py-1 rounded-sm">
+                        <span>2026-06-14</span><span>-</span><span>2026-06-15</span>
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </button>
+                    <div id="funding-fee-date-picker" class="absolute top-full mt-1 left-0 bg-white border border-gray-200 shadow-lg p-3 rounded-sm hidden z-50">
+                        <div class="flex space-x-2"><input type="date" class="border px-2 py-1 text-[10px]"/><span>至</span><input type="date" class="border px-2 py-1 text-[10px]"/><button class="px-2 py-1 bg-black text-white text-[9px]">確定</button></div>
+                    </div>
+                </div>
+                <button class="px-3 py-1 bg-black text-white rounded-sm">查詢</button>
+                <button class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm">重置</button>
+            </div>
+
+            <!-- 数据表格容器 -->
             <div class="flex-1 overflow-auto" id="data-container">
                 <table class="w-full text-left text-[9px] border-collapse min-w-[1000px]">
                     <thead class="bg-gray-50 sticky top-0 text-gray-400 border-b border-gray-100 z-10">
                     <tr id="data-header">
-                        <th class="px-3 py-2 font-medium">合約</th>
-                        <th class="px-3 py-2 font-medium">數量</th>
-                        <th class="px-3 py-2 font-medium">開倉均價</th>
-                        <th class="px-3 py-2 font-medium">標記價格</th>
-                        <th class="px-3 py-2 font-medium">盈虧平衡價</th>
-                        <th class="px-3 py-2 font-medium">預估強平價</th>
-                        <th class="px-3 py-2 font-medium">保證金比率</th>
-                        <th class="px-3 py-2 font-medium">保證金</th>
-                        <th class="px-3 py-2 font-medium">盈虧 (ROE%)</th>
-                        <th class="px-3 py-2 font-medium">止盈/止損</th>
-                        <th class="px-3 py-2 text-right">
-                            <button class="bg-gray-100 text-black px-2 py-0.5 rounded-[1px] hover:bg-gray-200 transition">一鍵平倉</button>
-                        </th>
+                        <!-- 动态由JS生成 -->
                     </tr>
                     </thead>
                     <tbody id="data-body" class="divide-y divide-gray-50">
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-3 py-2.5 whitespace-nowrap">
-                            <div class="font-bold text-black text-[10px]">BTCUSDT <span class="text-green-500 bg-green-50 px-1 rounded-[1px]">20x</span></div>
-                        </td>
-                        <td class="px-3 py-2.5 whitespace-nowrap font-medium text-gray-900">
-                            <div class="flex items-center">
-                                0.500 BTC
-                                <button onclick="toggleModal('modal-unit-switch')" class="ml-1.5 p-0.5 hover:bg-gray-100 rounded text-gray-400 transition-colors">
-                                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                                        <path d="M4 11H13.5M13.5 11L11 8.5M13.5 11L11 13.5M12 5H2.5M2.5 5L5 2.5M2.5 5L5 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        </td>
-                        <td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,100.5</td>
-                        <td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,432.1</td>
-                        <td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,120.0</td>
-                        <td class="px-3 py-2.5 whitespace-nowrap text-orange-500 font-bold">62,400.0</td>
-                        <td class="px-3 py-2.5 whitespace-nowrap text-green-500 font-medium">1.25%</td>
-                        <td class="px-3 py-2.5 whitespace-nowrap text-gray-900">1,627.50 USDT</td>
-                        <td class="px-3 py-2.5 whitespace-nowrap">
-                            <div class="text-green-500 font-black">+166.05 USDT</div>
-                            <div class="text-green-500 text-[8px]">(+25.40%)</div>
-                        </td>
-                        <td class="px-3 py-2.5 whitespace-nowrap">
-                            -- / --
-                            <button onclick="toggleModal('modal-tpsl')" class="text-blue-500 hover:text-blue-700 flex items-center group">
-                                <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                設置
-                            </button>
-                        </td>
-                        <td class="px-3 py-2.5 text-right whitespace-nowrap space-x-2">
-                            <button class="text-gray-900 hover:text-blue-600 font-bold">限价</button>
-                            <button class="text-gray-900 hover:text-blue-600 font-bold">市价</button>
-                        </td>
-                    </tr>
+                    <!-- 动态由JS生成 -->
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- 賬戶信息面板 (右下角區塊) -->
+        <!-- 右侧账户信息面板（保持不变） -->
         <aside class="w-[300px] bg-white flex flex-col p-4 border-l border-gray-100 overflow-y-auto">
-
-            <!-- 1. 賬戶操作按鈕 -->
             <div class="mb-5">
                 <p class="font-black text-[11px] mb-3 uppercase tracking-wider text-black">賬戶</p>
                 <div class="flex gap-2">
@@ -823,8 +960,6 @@
                     <button class="flex-1 py-1.5 border border-gray-200 rounded-[2px] text-[10px] font-bold hover:bg-gray-50 transition">提現</button>
                 </div>
             </div>
-
-            <!-- 2. 賬戶權益數據 -->
             <div class="mb-5">
                 <p class="font-black text-[11px] mb-2 uppercase tracking-wider text-black border-b border-gray-50 pb-1">賬戶權益</p>
                 <div class="space-y-2.5 pt-1">
@@ -850,8 +985,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- 3. 保證金數據 -->
             <div class="mb-2">
                 <p class="font-black text-[11px] mb-2 uppercase tracking-wider text-black border-b border-gray-50 pb-1">保證金</p>
                 <div class="space-y-2.5 pt-1">
@@ -1487,6 +1620,96 @@
     </div>
 </div>
 
+<!-- 分享弹窗 -->
+<div id="modal-share-pnl" class="modal-overlay hidden" style="display: none;">
+    <div class="bg-white w-full rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in duration-300 flex flex-col max-w-[320px]">
+        <div id="pnl-poster" class="bg-white p-8 space-y-8 relative">
+            <div class="flex items-center space-x-2">
+                <div class="w-6 h-6 bg-black rounded flex items-center justify-center text-white font-black text-xs italic">F</div>
+                <span class="font-black text-base tracking-tighter">ForX</span>
+            </div>
+            <div class="flex justify-between items-start">
+                <div class="space-y-1">
+                    <h3 class="text-xl font-black text-gray-900">BNB/USDT</h3>
+                    <p class="text-[10px] font-black text-green-500 uppercase italic">開多 (Buy/Long)</p>
+                </div>
+                <div class="w-12 h-12 bg-yellow-50 rounded-full flex items-center justify-center">
+                    <span class="text-2xl">💰</span>
+                </div>
+            </div>
+            <div class="py-4 text-center">
+                <p class="text-5xl font-black text-green-500 tracking-tighter">+25.40%</p>
+                <p class="text-[10px] text-gray-400 font-bold uppercase mt-2 tracking-widest text-green-500/50">Return on Equity</p>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-5 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <p class="text-[9px] text-gray-400 font-bold uppercase">開倉均價</p>
+                        <p class="text-[13px] font-black text-gray-900 font-mono">65,100.5</p>
+                    </div>
+                    <div class="space-y-1 text-right">
+                        <p class="text-[9px] text-gray-400 font-bold uppercase">標記價格</p>
+                        <p class="text-[13px] font-black text-gray-900 font-mono">65,432.1</p>
+                    </div>
+                </div>
+                <div class="pt-4 border-t border-gray-200 flex justify-between items-center text-[9px] font-medium text-gray-400">
+                    <span>11/06/2026 21:35</span>
+                    <span class="text-blue-600 font-bold">https://forx.finance</span>
+                </div>
+            </div>
+            <div class="text-center pt-2">
+                <p class="font-black text-sm tracking-tighter">ForX</p>
+                <p class="text-[9px] text-gray-400 font-bold uppercase tracking-tight">鏈上交易加密貨幣、黃金和股票</p>
+            </div>
+        </div>
+        <div class="p-4 bg-gray-50 flex space-x-3 border-t border-gray-100">
+            <button onclick="toggleModal('modal-share-pnl')" class="flex-1 py-3 border border-gray-200 bg-white rounded-xl font-black text-xs text-gray-400 uppercase">取消</button>
+            <button onclick="alert('海報已保存至相冊')" class="flex-1 py-3 bg-black text-white rounded-xl font-black text-xs shadow-lg uppercase active:scale-95 transition-all">下载海報</button>
+        </div>
+    </div>
+</div>
+
+<!-- 撤单确认弹窗 -->
+<div id="modal-cancel-order" class="modal-overlay" style="display: none;">
+    <div class="bg-white w-[360px] rounded-sm shadow-2xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center">
+            <h3 class="text-sm font-black uppercase">撤銷訂單</h3>
+            <button onclick="toggleModal('modal-cancel-order')" class="text-gray-400 hover:text-black">✕</button>
+        </div>
+        <div class="p-5 space-y-4">
+            <div class="text-xs text-gray-600 leading-relaxed">
+                <p class="font-bold text-gray-900 mb-2">確定要撤銷該訂單嗎？</p>
+                <p class="text-gray-400">撤銷後該訂單將不再生效。</p>
+                <p id="cancel-order-info" class="mt-2 text-gray-500 font-mono text-[10px]"></p>
+            </div>
+            <div class="flex space-x-3 pt-2">
+                <button onclick="toggleModal('modal-cancel-order')" class="flex-1 border border-gray-200 py-2.5 rounded-sm font-bold text-xs text-gray-400 uppercase">取消</button>
+                <button onclick="executeCancelOrder()" class="flex-1 bg-red-500 text-white py-2.5 rounded-sm font-bold text-xs uppercase">確認撤銷</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 全部撤单确认弹窗 -->
+<div id="modal-cancel-all" class="modal-overlay" style="display: none;">
+    <div class="bg-white w-[360px] rounded-sm shadow-2xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center">
+            <h3 class="text-sm font-black uppercase">全部撤單</h3>
+            <button onclick="toggleModal('modal-cancel-all')" class="text-gray-400 hover:text-black">✕</button>
+        </div>
+        <div class="p-5 space-y-4">
+            <div class="text-xs text-gray-600 leading-relaxed">
+                <p class="font-bold text-gray-900 mb-2">確定要撤銷所有當前委託訂單嗎？</p>
+                <p class="text-gray-400">此操作將撤銷所有基礎單</p>
+            </div>
+            <div class="flex space-x-3 pt-2">
+                <button onclick="toggleModal('modal-cancel-all')" class="flex-1 border border-gray-200 py-2.5 rounded-sm font-bold text-xs text-gray-400 uppercase">取消</button>
+                <button onclick="executeCancelAll()" class="flex-1 bg-red-500 text-white py-2.5 rounded-sm font-bold text-xs uppercase">確認全部撤銷</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     function toggleModal(id) {
         const modal = document.getElementById(id);
@@ -1502,72 +1725,6 @@
         const container = document.getElementById('tpsl-inputs');
         // 注意：如果是直接點擊 label 觸發的，這裡不要手動 checkbox.checked = !checkbox.checked
         container.style.display = checkbox.checked ? 'grid' : 'none';
-    }
-
-    function switchDataTab(tabId) {
-        const tabs = ['pos', 'order', 'hist-order', 'hist-trade', 'hist-pos', 'asset-log'];
-        tabs.forEach(t => document.getElementById('tab-data-' + t).className = 'cursor-pointer h-8 flex items-center shrink-0');
-        document.getElementById('tab-data-' + tabId).className = 'tab-active cursor-pointer h-8 flex items-center shrink-0';
-
-        const h = document.getElementById('data-header');
-        const b = document.getElementById('data-body');
-
-        if (tabId === 'pos') {
-            h.innerHTML = '<th class="px-3 py-2 font-medium">合約</th><th class="px-3 py-2 font-medium">數量</th><th class="px-3 py-2 font-medium">開倉均價</th><th class="px-3 py-2 font-medium">標記價格</th><th class="px-3 py-2 font-medium">盈虧平衡價</th><th class="px-3 py-2 font-medium">預估強平價</th><th class="px-3 py-2 font-medium">保證金比率</th><th class="px-3 py-2 font-medium">保證金</th><th class="px-3 py-2 font-medium">盈虧 (ROE%)</th><th class="px-3 py-2 font-medium">止盈/止損</th><th class="px-3 py-2 text-right"><button class="bg-gray-100 text-black px-2 py-0.5 rounded-[1px] hover:bg-gray-200 transition">一鍵平倉</button></th>';
-            b.innerHTML = '<tr class="hover:bg-gray-50 transition-colors border-b border-gray-50"><td class="px-3 py-2.5 whitespace-nowrap"><div class="font-bold text-black text-[10px]">BTCUSDT <span class="text-green-500 bg-green-50 px-1 rounded-[1px]">20x</span></div></td><td class="px-3 py-2.5 whitespace-nowrap font-medium text-gray-900"><div class="flex items-center">0.500 BTC<button onclick="toggleModal(\'modal-unit-switch\')" class="ml-1.5 p-0.5 hover:bg-gray-100 rounded text-gray-400"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 11H13.5M13.5 11L11 8.5M13.5 11L11 13.5M12 5H2.5M2.5 5L5 2.5M2.5 5L5 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></td><td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,100.5</td><td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,432.1</td><td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,120.0</td><td class="px-3 py-2.5 whitespace-nowrap text-orange-500 font-bold">62,400.0</td><td class="px-3 py-2.5 whitespace-nowrap text-green-500 font-medium">1.25%</td><td class="px-3 py-2.5 whitespace-nowrap text-gray-900">1,627.50 USDT</td><td class="px-3 py-2.5 whitespace-nowrap"><div class="text-green-500 font-black">+166.05 USDT</div><div class="text-green-500 text-[8px]">(+25.40%)</div></td><td class="px-3 py-2.5 whitespace-nowrap">-- / --<button onclick="toggleModal(\'modal-tpsl\')" class="text-blue-500 hover:text-blue-700 flex items-center group"><svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>設置</button></td><td class="px-3 py-2.5 text-right whitespace-nowrap space-x-2"><button class="text-gray-900 hover:text-blue-600 font-bold">限價</button><button class="text-gray-900 hover:text-blue-600 font-bold">市價</button></td></tr>';
-        } else if (tabId === 'order') {
-            // 1. 模拟委托数据
-            h.innerHTML = '<th class="px-4 py-2">時間</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">方向</th><th class="px-4 py-2">平均價格</th><th class="px-4 py-2">價格</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發條件</th><th class="px-4 py-2 text-blue-600">止盈/止损</th><th class="px-4 py-2">狀態</th>';
-            b.innerHTML = `
-                            <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">
-                                <td class="px-4 py-3 text-gray-400">2024-05-24 14:20:15</td>
-                                <td class="px-4 py-3 font-black text-gray-900">BNBUSDT</td>
-                                <td class="px-4 py-3 font-medium">限價單</td>
-                                <td class="px-4 py-3 text-green-500 font-bold uppercase tracking-tighter text-[12px]">買入 / 開多</td>
-                                <td class="px-4 py-3 text-gray-400 font-mono">--</td>
-                                <td class="px-4 py-3 font-mono font-bold">620.00</td>
-                                <td class="px-4 py-3 text-gray-400 font-mono">0.00</td>
-                                <td class="px-4 py-3 font-mono font-bold">1.00</td>
-                                <td class="px-4 py-3 text-gray-400">--</td>
-                                <td class="px-4 py-3">
-                                    <div class="flex items-center space-x-2">
-                                        <span class="text-gray-300 italic">800.123 / 600.234</span>
-                                        <button onclick="toggleModal('modal-order-tpsl')" class="text-blue-500 hover:text-blue-700 flex items-center group">
-                                            <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                            設置
-                                        </button>
-                                    </div>
-                                </td>
-                                <td class="px-4 py-3 text-blue-600 font-black uppercase">委託中</td>
-                            </tr>
-                            `;
-        }  else if (tabId === 'hist-order') {
-            // 1. 模拟委托数据
-            h.innerHTML = '<th class="px-4 py-2">時間</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">方向</th><th class="px-4 py-2">平均價格</th><th class="px-4 py-2">價格</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發條件</th><th class="px-4 py-2">狀態</th>';
-            b.innerHTML = `
-                            <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">
-                                <td class="px-4 py-3 text-gray-400">2024-05-24 14:20:15</td>
-                                <td class="px-4 py-3 font-black text-gray-900">BNBUSDT</td>
-                                <td class="px-4 py-3 font-medium">限價單</td>
-                                <td class="px-4 py-3 text-green-500 font-bold uppercase tracking-tighter text-[12px]">買入 / 開多</td>
-                                <td class="px-4 py-3 text-gray-400 font-mono">--</td>
-                                <td class="px-4 py-3 font-mono font-bold">620.00</td>
-                                <td class="px-4 py-3 text-gray-400 font-mono">0.00</td>
-                                <td class="px-4 py-3 font-mono font-bold">1.00</td>
-                                <td class="px-4 py-3 text-gray-400">--</td>
-                                <td class="px-4 py-3 text-blue-600 font-black uppercase">已取消</td>
-                            </tr>
-                            `;
-        } else if (tabId === 'hist-trade') {
-            h.innerHTML = '<th class="px-4 py-2">數量</th><th class="px-4 py-2">手續費</th><th class="px-4 py-2">訂單號</th><th class="px-4 py-2">時間</th><th class="px-4 py-2">合約方向</th><th class="px-4 py-2">成交均價</th><th class="px-4 py-2">角色</th><th class="px-4 py-2">已實現盈虧</th>';
-            b.innerHTML = '<tr class="border-b border-gray-50"><td class="px-4 py-3">0.100 BTC</td><td class="px-4 py-3">2.34 USDT</td><td class="px-4 py-3">OR_882910</td><td class="px-4 py-3">12:30:10</td><td class="px-4 py-3 text-green-500 font-bold">買入</td><td class="px-4 py-3">65,400.0</td><td class="px-4 py-3">吃單</td><td class="px-4 py-3 text-green-500">+45.20</td></tr>';
-        } else if (tabId === 'hist-pos') {
-            h.innerHTML = '<th class="px-4 py-2">合約</th><th class="px-4 py-2">開倉均價</th><th class="px-4 py-2">平倉均價</th><th class="px-4 py-2">持倉數量</th><th class="px-4 py-2">已平倉數量</th><th class="px-4 py-2">已平仓盈虧</th><th class="px-4 py-2">狀態</th><th class="px-4 py-2">開倉時間</th><th class="px-4 py-2">最新平倉時間</th>';
-            b.innerHTML = '<tr class="border-b border-gray-50"><td class="px-4 py-3 font-bold">ETHUSDT</td><td class="px-4 py-3">2,400.0</td><td class="px-4 py-3">2,450.0</td><td class="px-4 py-3">10.0 ETH</td><td class="px-4 py-3">10.0 ETH</td><td class="px-4 py-3 text-green-500">+500.00</td><td class="px-4 py-3">已全部平仓</td><td class="px-4 py-3">10:00:00</td><td class="px-4 py-3">2026-05-11 11:47:17</td></tr>';
-        } else if (tabId === 'asset-log') {
-            h.innerHTML = '<th class="px-4 py-2">資產</th><th class="px-4 py-2">種類</th><th class="px-4 py-2">時間</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">總額</th><th class="px-4 py-2">合約</th>';
-            b.innerHTML = '<tr class="border-b border-gray-50"><td class="px-4 py-3 font-bold">USDT</td><td class="px-4 py-3">永續錢包</td><td class="px-4 py-3">12:55:00</td><td class="px-4 py-3">資金費收付</td><td class="px-4 py-3 text-red-500">-12.50</td><td class="px-4 py-3">BTCUSDT</td></tr>';
-        }
     }
 
     function switchAreaTab(area, tabId) {
@@ -1794,6 +1951,233 @@
         alert("止盈止損訂單已下單！");
         toggleModal('modal-tpsl-confirm'); // 關閉確認框
     }
+
+    // ========== 下半区表格渲染核心 ==========
+    let currentDataTab = 'pos';
+    let currentOrderSubTab = 'base';   // 'base' 或 'tpsl'
+
+    function switchDataTab(tabId) {
+        const tabs = ['pos', 'order', 'hist-order', 'hist-trade', 'hist-pos', 'asset-log', 'funding-fee'];
+        tabs.forEach(t => document.getElementById('tab-data-' + t).className = 'cursor-pointer h-8 flex items-center shrink-0');
+        document.getElementById('tab-data-' + tabId).className = 'tab-active cursor-pointer h-8 flex items-center shrink-0';
+        currentDataTab = tabId;
+
+        // 显示/隐藏子标签（仅 order 和 hist-order 需要）
+        const subtabsEl = document.getElementById('order-subtabs');
+        if (tabId === 'order' || tabId === 'hist-order') {
+            subtabsEl.classList.remove('hidden');
+            // 更新子标签文字
+            document.getElementById('subtab-order-base').innerText = tabId === 'order' ? '基礎單 (1)' : '基礎單';
+            document.getElementById('subtab-order-tpsl').innerText = tabId === 'order' ? '止盈止損單 (2)' : '止盈止損單';
+            // 重置子标签为 base
+            switchOrderSubTab('base');
+        } else {
+            subtabsEl.classList.add('hidden');
+            renderTableForTab(tabId);
+        }
+    }
+
+    function switchOrderSubTab(type) {
+        currentOrderSubTab = type;
+        const baseBtn = document.getElementById('subtab-order-base');
+        const tpslBtn = document.getElementById('subtab-order-tpsl');
+        if (type === 'base') {
+            baseBtn.className = 'tab-active cursor-pointer pb-1';
+            tpslBtn.className = 'cursor-pointer pb-1 text-gray-400 hover:text-black';
+        } else {
+            baseBtn.className = 'cursor-pointer pb-1 text-gray-400 hover:text-black';
+            tpslBtn.className = 'tab-active cursor-pointer pb-1';
+        }
+        renderTableForTab(currentDataTab);
+    }
+
+    function renderTableForTab(tabId) {
+        const h = document.getElementById('data-header');
+        const b = document.getElementById('data-body');
+        // 隐藏所有筛选栏
+        document.getElementById('hist-order-filters').classList.add('hidden');
+        document.getElementById('hist-trade-filters').classList.add('hidden');
+        document.getElementById('hist-pos-filters').classList.add('hidden');
+        document.getElementById('asset-log-filters').classList.add('hidden');
+        document.getElementById('funding-fee-filters').classList.add('hidden');
+
+        if (tabId === 'pos') {
+            h.innerHTML = '<th class="px-3 py-2 font-medium">合約</th><th class="px-3 py-2 font-medium">數量</th><th class="px-3 py-2 font-medium">開倉均價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="最新标记价格，用于计算盈亏和强平">標記價格</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="持仓达到盈亏平衡时的价格">盈虧平衡價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="预估触发强平的价格">預估強平價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="当前保证金与持仓价值的比率，越高风险越高，接近100%有爆仓风险">風險率</th><th class="px-3 py-2 font-medium">保證金</th><th class="px-3 py-2 font-medium">盈虧 (ROE%)</th><th class="px-3 py-2 font-medium">止盈/止損</th><th class="px-3 py-2 text-right"><button class="bg-gray-100 text-black px-2 py-0.5 rounded-[1px] hover:bg-gray-200 transition">一鍵平倉</button></th>';
+            b.innerHTML = `<tr class="hover:bg-gray-50 transition-colors border-b border-gray-50">
+            <td class="px-3 py-2.5 whitespace-nowrap"><div class="font-bold text-black text-[10px]">BTCUSDT <span class="text-green-500 bg-green-50 px-1 rounded-[1px]">20x</span></div></td>
+            <td class="px-3 py-2.5 whitespace-nowrap font-medium text-gray-900"><div class="flex items-center">0.500 BTC<button onclick="toggleModal('modal-unit-switch')" class="ml-1.5 p-0.5 hover:bg-gray-100 rounded text-gray-400"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 11H13.5M13.5 11L11 8.5M13.5 11L11 13.5M12 5H2.5M2.5 5L5 2.5M2.5 5L5 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></td>
+            <td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,100.5</td>
+            <td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,432.1</td>
+            <td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,120.0</td>
+            <td class="px-3 py-2.5 whitespace-nowrap text-orange-500 font-bold">62,400.0</td>
+            <td class="px-3 py-2.5 whitespace-nowrap text-green-500 font-medium">1.25%</td>
+            <td class="px-3 py-2.5 whitespace-nowrap text-gray-900">1,627.50 USDT</td>
+            <td class="px-3 py-2.5 whitespace-nowrap">
+                <div class="flex items-center space-x-1">
+                    <div>
+                        <div class="text-green-500 font-black">+166.05 USDT</div>
+                        <div class="text-green-500 text-[8px]">(+25.40%)</div>
+                    </div>
+                    <button onclick="toggleModal('modal-share-pnl')" class="text-gray-400 hover:text-blue-600 transition-colors p-0.5" title="分享战绩">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6zM8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                </div>
+            </td>
+            <td class="px-3 py-2.5 whitespace-nowrap">-- / --<button onclick="toggleModal('modal-tpsl')" class="text-blue-500 hover:text-blue-700 flex items-center group"><svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>設置</button></td>
+            <td class="px-3 py-2.5 text-right whitespace-nowrap space-x-2"><button class="text-gray-900 hover:text-blue-600 font-bold">限價</button><button class="text-gray-900 hover:text-blue-600 font-bold">市價</button></td>
+        </tr>`;
+        } else if (tabId === 'order') {
+            document.getElementById('hist-order-filters').classList.add('hidden'); // 当前委托不需要筛选
+            if (currentOrderSubTab === 'base') {
+                h.innerHTML = '<th class="px-4 py-2">時間</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">方向</th><th class="px-4 py-2">成交均价</th><th class="px-4 py-2">價格</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發條件</th><th class="px-4 py-2 text-blue-600">止盈/止损</th><th class="px-4 py-2">生效时间</th><th class="px-4 py-2 cursor-pointer" onclick="openCancelAllConfirm()"><span class="flex items-center space-x-1 text-red-500"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>全部撤单</span></th>';
+                b.innerHTML = `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">
+                <td class="px-4 py-3 text-gray-400">2024-05-24 14:20:15</td>
+                <td class="px-4 py-3 font-black text-gray-900">BNBUSDT</td>
+                <td class="px-4 py-3 font-medium">限價單</td>
+                <td class="px-4 py-3 text-green-500 font-bold uppercase tracking-tighter text-[12px]">買入 / 開多</td>
+                <td class="px-4 py-3 text-gray-400 font-mono">--</td>
+                <td class="px-4 py-3 font-mono font-bold">620.00</td>
+                <td class="px-4 py-3 text-gray-400 font-mono">0.00</td>
+                <td class="px-4 py-3 font-mono font-bold">1.00</td>
+                <td class="px-4 py-3 text-gray-400">--</td>
+                <td class="px-4 py-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-gray-300 italic">800.123 / 600.234</span>
+                        <button onclick="toggleModal('modal-order-tpsl')" class="text-blue-500 hover:text-blue-700 flex items-center group"><svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>設置</button>
+                    </div>
+                </td>
+                <td class="px-4 py-3 text-gray-400">--</td>
+                <td class="px-4 py-3 text-blue-600 font-black uppercase cursor-pointer" onclick="openCancelConfirm('OR_882910')"><span class="flex items-center space-x-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>撤单</span></td>
+            </tr>`;
+            } else { // 止盈止损单
+                h.innerHTML = '<th class="px-4 py-2">時間</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">方向</th><th class="px-4 py-2">成交均价</th><th class="px-4 py-2">價格</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發條件</th><th class="px-4 py-2 text-blue-600">止盈/止损</th><th class="px-4 py-2">生效时间</th><th class="px-4 py-2 cursor-pointer" onclick="openCancelAllConfirm()"><span class="flex items-center space-x-1 text-red-500"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>全部撤单</span></th>';
+                b.innerHTML = `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">
+                <td class="px-4 py-3 text-gray-400">2024-05-24 14:20:15</td>
+                <td class="px-4 py-3 font-black text-gray-900">BNBUSDT</td>
+                <td class="px-4 py-3 font-medium text-red-500">市价止盈</td>
+                <td class="px-4 py-3 text-green-500 font-bold uppercase tracking-tighter text-[12px]">平多</td>
+                <td class="px-4 py-3 text-gray-400 font-mono">--</td>
+                <td class="px-4 py-3 font-mono font-bold text-gray-500">市价</td>
+                <td class="px-4 py-3 text-gray-400 font-mono">--</td>
+                <td class="px-4 py-3 font-mono font-bold">全部平仓</td>
+                <td class="px-4 py-3 text-gray-700 font-bold">最新价格 >= 800.123</td>
+                <td class="px-4 py-3 text-gray-300">--</td>
+                <td class="px-4 py-3 text-gray-400">--</td>
+                <td class="px-4 py-3 text-blue-600 font-black uppercase cursor-pointer" onclick="openCancelConfirm('TP_001')"><span class="flex items-center space-x-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>撤单</span></td>
+            </tr>`;
+            }
+        } else if (tabId === 'hist-order') {
+            document.getElementById('hist-order-filters').classList.remove('hidden');
+            const extraFilters = document.getElementById('hist-order-extra-filters');
+            if (currentOrderSubTab === 'base') {
+                extraFilters.style.display = 'flex';
+                h.innerHTML = '<th class="px-4 py-2">時間</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">方向</th><th class="px-4 py-2">平均價格</th><th class="px-4 py-2">價格</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發條件</th><th class="px-4 py-2">生效时间</th><th class="px-4 py-2">狀態</th>';
+                b.innerHTML = `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">
+                <td class="px-4 py-3 text-gray-400">2024-05-24 14:20:15</td>
+                <td class="px-4 py-3 font-black text-gray-900">BNBUSDT</td>
+                <td class="px-4 py-3 font-medium">限價單</td>
+                <td class="px-4 py-3 text-green-500 font-bold uppercase tracking-tighter text-[12px]">買入 / 開多</td>
+                <td class="px-4 py-3 text-gray-400 font-mono">--</td>
+                <td class="px-4 py-3 font-mono font-bold">620.00</td>
+                <td class="px-4 py-3 text-gray-400 font-mono">0.00</td>
+                <td class="px-4 py-3 font-mono font-bold">1.00</td>
+                <td class="px-4 py-3 text-gray-400">--</td>
+                <td class="px-4 py-3 text-gray-400">--</td>
+                <td class="px-4 py-3 text-gray-400 font-black uppercase cursor-help" style="border-bottom: 1px dashed #9ca3af;" title="仓位止盈订单触发，关联持仓已完全平仓">已取消</td>
+            </tr>`;
+            } else { // 止盈止损单
+                extraFilters.style.display = 'none';
+                h.innerHTML = '<th class="px-4 py-2">時間</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">方向</th><th class="px-4 py-2">價格</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發條件</th><th class="px-4 py-2">生效时间</th><th class="px-4 py-2">狀態</th>';
+                b.innerHTML = `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">
+                <td class="px-4 py-3 text-gray-400">2024-05-24 14:20:15</td>
+                <td class="px-4 py-3 font-black text-gray-900">BNBUSDT</td>
+                <td class="px-4 py-3 font-medium">市场止盈</td>
+                <td class="px-4 py-3 text-green-500 font-bold">平多</td>
+                <td class="px-4 py-3 font-mono text-gray-500">市价</td>
+                <td class="px-4 py-3 font-mono">100.32 USDT</td>
+                <td class="px-4 py-3 text-gray-700 font-bold">最新价格 >=616.20</td>
+                <td class="px-4 py-3 text-gray-400">2024-05-24 18:20:15</td>
+                <td class="px-4 py-3 text-blue-600 font-black uppercase">已完成</td>
+            </tr>`;
+            }
+        } else if (tabId === 'hist-trade') {
+            document.getElementById('hist-trade-filters').classList.remove('hidden');
+            h.innerHTML = '<th class="px-4 py-2">時間</th><th class="px-4 py-2">訂單號</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">方向</th><th class="px-4 py-2">成交均價</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">角色</th><th class="px-4 py-2">手續費</th><th class="px-4 py-2">已實現盈虧</th>';
+            b.innerHTML = '<tr class="border-b border-gray-50"><td class="px-4 py-3 text-gray-400">2026-05-06 01:20:33</td><td class="px-4 py-3 text-gray-700">OR_1041927385473</td><td class="px-4 py-3 font-bold">BNBUSDT</td><td class="px-4 py-3 text-green-500 font-bold">開多</td><td class="px-4 py-3 font-mono">531.234</td><td class="px-4 py-3">1232.34 USDT</td><td class="px-4 py-3">吃單方</td><td class="px-4 py-3 text-gray-500">1.245 USDT</td><td class="px-4 py-3 text-green-500 font-black">+184.32450000 USDT</td></tr>';
+        } else if (tabId === 'hist-pos') {
+            document.getElementById('hist-pos-filters').classList.remove('hidden');
+            h.innerHTML = '<th class="px-4 py-2">合約</th><th class="px-4 py-2">開倉均價</th><th class="px-4 py-2">平倉均價</th><th class="px-4 py-2">持倉數量</th><th class="px-4 py-2">已平倉數量</th><th class="px-4 py-2">已平仓盈虧</th><th class="px-4 py-2">狀態</th><th class="px-4 py-2">開倉時間</th><th class="px-4 py-2">最新平倉時間</th>';
+            b.innerHTML = `<tr class="border-b border-gray-50">
+            <td class="px-4 py-3 font-bold">ETHUSDT</td>
+            <td class="px-4 py-3">2,400.0</td>
+            <td class="px-4 py-3">2,450.0</td>
+            <td class="px-4 py-3">10.0 ETH</td>
+            <td class="px-4 py-3">10.0 ETH</td>
+            <td class="px-4 py-3 text-green-500 flex items-center space-x-1">
+                <span>+500.00</span>
+                <button onclick="toggleModal('modal-share-pnl')" class="text-gray-400 hover:text-blue-600 p-0.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6zM8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+            </td>
+            <td class="px-4 py-3">已全部平仓</td>
+            <td class="px-4 py-3">10:00:00</td>
+            <td class="px-4 py-3">2026-05-11 11:47:17</td>
+        </tr>`;
+        } else if (tabId === 'asset-log') {
+            document.getElementById('asset-log-filters').classList.remove('hidden');
+            h.innerHTML = '<th class="px-4 py-2">時間</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">金額</th><th class="px-4 py-2">幣種</th><th class="px-4 py-2">合約</th>';
+            b.innerHTML = '<tr class="border-b border-gray-50"><td class="px-4 py-3 text-gray-400">2026-05-06 01:20:33</td><td class="px-4 py-3">資金費率</td><td class="px-4 py-3 font-mono">1.34232464 USDT</td><td class="px-4 py-3">USDT</td><td class="px-4 py-3">BNBUSDT</td></tr>';
+        } else if (tabId === 'funding-fee') {
+            document.getElementById('funding-fee-filters').classList.remove('hidden');
+            h.innerHTML = '<th class="px-4 py-2">時間</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">方向</th><th class="px-4 py-2">資金費用</th>';
+            b.innerHTML = '<tr class="border-b border-gray-50"><td class="px-4 py-3 text-gray-400">2024-05-24 18:20:15</td><td class="px-4 py-3 font-bold">BNBUSDT</td><td class="px-4 py-3 text-green-500">多頭支付空頭</td><td class="px-4 py-3 font-mono text-red-500">-0.012345 USDT</td></tr>';
+        }
+    }
+
+    // 撤单相关
+    let pendingCancelOrderId = null;
+    function openCancelConfirm(orderId) {
+        pendingCancelOrderId = orderId;
+        document.getElementById('cancel-order-info').innerText = '訂單號: ' + orderId;
+        toggleModal('modal-cancel-order');
+    }
+    function openCancelAllConfirm() {
+        toggleModal('modal-cancel-all');
+    }
+    function executeCancelOrder() {
+        console.log('撤銷訂單:', pendingCancelOrderId);
+        toggleModal('modal-cancel-order');
+        showNotification('訂單已撤銷');
+    }
+    function executeCancelAll() {
+        console.log('撤銷所有委託');
+        toggleModal('modal-cancel-all');
+        showNotification('全部委託已撤銷');
+    }
+
+    // 日期选择器与多选下拉
+    function toggleDatePicker(pickerId) {
+        const el = document.getElementById(pickerId);
+        el.classList.toggle('hidden');
+    }
+    function toggleMultiSelect(dropdownId) {
+        const el = document.getElementById(dropdownId);
+        el.classList.toggle('hidden');
+    }
+    // 点击外部关闭浮窗
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('[onclick^="toggleDatePicker"]') && !e.target.closest('.absolute.top-full')) {
+            document.querySelectorAll('[id$="-picker"]').forEach(el => el.classList.add('hidden'));
+        }
+        if (!e.target.closest('[onclick^="toggleMultiSelect"]') && !e.target.closest('.absolute.top-full')) {
+            document.querySelectorAll('[id$="-dropdown"]').forEach(el => el.classList.add('hidden'));
+        }
+    });
+
+    // 初始化渲染
+    window.addEventListener('DOMContentLoaded', function() {
+        switchDataTab('pos');
+    });
 </script>
 </body>
 </html>
