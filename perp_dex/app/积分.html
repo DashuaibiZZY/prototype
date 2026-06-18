@@ -67,6 +67,10 @@
                                 查看发放详情 &rarr;
                             </a>
                         </div>
+                        <!-- 新增全站总积分 -->
+                        <div class="text-left text-[9px] font-medium text-white/40 mt-1">
+                            平台已產生總積分 12.45M
+                        </div>
                     </div>
                     <!-- 背景裝飾 -->
                     <div class="absolute -right-4 -bottom-4 text-white/5">
@@ -82,7 +86,7 @@
                     <h4 class="font-black text-sm uppercase tracking-tight">如何快速獲取積分</h4>
                 </div>
 
-                <!-- 1. 新人任務 (現在排在第一位) -->
+                    <!-- 1. 新人任務 -->
                 <div class="space-y-3">
                     <div class="flex justify-between items-end">
                         <div class="flex items-center space-x-2">
@@ -93,23 +97,44 @@
                     </div>
 
                     <div class="space-y-3 bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                        <!-- 已完成 -->
-                        <div class="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-lg task-completed">
+                        <!-- 任务A：首次交易奖励 -->
+                        <div id="app-task-trade" class="flex items-center justify-between p-3 bg-white border border-blue-100 rounded-lg relative overflow-hidden">
                             <div class="space-y-1">
-                                <p class="text-[11px] font-black text-gray-400 line-through">首次交易獎勵</p>
+                                <p class="text-[11px] font-black text-gray-900">首次交易獎勵</p>
                                 <p class="text-[9px] text-gray-400">完成任意一筆交易</p>
                             </div>
-                            <span class="text-[11px] font-black text-gray-300">+5 Pts</span>
+                            <div class="text-right space-y-1">
+                                <p id="app-task-trade-pts" class="text-[11px] font-black text-blue-600">+5 Pts</p>
+                                <button id="app-task-trade-action" onclick="location.href='合约交易.html'" class="text-[9px] font-bold text-blue-500 underline">去交易</button>
+                                <!-- 原型切换按钮 -->
+                                <button onclick="toggleAppTask('app-task-trade')" class="block text-[8px] text-gray-300 underline mt-0.5">切换</button>
+                            </div>
+                            <!-- 已完成印章（默认隐藏） -->
+                            <div id="app-task-trade-stamp" class="absolute -top-2 -right-2 w-16 h-16 hidden">
+                                <svg viewBox="0 0 56 56" class="w-full h-full text-green-600 opacity-80">
+                                    <circle cx="28" cy="28" r="26" fill="none" stroke="currentColor" stroke-width="3"/>
+                                    <path d="M16 28l8 8 16-16" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
                         </div>
-                        <!-- 未完成 -->
-                        <div class="flex items-center justify-between p-3 bg-white border border-blue-100 rounded-lg">
+
+                        <!-- 任务B：推广先锋奖励 -->
+                        <div id="app-task-invite" class="flex items-center justify-between p-3 bg-white border border-blue-100 rounded-lg relative overflow-hidden">
                             <div class="space-y-1">
                                 <p class="text-[11px] font-black text-gray-900">推廣先鋒獎勵</p>
                                 <p class="text-[9px] text-gray-400">邀請 3 名有效好友</p>
                             </div>
-                            <div class="text-right">
-                                <p class="text-[11px] font-black text-blue-600">+10 Pts</p>
-                                <button class="text-[9px] font-bold text-blue-500 underline">去邀請</button>
+                            <div class="text-right space-y-1">
+                                <p id="app-task-invite-pts" class="text-[11px] font-black text-blue-600">+10 Pts</p>
+                                <button id="app-task-invite-action" onclick="toggleModal('modal-share')" class="text-[9px] font-bold text-blue-500 underline">去邀請</button>
+                                <button onclick="toggleAppTask('app-task-invite')" class="block text-[8px] text-gray-300 underline mt-0.5">切换</button>
+                            </div>
+                            <!-- 已完成印章（默认隐藏） -->
+                            <div id="app-task-invite-stamp" class="absolute -top-2 -right-2 w-16 h-16 hidden">
+                                <svg viewBox="0 0 56 56" class="w-full h-full text-green-600 opacity-80">
+                                    <circle cx="28" cy="28" r="26" fill="none" stroke="currentColor" stroke-width="3"/>
+                                    <path d="M16 28l8 8 16-16" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
                             </div>
                         </div>
                     </div>
@@ -119,29 +144,18 @@
                 <div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm space-y-4">
                     <div class="flex justify-between items-start">
                         <div>
-                            <h5 class="text-sm font-black text-gray-900">每周自動瓜分池</h5>
-                            <p class="text-[11px] text-gray-400 mt-1">系統每周一自動結算並分發</p>
+                            <h5 class="text-sm font-black text-gray-900">每周瓜分 1,000,000 积分</h5>
+                            <p class="text-[11px] text-gray-400 mt-1">每周一根据以下行为指标自动分发：</p>
                         </div>
                         <span class="bg-green-100 text-green-600 text-[9px] font-black px-1.5 py-0.5 rounded-sm uppercase">Automation</span>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <span class="text-[9px] font-bold bg-slate-100 px-2 py-1 rounded text-slate-500 uppercase">交易手續費</span>
-                        <span class="text-[9px] font-bold bg-slate-100 px-2 py-1 rounded text-slate-500 uppercase">合約持倉</span>
-                        <span class="text-[9px] font-bold bg-slate-100 px-2 py-1 rounded text-slate-500 uppercase">盈虧表現</span>
-                        <span class="text-[9px] font-bold bg-slate-100 px-2 py-1 rounded text-slate-500 uppercase">存款金額</span>
+                        <span class="text-[9px] font-bold bg-slate-100 px-2 py-1 rounded text-slate-500 uppercase">交易</span>
+                        <span class="text-[9px] font-bold bg-slate-100 px-2 py-1 rounded text-slate-500 uppercase">持倉</span>
+                        <span class="text-[9px] font-bold bg-slate-100 px-2 py-1 rounded text-slate-500 uppercase">盈虧</span>
+                        <span class="text-[9px] font-bold bg-slate-100 px-2 py-1 rounded text-slate-500 uppercase">入金</span>
+                        <span class="text-[9px] font-bold bg-slate-100 px-2 py-1 rounded text-slate-500 uppercase">邀请好友</span>
                     </div>
-                </div>
-            </section>
-
-            <!-- 全局統計 -->
-            <section class="grid grid-cols-2 border-t border-b border-gray-100 bg-white">
-                <div class="p-6 border-r border-gray-100 text-center space-y-1">
-                    <p class="text-[9px] text-gray-400 font-bold uppercase">已產生總積分</p>
-                    <p class="text-base font-black text-gray-900">12.45B</p>
-                </div>
-                <div class="p-6 text-center space-y-1">
-                    <p class="text-[9px] text-gray-400 font-bold uppercase">積分發放時間</p>
-                    <p class="text-base font-black text-gray-900 uppercase">每周一</p>
                 </div>
             </section>
 
@@ -199,6 +213,62 @@
             </div>
         </div>
 
+        <!-- 分享弹窗（直接复制） -->
+        <div id="modal-share" class="modal-overlay" onclick="closeModalOnSide(event, 'modal-share')">
+            <div class="bg-white w-full rounded-3xl overflow-hidden animate-in zoom-in duration-200 shadow-2xl">
+
+                <!-- 海报内容区 -->
+                <div class="bg-black p-6 text-white space-y-8 relative overflow-hidden">
+                    <div class="absolute -right-10 -top-10 w-40 h-40 bg-blue-600/30 rounded-full blur-3xl"></div>
+                    <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 20px 20px;"></div>
+
+                    <div class="flex justify-between items-center relative z-10">
+                        <span class="font-black italic text-xl tracking-tighter">ForX</span>
+                        <span class="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-sm font-black tracking-widest uppercase">Perp DEX</span>
+                    </div>
+
+                    <div class="space-y-2 relative z-10">
+                        <p class="text-[10px] text-blue-400 font-black tracking-[0.3em]">探索無限，交易可能</p>
+                        <p class="text-[11px] text-gray-400 font-medium leading-relaxed pt-2">
+                            體驗毫秒級訂單撮合與深度的去中心化流動性交易体验
+                        </p>
+                    </div>
+
+                    <div class="relative z-10 py-2">
+                        <div class="h-24 w-full bg-white/5 border border-white/10 rounded-xl flex flex-col justify-center px-4 space-y-3 overflow-hidden">
+                            <div class="flex items-end space-x-1 h-12">
+                                <div class="flex-1 bg-blue-500/40 h-8 rounded-t-sm"></div>
+                                <div class="flex-1 bg-blue-500/60 h-10 rounded-t-sm"></div>
+                                <div class="flex-1 bg-blue-500 h-12 rounded-t-sm"></div>
+                                <div class="flex-1 bg-blue-400/80 h-9 rounded-t-sm"></div>
+                                <div class="flex-1 bg-blue-500/30 h-6 rounded-t-sm"></div>
+                            </div>
+                            <div class="flex justify-between items-center text-[8px] font-black text-blue-400/50 uppercase tracking-widest">
+                                <span>Speed</span><span>Security</span><span>Transparency</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-end relative z-10">
+                        <div class="space-y-2">
+                            <p class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">我的邀請碼 (Referral Code)</p>
+                            <p class="text-2xl font-black tracking-[0.1em] text-white font-mono">E6DL28G</p>
+                        </div>
+                        <div class="w-14 h-14 bg-white p-1 rounded-lg shadow-lg shadow-blue-500/20 flex items-center justify-center">
+                            <svg class="w-full h-full text-black" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 3h6v6H3V3zm2 2v2h2V5H5zm8-2h6v6h-6V3zm2 2v2h2V5h-2zM3 15h6v6H3v-6zm2 2v2h2v-2H5zm10 0h2v2h-2v-2zm2-2h2v2h-2v-2zm0 4h2v2h-2v-2zM13 15h2v2h-2v-2zm2 2h2v2h-2v-2z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 bg-slate-50 flex space-x-3">
+                    <button onclick="toggleModal('modal-share')" class="flex-1 py-3 border border-gray-200 rounded-xl font-bold text-gray-400 text-xs uppercase">取消</button>
+                    <button onclick="alert('海報已保存並調用系統分享')" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-black text-xs shadow-xl active:scale-95 transition-all uppercase tracking-widest">分享海報</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -210,6 +280,38 @@
 
     function closeModalOnSide(e, id) {
         if (e.target.id === id) toggleModal(id);
+    }
+
+    function toggleAppTask(taskId) {
+        const task = document.getElementById(taskId);
+        const pts = document.getElementById(taskId + '-pts');
+        const actionBtn = document.getElementById(taskId + '-action');
+        const stamp = document.getElementById(taskId + '-stamp');
+        const isCompleted = task.classList.contains('task-completed');
+
+        if (isCompleted) {
+            // 恢复未完成状态
+            task.classList.remove('task-completed');
+            task.classList.add('border-blue-100', 'bg-white');
+            task.classList.remove('border-gray-100', 'bg-gray-50');
+            const title = task.querySelector('.font-black');
+            if (title) title.classList.remove('text-gray-400', 'line-through');
+            pts.classList.remove('text-gray-300');
+            pts.classList.add('text-blue-600');
+            actionBtn.style.display = 'block';
+            if (stamp) stamp.classList.add('hidden'); // 隐藏印章
+        } else {
+            // 设为已完成
+            task.classList.add('task-completed');
+            task.classList.remove('border-blue-100', 'bg-white');
+            task.classList.add('border-gray-100', 'bg-gray-50');
+            const title = task.querySelector('.font-black');
+            if (title) title.classList.add('text-gray-400', 'line-through');
+            pts.classList.remove('text-blue-600');
+            pts.classList.add('text-gray-300');
+            actionBtn.style.display = 'none';
+            if (stamp) stamp.classList.remove('hidden'); // 显示印章
+        }
     }
 </script>
 

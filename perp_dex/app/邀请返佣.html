@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ForX APP - 邀请返佣 V2</title>
+    <title>ForX APP - 邀请返佣（含身份切换）</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
@@ -13,7 +13,6 @@
         .screen { width: 100%; height: 100%; background: #fff; border-radius: 38px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
 
-        /* 等级路径样式微调 */
         .tier-node { position: relative; display: flex; flex-direction: column; align-items: center; flex: 1; }
         .tier-line { position: absolute; top: 10px; left: 50%; width: 100%; height: 2px; background: #f1f5f9; z-index: 0; }
         .tier-node:last-child .tier-line { display: none; }
@@ -22,23 +21,77 @@
         .tier-node.earned .tier-line { background: #2563eb; }
         .tier-node.active .tier-circle { border-color: #2563eb; color: #2563eb; border-width: 2px; box-shadow: 0 0 10px rgba(37, 99, 235, 0.2); }
 
-        /* 虛線樣式 */
         .dashed-underline {
-            border-bottom: 1.5px dashed rgba(156, 163, 175, 0.6); /* gray-400 with opacity */
+            border-bottom: 1.5px dashed rgba(156, 163, 175, 0.6);
             cursor: pointer;
             display: inline-block;
         }
 
-        /* 彈窗遮罩：改為 absolute，它會尋找最近的一個 position: relative 的父層 */
         .inner-modal-overlay {
-            position: absolute; /* 關鍵：不要用 fixed */
-            inset: 0;           /* 鋪滿父層 */
+            position: absolute;
+            inset: 0;
             background: rgba(0, 0, 0, 0.6);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 24px;      /* 增加左右邊距，讓彈窗內容不貼邊 */
+            padding: 24px;
             z-index: 100;
+        }
+
+        /* 身份切換條 */
+        .role-switch-bar {
+            background: #f1f5f9;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #334155;
+        }
+        .role-switch-bar label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+        .role-switch-bar input[type="radio"] {
+            accent-color: #2563eb;
+            width: 13px;
+            height: 13px;
+        }
+
+        /* 外部身份切换面板，位于手机框正上方 */
+        .prototype-role-switch {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #374151;
+            border: 1px solid #e2e8f0;
+        }
+        .prototype-role-switch label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+        .prototype-role-switch input[type="radio"] {
+            accent-color: #2563eb;
+            width: 14px;
+            height: 14px;
         }
     </style>
 </head>
@@ -46,9 +99,8 @@
 
 <div class="phone-shell">
     <div class="screen flex flex-col">
-
         <!-- 1. 顶部状态栏感导航 -->
-        <header class="flex justify-between items-center px-6 pt-12 pb-3 shrink-0 bg-white border-b border-gray-50">
+        <header class="flex justify-between items-center px-6 pt-4 pb-3 shrink-0 bg-white border-b border-gray-50">
             <button onclick="window.history.back()">
                 <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
             </button>
@@ -63,7 +115,7 @@
         <!-- 2. 内容区 -->
         <div class="flex-1 overflow-y-auto no-scrollbar bg-slate-50">
 
-            <!-- A. 比例与链接区 (首屏核心) -->
+            <!-- A. 比例与链接区 (首屏核心) - 普通/代理均显示 -->
             <section class="px-4 pt-4">
                 <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-4">
                     <div class="flex justify-between items-center">
@@ -89,124 +141,194 @@
                 </div>
             </section>
 
-            <!-- B. 等级成长路径 (修改後) -->
-            <!-- B. 等級成長路徑 -->
-            <section class="px-4 mt-3">
-                <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-                    <div class="flex justify-between items-center mb-6">
-                        <h4 class="text-[11px] font-black uppercase tracking-widest italic">等级成长进度</h4>
-                        <span class="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-black uppercase">下一级: 15%</span>
+            <!-- ===== 代理用戶引導信息框（僅代理模式顯示） ===== -->
+            <div id="agent-info-box" class="hidden px-4 mt-3">
+                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-center space-x-3">
+                    <svg class="w-5 h-5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div>
+                        <p class="text-[13px] font-bold text-blue-800 leading-tight">
+                            代理用户请前往 ForX 网页版「代理管理中心」查看完整邀请数据与收益明细。
+                        </p>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Roadmap 保持不变 -->
-                    <div class="flex relative mb-6">
-                        <div class="tier-node earned"><div class="tier-line"></div><div class="tier-circle">✓</div><span class="mt-1.5 text-[9px] font-black italic">10%</span></div>
-                        <div class="tier-node active"><div class="tier-line"></div><div class="tier-circle">2</div><span class="mt-1.5 text-[9px] font-black italic text-blue-600">15%</span></div>
-                        <div class="tier-node"><div class="tier-line"></div><div class="tier-circle">3</div><span class="mt-1.5 text-[9px] font-black italic">20%</span></div>
-                        <div class="tier-node"><div class="tier-line"></div><div class="tier-circle">4</div><span class="mt-1.5 text-[9px] font-black italic">25%</span></div>
-                    </div>
+            <!-- ===== 普通用戶內容（可根據身份隱藏部分） ===== -->
+            <div id="normal-user-content">
+                <!-- B. 等级成长路径 -->
+                <section class="px-4 mt-3">
+                    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                        <div class="flex justify-between items-center mb-6">
+                            <h4 class="text-[11px] font-black uppercase tracking-widest italic">等级成长进度</h4>
+                            <span class="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-black uppercase">下一级: 15%</span>
+                        </div>
 
-                    <!-- 升級任務 -->
-                    <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-50">
-                        <div class="space-y-1.5">
-                            <!-- 針對“活躍好友”文字加上虛線與點擊事件 -->
-                            <p class="text-[9px] text-gray-400 font-bold uppercase">
-                                <span onclick="showInfo('active')" class="dashed-underline">活躍好友</span>
-                                <span class="text-gray-900 ml-1">1 / 3</span>
-                            </p>
-                            <div class="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
-                                <div class="bg-blue-600 h-full" style="width: 33%"></div>
+                        <div class="flex relative mb-6">
+                            <div class="tier-node earned"><div class="tier-line"></div><div class="tier-circle">✓</div><span class="mt-1.5 text-[9px] font-black italic">10%</span></div>
+                            <div class="tier-node active"><div class="tier-line"></div><div class="tier-circle">2</div><span class="mt-1.5 text-[9px] font-black italic text-blue-600">15%</span></div>
+                            <div class="tier-node"><div class="tier-line"></div><div class="tier-circle">3</div><span class="mt-1.5 text-[9px] font-black italic">20%</span></div>
+                            <div class="tier-node"><div class="tier-line"></div><div class="tier-circle">4</div><span class="mt-1.5 text-[9px] font-black italic">25%</span></div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-50">
+                            <div class="space-y-1.5">
+                                <p class="text-[9px] text-gray-400 font-bold uppercase">
+                                    <span onclick="showInfo('active')" class="dashed-underline">活跃好友</span>
+                                    <span class="text-gray-900 ml-1">1 / 3</span>
+                                </p>
+                                <div class="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="bg-blue-600 h-full" style="width: 33%"></div>
+                                </div>
+                            </div>
+                            <div class="space-y-1.5">
+                                <p class="text-[9px] text-gray-400 font-bold uppercase">下级交易额 <span class="text-gray-900">0 / 2.5M USDT</span></p>
+                                <div class="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="bg-blue-600 h-full" style="width: 48%"></div>
+                                </div>
                             </div>
                         </div>
-                        <div class="space-y-1.5">
-                            <p class="text-[9px] text-gray-400 font-bold uppercase">下級交易額 <span class="text-gray-900">0 / 2.5M USDT</span></p>
-                            <div class="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
-                                <div class="bg-blue-600 h-full" style="width: 48%"></div>
+                    </div>
+                </section>
+
+                <!-- C. 收益数据 -->
+                <section class="px-4 mt-3">
+                    <div class="bg-slate-900 rounded-2xl p-5 text-white flex justify-between items-center shadow-lg relative overflow-hidden">
+                        <div class="space-y-1 relative z-10">
+                            <p onclick="showInfo('accumulated')" class="text-[9px] text-gray-500 font-bold uppercase tracking-widest dashed-underline">累积推广收益</p>
+                            <h4 class="text-2xl font-black tracking-tighter">1,240.50 <small class="text-[10px] font-medium opacity-50">USDT</small></h4>
+                        </div>
+                        <div class="text-right relative z-10">
+                            <p onclick="showInfo('pending')" class="text-[9px] text-gray-500 font-bold uppercase tracking-widest dashed-underline">待结算收益</p>
+                            <p class="text-lg font-black text-green-400">+$85.20</p>
+                        </div>
+                        <div class="absolute -right-4 top-0 opacity-10">
+                            <svg class="w-20 h-20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.21 1.87 1.15 0 2.25-.84 2.25-1.97 0-.93-.44-1.61-2.31-2.12-2.48-.67-3.77-1.47-3.77-3.67 0-1.31.89-2.52 2.61-3.1V4h2.67v1.94c1.86.3 2.79 1.49 2.97 3.09h-1.99c-.11-.82-.69-1.58-1.94-1.58-1.22 0-2.1.67-2.1 1.87 0 .88.51 1.27 2.04 1.74 2.64.7 4.09 1.53 4.09 3.83 0 1.39-.81 2.62-2.6 3.14z"/></svg>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- D. 推广统计与详情入口 -->
+                <section class="px-4 mt-3">
+                    <a href="邀请好友明细.html" class="block bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-[0.98] transition-all overflow-hidden">
+                        <div class="grid grid-cols-2 divide-x divide-gray-50 border-b border-gray-50 bg-white">
+                            <div class="p-4 text-center">
+                                <p class="text-[9px] text-gray-400 font-bold uppercase mb-1">直接推荐</p>
+                                <p class="text-base font-black text-gray-900">12</p>
+                            </div>
+                            <div class="p-4 text-center">
+                                <p class="text-[9px] text-gray-400 font-bold uppercase mb-1">下级总交易量</p>
+                                <p class="text-base font-black text-gray-900">$2.4M</p>
+                            </div>
+                        </div>
+                        <div class="px-5 py-3 flex justify-between items-center bg-blue-50/30">
+                            <span class="text-[11px] font-black text-blue-600 uppercase tracking-wider">查看直邀好友明细数据</span>
+                            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                    </a>
+                </section>
+
+                <!-- E. 大使模式入口 -->
+                <section class="px-4 mt-6 mb-20">
+                    <div class="bg-blue-600 rounded-2xl p-5 text-white flex justify-between items-center shadow-lg">
+                        <div class="space-y-1 flex-1 pr-4">
+                            <h5 class="text-sm font-black italic uppercase">ForX 大使申请</h5>
+                            <p class="text-[10px] text-blue-100 leading-tight">解锁 40% 返佣上限与专属奖励</p>
+                        </div>
+                        <button class="bg-white text-blue-600 px-4 py-2 rounded-xl font-black text-[10px] uppercase shadow-md active:scale-95">立即申请</button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ===== 代理用戶空狀態內容（默認隱藏） ===== -->
+            <div id="agent-user-content" class="hidden">
+                <!-- B. 等级成长路径 - 全部显示为占位符 -->
+                <section class="px-4 mt-3">
+                    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                        <div class="flex justify-between items-center mb-6">
+                            <h4 class="text-[11px] font-black uppercase tracking-widest italic text-gray-400">等级成长进度</h4>
+                            <span class="text-[9px] bg-gray-50 text-gray-400 px-2 py-0.5 rounded-full font-black uppercase">下一级: --</span>
+                        </div>
+                        <div class="flex relative mb-6">
+                            <div class="tier-node"><div class="tier-line"></div><div class="tier-circle">--</div><span class="mt-1.5 text-[9px] font-black italic text-gray-400">10%</span></div>
+                            <div class="tier-node"><div class="tier-line"></div><div class="tier-circle">--</div><span class="mt-1.5 text-[9px] font-black italic text-gray-400">15%</span></div>
+                            <div class="tier-node"><div class="tier-line"></div><div class="tier-circle">--</div><span class="mt-1.5 text-[9px] font-black italic text-gray-400">20%</span></div>
+                            <div class="tier-node"><div class="tier-line"></div><div class="tier-circle">--</div><span class="mt-1.5 text-[9px] font-black italic text-gray-400">25%</span></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-50">
+                            <div class="space-y-1.5">
+                                <p class="text-[9px] text-gray-400 font-bold uppercase">活跃好友 <span class="text-gray-400">-- / --</span></p>
+                                <div class="w-full h-1 bg-gray-100 rounded-full overflow-hidden"><div class="bg-gray-200 h-full" style="width: 0%"></div></div>
+                            </div>
+                            <div class="space-y-1.5">
+                                <p class="text-[9px] text-gray-400 font-bold uppercase">下级交易额 <span class="text-gray-400">-- USDT</span></p>
+                                <div class="w-full h-1 bg-gray-100 rounded-full overflow-hidden"><div class="bg-gray-200 h-full" style="width: 0%"></div></div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <!-- C. 收益數據 (修改後) -->
-            <section class="px-4 mt-3">
-                <div class="bg-slate-900 rounded-2xl p-5 text-white flex justify-between items-center shadow-lg relative overflow-hidden">
-                    <div class="space-y-1 relative z-10">
-                        <!-- 加上虛線與點擊事件 -->
-                        <p onclick="showInfo('accumulated')" class="text-[9px] text-gray-500 font-bold uppercase tracking-widest dashed-underline">累積推廣收益</p>
-                        <h4 class="text-2xl font-black tracking-tighter">1,240.50 <small class="text-[10px] font-medium opacity-50">USDT</small></h4>
-                    </div>
-                    <div class="text-right relative z-10">
-                        <!-- 加上虛線與點擊事件 -->
-                        <p onclick="showInfo('pending')" class="text-[9px] text-gray-500 font-bold uppercase tracking-widest dashed-underline">待結算收益</p>
-                        <p class="text-lg font-black text-green-400">+$85.20</p>
-                    </div>
-                    <!-- 裝飾背景保持不變 -->
-                    <div class="absolute -right-4 top-0 opacity-10">
-                        <svg class="w-20 h-20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.21 1.87 1.15 0 2.25-.84 2.25-1.97 0-.93-.44-1.61-2.31-2.12-2.48-.67-3.77-1.47-3.77-3.67 0-1.31.89-2.52 2.61-3.1V4h2.67v1.94c1.86.3 2.79 1.49 2.97 3.09h-1.99c-.11-.82-.69-1.58-1.94-1.58-1.22 0-2.1.67-2.1 1.87 0 .88.51 1.27 2.04 1.74 2.64.7 4.09 1.53 4.09 3.83 0 1.39-.81 2.62-2.6 3.14z"/></svg>
-                    </div>
-                </div>
-            </section>
-
-            <!-- D. 推廣統計與詳情入口 (優化版：移除間接推薦) -->
-            <section class="px-4 mt-3">
-                <a href="邀请好友明细.html" class="block bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-[0.98] transition-all overflow-hidden">
-                    <!-- 指標平鋪：改為 2 列 -->
-                    <div class="grid grid-cols-2 divide-x divide-gray-50 border-b border-gray-50 bg-white">
-                        <div class="p-4 text-center">
-                            <p class="text-[9px] text-gray-400 font-bold uppercase mb-1">直接推薦</p>
-                            <p class="text-base font-black text-gray-900">12</p>
+                <!-- C. 收益数据 - 显示“--” -->
+                <section class="px-4 mt-3">
+                    <div class="bg-slate-900 rounded-2xl p-5 text-white flex justify-between items-center shadow-lg relative overflow-hidden">
+                        <div class="space-y-1 relative z-10">
+                            <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">累积推广收益</p>
+                            <h4 class="text-2xl font-black tracking-tighter text-gray-600">--</h4>
                         </div>
-                        <div class="p-4 text-center">
-                            <p class="text-[9px] text-gray-400 font-bold uppercase mb-1">下級總交易量</p>
-                            <p class="text-base font-black text-gray-900">$2.4M</p>
+                        <div class="text-right relative z-10">
+                            <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">待结算收益</p>
+                            <p class="text-lg font-black text-gray-600">--</p>
                         </div>
                     </div>
-                    <!-- 入口引導 -->
-                    <div class="px-5 py-3 flex justify-between items-center bg-blue-50/30">
-                        <span class="text-[11px] font-black text-blue-600 uppercase tracking-wider">查看直邀好友明細數據</span>
-                        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                    </div>
-                </a>
-            </section>
+                </section>
 
-            <!-- E. 大使模式入口 (底部弱化) -->
-            <section class="px-4 mt-6 mb-20">
-                <div class="bg-blue-600 rounded-2xl p-5 text-white flex justify-between items-center shadow-lg">
-                    <div class="space-y-1 flex-1 pr-4">
-                        <h5 class="text-sm font-black italic uppercase">ForX 大使申請</h5>
-                        <p class="text-[10px] text-blue-100 leading-tight">解鎖 40% 返佣上限與專屬獎勵</p>
+                <!-- D. 推广统计与详情入口 - 显示空状态 -->
+                <section class="px-4 mt-3">
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="grid grid-cols-2 divide-x divide-gray-50 border-b border-gray-50 bg-white">
+                            <div class="p-4 text-center">
+                                <p class="text-[9px] text-gray-400 font-bold uppercase mb-1">直接推荐</p>
+                                <p class="text-base font-black text-gray-400">--</p>
+                            </div>
+                            <div class="p-4 text-center">
+                                <p class="text-[9px] text-gray-400 font-bold uppercase mb-1">下级总交易量</p>
+                                <p class="text-base font-black text-gray-400">--</p>
+                            </div>
+                        </div>
+                        <div class="px-5 py-3 flex justify-between items-center bg-gray-50/50">
+                            <span class="text-[11px] font-bold text-gray-400">暂无好友数据</span>
+                        </div>
                     </div>
-                    <button class="bg-white text-blue-600 px-4 py-2 rounded-xl font-black text-[10px] uppercase shadow-md active:scale-95">立即申請</button>
-                </div>
-            </section>
+                </section>
+
+                <!-- E. 大使入口保留 -->
+                <section class="px-4 mt-6 mb-20">
+                    <div class="bg-blue-600 rounded-2xl p-5 text-white flex justify-between items-center shadow-lg">
+                        <div class="space-y-1 flex-1 pr-4">
+                            <h5 class="text-sm font-black italic uppercase">ForX 大使申请</h5>
+                            <p class="text-[10px] text-blue-100 leading-tight">解锁 40% 返佣上限与专属奖励</p>
+                        </div>
+                        <button class="bg-white text-blue-600 px-4 py-2 rounded-xl font-black text-[10px] uppercase shadow-md active:scale-95">立即申请</button>
+                    </div>
+                </section>
+            </div>
         </div>
 
-        <!-- 分享海報彈窗 (品牌公關版) -->
+        <!-- 分享海报弹窗 (保持不变) -->
         <div id="modal-share" class="hidden absolute inset-0 bg-black/80 z-[100] flex items-center justify-center p-6 rounded-[38px]">
             <div class="bg-white w-full rounded-3xl overflow-hidden animate-in zoom-in duration-200 shadow-2xl">
-
-                <!-- 海報內容區 -->
                 <div class="bg-black p-6 text-white space-y-8 relative overflow-hidden">
-                    <!-- 背景裝飾：科技感流光與網格 -->
                     <div class="absolute -right-10 -top-10 w-40 h-40 bg-blue-600/30 rounded-full blur-3xl"></div>
                     <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 20px 20px;"></div>
-
-                    <!-- 1. 品牌頭部 -->
                     <div class="flex justify-between items-center relative z-10">
                         <span class="font-black italic text-xl tracking-tighter">ForX</span>
                         <span class="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-sm font-black tracking-widest uppercase">Perp DEX</span>
                     </div>
-
-                    <!-- 2. 主標題文案 -->
                     <div class="space-y-2 relative z-10">
-                        <p class="text-[10px] text-blue-400 font-black tracking-[0.3em]">探索無限，交易可能</p>
-                        <p class="text-[11px] text-gray-400 font-medium leading-relaxed pt-2">
-                            體驗毫秒級訂單撮合與深度的去中心化流動性交易体验
-                        </p>
+                        <p class="text-[10px] text-blue-400 font-black tracking-[0.3em]">探索无限，交易可能</p>
+                        <p class="text-[11px] text-gray-400 font-medium leading-relaxed pt-2">体验毫秒级订单撮合与深度的去中心化流动性交易体验</p>
                     </div>
-
-                    <!-- 3. 中間示意圖：模擬 K 線與技術指標感 -->
                     <div class="relative z-10 py-2">
                         <div class="h-24 w-full bg-white/5 border border-white/10 rounded-xl flex flex-col justify-center px-4 space-y-3 overflow-hidden">
                             <div class="flex items-end space-x-1 h-12">
@@ -221,35 +343,28 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- 4. 底部邀請信息 -->
                     <div class="flex justify-between items-end relative z-10">
                         <div class="space-y-2">
-                            <p class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">我的邀請碼 (Referral Code)</p>
+                            <p class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">我的邀请码</p>
                             <p class="text-2xl font-black tracking-[0.1em] text-white font-mono">E6DL28G</p>
                         </div>
-                        <!-- 模擬二維碼 -->
                         <div class="w-14 h-14 bg-white p-1 rounded-lg shadow-lg shadow-blue-500/20 flex items-center justify-center">
-                            <!-- 使用一個佔位 SVG 模擬二維碼 -->
                             <svg class="w-full h-full text-black" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M3 3h6v6H3V3zm2 2v2h2V5H5zm8-2h6v6h-6V3zm2 2v2h2V5h-2zM3 15h6v6H3v-6zm2 2v2h2v-2H5zm10 0h2v2h-2v-2zm2-2h2v2h-2v-2zm0 4h2v2h-2v-2zM13 15h2v2h-2v-2zm2 2h2v2h-2v-2z"/>
                             </svg>
                         </div>
                     </div>
                 </div>
-
-                <!-- 按鈕區 -->
                 <div class="p-6 bg-slate-50 flex space-x-3">
                     <button onclick="toggleModal('modal-share')" class="flex-1 py-3 border border-gray-200 rounded-xl font-bold text-gray-400 text-xs uppercase">取消</button>
-                    <button onclick="alert('海報已保存並調用系統分享')" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-black text-xs shadow-xl active:scale-95 transition-all uppercase tracking-widest">分享海報</button>
+                    <button onclick="alert('海报已保存并调用系统分享')" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-black text-xs shadow-xl active:scale-95 transition-all uppercase tracking-widest">分享海报</button>
                 </div>
             </div>
         </div>
 
-
-        <!-- 內置彈窗組件 -->
+        <!-- 内置弹窗组件 -->
         <div id="info-modal" class="hidden inner-modal-overlay">
-            <div class="bg-white rounded-2xl p-6 w-full shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div class="bg-white rounded-2xl p-6 w-full shadow-2xl">
                 <p id="modal-info-text" class="text-[13px] text-gray-600 leading-relaxed font-medium mb-6 text-center"></p>
                 <button onclick="closeInfo()" class="w-full py-3 bg-black text-white rounded-xl text-xs font-black uppercase tracking-widest active:scale-95 transition-transform">好的</button>
             </div>
@@ -257,25 +372,44 @@
     </div>
 </div>
 
-
-</body>
+<!-- 手机框外部的身份切换面板 -->
+<div class="prototype-role-switch">
+    <span class="text-gray-500 mr-2 text-[10px] font-bold uppercase">模拟身份</span>
+    <label>
+        <input type="radio" name="userRole" value="normal" checked onchange="switchRole('normal')">
+        <span>普通用户</span>
+    </label>
+    <label>
+        <input type="radio" name="userRole" value="agent" onchange="switchRole('agent')">
+        <span>代理用户</span>
+    </label>
+</div>
 
 <script>
-    // 打開分享彈窗
+    // 身份切换
+    function switchRole(role) {
+        const normalContent = document.getElementById('normal-user-content');
+        const agentContent = document.getElementById('agent-user-content');
+        const agentInfoBox = document.getElementById('agent-info-box');
+
+        if (role === 'agent') {
+            normalContent.classList.add('hidden');
+            agentContent.classList.remove('hidden');
+            agentInfoBox.classList.remove('hidden');
+        } else {
+            normalContent.classList.remove('hidden');
+            agentContent.classList.add('hidden');
+            agentInfoBox.classList.add('hidden');
+        }
+    }
+
+    // 分享弹窗
     function openShare() {
         const modal = document.getElementById('modal-share');
-        modal.classList.remove('hidden'); // 移除隱藏類
-        modal.style.display = 'flex';     // 確保以 flex 佈局居中顯示
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
     }
 
-    // 關閉彈窗 (用於取消按鈕或點擊遮罩)
-    function closeShare() {
-        const modal = document.getElementById('modal-share');
-        modal.classList.add('hidden');    // 重新隱藏
-        modal.style.display = 'none';
-    }
-
-    // 如果你之前用了 toggleModal，請確保它也能處理 hidden 類
     function toggleModal(id) {
         const modal = document.getElementById(id);
         if (modal.classList.contains('hidden')) {
@@ -290,13 +424,11 @@
     function showInfo(type) {
         const modal = document.getElementById('info-modal');
         const textEl = document.getElementById('modal-info-text');
-
         const content = {
-            'accumulated': '返佣數據每 5 分鐘更新一次，此處展示的為實時統計收益。',
-            'pending': '每日 0 點（UTC+8）系統將統一結算當日返佣，並發放至您的帳戶。結算完成前，收益將暫存於"待結算"狀態',
-            'active': '單個好友在過去 30 天內累計交易額 ≥ 10,000 USDT，即被計為活躍好友。'
+            'accumulated': '返佣数据每 5 分钟更新一次，此处展示的为实时统计收益。',
+            'pending': '每日 0 点（UTC+8）系统将统一结算当日返佣，并发放至您的账户。结算完成前，收益将暂存于“待结算”状态',
+            'active': '单个好友在过去 30 天内累计交易额 ≥ 10,000 USDT，即被计为活跃好友。'
         };
-
         textEl.innerText = content[type];
         modal.classList.remove('hidden');
     }
@@ -305,4 +437,6 @@
         document.getElementById('info-modal').classList.add('hidden');
     }
 </script>
+
+</body>
 </html>
