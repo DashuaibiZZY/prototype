@@ -90,57 +90,73 @@
             <div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
         </div>
 
-        <!-- 狀態 B: 已連接 (初始隱藏) -->
-        <div id="user-account-wrapper" class="relative group h-12 flex items-center">
-            <!-- 導航欄顯示的縮略信息 -->
+        <!-- 未登录按钮 -->
+        <button id="btn-connect-wallet" onclick="openLoginModal()"
+                class="bg-black text-white px-4 py-1.5 rounded-sm text-[11px] font-bold hover:bg-gray-800 transition">
+            连接钱包
+        </button>
+
+        <!-- 已登录状态（初始隐藏） -->
+        <div id="user-account-wrapper" class="hidden relative group h-12 flex items-center">
             <button class="bg-gray-50 px-3 py-1.5 rounded-sm flex items-center space-x-2 border border-gray-100 hover:bg-gray-100 transition">
                 <div class="w-3 h-3 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
-                <span class="text-[11px] font-black text-gray-900">0xd593...2Dd2</span>
+                <span id="nav-login-label" class="text-[11px] font-black text-gray-900">0xd593...2Dd2</span>
                 <svg class="w-3 h-3 text-gray-400 group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="3"/></svg>
             </button>
 
-            <!-- 已登錄下拉菜單 -->
+            <!-- 下拉菜单（丰富版） -->
             <div class="absolute top-full right-0 hidden group-hover:block pt-2 z-[110]">
-                <div class="bg-white border border-gray-100 rounded-sm shadow-2xl p-4 min-w-[240px] space-y-4">
-
-                    <!-- 1. 地址與複製 (移除了 UID) -->
-                    <div class="flex items-center justify-between pb-3 border-b border-gray-50">
+                <div class="bg-white border border-gray-100 rounded-sm shadow-2xl p-4 min-w-[280px] space-y-4">
+                    <!-- UID 与复制 -->
+                    <div class="flex items-center justify-between pb-2 border-b border-gray-50">
                         <div class="flex items-center space-x-2">
                             <div class="w-8 h-8 bg-blue-600 rounded-sm flex items-center justify-center text-white font-black text-[10px]">FX</div>
-                            <span class="text-[12px] font-black text-gray-900">0xd593...2Dd2</span>
-                        </div>
-                        <!-- 複製按鈕 -->
-                        <button class="text-gray-400 hover:text-blue-600 transition-colors p-1 hover:bg-gray-50 rounded-sm" title="複製地址">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path></svg>
-                        </button>
-                    </div>
-
-                    <!-- 2. 總資產與快速充值 (核心區域) -->
-                    <div class="bg-gray-50 p-3 rounded-sm border border-gray-100">
-                        <div class="flex justify-between items-start mb-3">
-                            <div class="flex flex-col">
-                                <span class="text-[10px] text-gray-400 font-bold uppercase mb-1">總資產價值</span>
-                                <span class="text-xl font-black text-gray-900 leading-none">$12,450.50</span>
+                            <div>
+                                <span class="text-[10px] text-gray-400">UID: <strong id="menu-uid" class="text-gray-900">123456</strong></span>
                             </div>
-                            <!-- 快速充值按鈕 -->
-                            <button class="bg-blue-600 text-white px-3 py-1.5 rounded-sm font-black text-[10px] uppercase shadow-sm hover:bg-blue-700 transition">
-                                充值
-                            </button>
                         </div>
-                        <!-- 進入投資組合入口 -->
-                        <a href="投资组合.html" class="flex items-center justify-between text-[10px] font-bold text-blue-600 hover:underline">
-                            查看詳情
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 18l6-6-6-6"/></svg>
-                        </a>
+                        <button class="text-gray-400 hover:text-blue-600 p-1" onclick="copyText('123456')" title="复制UID">📋</button>
                     </div>
 
-                    <!-- 3. 斷開連接 -->
-                    <div class="pt-1">
-                        <button onclick="mockDisconnect()" class="w-full flex items-center justify-between px-2 py-2 text-[11px] font-bold text-red-400 hover:text-red-600 hover:bg-red-50 transition rounded-sm group">
-                            <span>斷開連接</span>
-                            <svg class="w-4 h-4 opacity-50 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                        </button>
+                    <!-- 绑定信息 -->
+                    <div class="space-y-2 text-[11px]">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">钱包</span>
+                            <span id="menu-wallet-status" class="font-bold text-gray-900">0xd593...2Dd2</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">邮箱</span>
+                            <span id="menu-email-status" class="font-bold text-gray-900">
+                        <!-- 动态填充：未绑定时显示“未绑定 <button>添加</button>” -->
+                    </span>
+                        </div>
+                        <!-- 仅邮箱登录时显示GA绑定入口 -->
+                        <div id="menu-ga-entry" class="hidden flex justify-between">
+                            <span class="text-gray-400">GA认证</span>
+                            <button onclick="showGaBindModal()" class="text-blue-600 font-bold text-[10px] hover:underline">绑定GA</button>
+                        </div>
                     </div>
+
+                    <!-- 总资产 -->
+                    <div class="bg-gray-50 p-3 rounded-sm border border-gray-100">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] text-gray-400 uppercase">总资产价值</span>
+                            <span class="text-xl font-black text-gray-900">$12,450.50</span>
+                        </div>
+                    </div>
+
+                    <!-- 操作按钮 -->
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="openModal('deposit')" class="py-2 bg-blue-600 text-white text-[10px] font-black uppercase rounded-sm">充值</button>
+                        <button onclick="openModal('withdraw')" class="py-2 border border-gray-200 text-[10px] font-black uppercase rounded-sm">提现</button>
+                        <button onclick="openTransferModal()" class="py-2 bg-gray-900 text-white text-[10px] font-black uppercase rounded-sm">划转</button>
+                    </div>
+
+                    <!-- 退出登录 -->
+                    <button onclick="logout()" class="w-full flex items-center justify-between px-2 py-2 text-[11px] font-bold text-red-400 hover:text-red-600 hover:bg-red-50 transition rounded-sm">
+                        <span>退出登录</span>
+                        <svg class="w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    </button>
                 </div>
             </div>
         </div>
@@ -700,6 +716,79 @@
     </div>
 </div>
 
+<!-- 登录弹窗 -->
+<div id="modal-login" class="modal-overlay" style="display: none; background: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; align-items: center; justify-content: center;">
+    <div class="bg-white w-[420px] rounded-lg overflow-hidden shadow-2xl">
+        <div class="p-6 border-b flex justify-between items-center bg-slate-50">
+            <h2 id="login-modal-title" class="text-base font-black uppercase tracking-tight">登录 / 注册</h2>
+            <span class="cursor-pointer text-gray-400 text-xl hover:text-black" onclick="closeLoginModal()">✕</span>
+        </div>
+
+        <!-- 邮箱登录区（顶部） -->
+        <div class="px-6 pt-6 space-y-4" id="login-email-section">
+            <input type="email" id="login-email-input" placeholder="输入邮箱地址" class="w-full border border-gray-200 p-3 rounded-md text-sm outline-none focus:border-black">
+            <!-- 邮箱提交区（第一步） -->
+            <div id="email-step1">
+                <button onclick="sendEmailCode()" class="w-full py-3 bg-black text-white font-black text-sm rounded-md">发送验证码</button>
+            </div>
+            <!-- 验证码输入区（第二步，初始隐藏） -->
+            <div id="email-step2" class="hidden space-y-3">
+                <input type="text" id="login-code-input" placeholder="输入6位验证码" class="w-full border border-gray-200 p-3 rounded-md text-sm outline-none focus:border-black">
+                <button onclick="emailLogin()" class="w-full py-3 bg-blue-600 text-white font-black text-sm rounded-md">登录</button>
+                <button onclick="resendEmailCode()" class="w-full text-[11px] text-gray-400 font-bold text-center">重新发送验证码</button>
+            </div>
+            <div class="flex items-center py-2">
+                <div class="flex-1 border-t border-dashed border-gray-100"></div>
+                <span class="px-4 text-[10px] text-gray-300 font-bold">OR</span>
+                <div class="flex-1 border-t border-dashed border-gray-100"></div>
+            </div>
+        </div>
+
+        <!-- 钱包选择区（下方） -->
+        <div id="login-wallet-section" class="px-3 pb-6 space-y-1">
+            <div onclick="mockWalletLogin('MetaMask')" class="flex items-center justify-between px-4 py-3 hover:bg-gray-50 rounded-sm cursor-pointer group">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-orange-100 rounded-md flex items-center justify-center font-bold text-orange-600 text-[10px]">MM</div>
+                    <span class="text-[12px] font-black text-gray-800">MetaMask</span>
+                </div>
+                <span class="text-[10px] text-blue-500 font-bold opacity-0 group-hover:opacity-100">连接</span>
+            </div>
+            <div onclick="mockWalletLogin('OKX')" class="flex items-center justify-between px-4 py-3 hover:bg-gray-50 rounded-sm cursor-pointer group">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-black rounded-md flex items-center justify-center font-bold text-white text-[10px]">OKX</div>
+                    <span class="text-[12px] font-black text-gray-800">OKX Wallet</span>
+                </div>
+                <span class="text-[10px] text-blue-500 font-bold opacity-0 group-hover:opacity-100">连接</span>
+            </div>
+            <!-- 可继续添加其他钱包... -->
+        </div>
+    </div>
+</div>
+
+<!-- GA 绑定弹窗 -->
+<div id="modal-ga-bind" class="modal-overlay" style="display:none; background:rgba(0,0,0,0.5); position:fixed; top:0; left:0; width:100%; height:100%; z-index:2000; align-items:center; justify-content:center;">
+    <div class="bg-white w-[400px] rounded-lg p-6 shadow-2xl">
+        <div class="flex justify-between mb-4"><h3 class="font-black text-lg">绑定 Google 身份验证器</h3><span onclick="closeGaBindModal()" class="cursor-pointer">✕</span></div>
+        <div class="space-y-4 text-sm">
+            <p>请使用 Google Authenticator 扫描以下二维码或输入密钥：</p>
+            <div class="w-40 h-40 bg-gray-100 mx-auto flex items-center justify-center font-bold text-gray-400">QR CODE</div>
+            <p class="text-[10px] text-gray-500 break-all">密钥: ABCD1234EFGH5678</p>
+            <div class="flex space-x-2">
+                <input type="text" id="ga-code-input" placeholder="6位动态码" class="flex-1 border p-2 rounded">
+                <button onclick="confirmGaBind()" class="px-4 bg-blue-600 text-white font-bold rounded">确认绑定</button>
+            </div>
+            <p id="ga-bind-error" class="text-red-500 text-[10px] hidden">验证码错误，请重试</p>
+        </div>
+    </div>
+</div>
+
+<!-- 提现二次确认 + 安全验证弹窗（动态内容容器，可重用） -->
+<div id="modal-withdraw-confirm" class="modal-overlay" style="display:none; background:rgba(0,0,0,0.5); position:fixed; top:0; left:0; width:100%; height:100%; z-index:2000; align-items:center; justify-content:center;">
+    <div class="bg-white w-[400px] rounded-lg p-6 shadow-2xl">
+        <div id="withdraw-confirm-content"></div>
+    </div>
+</div>
+
 <script>
     // 彈窗內容模板庫
     const financeTemplates = {
@@ -868,6 +957,55 @@
                     <div class="flex justify-between"><span class="text-gray-400">到帳速度</span><span class="text-green-600 font-bold">5~10 分鐘</span></div>
                 </div>
                 <button class="w-full py-3 bg-black text-white font-black rounded-md">確認提現申請</button>
+            </div>
+        </div>
+    `,
+    deposit_external_only: `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-black">外部充值</h2>
+                <span class="cursor-pointer text-gray-400" onclick="closeFinanceModal()">✕</span>
+            </div>
+            <div class="space-y-4">
+                <div class="input-row"><span class="text-[11px] font-bold text-gray-400">资产</span><span class="font-black text-[12px]">USDT</span></div>
+                <div class="input-row"><span class="text-[11px] font-bold text-gray-400">链</span><span class="font-black text-[12px]">Arbitrum</span></div>
+                <div class="flex flex-col items-center py-4 bg-gray-50 rounded-md border border-dashed border-gray-200">
+                    <div class="w-32 h-32 bg-white p-2 border border-gray-100 mb-3 flex items-center justify-center font-bold text-gray-300">QR CODE</div>
+                    <div class="text-[11px] font-black text-gray-900 break-all px-6 text-center select-all">0xF235BE4440Cf7CDbDdd9f7F6Fc062B8297e37Eae</div>
+                    <button class="mt-2 text-blue-600 font-bold text-[10px] uppercase">点击复制地址</button>
+                </div>
+                <div class="bg-blue-50 border border-blue-100 p-3 rounded-md flex gap-2">
+                    <span class="text-blue-500 text-sm">ℹ️</span>
+                    <p class="text-[10px] text-blue-700 leading-tight">仅支持发送 <b class="text-blue-900">USDT (Arbitrum)</b> 资产到此地址。发送错误资产将无法找回。</p>
+                </div>
+                <div class="space-y-1.5 pt-2">
+                    <div class="flex justify-between text-[11px]"><span class="text-gray-400">到帐时间</span><span class="font-bold">5~15 分钟</span></div>
+                </div>
+                <button class="w-full py-3 border border-gray-200 font-black rounded-md text-[12px]" onclick="closeFinanceModal()">完成</button>
+            </div>
+        </div>
+    `,
+    withdraw_external_only: `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-black">提现至外部地址</h2>
+                <span class="cursor-pointer text-gray-400" onclick="closeFinanceModal()">✕</span>
+            </div>
+            <div class="space-y-4">
+                <div class="input-row"><span class="text-[11px] font-bold text-gray-400">资产</span><span class="font-black text-[12px]">USDT</span></div>
+                <div class="input-row"><span class="text-[11px] font-bold text-gray-400">链</span><span class="font-black text-[12px]">Ethereum</span></div>
+                <div class="bg-gray-50 border border-gray-100 h-10 flex items-center px-3 rounded-md">
+                    <input type="text" placeholder="输入接收地址" class="bg-transparent w-full outline-none font-bold text-[11px]">
+                </div>
+                <div class="bg-gray-50 p-3 rounded-md border border-gray-100">
+                    <div class="flex justify-between items-center mb-2"><input type="text" placeholder="提现数量" class="bg-transparent font-black outline-none w-1/2 text-sm"><span class="text-blue-600 font-bold text-[11px]">最大</span></div>
+                    <div class="flex justify-between text-[10px] text-gray-400 border-t border-gray-200/50 pt-2"><span>可用</span><span>12,000.00 USDT</span></div>
+                </div>
+                <div class="space-y-1.5 pt-2 text-[11px]">
+                    <div class="flex justify-between"><span class="text-gray-400">网络手续费</span><span class="font-bold">2.50 USDT</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">预计到帐</span><span class="font-black text-gray-900">0.00 USDT</span></div>
+                </div>
+                <button class="w-full py-3 bg-black text-white font-black rounded-md" onclick="startWithdrawVerification()">确认提现申请</button>
             </div>
         </div>
     `
@@ -1165,6 +1303,315 @@
     window.addEventListener('DOMContentLoaded', function() {
         switchDataTab('pos');
     });
+
+    // ================== 登录管理 ==================
+    let currentUser = null; // { uid, loginMethod: 'wallet'|'email', address?, email?, gaBound: false }
+
+    let loginMode = 'login'; // 记录当前弹窗用途
+
+    function openLoginModal(mode = 'login') {
+        loginMode = mode;
+        const modal = document.getElementById('modal-login');
+        const title = document.getElementById('login-modal-title');
+        const emailSection = document.getElementById('login-email-section');
+        const walletSection = document.getElementById('login-wallet-section');
+        const emailStep1 = document.getElementById('email-step1');
+        const emailStep2 = document.getElementById('email-step2');
+
+        // 重置邮箱步骤
+        emailStep1.classList.remove('hidden');
+        emailStep2.classList.add('hidden');
+
+        if (mode === 'login') {
+            title.innerText = '登录 / 注册';
+            emailSection.style.display = 'block';
+            walletSection.style.display = 'block';
+        } else if (mode === 'bindEmail') {
+            title.innerText = '绑定邮箱';
+            emailSection.style.display = 'block';
+            walletSection.style.display = 'none';
+        } else if (mode === 'bindWallet') {
+            title.innerText = '绑定钱包';
+            emailSection.style.display = 'none';
+            walletSection.style.display = 'block';
+        }
+
+        modal.style.display = 'flex';
+    }
+
+    function closeLoginModal() {
+        document.getElementById('modal-login').style.display = 'none';
+        loginMode = 'login';
+    }
+
+    function sendEmailCode() {
+        const email = document.getElementById('login-email-input').value.trim();
+        if (!email) { alert('请输入邮箱'); return; }
+        document.getElementById('email-step1').classList.add('hidden');
+        document.getElementById('email-step2').classList.remove('hidden');
+        window.loginEmail = email;
+    }
+
+    function emailLogin() {
+        const code = document.getElementById('login-code-input').value.trim();
+        if (code !== '123456') { alert('验证码错误（模拟：正确验证码 123456）'); return; }
+        const email = window.loginEmail || 'user@example.com';
+
+        if (loginMode === 'bindEmail') {
+            // 绑定邮箱逻辑
+            currentUser.email = email;
+            currentUser.boundEmail = true; // 标记
+            updateUIAfterLogin();
+            closeLoginModal();
+            return;
+        }
+
+        // 原有登录逻辑
+        currentUser = {
+            uid: '123456',
+            loginMethod: 'email',
+            email: email,
+            address: null,
+            boundWallet: false,
+            gaBound: false
+        };
+        updateUIAfterLogin();
+        closeLoginModal();
+    }
+
+    function resendEmailCode() { sendEmailCode(); }
+
+    function mockWalletLogin(walletName) {
+        const address = '0xd593...2Dd2';
+        currentUser = {
+            uid: '123456',
+            loginMethod: 'wallet',
+            address: address,
+            email: null,
+            boundEmail: false,
+            gaBound: false
+        };
+        updateUIAfterLogin();
+        closeLoginModal();
+    }
+
+    function logout() {
+        currentUser = null;
+        document.getElementById('btn-connect-wallet').classList.remove('hidden');
+        document.getElementById('user-account-wrapper').classList.add('hidden');
+        // 重置到初始状态
+        document.getElementById('nav-login-label').innerText = '0xd593...2Dd2';
+    }
+
+    function updateUIAfterLogin() {
+        document.getElementById('btn-connect-wallet').classList.add('hidden');
+        const wrapper = document.getElementById('user-account-wrapper');
+        wrapper.classList.remove('hidden');
+
+        // 更新导航栏标签
+        const label = document.getElementById('nav-login-label');
+        if (currentUser.loginMethod === 'wallet') {
+            label.innerText = currentUser.address;
+        } else {
+            label.innerText = currentUser.email;
+        }
+
+        // 更新菜单
+        document.getElementById('menu-uid').innerText = currentUser.uid;
+        document.getElementById('menu-wallet-status').innerText = currentUser.address || '';
+        if (currentUser.email) {
+            document.getElementById('menu-email-status').innerText = currentUser.email;
+        } else {
+            document.getElementById('menu-email-status').innerHTML = '<button onclick="bindEmail()" class="font-bold text-blue-500 underline text-[10px]">绑定</button>';
+        }
+
+        // GA入口：仅邮箱登录且未绑定GA时显示
+        const gaEntry = document.getElementById('menu-ga-entry');
+        if (currentUser.loginMethod === 'email' && !currentUser.gaBound) {
+            gaEntry.classList.remove('hidden');
+        } else {
+            gaEntry.classList.add('hidden');
+        }
+
+        // 钱包状态
+        const walletStatusEl = document.getElementById('menu-wallet-status');
+        if (currentUser.address || currentUser.boundWallet) {
+            walletStatusEl.innerText = currentUser.address || '(已绑定)';
+        } else {
+            walletStatusEl.innerHTML = '<button onclick="bindWallet()" class="font-bold text-blue-500 underline text-[10px]">绑定</button>';
+        }
+
+        // 邮箱状态
+        const emailStatusEl = document.getElementById('menu-email-status');
+        if (currentUser.email || currentUser.boundEmail) {
+            emailStatusEl.innerText = currentUser.email || '(已绑定)';
+        } else {
+            emailStatusEl.innerHTML = '<button onclick="bindEmail()" class="font-bold text-blue-500 underline text-[10px]">绑定</button>';
+        }
+    }
+
+    function bindEmail() {
+        openLoginModal('bindEmail');
+    }
+
+    function bindWallet() {
+        openLoginModal('bindWallet');
+    }
+
+    // ================== GA 绑定 ==================
+    function showGaBindModal() {
+        document.getElementById('modal-ga-bind').style.display = 'flex';
+    }
+    function closeGaBindModal() {
+        document.getElementById('modal-ga-bind').style.display = 'none';
+    }
+    function confirmGaBind() {
+        const code = document.getElementById('ga-code-input').value.trim();
+        if (code === '123456') { // 模拟正确
+            currentUser.gaBound = true;
+            document.getElementById('menu-ga-entry').classList.add('hidden');
+            closeGaBindModal();
+            alert('GA 绑定成功！提现时将需要 GA 验证。');
+        } else {
+            document.getElementById('ga-bind-error').classList.remove('hidden');
+        }
+    }
+
+    // ================== 充值/提现权限控制 ==================
+    function openModal(type) {
+        if (!currentUser) { alert('请先登录'); return; }
+        const overlay = document.getElementById('finance-modal');
+        const content = document.getElementById('modal-dynamic-content');
+
+        if (type === 'deposit') {
+            if (currentUser.loginMethod === 'wallet') {
+                content.innerHTML = financeTemplates.deposit_init;
+            } else {
+                content.innerHTML = financeTemplates.deposit_external_only;
+            }
+        } else if (type === 'withdraw') {
+            if (currentUser.loginMethod === 'wallet') {
+                content.innerHTML = financeTemplates.withdraw_init;
+            } else {
+                content.innerHTML = financeTemplates.withdraw_external_only;
+            }
+        }
+        overlay.style.display = 'flex';
+    }
+
+    // ================== 提现安全验证流程 ==================
+    function startWithdrawVerification() {
+        // 这里只模拟流程，实际应从表单获取金额等
+        if (currentUser.loginMethod === 'wallet') {
+            // 钱包签名模拟
+            alert('唤起钱包签名 (模拟) 成功！');
+            proceedWithdrawConfirm();
+        } else { // 邮箱登录
+            if (!currentUser.gaBound) {
+                alert('请先绑定 Google 身份验证器');
+                showGaBindModal();
+                return;
+            }
+            // 弹出GA+邮箱验证码窗口
+            document.getElementById('withdraw-confirm-content').innerHTML = `
+            <h3 class="font-black text-lg mb-4">安全验证</h3>
+            <div class="space-y-3">
+                <input type="text" id="ga-confirm-input" placeholder="GA 动态码" class="w-full border p-2 rounded">
+                <div class="flex space-x-2">
+                    <input type="text" id="email-code-confirm" placeholder="邮箱验证码" class="flex-1 border p-2 rounded">
+                    <button onclick="sendEmailCodeConfirm()" class="px-4 bg-black text-white rounded text-sm">获取</button>
+                </div>
+                <button onclick="verifyWithdrawEmailAndGa()" class="w-full py-2 bg-blue-600 text-white rounded">验证并确认提现</button>
+            </div>
+        `;
+            document.getElementById('modal-withdraw-confirm').style.display = 'flex';
+        }
+    }
+
+    function proceedWithdrawConfirm() {
+        // 模拟当前提现参数（实际可从表单取值，原型中硬编码）
+        const mockData = {
+            chain: 'Arbitrum',
+            address: currentUser.address || '0x1234...abcd',
+            amount: '100.00',
+            fee: '2.50',
+            receive: '97.50',
+            eta: '5~10 分钟'
+        };
+
+        document.getElementById('withdraw-confirm-content').innerHTML = `
+        <h3 class="font-black text-lg mb-4">提现确认</h3>
+        <div class="space-y-3 text-sm border-b pb-4 mb-4">
+            <div class="flex justify-between"><span class="text-gray-400">链</span><span class="font-bold">${mockData.chain}</span></div>
+            <div class="flex justify-between"><span class="text-gray-400">接收地址</span><span class="font-mono text-[10px] break-all">${mockData.address}</span></div>
+            <div class="flex justify-between"><span class="text-gray-400">提现金额</span><span class="font-bold">${mockData.amount} USDT</span></div>
+            <div class="flex justify-between"><span class="text-gray-400">网络手续费</span><span class="font-bold">${mockData.fee} USDT</span></div>
+            <div class="flex justify-between"><span class="text-gray-400">预计到账</span><span class="font-black text-lg">${mockData.receive} USDT</span></div>
+            <div class="flex justify-between"><span class="text-gray-400">到账时间</span><span class="text-green-600 font-bold">${mockData.eta}</span></div>
+        </div>
+        <button onclick="finalizeWithdraw()" class="w-full py-2.5 bg-blue-600 text-white font-black rounded-md">确认提现</button>
+        <button onclick="closeWithdrawConfirm()" class="w-full mt-2 py-2.5 border border-gray-200 rounded-md font-bold">取消</button>
+    `;
+        document.getElementById('modal-withdraw-confirm').style.display = 'flex';
+    }
+
+    function closeWithdrawConfirm() {
+        document.getElementById('modal-withdraw-confirm').style.display = 'none';
+        closeFinanceModal();
+    }
+
+    function finalizeWithdraw() {
+        alert('提现已提交！');
+        closeWithdrawConfirm();
+        closeFinanceModal();
+    }
+
+    function sendEmailCodeConfirm() {
+        console.log('邮箱验证码已发送');
+        // 模拟
+    }
+
+    function verifyWithdrawEmailAndGa() {
+        const ga = document.getElementById('ga-confirm-input').value;
+        const emailCode = document.getElementById('email-code-confirm').value;
+        if (ga !== '123456' || emailCode !== '123456') {
+            alert('验证码错误，请重试');
+            return;
+        }
+        closeWithdrawConfirm();
+        proceedWithdrawConfirm();
+    }
+
+    // 原有 closeFinanceModal 覆盖一下，确保同时关闭确认弹窗
+    const origCloseFinanceModal = closeFinanceModal;
+    closeFinanceModal = function() {
+        origCloseFinanceModal();
+        document.getElementById('modal-withdraw-confirm').style.display = 'none';
+    };
+
+    // 更新 openTransferModal 也需要登录
+    const origOpenTransfer = openTransferModal;
+    openTransferModal = function() {
+        if (!currentUser) { alert('请先登录'); return; }
+        origOpenTransfer();
+    }
+
+    function walletAction(walletName) {
+        if (loginMode === 'bindWallet') {
+            bindWalletComplete(walletName);
+        } else {
+            mockWalletLogin(walletName);
+        }
+    }
+
+    function bindWalletComplete(walletName) {
+        // 模拟获取地址
+        const address = '0x' + Math.floor(Math.random()*1000000).toString(16) + '...' + walletName.slice(0,3);
+        currentUser.address = address;
+        currentUser.boundWallet = true;
+        updateUIAfterLogin();
+        closeLoginModal();
+    }
 </script>
 </body>
 </html>
