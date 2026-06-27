@@ -379,6 +379,44 @@
             color: white;
         }
 
+        .primary-tabs .tab {
+            padding: 14px 14px;
+            font-size: 15px;
+        }
+
+        .announcement-subtabs-container {
+            display: none;
+            padding: 0 12px 10px;
+            background: var(--bg-primary);
+        }
+
+        .announcement-subtabs-container.show {
+            display: block;
+        }
+
+        .announcement-subtabs {
+            gap: 8px;
+            padding: 0;
+        }
+
+        .announcement-subtabs .tab {
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            font-size: 12px;
+        }
+
+        .announcement-subtabs .tab.active {
+            color: #fff;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.35) 0%, rgba(139, 92, 246, 0.28) 100%);
+            border-color: rgba(59, 130, 246, 0.45);
+        }
+
+        .announcement-subtabs .tab.active::after {
+            display: none;
+        }
+
         /* 消息列表 */
         .message-list {
             padding: 12px 16px;
@@ -1193,6 +1231,13 @@
             <header class="home-header">
                 <nav class="home-nav">
                     <div class="logo">ForX</div>
+                    <div class="search-box">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="M21 21l-4.35-4.35"></path>
+                        </svg>
+                        <span>搜索 BTC/USDT 永续</span>
+                    </div>
                     <div class="bell-btn" id="bellBtn">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -1240,9 +1285,11 @@
                     </div>
                 </div>
             </header>
-
             <div class="tabs-container">
-                <div class="tabs" id="tabs"></div>
+                <div class="tabs primary-tabs" id="tabs"></div>
+                <div class="announcement-subtabs-container" id="announcementSubtabsContainer">
+                    <div class="tabs announcement-subtabs" id="announcementSubtabs"></div>
+                </div>
             </div>
 
             <div class="scroll-content">
@@ -1409,6 +1456,22 @@
                 time: '3小时前',
                 priority: 3,
                 unread: false
+            },
+            {
+                id: 31,
+                type: 'system',
+                category: '系统',
+                title: 'BCH/USDT 永续合约下架公告',
+                summary: 'BCH/USDT 永续合约将于 2026-06-28 18:00 下架，请提前处理相关委托与持仓。',
+                businessData: {
+                    pair: 'BCH/USDT 永续',
+                    effectiveTime: '2026-06-28 18:00',
+                    reason: '流动性与风险控制策略调整'
+                },
+                actionType: 'system',
+                time: '2小时前',
+                priority: 1,
+                unread: true
             },
             // 资产通知
             {
@@ -1953,14 +2016,22 @@
             }
         ];
 
-        // 分类配置
+        // 一级分类配置：公告 / 充提 / 价格提醒 / 合约 / 安全
         const categories = [
-            { id: 'all', name: '全部', icon: 'all' },
-            { id: 'system', name: '系统', icon: 'system' },
-            { id: 'asset', name: '资产', icon: 'asset' },
+            { id: 'announcement', name: '公告', icon: 'system' },
+            { id: 'depositWithdraw', name: '充提', icon: 'asset' },
+            { id: 'priceAlert', name: '价格提醒', icon: 'risk' },
             { id: 'contract', name: '合约', icon: 'contract' },
-            { id: 'security', name: '安全', icon: 'security' },
-            { id: 'activity', name: '活动', icon: 'activity' }
+            { id: 'security', name: '安全', icon: 'security' }
+        ];
+
+        // 公告二级分类：仅在一级 Tab 为“公告”时展示
+        const announcementCategories = [
+            { id: 'all', name: '全部' },
+            { id: 'activity', name: '活动' },
+            { id: 'newCoin', name: '新币上线' },
+            { id: 'delist', name: '下架' },
+            { id: 'systemUpdate', name: '系统更新' }
         ];
 
         // 图标 SVG
@@ -1992,9 +2063,11 @@
         };
 
         // 状态管理
-        let currentTab = 'all';
+        let currentTab = 'announcement';
+        let currentAnnouncementTab = 'all';
         let messages = JSON.parse(JSON.stringify(mockMessages));
         let currentMessageId = null;
+        let currentAnnouncementId = null;
 
         // DOM 元素
         const homePage = document.getElementById('homePage');
@@ -2003,6 +2076,8 @@
         const messageCenter = document.getElementById('messageCenter');
         const backBtn = document.getElementById('backBtn');
         const tabs = document.getElementById('tabs');
+        const announcementSubtabs = document.getElementById('announcementSubtabs');
+        const announcementSubtabsContainer = document.getElementById('announcementSubtabsContainer');
         const messageList = document.getElementById('messageList');
         const emptyState = document.getElementById('emptyState');
         const unreadSummary = document.getElementById('unreadSummary');
@@ -2040,15 +2115,57 @@
             bindEvents();
         }
 
-        // 渲染 Tab
+        // 根据消息数据归属到新的一级分类
+        function getPrimaryCategory(msg) {
+            const bdType = msg.businessData && msg.businessData.type;
+            if (msg.category === '系统' || msg.category === '活动' || bdType === 'reward' || (bdType && bdType.indexOf('activity') === 0) || bdType === 'ticketReply') {
+                return 'announcement';
+            }
+            if (bdType === 'deposit' || bdType === 'withdrawSubmit' || bdType === 'withdrawFailed') {
+                return 'depositWithdraw';
+            }
+            if (bdType === 'priceVolatility') {
+                return 'priceAlert';
+            }
+            if (msg.category === '安全') {
+                return 'security';
+            }
+            return 'contract';
+        }
+
+        // 公告二级分类归属
+        function getAnnouncementCategory(msg) {
+            const bdType = msg.businessData && msg.businessData.type;
+            const title = msg.title || '';
+            if (title.includes('下架')) return 'delist';
+            if ((title.includes('上线') && !title.includes('活动')) || title.includes('新币')) return 'newCoin';
+            if (msg.category === '活动' || bdType === 'reward' || (bdType && bdType.indexOf('activity') === 0) || bdType === 'ticketReply') return 'activity';
+            return 'systemUpdate';
+        }
+
+        function getCurrentTabName() {
+            const tab = categories.find(c => c.id === currentTab);
+            if (!tab) return '当前分类';
+            if (currentTab === 'announcement' && currentAnnouncementTab !== 'all') {
+                const sub = announcementCategories.find(c => c.id === currentAnnouncementTab);
+                return `${tab.name}-${sub ? sub.name : '全部'}`;
+            }
+            return tab.name;
+        }
+
+        function messageMatchesCurrentScope(msg) {
+            if (getPrimaryCategory(msg) !== currentTab) return false;
+            if (currentTab === 'announcement' && currentAnnouncementTab !== 'all') {
+                return getAnnouncementCategory(msg) === currentAnnouncementTab;
+            }
+            return true;
+        }
+
+        // 渲染一级 Tab 与公告二级 Tab
         function renderTabs() {
             const counts = {};
             categories.forEach(cat => {
-                if (cat.id === 'all') {
-                    counts[cat.id] = messages.filter(m => m.unread && !m.hidden).length;
-                } else {
-                    counts[cat.id] = messages.filter(m => m.category === cat.name && m.unread && !m.hidden).length;
-                }
+                counts[cat.id] = messages.filter(m => getPrimaryCategory(m) === cat.id && m.unread && !m.hidden).length;
             });
 
             tabs.innerHTML = categories.map(cat => `
@@ -2061,6 +2178,43 @@
             tabs.querySelectorAll('.tab').forEach(tab => {
                 tab.addEventListener('click', () => {
                     currentTab = tab.dataset.tab;
+                    if (currentTab !== 'announcement') {
+                        currentAnnouncementTab = 'all';
+                    }
+                    renderTabs();
+                    renderMessages();
+                    updateMarkAllBtn();
+                });
+            });
+
+            renderAnnouncementTabs();
+        }
+
+        function renderAnnouncementTabs() {
+            if (!announcementSubtabs || !announcementSubtabsContainer) return;
+            if (currentTab !== 'announcement') {
+                announcementSubtabsContainer.classList.remove('show');
+                announcementSubtabs.innerHTML = '';
+                return;
+            }
+            announcementSubtabsContainer.classList.add('show');
+            const subCounts = {};
+            announcementCategories.forEach(cat => {
+                subCounts[cat.id] = messages.filter(m => {
+                    if (getPrimaryCategory(m) !== 'announcement' || !m.unread || m.hidden) return false;
+                    if (cat.id === 'all') return true;
+                    return getAnnouncementCategory(m) === cat.id;
+                }).length;
+            });
+            announcementSubtabs.innerHTML = announcementCategories.map(cat => `
+                <div class="tab ${cat.id === currentAnnouncementTab ? 'active' : ''}" data-ann-tab="${cat.id}">
+                    ${cat.name}
+                    ${subCounts[cat.id] > 0 ? `<span class="tab-count">${subCounts[cat.id] > 99 ? '99+' : subCounts[cat.id]}</span>` : ''}
+                </div>
+            `).join('');
+            announcementSubtabs.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    currentAnnouncementTab = tab.dataset.annTab;
                     renderTabs();
                     renderMessages();
                     updateMarkAllBtn();
@@ -2080,37 +2234,26 @@
 
         // 获取当前分类未读数
         function getCurrentCategoryUnreadCount() {
-            if (currentTab === 'all') {
-                return messages.filter(m => m.unread && !m.hidden).length;
-            } else {
-                const catName = categories.find(c => c.id === currentTab).name;
-                return messages.filter(m => m.category === catName && m.unread && !m.hidden).length;
-            }
+            return messages.filter(m => m.unread && !m.hidden && messageMatchesCurrentScope(m)).length;
         }
 
         // 渲染消息列表
         function renderMessages() {
-            let filtered = messages.filter(m => !m.hidden);
-            if (currentTab !== 'all') {
-                const catName = categories.find(c => c.id === currentTab).name;
-                filtered = filtered.filter(m => m.category === catName);
-            }
+            let filtered = messages.filter(m => !m.hidden && messageMatchesCurrentScope(m));
 
-            // 排序
+            // 排序：未读靠前，P0/P1 优先，时间/ID 倒序
             filtered = filtered.sort((a, b) => {
                 if (a.unread !== b.unread) return b.unread - a.unread;
                 if (a.priority !== b.priority) return a.priority - b.priority;
                 return b.id - a.id;
             });
 
-            const currentUnread = getCurrentCategoryUnreadCount();
-
             if (filtered.length === 0) {
                 messageList.innerHTML = '';
                 emptyState.classList.add('show');
                 emptyIcon.classList.remove('success');
                 emptyTitle.textContent = '暂无消息';
-                emptyDesc.textContent = '当前分类下没有消息';
+                emptyDesc.textContent = `当前「${getCurrentTabName()}」下没有消息`;
             } else {
                 emptyState.classList.remove('show');
                 messageList.innerHTML = filtered.map(msg => createMessageCard(msg)).join('');
@@ -2228,6 +2371,8 @@
             }
 
             currentMessageId = id;
+            currentAnnouncementId = null;
+            if (moreBtn) moreBtn.style.display = 'flex';
 
             // 标记已读
             if (msg.unread) {
@@ -3132,10 +3277,20 @@
                 renderMessages();
                 updateMarkAllBtn();
                 currentMessageId = null;
+                currentAnnouncementId = null;
+                if (moreBtn) moreBtn.style.display = 'flex';
             });
 
             // 底部操作按钮
             actionBtn.addEventListener('click', () => {
+                if (currentAnnouncementId) {
+                    messageDetail.classList.remove('active');
+                    messageDetail.classList.remove('slide-in');
+                    messageCenter.classList.add('active');
+                    currentAnnouncementId = null;
+                    if (moreBtn) moreBtn.style.display = 'flex';
+                    return;
+                }
                 const msg = messages.find(m => m.id === currentMessageId);
                 if (msg) {
                     if (msg.actionType === 'none' || msg.actionType === 'system') {
@@ -3189,12 +3344,7 @@
                     return;
                 }
 
-                if (currentTab === 'all') {
-                    markAllDesc.textContent = '确定要将所有消息标记为已读吗？';
-                } else {
-                    const catName = categories.find(c => c.id === currentTab).name;
-                    markAllDesc.textContent = `确定要将「${catName}」分类下的所有消息标记为已读吗？`;
-                }
+                markAllDesc.textContent = `确定要将「${getCurrentTabName()}」下的所有消息标记为已读吗？`;
                 markAllModal.classList.add('show');
             });
 
@@ -3203,14 +3353,9 @@
             });
 
             document.getElementById('markAllConfirm').addEventListener('click', () => {
-                if (currentTab === 'all') {
-                    messages.forEach(m => { if (!m.hidden) m.unread = false; });
-                } else {
-                    const catName = categories.find(c => c.id === currentTab).name;
-                    messages.forEach(m => {
-                        if (m.category === catName && !m.hidden) m.unread = false;
-                    });
-                }
+                messages.forEach(m => {
+                    if (!m.hidden && messageMatchesCurrentScope(m)) m.unread = false;
+                });
                 updateUnreadCount();
                 renderTabs();
                 renderMessages();

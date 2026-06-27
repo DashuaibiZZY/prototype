@@ -1352,6 +1352,58 @@
             font-size: 14px;
         }
 
+
+
+        /* 新版一级 Tab / 分类：公告、充提、价格提醒、合约、安全 */
+        .msg-type-icon.announcement { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+        .msg-type-icon.depositWithdraw { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .msg-type-icon.priceAlert { background: rgba(245, 158, 11, 0.2); color: var(--accent-orange); }
+        .message-card-icon.announcement { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+        .message-card-icon.depositWithdraw { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .message-card-icon.priceAlert { background: rgba(245, 158, 11, 0.2); color: var(--accent-orange); }
+        .detail-icon-big.announcement { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+        .detail-icon-big.depositWithdraw { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .detail-icon-big.priceAlert { background: rgba(245, 158, 11, 0.2); color: var(--accent-orange); }
+        .category-icon.announcement { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+        .category-icon.depositWithdraw { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .category-icon.priceAlert { background: rgba(245, 158, 11, 0.2); color: var(--accent-orange); }
+
+        .announcement-subtabs {
+            display: none;
+            gap: 6px;
+            padding: 0 0 12px 0;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .announcement-subtabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .announcement-subtab {
+            height: 30px;
+            padding: 0 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 100px;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .announcement-subtab:hover {
+            border-color: var(--border-light);
+            color: var(--text-primary);
+        }
+
+        .announcement-subtab.active {
+            border-color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--accent-cyan);
+        }
+
         /* 背景装饰 */
         .bg-decoration {
             position: fixed;
@@ -1462,12 +1514,11 @@
             <div class="dropdown-unread-tip">你有 <span id="dropdownUnreadCount">14</span> 条未读消息</div>
         </div>
         <div class="dropdown-tabs">
-            <button class="dropdown-tab active" data-tab="all">全部</button>
-            <button class="dropdown-tab" data-tab="system">系统</button>
-            <button class="dropdown-tab" data-tab="asset">资产</button>
+            <button class="dropdown-tab active" data-tab="announcement">公告</button>
+            <button class="dropdown-tab" data-tab="depositWithdraw">充提</button>
+            <button class="dropdown-tab" data-tab="priceAlert">价格提醒</button>
             <button class="dropdown-tab" data-tab="contract">合约</button>
             <button class="dropdown-tab" data-tab="security">安全</button>
-            <button class="dropdown-tab" data-tab="activity">活动</button>
         </div>
         <div class="dropdown-message-list" id="dropdownMessageList">
         </div>
@@ -1491,64 +1542,30 @@
             <aside class="category-sidebar">
                 <div class="sidebar-header">消息分类</div>
                 <div class="category-list">
-                    <div class="category-item active" data-category="all">
-                        <div class="category-icon all">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <polyline points="12 6 12 12 16 14"></polyline>
-                            </svg>
-                        </div>
-                        <span class="category-name">全部消息</span>
-                        <span class="category-unread" id="cat-unread-all">14</span>
+                    <div class="category-item active" data-category="announcement">
+                        <div class="category-icon announcement">公</div>
+                        <span class="category-name">公告</span>
+                        <span class="category-unread" id="cat-unread-announcement">0</span>
                     </div>
-                    <div class="category-item" data-category="system">
-                        <div class="category-icon system">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="3"></circle>
-                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                            </svg>
-                        </div>
-                        <span class="category-name">系统通知</span>
-                        <span class="category-unread" id="cat-unread-system">2</span>
+                    <div class="category-item" data-category="depositWithdraw">
+                        <div class="category-icon depositWithdraw">充</div>
+                        <span class="category-name">充提</span>
+                        <span class="category-unread" id="cat-unread-depositWithdraw">0</span>
                     </div>
-                    <div class="category-item" data-category="asset">
-                        <div class="category-icon asset">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="12" y1="1" x2="12" y2="23"></line>
-                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                            </svg>
-                        </div>
-                        <span class="category-name">资产通知</span>
-                        <span class="category-unread" id="cat-unread-asset">2</span>
+                    <div class="category-item" data-category="priceAlert">
+                        <div class="category-icon priceAlert">价</div>
+                        <span class="category-name">价格提醒</span>
+                        <span class="category-unread" id="cat-unread-priceAlert">0</span>
                     </div>
                     <div class="category-item" data-category="contract">
-                        <div class="category-icon contract">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="16 18 22 12 16 6"></polyline>
-                                <polyline points="8 6 2 12 8 18"></polyline>
-                            </svg>
-                        </div>
-                        <span class="category-name">合约通知</span>
-                        <span class="category-unread" id="cat-unread-contract">6</span>
+                        <div class="category-icon contract">合</div>
+                        <span class="category-name">合约</span>
+                        <span class="category-unread" id="cat-unread-contract">0</span>
                     </div>
                     <div class="category-item" data-category="security">
-                        <div class="category-icon security">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                                <polyline points="9 12 11 14 15 10"></polyline>
-                            </svg>
-                        </div>
-                        <span class="category-name">安全通知</span>
-                        <span class="category-unread" id="cat-unread-security">2</span>
-                    </div>
-                    <div class="category-item" data-category="activity">
-                        <div class="category-icon activity">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                            </svg>
-                        </div>
-                        <span class="category-name">活动通知</span>
-                        <span class="category-unread" id="cat-unread-activity">2</span>
+                        <div class="category-icon security">安</div>
+                        <span class="category-name">安全</span>
+                        <span class="category-unread" id="cat-unread-security">0</span>
                     </div>
                 </div>
             </aside>
@@ -1557,8 +1574,15 @@
             <section class="message-list-panel">
                 <div class="list-header">
                     <div class="list-header-top">
-                        <div class="list-title" id="listTitle">全部消息</div>
-                        <div class="list-unread-count" id="listUnreadCount">14 条未读</div>
+                        <div class="list-title" id="listTitle">公告</div>
+                        <div class="list-unread-count" id="listUnreadCount">0 条未读</div>
+                    </div>
+                    <div class="announcement-subtabs" id="announcementSubTabs">
+                        <button class="announcement-subtab active" data-ann-sub="all">全部</button>
+                        <button class="announcement-subtab" data-ann-sub="activity">活动</button>
+                        <button class="announcement-subtab" data-ann-sub="newCoin">新币上线</button>
+                        <button class="announcement-subtab" data-ann-sub="delist">下架</button>
+                        <button class="announcement-subtab" data-ann-sub="systemUpdate">系统更新</button>
                     </div>
                     <div class="list-tools">
                         <div class="list-search">
@@ -1566,7 +1590,7 @@
                                 <circle cx="11" cy="11" r="8"></circle>
                                 <path d="m21 21-4.35-4.35"></path>
                             </svg>
-                            <input type="text" placeholder="搜索消息标题、订单号、交易对" id="searchInput">
+                            <input type="text" placeholder="搜索公告、订单号、交易对" id="searchInput">
                         </div>
                         <button class="filter-btn active" data-filter="all">全部</button>
                         <button class="filter-btn" data-filter="unread">未读</button>
@@ -1683,21 +1707,31 @@
     <script>
         // 消息类型配置
         const MSG_TYPES = {
-            system: { icon: 'SYS', label: '系统通知', class: 'system' },
-            asset: { icon: '资', label: '资产通知', class: 'asset' },
-            contract: { icon: '合', label: '合约通知', class: 'contract' },
-            security: { icon: '安', label: '安全通知', class: 'security' },
-            activity: { icon: '活', label: '活动通知', class: 'activity' }
+            announcement: { icon: '公', label: '公告', class: 'announcement' },
+            depositWithdraw: { icon: '充', label: '充提', class: 'depositWithdraw' },
+            priceAlert: { icon: '价', label: '价格提醒', class: 'priceAlert' },
+            contract: { icon: '合', label: '合约', class: 'contract' },
+            security: { icon: '安', label: '安全', class: 'security' }
         };
 
         const CATEGORY_NAMES = {
             all: '全部消息',
-            system: '系统通知',
-            asset: '资产通知',
-            contract: '合约通知',
-            security: '安全通知',
-            activity: '活动通知'
+            announcement: '公告',
+            depositWithdraw: '充提',
+            priceAlert: '价格提醒',
+            contract: '合约',
+            security: '安全'
         };
+
+        const ANNOUNCEMENT_SUB_NAMES = {
+            all: '全部',
+            activity: '活动',
+            newCoin: '新币上线',
+            delist: '下架',
+            systemUpdate: '系统更新'
+        };
+
+        const CATEGORY_KEYS = ['announcement', 'depositWithdraw', 'priceAlert', 'contract', 'security'];
 
         const PRIORITY_TAGS = {
             'P0': { label: '紧急', class: 'risk' },
@@ -1761,6 +1795,28 @@
                     }
                 },
                 {
+                    id: 'msg_price_001',
+                    type: 'priceAlert',
+                    subtype: 'priceVolatility',
+                    title: 'BTC/USDT 价格波动提醒',
+                    summary: 'BTC/USDT 永续合约价格在过去 5 分钟内波动超过 3%，请注意风险。',
+                    content: [
+                        'BTC/USDT 永续合约价格在过去 5 分钟内波动超过 3%。',
+                        '当前价格：67,850.00 USDT，5 分钟前价格：65,750.00 USDT。',
+                        '请结合仓位、保证金和止盈止损设置做好风险控制。'
+                    ],
+                    time: new Date(Date.now() - 12 * 60 * 1000),
+                    read: false,
+                    priority: 'P1',
+                    businessData: {
+                        pair: 'BTC/USDT 永续',
+                        change: '+3.2%',
+                        currentPrice: '67,850.00 USDT',
+                        previousPrice: '65,750.00 USDT',
+                        period: '5分钟'
+                    }
+                },
+                {
                     id: 'msg_002',
                     type: 'contract',
                     subtype: 'contractLimitDeal',
@@ -1788,7 +1844,7 @@
                 },
                 {
                     id: 'msg_003',
-                    type: 'asset',
+                    type: 'depositWithdraw',
                     subtype: 'depositSuccess',
                     title: '充值成功',
                     summary: '您的充值已到账：5,000 USDT（Arbitrum）。',
@@ -1877,7 +1933,8 @@
                 },
                 {
                     id: 'msg_007',
-                    type: 'activity',
+                    type: 'announcement',
+                    announcementType: 'activity',
                     subtype: 'activityOnline',
                     title: '🎉 交易大赛火热开启',
                     summary: 'ForX 夏季交易大赛已上线，奖池 100,000 USDT！',
@@ -1898,7 +1955,8 @@
                 },
                 {
                     id: 'msg_008',
-                    type: 'system',
+                    type: 'announcement',
+                    announcementType: 'systemUpdate',
                     subtype: 'systemAnnounce',
                     title: '系统升级维护通知',
                     summary: '将于 6月6日 02:00-04:00 进行系统升级，提币功能将暂停。',
@@ -1914,7 +1972,7 @@
                 },
                 {
                     id: 'msg_009',
-                    type: 'asset',
+                    type: 'depositWithdraw',
                     subtype: 'withdrawRequest',
                     title: '提币申请已受理',
                     summary: '您的 0.5 ETH 提币申请已受理，正在处理中。',
@@ -2004,10 +2062,45 @@
                         loginTime: '2024-06-04 00:35:20'
                     }
                 },
+                {
+                    id: 'msg_ann_newcoin_001',
+                    type: 'announcement',
+                    announcementType: 'newCoin',
+                    subtype: 'systemAnnounce',
+                    title: 'SOL/USDT 永续合约上线公告',
+                    summary: 'SOL/USDT 永续合约已正式上线，最高支持 50x 杠杆。',
+                    content: [
+                        'SOL/USDT 永续合约已正式上线 ForX。',
+                        '用户可在合约交易页面选择 SOL/USDT 永续进行交易。',
+                        '上线初期请关注盘口深度、资金费率和杠杆风险。'
+                    ],
+                    time: new Date(Date.now() - 10 * 60 * 60 * 1000),
+                    read: false,
+                    priority: 'P2',
+                    businessData: null
+                },
+                {
+                    id: 'msg_ann_delist_001',
+                    type: 'announcement',
+                    announcementType: 'delist',
+                    subtype: 'systemAnnounce',
+                    title: 'XRP/USDT 永续合约下架公告',
+                    summary: 'XRP/USDT 永续合约将于 2026-06-28 18:00 下架，请提前处理持仓。',
+                    content: [
+                        'XRP/USDT 永续合约将于 2026-06-28 18:00 下架。',
+                        '下架前，用户可主动平仓或撤销未成交委托。',
+                        '到期仍未处理的持仓，将按平台规则统一结算。'
+                    ],
+                    time: new Date(Date.now() - 18 * 60 * 60 * 1000),
+                    read: true,
+                    priority: 'P1',
+                    businessData: null
+                },
                 // 异常状态消息（默认不显示）
                 {
                     id: 'msg_expired',
-                    type: 'activity',
+                    type: 'announcement',
+                    announcementType: 'activity',
                     subtype: 'activityEnding',
                     title: '活动即将结束',
                     summary: '交易大赛将于明天结束。',
@@ -2020,7 +2113,8 @@
                 },
                 {
                     id: 'msg_revoked',
-                    type: 'system',
+                    type: 'announcement',
+                    announcementType: 'systemUpdate',
                     subtype: 'systemAnnounce',
                     title: '已撤回公告',
                     summary: '此公告已撤回。',
@@ -2032,7 +2126,8 @@
                     status: 'revoked'
                 }
             ],
-            currentCategory: 'all',
+            currentCategory: 'announcement',
+            currentAnnouncementSubCategory: 'all',
             currentFilter: 'all',
             searchQuery: '',
             selectedMessageId: null,
@@ -2083,8 +2178,9 @@
         function updateUnreadBadges() {
             document.getElementById('bellBadge').textContent = getUnreadCount('all');
             document.getElementById('dropdownUnreadCount').textContent = getUnreadCount('all');
-            ['all', 'system', 'asset', 'contract', 'security', 'activity'].forEach(cat => {
+            CATEGORY_KEYS.forEach(cat => {
                 const el = document.getElementById(`cat-unread-${cat}`);
+                if (!el) return;
                 const count = getUnreadCount(cat);
                 el.textContent = count;
                 el.style.display = count > 0 ? 'flex' : 'none';
@@ -2098,6 +2194,10 @@
             
             if (state.currentCategory !== 'all') {
                 list = list.filter(m => m.type === state.currentCategory);
+            }
+
+            if (state.currentCategory === 'announcement' && state.currentAnnouncementSubCategory !== 'all') {
+                list = list.filter(m => m.announcementType === state.currentAnnouncementSubCategory);
             }
             
             if (state.currentFilter === 'unread') {
@@ -2162,8 +2262,27 @@
             });
         }
 
+        function getListTitle() {
+            if (state.currentCategory === 'announcement' && state.currentAnnouncementSubCategory !== 'all') {
+                return `公告 / ${ANNOUNCEMENT_SUB_NAMES[state.currentAnnouncementSubCategory]}`;
+            }
+            return CATEGORY_NAMES[state.currentCategory] || '消息';
+        }
+
+        function renderAnnouncementSubTabs() {
+            const subTabs = document.getElementById('announcementSubTabs');
+            if (!subTabs) return;
+            subTabs.style.display = state.currentCategory === 'announcement' ? 'flex' : 'none';
+            subTabs.querySelectorAll('.announcement-subtab').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.annSub === state.currentAnnouncementSubCategory);
+            });
+        }
+
         // 渲染主列表
         function renderMainList() {
+            renderAnnouncementSubTabs();
+            document.getElementById('listTitle').textContent = getListTitle();
+            document.getElementById('listUnreadCount').textContent = `${getUnreadCount(state.currentCategory)} 条未读`;
             const container = document.getElementById('messageListContainer');
             const list = getFilteredMessages();
             const totalPages = Math.max(1, Math.ceil(list.length / state.pageSize));
@@ -2763,6 +2882,7 @@
                     document.querySelectorAll('.dropdown-tab').forEach(t => t.classList.remove('active'));
                     tab.classList.add('active');
                     state.currentCategory = tab.dataset.tab;
+                    state.currentAnnouncementSubCategory = 'all';
                     renderDropdownList();
                 });
             });
@@ -2772,8 +2892,9 @@
                     document.querySelectorAll('.category-item').forEach(i => i.classList.remove('active'));
                     item.classList.add('active');
                     state.currentCategory = item.dataset.category;
+                    state.currentAnnouncementSubCategory = 'all';
                     state.currentPage = 1;
-                    document.getElementById('listTitle').textContent = CATEGORY_NAMES[state.currentCategory];
+                    document.getElementById('listTitle').textContent = getListTitle();
                     document.getElementById('listUnreadCount').textContent = `${getUnreadCount(state.currentCategory)} 条未读`;
                     
                     const list = getFilteredMessages();
@@ -2786,6 +2907,26 @@
                         }
                     }
                     
+                    renderMainList();
+                    renderDetail(state.selectedMessageId);
+                });
+            });
+            
+            document.querySelectorAll('.announcement-subtab').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.announcement-subtab').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.currentAnnouncementSubCategory = btn.dataset.annSub;
+                    state.currentPage = 1;
+                    const list = getFilteredMessages();
+                    state.selectedMessageId = list.length > 0 ? list[0].id : null;
+                    if (state.selectedMessageId) {
+                        const msg = state.messages.find(m => m.id === state.selectedMessageId);
+                        if (msg && !msg.read) {
+                            msg.read = true;
+                            updateUnreadBadges();
+                        }
+                    }
                     renderMainList();
                     renderDetail(state.selectedMessageId);
                 });
