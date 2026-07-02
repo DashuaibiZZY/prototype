@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>ForX Admin - 平台运营后台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .sidebar-item-active { background-color: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-[12px]">
+
+<!-- 侧边栏 -->
+<aside class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0">
+    <div class="p-6 text-white font-black text-xl italic tracking-tighter">ForX ADMIN</div>
+    <nav class="flex-1 px-4 space-y-1">
+        <button onclick="showPage('page-agent-mgmt')" id="nav-agent" class="sidebar-item-active w-full flex items-center px-4 py-3 rounded-lg transition-all">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            一级代理管理
+        </button>
+        <button onclick="showPage('page-operator-mgmt')" id="nav-operator" class="w-full flex items-center px-4 py-3 rounded-lg hover:bg-slate-800 transition-all">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            运营权限配置
+        </button>
+        <button onclick="showPage('page-settlement')" id="nav-settlement" class="w-full flex items-center px-4 py-3 rounded-lg hover:bg-slate-800 transition-all">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            佣金对账与发放
+        </button>
+    </nav>
+    <div class="p-4 border-t border-slate-800 text-slate-500">登录身份: 超级管理员</div>
+</aside>
+
+<!-- 主内容区 -->
+<main class="flex-1 flex flex-col overflow-hidden">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+        <h1 id="header-title" class="text-lg font-bold text-slate-800">一级代理管理</h1>
+        <div class="flex items-center space-x-4">
+            <span class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold">权限上限: 80%</span>
+            <div class="w-8 h-8 bg-slate-200 rounded-full"></div>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8">
+        <!-- 页面1: 代理管理 -->
+        <div id="page-agent-mgmt" class="space-y-8">
+            <!-- 新增表单 -->
+            <section class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+                <h2 class="text-sm font-bold mb-4 uppercase tracking-wider text-slate-400">新增一级代理渠道</h2>
+                <div class="grid grid-cols-4 gap-4">
+                    <input type="text" placeholder="钱包地址 / UID" class="border p-2 rounded outline-none focus:border-blue-500">
+                    <div class="relative">
+                        <input type="number" placeholder="返佣比例" class="border p-2 rounded w-full pr-8 outline-none">
+                        <span class="absolute right-3 top-2 text-slate-400">%</span>
+                    </div>
+                    <input type="text" placeholder="备注(渠道名)" class="border p-2 rounded outline-none">
+                    <button class="bg-blue-600 text-white font-bold rounded hover:bg-blue-700">确认绑定代理</button>
+                </div>
+            </section>
+
+            <!-- 代理管理列表：运营视角 -->
+            <section class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <input type="text" placeholder="搜索代理钱包地址或代理备注" class="border p-2 rounded text-[11px] w-64 outline-none focus:ring-1 focus:ring-blue-600">
+                        <div class="flex bg-slate-100 p-1 rounded-md text-[10px] font-bold">
+                            <button class="px-4 py-1.5 bg-white shadow-sm rounded text-slate-900">全部正常 (142)</button>
+                            <button class="px-4 py-1.5 text-slate-400 hover:text-red-500 transition-colors">异常预警 (3)</button>
+                        </div>
+                    </div>
+                    <div class="text-[10px] text-slate-400 font-medium italic">数据每 5 分钟自动校验一次级差状态</div>
+                </div>
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase text-[10px]">
+                    <tr>
+                        <th class="px-6 py-4">一级代理信息</th>
+                        <th class="px-6 py-4 text-center">返佣比例</th>
+                        <th class="px-6 py-4 text-right">团队总交易额</th>
+                        <th class="px-6 py-4 text-right">团队总净入金</th>
+                        <th class="px-6 py-4 text-center">用户规模 (总/活)</th>
+                        <th class="px-6 py-4 text-right text-blue-600">平台净利润 (Net)</th>
+                        <th class="px-6 py-4 text-right">状态/操作</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50 text-[11px]">
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-6 py-4"><span class="font-black text-slate-900">0xd5...2Dd2</span><span class="block text-slate-400 text-[9px] uppercase">Channel: KOL_Global</span></td>
+                        <td class="px-6 py-4 text-center font-black text-lg">70%</td>
+                        <td class="px-6 py-4 text-right font-bold text-slate-600">$52.4M</td>
+                        <td class="px-6 py-4 text-right font-bold text-green-600">+$1.2M</td>
+                        <td class="px-6 py-4 text-center font-black">1,420 <span class="text-slate-300 font-normal">/ 420</span></td>
+                        <td class="px-6 py-4 text-right font-black text-blue-600">--</td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end space-x-3">
+                                <div class="group relative flex items-center">
+                                    <svg class="w-4 h-4 text-red-500 cursor-help" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                                    <div class="hidden group-hover:block absolute bottom-full right-0 mb-2 w-48 p-2 bg-slate-800 text-white text-[10px] rounded shadow-xl z-50 leading-relaxed font-normal normal-case">下级比例超过该代理，结算已暂停。请立即调整该代理或下级代理的返佣比例。</div>
+                                </div>
+                                <button onclick="openModal('modal-modify-ratio')" class="text-blue-600 font-bold hover:underline">调整</button>
+                                <span class="text-gray-200">|</span>
+                                <button class="text-red-400 font-bold hover:underline">禁用</button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-6 py-4"><span class="font-black text-slate-900">0xd5...2Dd2</span><span class="block text-slate-400 text-[9px] uppercase">Channel: KOL_Global</span></td>
+                        <td class="px-6 py-4 text-center font-black text-lg">70%</td>
+                        <td class="px-6 py-4 text-right font-bold text-slate-600">$52.4M</td>
+                        <td class="px-6 py-4 text-right font-bold text-green-600">+$1.2M</td>
+                        <td class="px-6 py-4 text-center font-black">1,420 <span class="text-slate-300 font-normal">/ 420</span></td>
+                        <td class="px-6 py-4 text-right font-black text-blue-600">$124,500</td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end space-x-3">
+                                <button onclick="openModal('modal-modify-ratio')" class="text-blue-600 font-bold hover:underline">调整</button>
+                                <span class="text-gray-200">|</span>
+                                <button class="text-red-400 font-bold hover:underline">禁用</button>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </section>
+        </div>
+
+        <!-- 页面2: 运营权限管理 (超管可见) -->
+        <div id="page-operator-mgmt" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-slate-700 font-bold text-base">运营配置权限中心</h2>
+                    <p class="text-slate-400">配置平台 BD/运营人员可分配的一级代理返佣上限。</p>
+                </div>
+                <button onclick="openModal('modal-add-operator')" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all">+ 新增运营账号</button>
+            </div>
+            <div class="bg-slate-900 text-white p-6 rounded-lg shadow-xl">
+                <table class="w-full text-left">
+                    <thead class="text-slate-500 border-b border-slate-800 uppercase text-[10px] tracking-wider">
+                    <tr>
+                        <th class="py-3 px-4 text-left">运营账号</th>
+                        <th class="py-3 px-4 text-left">姓名</th>
+                        <th class="py-3 px-4 text-left">配置上限</th>
+                        <th class="py-3 px-4 text-left">权限状态</th>
+                        <th class="py-3 px-4 text-right">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800">
+                    <tr class="hover:bg-slate-800/50 transition-colors">
+                        <td class="py-4 px-4 font-bold">allen@forx.fi</td>
+                        <td class="py-4 px-4 text-slate-400">Allen Zhang</td>
+                        <td class="py-4 px-4 text-blue-400 font-black text-lg">80%</td>
+                        <td class="py-4 px-4"><span class="flex items-center text-green-400 font-bold"><span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-2 shadow-[0_0_8px_rgba(74,222,128,0.5)]"></span>启用中</span></td>
+                        <td class="py-4 px-4 text-right space-x-4">
+                            <button onclick="openModal('modal-edit-limit')" class="text-blue-400 hover:underline font-bold">编辑上限</button>
+                            <button class="text-red-400 hover:underline font-bold">关闭权限</button>
+                        </td>
+                    </tr>
+                    <tr class="hover:bg-slate-800/50 transition-colors opacity-50">
+                        <td class="py-4 px-4 font-bold">john@forx.fi</td>
+                        <td class="py-4 px-4 text-slate-400">John Doe</td>
+                        <td class="py-4 px-4 text-blue-400 font-black text-lg">60%</td>
+                        <td class="py-4 px-4"><span class="flex items-center text-slate-500 font-bold"><span class="w-1.5 h-1.5 bg-slate-500 rounded-full mr-2"></span>已关闭</span></td>
+                        <td class="py-4 px-4 text-right space-x-4">
+                            <button class="text-slate-400 font-bold cursor-not-allowed">编辑上限</button>
+                            <button class="text-green-400 hover:underline font-bold">开启权限</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 页面3: 佣金对账与发放 -->
+        <div id="page-settlement" class="hidden space-y-6">
+            <!-- 批次列表视图 -->
+            <div id="view-batch-list" class="space-y-6">
+                <div class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 text-slate-400 font-black border-b border-slate-100 uppercase text-[10px]">
+                        <tr>
+                            <th class="px-6 py-4">结算日期</th>
+                            <th class="px-6 py-4 text-right">返佣总成交额 (USDT)</th>
+                            <th class="px-6 py-4 text-right">待发放总佣金</th>
+                            <th class="px-6 py-4 text-center">状态</th>
+                            <th class="px-6 py-4 text-right">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50 text-[11px] font-medium">
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-6 py-4 font-black">2024-05-23</td>
+                            <td class="px-6 py-4 text-right font-bold text-slate-600">$12,450,000</td>
+                            <td class="px-6 py-4 text-right font-black text-blue-600">$85,140.00</td>
+                            <td class="px-6 py-4 text-center"><span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full">等待对账</span></td>
+                            <td class="px-6 py-4 text-right"><button onclick="showReviewDetail(false)" class="bg-slate-900 text-white px-4 py-1.5 rounded font-black hover:bg-slate-800 transition-all uppercase">查看详情</button></td>
+                        </tr>
+                        <tr class="hover:bg-slate-50 bg-red-50/20">
+                            <td class="px-6 py-4 font-black text-red-700">2024-05-22</td>
+                            <td class="px-6 py-4 text-right font-bold text-slate-600">$10,200,000</td>
+                            <td class="px-6 py-4 text-right font-black text-red-600">$70,000.00</td>
+                            <td class="px-6 py-4 text-center"><span class="bg-red-100 text-red-700 px-3 py-1 rounded-full font-bold uppercase">已拒绝</span></td>
+                            <td class="px-6 py-4 text-right"><button onclick="showReviewDetail(true)" class="bg-red-600 text-white px-4 py-1.5 rounded font-black hover:bg-red-700 transition-all uppercase">查看原因</button></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 详情对账视图 -->
+            <div id="view-review-detail" class="hidden space-y-6">
+                <div id="reject-banner" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded shadow-sm">
+                    <div class="flex items-start">
+                        <svg class="w-4 h-4 text-red-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                        <div>
+                            <p class="text-red-700 font-black text-[13px]">该批次已被拒绝放款</p>
+                            <p class="text-red-600 font-medium mt-1">拒绝原因：账目无法对齐，返佣金额大于手续费总收入。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <button onclick="backToList()" class="p-2 bg-white border border-slate-200 rounded hover:bg-slate-50 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
+                        </button>
+                        <h2 class="text-lg font-black italic uppercase tracking-tight" id="detail-title">2024-05-23 结算批次明细</h2>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button class="bg-white border-2 border-slate-900 text-slate-900 px-4 py-2 rounded font-black hover:bg-slate-50 flex items-center shadow-sm">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            下载对账单 (.csv)
+                        </button>
+                        <button onclick="openModal('modal-reject')" class="bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded font-black hover:bg-red-100 transition-all">拒绝放款</button>
+                        <button onclick="openModal('modal-approve')" class="bg-blue-600 text-white px-6 py-2 rounded font-black shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-all">审核通过并放款</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-4 gap-4">
+                    <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">本期返佣总成交额</p><p class="text-2xl font-black text-slate-900 tracking-tighter" id="sum-vol">$12,450,000.00</p></div>
+                    <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">系统计算应发</p><p class="text-2xl font-black text-slate-900 tracking-tighter" id="sum-expected">$85,140.00</p></div>
+                    <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">人工调整差额</p><p class="text-2xl font-black text-red-500 tracking-tighter">-$500.00</p></div>
+                    <div class="bg-slate-900 p-6 rounded-lg shadow-xl"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">最终实发总额</p><p class="text-2xl font-black text-blue-400 tracking-tighter">$84,640.00</p></div>
+                </div>
+
+                <div id="abnormal-banner" class="hidden bg-blue-50 border-l-4 border-blue-500 p-4 rounded shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <svg class="w-4 h-4 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div>
+                                <p class="text-blue-800 font-black text-[13px]">检测到该批次包含 <span class="underline decoration-2">1</span> 个异常代理记录</p>
+                                <p class="text-blue-600 font-medium mt-0.5">原因：下级配置比例超过该级代理。受影响代理的佣金已自动置为暂停结算状态。</p>
+                            </div>
+                        </div>
+                        <button class="bg-blue-600 text-white px-4 py-1.5 rounded font-black text-[10px] uppercase shadow-md hover:bg-blue-700 transition-all">导出异常明细</button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+                    <div class="p-4 border-b border-slate-100">
+                        <input type="text" placeholder="搜索代理钱包地址或代理备注" class="border p-2 rounded text-[11px] w-64 outline-none focus:ring-1 focus:ring-blue-600">
+                    </div>
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 text-slate-400 font-black text-[10px] uppercase border-b border-slate-100">
+                        <tr>
+                            <th class="px-6 py-4">代理信息</th>
+                            <th class="px-6 py-4 text-center">上级代理 (Parent)</th>
+                            <th class="px-6 py-4 text-right">期间成交额</th>
+                            <th class="px-6 py-4 text-right">系统原始佣金</th>
+                            <th class="px-6 py-4 text-center">人工调减 (USDT)</th>
+                            <th class="px-6 py-4 text-right">实发佣金金额</th>
+                        </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50 text-[11px] font-bold">
+                        <tr class="hover:bg-slate-50/50">
+                            <td class="px-6 py-4"><span class="text-slate-900 block font-black">0xd593...2Dd2</span><span class="text-slate-400 font-normal">代理-小王</span></td>
+                            <td class="px-6 py-4 text-center text-slate-300 font-medium">-- (一级) --</td>
+                            <td class="px-6 py-4 text-right text-slate-500 font-medium">$1,000,000</td>
+                            <td class="px-6 py-4 text-right text-slate-900">$7,000.00</td>
+                            <td class="px-6 py-4 text-center"><button onclick="openAdjustModal('0xd593...2Dd2', '500.00')" class="px-3 py-1 border border-dashed border-blue-400 text-red-500 rounded font-black hover:bg-blue-50 transition-all">-$500.00</button></td>
+                            <td class="px-6 py-4 text-right text-blue-600 font-black">$6,500.00</td>
+                        </tr>
+                        <tr class="bg-slate-50 text-slate-400 italic">
+                            <td class="px-6 py-4 opacity-60"><span class="text-slate-900 block font-black">0x88e1...4F42</span><span class="text-slate-400 font-normal">代理-John (风险)</span></td>
+                            <td class="px-6 py-4 text-center text-slate-400 opacity-60">0x3f...12a (二级)</td>
+                            <td class="px-6 py-4 text-right font-medium opacity-60">$250,000</td>
+                            <td class="px-6 py-4 text-right text-slate-400 font-bold italic">-- 异常暂停</td>
+                            <td class="px-6 py-4 text-center opacity-40">--</td>
+                            <td class="px-6 py-4 text-right font-black opacity-60">$0.00</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- 弹窗 A: 新增运营账号 -->
+<div id="modal-add-operator" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center">
+    <div class="bg-white w-[400px] rounded-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center"><h3 class="font-bold text-slate-800">新增运营/BD 账号</h3><button onclick="closeModal('modal-add-operator')" class="text-slate-400 hover:text-slate-800">✕</button></div>
+        <div class="p-6 space-y-4">
+            <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">登录邮箱 / 账号</label><input type="text" placeholder="example@forx.fi" class="w-full border border-slate-200 p-2 rounded outline-none focus:border-blue-500 font-medium"></div>
+            <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">姓名</label><input type="text" placeholder="请输入真实姓名" class="w-full border border-slate-200 p-2 rounded outline-none focus:border-blue-500 font-medium"></div>
+            <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">配置返佣上限 (%)</label><div class="relative"><input type="number" placeholder="最大不可超过 80" class="w-full border border-slate-200 p-2 rounded outline-none focus:border-blue-500 font-bold pr-8"><span class="absolute right-3 top-2 text-slate-400 font-bold">%</span></div></div>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 flex space-x-3">
+            <button onclick="closeModal('modal-add-operator')" class="flex-1 py-2 border border-slate-200 rounded font-bold text-slate-500 hover:bg-white transition-all">取消</button>
+            <button onclick="alert('账号创建成功'); closeModal('modal-add-operator')" class="flex-1 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 transition-all">确认创建</button>
+        </div>
+    </div>
+</div>
+
+<!-- 弹窗 B: 编辑上限 -->
+<div id="modal-edit-limit" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center">
+    <div class="bg-white w-[360px] rounded-lg shadow-2xl overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 font-bold text-slate-800 text-center italic">调整配置上限: Allen</div>
+        <div class="p-8 text-center space-y-4">
+            <div class="relative"><input type="number" value="80" class="w-full border-b-2 border-blue-600 text-4xl font-black text-center outline-none p-2 text-blue-600"><span class="absolute right-4 bottom-4 text-blue-600 font-black text-xl">%</span></div>
+            <p class="text-[10px] text-slate-400">修改后，该运营可配置的一级代理最高比例将立即变更。</p>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 flex space-x-2">
+            <button onclick="closeModal('modal-edit-limit')" class="flex-1 py-2 font-bold text-slate-400">取消</button>
+            <button onclick="alert('上限已更新'); closeModal('modal-edit-limit')" class="flex-1 bg-slate-900 text-white py-2 rounded font-bold">保存修改</button>
+        </div>
+    </div>
+</div>
+
+<!-- 弹窗 C: 调整比例风险确认 -->
+<div id="modal-confirm-adjust" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center">
+    <div class="bg-white w-[400px] rounded-lg shadow-2xl overflow-hidden animate-in zoom-in duration-200">
+        <div class="p-8">
+            <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-4"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></div>
+            <h3 class="text-lg font-bold text-slate-800 text-center mb-2">确认修改返佣比例？</h3>
+            <p class="text-slate-500 text-center text-[11px] leading-relaxed mb-6">下调一级代理的比例可能导致其与直属下级代理之间产生<span class="text-red-600 font-bold">比例倒挂</span>。</p>
+            <div class="space-y-3">
+                <div class="flex justify-between text-[11px] bg-slate-50 p-2 rounded"><span class="text-slate-400">当前比例</span><span class="font-bold">70%</span></div>
+                <div class="flex justify-between text-[11px] bg-blue-50 p-2 rounded border border-blue-100"><span class="text-blue-600">目标比例</span><span class="font-black text-blue-600">65%</span></div>
+            </div>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 flex space-x-3">
+            <button onclick="closeModal('modal-confirm-adjust')" class="flex-1 py-2 border border-slate-200 rounded font-bold text-slate-500 hover:bg-white transition-all">取消</button>
+            <button onclick="alert('比例调整指令已提交，T+1 生效'); closeModal('modal-confirm-adjust')" class="flex-1 py-2 bg-slate-900 text-white rounded font-bold hover:bg-slate-800 transition-all">确认并变更</button>
+        </div>
+    </div>
+</div>
+
+<!-- 弹窗 D: 设定新返佣比例 -->
+<div id="modal-modify-ratio" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center">
+    <div class="bg-white w-[380px] rounded-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center"><h3 class="font-bold text-slate-800">调整返佣比例</h3><button onclick="closeModal('modal-modify-ratio')" class="text-slate-400 hover:text-slate-800">✕</button></div>
+        <div class="p-8 space-y-5">
+            <div><p class="text-[10px] text-slate-400 font-bold uppercase mb-1">正在操作一级代理</p><p class="text-[11px] font-mono font-bold text-slate-900 uppercase">0xd593...2Dd2 (KOL_Global)</p></div>
+            <div class="flex items-center justify-between bg-slate-50 p-3 rounded border border-slate-100"><span class="text-[11px] text-slate-500 font-medium">当前配置比例</span><span class="text-lg font-black text-slate-900">70%</span></div>
+            <div><label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">设定新比例 (%)</label><div class="relative"><input id="input-target-ratio" type="number" class="w-full border-2 border-slate-200 rounded p-3 text-2xl font-black text-blue-600 outline-none focus:border-blue-600 transition-all" placeholder="00"><span class="absolute right-4 top-4 text-slate-400 font-bold text-xl">%</span></div><p class="text-[10px] text-slate-400 mt-2 italic">* 修改将于次日 00:00 生效。</p></div>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 flex space-x-3">
+            <button onclick="closeModal('modal-modify-ratio')" class="flex-1 py-2 font-bold text-slate-500">取消</button>
+            <button onclick="handleRatioSubmit()" class="flex-1 bg-slate-900 text-white py-2 rounded font-bold hover:bg-slate-800 shadow-lg">确认修改</button>
+        </div>
+    </div>
+</div>
+
+<!-- 弹窗 E: 审核通过确认 -->
+<div id="modal-approve" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center">
+    <div class="bg-white w-[420px] rounded-lg shadow-2xl p-8 text-center animate-in zoom-in duration-200">
+        <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
+        <h3 class="text-xl font-black text-slate-900 mb-2 italic">确认批量发放佣金？</h3>
+        <p class="text-[13px] text-slate-400 mb-8 px-4 leading-relaxed">点击确认后，系统将按照对账后的金额执行<span class="text-black font-bold">链上/站内转账</span>，此操作无法撤回。</p>
+        <div class="flex space-x-3">
+            <button onclick="closeModal('modal-approve')" class="flex-1 py-3 border border-slate-200 rounded font-black text-slate-400 uppercase">取消</button>
+            <button onclick="alert('佣金已进入队列，开始发放'); closeModal('modal-approve'); backToList();" class="flex-1 py-3 bg-blue-600 text-white rounded font-black shadow-lg uppercase">确定执行发放</button>
+        </div>
+    </div>
+</div>
+
+<!-- 弹窗 F: 拒绝审批 -->
+<div id="modal-reject" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center">
+    <div class="bg-white w-[420px] rounded-lg shadow-2xl p-8 animate-in zoom-in duration-200">
+        <h3 class="text-xl font-black text-slate-900 mb-6 italic text-center">拒绝放款确认</h3>
+        <div class="space-y-4 mb-8">
+            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">请填写拒绝原因 (备注)</label>
+            <textarea id="reject-note" class="w-full h-32 border border-slate-200 rounded p-3 text-sm focus:border-red-500 outline-none" placeholder="输入拒绝理由，运营人员可查阅..."></textarea>
+        </div>
+        <div class="flex space-x-3">
+            <button onclick="closeModal('modal-reject')" class="flex-1 py-3 border border-slate-200 rounded font-black text-slate-400 uppercase">取消</button>
+            <button onclick="alert('该批次已标记为拒绝'); closeModal('modal-reject'); backToList();" class="flex-1 py-3 bg-red-600 text-white rounded font-black shadow-lg uppercase">确定拒绝</button>
+        </div>
+    </div>
+</div>
+
+<!-- 弹窗 G: 修改调减金额 -->
+<div id="modal-adjust" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center">
+    <div class="bg-white w-[380px] rounded-lg shadow-2xl overflow-hidden animate-in zoom-in duration-200">
+        <div class="px-6 py-4 border-b border-gray-50 bg-slate-50 flex justify-between items-center"><span class="text-xs font-black uppercase tracking-tight">调整佣金金额</span><button onclick="closeModal('modal-adjust')" class="text-gray-400">✕</button></div>
+        <div class="p-8 space-y-4">
+            <div><p class="text-[10px] text-gray-400 font-bold uppercase mb-1">正在操作代理</p><p id="adjust-target-addr" class="text-[11px] font-mono font-bold text-slate-900">0x000...000</p></div>
+            <div><label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">需人工扣除的金额 (USDT)</label><div class="relative"><input id="adjust-input-val" type="number" class="w-full border-2 border-blue-500 rounded p-3 text-lg font-black text-red-500 outline-none" placeholder="0.00"><span class="absolute right-3 top-3.5 text-gray-400 font-bold">USDT</span></div><p class="text-[10px] text-slate-400 mt-2 italic">* 该金额将从系统原始佣金中扣除</p></div>
+        </div>
+        <div class="px-6 py-4 bg-gray-50 flex space-x-3">
+            <button onclick="closeModal('modal-adjust')" class="flex-1 py-2 border border-slate-200 rounded font-black text-slate-400 uppercase text-[11px]">取消</button>
+            <button onclick="saveAdjustment()" class="flex-1 py-2 bg-slate-900 text-white rounded font-black uppercase text-[11px] shadow-lg">确认修改</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ============ 页面切换逻辑 ============
+    function showPage(pageId) {
+        // 隐藏所有页面
+        document.getElementById('page-agent-mgmt').classList.add('hidden');
+        document.getElementById('page-operator-mgmt').classList.add('hidden');
+        document.getElementById('page-settlement').classList.add('hidden');
+        document.getElementById(pageId).classList.remove('hidden');
+
+        // 重置侧边栏激活状态
+        const navs = ['nav-agent', 'nav-operator', 'nav-settlement'];
+        navs.forEach(id => document.getElementById(id).classList.remove('sidebar-item-active'));
+
+        // 激活对应侧边栏按钮，并更新标题
+        if (pageId === 'page-agent-mgmt') {
+            document.getElementById('nav-agent').classList.add('sidebar-item-active');
+            document.getElementById('header-title').innerText = '一级代理管理';
+        } else if (pageId === 'page-operator-mgmt') {
+            document.getElementById('nav-operator').classList.add('sidebar-item-active');
+            document.getElementById('header-title').innerText = '运营权限配置';
+        } else if (pageId === 'page-settlement') {
+            document.getElementById('nav-settlement').classList.add('sidebar-item-active');
+            document.getElementById('header-title').innerText = '每日佣金结算审批';
+            // 默认展示批次列表
+            document.getElementById('view-batch-list').classList.remove('hidden');
+            document.getElementById('view-review-detail').classList.add('hidden');
+        }
+    }
+
+    // ============ 弹窗通用控制 ============
+    function openModal(id) {
+        document.getElementById(id).classList.remove('hidden');
+    }
+    function closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+    }
+
+    // ============ 调整比例相关 ============
+    function handleRatioSubmit() {
+        const targetValue = document.getElementById('input-target-ratio').value;
+        if (!targetValue || targetValue <= 0) {
+            alert("请输入有效的比例数值");
+            return;
+        }
+        // 模拟：如果新比例低于 70% 则认为有风险
+        if (parseFloat(targetValue) < 70) {
+            closeModal('modal-modify-ratio');
+            openModal('modal-confirm-adjust');
+        } else {
+            alert('比例已成功调整至 ' + targetValue + '% (T+1 生效)');
+            closeModal('modal-modify-ratio');
+        }
+    }
+
+    // ============ 佣金结算：详情/返回 ============
+    function showReviewDetail(isRejected) {
+        document.getElementById('view-batch-list').classList.add('hidden');
+        document.getElementById('view-review-detail').classList.remove('hidden');
+
+        const rejectBanner = document.getElementById('reject-banner');
+        const abnormalBanner = document.getElementById('abnormal-banner');
+        const title = document.getElementById('detail-title');
+        const sumVol = document.getElementById('sum-vol');
+        const sumExp = document.getElementById('sum-expected');
+
+        if (isRejected) {
+            rejectBanner.classList.remove('hidden');
+            abnormalBanner.classList.add('hidden');
+            title.innerText = "2024-05-22 结算详情 (已拒绝)";
+            sumVol.innerText = "$10,200,000.00";
+            sumExp.innerText = "$70,000.00";
+        } else {
+            rejectBanner.classList.add('hidden');
+            abnormalBanner.classList.remove('hidden');
+            title.innerText = "2024-05-23 结算详情";
+            sumVol.innerText = "$12,450,000.00";
+            sumExp.innerText = "$85,140.00";
+        }
+    }
+
+    function backToList() {
+        document.getElementById('view-review-detail').classList.add('hidden');
+        document.getElementById('view-batch-list').classList.remove('hidden');
+    }
+
+    // ============ 人工调减弹窗 ============
+    function openAdjustModal(addr, currentVal) {
+        document.getElementById('adjust-target-addr').innerText = addr;
+        document.getElementById('adjust-input-val').value = currentVal;
+        openModal('modal-adjust');
+    }
+
+    function saveAdjustment() {
+        const newVal = document.getElementById('adjust-input-val').value;
+        const targetAddr = document.getElementById('adjust-target-addr').innerText;
+        console.log(`已将代理 ${targetAddr} 的调减金额修改为: ${newVal}`);
+        alert("修改成功，实发金额已重新计算。");
+        closeModal('modal-adjust');
+    }
+</script>
+</body>
+</html>
