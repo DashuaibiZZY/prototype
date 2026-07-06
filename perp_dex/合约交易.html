@@ -27,6 +27,20 @@
             border-radius: 50%;
             cursor: pointer;
         }
+        /* 公告轮播动画 */
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            animation: marquee 30s linear infinite;
+            display: inline-flex;
+            white-space: nowrap;
+        }
+        /* 隐藏滚动条但保持功能 */
+        #announcement-scroll::-webkit-scrollbar {
+            display: none;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -38,12 +52,19 @@
         <div class="flex space-x-5 text-[12px] font-medium">
             <a href="合约交易.html" class="text-black font-bold">交易</a>
             <a href="投资组合.html" class="text-gray-400 hover:text-black">投資組合</a>
-            <a href="积分.html" class="text-gray-400 hover:text-black relative">積分<span class="absolute -top-1 -right-5 bg-red-500 text-white px-1 text-[8px] rounded-sm scale-90">NEW</span></a>
-            <a href="邀请返佣.html" class="text-gray-400 hover:text-black relative">邀請返佣 <span class="absolute -top-1 -right-5 bg-red-500 text-white px-1 text-[8px] rounded-sm scale-90">40%</span></a>
-            <a href="#" class="text-gray-400 hover:text-black">活动</a>
-            <a href="排行榜.html" class="text-gray-400 hover:text-black">排行榜</a>
+            <!-- 熱門活動（HOT 标签紧贴） -->
+            <a href="热门活动.html" class="text-gray-400 hover:text-black relative">
+                熱門活動
+                <span class="absolute -top-1 -right-5 bg-red-500 text-white px-1 text-[8px] rounded-sm scale-90 leading-tight">HOT</span>
+            </a>
+            <a href="积分.html" class="text-gray-400 hover:text-black">積分</a>
+            <!-- 邀請返佣 40% -->
+            <a href="邀请返佣.html" class="text-gray-400 hover:text-black relative">
+                邀請返佣
+                <span class="absolute -top-1 -right-5 bg-red-500 text-white px-1 text-[8px] rounded-sm scale-90">40%</span>
+            </a>
         </div>
-        <!-- 更多下拉菜單組件 -->
+        <!-- 更多下拉菜單（更新內容） -->
         <div class="relative group h-full flex items-center">
             <span class="text-gray-400 hover:text-black cursor-pointer flex items-center text-[12px] font-medium transition-colors">
                 更多
@@ -54,42 +75,56 @@
             <div class="absolute top-full left-0 hidden group-hover:block pt-2 z-[100]">
                 <div class="bg-white border border-gray-100 rounded-sm py-1 shadow-lg min-w-[140px] overflow-hidden">
                     <a href="卡券中心.html" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 font-bold transition-colors">卡券中心</a>
+                    <a href="排行榜.html" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 font-bold transition-colors">排行榜</a>
                     <a href="代理中心.html" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 font-bold transition-colors">代理中心</a>
                     <a href="#" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 transition-colors">文檔</a>
+                    <a href="#" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 transition-colors">公告</a>
                 </div>
             </div>
         </div>
     </div>
-    <!-- 錢包連接狀態容器 -->
+
+    <!-- 右侧操作区 -->
     <div class="flex items-center space-x-3">
-        <!-- 1. 白夜/黑夜模式切換 (新功能) -->
-        <button class="text-gray-400 hover:text-black transition-colors" title="切換模式">
-            <!-- 這裡默認顯示太陽圖標 (日間模式) -->
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+        <!-- 日夜模式切换（框+ /） -->
+        <button class="flex items-center border border-gray-200 rounded px-1.5 py-0.5 text-gray-400 hover:text-black hover:border-gray-400 transition-colors" title="切換模式">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                 <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round"/>
+            </svg>
+            <span class="text-[10px] mx-px text-gray-300">/</span>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
             </svg>
         </button>
 
-        <!-- 2. 多語言選擇 (新功能) -->
+        <!-- 消息铃铛（带数字） -->
+        <button class="relative text-gray-400 hover:text-black transition-colors" title="消息中心">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span class="absolute -top-1 -right-1.5 bg-red-500 text-white text-[8px] font-bold w-3.5 h-3.5 flex items-center justify-center rounded-full leading-none">3</span>
+        </button>
+
+        <!-- 多語言選擇（地球圖標 + 下拉） -->
         <div class="relative group cursor-pointer">
-            <div class="flex items-center text-[11px] font-black text-gray-400 group-hover:text-black transition-colors">
-                简体中文
-                <svg class="w-3 h-3 ml-1 group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 9l-7 7-7-7" stroke-width="3"/>
+            <div class="text-gray-400 group-hover:text-black transition-colors">
+                <!-- 地球圖標 -->
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                 </svg>
             </div>
-            <!-- 語言下拉菜單 -->
+            <!-- 語言下拉菜單（更新順序與內容） -->
             <div class="absolute top-full right-0 hidden group-hover:block pt-2 z-[100]">
-                <div class="bg-white border border-gray-100 rounded-sm py-1 shadow-xl min-w-[80px] overflow-hidden">
+                <div class="bg-white border border-gray-100 rounded-sm py-1 shadow-xl min-w-[100px] overflow-hidden">
+                    <a href="#" class="block px-3 py-1.5 text-[11px] text-gray-400 hover:text-black hover:bg-gray-50 font-bold transition-colors">English</a>
                     <a href="#" class="block px-3 py-1.5 text-[11px] text-black font-black bg-gray-50">简体中文</a>
-                    <a href="#" class="block px-3 py-1.5 text-[11px] text-gray-400 hover:text-black hover:bg-gray-50 font-bold uppercase transition-colors">繁体中文</a>
-                    <a href="#" class="block px-3 py-1.5 text-[11px] text-gray-400 hover:text-black hover:bg-gray-50 font-bold uppercase transition-colors">EN</a>
-                    <a href="#" class="block px-3 py-1.5 text-[11px] text-gray-400 hover:text-black hover:bg-gray-50 font-bold transition-colors">日本語</a>
+                    <a href="#" class="block px-3 py-1.5 text-[11px] text-gray-400 hover:text-black hover:bg-gray-50 font-bold transition-colors">繁体中文</a>
+                    <a href="#" class="block px-3 py-1.5 text-[11px] text-gray-400 hover:text-black hover:bg-gray-50 font-bold transition-colors">日本语</a>
                 </div>
             </div>
         </div>
 
-        <!-- 設置按鈕 (新功能) -->
+        <!-- 設置按鈕 (保持不變) -->
         <button onclick="toggleSettingsDrawer()" class="text-gray-400 hover:text-black transition-colors" title="設置">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -97,24 +132,14 @@
             </svg>
         </button>
 
-        <!-- === 新增：支持鏈信息 (BNB Chain) === -->
-        <div class="flex items-center space-x-2 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-sm cursor-default group hover:bg-gray-100 transition-colors">
-            <!-- 鏈 Logo -->
-            <img src="bsc-logo.svg" class="w-4 h-4 object-contain" alt="BNB Chain">
-            <!-- 鏈 名稱 -->
-            <span class="text-[11px] font-black text-gray-900 tracking-tight">BNB Chain</span>
-            <!-- 連接狀態感小綠點 (選配，增加「連線感」) -->
-            <div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-        </div>
-
-        <!-- 已登录状态 -->
+        <!-- 已登录状态（錢包下拉保持原樣） -->
         <div id="user-account-wrapper" class="relative group h-12 flex items-center">
+            <!-- ... 此處錢包部分完全保留原始代碼 ... -->
             <button class="bg-gray-50 px-3 py-1.5 rounded-sm flex items-center space-x-2 border border-gray-100 hover:bg-gray-100 transition">
                 <div class="w-3 h-3 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
                 <span id="nav-login-label" class="text-[11px] font-black text-gray-900">0xd593...2Dd2</span>
                 <svg class="w-3 h-3 text-gray-400 group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="3"/></svg>
             </button>
-
             <!-- 下拉菜单（丰富版） -->
             <div class="absolute top-full right-0 hidden group-hover:block pt-2 z-[110]">
                 <div class="bg-white border border-gray-100 rounded-sm shadow-2xl p-4 min-w-[280px] space-y-4">
@@ -128,7 +153,6 @@
                         </div>
                         <button class="text-gray-400 hover:text-blue-600 p-1" onclick="copyText('123456')" title="复制UID">📋</button>
                     </div>
-
                     <!-- 绑定信息 -->
                     <div class="space-y-2 text-[11px]">
                         <div class="flex justify-between">
@@ -139,13 +163,11 @@
                             <span class="text-gray-400">邮箱</span>
                             <span id="menu-email-status" class="font-bold text-gray-900">usdt32145@gmail.com</span>
                         </div>
-                        <!-- 仅邮箱登录时显示GA绑定入口 -->
                         <div id="menu-ga-entry" class="hidden flex justify-between">
                             <span class="text-gray-400">GA认证</span>
                             <button onclick="showGaBindModal()" class="text-blue-600 font-bold text-[10px] hover:underline">绑定GA</button>
                         </div>
                     </div>
-
                     <!-- 总资产 -->
                     <div class="bg-gray-50 p-3 rounded-sm border border-gray-100">
                         <div class="flex justify-between items-center">
@@ -153,14 +175,12 @@
                             <span class="text-s font-black text-gray-900">$12,450.50 USDT</span>
                         </div>
                     </div>
-
                     <!-- 操作按钮 -->
                     <div class="grid grid-cols-3 gap-2">
                         <button onclick="openModal('deposit')" class="py-2 bg-blue-600 text-white text-[10px] font-black uppercase rounded-sm">充值</button>
                         <button onclick="openModal('withdraw')" class="py-2 border border-gray-200 text-[10px] font-black uppercase rounded-sm">提现</button>
                         <button onclick="openTransferModal()" class="py-2 bg-gray-900 text-white text-[10px] font-black uppercase rounded-sm">划转</button>
                     </div>
-
                     <!-- 退出登录 -->
                     <button onclick="logout()" class="w-full flex items-center justify-between px-2 py-2 text-[11px] font-bold text-red-400 hover:text-red-600 hover:bg-red-50 transition rounded-sm">
                         <span>退出登录</span>
@@ -684,10 +704,14 @@
         <!-- 交易終端 -->
         <aside class="w-[300px] bg-white flex flex-col shrink-0 overflow-y-auto scrollbar-hide border-l border-gray-100">
             <div class="p-3">
-                <!-- 全仓 / 杠杆倍数 -->
+                <!-- 全仓 / 多空杠杆（合并按钮） -->
                 <div class="grid grid-cols-2 gap-1.5 mb-2">
                     <button onclick="toggleModal('modal-margin')" class="py-1 bg-gray-100 rounded-sm font-bold text-[10px]">全倉</button>
-                    <button onclick="toggleModal('modal-leverage')" class="py-1 bg-gray-100 rounded-sm font-bold text-[10px]">20x</button>
+                    <button onclick="toggleModal('modal-leverage')" class="py-1 bg-white border border-gray-100 rounded-sm font-bold text-[10px] flex items-center justify-center space-x-1">
+                        <span class="text-green-500">20x</span>
+                        <span class="text-gray-300">/</span>
+                        <span class="text-red-500">10x</span>
+                    </button>
                 </div>
 
                 <!-- 开仓 / 平仓 -->
@@ -1578,60 +1602,123 @@
             </div>
         </div>
 
-        <!-- 右侧账户信息面板（保持不变） -->
+        <!-- 右侧账户信息面板 (优化版) -->
         <aside class="w-[300px] bg-white flex flex-col p-4 border-l border-gray-100 overflow-y-auto">
+            <!-- ===== 1. 保证金区块 ===== -->
             <div class="mb-5">
-                <p class="font-black text-[11px] mb-3 uppercase tracking-wider text-black">賬戶</p>
-                <div class="flex gap-2">
-                    <button class="flex-1 py-1.5 bg-black text-white rounded-[2px] text-[10px] font-bold hover:bg-gray-800 transition">充值</button>
-                    <button class="flex-1 py-1.5 border border-gray-200 rounded-[2px] text-[10px] font-bold hover:bg-gray-50 transition">提現</button>
-                </div>
-            </div>
-            <div class="mb-5">
-                <p class="font-black text-[11px] mb-2 uppercase tracking-wider text-black border-b border-gray-50 pb-1">賬戶權益</p>
-                <div class="space-y-2.5 pt-1">
-                    <div class="flex justify-between items-center text-[10px]">
-                        <span class="text-gray-400">總資產價值</span>
-                        <span class="font-bold text-gray-900">12,450.50 USDT</span>
+                <p class="font-black text-[11px] mb-2 uppercase tracking-wider text-black border-b border-gray-50 pb-1">全仓保證金</p>
+                <div class="space-y-3 pt-1">
+                    <!-- 账户保证金比例 + 仪表盘图标 -->
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-400 text-[10px]">賬戶保證金比例</span>
+                        <div class="flex items-center space-x-2">
+                            <!-- 仪表盘图标 (半圆弧，颜色从绿到红，指针指向当前比例) -->
+                            <svg class="w-8 h-5" viewBox="0 0 40 20">
+                                <!-- 背景弧（灰） -->
+                                <path d="M5 18 A15 15 0 0 1 35 18" fill="none" stroke="#e5e7eb" stroke-width="4" stroke-linecap="round"/>
+                                <!-- 风险弧 (绿色到红色渐变，根据保证金比例计算弧长) -->
+                                <!-- 高风险示例：红色弧较长 -->
+                                <path d="M5 18 A15 15 0 0 1 32 10" fill="none" stroke="url(#riskGradient)" stroke-width="4" stroke-linecap="round"/>
+                                <!-- 指针 -->
+                                <circle cx="32" cy="10" r="2" fill="#ef4444"/>
+                                <defs>
+                                    <linearGradient id="riskGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="#22c55e"/>
+                                        <stop offset="50%" stop-color="#eab308"/>
+                                        <stop offset="100%" stop-color="#ef4444"/>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                            <!-- 数值及颜色 -->
+                            <span class="font-bold text-green-500 text-[10px]">731.39%</span>
+                        </div>
                     </div>
-                    <div class="flex justify-between items-center text-[10px]">
-                        <span class="text-gray-400">可用資產</span>
-                        <span class="font-bold text-gray-900">12,000.00 USDT</span>
-                    </div>
-                    <div class="flex justify-between items-center text-[10px]">
-                        <span class="text-gray-400">凍結保證金</span>
-                        <span class="font-bold text-gray-900">450.50 USDT</span>
-                    </div>
-                    <div class="flex justify-between items-center text-[10px]">
-                        <span class="text-gray-400">未實現盈虧</span>
-                        <span class="text-green-500 font-bold">+166.05 USDT</span>
-                    </div>
-                    <div class="flex justify-between items-center text-[10px]">
-                        <span class="text-blue-500 font-medium">可提現資產</span>
-                        <span class="font-bold text-gray-900 border-b border-dotted border-blue-200">12,000.00 USDT</span>
-                    </div>
-                </div>
-            </div>
-            <div class="mb-2">
-                <p class="font-black text-[11px] mb-2 uppercase tracking-wider text-black border-b border-gray-50 pb-1">保證金</p>
-                <div class="space-y-2.5 pt-1">
-                    <div class="flex justify-between items-center text-[10px]">
-                        <span class="text-gray-400">賬戶保證金比例</span>
-                        <span class="text-green-500 font-bold">0.85%</span>
-                    </div>
+                    <!-- 账户维持保证金 -->
                     <div class="flex justify-between items-center text-[10px]">
                         <span class="text-gray-400">賬戶維持保證金</span>
-                        <span class="font-bold text-gray-900">--</span>
+                        <span class="font-bold text-gray-900">1,043.23 USDT</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== 2. 永续账户区块 ===== -->
+            <div class="mb-2">
+                <p class="font-black text-[11px] mb-2 uppercase tracking-wider text-black border-b border-gray-50 pb-1">永續賬戶</p>
+                <div class="space-y-2.5 pt-1">
+                    <!-- 总权益 -->
+                    <div class="flex justify-between items-center text-[10px]">
+                        <span class="text-gray-400">總權益</span>
+                        <span class="font-bold text-gray-900">12,450.50 USDT</span>
+                    </div>
+                    <!-- 未实现盈亏（根据正负值动态显示颜色） -->
+                    <div class="flex justify-between items-center text-[10px]">
+                        <span class="text-gray-400">未實現盈虧</span>
+                        <span class="font-bold text-green-500">+166.05 USDT</span> <!-- 正数绿色，负数红色 -->
+                    </div>
+                    <!-- 操作按钮（充值 + 划转） -->
+                    <div class="flex gap-2 mt-3">
+                        <button class="flex-1 py-2 bg-black text-white rounded-[2px] text-[10px] font-bold hover:bg-gray-800 transition">充值</button>
+                        <button class="flex-1 py-2 border border-gray-200 rounded-[2px] text-[10px] font-bold hover:bg-gray-50 transition">劃轉</button>
                     </div>
                 </div>
             </div>
         </aside>
     </div>
+
+    <!-- 底部信息条（固定悬浮） -->
+    <div class="fixed bottom-0 left-0 w-full h-7 border-t border-gray-100 flex items-center justify-between px-4 bg-white z-40 text-[10px]">
+
+        <!-- 左侧：信号强度 + 连接状态 + 延迟 -->
+        <div class="flex items-center space-x-2 text-gray-500 font-medium shrink-0">
+            <!-- 信号强度图标（4格） -->
+            <svg class="w-4 h-4 text-green-500" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="2" y="16" width="4" height="4" rx="0.5"/>
+                <rect x="8" y="12" width="4" height="8" rx="0.5"/>
+                <rect x="14" y="8" width="4" height="12" rx="0.5"/>
+                <rect x="20" y="4" width="4" height="16" rx="0.5"/>
+            </svg>
+            <span class="text-green-500 font-bold">已连接</span>
+            <span class="text-gray-400">154ms</span>
+        </div>
+
+        <!-- 中间：公告轮播 -->
+        <div class="flex-1 mx-6 overflow-hidden relative h-full flex items-center">
+            <div id="announcement-scroll" class="whitespace-nowrap flex space-x-12 animate-marquee">
+                <span class="text-gray-600 cursor-pointer hover:text-black">📢 系统升级维护通知（2026-07-15）</span>
+                <span class="text-gray-600 cursor-pointer hover:text-black">📢 新增 EOLUSDT 永续合约，最高支持 150x 杠杆</span>
+                <span class="text-gray-600 cursor-pointer hover:text-black">💰 邀请返佣活动火热进行中，立即参与瓜分 20,000 USDT</span>
+                <span class="text-gray-600 cursor-pointer hover:text-black">📢 关于 ETHUSDT 资金费率结算调整的公告</span>
+                <span class="text-gray-600 cursor-pointer hover:text-black">💰 交易大赛火热进行中，参与瓜分 $20万 奖池</span>
+            </div>
+        </div>
+
+        <!-- 右侧：社交媒体图标 -->
+        <div class="flex items-center space-x-3 text-gray-400 shrink-0">
+            <!-- X (Twitter) -->
+            <a href="#" class="hover:text-gray-800 transition-colors" title="X">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+            </a>
+            <!-- Discord -->
+            <a href="#" class="hover:text-gray-800 transition-colors" title="Discord">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+                </svg>
+            </a>
+            <!-- Telegram -->
+            <a href="#" class="hover:text-gray-800 transition-colors" title="Telegram">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.02-1.96 1.25-5.54 3.66-.52.36-1 .53-1.42.52-.47-.01-1.37-.26-2.03-.48-.82-.27-1.47-.42-1.41-.88.03-.24.37-.49 1.02-.74 3.99-1.74 6.65-2.89 7.98-3.44 3.8-1.58 4.59-1.85 5.1-1.86.11 0 .37.03.54.17.14.12.18.28.2.45-.01.06.01.24 0 .38z"/>
+                </svg>
+            </a>
+        </div>
+    </div>
 </main>
 
-<!-- 彈窗: 槓桿調整 -->
+<!-- 彈窗: 槓桿調整 (多空独立) -->
 <div id="modal-leverage" class="modal-overlay">
-    <div class="bn-modal" style="width: 400px;">
+    <div class="bn-modal" style="width: 420px;">
         <!-- Header -->
         <div class="flex justify-between items-center px-6 py-4 border-b border-gray-50">
             <span class="text-base font-bold">調整槓桿</span>
@@ -1641,55 +1728,116 @@
         </div>
 
         <!-- Content -->
-        <div class="p-6">
-            <div class="text-xs text-gray-500 mb-2">槓桿</div>
-
-            <!-- Stepper Input -->
-            <div class="flex items-center border border-gray-200 rounded px-1 py-1 mb-6 focus-within:border-blue-500 transition-colors">
-                <button class="w-10 h-10 flex items-center justify-center hover:bg-gray-50 text-xl font-light text-gray-400">-</button>
-                <div class="flex-1 flex items-center justify-center">
-                    <input type="number" class="w-12 text-right text-lg font-black outline-none bg-transparent" value="20">
-                    <span class="ml-1 text-base font-bold">x</span>
+        <div class="p-6 space-y-6">
+            <!-- ===== 做多杠杆 ===== -->
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-bold text-500">做多槓桿</span>
+                    <span class="text-[10px] text-gray-400">當前：<span id="long-leverage-display" class="font-bold text-green-500">20x</span></span>
                 </div>
-                <button class="w-10 h-10 flex items-center justify-center hover:bg-gray-50 text-xl font-light text-gray-400">+</button>
+
+                <!-- Stepper Input 做多 -->
+                <div class="flex items-center border border-gray-200 rounded px-1 py-1 mb-3 focus-within:border-green-500 transition-colors">
+                    <button class="w-10 h-10 flex items-center justify-center hover:bg-gray-50 text-xl font-light text-gray-400">-</button>
+                    <div class="flex-1 flex items-center justify-center">
+                        <input type="number" class="w-12 text-right text-lg font-black outline-none bg-transparent text-green-500" value="20" id="long-leverage-input">
+                        <span class="ml-1 text-base font-bold text-green-500">x</span>
+                    </div>
+                    <button class="w-10 h-10 flex items-center justify-center hover:bg-gray-50 text-xl font-light text-gray-400">+</button>
+                </div>
+
+                <!-- Slider with Marks 做多 -->
+                <div class="relative px-2 mb-3">
+                    <input type="range" min="1" max="150" value="20" class="bn-slider w-full h-1 bg-gray-100 rounded-full appearance-none accent-green-500" id="long-leverage-slider">
+                    <div class="absolute left-0 right-0 top-1/2 -translate-y-1/2 flex justify-between px-2 pointer-events-none">
+                        <div class="relative flex flex-col items-center">
+                            <span class="w-1.5 h-1.5 bg-green-500"></span>
+                            <span class="absolute top-4 text-[10px] text-gray-400 whitespace-nowrap">1x</span>
+                        </div>
+                        <div class="relative flex flex-col items-center" style="margin-left: -5%">
+                            <span class="w-1.5 h-1.5 bg-gray-200"></span>
+                            <span class="absolute top-4 text-[10px] text-gray-400 whitespace-nowrap">30x</span>
+                        </div>
+                        <div class="relative flex flex-col items-center" style="margin-left: -5%">
+                            <span class="w-1.5 h-1.5 bg-gray-200"></span>
+                            <span class="absolute top-4 text-[10px] text-gray-400 whitespace-nowrap">60x</span>
+                        </div>
+                        <div class="relative flex flex-col items-center" style="margin-left: -5%">
+                            <span class="w-1.5 h-1.5 bg-gray-200"></span>
+                            <span class="absolute top-4 text-[10px] text-gray-400 whitespace-nowrap">90x</span>
+                        </div>
+                        <div class="relative flex flex-col items-center" style="margin-left: -5%">
+                            <span class="w-1.5 h-1.5 bg-gray-200"></span>
+                            <span class="absolute top-4 text-[10px] text-gray-400 whitespace-nowrap">120x</span>
+                        </div>
+                        <div class="relative flex flex-col items-center">
+                            <span class="w-1.5 h-1.5 bg-gray-200"></span>
+                            <span class="absolute top-4 text-[10px] text-gray-400 whitespace-nowrap">150x</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 做多风险提示 -->
+                <div class="text-[10px] text-gray-400 bg-green-50 p-2 rounded border border-green-100">
+                    <div class="flex"><span class="mr-1">•</span><span>杠杆倍数调整后最大可开：<b class="text-green-600 ml-1">50,000 USDT</b></span></div>
+                </div>
             </div>
 
-            <!-- Custom Slider with Marks -->
-            <div class="relative px-2 mb-10">
-                <input type="range" min="1" max="150" value="20" class="bn-slider w-full h-1 bg-gray-100 rounded-full appearance-none accent-blue-600">
-                <!-- 刻度點與文字 -->
-                <div class="absolute left-0 right-0 top-1/2 -translate-y-1/2 flex justify-between px-2 pointer-events-none">
-                    <div class="relative flex flex-col items-center">
-                        <span class="w-1.5 h-1.5 bg-blue-600"></span>
-                        <span class="absolute top-4 text-[10px] text-gray-400 whitespace-nowrap">1x</span>
+            <!-- 分割线 -->
+            <div class="border-t border-gray-100"></div>
+
+            <!-- ===== 做空杠杆 ===== -->
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-bold text-500">做空槓桿</span>
+                    <span class="text-[10px] text-gray-400">當前：<span id="short-leverage-display" class="font-bold text-red-500">10x</span></span>
+                </div>
+
+                <!-- Stepper Input 做空 -->
+                <div class="flex items-center border border-gray-200 rounded px-1 py-1 mb-3 focus-within:border-red-500 transition-colors">
+                    <button class="w-10 h-10 flex items-center justify-center hover:bg-gray-50 text-xl font-light text-gray-400">-</button>
+                    <div class="flex-1 flex items-center justify-center">
+                        <input type="number" class="w-12 text-right text-lg font-black outline-none bg-transparent text-red-500" value="10" id="short-leverage-input">
+                        <span class="ml-1 text-base font-bold text-red-500">x</span>
                     </div>
-                    <div class="relative flex flex-col items-center" style="margin-left: -5%">
-                        <span class="w-1.5 h-1.5 bg-gray-200"></span>
-                        <span class="absolute top-4 text-[10px] text-gray-400 whitespace-nowrap">30x</span>
-                    </div>
-                    <div class="relative flex flex-col items-center" style="margin-left: -5%">
-                        <span class="w-1.5 h-1.5 bg-gray-200"></span>
-                        <span class="absolute top-4 text-[10px] text-gray-400 whitespace-nowrap">60x</span>
-                    </div>
-                    <div class="relative flex flex-col items-center" style="margin-left: -5%">
-                        <span class="w-1.5 h-1.5 bg-gray-200"></span>
-                        <span class="absolute top-4 text-[10px] text-gray-400 whitespace-nowrap">90x</span>
-                    </div>
-                    <div class="relative flex flex-col items-center" style="margin-left: -5%">
-                        <span class="w-1.5 h-1.5 bg-gray-200"></span>
-                        <span class="absolute top-4 text-[10px] text-gray-400 whitespace-nowrap">120x</span>
-                    </div>
-                    <div class="relative flex flex-col items-center">
-                        <span class="w-1.5 h-1.5 bg-gray-200"></span>
-                        <span class="absolute top-4 text-[10px] text-gray-400 whitespace-nowrap">150x</span>
+                    <button class="w-10 h-10 flex items-center justify-center hover:bg-gray-50 text-xl font-light text-gray-400">+</button>
+                </div>
+
+                <!-- Slider with Marks 做空 -->
+                <div class="relative px-2 mb-3">
+                    <input type="range" min="1" max="150" value="10" class="bn-slider w-full h-1 bg-gray-100 rounded-full appearance-none accent-red-500" id="short-leverage-slider">
+                    <div class="absolute left-0 right-0 top-1/2 -translate-y-1/2 flex justify-between px-2 pointer-events-none">
+                        <div class="relative flex flex-col items-center">
+                            <span class="w-1.5 h-1.5 bg-red-500"></span>
+                            <span class="absolute top-4 text-[10px] text-gray-400 whitespace-nowrap">1x</span>
+                        </div>
+                        <div class="relative flex flex-col items-center" style="margin-left: -5%">
+                            <span class="w-1.5 h-1.5 bg-gray-200"></span>
+                            <span class="absolute top-4 text-[10px] text-gray-400 whitespace-nowrap">30x</span>
+                        </div>
+                        <div class="relative flex flex-col items-center" style="margin-left: -5%">
+                            <span class="w-1.5 h-1.5 bg-gray-200"></span>
+                            <span class="absolute top-4 text-[10px] text-gray-400 whitespace-nowrap">60x</span>
+                        </div>
+                        <div class="relative flex flex-col items-center" style="margin-left: -5%">
+                            <span class="w-1.5 h-1.5 bg-gray-200"></span>
+                            <span class="absolute top-4 text-[10px] text-gray-400 whitespace-nowrap">90x</span>
+                        </div>
+                        <div class="relative flex flex-col items-center" style="margin-left: -5%">
+                            <span class="w-1.5 h-1.5 bg-gray-200"></span>
+                            <span class="absolute top-4 text-[10px] text-gray-400 whitespace-nowrap">120x</span>
+                        </div>
+                        <div class="relative flex flex-col items-center">
+                            <span class="w-1.5 h-1.5 bg-gray-200"></span>
+                            <span class="absolute top-4 text-[10px] text-gray-400 whitespace-nowrap">150x</span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Risk Warnings -->
-            <div class="space-y-2 text-[10px] text-gray-400 leading-relaxed bg-gray-50 p-3 rounded border border-gray-100">
-                <div class="flex"><span class="mr-1">•</span><span>當前槓桿倍數最高可持有頭寸：<b class="text-black ml-1">100,000,000 USDT</b></span></div>
-                <div class="flex"><span class="mr-1">•</span><span>槓桿調整將同時影響當前倉位和掛單的槓桿。</span></div>
+                <!-- 做空风险提示 -->
+                <div class="text-[10px] text-gray-400 bg-red-50 p-2 rounded border border-red-100">
+                    <div class="flex"><span class="mr-1">•</span><span>杠杆倍数调整后最大可开：<b class="text-red-600 ml-1">50,000 USDT</b></span></div>
+                </div>
             </div>
         </div>
 
@@ -2341,6 +2489,17 @@
 
 <script>
     // ==================== 通用工具 ====================
+    // 底部公告轮播 - 鼠标悬停暂停
+    const scrollContainer = document.getElementById('announcement-scroll');
+    if (scrollContainer) {
+        scrollContainer.addEventListener('mouseenter', () => {
+            scrollContainer.style.animationPlayState = 'paused';
+        });
+        scrollContainer.addEventListener('mouseleave', () => {
+            scrollContainer.style.animationPlayState = 'running';
+        });
+    }
+
     function toggleModal(id) {
         const modal = document.getElementById(id);
         if (!modal) return;
@@ -2833,7 +2992,7 @@
         filterIds.forEach(id => document.getElementById(id)?.classList.add('hidden'));
 
         if (tabId === 'pos') {
-            h.innerHTML = `<th class="px-3 py-2 font-medium">合約</th><th class="px-3 py-2 font-medium">數量</th><th class="px-3 py-2 font-medium">開倉均價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="最新标记价格，用于计算盈亏和强平">標記價格</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="持仓达到盈亏平衡时的价格">盈虧平衡價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="预估触发强平的价格">預估強平價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="当前保证金与持仓价值的比率，越高风险越高，接近100%有爆仓风险">風險率</th><th class="px-3 py-2 font-medium">保證金</th><th class="px-3 py-2 font-medium">盈虧 (ROE%)</th><th class="px-3 py-2 font-medium">止盈/止損</th><th class="px-3 py-2 text-right"><button onclick="openCloseAllConfirm()" class="bg-gray-100 text-black px-2 py-0.5 rounded-[1px] hover:bg-gray-200 transition">一鍵平倉</button></th>`;
+            h.innerHTML = `<th class="px-3 py-2 font-medium">合約</th><th class="px-3 py-2 font-medium">數量</th><th class="px-3 py-2 font-medium">開倉均價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="最新标记价格，用于计算盈亏和强平">標記價格</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="持仓达到盈亏平衡时的价格">盈虧平衡價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="预估触发强平的价格">預估強平價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="当前保证金与持仓价值的比率，越高风险越高，接近100%有爆仓风险">風險率</th><th class="px-3 py-2 font-medium">保證金</th><th class="px-3 py-2 font-medium">盈虧 (ROE%)</th><th class="px-3 py-2 text-right"><button onclick="openCloseAllConfirm()" class="bg-gray-100 text-black px-2 py-0.5 rounded-[1px] hover:bg-gray-200 transition">一鍵平倉</button><th class="px-3 py-2 font-medium">止盈/止損</th></th>`;
             b.innerHTML = `<tr class="hover:bg-gray-50 transition-colors border-b border-gray-50">
             <td class="px-3 py-2.5 whitespace-nowrap"><div class="font-bold text-black text-[10px]">BTCUSDT <span class="text-green-500 bg-green-50 px-1 rounded-[1px]">20x</span></div></td>
             <td class="px-3 py-2.5 whitespace-nowrap font-medium text-gray-900"><div class="flex items-center">0.500 BTC<button onclick="toggleModal('modal-unit-switch')" class="ml-1.5 p-0.5 hover:bg-gray-100 rounded text-gray-400"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 11H13.5M13.5 11L11 8.5M13.5 11L11 13.5M12 5H2.5M2.5 5L5 2.5M2.5 5L5 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></td>
@@ -2851,7 +3010,6 @@
                     </button>
                 </div>
             </td>
-            <td class="px-3 py-2.5 whitespace-nowrap">-- / --<button onclick="toggleModal('modal-tpsl')" class="text-blue-500 hover:text-blue-700 flex items-center group"><svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>設置</button></td>
             <td class="px-3 py-2.5 text-right whitespace-nowrap space-x-2">
                 <button onclick="openOrderConfirm('close-long-market')" class="text-gray-900 hover:text-blue-600 font-bold">市價</button>
                 <button onclick="openOrderConfirm('close-long-limit')" class="text-gray-900 hover:text-blue-600 font-bold">限價</button>
@@ -2868,6 +3026,7 @@
                     </div>
                 </span>
             </td>
+            <td class="px-3 py-2.5 whitespace-nowrap">-- / --<button onclick="toggleModal('modal-tpsl')" class="text-blue-500 hover:text-blue-700 flex items-center group"><svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>設置</button></td>
         </tr>`;
         } else if (tabId === 'order') {
             document.getElementById('hist-order-filters')?.classList.add('hidden');
