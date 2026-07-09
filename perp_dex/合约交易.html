@@ -724,7 +724,7 @@
                 <div class="flex items-center space-x-3 text-[10px] font-bold text-gray-400 mb-3 border-b border-gray-50 pb-1">
                     <span id="tab-limit" onclick="switchOrderMode('limit')" class="text-black border-b-2 border-black pb-1 cursor-pointer">限价委托</span>
                     <span id="tab-market" onclick="switchOrderMode('market')" class="hover:text-black cursor-pointer pb-1">市价委托</span>
-                    <span id="tab-profit-loss" onclick="switchOrderMode('')" class="hover:text-black cursor-pointer pb-1">止盈止损</span>
+                    <span id="tab-profit-loss" onclick="switchOrderMode('profit-loss')" class="hover:text-black cursor-pointer pb-1">止盈止损</span>
                 </div>
 
                 <div id="price-input-container" class="flex gap-1.5 mb-2">
@@ -744,6 +744,24 @@
                             title="最優價 (BBO) 可為限價單快速設置訂單簿上的最佳買入價或最佳賣出價。同向價指當前交易方向的最佳價格，對手價指相反交易方向的最佳價格。1 指訂單表最佳價格，5 指訂單表排序第 5 的最佳價格。">
                         最优价
                     </button>
+                </div>
+
+                <!-- 止盈止损下单区 (默认隐藏) -->
+                <div id="tpsl-order-container" class="hidden space-y-2 mb-2">
+                    <!-- 单向/双向选择（全宽下拉） -->
+                    <div class="relative" onclick="toggleTPSLModeDropdown(event)">
+                        <div class="flex items-center justify-between bg-gray-50 border border-gray-100 h-8 px-2 cursor-pointer text-[9px] font-bold text-gray-500">
+                            <span id="tpsl-mode-value">单向委托</span>
+                            <svg width="8" height="8" class="ml-1" viewBox="0 0 16 16"><path d="M8 11.2L3.2 6.4h9.6L8 11.2z" fill="currentColor"></path></svg>
+                        </div>
+                        <div id="tpsl-mode-dropdown" class="absolute top-full left-0 w-full bg-white border border-gray-200 shadow rounded-sm text-[10px] hidden z-50">
+                            <div class="px-3 py-2 hover:bg-gray-100 cursor-pointer" onclick="setTPSLMode('单向委托'); event.stopPropagation();">单向委托</div>
+                            <div class="px-3 py-2 hover:bg-gray-100 cursor-pointer" onclick="setTPSLMode('双向委托'); event.stopPropagation();">双向委托</div>
+                        </div>
+                    </div>
+
+                    <!-- 动态触发/委托价格区域 (由JS根据模式生成) -->
+                    <div id="tpsl-triggers-container" class="space-y-2"></div>
                 </div>
 
                 <!-- 数量输入 -->
@@ -2718,32 +2736,198 @@
         }
     }
 
+    // ==================== 止盈止损交互 ====================
+    let currentTPSLMode = '单向委托';   // 单向委托 / 双向委托
+    let currentTPSLDirection = ''; // 由开平仓决定
+
+    // 订单模式切换扩展
     function switchOrderMode(mode) {
         currentOrderMode = mode;
-        const container = document.getElementById('price-input-container');
-        const priceInput = document.querySelector('#price-input-container input');
-        const bestBtn = document.querySelector('#price-input-container button');
+        const priceContainer = document.getElementById('price-input-container');
+        const tpslContainer = document.getElementById('tpsl-order-container');
+        const gtcSelector = document.getElementById('gtc-selector');
+        const bestBtn = document.getElementById('btn-best-price');
         const tabLimit = document.getElementById('tab-limit');
         const tabMarket = document.getElementById('tab-market');
-        if (!container || !priceInput || !bestBtn) return;
+        const tabPL = document.getElementById('tab-profit-loss');
 
-        if (mode === 'market') {
-            container.classList.add('bg-gray-100', 'text-gray-500');
-            priceInput.disabled = true;
-            priceInput.value = '市價';
-            priceInput.classList.add('text-center');
-            bestBtn.classList.add('hidden');
-            if (tabMarket) tabMarket.className = "text-black border-b-2 border-black pb-1 cursor-pointer";
-            if (tabLimit) tabLimit.className = "hover:text-black cursor-pointer pb-1 text-gray-400";
-        } else {
-            container.classList.remove('bg-gray-100', 'text-gray-500');
-            priceInput.disabled = false;
-            priceInput.value = '65432.1';
-            priceInput.classList.remove('text-center');
-            bestBtn.classList.remove('hidden');
-            if (tabLimit) tabLimit.className = "text-black border-b-2 border-black pb-1 cursor-pointer";
-            if (tabMarket) tabMarket.className = "hover:text-black cursor-pointer pb-1 text-gray-400";
+        // 重置所有 tab 样式
+        const setTabStyle = (el, active) => {
+            if (active) el.className = "text-black border-b-2 border-black pb-1 cursor-pointer";
+            else el.className = "hover:text-black cursor-pointer pb-1 text-gray-400";
+        };
+
+        if (mode === 'limit') {
+            priceContainer.classList.remove('hidden');
+            tpslContainer.classList.add('hidden');
+            if (gtcSelector) gtcSelector.classList.remove('hidden');
+            setTabStyle(tabLimit, true);
+            setTabStyle(tabMarket, false);
+            setTabStyle(tabPL, false);
+        } else if (mode === 'market') {
+            priceContainer.classList.remove('hidden');
+            tpslContainer.classList.add('hidden');
+            if (gtcSelector) gtcSelector.classList.add('hidden');
+            setTabStyle(tabLimit, false);
+            setTabStyle(tabMarket, true);
+            setTabStyle(tabPL, false);
+            // 市价模式输入框置灰
+            const priceInput = document.getElementById('price-input');
+            if (priceInput) {
+                priceInput.disabled = true;
+                priceInput.value = '市價';
+                priceInput.classList.add('text-center');
+            }
+            if (bestBtn) bestBtn.classList.add('hidden');
+        } else if (mode === 'profit-loss') {
+            priceContainer.classList.add('hidden');
+            tpslContainer.classList.remove('hidden');
+            if (gtcSelector) gtcSelector.classList.add('hidden');
+            setTabStyle(tabLimit, false);
+            setTabStyle(tabMarket, false);
+            setTabStyle(tabPL, true);
+            // 恢复价格输入框（防止从市价切过来时残留状态）
+            const priceInput = document.getElementById('price-input');
+            if (priceInput) {
+                priceInput.disabled = false;
+                priceInput.value = '65432.1';
+                priceInput.classList.remove('text-center');
+            }
+            if (bestBtn) bestBtn.classList.remove('hidden');
+            // 渲染止盈止损内容
+            renderTPSLTriggers();
         }
+        // 更新下单按钮
+        renderOrderButtons();
+    }
+
+    // 切换单向/双向下拉
+    function toggleTPSLModeDropdown(e) {
+        e.stopPropagation();
+        document.getElementById('tpsl-mode-dropdown').classList.toggle('hidden');
+    }
+    function setTPSLMode(mode) {
+        currentTPSLMode = mode;
+        document.getElementById('tpsl-mode-value').innerText = mode;
+        document.getElementById('tpsl-mode-dropdown').classList.add('hidden');
+        renderTPSLTriggers();
+    }
+
+    // 渲染触发价格+委托价格区域
+    function renderTPSLTriggers() {
+        const container = document.getElementById('tpsl-triggers-container');
+        if (!container) return;
+        let html = '';
+
+        // 根据开平仓决定标题
+        const isClose = currentSide === 'close';
+        const isBidirect = currentTPSLMode === '双向委托';
+
+        const renderTriggerRow = (label, triggerPlaceholder, prefix) => {
+            const triggerTypeId = prefix + '-trigger';
+            const orderTypeId = prefix + '-order';
+            const orderPriceId = prefix + '-price';
+            return `
+    <div class="space-y-1">
+        <div class="flex justify-between text-[8px] text-gray-400"><span>${label}</span></div>
+        <div class="h-7 bg-gray-50 border border-gray-100 px-1.5 flex items-center">
+            <input class="w-full bg-transparent font-bold text-[10px] outline-none" placeholder="${triggerPlaceholder}" id="${triggerTypeId}">
+            <select class="text-[8px] bg-transparent border-l border-gray-200 pl-1 text-gray-500 outline-none ml-1" id="${triggerTypeId}-type">
+                <option>最新成交價</option>
+                <option>標記價格</option>
+            </select>
+        </div>
+        <!-- 委托价格标题（与单向委托/双向同样的点击下拉交互） -->
+        <div class="flex items-center text-[9px] font-bold text-gray-500 cursor-pointer relative" onclick="toggleOrderTypeDropdown(event, '${orderTypeId}')">
+            <span id="${orderTypeId}-label">市价</span>
+            <svg width="8" height="8" class="ml-1" viewBox="0 0 16 16"><path d="M8 11.2L3.2 6.4h9.6L8 11.2z" fill="currentColor"></path></svg>
+            <div id="${orderTypeId}-dropdown" class="absolute top-full left-0 mt-1 bg-white border border-gray-200 shadow rounded-sm text-[10px] hidden z-50 w-20">
+                <div class="px-3 py-1.5 hover:bg-gray-100 cursor-pointer" onclick="setOrderType('${orderTypeId}', '市价', '${orderPriceId}'); event.stopPropagation();">市价</div>
+                <div class="px-3 py-1.5 hover:bg-gray-100 cursor-pointer" onclick="setOrderType('${orderTypeId}', '限价', '${orderPriceId}'); event.stopPropagation();">限价</div>
+            </div>
+        </div>
+        <div class="h-7 bg-gray-50 border border-gray-100 px-1.5 flex items-center" id="${orderPriceId}-container">
+            <input class="w-full bg-transparent font-bold text-[10px] outline-none" id="${orderPriceId}" placeholder="委托价" disabled>
+        </div>
+    </div>`;
+        };
+
+        if (isClose) {
+            if (isBidirect) {
+                // 双向平仓：止盈 + 止损
+                html += renderTriggerRow('止盈', '止盈触发价', 'tp-trigger', 'tp-order', 'tp-price');
+                html += renderTriggerRow('止损', '止损触发价', 'sl-trigger', 'sl-order', 'sl-price');
+            } else {
+                // 单向平仓：触发价格
+                html += renderTriggerRow('触发价格', '触发价', 'tp-trigger', 'tp-order', 'tp-price');
+            }
+        } else {
+            // 开仓
+            if (isBidirect) {
+                html += renderTriggerRow('触发价格', '触发价', 'tp-trigger', 'tp-order', 'tp-price');
+                html += renderTriggerRow('触发价格', '触发价', 'sl-trigger', 'sl-order', 'sl-price');
+            } else {
+                html += renderTriggerRow('触发价格', '触发价', 'tp-trigger', 'tp-order', 'tp-price');
+            }
+        }
+        container.innerHTML = html;
+
+        // 初始化委托价格类型为市价（输入框置灰）
+        const allOrderTypeIds = isBidirect ? ['tp-order', 'sl-order'] : ['tp-order'];
+        allOrderTypeIds.forEach(id => {
+            const labelEl = document.getElementById(id + '-label');
+            const priceInput = document.getElementById(id === 'tp-order' ? 'tp-price' : 'sl-price');
+            if (labelEl) labelEl.innerText = '市价委托价格';
+            if (priceInput) {
+                priceInput.disabled = true;
+                priceInput.value = '市价';
+                priceInput.classList.add('text-center');
+            }
+        });
+    }
+
+    // 展开/收起委托价格类型下拉
+    function toggleOrderTypeDropdown(e, orderTypeId) {
+        e.stopPropagation();
+        const dropdown = document.getElementById(orderTypeId + '-dropdown');
+        if (dropdown) dropdown.classList.toggle('hidden');
+    }
+
+    // 选择委托价格类型（市价/限价）
+    function setOrderType(orderTypeId, type, priceInputId) {
+        const label = document.getElementById(orderTypeId + '-label');
+        const priceInput = document.getElementById(priceInputId);
+        const dropdown = document.getElementById(orderTypeId + '-dropdown');
+        if (label) label.innerText = type;
+        if (priceInput) {
+            if (type === '市价') {
+                priceInput.disabled = true;
+                priceInput.value = '市价';
+                priceInput.classList.add('text-center');
+            } else {
+                priceInput.disabled = false;
+                priceInput.value = '';
+                priceInput.placeholder = '委托价';
+                priceInput.classList.remove('text-center');
+            }
+        }
+        if (dropdown) dropdown.classList.add('hidden');
+    }
+
+    // 渲染下单按钮（根据开平仓和订单模式）
+    function renderOrderButtons() {
+        const container = document.getElementById('order-buttons-container');
+        if (!container) return;
+        let html = '';
+        if (currentSide === 'open') {
+            html = `
+        <button onclick="openOrderConfirm('long')" class="py-2 bg-green-500 text-white font-black rounded shadow-sm">开多</button>
+        <button onclick="openOrderConfirm('short')" class="py-2 bg-red-500 text-white font-black rounded shadow-sm">开空</button>`;
+        } else {
+            // 平仓方向由持仓决定，这里简单处理
+            html = `<button onclick="openOrderConfirm('close')" class="py-2 bg-orange-500 text-white font-black rounded shadow-sm col-span-2">平仓</button>`;
+        }
+        container.innerHTML = html;
     }
 
     function toggleBestPriceDropdown() {
@@ -3385,7 +3569,6 @@
     }
     setInterval(updateFooterTime, 1000);
     updateFooterTime();
-
     // ==================== 初始化 ====================
     window.addEventListener('DOMContentLoaded', function() {
         renderOrderBook();
