@@ -41,6 +41,30 @@
         #announcement-scroll::-webkit-scrollbar {
             display: none;
         }
+        /* 新币上线倒计时（原型） */
+        .kline-countdown-box {
+            min-width: 56px;
+            padding: 10px 8px;
+            background: #f9fafb;
+            border: 1px solid #f3f4f6;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .kline-countdown-num {
+            font-size: 28px;
+            font-weight: 900;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            line-height: 1;
+            color: #111827;
+            letter-spacing: -0.02em;
+        }
+        .kline-countdown-label {
+            font-size: 9px;
+            font-weight: 700;
+            color: #9ca3af;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -222,7 +246,9 @@
     <div class="flex border-b border-gray-100 h-[60vh]">
         <div class="flex-1 flex flex-col relative overflow-hidden bg-[#ffffff]">
             <!-- 核心主體：K線圖表頁面 -->
-            <div id="view-kline" class="flex-1 bg-white flex flex-col overflow-hidden text-[#1e2329] font-medium border-r border-gray-100">
+            <div id="view-kline" class="flex-1 bg-white flex flex-col overflow-hidden text-[#1e2329] font-medium border-r border-gray-100 relative">
+                <!-- 正常 K 線狀態 -->
+                <div id="kline-state-normal" class="flex-1 flex flex-col overflow-hidden">
                 <div class="h-9 flex items-center px-2 border-b border-gray-50 shrink-0 bg-white justify-between">
 
                     <!-- 左側：週期切換 + 基礎工具圖標 -->
@@ -271,6 +297,8 @@
                                 <path stroke-width="2.5" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
                             </svg>
                         </button>
+                        <!-- 原型切換按鈕（上線後移除） -->
+                        <button id="btn-kline-proto-toggle" onclick="toggleKlineMode()" class="ml-1 px-2 h-7 text-[9px] text-orange-500 border border-dashed border-orange-200 rounded-sm hover:bg-orange-50 transition-colors whitespace-nowrap" title="原型演示專用">切換：新幣倒計時</button>
                     </div>
                 </div>
 
@@ -365,6 +393,85 @@
                         <button class="text-blue-600 font-black bg-blue-50 px-1 rounded-sm transition-all">自動</button>
                     </div>
                 </footer>
+                </div>
+
+                <!-- 新幣上線倒計時狀態 -->
+                <div id="kline-state-countdown" class="hidden flex-1 flex flex-col overflow-hidden bg-white">
+                    <div class="h-9 flex items-center px-2 border-b border-gray-50 shrink-0 bg-white justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-0.5 bg-orange-50 text-orange-600 text-[9px] font-black rounded-sm uppercase tracking-wider">新幣上線</span>
+                            <span class="text-[11px] font-black text-gray-900 italic">PEPEUSDC·永續</span>
+                        </div>
+                        <div class="flex items-center space-x-1 shrink-0">
+                            <button onclick="switchView('kline')" class="px-3 h-7 rounded-sm bg-gray-900 text-white text-[11px] font-black italic">圖表</button>
+                            <button onclick="switchView('depth')" class="px-3 h-7 rounded-sm text-gray-400 hover:bg-gray-50 text-[11px] font-bold transition-colors">深度</button>
+                            <button onclick="switchView('details')" class="px-2 h-7 text-gray-400 hover:text-black text-[10px] font-bold transition-colors">詳情</button>
+                            <button onclick="switchView('funding')" class="px-2 h-7 text-gray-400 hover:text-black text-[10px] font-bold transition-colors">資金費率</button>
+                            <button id="btn-kline-proto-toggle-cd" onclick="toggleKlineMode()" class="ml-1 px-2 h-7 text-[9px] text-orange-500 border border-dashed border-orange-200 rounded-sm hover:bg-orange-50 transition-colors whitespace-nowrap" title="原型演示專用">切換：正常K線</button>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 flex flex-col items-center justify-center relative overflow-hidden">
+                        <div class="absolute inset-0 opacity-[0.03] pointer-events-none" style="background-image: radial-gradient(#000 1px, transparent 1px); background-size: 24px 24px;"></div>
+
+                        <div class="relative z-10 flex flex-col items-center text-center px-6 max-w-lg">
+                            <div class="w-14 h-14 rounded-full bg-gradient-to-br from-orange-100 to-orange-50 border border-orange-100 flex items-center justify-center mb-5 shadow-sm">
+                                <span class="text-xl font-black text-orange-500">P</span>
+                            </div>
+                            <h2 class="text-lg font-black text-gray-900 tracking-tight mb-1">PEPE / USDC 永續合約</h2>
+                            <p class="text-[10px] text-gray-400 font-medium mb-8">新幣永續合約即將開啟交易，敬請期待</p>
+
+                            <p class="text-[11px] font-bold text-gray-500 mb-4">距離交易開啟</p>
+                            <div class="flex items-center space-x-2 mb-6">
+                                <div class="kline-countdown-box">
+                                    <div id="cd-days" class="kline-countdown-num">02</div>
+                                    <div class="kline-countdown-label">天</div>
+                                </div>
+                                <span class="text-xl font-black text-gray-300 pb-4">:</span>
+                                <div class="kline-countdown-box">
+                                    <div id="cd-hours" class="kline-countdown-num">14</div>
+                                    <div class="kline-countdown-label">時</div>
+                                </div>
+                                <span class="text-xl font-black text-gray-300 pb-4">:</span>
+                                <div class="kline-countdown-box">
+                                    <div id="cd-mins" class="kline-countdown-num">35</div>
+                                    <div class="kline-countdown-label">分</div>
+                                </div>
+                                <span class="text-xl font-black text-gray-300 pb-4">:</span>
+                                <div class="kline-countdown-box">
+                                    <div id="cd-secs" class="kline-countdown-num">22</div>
+                                    <div class="kline-countdown-label">秒</div>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col items-center space-y-1.5 text-[10px]">
+                                <div class="text-gray-400">開盤時間</div>
+                                <div class="font-mono font-bold text-gray-700">2026-07-11 12:00:00 <span class="text-gray-400 font-medium">(UTC+8)</span></div>
+                            </div>
+
+                            <div class="mt-8 flex items-center space-x-6 text-[9px] text-gray-400 font-bold">
+                                <div class="flex flex-col items-center">
+                                    <span class="text-gray-900 font-black text-sm mb-0.5">50x</span>
+                                    <span>最高槓桿</span>
+                                </div>
+                                <div class="w-px h-6 bg-gray-100"></div>
+                                <div class="flex flex-col items-center">
+                                    <span class="text-gray-900 font-black text-sm mb-0.5">USDC</span>
+                                    <span>結算幣種</span>
+                                </div>
+                                <div class="w-px h-6 bg-gray-100"></div>
+                                <div class="flex flex-col items-center">
+                                    <span class="text-gray-900 font-black text-sm mb-0.5">永續</span>
+                                    <span>合約類型</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <footer class="h-6 border-t border-gray-100 flex items-center justify-center px-3 bg-white shrink-0">
+                        <span class="text-[9px] text-gray-400 font-medium">交易開啟前暫無行情數據 · 開盤後將自動切換至 K 線圖表</span>
+                    </footer>
+                </div>
             </div>
 
             <!-- 視圖 2: 深度圖 (包含右側懸浮功能按鈕) -->
@@ -3362,6 +3469,41 @@
             });
         });
     }
+
+    // ==================== K線原型切換：正常圖表 / 新幣上線倒計時 ====================
+    let isKlineCountdownMode = false;
+    let klineCountdownRemaining = 2 * 86400 + 14 * 3600 + 35 * 60 + 22; // 原型演示用初始值
+
+    function padCountdown(n) {
+        return String(Math.max(0, n)).padStart(2, '0');
+    }
+
+    function renderKlineCountdown() {
+        const days = Math.floor(klineCountdownRemaining / 86400);
+        const hours = Math.floor((klineCountdownRemaining % 86400) / 3600);
+        const mins = Math.floor((klineCountdownRemaining % 3600) / 60);
+        const secs = klineCountdownRemaining % 60;
+        const map = { 'cd-days': days, 'cd-hours': hours, 'cd-mins': mins, 'cd-secs': secs };
+        Object.entries(map).forEach(([id, val]) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = padCountdown(val);
+        });
+    }
+
+    function toggleKlineMode() {
+        isKlineCountdownMode = !isKlineCountdownMode;
+        const normalEl = document.getElementById('kline-state-normal');
+        const countdownEl = document.getElementById('kline-state-countdown');
+        if (normalEl) normalEl.classList.toggle('hidden', isKlineCountdownMode);
+        if (countdownEl) countdownEl.classList.toggle('hidden', !isKlineCountdownMode);
+        if (isKlineCountdownMode) renderKlineCountdown();
+    }
+
+    setInterval(() => {
+        if (!isKlineCountdownMode || klineCountdownRemaining <= 0) return;
+        klineCountdownRemaining--;
+        renderKlineCountdown();
+    }, 1000);
 
     let isPriceSelectMode = false;
 
