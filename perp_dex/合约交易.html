@@ -220,24 +220,24 @@
 <div class="h-12 border-b border-gray-100 flex items-center px-4 bg-white shrink-0">
     <!-- 交易对 + 杠杆标签 + 下拉箭头 -->
     <div class="flex items-center border-r border-gray-100 pr-4 mr-4 shrink-0 cursor-pointer" onclick="toggleMarketList(event)">
-        <span class="font-bold text-sm">BTCUSDT</span>
-        <span class="ml-1.5 text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-sm font-bold">100x</span>
+        <span id="market-pair-name" class="font-bold text-sm">BTCUSDT</span>
+        <span id="market-pair-leverage" class="ml-1.5 text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-sm font-bold">100x</span>
         <svg width="10" height="10" class="ml-1 text-gray-400" viewBox="0 0 16 16"><path d="M8 11.2L3.2 6.4h9.6L8 11.2z" fill="currentColor"></path></svg>
     </div>
     <!-- 价格与涨跌整合 -->
     <div class="flex flex-col items-start shrink-0 mr-6">
-        <span class="text-green-500 font-bold text-xs">65,432.10</span>
-        <span class="text-green-500 text-[9px] font-medium">-1.76%</span>
+        <span id="market-last-price" class="text-green-500 font-bold text-xs">65,432.10</span>
+        <span id="market-change" class="text-green-500 text-[9px] font-medium">-1.76%</span>
     </div>
     <!-- 其余信息列 -->
     <div class="flex items-center space-x-6 text-[10px]">
-        <div class="flex flex-col"><span class="text-gray-400 dashed-hint">標記價格</span><span class="text-gray-900 font-medium">65,391.3</span></div>
-        <div class="flex flex-col"><span class="text-gray-400 dashed-hint">指數價格</span><span class="text-gray-900 font-medium">65,391.3</span></div>
-        <div class="flex flex-col"><span class="text-gray-400 dashed-hint">資金費率 / 倒計時</span><span class="text-blue-500 font-medium">0.0001% <span class="text-gray-400">00:25:13</span></span></div>
-        <div class="flex flex-col"><span class="text-gray-400">24h成交量 (USDT)</span><span class="text-gray-900 font-medium">60.23 M</span></div>
-        <div class="flex flex-col"><span class="text-gray-400">未平倉合約 (USDT)</span><span class="text-gray-900 font-medium">3.23 M</span></div>
-        <div class="flex flex-col"><span class="text-gray-400">24h 最高價</span><span class="text-gray-900">66,332.5</span></div>
-        <div class="flex flex-col"><span class="text-gray-400">24h 最低價</span><span class="text-gray-900">61,332.5</span></div>
+        <div class="flex flex-col"><span class="text-gray-400 dashed-hint">標記價格</span><span id="market-mark-price" class="text-gray-900 font-medium">65,391.3</span></div>
+        <div class="flex flex-col"><span class="text-gray-400 dashed-hint">指數價格</span><span id="market-index-price" class="text-gray-900 font-medium">65,391.3</span></div>
+        <div class="flex flex-col"><span class="text-gray-400 dashed-hint">資金費率 / 倒計時</span><span id="market-funding" class="text-blue-500 font-medium">0.0001% <span class="text-gray-400">00:25:13</span></span></div>
+        <div class="flex flex-col"><span class="text-gray-400">24h成交量 (USDT)</span><span id="market-volume" class="text-gray-900 font-medium">60.23 M</span></div>
+        <div class="flex flex-col"><span class="text-gray-400">未平倉合約 (USDT)</span><span id="market-oi" class="text-gray-900 font-medium">3.23 M</span></div>
+        <div class="flex flex-col"><span class="text-gray-400">24h 最高價</span><span id="market-high" class="text-gray-900">66,332.5</span></div>
+        <div class="flex flex-col"><span class="text-gray-400">24h 最低價</span><span id="market-low" class="text-gray-900">61,332.5</span></div>
     </div>
 </div>
 
@@ -765,7 +765,7 @@
             </div>
 
             <!-- 訂單簿內容 -->
-            <div class="flex-1 flex flex-col overflow-hidden" id="ob-content-book">
+            <div class="flex-1 flex flex-col overflow-hidden relative" id="ob-content-book">
                 <!-- 表頭 -->
                 <div class="h-7 flex items-center justify-between px-3 text-[10px] text-gray-400 uppercase">
                     <span>價格</span><span>數量</span><span>累計</span>
@@ -774,15 +774,20 @@
                 <div id="sell-orders" class="flex-1 flex flex-col-reverse overflow-hidden font-medium"></div>
 
                 <!-- 中間價 + 標記價格 -->
-                <div class="py-2 text-center text-sm font-black text-green-500 bg-gray-50 relative">
-                    65,432.10
-                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-gray-500 border-b border-dashed border-gray-400 cursor-help" title="標記價格是根據現貨指數和資金費率計算出的合理價格，用於計算未實現盈虧和強平。">
+                <div id="ob-mid-price-bar" class="py-2 text-center text-sm font-black text-green-500 bg-gray-50 relative">
+                    <span id="ob-last-price">65,432.10</span>
+                    <span id="ob-mark-price" class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-gray-500 border-b border-dashed border-gray-400 cursor-help" title="標記價格是根據現貨指數和資金費率計算出的合理價格，用於計算未實現盈虧和強平。">
                         65,450.00
                     </span>
                 </div>
 
                 <!-- 買單容器 -->
                 <div id="buy-orders" class="flex-1 flex flex-col overflow-hidden font-medium"></div>
+
+                <!-- 空狀態提示（新幣倒計時） -->
+                <div id="ob-book-empty" class="hidden absolute inset-0 top-7 flex flex-col items-center justify-center bg-white/90 z-10 pointer-events-none">
+                    <span class="text-[10px] text-gray-300 font-medium">暫無掛單數據</span>
+                </div>
 
                 <!-- 底部工具欄 -->
                 <div class="h-8 border-t border-gray-50 flex items-center px-3 justify-between text-gray-400">
@@ -800,11 +805,15 @@
             </div>
 
             <!-- 最新成交內容 -->
-            <div class="flex-1 hidden flex flex-col overflow-hidden" id="ob-content-trades">
+            <div class="flex-1 hidden flex flex-col overflow-hidden relative" id="ob-content-trades">
                 <div class="h-7 flex items-center justify-between px-3 text-[10px] text-gray-400 uppercase">
                     <span>時間</span><span>價格(<span id="trades-unit-label">USDT</span>)</span><span>數量</span>
                 </div>
                 <div id="trades-list" class="flex-1 overflow-y-auto font-medium text-[10px]"></div>
+                <!-- 空狀態提示（新幣倒計時） -->
+                <div id="ob-trades-empty" class="hidden absolute inset-0 top-7 flex items-center justify-center bg-white z-10 pointer-events-none">
+                    <span class="text-[10px] text-gray-300 font-medium">暫無成交記錄</span>
+                </div>
             </div>
         </div>
 
@@ -2656,6 +2665,11 @@
         const sellEl = document.getElementById('sell-orders');
         const buyEl = document.getElementById('buy-orders');
         if (!sellEl || !buyEl) return;
+        if (isKlineCountdownMode) {
+            sellEl.innerHTML = '';
+            buyEl.innerHTML = '';
+            return;
+        }
         sellEl.innerHTML = '';
         buyEl.innerHTML = '';
 
@@ -2713,6 +2727,7 @@
         const list = document.getElementById('trades-list');
         if (!list) return;
         list.innerHTML = '';
+        if (isKlineCountdownMode) return;
         const now = Date.now();
         const basePrice = 65432.1;
         for (let i = 0; i < 20; i++) {
@@ -2738,12 +2753,16 @@
             tradesTab.className = 'flex-1';
             bookContent.classList.remove('hidden');
             tradesContent.classList.add('hidden');
+            const bookEmpty = document.getElementById('ob-book-empty');
+            if (bookEmpty) bookEmpty.classList.toggle('hidden', !isKlineCountdownMode);
         } else {
             tradesTab.className = 'flex-1 border-b-2 border-black text-black';
             bookTab.className = 'flex-1';
             tradesContent.classList.remove('hidden');
             bookContent.classList.add('hidden');
             renderTrades();
+            const tradesEmpty = document.getElementById('ob-trades-empty');
+            if (tradesEmpty) tradesEmpty.classList.toggle('hidden', !isKlineCountdownMode);
         }
     }
 
@@ -3474,6 +3493,104 @@
     let isKlineCountdownMode = false;
     let klineCountdownRemaining = 2 * 86400 + 14 * 3600 + 35 * 60 + 22; // 原型演示用初始值
 
+    const marketNormalSnapshot = {
+        pair: 'BTCUSDT',
+        leverage: '100x',
+        lastPrice: '65,432.10',
+        lastPriceClass: 'text-green-500 font-bold text-xs',
+        change: '-1.76%',
+        changeClass: 'text-green-500 text-[9px] font-medium',
+        markPrice: '65,391.3',
+        indexPrice: '65,391.3',
+        funding: '0.0001% <span class="text-gray-400">00:25:13</span>',
+        fundingClass: 'text-blue-500 font-medium',
+        volume: '60.23 M',
+        oi: '3.23 M',
+        high: '66,332.5',
+        low: '61,332.5',
+        obLastPrice: '65,432.10',
+        obMarkPrice: '65,450.00',
+        obMidBarClass: 'py-2 text-center text-sm font-black text-green-500 bg-gray-50 relative'
+    };
+
+    const marketCountdownSnapshot = {
+        pair: 'PEPEUSDC',
+        leverage: '50x',
+        lastPrice: '--',
+        lastPriceClass: 'text-gray-400 font-bold text-xs',
+        change: '--',
+        changeClass: 'text-gray-400 text-[9px] font-medium',
+        markPrice: '--',
+        indexPrice: '--',
+        funding: '--',
+        fundingClass: 'text-gray-400 font-medium',
+        volume: '--',
+        oi: '--',
+        high: '--',
+        low: '--',
+        obLastPrice: '--',
+        obMarkPrice: '--',
+        obMidBarClass: 'py-2 text-center text-sm font-black text-gray-400 bg-gray-50 relative'
+    };
+
+    function applyMarketBarState(snapshot) {
+        const setText = (id, val, isHtml) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (isHtml) el.innerHTML = val;
+            else el.textContent = val;
+        };
+        setText('market-pair-name', snapshot.pair);
+        setText('market-pair-leverage', snapshot.leverage);
+        const lastPriceEl = document.getElementById('market-last-price');
+        if (lastPriceEl) {
+            lastPriceEl.textContent = snapshot.lastPrice;
+            lastPriceEl.className = snapshot.lastPriceClass;
+        }
+        const changeEl = document.getElementById('market-change');
+        if (changeEl) {
+            changeEl.textContent = snapshot.change;
+            changeEl.className = snapshot.changeClass;
+        }
+        setText('market-mark-price', snapshot.markPrice);
+        setText('market-index-price', snapshot.indexPrice);
+        setText('market-funding', snapshot.funding, true);
+        const fundingEl = document.getElementById('market-funding');
+        if (fundingEl) fundingEl.className = snapshot.fundingClass;
+        setText('market-volume', snapshot.volume);
+        setText('market-oi', snapshot.oi);
+        setText('market-high', snapshot.high);
+        setText('market-low', snapshot.low);
+        setText('ob-last-price', snapshot.obLastPrice);
+        const markPriceEl = document.getElementById('ob-mark-price');
+        if (markPriceEl) markPriceEl.textContent = snapshot.obMarkPrice;
+        const midBarEl = document.getElementById('ob-mid-price-bar');
+        if (midBarEl) midBarEl.className = snapshot.obMidBarClass;
+    }
+
+    function applyOrderBookEmptyState(isEmpty) {
+        const bookEmpty = document.getElementById('ob-book-empty');
+        const tradesEmpty = document.getElementById('ob-trades-empty');
+        const sellEl = document.getElementById('sell-orders');
+        const buyEl = document.getElementById('buy-orders');
+        const tradesList = document.getElementById('trades-list');
+        if (bookEmpty) bookEmpty.classList.toggle('hidden', !isEmpty);
+        if (tradesEmpty) {
+            const tradesVisible = !document.getElementById('ob-content-trades')?.classList.contains('hidden');
+            tradesEmpty.classList.toggle('hidden', !isEmpty || !tradesVisible);
+        }
+        if (isEmpty) {
+            if (sellEl) sellEl.innerHTML = '';
+            if (buyEl) buyEl.innerHTML = '';
+            if (tradesList) tradesList.innerHTML = '';
+        } else {
+            renderOrderBook();
+            if (!document.getElementById('ob-content-trades')?.classList.contains('hidden')) {
+                renderTrades();
+            }
+        }
+    }
+
     function padCountdown(n) {
         return String(Math.max(0, n)).padStart(2, '0');
     }
@@ -3496,6 +3613,8 @@
         const countdownEl = document.getElementById('kline-state-countdown');
         if (normalEl) normalEl.classList.toggle('hidden', isKlineCountdownMode);
         if (countdownEl) countdownEl.classList.toggle('hidden', !isKlineCountdownMode);
+        applyMarketBarState(isKlineCountdownMode ? marketCountdownSnapshot : marketNormalSnapshot);
+        applyOrderBookEmptyState(isKlineCountdownMode);
         if (isKlineCountdownMode) renderKlineCountdown();
     }
 
