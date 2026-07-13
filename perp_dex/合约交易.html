@@ -2860,6 +2860,9 @@
             btnOpen.className = 'flex-1 py-1 font-bold text-gray-400';
             if (tpslSection) tpslSection.style.display = 'none';
         }
+        if (currentOrderMode === 'profit-loss') {
+            renderTPSLTriggers();
+        }
     }
 
     // ==================== 止盈止损交互 ====================
@@ -2939,6 +2942,25 @@
         renderTPSLTriggers();
     }
 
+    function getOrderRoleFromTypeId(orderTypeId) {
+        return orderTypeId.startsWith('sl') ? 'sl' : 'tp';
+    }
+
+    function getTPSLOrderTypeLabel(orderRole, priceType) {
+        const isMarket = priceType === '市价';
+        const isClose = currentSide === 'close';
+        const isBidirect = currentTPSLMode === '双向委托';
+
+        if (!isClose) {
+            return isMarket ? '下单市价委托' : '下单限价委托';
+        }
+        if (isBidirect) {
+            const prefix = orderRole === 'sl' ? '止损' : '止盈';
+            return isMarket ? `${prefix}市价委托` : `${prefix}限价委托`;
+        }
+        return isMarket ? '平仓市价委托' : '平仓限价委托';
+    }
+
     // 渲染触发价格+委托价格区域
     function renderTPSLTriggers() {
         const container = document.getElementById('tpsl-triggers-container');
@@ -2949,10 +2971,11 @@
         const isClose = currentSide === 'close';
         const isBidirect = currentTPSLMode === '双向委托';
 
-        const renderTriggerRow = (label, triggerPlaceholder, prefix) => {
-            const triggerTypeId = prefix + '-trigger';
-            const orderTypeId = prefix + '-order';
-            const orderPriceId = prefix + '-price';
+        const renderTriggerRow = (label, triggerPlaceholder, orderRole) => {
+            const triggerTypeId = orderRole + '-trigger';
+            const orderTypeId = orderRole + '-order';
+            const orderPriceId = orderRole + '-price';
+            const defaultLabel = getTPSLOrderTypeLabel(orderRole, '市价');
             return `
     <div class="space-y-1">
         <div class="flex justify-between text-[8px] text-gray-400"><span>${label}</span></div>
@@ -2965,7 +2988,7 @@
         </div>
         <!-- 委托价格标题（与单向委托/双向同样的点击下拉交互） -->
         <div class="flex items-center text-[9px] font-bold text-gray-500 cursor-pointer relative" onclick="toggleOrderTypeDropdown(event, '${orderTypeId}')">
-            <span id="${orderTypeId}-label">市价</span>
+            <span id="${orderTypeId}-label">${defaultLabel}</span>
             <svg width="8" height="8" class="ml-1" viewBox="0 0 16 16"><path d="M8 11.2L3.2 6.4h9.6L8 11.2z" fill="currentColor"></path></svg>
             <div id="${orderTypeId}-dropdown" class="absolute top-full left-0 mt-1 bg-white border border-gray-200 shadow rounded-sm text-[10px] hidden z-50 w-20">
                 <div class="px-3 py-1.5 hover:bg-gray-100 cursor-pointer" onclick="setOrderType('${orderTypeId}', '市价', '${orderPriceId}'); event.stopPropagation();">市价</div>
@@ -2981,19 +3004,19 @@
         if (isClose) {
             if (isBidirect) {
                 // 双向平仓：止盈 + 止损
-                html += renderTriggerRow('止盈', '止盈触发价', 'tp-trigger', 'tp-order', 'tp-price');
-                html += renderTriggerRow('止损', '止损触发价', 'sl-trigger', 'sl-order', 'sl-price');
+                html += renderTriggerRow('止盈', '止盈触发价', 'tp');
+                html += renderTriggerRow('止损', '止损触发价', 'sl');
             } else {
                 // 单向平仓：触发价格
-                html += renderTriggerRow('触发价格', '触发价', 'tp-trigger', 'tp-order', 'tp-price');
+                html += renderTriggerRow('触发价格', '触发价', 'tp');
             }
         } else {
             // 开仓
             if (isBidirect) {
-                html += renderTriggerRow('触发价格', '触发价', 'tp-trigger', 'tp-order', 'tp-price');
-                html += renderTriggerRow('触发价格', '触发价', 'sl-trigger', 'sl-order', 'sl-price');
+                html += renderTriggerRow('触发价格', '触发价', 'tp');
+                html += renderTriggerRow('触发价格', '触发价', 'sl');
             } else {
-                html += renderTriggerRow('触发价格', '触发价', 'tp-trigger', 'tp-order', 'tp-price');
+                html += renderTriggerRow('触发价格', '触发价', 'tp');
             }
         }
         container.innerHTML = html;
@@ -3001,9 +3024,10 @@
         // 初始化委托价格类型为市价（输入框置灰）
         const allOrderTypeIds = isBidirect ? ['tp-order', 'sl-order'] : ['tp-order'];
         allOrderTypeIds.forEach(id => {
+            const orderRole = getOrderRoleFromTypeId(id);
             const labelEl = document.getElementById(id + '-label');
-            const priceInput = document.getElementById(id === 'tp-order' ? 'tp-price' : 'sl-price');
-            if (labelEl) labelEl.innerText = '市价委托价格';
+            const priceInput = document.getElementById(orderRole + '-price');
+            if (labelEl) labelEl.innerText = getTPSLOrderTypeLabel(orderRole, '市价');
             if (priceInput) {
                 priceInput.disabled = true;
                 priceInput.value = '市价';
@@ -3024,7 +3048,8 @@
         const label = document.getElementById(orderTypeId + '-label');
         const priceInput = document.getElementById(priceInputId);
         const dropdown = document.getElementById(orderTypeId + '-dropdown');
-        if (label) label.innerText = type;
+        const orderRole = getOrderRoleFromTypeId(orderTypeId);
+        if (label) label.innerText = getTPSLOrderTypeLabel(orderRole, type);
         if (priceInput) {
             if (type === '市价') {
                 priceInput.disabled = true;
