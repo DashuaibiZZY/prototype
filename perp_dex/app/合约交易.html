@@ -18,8 +18,11 @@
         .countdown-num { font-size: 16px; font-weight: 900; color: #111827; font-variant-numeric: tabular-nums; }
         .countdown-label { font-size: 9px; color: #9ca3af; font-weight: 700; margin-top: 2px; }
 
-        .guest-mask { position: absolute; inset: 0; background: rgba(255,255,255,.72); backdrop-filter: blur(1px); z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; border-radius: 38px; }
         .pair-row:active { background: #f9fafb; }
+        .pair-tab { color: #9ca3af; font-weight: 700; font-size: 12px; padding-bottom: 10px; position: relative; cursor: pointer; white-space: nowrap; flex-shrink: 0; background: none; border: none; }
+        .pair-tab.active { color: #111827; font-weight: 900; }
+        .pair-tab.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: #111827; border-radius: 1px; }
+        .pair-sheet-panel { height: 82%; min-height: 82%; }
 
         .phone-shell { width: 375px; height: 812px; background: #000; border-radius: 50px; padding: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative; border: 4px solid #333; }
         .screen { width: 100%; height: 100%; background: #fff; border-radius: 38px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
@@ -86,33 +89,18 @@
             </div>
         </header>
 
-        <!-- 待開盤倒計時橫幅 -->
-        <div id="premarket-banner" class="hidden px-4 py-3 bg-orange-50 border-b border-orange-100 shrink-0">
-            <div class="flex items-center space-x-2 mb-2">
-                <span class="px-1.5 py-0.5 bg-orange-100 text-orange-600 text-[9px] font-black rounded-sm uppercase">新幣上線</span>
-                <span class="text-[11px] font-black text-gray-900">PEPEUSDT·永續</span>
-            </div>
-            <p class="text-[10px] text-gray-500 mb-2">新幣永續合約即將開啟交易，敬請期待</p>
-            <div class="flex items-center space-x-1.5">
-                <div class="countdown-box"><div id="cd-days" class="countdown-num">02</div><div class="countdown-label">天</div></div>
-                <span class="text-gray-300 font-black">:</span>
-                <div class="countdown-box"><div id="cd-hours" class="countdown-num">14</div><div class="countdown-label">時</div></div>
-                <span class="text-gray-300 font-black">:</span>
-                <div class="countdown-box"><div id="cd-mins" class="countdown-num">35</div><div class="countdown-label">分</div></div>
-                <span class="text-gray-300 font-black">:</span>
-                <div class="countdown-box"><div id="cd-secs" class="countdown-num">22</div><div class="countdown-label">秒</div></div>
-            </div>
-        </div>
-
         <div class="flex-1 overflow-y-auto no-scrollbar relative">
             <!-- 2. 中間交易區域 (盤口 + 面板) -->
             <div class="flex px-4 py-3 space-x-4">
 
                 <!-- 2.1 左側盤口深度 -->
-                <div class="w-[45%] flex flex-col relative">
+                <div class="w-[45%] flex flex-col relative min-h-[320px]">
                     <div class="text-[10px] mb-3">
                         <span id="funding-rate-trigger" onclick="openSheet('funding-sheet')" class="text-gray-400 dashed-underline cursor-pointer active:opacity-70">資金費率 / <span id="funding-rate-value">08:42:15</span></span>
                     </div>
+
+                    <!-- 正常盤口內容 -->
+                    <div id="ob-normal-content" class="flex flex-col flex-1">
                     <div class="flex justify-between text-[10px] text-gray-400 mb-2 font-bold uppercase">
                         <span>價格(USDT)</span>
                         <span id="ob-qty-unit-label">數量(BTC)</span>
@@ -147,8 +135,28 @@
                         </div>
                         <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
                     </div>
-                    <div id="ob-empty-overlay" class="hidden absolute inset-0 top-8 flex flex-col items-center justify-center bg-white/95 z-10 rounded">
-                        <span class="text-[10px] text-gray-300 font-medium">暫無掛單數據</span>
+                    </div>
+
+                    <!-- 待開盤：覆蓋盤口區域 -->
+                    <div id="premarket-ob-panel" class="hidden absolute inset-0 top-6 flex flex-col items-center justify-center bg-white z-10 px-2 text-center">
+                        <div class="w-11 h-11 rounded-full bg-gradient-to-br from-orange-100 to-orange-50 border border-orange-100 flex items-center justify-center mb-3">
+                            <span class="text-lg font-black text-orange-500">P</span>
+                        </div>
+                        <div class="flex items-center space-x-1.5 mb-1">
+                            <span class="px-1.5 py-0.5 bg-orange-50 text-orange-600 text-[8px] font-black rounded-sm uppercase">新幣上線</span>
+                        </div>
+                        <p class="text-[11px] font-black text-gray-900 mb-0.5">PEPE / USDT 永續</p>
+                        <p class="text-[9px] text-gray-400 mb-4 leading-relaxed">新幣永續合約即將開啟交易，敬請期待</p>
+                        <p class="text-[10px] font-bold text-gray-500 mb-2">距離交易開啟</p>
+                        <div class="flex items-center space-x-1">
+                            <div class="countdown-box"><div id="cd-days" class="countdown-num">02</div><div class="countdown-label">天</div></div>
+                            <span class="text-gray-300 font-black text-sm">:</span>
+                            <div class="countdown-box"><div id="cd-hours" class="countdown-num">14</div><div class="countdown-label">時</div></div>
+                            <span class="text-gray-300 font-black text-sm">:</span>
+                            <div class="countdown-box"><div id="cd-mins" class="countdown-num">35</div><div class="countdown-label">分</div></div>
+                            <span class="text-gray-300 font-black text-sm">:</span>
+                            <div class="countdown-box"><div id="cd-secs" class="countdown-num">22</div><div class="countdown-label">秒</div></div>
+                        </div>
                     </div>
                 </div>
 
@@ -266,28 +274,33 @@
                     <!-- 開倉區 -->
                     <div id="open-order-section" class="space-y-2">
                         <div class="space-y-0.5">
-                            <div class="flex justify-between text-[10px] text-gray-400"><span>最大可開</span><span class="font-bold text-gray-900">50,000 USDT</span></div>
-                            <div class="flex justify-between text-[10px] text-gray-400"><span>強平價格</span><span class="font-bold text-gray-900">65,241.2</span></div>
+                            <div class="flex justify-between text-[10px] text-gray-400"><span>最大可開</span><span id="stat-max-open-long" class="font-bold text-gray-900">50,000 USDT</span></div>
+                            <div class="flex justify-between text-[10px] text-gray-400"><span>強平價格</span><span id="stat-liq-long" class="font-bold text-gray-900">65,241.2</span></div>
                         </div>
-                        <button onclick="openOrderConfirm('long')" class="w-full bg-green-500 text-white py-2 rounded text-xs font-black">買入 / 做多</button>
+                        <button id="btn-open-long" onclick="openOrderConfirm('long')" class="w-full bg-green-500 text-white py-2 rounded text-xs font-black">買入 / 做多</button>
 
                         <div class="space-y-0.5 pt-1">
-                            <div class="flex justify-between text-[10px] text-gray-400"><span>最大可開</span><span class="font-bold text-gray-900">50,000 USDT</span></div>
-                            <div class="flex justify-between text-[10px] text-gray-400"><span>強平價格</span><span class="font-bold text-gray-900">78,120.5</span></div>
+                            <div class="flex justify-between text-[10px] text-gray-400"><span>最大可開</span><span id="stat-max-open-short" class="font-bold text-gray-900">50,000 USDT</span></div>
+                            <div class="flex justify-between text-[10px] text-gray-400"><span>強平價格</span><span id="stat-liq-short" class="font-bold text-gray-900">78,120.5</span></div>
                         </div>
-                        <button onclick="openOrderConfirm('short')" class="w-full bg-red-500 text-white py-2 rounded text-xs font-black">賣出 / 做空</button>
+                        <button id="btn-open-short" onclick="openOrderConfirm('short')" class="w-full bg-red-500 text-white py-2 rounded text-xs font-black">賣出 / 做空</button>
                     </div>
 
                     <!-- 平倉區 -->
                     <div id="close-order-section" class="hidden space-y-2">
                         <div class="space-y-0.5">
-                            <div class="flex justify-between text-[10px] text-gray-400"><span>可平多</span><span class="font-bold text-gray-900">0.050 BTC</span></div>
+                            <div class="flex justify-between text-[10px] text-gray-400"><span>可平多</span><span id="stat-close-long-qty" class="font-bold text-gray-900">0.050 BTC</span></div>
                         </div>
                         <button id="btn-close-long" onclick="openOrderConfirm('close-long')" class="w-full bg-red-500 text-white py-2 rounded text-xs font-black">平多</button>
                         <div class="space-y-0.5 pt-1">
-                            <div class="flex justify-between text-[10px] text-gray-400"><span>可平空</span><span class="font-bold text-gray-900">0.000 BTC</span></div>
+                            <div class="flex justify-between text-[10px] text-gray-400"><span>可平空</span><span id="stat-close-short-qty" class="font-bold text-gray-900">0.000 BTC</span></div>
                         </div>
                         <button id="btn-close-short" onclick="openOrderConfirm('close-short')" class="w-full bg-green-500 text-white py-2 rounded text-xs font-black opacity-40" disabled>平空</button>
+                    </div>
+
+                    <!-- 未登錄：單一交易按鈕 -->
+                    <div id="guest-trade-section" class="hidden">
+                        <button onclick="alert('請先登錄')" class="w-full bg-gray-900 text-white py-2.5 rounded text-xs font-black">登錄後交易</button>
                     </div>
                 </div>
             </div>
@@ -320,25 +333,25 @@
                             <div class="flex justify-between items-end">
                                 <div class="space-y-1">
                                     <p class="text-[10px] text-gray-400 font-bold uppercase">未實現盈虧(USDT)</p>
-                                    <p class="text-lg font-black text-green-500">+125.42</p>
+                                    <p id="pos-pnl" class="text-lg font-black text-green-500">+125.42</p>
                                 </div>
                                 <div class="text-right space-y-1">
                                     <p class="text-[10px] text-gray-400 font-bold dashed-underline inline-block">投資回報率</p>
-                                    <p class="text-sm font-black text-green-500">+12.35%</p>
+                                    <p id="pos-roi" class="text-sm font-black text-green-500">+12.35%</p>
                                 </div>
                             </div>
                             <div class="grid grid-cols-3 gap-2 py-2 border-t border-gray-50">
                                 <div class="space-y-1">
                                     <p class="text-gray-400 text-[10px] font-bold">持倉數量</p>
-                                    <p class="text-[11px] font-black">0.050 BTC</p>
+                                    <p id="pos-qty" class="text-[11px] font-black">0.050 BTC</p>
                                 </div>
                                 <div class="space-y-1">
                                     <p class="text-gray-400 text-[10px] font-bold">保證金</p>
-                                    <p class="text-[11px] font-black">1,240.00</p>
+                                    <p id="pos-margin" class="text-[11px] font-black">1,240.00</p>
                                 </div>
                                 <div class="space-y-1 text-right">
                                     <p class="text-gray-400 text-[10px] font-bold">強平價格</p>
-                                    <p class="text-[11px] font-black text-orange-500">65,241.2</p>
+                                    <p id="pos-liq" class="text-[11px] font-black text-orange-500">65,241.2</p>
                                 </div>
                             </div>
                             <div class="flex space-x-2 pt-2">
@@ -585,26 +598,25 @@
         <!-- ===== 底部弹层：交易对选择 ===== -->
         <div id="pair-sheet" class="hidden absolute inset-0 z-50 flex items-end rounded-[38px] overflow-hidden">
             <div class="absolute inset-0 bg-black/40" onclick="closeSheet('pair-sheet')"></div>
-            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet max-h-[88%] flex flex-col">
-                <div class="py-4 px-5 border-b border-gray-50 shrink-0">
-                    <h3 class="text-[13px] font-black text-gray-900 mb-3">選擇合約</h3>
-                    <div class="relative">
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet pair-sheet-panel flex flex-col">
+                <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 shrink-0"></div>
+                <div class="py-3 px-5 shrink-0">
+                    <h3 class="text-[15px] font-black text-gray-900 mb-3">選擇合約</h3>
+                    <div class="relative mb-3">
                         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2.5"/></svg>
                         <input type="text" placeholder="查詢" class="w-full bg-gray-100 rounded-xl py-2.5 pl-10 pr-4 text-xs outline-none">
                     </div>
-                    <div class="flex space-x-2 overflow-x-auto no-scrollbar mt-3">
-                        <span class="px-2.5 py-1 bg-gray-100 rounded-full text-[10px] font-bold shrink-0">收藏</span>
-                        <span class="px-2.5 py-1 bg-gray-900 text-white rounded-full text-[10px] font-bold shrink-0">全部</span>
-                        <span class="px-2.5 py-1 bg-gray-100 rounded-full text-[10px] font-bold shrink-0">新幣上線</span>
-                        <span class="px-2.5 py-1 bg-gray-100 rounded-full text-[10px] font-bold shrink-0">熱門</span>
+                    <div class="flex space-x-5 overflow-x-auto no-scrollbar border-b border-gray-100" id="pair-category-tabs">
+                        <button type="button" class="pair-tab" data-cat="fav" onclick="switchPairCategory('fav')">收藏</button>
+                        <button type="button" class="pair-tab active" data-cat="all" onclick="switchPairCategory('all')">全部</button>
+                        <button type="button" class="pair-tab" data-cat="new" onclick="switchPairCategory('new')">新幣上線</button>
+                        <button type="button" class="pair-tab" data-cat="hot" onclick="switchPairCategory('hot')">熱門</button>
                     </div>
                 </div>
-                <div class="px-5 py-2 grid grid-cols-3 text-[9px] text-gray-400 font-bold border-b border-gray-50 shrink-0">
+                <div class="px-5 py-2 grid grid-cols-3 text-[9px] text-gray-400 font-bold shrink-0">
                     <span>合約</span><span class="text-right">價格</span><span class="text-right">24H 漲跌幅</span>
                 </div>
-                <div class="flex-1 overflow-y-auto no-scrollbar divide-y divide-gray-50" id="pair-list">
-                    <!-- JS 注入 -->
-                </div>
+                <div class="flex-1 overflow-y-auto no-scrollbar divide-y divide-gray-50 min-h-0" id="pair-list"></div>
             </div>
         </div>
 
@@ -615,15 +627,6 @@
                 <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 shrink-0"></div>
                 <div id="order-filter-content" class="p-6 overflow-y-auto no-scrollbar"></div>
             </div>
-        </div>
-
-        <!-- 未登錄遮罩 -->
-        <div id="guest-overlay" class="guest-mask hidden">
-            <div class="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center text-2xl mb-4">🔒</div>
-            <h3 class="text-[15px] font-black text-gray-900 mb-2">登錄後開始交易</h3>
-            <p class="text-[11px] text-gray-500 leading-relaxed mb-5">登錄或註冊後可查看資產、下單交易與管理持倉</p>
-            <button onclick="toggleGuestMode()" class="w-full max-w-[220px] bg-black text-white py-3 rounded-xl text-[12px] font-black mb-2">登錄 / 註冊</button>
-            <button onclick="toggleGuestMode()" class="text-[11px] text-gray-400 font-bold">返回已登錄預覽</button>
         </div>
 
     </div>
@@ -649,6 +652,22 @@
     let isGuestMode = false;
     let klineCountdownRemaining = 2 * 86400 + 14 * 3600 + 35 * 60 + 22;
     let currentPair = 'BTCUSDT';
+    let currentPairCategory = 'all';
+
+    const loggedInSnapshot = {
+        balance: '12,450.00 USDT',
+        maxOpenLong: '50,000 USDT',
+        maxOpenShort: '50,000 USDT',
+        liqLong: '65,241.2',
+        liqShort: '78,120.5',
+        closeLongQty: '0.050 BTC',
+        closeShortQty: '0.000 BTC',
+        posPnl: '+125.42',
+        posRoi: '+12.35%',
+        posQty: '0.050 BTC',
+        posMargin: '1,240.00',
+        posLiq: '65,241.2'
+    };
 
     const priceMap = {
         '对手价 1': '72305.1',
@@ -660,11 +679,11 @@
     const orderTypeLabels = { limit: '限價委託', market: '市價委託', 'profit-loss': '止盈止損' };
 
     const pairListData = [
-        { pair: 'BTCUSDT', leverage: '100x', price: '65,432.10', change: '-1.76%', changeClass: 'text-red-500' },
-        { pair: 'ETHUSDT', leverage: '100x', price: '2,432.10', change: '-3.76%', changeClass: 'text-red-500' },
-        { pair: 'BNBUSDT', leverage: '75x', price: '723.50', change: '+2.45%', changeClass: 'text-green-500' },
-        { pair: 'SOLUSDT', leverage: '50x', price: '198.20', change: '+5.12%', changeClass: 'text-green-500' },
-        { pair: 'PEPEUSDT', leverage: '50x', price: '--', change: '--', changeClass: 'text-gray-400', premarket: true }
+        { pair: 'BTCUSDT', leverage: '100x', price: '65,432.10', change: '-1.76%', changeClass: 'text-red-500', cats: ['all', 'hot', 'fav'] },
+        { pair: 'ETHUSDT', leverage: '100x', price: '2,432.10', change: '-3.76%', changeClass: 'text-red-500', cats: ['all', 'hot'] },
+        { pair: 'BNBUSDT', leverage: '75x', price: '723.50', change: '+2.45%', changeClass: 'text-green-500', cats: ['all', 'hot', 'fav'] },
+        { pair: 'SOLUSDT', leverage: '50x', price: '198.20', change: '+5.12%', changeClass: 'text-green-500', cats: ['all', 'hot'] },
+        { pair: 'PEPEUSDT', leverage: '50x', price: '--', change: '--', changeClass: 'text-gray-400', premarket: true, cats: ['all', 'new'] }
     ];
 
     const mockOrderData = {
@@ -934,6 +953,7 @@
             if (cb) { cb.checked = false; toggleAttachTPSL(); }
         }
         if (currentOrderMode === 'profit-loss') renderTPSLTriggers();
+        updateTradeButtonsVisibility();
     }
 
     function selectOrderMode(mode) {
@@ -990,7 +1010,8 @@
     function renderPairList() {
         const list = document.getElementById('pair-list');
         if (!list) return;
-        list.innerHTML = pairListData.map(item => `
+        const items = pairListData.filter(item => item.cats.includes(currentPairCategory));
+        list.innerHTML = items.map(item => `
             <div class="pair-row px-5 py-3 grid grid-cols-3 items-center cursor-pointer" onclick="selectPair('${item.pair}', ${!!item.premarket})">
                 <div class="flex items-center space-x-1.5 min-w-0">
                     <svg class="w-3 h-3 text-gray-300 shrink-0" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/></svg>
@@ -1001,6 +1022,14 @@
                 <div class="text-right text-[11px] font-bold ${item.changeClass}">${item.change}</div>
             </div>
         `).join('');
+    }
+
+    function switchPairCategory(cat) {
+        currentPairCategory = cat;
+        document.querySelectorAll('#pair-category-tabs .pair-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.cat === cat);
+        });
+        renderPairList();
     }
 
     function selectPair(pair, premarket) {
@@ -1029,24 +1058,16 @@
     }
 
     function applyPremarketUI() {
-        const banner = document.getElementById('premarket-banner');
-        const emptyOb = document.getElementById('ob-empty-overlay');
-        const sellList = document.getElementById('ob-sell-list');
-        const buyList = document.getElementById('ob-buy-list');
-        const lastPrice = document.getElementById('ob-last-price');
-        const markPrice = document.getElementById('ob-mark-price');
+        const premarketPanel = document.getElementById('premarket-ob-panel');
+        const obNormal = document.getElementById('ob-normal-content');
         const changeBadge = document.getElementById('header-change-badge');
         const fundingValue = document.getElementById('funding-rate-value');
         const pairName = document.getElementById('header-pair-name');
         const btn = document.getElementById('btn-toggle-premarket');
 
         if (isPremarketMode) {
-            banner?.classList.remove('hidden');
-            emptyOb?.classList.remove('hidden');
-            sellList?.classList.add('hidden');
-            buyList?.classList.add('hidden');
-            if (lastPrice) { lastPrice.textContent = '--'; lastPrice.className = 'text-gray-400 text-sm font-black'; }
-            if (markPrice) markPrice.textContent = '--';
+            premarketPanel?.classList.remove('hidden');
+            obNormal?.classList.add('hidden');
             if (changeBadge) { changeBadge.textContent = '--'; changeBadge.className = 'bg-gray-200 text-gray-500 text-[10px] px-1.5 py-0.5 rounded-sm font-bold'; }
             if (fundingValue) fundingValue.textContent = '--';
             if (pairName) pairName.textContent = 'PEPEUSDT';
@@ -1054,12 +1075,8 @@
             if (btn) btn.textContent = '切换：正常交易';
             renderKlineCountdown();
         } else {
-            banner?.classList.add('hidden');
-            emptyOb?.classList.add('hidden');
-            sellList?.classList.remove('hidden');
-            buyList?.classList.remove('hidden');
-            if (lastPrice) { lastPrice.textContent = '72305.9'; lastPrice.className = 'text-green-500 text-sm font-black'; }
-            if (markPrice) markPrice.textContent = '72311.9';
+            premarketPanel?.classList.add('hidden');
+            obNormal?.classList.remove('hidden');
             if (changeBadge) { changeBadge.textContent = '+2.45%'; changeBadge.className = 'bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded-sm font-bold'; }
             if (fundingValue) fundingValue.textContent = '08:42:15';
             if (pairName) pairName.textContent = currentPair === 'PEPEUSDT' ? 'BTCUSDT' : currentPair;
@@ -1073,23 +1090,82 @@
         applyPremarketUI();
     }
 
+    function setGuestText(id, value) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+    }
+
+    function updateTradeButtonsVisibility() {
+        const guestTrade = document.getElementById('guest-trade-section');
+        const openSection = document.getElementById('open-order-section');
+        const closeSection = document.getElementById('close-order-section');
+        if (isGuestMode) {
+            openSection?.classList.add('hidden');
+            closeSection?.classList.add('hidden');
+            guestTrade?.classList.remove('hidden');
+        } else {
+            guestTrade?.classList.add('hidden');
+            if (currentSide === 'open') {
+                openSection?.classList.remove('hidden');
+                closeSection?.classList.add('hidden');
+            } else {
+                openSection?.classList.add('hidden');
+                closeSection?.classList.remove('hidden');
+            }
+        }
+    }
+
+    function applyGuestUI() {
+        const btn = document.getElementById('btn-toggle-guest');
+        const plusBtn = document.getElementById('deposit-plus-btn');
+        const closeAllBtn = document.querySelector('#positions-panel button[onclick*="close-all-modal"]');
+        const s = loggedInSnapshot;
+
+        if (btn) btn.textContent = isGuestMode ? '返回已登录' : '未登录状态';
+        plusBtn?.classList.toggle('hidden', isGuestMode);
+        closeAllBtn?.classList.toggle('hidden', isGuestMode);
+
+        if (isGuestMode) {
+            setGuestText('available-balance', '--');
+            setGuestText('stat-max-open-long', '--');
+            setGuestText('stat-max-open-short', '--');
+            setGuestText('stat-liq-long', '--');
+            setGuestText('stat-liq-short', '--');
+            setGuestText('stat-close-long-qty', '--');
+            setGuestText('stat-close-short-qty', '--');
+            setGuestText('pos-pnl', '--');
+            setGuestText('pos-roi', '--');
+            setGuestText('pos-qty', '--');
+            setGuestText('pos-margin', '--');
+            setGuestText('pos-liq', '--');
+            const posPnl = document.getElementById('pos-pnl');
+            const posRoi = document.getElementById('pos-roi');
+            if (posPnl) posPnl.className = 'text-lg font-black text-gray-400';
+            if (posRoi) posRoi.className = 'text-sm font-black text-gray-400';
+        } else {
+            setGuestText('available-balance', s.balance);
+            setGuestText('stat-max-open-long', s.maxOpenLong);
+            setGuestText('stat-max-open-short', s.maxOpenShort);
+            setGuestText('stat-liq-long', s.liqLong);
+            setGuestText('stat-liq-short', s.liqShort);
+            setGuestText('stat-close-long-qty', s.closeLongQty);
+            setGuestText('stat-close-short-qty', s.closeShortQty);
+            setGuestText('pos-pnl', s.posPnl);
+            setGuestText('pos-roi', s.posRoi);
+            setGuestText('pos-qty', s.posQty);
+            setGuestText('pos-margin', s.posMargin);
+            setGuestText('pos-liq', s.posLiq);
+            const posPnl = document.getElementById('pos-pnl');
+            const posRoi = document.getElementById('pos-roi');
+            if (posPnl) posPnl.className = 'text-lg font-black text-green-500';
+            if (posRoi) posRoi.className = 'text-sm font-black text-green-500';
+        }
+        updateTradeButtonsVisibility();
+    }
+
     function toggleGuestMode() {
         isGuestMode = !isGuestMode;
-        const overlay = document.getElementById('guest-overlay');
-        const btn = document.getElementById('btn-toggle-guest');
-        const balance = document.getElementById('available-balance');
-        const plusBtn = document.getElementById('deposit-plus-btn');
-        const positionsPanel = document.getElementById('positions-panel');
-
-        overlay?.classList.toggle('hidden', !isGuestMode);
-        if (btn) btn.textContent = isGuestMode ? '返回已登录' : '未登录状态';
-        if (balance) balance.textContent = isGuestMode ? '登录后查看' : '12,450.00 USDT';
-        plusBtn?.classList.toggle('hidden', isGuestMode);
-        if (positionsPanel && isGuestMode && currentPositionTab === 'positions') {
-            positionsPanel.querySelector('.px-4.pb-20')?.classList.add('opacity-40');
-        } else {
-            positionsPanel?.querySelector('.px-4.pb-20')?.classList.remove('opacity-40');
-        }
+        applyGuestUI();
     }
 
     function tickPremarketCountdown() {
