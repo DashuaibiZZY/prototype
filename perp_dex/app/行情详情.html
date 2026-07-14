@@ -144,8 +144,8 @@
             <section class="mt-2">
                 <div class="flex px-4 border-b border-gray-100 overflow-x-auto no-scrollbar">
                     <button onclick="switchMarketTab('orderbook')" id="tab-btn-orderbook" class="py-3 mr-6 text-[13px] font-black border-b-2 border-black shrink-0">訂單簿</button>
-                    <button onclick="switchMarketTab('funding')" id="tab-btn-funding" class="py-3 mr-6 text-[13px] font-bold text-gray-400 shrink-0">资金费率</button>
-                    <button onclick="switchMarketTab('trades')" id="tab-btn-trades" class="py-3 text-[13px] font-bold text-gray-400 shrink-0">最新成交</button>
+                    <button onclick="switchMarketTab('trades')" id="tab-btn-trades" class="py-3 mr-6 text-[13px] font-bold text-gray-400 shrink-0">最新成交</button>
+                    <button onclick="switchMarketTab('funding')" id="tab-btn-funding" class="py-3 text-[13px] font-bold text-gray-400 shrink-0">资金费率</button>
                 </div>
 
                 <!-- 訂單簿內容 (原有內容) -->
@@ -258,7 +258,6 @@
                                 <line x1="0" y1="50" x2="400" y2="50" stroke="#d1d5db" stroke-width="0.5" stroke-dasharray="2,2" />
                             </svg>
                         </div>
-                        <p class="text-[8px] text-gray-400">* 資金費率每 8 小時結算一次。</p>
                     </div>
 
                     <div class="border border-gray-100 rounded-lg overflow-hidden">
@@ -419,20 +418,19 @@
         const btnTr = document.getElementById('tab-btn-trades');
 
         [ob, funding, tr].forEach(el => el?.classList.add('hidden'));
-        [btnOb, btnFunding, btnTr].forEach(btn => {
-            if (!btn) return;
-            btn.className = btn === btnTr ? TAB_INACTIVE_LAST : TAB_INACTIVE;
-        });
+        if (btnOb) btnOb.className = TAB_INACTIVE;
+        if (btnTr) btnTr.className = TAB_INACTIVE;
+        if (btnFunding) btnFunding.className = TAB_INACTIVE_LAST;
 
         if (tab === 'orderbook') {
             ob?.classList.remove('hidden');
             if (btnOb) btnOb.className = TAB_ACTIVE;
-        } else if (tab === 'funding') {
-            funding?.classList.remove('hidden');
-            if (btnFunding) btnFunding.className = TAB_ACTIVE;
-        } else {
+        } else if (tab === 'trades') {
             tr?.classList.remove('hidden');
-            if (btnTr) btnTr.className = 'py-3 text-[13px] font-black border-b-2 border-black shrink-0';
+            if (btnTr) btnTr.className = TAB_ACTIVE;
+        } else {
+            funding?.classList.remove('hidden');
+            if (btnFunding) btnFunding.className = 'py-3 text-[13px] font-black border-b-2 border-black shrink-0';
         }
     }
 
