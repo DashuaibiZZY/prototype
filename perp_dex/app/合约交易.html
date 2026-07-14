@@ -14,9 +14,18 @@
         .proto-btn.alt { background: #fff; color: #111827; border: 1px solid #e5e7eb; }
         .proto-btn.warn { background: #ea580c; }
 
-        .countdown-box { background: #fff; border: 1px solid #fed7aa; border-radius: 8px; padding: 8px 10px; min-width: 44px; text-align: center; }
+        .countdown-box { background: #fff; border: 1px solid #fed7aa; border-radius: 6px; padding: 8px 10px; min-width: 44px; text-align: center; }
         .countdown-num { font-size: 16px; font-weight: 900; color: #111827; font-variant-numeric: tabular-nums; }
         .countdown-label { font-size: 9px; color: #9ca3af; font-weight: 700; margin-top: 2px; }
+        .countdown-compact .countdown-box { padding: 2px 3px; min-width: 0; width: 24px; border-radius: 4px; }
+        .countdown-compact .countdown-num { font-size: 9px; line-height: 1.1; }
+        .countdown-compact .countdown-label { font-size: 6px; margin-top: 1px; line-height: 1; }
+        .countdown-compact .countdown-sep { font-size: 8px; line-height: 1; flex-shrink: 0; }
+
+        .trade-panel { min-width: 0; overflow: hidden; }
+        .trade-field { min-width: 0; width: 100%; overflow: hidden; }
+        .trade-field input { min-width: 0; }
+        .trigger-select { width: 42px; max-width: 42px; flex-shrink: 0; font-size: 7px; padding-left: 2px; }
 
         .pair-row:active { background: #f9fafb; }
         .pair-tab { color: #9ca3af; font-weight: 700; font-size: 12px; padding-bottom: 10px; position: relative; cursor: pointer; white-space: nowrap; flex-shrink: 0; background: none; border: none; }
@@ -91,7 +100,7 @@
 
         <div class="flex-1 overflow-y-auto no-scrollbar relative">
             <!-- 2. 中間交易區域 (盤口 + 面板) -->
-            <div class="flex px-4 py-3 space-x-4">
+            <div class="flex px-4 py-3 space-x-4 min-w-0 overflow-hidden">
 
                 <!-- 2.1 左側盤口深度 -->
                 <div class="w-[45%] flex flex-col relative min-h-[320px]">
@@ -138,30 +147,30 @@
                     </div>
 
                     <!-- 待開盤：覆蓋盤口區域 -->
-                    <div id="premarket-ob-panel" class="hidden absolute inset-0 top-6 flex flex-col items-center justify-center bg-white z-10 px-2 text-center">
-                        <div class="w-11 h-11 rounded-full bg-gradient-to-br from-orange-100 to-orange-50 border border-orange-100 flex items-center justify-center mb-3">
-                            <span class="text-lg font-black text-orange-500">P</span>
+                    <div id="premarket-ob-panel" class="hidden absolute inset-0 top-6 flex flex-col items-center justify-center bg-white z-10 px-1 text-center overflow-hidden">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-100 to-orange-50 border border-orange-100 flex items-center justify-center mb-2">
+                            <span class="text-sm font-black text-orange-500">P</span>
                         </div>
-                        <div class="flex items-center space-x-1.5 mb-1">
-                            <span class="px-1.5 py-0.5 bg-orange-50 text-orange-600 text-[8px] font-black rounded-sm uppercase">新幣上線</span>
+                        <div class="flex items-center space-x-1 mb-1">
+                            <span class="px-1 py-0.5 bg-orange-50 text-orange-600 text-[7px] font-black rounded-sm uppercase">新幣上線</span>
                         </div>
-                        <p class="text-[11px] font-black text-gray-900 mb-0.5">PEPE / USDT 永續</p>
-                        <p class="text-[9px] text-gray-400 mb-4 leading-relaxed">新幣永續合約即將開啟交易，敬請期待</p>
-                        <p class="text-[10px] font-bold text-gray-500 mb-2">距離交易開啟</p>
-                        <div class="flex items-center space-x-1">
+                        <p class="text-[9px] font-black text-gray-900 mb-0.5 leading-tight">PEPE / USDT</p>
+                        <p class="text-[7px] text-gray-400 mb-2 leading-snug px-1">即將開啟交易</p>
+                        <p class="text-[8px] font-bold text-gray-500 mb-1.5">距離交易開啟</p>
+                        <div class="countdown-compact flex items-center justify-center gap-0.5 w-full max-w-[130px]">
                             <div class="countdown-box"><div id="cd-days" class="countdown-num">02</div><div class="countdown-label">天</div></div>
-                            <span class="text-gray-300 font-black text-sm">:</span>
+                            <span class="countdown-sep text-gray-300 font-black">:</span>
                             <div class="countdown-box"><div id="cd-hours" class="countdown-num">14</div><div class="countdown-label">時</div></div>
-                            <span class="text-gray-300 font-black text-sm">:</span>
+                            <span class="countdown-sep text-gray-300 font-black">:</span>
                             <div class="countdown-box"><div id="cd-mins" class="countdown-num">35</div><div class="countdown-label">分</div></div>
-                            <span class="text-gray-300 font-black text-sm">:</span>
+                            <span class="countdown-sep text-gray-300 font-black">:</span>
                             <div class="countdown-box"><div id="cd-secs" class="countdown-num">22</div><div class="countdown-label">秒</div></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 2.2 右側交易功能面板 -->
-                <div class="flex-1 flex flex-col space-y-2">
+                <div id="trade-panel" class="flex-1 flex flex-col space-y-2 trade-panel min-w-0">
                     <!-- 全倉 / 多空槓桿 -->
                     <div class="flex space-x-1">
                         <button id="btn-margin" onclick="openSheet('margin-sheet')" class="flex-1 bg-gray-100 py-1.5 rounded text-[11px] font-bold">全倉</button>
@@ -201,7 +210,7 @@
                     </div>
 
                     <!-- 止盈止損下單區 -->
-                    <div id="tpsl-order-container" class="hidden space-y-2">
+                    <div id="tpsl-order-container" class="hidden space-y-2 min-w-0 overflow-hidden">
                         <div class="relative" onclick="toggleTPSLModeDropdown(event)">
                             <div class="input-box flex justify-between items-center cursor-pointer">
                                 <span id="tpsl-mode-value" class="text-[10px] font-bold text-gray-600">單向委託</span>
@@ -244,27 +253,27 @@
                     </div>
 
                     <!-- 跟隨止盈止損（限價/市價 · 開倉） -->
-                    <div id="attach-tpsl-section">
+                    <div id="attach-tpsl-section" class="min-w-0 overflow-hidden">
                         <div class="flex items-center space-x-1">
-                            <input type="checkbox" id="check-tpsl" onchange="toggleAttachTPSL()" class="w-3 h-3 rounded-sm accent-black">
+                            <input type="checkbox" id="check-tpsl" onchange="toggleAttachTPSL()" class="w-3 h-3 rounded-sm accent-black shrink-0">
                             <span class="text-[11px] font-bold text-gray-500 dashed-underline">止盈/止損</span>
                         </div>
-                        <div id="attach-tpsl-inputs" class="hidden mt-2 space-y-2">
+                        <div id="attach-tpsl-inputs" class="hidden mt-2 space-y-2 min-w-0">
                             <div class="space-y-0.5">
                                 <div class="text-[8px] text-gray-400 font-bold">止盈</div>
-                                <div class="input-box flex items-center pt-0">
-                                    <input id="attach-tp-price" class="bg-transparent text-[10px] font-bold flex-1 outline-none" placeholder="價格">
-                                    <select class="text-[8px] bg-transparent border-l border-gray-200 pl-1 text-gray-500 outline-none ml-1">
-                                        <option>最新成交價</option><option>標記價格</option>
+                                <div class="input-box trade-field flex items-center pt-0 min-w-0">
+                                    <input id="attach-tp-price" class="bg-transparent text-[10px] font-bold flex-1 min-w-0 outline-none" placeholder="價格">
+                                    <select class="trigger-select bg-transparent border-l border-gray-200 text-gray-500 outline-none ml-1">
+                                        <option>最新價</option><option>標記價</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="space-y-0.5">
                                 <div class="text-[8px] text-gray-400 font-bold">止損</div>
-                                <div class="input-box flex items-center pt-0">
-                                    <input id="attach-sl-price" class="bg-transparent text-[10px] font-bold flex-1 outline-none" placeholder="價格">
-                                    <select class="text-[8px] bg-transparent border-l border-gray-200 pl-1 text-gray-500 outline-none ml-1">
-                                        <option>最新成交價</option><option>標記價格</option>
+                                <div class="input-box trade-field flex items-center pt-0 min-w-0">
+                                    <input id="attach-sl-price" class="bg-transparent text-[10px] font-bold flex-1 min-w-0 outline-none" placeholder="價格">
+                                    <select class="trigger-select bg-transparent border-l border-gray-200 text-gray-500 outline-none ml-1">
+                                        <option>最新價</option><option>標記價</option>
                                     </select>
                                 </div>
                             </div>
@@ -319,10 +328,10 @@
                 <div id="positions-panel">
                     <div class="flex justify-between items-center px-4 mb-4">
                         <span class="text-[11px] font-bold text-gray-500"><input type="checkbox" class="w-3 h-3 accent-black"> 隱藏其他合約</span>
-                        <button onclick="openModal('close-all-modal')" class="bg-gray-100 px-3 py-1.5 rounded text-[11px] font-bold">一鍵平倉</button>
+                        <button id="btn-close-all" onclick="openModal('close-all-modal')" class="bg-gray-100 px-3 py-1.5 rounded text-[11px] font-bold">一鍵平倉</button>
                     </div>
                     <div class="px-4 pb-20">
-                        <div class="border border-gray-100 rounded-lg p-4 space-y-4 shadow-sm">
+                        <div id="positions-card" class="border border-gray-100 rounded-lg p-4 space-y-4 shadow-sm">
                             <div class="flex justify-between items-start">
                                 <div class="flex items-center space-x-2">
                                     <div class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">多</div>
@@ -359,6 +368,9 @@
                                 <button class="flex-1 bg-gray-100 py-2 rounded text-[11px] font-bold">止盈止損</button>
                                 <button onclick="openOrderConfirm('close-long')" class="flex-1 bg-gray-100 py-2 rounded text-[11px] font-bold">平倉</button>
                             </div>
+                        </div>
+                        <div id="positions-empty" class="hidden py-16 text-center">
+                            <p class="text-[11px] font-bold text-gray-300">暫無持倉</p>
                         </div>
                     </div>
                 </div>
@@ -836,7 +848,25 @@
 
     function renderOrderList() {
         const container = document.getElementById('order-list-container');
-        if (container) container.innerHTML = mockOrderData[currentOrderSecondary] || '';
+        if (!container) return;
+        if (isGuestMode) {
+            container.innerHTML = '<div class="py-16 text-center"><p class="text-[11px] font-bold text-gray-300">暫無委託</p></div>';
+            return;
+        }
+        container.innerHTML = mockOrderData[currentOrderSecondary] || '';
+    }
+
+    function updatePositionTabLabels() {
+        const posCount = isGuestMode ? 0 : 1;
+        const ordCount = isGuestMode ? 0 : 3;
+        const tabPos = document.getElementById('tab-positions');
+        const tabOrd = document.getElementById('tab-orders');
+        const sBasic = document.getElementById('s-basic');
+        const sTpsl = document.getElementById('s-tpsl');
+        if (tabPos) tabPos.textContent = `當前持倉(${posCount})`;
+        if (tabOrd) tabOrd.textContent = `當前委託(${ordCount})`;
+        if (sBasic) sBasic.textContent = `基礎單 (${isGuestMode ? 0 : 1})`;
+        if (sTpsl) sTpsl.textContent = `止盈止損單 (${isGuestMode ? 0 : 2})`;
     }
 
     function openOrderFilterModal(type) {
@@ -1118,12 +1148,21 @@
     function applyGuestUI() {
         const btn = document.getElementById('btn-toggle-guest');
         const plusBtn = document.getElementById('deposit-plus-btn');
-        const closeAllBtn = document.querySelector('#positions-panel button[onclick*="close-all-modal"]');
+        const closeAllBtn = document.getElementById('btn-close-all');
+        const positionsCard = document.getElementById('positions-card');
+        const positionsEmpty = document.getElementById('positions-empty');
+        const positionsToolbar = document.querySelector('#positions-panel > .flex.justify-between');
         const s = loggedInSnapshot;
 
         if (btn) btn.textContent = isGuestMode ? '返回已登录' : '未登录状态';
         plusBtn?.classList.toggle('hidden', isGuestMode);
         closeAllBtn?.classList.toggle('hidden', isGuestMode);
+        positionsToolbar?.classList.toggle('hidden', isGuestMode);
+        positionsCard?.classList.toggle('hidden', isGuestMode);
+        positionsEmpty?.classList.toggle('hidden', !isGuestMode);
+        document.getElementById('order-secondary-tabs')?.classList.toggle('hidden', isGuestMode);
+        document.getElementById('order-filter-bar')?.classList.toggle('hidden', isGuestMode);
+        updatePositionTabLabels();
 
         if (isGuestMode) {
             setGuestText('available-balance', '--');
@@ -1133,15 +1172,7 @@
             setGuestText('stat-liq-short', '--');
             setGuestText('stat-close-long-qty', '--');
             setGuestText('stat-close-short-qty', '--');
-            setGuestText('pos-pnl', '--');
-            setGuestText('pos-roi', '--');
-            setGuestText('pos-qty', '--');
-            setGuestText('pos-margin', '--');
-            setGuestText('pos-liq', '--');
-            const posPnl = document.getElementById('pos-pnl');
-            const posRoi = document.getElementById('pos-roi');
-            if (posPnl) posPnl.className = 'text-lg font-black text-gray-400';
-            if (posRoi) posRoi.className = 'text-sm font-black text-gray-400';
+            if (currentPositionTab === 'orders') renderOrderList();
         } else {
             setGuestText('available-balance', s.balance);
             setGuestText('stat-max-open-long', s.maxOpenLong);
@@ -1159,6 +1190,7 @@
             const posRoi = document.getElementById('pos-roi');
             if (posPnl) posPnl.className = 'text-lg font-black text-green-500';
             if (posRoi) posRoi.className = 'text-sm font-black text-green-500';
+            if (currentPositionTab === 'orders') renderOrderList();
         }
         updateTradeButtonsVisibility();
     }
@@ -1194,12 +1226,12 @@
         const isMarket = priceType === '市价';
         const isClose = currentSide === 'close';
         const isBidirect = currentTPSLMode === '雙向委託';
-        if (!isClose) return isMarket ? '下单市价委托' : '下单限价委托';
+        if (!isClose) return isMarket ? '市價委託' : '限價委託';
         if (isBidirect) {
-            const prefix = orderRole === 'sl' ? '止损' : '止盈';
-            return isMarket ? `${prefix}市价委托` : `${prefix}限价委托`;
+            const prefix = orderRole === 'sl' ? '止損' : '止盈';
+            return isMarket ? `${prefix}市價` : `${prefix}限價`;
         }
-        return isMarket ? '平仓市价委托' : '平仓限价委托';
+        return isMarket ? '平倉市價' : '平倉限價';
     }
 
     function renderTPSLTriggers() {
@@ -1214,26 +1246,26 @@
             const orderPriceId = role + '-price';
             const defaultLabel = getTPSLOrderTypeLabel(role, '市价');
             return `
-            <div class="space-y-1">
+            <div class="space-y-1 min-w-0 overflow-hidden">
                 <div class="text-[8px] text-gray-400 font-bold">${label}</div>
-                <div class="input-box flex items-center pt-0">
-                    <input class="bg-transparent text-[10px] font-bold flex-1 outline-none" placeholder="${placeholder}" id="${role}-trigger">
-                    <select class="text-[8px] bg-transparent border-l border-gray-200 pl-1 text-gray-500 outline-none ml-1">
-                        <option>最新成交價</option><option>標記價格</option>
+                <div class="input-box trade-field flex items-center pt-0 min-w-0">
+                    <input class="bg-transparent text-[10px] font-bold flex-1 min-w-0 outline-none" placeholder="${placeholder}" id="${role}-trigger">
+                    <select class="trigger-select bg-transparent border-l border-gray-200 text-gray-500 outline-none ml-1">
+                        <option>最新價</option><option>標記價</option>
                     </select>
                 </div>
-                <div class="relative" onclick="toggleOrderTypeDropdown(event, '${orderTypeId}')">
-                    <div class="text-[9px] font-bold text-gray-500 flex items-center cursor-pointer">
-                        <span id="${orderTypeId}-label">${defaultLabel}</span>
-                        <svg class="w-3 h-3 ml-1 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                <div class="relative min-w-0" onclick="toggleOrderTypeDropdown(event, '${orderTypeId}')">
+                    <div class="text-[8px] font-bold text-gray-500 flex items-center cursor-pointer min-w-0">
+                        <span id="${orderTypeId}-label" class="truncate">${defaultLabel}</span>
+                        <svg class="w-2.5 h-2.5 ml-0.5 text-gray-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
                     </div>
-                    <div id="${orderTypeId}-dropdown" class="hidden absolute top-full left-0 mt-1 bg-white border border-gray-100 rounded shadow z-20 text-[10px] font-bold w-20">
-                        <div class="px-3 py-2 active:bg-gray-50" onclick="setOrderType('${orderTypeId}', '市价', '${orderPriceId}'); event.stopPropagation();">市价</div>
-                        <div class="px-3 py-2 active:bg-gray-50" onclick="setOrderType('${orderTypeId}', '限价', '${orderPriceId}'); event.stopPropagation();">限价</div>
+                    <div id="${orderTypeId}-dropdown" class="hidden absolute top-full left-0 mt-1 bg-white border border-gray-100 rounded shadow z-20 text-[9px] font-bold w-16">
+                        <div class="px-2 py-1.5 active:bg-gray-50" onclick="setOrderType('${orderTypeId}', '市价', '${orderPriceId}'); event.stopPropagation();">市价</div>
+                        <div class="px-2 py-1.5 active:bg-gray-50" onclick="setOrderType('${orderTypeId}', '限价', '${orderPriceId}'); event.stopPropagation();">限价</div>
                     </div>
                 </div>
-                <div class="input-box pt-0">
-                    <input id="${orderPriceId}" class="bg-transparent text-[10px] font-bold w-full outline-none text-center text-gray-400" value="市价" disabled>
+                <div class="input-box trade-field pt-0 min-w-0">
+                    <input id="${orderPriceId}" class="bg-transparent text-[10px] font-bold w-full min-w-0 outline-none text-center text-gray-400" value="市价" disabled>
                 </div>
             </div>`;
         };
