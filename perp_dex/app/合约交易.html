@@ -769,21 +769,27 @@
         return qty >= 10 ? qty.toFixed(2) : qty.toFixed(2);
     }
 
-    function buildDepthPercents(rows) {
+    function buildDepthPercents(rows, side) {
+        const accumulateOrder = side === 'sell' ? [...rows].reverse() : rows;
         let cumulative = 0;
-        const withCum = rows.map(row => {
+        const cumByPrice = new Map();
+        accumulateOrder.forEach(row => {
             cumulative += row.qty;
-            return { ...row, cumulative };
+            cumByPrice.set(row.price, cumulative);
         });
         const maxCum = cumulative || 1;
-        return withCum.map(row => ({ ...row, percent: (row.cumulative / maxCum) * 100 }));
+        return rows.map(row => ({
+            ...row,
+            cumulative: cumByPrice.get(row.price),
+            percent: (cumByPrice.get(row.price) / maxCum) * 100
+        }));
     }
 
     function renderObSide(containerId, rows, side) {
         const container = document.getElementById(containerId);
         if (!container) return;
         const priceClass = side === 'sell' ? 'text-red-500' : 'text-green-500';
-        const depthRows = buildDepthPercents(rows);
+        const depthRows = buildDepthPercents(rows, side);
         container.innerHTML = depthRows.map((row, idx) => `
             <div class="ob-row">
                 <div class="ob-depth-bar ${side}" style="width:${row.percent.toFixed(1)}%; animation-delay:${idx * 0.12}s"></div>
