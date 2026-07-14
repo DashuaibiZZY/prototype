@@ -717,10 +717,10 @@
                         <div class="flex justify-between items-center">
                             <h3 class="text-[11px] font-black text-gray-900 uppercase tracking-widest">資金費率歷史趨勢</h3>
                             <!-- 時間週期切換 -->
-                            <div class="flex bg-gray-100 p-0.5 rounded-sm">
-                                <button class="px-3 py-1 text-[9px] font-black rounded-sm bg-white shadow-sm">1D</button>
-                                <button class="px-3 py-1 text-[9px] font-black text-gray-400 hover:text-gray-900 transition-colors">1W</button>
-                                <button class="px-3 py-1 text-[9px] font-black text-gray-400 hover:text-gray-900 transition-colors">1M</button>
+                            <div class="flex bg-gray-100 p-0.5 rounded-sm" id="funding-period-tabs">
+                                <button type="button" data-period="1D" onclick="switchFundingPeriod('1D')" class="funding-period-btn px-3 py-1 text-[9px] font-black rounded-sm bg-white shadow-sm">1D</button>
+                                <button type="button" data-period="1W" onclick="switchFundingPeriod('1W')" class="funding-period-btn px-3 py-1 text-[9px] font-black text-gray-400 hover:text-gray-900 transition-colors">1W</button>
+                                <button type="button" data-period="1M" onclick="switchFundingPeriod('1M')" class="funding-period-btn px-3 py-1 text-[9px] font-black text-gray-400 hover:text-gray-900 transition-colors">1M</button>
                             </div>
                         </div>
 
@@ -756,38 +756,13 @@
                                 <div class="px-4 py-3">時間</div>
                                 <div class="px-4 py-3 text-right">資金費率</div>
                             </div>
-                            <div class="divide-y divide-gray-50 text-[10px] font-bold">
-                                <div class="grid grid-cols-2 px-4 py-2.5 hover:bg-gray-50/50">
-                                    <span class="text-gray-600 font-mono">2026-07-14 08:00</span>
-                                    <span class="text-right text-green-500 font-mono">+0.005000%</span>
-                                </div>
-                                <div class="grid grid-cols-2 px-4 py-2.5 hover:bg-gray-50/50">
-                                    <span class="text-gray-600 font-mono">2026-07-14 00:00</span>
-                                    <span class="text-right text-green-500 font-mono">+0.004850%</span>
-                                </div>
-                                <div class="grid grid-cols-2 px-4 py-2.5 hover:bg-gray-50/50">
-                                    <span class="text-gray-600 font-mono">2026-07-13 16:00</span>
-                                    <span class="text-right text-red-500 font-mono">-0.001200%</span>
-                                </div>
-                                <div class="grid grid-cols-2 px-4 py-2.5 hover:bg-gray-50/50">
-                                    <span class="text-gray-600 font-mono">2026-07-13 08:00</span>
-                                    <span class="text-right text-green-500 font-mono">+0.003100%</span>
-                                </div>
-                                <div class="grid grid-cols-2 px-4 py-2.5 hover:bg-gray-50/50">
-                                    <span class="text-gray-600 font-mono">2026-07-13 00:00</span>
-                                    <span class="text-right text-green-500 font-mono">+0.006200%</span>
-                                </div>
-                                <div class="grid grid-cols-2 px-4 py-2.5 hover:bg-gray-50/50">
-                                    <span class="text-gray-600 font-mono">2026-07-12 16:00</span>
-                                    <span class="text-right text-red-500 font-mono">-0.000800%</span>
-                                </div>
-                                <div class="grid grid-cols-2 px-4 py-2.5 hover:bg-gray-50/50">
-                                    <span class="text-gray-600 font-mono">2026-07-12 08:00</span>
-                                    <span class="text-right text-green-500 font-mono">+0.002400%</span>
-                                </div>
-                                <div class="grid grid-cols-2 px-4 py-2.5 hover:bg-gray-50/50">
-                                    <span class="text-gray-600 font-mono">2026-07-12 00:00</span>
-                                    <span class="text-right text-green-500 font-mono">+0.004100%</span>
+                            <div id="funding-history-body" class="divide-y divide-gray-50 text-[10px] font-bold"></div>
+                            <div id="funding-history-pagination" class="hidden flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/50">
+                                <span id="funding-page-total" class="text-[9px] text-gray-400 font-bold">共 0 条</span>
+                                <div class="flex items-center space-x-2">
+                                    <button type="button" id="funding-page-prev" onclick="changeFundingHistoryPage(-1)" class="px-2.5 py-1 text-[9px] font-bold border border-gray-200 rounded-sm hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed">上一页</button>
+                                    <span id="funding-page-info" class="text-[9px] font-bold text-gray-600 min-w-[48px] text-center">1 / 1</span>
+                                    <button type="button" id="funding-page-next" onclick="changeFundingHistoryPage(1)" class="px-2.5 py-1 text-[9px] font-bold border border-gray-200 rounded-sm hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed">下一页</button>
                                 </div>
                             </div>
                         </div>
@@ -3552,6 +3527,95 @@
                 btn.className = v === type ? activeClass : inactiveClass;
             });
         });
+        if (type === 'funding') renderFundingHistory();
+    }
+
+    // ==================== 資金費率歷史列表 ====================
+    let fundingHistoryPeriod = '1D';
+    let fundingHistoryPage = 1;
+    const FUNDING_HISTORY_PAGE_SIZE = 10;
+    const fundingHistoryCountMap = { '1D': 3, '1W': 21, '1M': 90 };
+    let fundingHistoryCache = {};
+
+    function padFundingNum(n) { return String(n).padStart(2, '0'); }
+
+    function formatFundingDateTime(date) {
+        return `${date.getFullYear()}-${padFundingNum(date.getMonth() + 1)}-${padFundingNum(date.getDate())} ${padFundingNum(date.getHours())}:00`;
+    }
+
+    function getFundingHistoryData(period) {
+        if (fundingHistoryCache[period]) return fundingHistoryCache[period];
+        const count = fundingHistoryCountMap[period] || 3;
+        const base = new Date('2026-07-14T08:00:00');
+        const rates = [0.005000, 0.004850, -0.001200, 0.003100, 0.006200, -0.000800, 0.002400, 0.004100];
+        const items = [];
+        for (let i = 0; i < count; i++) {
+            const d = new Date(base.getTime() - i * 8 * 3600 * 1000);
+            const rate = rates[i % rates.length] + (period === '1M' ? ((i % 5) - 2) * 0.00015 : 0);
+            items.push({ time: formatFundingDateTime(d), rate });
+        }
+        fundingHistoryCache[period] = items;
+        return items;
+    }
+
+    function formatFundingRate(rate) {
+        const sign = rate >= 0 ? '+' : '';
+        return `${sign}${rate.toFixed(6)}%`;
+    }
+
+    function switchFundingPeriod(period) {
+        fundingHistoryPeriod = period;
+        fundingHistoryPage = 1;
+        document.querySelectorAll('.funding-period-btn').forEach(btn => {
+            const active = btn.dataset.period === period;
+            btn.className = active
+                ? 'funding-period-btn px-3 py-1 text-[9px] font-black rounded-sm bg-white shadow-sm'
+                : 'funding-period-btn px-3 py-1 text-[9px] font-black text-gray-400 hover:text-gray-900 transition-colors';
+        });
+        renderFundingHistory();
+    }
+
+    function changeFundingHistoryPage(delta) {
+        const all = getFundingHistoryData(fundingHistoryPeriod);
+        const totalPages = Math.ceil(all.length / FUNDING_HISTORY_PAGE_SIZE);
+        fundingHistoryPage = Math.min(totalPages, Math.max(1, fundingHistoryPage + delta));
+        renderFundingHistory();
+    }
+
+    function renderFundingHistory() {
+        const body = document.getElementById('funding-history-body');
+        const pager = document.getElementById('funding-history-pagination');
+        if (!body) return;
+
+        const all = getFundingHistoryData(fundingHistoryPeriod);
+        const usePagination = fundingHistoryPeriod === '1M';
+        const totalPages = Math.max(1, Math.ceil(all.length / FUNDING_HISTORY_PAGE_SIZE));
+        if (fundingHistoryPage > totalPages) fundingHistoryPage = totalPages;
+
+        const start = usePagination ? (fundingHistoryPage - 1) * FUNDING_HISTORY_PAGE_SIZE : 0;
+        const slice = usePagination ? all.slice(start, start + FUNDING_HISTORY_PAGE_SIZE) : all;
+
+        body.innerHTML = slice.map(item => {
+            const color = item.rate >= 0 ? 'text-green-500' : 'text-red-500';
+            return `<div class="grid grid-cols-2 px-4 py-2.5 hover:bg-gray-50/50">
+                <span class="text-gray-600 font-mono">${item.time}</span>
+                <span class="text-right ${color} font-mono">${formatFundingRate(item.rate)}</span>
+            </div>`;
+        }).join('');
+
+        if (pager) {
+            pager.classList.toggle('hidden', !usePagination);
+            if (usePagination) {
+                const totalEl = document.getElementById('funding-page-total');
+                const infoEl = document.getElementById('funding-page-info');
+                const prevBtn = document.getElementById('funding-page-prev');
+                const nextBtn = document.getElementById('funding-page-next');
+                if (totalEl) totalEl.textContent = `共 ${all.length} 条`;
+                if (infoEl) infoEl.textContent = `${fundingHistoryPage} / ${totalPages}`;
+                if (prevBtn) prevBtn.disabled = fundingHistoryPage <= 1;
+                if (nextBtn) nextBtn.disabled = fundingHistoryPage >= totalPages;
+            }
+        }
     }
 
     // ==================== K線原型切換：正常圖表 / 新幣上線倒計時 ====================
