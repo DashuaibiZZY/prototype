@@ -25,7 +25,16 @@
         .trade-panel { min-width: 0; overflow: hidden; }
         .trade-field { min-width: 0; width: 100%; overflow: hidden; }
         .trade-field input { min-width: 0; }
-        .trigger-select { width: 42px; max-width: 42px; flex-shrink: 0; font-size: 7px; padding-left: 2px; }
+        .picker-chip { display: inline-flex; align-items: center; gap: 1px; font-size: 9px; font-weight: 700; color: #6b7280; padding-left: 6px; margin-left: 4px; border-left: 1px solid #e5e7eb; white-space: nowrap; flex-shrink: 0; background: none; border-top: none; border-right: none; border-bottom: none; cursor: pointer; }
+        .picker-chip-wide { max-width: none; min-width: 52px; }
+        .qty-unit-toggle { display: inline-flex; align-items: center; gap: 1px; font-size: 8px; font-weight: 700; white-space: nowrap; }
+        .qty-unit-toggle .unit-on { color: #111827; }
+        .qty-unit-toggle .unit-off { color: #d1d5db; }
+        #trade-panel .input-box { min-height: 40px; box-sizing: border-box; }
+        #trade-panel .input-box.field-tall { padding-top: 16px; display: flex; align-items: flex-end; }
+        #trade-panel .input-box.field-row { display: flex; align-items: center; padding-top: 8px; padding-bottom: 8px; }
+        .sheet-option-rich { padding: 14px 20px; cursor: pointer; border-bottom: 1px solid #f3f4f6; }
+        .sheet-option-rich:active { background: #f9fafb; }
 
         .pair-row:active { background: #f9fafb; }
         .pair-tab { color: #9ca3af; font-weight: 700; font-size: 12px; padding-bottom: 10px; position: relative; cursor: pointer; white-space: nowrap; flex-shrink: 0; background: none; border: none; }
@@ -211,26 +220,23 @@
 
                     <!-- 止盈止損下單區 -->
                     <div id="tpsl-order-container" class="hidden space-y-2 min-w-0 overflow-hidden">
-                        <div class="relative" onclick="toggleTPSLModeDropdown(event)">
-                            <div class="input-box flex justify-between items-center cursor-pointer">
-                                <span id="tpsl-mode-value" class="text-[10px] font-bold text-gray-600">單向委託</span>
-                                <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
-                            </div>
-                            <div id="tpsl-mode-dropdown" class="hidden absolute top-full left-0 w-full mt-1 bg-white border border-gray-100 rounded shadow-lg z-20 text-[10px] font-bold">
-                                <div class="px-3 py-2 active:bg-gray-50" onclick="setTPSLMode('單向委託'); event.stopPropagation();">單向委託</div>
-                                <div class="px-3 py-2 active:bg-gray-50" onclick="setTPSLMode('雙向委託'); event.stopPropagation();">雙向委託</div>
-                            </div>
+                        <div class="input-box field-row flex justify-between items-center cursor-pointer active:bg-gray-200" onclick="openPickerSheet('tpsl-mode')">
+                            <span id="tpsl-mode-value" class="text-[10px] font-bold text-gray-600">单向</span>
+                            <svg class="w-3 h-3 text-gray-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
                         </div>
                         <div id="tpsl-triggers-container" class="space-y-2"></div>
                     </div>
 
                     <!-- 數量輸入 -->
-                    <div class="input-box relative pt-4 flex">
+                    <div class="input-box field-tall relative flex min-w-0 pb-1.5">
                         <span class="absolute top-1 left-2 text-[8px] text-gray-400 font-bold uppercase">數量</span>
-                        <input id="qty-input" type="text" placeholder="0.00" class="bg-transparent text-[11px] font-bold flex-1 outline-none">
-                        <div id="qty-unit-trigger" onclick="openSheet('unit-sheet')" class="flex items-center text-[10px] font-bold text-gray-500 cursor-pointer active:opacity-70">
-                            <span id="qty-unit-label">BTC</span> <svg class="w-3 h-3 ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
-                        </div>
+                        <input id="qty-input" type="text" placeholder="0.00" class="bg-transparent text-[11px] font-bold flex-1 min-w-0 outline-none pb-0.5">
+                        <button type="button" id="qty-unit-trigger" onclick="openSheet('unit-sheet')" class="picker-chip picker-chip-wide shrink-0 whitespace-nowrap">
+                            <span id="qty-unit-label" class="qty-unit-toggle">
+                                <span id="qty-unit-btc" class="unit-on">BTC</span><span class="unit-off">/</span><span id="qty-unit-usdt" class="unit-off">USDT</span>
+                            </span>
+                            <svg class="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                        </button>
                     </div>
 
                     <!-- 滾動條百分比 -->
@@ -261,20 +267,22 @@
                         <div id="attach-tpsl-inputs" class="hidden mt-2 space-y-2 min-w-0">
                             <div class="space-y-0.5">
                                 <div class="text-[8px] text-gray-400 font-bold">止盈</div>
-                                <div class="input-box trade-field flex items-center pt-0 min-w-0">
-                                    <input id="attach-tp-price" class="bg-transparent text-[10px] font-bold flex-1 min-w-0 outline-none" placeholder="價格">
-                                    <select class="trigger-select bg-transparent border-l border-gray-200 text-gray-500 outline-none ml-1">
-                                        <option>最新價</option><option>標記價</option>
-                                    </select>
+                                <div class="input-box field-row trade-field flex items-center min-w-0">
+                                    <input id="attach-tp-price" class="bg-transparent text-[11px] font-bold flex-1 min-w-0 outline-none" placeholder="價格">
+                                    <button type="button" class="picker-chip" onclick="event.stopPropagation(); openPickerSheet('trigger-type', 'attach-tp')">
+                                        <span id="attach-tp-trigger-label">最新价格</span>
+                                        <svg class="w-2.5 h-2.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                                    </button>
                                 </div>
                             </div>
                             <div class="space-y-0.5">
                                 <div class="text-[8px] text-gray-400 font-bold">止損</div>
-                                <div class="input-box trade-field flex items-center pt-0 min-w-0">
-                                    <input id="attach-sl-price" class="bg-transparent text-[10px] font-bold flex-1 min-w-0 outline-none" placeholder="價格">
-                                    <select class="trigger-select bg-transparent border-l border-gray-200 text-gray-500 outline-none ml-1">
-                                        <option>最新價</option><option>標記價</option>
-                                    </select>
+                                <div class="input-box field-row trade-field flex items-center min-w-0">
+                                    <input id="attach-sl-price" class="bg-transparent text-[11px] font-bold flex-1 min-w-0 outline-none" placeholder="價格">
+                                    <button type="button" class="picker-chip" onclick="event.stopPropagation(); openPickerSheet('trigger-type', 'attach-sl')">
+                                        <span id="attach-sl-trigger-label">最新价格</span>
+                                        <svg class="w-2.5 h-2.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -632,6 +640,14 @@
             </div>
         </div>
 
+        <!-- ===== 底部弹层：通用选择器 ===== -->
+        <div id="picker-sheet" class="hidden absolute inset-0 z-50 flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('picker-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet max-h-[78%] overflow-y-auto no-scrollbar">
+                <div id="picker-sheet-body"></div>
+            </div>
+        </div>
+
         <!-- ===== 筛选弹窗（当前委托） ===== -->
         <div id="order-filter-overlay" class="hidden absolute inset-0 z-[100] bg-black/60 backdrop-blur-sm transition-opacity duration-300 opacity-0 rounded-[38px] overflow-hidden">
             <div onclick="closeOrderFilterModal()" class="absolute inset-0"></div>
@@ -647,7 +663,10 @@
 <script>
     let currentSide = 'open';
     let currentOrderMode = 'limit';
-    let currentTPSLMode = '單向委託';
+    let currentTPSLMode = '单向';
+    const triggerTypeMap = { 'attach-tp': 'latest', 'attach-sl': 'latest', tp: 'latest', sl: 'latest' };
+    const orderDelegateMap = { 'tp-order': 'market', 'sl-order': 'market' };
+    let pickerContext = { type: '', key: '' };
     let currentMarginMode = 'cross';
     let longLeverage = 20;
     let shortLeverage = 10;
@@ -806,10 +825,77 @@
         btn.classList.add('bg-gray-100');
     }
 
+    function updateQtyUnitDisplay() {
+        const btc = document.getElementById('qty-unit-btc');
+        const usdt = document.getElementById('qty-unit-usdt');
+        if (!btc || !usdt) return;
+        btc.className = currentQtyUnit === 'BTC' ? 'unit-on' : 'unit-off';
+        usdt.className = currentQtyUnit === 'USDT' ? 'unit-on' : 'unit-off';
+    }
+
     function selectQtyUnit(unit) {
         currentQtyUnit = unit;
-        document.getElementById('qty-unit-label').innerText = unit;
+        updateQtyUnitDisplay();
         closeSheet('unit-sheet');
+    }
+
+    function getTriggerTypeLabel(value) {
+        return value === 'mark' ? '标记价格' : '最新价格';
+    }
+
+    function renderPickerHeader(title) {
+        return `<div class="py-4 px-5 border-b border-gray-50"><h3 class="text-[13px] font-black text-gray-900">${title}</h3></div>`;
+    }
+
+    function renderRichPickerOption(value, title, desc, selected) {
+        const safeDesc = desc ? `<div class="text-[10px] text-gray-400 mt-1 leading-snug">${desc}</div>` : '';
+        return `
+            <div class="sheet-option-rich ${selected ? 'bg-gray-50' : ''}" onclick="selectPickerOption('${value}')">
+                <div class="text-[13px] font-bold text-gray-900">${title}</div>
+                ${safeDesc}
+            </div>`;
+    }
+
+    function openPickerSheet(type, key) {
+        pickerContext = { type, key: key || '' };
+        const body = document.getElementById('picker-sheet-body');
+        if (!body) return;
+        let html = '';
+
+        if (type === 'trigger-type') {
+            const current = triggerTypeMap[key] || 'latest';
+            html += renderPickerHeader('触发价格类型');
+            html += renderRichPickerOption('latest', '最新价格', '该合约最新成交价格', current === 'latest');
+            html += renderRichPickerOption('mark', '标记价格', '合约的预估公允价值，用于强制平仓计算。', current === 'mark');
+        } else if (type === 'tpsl-mode') {
+            html += renderPickerHeader('委托模式');
+            html += renderRichPickerOption('单向', '单向', '预设触发价与委托价，市价达触发价后按委托价下单。', currentTPSLMode === '单向');
+            html += renderRichPickerOption('双向', '双向', '预设止盈/止损触发价与委托价；一侧触发成交后，另一侧自动失效。', currentTPSLMode === '双向');
+        } else if (type === 'order-delegate') {
+            const current = orderDelegateMap[key] || 'market';
+            html += renderPickerHeader('订单委托类型');
+            html += renderRichPickerOption('market', '市价委托', '', current === 'market');
+            html += renderRichPickerOption('limit', '限价委托', '', current === 'limit');
+        }
+
+        body.innerHTML = html + '<div class="p-4"><button onclick="closeSheet(\'picker-sheet\')" class="w-full py-3 text-[13px] font-bold text-gray-400 bg-gray-50 rounded-xl">取消</button></div>';
+        openSheet('picker-sheet');
+    }
+
+    function selectPickerOption(value) {
+        const { type, key } = pickerContext;
+        if (type === 'trigger-type') {
+            triggerTypeMap[key] = value;
+            const labelId = key.startsWith('attach-') ? `${key}-trigger-label` : `${key}-trigger-label`;
+            const labelEl = document.getElementById(labelId);
+            if (labelEl) labelEl.textContent = getTriggerTypeLabel(value);
+        } else if (type === 'tpsl-mode') {
+            setTPSLMode(value);
+        } else if (type === 'order-delegate') {
+            const priceInputId = key.replace('-order', '-price');
+            setOrderType(key, value === 'market' ? '市价' : '限价', priceInputId);
+        }
+        closeSheet('picker-sheet');
     }
 
     function selectObPrecision(val) {
@@ -1206,15 +1292,10 @@
         renderKlineCountdown();
     }
 
-    function toggleTPSLModeDropdown(e) {
-        e.stopPropagation();
-        document.getElementById('tpsl-mode-dropdown').classList.toggle('hidden');
-    }
-
     function setTPSLMode(mode) {
         currentTPSLMode = mode;
-        document.getElementById('tpsl-mode-value').innerText = mode;
-        document.getElementById('tpsl-mode-dropdown').classList.add('hidden');
+        const modeEl = document.getElementById('tpsl-mode-value');
+        if (modeEl) modeEl.innerText = mode;
         renderTPSLTriggers();
     }
 
@@ -1225,7 +1306,7 @@
     function getTPSLOrderTypeLabel(orderRole, priceType) {
         const isMarket = priceType === '市价';
         const isClose = currentSide === 'close';
-        const isBidirect = currentTPSLMode === '雙向委託';
+        const isBidirect = currentTPSLMode === '双向';
         if (!isClose) return isMarket ? '市價委託' : '限價委託';
         if (isBidirect) {
             const prefix = orderRole === 'sl' ? '止損' : '止盈';
@@ -1238,34 +1319,32 @@
         const container = document.getElementById('tpsl-triggers-container');
         if (!container) return;
         const isClose = currentSide === 'close';
-        const isBidirect = currentTPSLMode === '雙向委託';
+        const isBidirect = currentTPSLMode === '双向';
         let html = '';
 
         const renderRow = (label, placeholder, role) => {
             const orderTypeId = role + '-order';
             const orderPriceId = role + '-price';
-            const defaultLabel = getTPSLOrderTypeLabel(role, '市价');
+            const triggerKey = role;
+            const delegateType = orderDelegateMap[orderTypeId] || 'market';
+            const defaultLabel = getTPSLOrderTypeLabel(role, delegateType === 'market' ? '市价' : '限价');
+            const triggerLabel = getTriggerTypeLabel(triggerTypeMap[triggerKey] || 'latest');
             return `
             <div class="space-y-1 min-w-0 overflow-hidden">
                 <div class="text-[8px] text-gray-400 font-bold">${label}</div>
-                <div class="input-box trade-field flex items-center pt-0 min-w-0">
-                    <input class="bg-transparent text-[10px] font-bold flex-1 min-w-0 outline-none" placeholder="${placeholder}" id="${role}-trigger">
-                    <select class="trigger-select bg-transparent border-l border-gray-200 text-gray-500 outline-none ml-1">
-                        <option>最新價</option><option>標記價</option>
-                    </select>
+                <div class="input-box field-row trade-field flex items-center min-w-0">
+                    <input class="bg-transparent text-[11px] font-bold flex-1 min-w-0 outline-none" placeholder="${placeholder}" id="${role}-trigger">
+                    <button type="button" class="picker-chip" onclick="event.stopPropagation(); openPickerSheet('trigger-type', '${triggerKey}')">
+                        <span id="${role}-trigger-label">${triggerLabel}</span>
+                        <svg class="w-2.5 h-2.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                    </button>
                 </div>
-                <div class="relative min-w-0" onclick="toggleOrderTypeDropdown(event, '${orderTypeId}')">
-                    <div class="text-[8px] font-bold text-gray-500 flex items-center cursor-pointer min-w-0">
-                        <span id="${orderTypeId}-label" class="truncate">${defaultLabel}</span>
-                        <svg class="w-2.5 h-2.5 ml-0.5 text-gray-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
-                    </div>
-                    <div id="${orderTypeId}-dropdown" class="hidden absolute top-full left-0 mt-1 bg-white border border-gray-100 rounded shadow z-20 text-[9px] font-bold w-16">
-                        <div class="px-2 py-1.5 active:bg-gray-50" onclick="setOrderType('${orderTypeId}', '市价', '${orderPriceId}'); event.stopPropagation();">市价</div>
-                        <div class="px-2 py-1.5 active:bg-gray-50" onclick="setOrderType('${orderTypeId}', '限价', '${orderPriceId}'); event.stopPropagation();">限价</div>
-                    </div>
+                <div class="input-box field-row flex justify-between items-center cursor-pointer active:bg-gray-200 min-w-0" onclick="openPickerSheet('order-delegate', '${orderTypeId}')">
+                    <span id="${orderTypeId}-label" class="text-[10px] font-bold text-gray-600 truncate">${defaultLabel}</span>
+                    <svg class="w-3 h-3 text-gray-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
                 </div>
-                <div class="input-box trade-field pt-0 min-w-0">
-                    <input id="${orderPriceId}" class="bg-transparent text-[10px] font-bold w-full min-w-0 outline-none text-center text-gray-400" value="市价" disabled>
+                <div class="input-box field-row trade-field min-w-0">
+                    <input id="${orderPriceId}" class="bg-transparent text-[11px] font-bold w-full min-w-0 outline-none ${delegateType === 'market' ? 'text-center text-gray-400' : ''}" value="${delegateType === 'market' ? '市价' : ''}" placeholder="${delegateType === 'limit' ? '委託價' : ''}" ${delegateType === 'market' ? 'disabled' : ''}>
                 </div>
             </div>`;
         };
@@ -1288,13 +1367,9 @@
         container.innerHTML = html;
     }
 
-    function toggleOrderTypeDropdown(e, orderTypeId) {
-        e.stopPropagation();
-        document.getElementById(orderTypeId + '-dropdown')?.classList.toggle('hidden');
-    }
-
     function setOrderType(orderTypeId, type, priceInputId) {
         const role = getOrderRoleFromTypeId(orderTypeId);
+        orderDelegateMap[orderTypeId] = type === '市价' ? 'market' : 'limit';
         const label = document.getElementById(orderTypeId + '-label');
         const priceInput = document.getElementById(priceInputId);
         if (label) label.innerText = getTPSLOrderTypeLabel(role, type);
@@ -1302,6 +1377,7 @@
             if (type === '市价') {
                 priceInput.disabled = true;
                 priceInput.value = '市价';
+                priceInput.placeholder = '';
                 priceInput.classList.add('text-center', 'text-gray-400');
             } else {
                 priceInput.disabled = false;
@@ -1310,7 +1386,6 @@
                 priceInput.classList.remove('text-center', 'text-gray-400');
             }
         }
-        document.getElementById(orderTypeId + '-dropdown')?.classList.add('hidden');
     }
 
     function adjustLeverage(side, delta) {
@@ -1400,13 +1475,10 @@
         closeModal('close-all-modal');
     }
 
-    document.addEventListener('click', () => {
-        document.getElementById('tpsl-mode-dropdown')?.classList.add('hidden');
-    });
-
     updateFundingCountdown();
     setInterval(updateFundingCountdown, 1000);
     setInterval(tickPremarketCountdown, 1000);
+    updateQtyUnitDisplay();
     renderOrderList();
     renderPairList();
     updateBestPriceChecks();
