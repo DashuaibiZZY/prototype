@@ -757,13 +757,8 @@
                                 <div class="px-4 py-3 text-right">資金費率</div>
                             </div>
                             <div id="funding-history-body" class="divide-y divide-gray-50 text-[10px] font-bold"></div>
-                            <div id="funding-history-pagination" class="hidden flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/50">
-                                <span id="funding-page-total" class="text-[9px] text-gray-400 font-bold">共 0 条</span>
-                                <div class="flex items-center space-x-2">
-                                    <button type="button" id="funding-page-prev" onclick="changeFundingHistoryPage(-1)" class="px-2.5 py-1 text-[9px] font-bold border border-gray-200 rounded-sm hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed">上一页</button>
-                                    <span id="funding-page-info" class="text-[9px] font-bold text-gray-600 min-w-[48px] text-center">1 / 1</span>
-                                    <button type="button" id="funding-page-next" onclick="changeFundingHistoryPage(1)" class="px-2.5 py-1 text-[9px] font-bold border border-gray-200 rounded-sm hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed">下一页</button>
-                                </div>
+                            <div id="funding-history-pagination" class="hidden flex items-center justify-center px-4 py-3 border-t border-gray-100 bg-gray-50/50">
+                                <div id="funding-page-controls" class="flex items-center space-x-1 text-[10px] font-bold"></div>
                             </div>
                         </div>
                     </div>
@@ -3582,13 +3577,59 @@
         renderFundingHistory();
     }
 
+    function goFundingHistoryPage(page) {
+        const all = getFundingHistoryData(fundingHistoryPeriod);
+        const totalPages = Math.ceil(all.length / FUNDING_HISTORY_PAGE_SIZE);
+        fundingHistoryPage = Math.min(totalPages, Math.max(1, page));
+        renderFundingHistory();
+    }
+
+    function getFundingPageList(current, total) {
+        if (total <= 5) {
+            return Array.from({ length: total }, (_, i) => i + 1);
+        }
+        const pages = new Set([1, total, current]);
+        if (current > 1) pages.add(current - 1);
+        if (current < total) pages.add(current + 1);
+        if (current <= 3) { pages.add(2); pages.add(3); }
+        if (current >= total - 2) { pages.add(total - 1); pages.add(total - 2); }
+        const sorted = [...pages].sort((a, b) => a - b);
+        const result = [];
+        for (let i = 0; i < sorted.length; i++) {
+            if (i > 0 && sorted[i] - sorted[i - 1] > 1) result.push('...');
+            result.push(sorted[i]);
+        }
+        return result;
+    }
+
+    function renderFundingPaginationControls(current, total) {
+        const container = document.getElementById('funding-page-controls');
+        if (!container) return;
+        const pages = getFundingPageList(current, total);
+        const btnBase = 'min-w-[24px] h-6 px-1.5 rounded-sm flex items-center justify-center';
+        const btnInactive = `${btnBase} text-gray-600 hover:bg-white border border-transparent hover:border-gray-200`;
+        const btnActive = `${btnBase} bg-gray-900 text-white`;
+        const btnArrow = `${btnBase} text-gray-600 hover:bg-white border border-gray-200 disabled:opacity-30 disabled:cursor-not-allowed`;
+
+        let html = `<button type="button" onclick="changeFundingHistoryPage(-1)" ${current <= 1 ? 'disabled' : ''} class="${btnArrow}">&lt;</button>`;
+        pages.forEach(p => {
+            if (p === '...') {
+                html += `<span class="px-1 text-gray-400 font-bold select-none">...</span>`;
+            } else {
+                html += `<button type="button" onclick="goFundingHistoryPage(${p})" class="${p === current ? btnActive : btnInactive}">${p}</button>`;
+            }
+        });
+        html += `<button type="button" onclick="changeFundingHistoryPage(1)" ${current >= total ? 'disabled' : ''} class="${btnArrow}">&gt;</button>`;
+        container.innerHTML = html;
+    }
+
     function renderFundingHistory() {
         const body = document.getElementById('funding-history-body');
         const pager = document.getElementById('funding-history-pagination');
         if (!body) return;
 
         const all = getFundingHistoryData(fundingHistoryPeriod);
-        const usePagination = fundingHistoryPeriod === '1M';
+        const usePagination = fundingHistoryPeriod === '1W' || fundingHistoryPeriod === '1M';
         const totalPages = Math.max(1, Math.ceil(all.length / FUNDING_HISTORY_PAGE_SIZE));
         if (fundingHistoryPage > totalPages) fundingHistoryPage = totalPages;
 
@@ -3605,16 +3646,7 @@
 
         if (pager) {
             pager.classList.toggle('hidden', !usePagination);
-            if (usePagination) {
-                const totalEl = document.getElementById('funding-page-total');
-                const infoEl = document.getElementById('funding-page-info');
-                const prevBtn = document.getElementById('funding-page-prev');
-                const nextBtn = document.getElementById('funding-page-next');
-                if (totalEl) totalEl.textContent = `共 ${all.length} 条`;
-                if (infoEl) infoEl.textContent = `${fundingHistoryPage} / ${totalPages}`;
-                if (prevBtn) prevBtn.disabled = fundingHistoryPage <= 1;
-                if (nextBtn) nextBtn.disabled = fundingHistoryPage >= totalPages;
-            }
+            if (usePagination) renderFundingPaginationControls(fundingHistoryPage, totalPages);
         }
     }
 
