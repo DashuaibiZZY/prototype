@@ -21,6 +21,8 @@
             background: rgba(255,255,255,0.9); z-index: 10;
         }
         .modal-overlay { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; align-items: center; justify-content: center; display: none; }
+        .tier-progress-track { height: 8px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
+        .tier-progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #2563eb, #3b82f6); }
     </style>
 </head>
 <body class="min-h-screen flex flex-col text-[12px]">
@@ -168,7 +170,8 @@
         </div>
 
         <!-- 3. 个人积分看板 -->
-        <div class="stats-card p-8 border-l-[6px] border-l-blue-600 shadow-xl flex flex-col md:flex-row justify-between items-center gap-8">
+        <div class="stats-card p-8 border-l-[6px] border-l-blue-600 shadow-xl space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-8">
             <div class="space-y-4 flex-1">
                 <p class="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">我的总积分</p>
                 <div class="flex items-baseline space-x-4">
@@ -197,8 +200,35 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </button>
                 </div>
-                <div class="text-6xl font-black text-blue-600 tracking-tighter italic">1.5X</div>
-                <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Multiplier Active</p>
+                <div class="text-6xl font-black text-blue-600 tracking-tighter italic">1.2X</div>
+                <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">级别 3 · Multiplier Active</p>
+            </div>
+            </div>
+
+            <!-- 加成阶梯进度条（页面内展示） -->
+            <div class="border-t border-gray-100 pt-6 space-y-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-1.5 h-4 bg-blue-600 rounded-full"></span>
+                        <h3 class="text-sm font-black text-gray-900">伞下周交易额加成进度</h3>
+                    </div>
+                    <button onclick="toggleModal('modal-multiplier-rules')" class="text-[11px] font-bold text-blue-600 hover:underline">查看完整阶梯规则 →</button>
+                </div>
+                <div class="flex items-center justify-between text-[11px] font-bold text-gray-500">
+                    <span>当前 <b class="text-blue-600">级别 3 · 1.2X</b></span>
+                    <span class="text-gray-300">→</span>
+                    <span>下一档 <b class="text-gray-900">级别 4 · 1.3X</b> <span class="text-gray-400 font-medium">($1B)</span></span>
+                </div>
+                <div class="tier-progress-track">
+                    <div class="tier-progress-fill" style="width:44%"></div>
+                </div>
+                <div class="flex justify-between text-[10px] font-bold text-gray-400 uppercase tracking-wide">
+                    <span>$100M</span><span>$200M</span><span class="text-blue-600">$500M</span><span>$1B</span><span>$5B</span>
+                </div>
+                <p class="text-[11px] text-gray-500 font-medium">
+                    伞下用户（含间接邀请）本周总交易额 <b class="text-gray-900">$720M</b>，
+                    距级别 4 门槛还差 <b class="text-blue-600">$280M</b>。达成后邀请者与被邀请者同时享受加成，每周结算刷新。
+                </p>
             </div>
         </div>
 
@@ -328,8 +358,8 @@
                 <tr><td class="py-3">级别 1</td><td>$ 100M</td><td class="text-right text-blue-600">1.1X</td></tr>
                 <tr><td class="py-3">级别 2</td><td>$ 200M</td><td class="text-right text-blue-600">1.15X</td></tr>
                 <tr><td class="py-3">级别 3</td><td>$ 500M</td><td class="text-right text-blue-600">1.2X</td></tr>
-                <tr><td class="py-3">级别 4</td><td>$ 1B</td><td class="text-right text-blue-600">1.3X</td></tr>
-                <tr><td class="py-3 text-blue-600 uppercase">级别 5 (MAX)</td><td class="text-blue-600 font-black">$ 5B</td><td class="text-right text-blue-600 font-black">1.5X</td></tr>
+                <tr class="bg-blue-50"><td class="py-3 text-blue-600 font-black">级别 4</td><td class="text-blue-600 font-black">$ 1B</td><td class="text-right text-blue-600 font-black">1.3X</td></tr>
+                <tr><td class="py-3 uppercase">级别 5 (MAX)</td><td>$ 5B</td><td class="text-right text-blue-600 font-black">1.5X</td></tr>
                 </tbody>
             </table>
             <div class="mt-6 p-3 bg-blue-50 border-l-2 border-blue-600 text-[10px] text-blue-700 leading-relaxed">
