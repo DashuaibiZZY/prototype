@@ -84,7 +84,7 @@
                     </div>
                 </div>
                 <div class="col-span-2">
-                    <label class="input-label">积分目标排名</label>
+                    <label class="input-label">交易额目标排名</label>
                     <div class="flex items-center space-x-1">
                         <input type="number" placeholder="Min" class="search-input w-full text-center">
                         <span class="text-slate-300">-</span>
@@ -94,6 +94,14 @@
             </div>
             <div class="grid grid-cols-12 gap-3 items-end">
                 <div class="col-span-2">
+                    <label class="input-label">积分目标排名</label>
+                    <div class="flex items-center space-x-1">
+                        <input type="number" placeholder="Min" class="search-input w-full text-center">
+                        <span class="text-slate-300">-</span>
+                        <input type="number" placeholder="Max" class="search-input w-full text-center">
+                    </div>
+                </div>
+                <div class="col-span-2">
                     <label class="input-label">账户状态</label>
                     <select class="search-input w-full bg-white font-bold">
                         <option>全部</option>
@@ -102,7 +110,7 @@
                         <option>下线 (Offline)</option>
                     </select>
                 </div>
-                <div class="col-span-10 flex justify-end space-x-2">
+                <div class="col-span-8 flex justify-end space-x-2">
                     <button onclick="applyFilters()" class="px-6 bg-slate-900 text-white font-bold py-1.5 rounded hover:bg-black transition-all">筛选</button>
                     <button onclick="resetFilters()" class="px-6 border border-slate-200 text-slate-400 font-bold py-1.5 rounded hover:bg-slate-50 transition-all">重置</button>
                 </div>
@@ -129,7 +137,7 @@
                     <th class="px-6 py-4 text-center">目标排名要求</th>
                     <th class="px-6 py-4 text-center">当前状态</th>
                     <th class="px-6 py-4">生命周期</th>
-                    <th class="px-6 py-4 text-right">当前数据 (PnL / ROI / Points)</th>
+                    <th class="px-6 py-4 text-right">当前数据 (PnL / ROI / Volume / Points)</th>
                     <th class="px-6 py-4 text-right">操作</th>
                 </tr>
                 </thead>
@@ -168,7 +176,7 @@
                     <p class="text-[9px] text-slate-400 italic">仅统计已报名该活动的用户排名，影子账户将在此活动榜单内竞争目标名次</p>
                 </div>
                 <div class="hint-box" id="modal-target-hint">
-                    当前目标：<strong>全平台榜单</strong>。影子账户将超越全站 PnL / ROI / 积分综合排名中的目标区间用户。
+                    当前目标：<strong>全平台榜单</strong>。影子账户将超越全站 PnL / ROI / 交易额 / 积分综合排名中的目标区间用户。
                 </div>
             </section>
 
@@ -201,6 +209,19 @@
                                 <option value="101-200">Top 101 - 200 (名额: 100)</option>
                                 <option value="201-500">Top 201 - 500 (名额: 300)</option>
                             </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="input-label">交易额 (Volume) 目标区间</label>
+                            <select class="w-full border-b-2 border-slate-200 bg-slate-50 p-2 font-black text-amber-700 outline-none focus:border-amber-600">
+                                <option value="1-3">Top 1 - 3 (名额: 3)</option>
+                                <option value="4-10">Top 4 - 10 (名额: 7)</option>
+                                <option value="11-20">Top 11 - 20 (名额: 10)</option>
+                                <option value="21-50">Top 21 - 50 (名额: 30)</option>
+                                <option value="51-100">Top 51 - 100 (名额: 50)</option>
+                                <option value="101-200">Top 101 - 200 (名额: 100)</option>
+                                <option value="201-500">Top 201 - 500 (名额: 300)</option>
+                            </select>
+                            <p class="text-[9px] text-slate-400 italic">按合约成交额（USDT 名义价值）统计排名</p>
                         </div>
                         <div class="space-y-2">
                             <label class="input-label">获得积分 (Points) 目标区间</label>
@@ -257,6 +278,7 @@
             activityName: '',
             pnl: 'Top 1-3',
             roi: 'Top 5-10',
+            volume: 'Top 4-10',
             points: 'Top 50-100',
             status: 'active',
             statusLabel: '活跃',
@@ -264,6 +286,7 @@
             lifecyclePct: 30,
             pnlValue: '+$1,240,000',
             roiValue: '124.52%',
+            volumeValue: '$12.8M',
             pointsValue: '24,500 Pts'
         },
         {
@@ -274,6 +297,7 @@
             activityName: 'ForX嘉年华交易大赛',
             pnl: 'Top 1-3',
             roi: 'Top 4-10',
+            volume: 'Top 1-3',
             points: 'Top 11-20',
             status: 'active',
             statusLabel: '活跃',
@@ -281,6 +305,7 @@
             lifecyclePct: 36,
             pnlValue: '+$86,420',
             roiValue: '42.18%',
+            volumeValue: '$5.2M',
             pointsValue: '8,120 Pts'
         }
     ];
@@ -346,6 +371,7 @@
                 <td class="px-6 py-4 text-[10px] font-bold space-y-1">
                     <div class="flex justify-between"><span>PnL:</span><span class="text-blue-600">${row.pnl}</span></div>
                     <div class="flex justify-between"><span>ROI:</span><span class="text-slate-600">${row.roi}</span></div>
+                    <div class="flex justify-between"><span>Volume:</span><span class="text-amber-700">${row.volume}</span></div>
                     <div class="flex justify-between"><span>Points:</span><span class="text-slate-600">${row.points}</span></div>
                 </td>
                 <td class="px-6 py-4 text-center"><span class="status-${row.status}">${row.statusLabel}</span></td>
@@ -356,6 +382,7 @@
                 <td class="px-6 py-4 text-right space-y-1">
                     <p class="text-green-600 font-black">${row.pnlValue}</p>
                     <p class="text-slate-900 font-bold">${row.roiValue}</p>
+                    <p class="text-amber-700 font-bold">${row.volumeValue}</p>
                     <p class="text-blue-500 font-bold uppercase">${row.pointsValue}</p>
                 </td>
                 <td class="px-6 py-4 text-right space-x-3">
@@ -374,7 +401,7 @@
 
         const hint = document.getElementById('modal-target-hint');
         if (type === 'platform') {
-            hint.innerHTML = '当前目标：<strong>全平台榜单</strong>。影子账户将超越全站 PnL / ROI / 积分综合排名中的目标区间用户。';
+            hint.innerHTML = '当前目标：<strong>全平台榜单</strong>。影子账户将超越全站 PnL / ROI / 交易额 / 积分综合排名中的目标区间用户。';
         } else {
             const name = ACTIVITY_MAP[document.getElementById('modal-activity-select').value] || '（待选择活动）';
             hint.innerHTML = '当前目标：<strong>平台活动榜单</strong> — ' + name + '。仅针对已报名该活动的用户进行排名竞争。';
