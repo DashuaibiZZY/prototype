@@ -7,7 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; gap: 24px; flex-wrap: wrap; }
+        .proto-controls { display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+        .proto-btn { background: #111827; color: #fff; padding: 10px 16px; border-radius: 999px; font-size: 11px; font-weight: 800; box-shadow: 0 10px 25px -10px rgba(0,0,0,.35); white-space: nowrap; border: none; cursor: pointer; text-align: left; }
+        .proto-btn.alt { background: #fff; color: #111827; border: 1px solid #e5e7eb; }
+        .proto-btn.warn { background: #ea580c; }
+        .proto-btn.active { outline: 2px solid #6366f1; outline-offset: 2px; }
         .phone-shell { width: 375px; height: 812px; background: #000; border-radius: 50px; padding: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative; border: 4px solid #333; }
         .screen { width: 100%; height: 100%; background: #fff; border-radius: 38px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -15,24 +20,16 @@
         .reward-card:active { transform: scale(0.985); }
         .activity-hub {
             background: linear-gradient(160deg, #1e1b4b 0%, #312e81 42%, #4c1d95 100%);
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 16px 40px rgba(76,29,149,0.22);
-            position: relative;
+            border-radius: 20px; overflow: hidden;
+            box-shadow: 0 16px 40px rgba(76,29,149,0.22); position: relative;
         }
         .activity-hub::before {
             content: ''; position: absolute; right: -30px; top: -40px; width: 160px; height: 160px;
             border-radius: 50%; background: rgba(167,139,250,0.15); pointer-events: none;
         }
-        .activity-hub-pool {
-            padding: 14px 16px 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            position: relative; z-index: 1;
-        }
-        .activity-hub-featured {
-            padding: 12px 16px 14px;
-            position: relative; z-index: 1;
-        }
+        .activity-hub-pool { padding: 14px 16px 12px; border-bottom: 1px solid rgba(255,255,255,0.1); position: relative; z-index: 1; }
+        .activity-hub-pool.pool-only { border-bottom: none; padding-bottom: 16px; }
+        .activity-hub-featured { padding: 12px 16px 14px; position: relative; z-index: 1; }
         .activity-hub-featured::before {
             content: ''; position: absolute; left: 18px; right: 18px; top: 0; height: 1px;
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
@@ -46,221 +43,275 @@
             display: flex; flex-direction: column; gap: 10px; min-height: 138px;
         }
         .benefit-card:active { transform: scale(0.98); }
+        .benefit-card.is-guest { cursor: pointer; }
         .module-icon-sm {
             width: 28px; height: 28px; border-radius: 8px;
             display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px;
         }
-        .benefit-stat {
-            font-size: 14px; font-weight: 900; line-height: 1.1;
-            letter-spacing: -0.02em; word-break: break-all;
-        }
+        .benefit-stat { font-size: 14px; font-weight: 900; line-height: 1.1; letter-spacing: -0.02em; word-break: break-all; }
         .expire-warn-sm { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; font-size: 9px; font-weight: 800; padding: 3px 6px; border-radius: 6px; }
     </style>
 </head>
 <body>
 
+<div class="proto-controls">
+    <button id="btn-state-normal" class="proto-btn active" type="button" onclick="setPageState('normal')">默认：有进行中活动</button>
+    <button id="btn-state-no-activity" class="proto-btn alt" type="button" onclick="setPageState('no-activity')">无进行中活动</button>
+    <button id="btn-state-guest" class="proto-btn alt" type="button" onclick="setPageState('guest')">未登录状态</button>
+    <button id="btn-state-error" class="proto-btn warn" type="button" onclick="setPageState('error')">网络异常</button>
+</div>
+
 <div class="phone-shell">
     <div class="screen flex flex-col bg-slate-50">
 
-        <!-- 顶部导航 -->
         <header class="flex justify-between items-center px-5 pt-12 pb-3 shrink-0 bg-white border-b border-gray-50">
             <div class="w-6"></div>
             <h1 class="font-black text-[15px] tracking-tight">奖励中心</h1>
             <div class="w-6"></div>
         </header>
 
-        <!-- 可滚动内容 -->
-        <div class="flex-1 overflow-y-auto no-scrollbar pb-24">
+        <div class="flex-1 overflow-y-auto no-scrollbar pb-24 relative">
 
-            <!-- 活动专区（奖池 + 热门活动一体） -->
-            <section class="px-4 pt-4 pb-1">
-                <div class="activity-hub text-white">
-                    <div class="activity-hub-pool">
-                        <div class="flex items-center justify-between mb-2">
-                            <h2 class="text-[13px] font-black">热门活动</h2>
-                            <div class="flex items-center gap-2">
-                                <span class="text-[9px] font-black bg-red-500 text-white px-2 py-0.5 rounded-full">HOT</span>
-                                <button onclick="location.href='活动中心.html'" class="text-[10px] font-bold text-violet-200">全部 →</button>
+            <!-- 网络异常 -->
+            <div id="error-panel" class="hidden absolute inset-0 z-20 bg-slate-50 flex flex-col items-center justify-center px-8 text-center">
+                <div class="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center text-2xl mb-4">📡</div>
+                <p class="text-[14px] font-black text-gray-900">网络异常</p>
+                <p class="text-[11px] text-gray-500 mt-2 leading-relaxed">奖励数据加载失败，请检查网络后重试</p>
+                <button type="button" onclick="setPageState('normal')" class="mt-6 bg-gray-900 text-white text-[12px] font-black px-8 py-2.5 rounded-xl active:scale-[0.98]">重新加载</button>
+            </div>
+
+            <div id="main-content">
+                <!-- 活动专区 -->
+                <section class="px-4 pt-4 pb-1" id="activity-section">
+                    <div class="activity-hub text-white">
+                        <div class="activity-hub-pool" id="activity-pool">
+                            <div class="flex items-center justify-between mb-2">
+                                <h2 class="text-[13px] font-black">热门活动</h2>
+                                <div class="flex items-center gap-2">
+                                    <span id="activity-hot" class="text-[9px] font-black bg-red-500 text-white px-2 py-0.5 rounded-full">HOT</span>
+                                    <button onclick="location.href='活动中心.html'" class="text-[10px] font-bold text-violet-200">全部 →</button>
+                                </div>
+                            </div>
+                            <div class="flex items-end justify-between">
+                                <div>
+                                    <p id="activity-pool-label" class="text-[9px] font-bold text-violet-300 uppercase tracking-wide">进行中总奖池</p>
+                                    <p id="activity-pool-value" class="text-[24px] font-black leading-none tracking-tighter mt-0.5">250,000 <span class="text-[12px] font-bold text-violet-300">USDT</span></p>
+                                    <p id="activity-pool-hint" class="hidden text-[9px] font-bold text-violet-200/80 mt-2">暂无进行中活动，敬请期待</p>
+                                </div>
+                                <div id="activity-count-wrap" class="text-right pb-0.5">
+                                    <p class="text-[18px] font-black leading-none">3</p>
+                                    <p class="text-[9px] font-bold text-violet-300 mt-0.5">场进行中</p>
+                                </div>
                             </div>
                         </div>
-                        <div class="flex items-end justify-between">
-                            <div>
-                                <p class="text-[9px] font-bold text-violet-300 uppercase tracking-wide">进行中总奖池</p>
-                                <p class="text-[24px] font-black leading-none tracking-tighter mt-0.5">250,000 <span class="text-[12px] font-bold text-violet-300">USDT</span></p>
+                        <a href="活动中心.html" id="activity-featured" class="activity-hub-featured block reward-card">
+                            <div class="flex items-center gap-2 mb-1.5">
+                                <span class="text-[9px] font-black bg-white/15 px-2 py-0.5 rounded-full border border-white/20">交易大赛</span>
+                                <span class="text-[9px] font-bold text-violet-200">8,942 人参与</span>
                             </div>
-                            <div class="text-right pb-0.5">
-                                <p class="text-[18px] font-black leading-none">3</p>
-                                <p class="text-[9px] font-bold text-violet-300 mt-0.5">场进行中</p>
+                            <h3 class="text-[15px] font-black leading-tight">合约交易争霸赛</h3>
+                            <div class="flex items-center justify-between bg-white/10 rounded-xl px-3 py-2.5 mt-2.5 border border-white/10">
+                                <div>
+                                    <p class="text-[8px] font-bold text-violet-300 uppercase">本场奖池</p>
+                                    <p class="text-[17px] font-black tracking-tight leading-tight">100,000 <span class="text-[10px] text-violet-300">USDT</span></p>
+                                </div>
+                                <span class="bg-white text-violet-700 text-[10px] font-black px-3 py-1.5 rounded-lg shrink-0">立即参与</span>
                             </div>
-                        </div>
+                        </a>
                     </div>
-                    <a href="活动中心.html" class="activity-hub-featured block reward-card">
-                        <div class="flex items-center gap-2 mb-1.5">
-                            <span class="text-[9px] font-black bg-white/15 px-2 py-0.5 rounded-full border border-white/20">交易大赛</span>
-                            <span class="text-[9px] font-bold text-violet-200">8,942 人参与</span>
-                        </div>
-                        <h3 class="text-[15px] font-black leading-tight">合约交易争霸赛</h3>
-                        <div class="flex items-center justify-between bg-white/10 rounded-xl px-3 py-2.5 mt-2.5 border border-white/10">
-                            <div>
-                                <p class="text-[8px] font-bold text-violet-300 uppercase">本场奖池</p>
-                                <p class="text-[17px] font-black tracking-tight leading-tight">100,000 <span class="text-[10px] text-violet-300">USDT</span></p>
-                            </div>
-                            <span class="bg-white text-violet-700 text-[10px] font-black px-3 py-1.5 rounded-lg shrink-0">立即参与</span>
-                        </div>
-                    </a>
-                </div>
-            </section>
+                </section>
 
-            <!-- 我的奖励权益（2×2 紧凑网格，首屏可见） -->
-            <section class="px-4 py-2">
-                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">我的权益</p>
-                <div class="benefit-grid">
+                <!-- 我的权益 -->
+                <section class="px-4 py-2" id="benefits-section">
+                    <div id="guest-banner" class="hidden mb-2.5 bg-white border border-gray-100 rounded-xl px-3.5 py-3 flex items-center justify-between gap-3 shadow-sm">
+                        <div class="min-w-0">
+                            <p class="text-[11px] font-black text-gray-900">登录后查看我的权益</p>
+                            <p class="text-[9px] text-gray-400 mt-0.5">积分、返佣、VIP 与卡券数据需登录后展示</p>
+                        </div>
+                        <button type="button" class="shrink-0 bg-gray-900 text-white text-[10px] font-black px-3 py-1.5 rounded-lg">登录</button>
+                    </div>
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">我的权益</p>
+                    <div class="benefit-grid" id="benefit-grid">
 
-                    <a href="积分.html" class="benefit-card reward-card">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <div class="module-icon-sm bg-gradient-to-br from-blue-600 to-indigo-700 text-white">⭐</div>
-                                <span class="text-[12px] font-black text-gray-900">积分</span>
+                        <a href="积分.html" class="benefit-card reward-card" data-benefit-link>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <div class="module-icon-sm bg-gradient-to-br from-blue-600 to-indigo-700 text-white">⭐</div>
+                                    <span class="text-[12px] font-black text-gray-900">积分</span>
+                                </div>
+                                <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
                             </div>
-                            <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-                        </div>
-                        <div class="grid grid-cols-2 gap-1.5 min-w-0">
-                            <div class="min-w-0">
-                                <p class="text-[9px] font-bold text-gray-400">总积分</p>
-                                <p class="benefit-stat text-gray-900 mt-0.5">234,124</p>
+                            <div class="grid grid-cols-2 gap-1.5 min-w-0">
+                                <div class="min-w-0"><p class="text-[9px] font-bold text-gray-400">总积分</p><p class="benefit-stat text-gray-900 mt-0.5" data-field="points-total">234,124</p></div>
+                                <div class="text-right min-w-0"><p class="text-[9px] font-bold text-gray-400">本周新增</p><p class="benefit-stat text-blue-600 mt-0.5" data-field="points-week">+3,680</p></div>
                             </div>
-                            <div class="text-right min-w-0">
-                                <p class="text-[9px] font-bold text-gray-400">本周新增</p>
-                                <p class="benefit-stat text-blue-600 mt-0.5">+3,680</p>
+                            <div data-progress-block>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-[9px] font-bold text-gray-500">加成 <span class="text-amber-500">1.5X</span> MAX</span>
+                                    <span class="text-[9px] font-bold text-gray-400">级别 5</span>
+                                </div>
+                                <div class="progress-track"><div class="progress-fill bg-gradient-to-r from-amber-400 to-amber-500" style="width:100%"></div></div>
+                                <p class="text-[8px] text-gray-400 mt-1">伞下周交易额 $5.2B · 已达最高档</p>
                             </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <span class="text-[9px] font-bold text-gray-500">加成 <span class="text-amber-500">1.5X</span> MAX</span>
-                                <span class="text-[9px] font-bold text-gray-400">级别 5</span>
-                            </div>
-                            <div class="progress-track"><div class="progress-fill bg-gradient-to-r from-amber-400 to-amber-500" style="width:100%"></div></div>
-                            <p class="text-[8px] text-gray-400 mt-1">伞下周交易额 $5.2B · 已达最高档</p>
-                        </div>
-                    </a>
+                            <p class="hidden text-[9px] font-bold text-gray-400" data-guest-hint>登录查看</p>
+                        </a>
 
-                    <a href="邀请返佣.html" class="benefit-card reward-card">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <div class="module-icon-sm bg-gradient-to-br from-violet-600 to-purple-700 text-white">🤝</div>
-                                <span class="text-[12px] font-black text-gray-900">邀请返佣</span>
+                        <a href="邀请返佣.html" class="benefit-card reward-card" data-benefit-link>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <div class="module-icon-sm bg-gradient-to-br from-violet-600 to-purple-700 text-white">🤝</div>
+                                    <span class="text-[12px] font-black text-gray-900">邀请返佣</span>
+                                </div>
+                                <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
                             </div>
-                            <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-                        </div>
-                        <div class="grid grid-cols-2 gap-1.5 min-w-0">
-                            <div class="min-w-0">
-                                <p class="text-[9px] font-bold text-gray-400">返佣比例</p>
-                                <p class="benefit-stat text-violet-600 mt-0.5">10%</p>
+                            <div class="grid grid-cols-2 gap-1.5 min-w-0">
+                                <div class="min-w-0"><p class="text-[9px] font-bold text-gray-400">返佣比例</p><p class="benefit-stat text-violet-600 mt-0.5" data-field="rebate-rate">10%</p></div>
+                                <div class="text-right min-w-0"><p class="text-[9px] font-bold text-gray-400">累计佣金</p><p class="benefit-stat text-gray-900 mt-0.5" data-field="rebate-total">1,240.50</p><p class="text-[8px] font-bold text-gray-400">USDT</p></div>
                             </div>
-                            <div class="text-right min-w-0">
-                                <p class="text-[9px] font-bold text-gray-400">累计佣金</p>
-                                <p class="benefit-stat text-gray-900 mt-0.5">1,240.50</p>
-                                <p class="text-[8px] font-bold text-gray-400">USDT</p>
+                            <div data-progress-block>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-[9px] font-bold text-gray-500">升级 Lv3 <span class="text-violet-600">15%</span></span>
+                                    <span class="text-[9px] font-bold text-gray-400">33%</span>
+                                </div>
+                                <div class="progress-track"><div class="progress-fill bg-gradient-to-r from-violet-500 to-purple-500" style="width:33%"></div></div>
+                                <p class="text-[8px] text-gray-400 mt-1">还差 2 位活跃好友</p>
                             </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <span class="text-[9px] font-bold text-gray-500">升级 Lv3 <span class="text-violet-600">15%</span></span>
-                                <span class="text-[9px] font-bold text-gray-400">33%</span>
-                            </div>
-                            <div class="progress-track"><div class="progress-fill bg-gradient-to-r from-violet-500 to-purple-500" style="width:33%"></div></div>
-                            <p class="text-[8px] text-gray-400 mt-1">还差 2 位活跃好友</p>
-                        </div>
-                    </a>
+                            <p class="hidden text-[9px] font-bold text-gray-400" data-guest-hint>登录查看</p>
+                        </a>
 
-                    <a href="VIP费率等级.html" class="benefit-card reward-card">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <div class="module-icon-sm bg-gradient-to-br from-amber-400 to-yellow-500 text-gray-900 font-black text-[11px]">V</div>
-                                <span class="text-[12px] font-black text-gray-900">VIP 1</span>
+                        <a href="VIP费率等级.html" class="benefit-card reward-card" data-benefit-link>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <div class="module-icon-sm bg-gradient-to-br from-amber-400 to-yellow-500 text-gray-900 font-black text-[11px]">V</div>
+                                    <span class="text-[12px] font-black text-gray-900" data-field="vip-title">VIP 1</span>
+                                </div>
+                                <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
                             </div>
-                            <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-                        </div>
-                        <div>
-                            <p class="text-[9px] font-bold text-gray-400">当前费率</p>
-                            <div class="flex gap-4 mt-1 text-[11px] text-gray-600">
-                                <span>Maker <b class="text-amber-600 font-black">0.020%</b></span>
-                                <span>Taker <b class="text-amber-600 font-black">0.050%</b></span>
+                            <div data-fee-block>
+                                <p class="text-[9px] font-bold text-gray-400">当前费率</p>
+                                <div class="flex gap-4 mt-1 text-[11px] text-gray-600">
+                                    <span>Maker <b class="text-amber-600 font-black" data-field="vip-maker">0.020%</b></span>
+                                    <span>Taker <b class="text-amber-600 font-black" data-field="vip-taker">0.050%</b></span>
+                                </div>
                             </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <span class="text-[9px] font-bold text-gray-500">升级 VIP 2</span>
-                                <span class="text-[9px] font-bold text-amber-600">62%</span>
+                            <div data-progress-block>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-[9px] font-bold text-gray-500">升级 VIP 2</span>
+                                    <span class="text-[9px] font-bold text-amber-600">62%</span>
+                                </div>
+                                <div class="progress-track"><div class="progress-fill bg-gradient-to-r from-amber-400 to-yellow-400" style="width:62%"></div></div>
+                                <p class="text-[8px] text-gray-400 mt-1">14 日交易量 248 万 / 300 万 USDT</p>
                             </div>
-                            <div class="progress-track"><div class="progress-fill bg-gradient-to-r from-amber-400 to-yellow-400" style="width:62%"></div></div>
-                            <p class="text-[8px] text-gray-400 mt-1">30 日交易量 248 万 / 300 万 USDT</p>
-                        </div>
-                    </a>
+                            <p class="hidden text-[9px] font-bold text-gray-400" data-guest-hint>登录查看</p>
+                        </a>
 
-                    <a href="卡券中心.html" class="benefit-card reward-card">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <div class="module-icon-sm bg-gradient-to-br from-emerald-500 to-teal-600 text-white">🎫</div>
-                                <span class="text-[12px] font-black text-gray-900">我的卡券</span>
+                        <a href="卡券中心.html" class="benefit-card reward-card" data-benefit-link>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <div class="module-icon-sm bg-gradient-to-br from-emerald-500 to-teal-600 text-white">🎫</div>
+                                    <span class="text-[12px] font-black text-gray-900">我的卡券</span>
+                                </div>
+                                <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
                             </div>
-                            <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-                        </div>
-                        <div class="grid grid-cols-2 gap-1.5 min-w-0">
-                            <div class="min-w-0">
-                                <p class="text-[9px] font-bold text-gray-400">有效体验金</p>
-                                <p class="benefit-stat text-gray-900 mt-0.5">2<span class="text-[10px] font-bold text-gray-400 ml-0.5">张</span></p>
+                            <div class="grid grid-cols-2 gap-1.5 min-w-0">
+                                <div class="min-w-0"><p class="text-[9px] font-bold text-gray-400">有效体验金</p><p class="benefit-stat text-gray-900 mt-0.5" data-field="coupon-count">2<span class="text-[10px] font-bold text-gray-400 ml-0.5">张</span></p></div>
+                                <div class="text-right min-w-0"><p class="text-[9px] font-bold text-gray-400">体验金总额</p><p class="benefit-stat text-emerald-600 mt-0.5" data-field="coupon-total">100</p><p class="text-[8px] font-bold text-gray-400">USDT</p></div>
                             </div>
-                            <div class="text-right min-w-0">
-                                <p class="text-[9px] font-bold text-gray-400">体验金总额</p>
-                                <p class="benefit-stat text-emerald-600 mt-0.5">100</p>
-                                <p class="text-[8px] font-bold text-gray-400">USDT</p>
-                            </div>
-                        </div>
-                        <span class="expire-warn-sm inline-block w-fit">50 USDT 即将过期 · 3 天内</span>
-                    </a>
+                            <span id="coupon-expire" class="expire-warn-sm inline-block w-fit">50 USDT 即将过期 · 3 天内</span>
+                            <p class="hidden text-[9px] font-bold text-gray-400" data-guest-hint>登录查看</p>
+                        </a>
 
-                </div>
-            </section>
+                    </div>
+                </section>
+            </div>
         </div>
 
-        <!-- 底部导航栏 -->
         <nav class="absolute bottom-0 w-full bg-white border-t border-gray-100 px-4 pt-2 pb-8 flex justify-between items-center shrink-0 z-10">
-            <a href="首页.html">
-                <div class="flex flex-col items-center space-y-1 px-3 text-gray-400">
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-                    <span class="text-[10px]">首頁</span>
-                </div>
-            </a>
-            <a href="行情.html">
-                <div class="flex flex-col items-center space-y-1 px-3 text-gray-400">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
-                    <span class="text-[10px]">行情</span>
-                </div>
-            </a>
-            <a href="合约交易.html">
-                <div class="flex flex-col items-center space-y-1 px-3 text-gray-400">
-                    <div class="bg-black rounded-lg p-1.5 -mt-6 shadow-lg shadow-black/20">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-                    </div>
-                    <span class="text-[10px] pt-1">永續合約</span>
-                </div>
-            </a>
-            <a href="奖励.html">
-                <div class="flex flex-col items-center space-y-1 px-3">
-                    <svg class="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12z"/></svg>
-                    <span class="text-[10px] font-bold text-black">獎勵</span>
-                </div>
-            </a>
-            <a href="我的.html">
-                <div class="flex flex-col items-center space-y-1 px-3 text-gray-400">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                    <span class="text-[10px]">我的</span>
-                </div>
-            </a>
+            <a href="首页.html"><div class="flex flex-col items-center space-y-1 px-3 text-gray-400"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span class="text-[10px]">首頁</span></div></a>
+            <a href="行情.html"><div class="flex flex-col items-center space-y-1 px-3 text-gray-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg><span class="text-[10px]">行情</span></div></a>
+            <a href="合约交易.html"><div class="flex flex-col items-center space-y-1 px-3 text-gray-400"><div class="bg-black rounded-lg p-1.5 -mt-6 shadow-lg shadow-black/20"><svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg></div><span class="text-[10px] pt-1">永續合約</span></div></a>
+            <a href="奖励.html"><div class="flex flex-col items-center space-y-1 px-3"><svg class="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12z"/></svg><span class="text-[10px] font-bold text-black">獎勵</span></div></a>
+            <a href="我的.html"><div class="flex flex-col items-center space-y-1 px-3 text-gray-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg><span class="text-[10px]">我的</span></div></a>
         </nav>
     </div>
 </div>
+
+<script>
+    const LOGGED_DATA = {
+        'points-total': '234,124', 'points-week': '+3,680',
+        'rebate-rate': '10%', 'rebate-total': '1,240.50',
+        'vip-title': 'VIP 1', 'vip-maker': '0.020%', 'vip-taker': '0.050%',
+        'coupon-count': '2<span class="text-[10px] font-bold text-gray-400 ml-0.5">张</span>',
+        'coupon-total': '100'
+    };
+    let pageState = 'normal';
+
+    function setPageState(state) {
+        pageState = state;
+        document.querySelectorAll('.proto-btn').forEach(btn => btn.classList.remove('active'));
+        const btnMap = { normal: 'btn-state-normal', 'no-activity': 'btn-state-no-activity', guest: 'btn-state-guest', error: 'btn-state-error' };
+        document.getElementById(btnMap[state])?.classList.add('active');
+
+        const isError = state === 'error';
+        const isGuest = state === 'guest';
+        const isNoActivity = state === 'no-activity';
+
+        document.getElementById('error-panel').classList.toggle('hidden', !isError);
+        document.getElementById('main-content').classList.toggle('hidden', isError);
+
+        if (!isError) {
+            document.getElementById('activity-hot').classList.toggle('hidden', isNoActivity);
+            document.getElementById('activity-count-wrap').classList.toggle('hidden', isNoActivity);
+            document.getElementById('activity-featured').classList.toggle('hidden', isNoActivity);
+            document.getElementById('activity-pool-hint').classList.toggle('hidden', !isNoActivity);
+            document.getElementById('activity-pool').classList.toggle('pool-only', isNoActivity);
+
+            const poolLabel = document.getElementById('activity-pool-label');
+            const poolValue = document.getElementById('activity-pool-value');
+            if (isNoActivity) {
+                poolLabel.textContent = '历史累计已瓜分奖池';
+                poolValue.innerHTML = '12,850,000 <span class="text-[12px] font-bold text-violet-300">USDT</span>';
+            } else {
+                poolLabel.textContent = '进行中总奖池';
+                poolValue.innerHTML = '250,000 <span class="text-[12px] font-bold text-violet-300">USDT</span>';
+            }
+        }
+
+        document.getElementById('guest-banner').classList.toggle('hidden', !isGuest || isError);
+        document.getElementById('coupon-expire')?.classList.toggle('hidden', isGuest);
+
+        document.querySelectorAll('[data-benefit-link]').forEach(card => {
+            card.classList.toggle('is-guest', isGuest);
+            card.querySelectorAll('[data-progress-block]').forEach(el => el.classList.toggle('hidden', isGuest));
+            card.querySelector('[data-fee-block]')?.classList.toggle('hidden', isGuest);
+            card.querySelectorAll('[data-guest-hint]').forEach(el => el.classList.toggle('hidden', !isGuest));
+        });
+
+        Object.keys(LOGGED_DATA).forEach(key => {
+            const el = document.querySelector(`[data-field="${key}"]`);
+            if (!el) return;
+            if (isGuest) {
+                if (key === 'coupon-count') el.innerHTML = '--';
+                else if (key === 'vip-title') el.textContent = 'VIP --';
+                else el.textContent = '--';
+            } else if (key === 'coupon-count') {
+                el.innerHTML = LOGGED_DATA[key];
+            } else {
+                el.textContent = LOGGED_DATA[key];
+            }
+        });
+    }
+
+    function guestCardClick(e) {
+        if (pageState !== 'guest') return;
+        e.preventDefault();
+    }
+
+    document.querySelectorAll('[data-benefit-link]').forEach(card => {
+        card.addEventListener('click', guestCardClick);
+    });
+    setPageState('normal');
+</script>
 
 </body>
 </html>
