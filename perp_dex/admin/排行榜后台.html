@@ -8,13 +8,20 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #111827; }
         .sidebar-item-active { background-color: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
-        .status-active { background: #dcfce7; color: #166534; }
-        .status-decay { background: #fef3c7; color: #92400e; }
-        .status-offline { background: #f1f5f9; color: #475569; }
+        .status-active { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+        .status-decay { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+        .status-offline { background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+        .target-badge-platform { background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; }
+        .target-badge-activity { background: #f5f3ff; color: #6d28d9; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; }
         .modal-overlay { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; align-items: center; justify-content: center; display: none; }
-        .input-label { block; text-[10px]; font-weight: 900; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.05em; }
+        .input-label { display: block; font-size: 10px; font-weight: 900; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.05em; }
         .search-input { border: 1px solid #e2e8f0; border-radius: 4px; padding: 6px 10px; font-size: 11px; outline: none; transition: border-color 0.2s; }
         .search-input:focus { border-color: #3b82f6; }
+        .search-input:disabled { background: #f8fafc; color: #94a3b8; cursor: not-allowed; }
+        .target-type-btn { flex: 1; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; font-weight: 800; color: #64748b; background: #fff; transition: all 0.15s; }
+        .target-type-btn.active { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; box-shadow: inset 0 0 0 1px #2563eb; }
+        .target-type-btn.activity.active { border-color: #7c3aed; background: #f5f3ff; color: #6d28d9; box-shadow: inset 0 0 0 1px #7c3aed; }
+        .hint-box { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 4px; padding: 8px 10px; font-size: 10px; color: #64748b; line-height: 1.5; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -32,65 +39,85 @@
 </aside>
 
 <main class="flex-1 flex flex-col overflow-hidden">
-    <!-- 头部 -->
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
-        <h1 class="text-lg font-bold text-slate-800 italic uppercase">排行榜影子配置</h1>
+        <div>
+            <h1 class="text-lg font-bold text-slate-800 italic uppercase">排行榜影子配置</h1>
+            <p class="text-[10px] text-slate-400 mt-0.5">支持全平台榜单与活动报名用户榜单两套影子排名目标</p>
+        </div>
     </header>
 
     <div class="flex-1 overflow-y-auto p-8 space-y-4">
 
-        <!-- 2. 搜索与过滤条 -->
-        <section class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm grid grid-cols-6 gap-3 items-end">
-            <div class="col-span-1">
-                <label class="input-label">地址模糊搜索</label>
-                <input type="text" placeholder="0x..." class="search-input w-full">
-            </div>
-            <div class="col-span-1">
-                <label class="input-label">PnL 目标排名</label>
-                <div class="flex items-center space-x-1">
-                    <input type="number" placeholder="Min" class="search-input w-full text-center">
-                    <span class="text-slate-300">-</span>
-                    <input type="number" placeholder="Max" class="search-input w-full text-center">
+        <!-- 搜索与过滤条 -->
+        <section class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm space-y-3">
+            <div class="grid grid-cols-12 gap-3 items-end">
+                <div class="col-span-2">
+                    <label class="input-label">地址模糊搜索</label>
+                    <input type="text" id="filter-address" placeholder="0x..." class="search-input w-full">
+                </div>
+                <div class="col-span-2">
+                    <label class="input-label">目标榜单</label>
+                    <select id="filter-target-type" class="search-input w-full bg-white font-bold" onchange="onFilterTargetTypeChange()">
+                        <option value="all">全部</option>
+                        <option value="platform">全平台</option>
+                        <option value="activity">平台活动</option>
+                    </select>
+                </div>
+                <div class="col-span-2">
+                    <label class="input-label">活动名称</label>
+                    <input type="text" id="filter-activity-name" placeholder="输入活动名关键词" class="search-input w-full" disabled>
+                </div>
+                <div class="col-span-2">
+                    <label class="input-label">PnL 目标排名</label>
+                    <div class="flex items-center space-x-1">
+                        <input type="number" placeholder="Min" class="search-input w-full text-center">
+                        <span class="text-slate-300">-</span>
+                        <input type="number" placeholder="Max" class="search-input w-full text-center">
+                    </div>
+                </div>
+                <div class="col-span-2">
+                    <label class="input-label">ROI 目标排名</label>
+                    <div class="flex items-center space-x-1">
+                        <input type="number" placeholder="Min" class="search-input w-full text-center">
+                        <span class="text-slate-300">-</span>
+                        <input type="number" placeholder="Max" class="search-input w-full text-center">
+                    </div>
+                </div>
+                <div class="col-span-2">
+                    <label class="input-label">积分目标排名</label>
+                    <div class="flex items-center space-x-1">
+                        <input type="number" placeholder="Min" class="search-input w-full text-center">
+                        <span class="text-slate-300">-</span>
+                        <input type="number" placeholder="Max" class="search-input w-full text-center">
+                    </div>
                 </div>
             </div>
-            <div class="col-span-1">
-                <label class="input-label">ROI 目标排名</label>
-                <div class="flex items-center space-x-1">
-                    <input type="number" placeholder="Min" class="search-input w-full text-center">
-                    <span class="text-slate-300">-</span>
-                    <input type="number" placeholder="Max" class="search-input w-full text-center">
+            <div class="grid grid-cols-12 gap-3 items-end">
+                <div class="col-span-2">
+                    <label class="input-label">账户状态</label>
+                    <select class="search-input w-full bg-white font-bold">
+                        <option>全部</option>
+                        <option>活跃 (Active)</option>
+                        <option>衰退 (Decay)</option>
+                        <option>下线 (Offline)</option>
+                    </select>
+                </div>
+                <div class="col-span-10 flex justify-end space-x-2">
+                    <button onclick="applyFilters()" class="px-6 bg-slate-900 text-white font-bold py-1.5 rounded hover:bg-black transition-all">筛选</button>
+                    <button onclick="resetFilters()" class="px-6 border border-slate-200 text-slate-400 font-bold py-1.5 rounded hover:bg-slate-50 transition-all">重置</button>
                 </div>
             </div>
-            <div class="col-span-1">
-                <label class="input-label">积分目标排名</label>
-                <div class="flex items-center space-x-1">
-                    <input type="number" placeholder="Min" class="search-input w-full text-center">
-                    <span class="text-slate-300">-</span>
-                    <input type="number" placeholder="Max" class="search-input w-full text-center">
-                </div>
-            </div>
-            <div>
-                <label class="input-label">账户状态</label>
-                <select class="search-input w-full bg-white font-bold">
-                    <option>全部</option>
-                    <option>活跃 (Active)</option>
-                    <option>衰退 (Decay)</option>
-                    <option>下线 (Offline)</option>
-                </select>
-            </div>
-            <div class="flex space-x-2">
-                <button class="flex-1 bg-slate-900 text-white font-bold py-1.5 rounded hover:bg-black transition-all">筛选</button>
-                <button class="flex-1 border border-slate-200 text-slate-400 font-bold py-1.5 rounded hover:bg-slate-50 transition-all">重置</button>
-            </div>
+            <p class="text-[10px] text-slate-400">提示：选择「平台活动」后可按活动名称模糊查询；目标榜单决定影子账户超越的是全站排名还是某活动报名用户排名。</p>
         </section>
 
-        <!-- 3. 影子账户池列表 -->
+        <!-- 影子账户池列表 -->
         <section class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
             <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
                 <div class="flex items-center space-x-4">
                     <h2 class="font-black text-slate-700 uppercase tracking-tighter">影子账户池</h2>
+                    <span id="filter-result-hint" class="text-[10px] text-slate-400 font-bold">共 2 条</span>
                 </div>
-                <button onclick="toggleModal('modal-edit-shadow')" class="bg-blue-600 text-white px-4 py-2 rounded-sm font-black hover:bg-blue-700 transition-all uppercase">
+                <button onclick="openShadowModal()" class="bg-blue-600 text-white px-4 py-2 rounded-sm font-black hover:bg-blue-700 transition-all uppercase">
                     + 新增影子账户
                 </button>
             </div>
@@ -98,6 +125,7 @@
                 <thead class="bg-slate-50 text-slate-400 font-black text-[10px] uppercase border-b border-slate-100">
                 <tr>
                     <th class="px-6 py-4">影子地址</th>
+                    <th class="px-6 py-4">目标榜单</th>
                     <th class="px-6 py-4 text-center">目标排名要求</th>
                     <th class="px-6 py-4 text-center">当前状态</th>
                     <th class="px-6 py-4">生命周期</th>
@@ -105,31 +133,7 @@
                     <th class="px-6 py-4 text-right">操作</th>
                 </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-50 text-[11px] font-medium">
-                <tr class="hover:bg-slate-50/50 transition-colors">
-                    <td class="px-6 py-4">
-                        <span class="font-mono font-black text-slate-900 block text-[12px]">0x7a8b...C443</span>
-                    </td>
-                    <td class="px-6 py-4 text-[10px] font-bold space-y-1">
-                        <div class="flex justify-between"><span>PnL:</span><span class="text-blue-600">Top 1-3</span></div>
-                        <div class="flex justify-between"><span>ROI:</span><span class="text-slate-600">Top 5-10</span></div>
-                        <div class="flex justify-between"><span>Points:</span><span class="text-slate-600">Top 50-100</span></div>
-                    </td>
-                    <td class="px-6 py-4 text-center"><span class="status-tag status-active">活跃</span></td>
-                    <td class="px-6 py-4">
-                        <div class="w-24 h-1 bg-slate-100 rounded-full mb-1"><div class="bg-blue-500 h-full" style="width: 30%"></div></div>
-                        <span class="text-[9px] text-slate-400">Day 10 / 30 (自动继承)</span>
-                    </td>
-                    <td class="px-6 py-4 text-right space-y-1">
-                        <p class="text-green-600 font-black">+$1,240,000</p>
-                        <p class="text-slate-900 font-bold">124.52%</p>
-                        <p class="text-blue-500 font-bold uppercase">24,500 Pts</p>
-                    </td>
-                    <td class="px-6 py-4 text-right space-x-3">
-                        <button onclick="toggleModal('modal-edit-shadow')" class="text-blue-600 font-black hover:underline">编辑</button>
-                        <button onclick="confirm('确认下线？该账户将进入快速衰退并在周期结束时被继承。')" class="text-red-500 font-bold hover:underline">下线</button>
-                    </td>
-                </tr>
+                <tbody id="shadow-table-body" class="divide-y divide-slate-50 text-[11px] font-medium">
                 </tbody>
             </table>
         </section>
@@ -138,89 +142,280 @@
 
 <!-- 弹窗: 新增/编辑影子账户 -->
 <div id="modal-edit-shadow" class="modal-overlay">
-    <div class="bg-white w-[650px] rounded-sm shadow-2xl overflow-hidden animate-in zoom-in duration-200">
-        <div class="px-8 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-900">
+    <div class="bg-white w-[700px] rounded-sm shadow-2xl overflow-hidden animate-in zoom-in duration-200 max-h-[92vh] flex flex-col">
+        <div class="px-8 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-900 shrink-0">
             <h3 class="text-white font-black italic uppercase tracking-widest">影子交易员全量参数配置</h3>
             <button onclick="toggleModal('modal-edit-shadow')" class="text-slate-400 hover:text-white">✕</button>
         </div>
 
-        <div class="p-8 grid grid-cols-2 gap-10">
-            <!-- 左侧：多维度目标排名 (固定区间下拉框版) -->
-            <div class="space-y-6">
-                <h4 class="text-slate-900 font-black border-b pb-2 uppercase tracking-tighter">1. 维度排名区间目标</h4>
-                <div class="space-y-5">
-                    <!-- PnL 排名 -->
-                    <div class="space-y-2">
-                        <label class="input-label">收益金额 (PnL Amount) 目标区间</label>
-                        <select class="w-full border-b-2 border-slate-200 bg-slate-50 p-2 font-black text-blue-600 outline-none focus:border-blue-600">
-                            <option value="1-3">Top 1 - 3 (名额: 3)</option>
-                            <option value="4-10">Top 4 - 10 (名额: 7)</option>
-                            <option value="11-20">Top 11 - 20 (名额: 10)</option>
-                            <option value="21-50">Top 21 - 50 (名额: 30)</option>
-                            <option value="51-100">Top 51 - 100 (名额: 50)</option>
-                            <option value="101-200">Top 101 - 200 (名额: 100)</option>
-                            <option value="201-500">Top 201 - 500 (名额: 300)</option>
-                        </select>
-                        <p class="text-[9px] text-slate-400 italic">系统将自动校验区间余量，避免重叠</p>
-                    </div>
+        <div class="p-8 overflow-y-auto space-y-8">
+            <!-- 0. 目标榜单 -->
+            <section class="space-y-4">
+                <h4 class="text-slate-900 font-black border-b pb-2 uppercase tracking-tighter">0. 目标榜单</h4>
+                <div class="flex gap-3">
+                    <button type="button" id="modal-target-platform" class="target-type-btn active" onclick="setModalTargetType('platform')">全平台</button>
+                    <button type="button" id="modal-target-activity" class="target-type-btn activity" onclick="setModalTargetType('activity')">平台活动</button>
+                </div>
+                <div id="modal-activity-wrap" class="hidden space-y-2">
+                    <label class="input-label">选择交易排名活动</label>
+                    <select id="modal-activity-select" class="w-full border border-slate-200 rounded p-2.5 font-bold text-violet-700 bg-violet-50 outline-none focus:border-violet-500">
+                        <option value="">请选择活动</option>
+                        <option value="act-001">ForX嘉年华交易大赛</option>
+                        <option value="act-002">BTC 永续交易量冲榜</option>
+                        <option value="act-003">Q3 ROI 争霸赛</option>
+                        <option value="act-004">新春积分排位赛</option>
+                    </select>
+                    <p class="text-[9px] text-slate-400 italic">仅统计已报名该活动的用户排名，影子账户将在此活动榜单内竞争目标名次</p>
+                </div>
+                <div class="hint-box" id="modal-target-hint">
+                    当前目标：<strong>全平台榜单</strong>。影子账户将超越全站 PnL / ROI / 积分综合排名中的目标区间用户。
+                </div>
+            </section>
 
-                    <!-- ROI 排名 -->
-                    <div class="space-y-2">
-                        <label class="input-label">收益率 (ROI %) 目标区间</label>
-                        <select class="w-full border-b-2 border-slate-200 bg-slate-50 p-2 font-black text-slate-700 outline-none focus:border-blue-600">
-                            <option value="1-3">Top 1 - 3 (名额: 3)</option>
-                            <option value="4-10">Top 4 - 10 (名额: 7)</option>
-                            <option value="11-20">Top 11 - 20 (名额: 10)</option>
-                            <option value="21-50">Top 21 - 50 (名额: 30)</option>
-                            <option value="51-100">Top 51 - 100 (名额: 50)</option>
-                            <option value="101-200">Top 101 - 200 (名额: 100)</option>
-                            <option value="201-500">Top 201 - 500 (名额: 300)</option>
-                        </select>
-                    </div>
-
-                    <!-- 积分排名 -->
-                    <div class="space-y-2">
-                        <label class="input-label">获得积分 (Points) 目标区间</label>
-                        <select class="w-full border-b-2 border-slate-200 bg-slate-50 p-2 font-black text-slate-700 outline-none focus:border-blue-600">
-                            <option value="1-3">Top 1 - 3 (名额: 3)</option>
-                            <option value="4-10">Top 4 - 10 (名额: 7)</option>
-                            <option value="11-20">Top 11 - 20 (名额: 10)</option>
-                            <option value="21-50">Top 21 - 50 (名额: 30)</option>
-                            <option value="51-100">Top 51 - 100 (名额: 50)</option>
-                            <option value="101-200">Top 101 - 200 (名额: 100)</option>
-                            <option value="201-500">Top 201 - 500 (名额: 300)</option>
-                        </select>
+            <div class="grid grid-cols-2 gap-10">
+                <!-- 左侧：多维度目标排名 -->
+                <div class="space-y-6">
+                    <h4 class="text-slate-900 font-black border-b pb-2 uppercase tracking-tighter">1. 维度排名区间目标</h4>
+                    <div class="space-y-5">
+                        <div class="space-y-2">
+                            <label class="input-label">收益金额 (PnL Amount) 目标区间</label>
+                            <select class="w-full border-b-2 border-slate-200 bg-slate-50 p-2 font-black text-blue-600 outline-none focus:border-blue-600">
+                                <option value="1-3">Top 1 - 3 (名额: 3)</option>
+                                <option value="4-10">Top 4 - 10 (名额: 7)</option>
+                                <option value="11-20">Top 11 - 20 (名额: 10)</option>
+                                <option value="21-50">Top 21 - 50 (名额: 30)</option>
+                                <option value="51-100">Top 51 - 100 (名额: 50)</option>
+                                <option value="101-200">Top 101 - 200 (名额: 100)</option>
+                                <option value="201-500">Top 201 - 500 (名额: 300)</option>
+                            </select>
+                            <p class="text-[9px] text-slate-400 italic">系统将自动校验区间余量，避免重叠</p>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="input-label">收益率 (ROI %) 目标区间</label>
+                            <select class="w-full border-b-2 border-slate-200 bg-slate-50 p-2 font-black text-slate-700 outline-none focus:border-blue-600">
+                                <option value="1-3">Top 1 - 3 (名额: 3)</option>
+                                <option value="4-10">Top 4 - 10 (名额: 7)</option>
+                                <option value="11-20">Top 11 - 20 (名额: 10)</option>
+                                <option value="21-50">Top 21 - 50 (名额: 30)</option>
+                                <option value="51-100">Top 51 - 100 (名额: 50)</option>
+                                <option value="101-200">Top 101 - 200 (名额: 100)</option>
+                                <option value="201-500">Top 201 - 500 (名额: 300)</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="input-label">获得积分 (Points) 目标区间</label>
+                            <select class="w-full border-b-2 border-slate-200 bg-slate-50 p-2 font-black text-slate-700 outline-none focus:border-blue-600">
+                                <option value="1-3">Top 1 - 3 (名额: 3)</option>
+                                <option value="4-10">Top 4 - 10 (名额: 7)</option>
+                                <option value="11-20">Top 11 - 20 (名额: 10)</option>
+                                <option value="21-50">Top 21 - 50 (名额: 30)</option>
+                                <option value="51-100">Top 51 - 100 (名额: 50)</option>
+                                <option value="101-200">Top 101 - 200 (名额: 100)</option>
+                                <option value="201-500">Top 201 - 500 (名额: 300)</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- 右侧：生命周期与性格 -->
-            <div class="space-y-6">
-                <h4 class="text-slate-900 font-black border-b pb-2 uppercase tracking-tighter">2. 生命周期与人设</h4>
-                <div class="space-y-5">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label class="input-label">活跃时长 (天)</label><input type="number" value="30" class="w-full border border-slate-200 rounded p-2 font-black"></div>
-                    </div>
-                    <div class="p-4 bg-blue-50 rounded-sm border border-blue-100 flex items-center justify-between">
-                        <div><p class="text-[10px] font-black text-blue-600 uppercase">自动继承者逻辑</p><p class="text-[8px] text-blue-400 italic">结束后自动生成新地址承接参数</p></div>
-                        <input type="checkbox" checked class="w-5 h-5 accent-blue-600">
+                <!-- 右侧：生命周期 -->
+                <div class="space-y-6">
+                    <h4 class="text-slate-900 font-black border-b pb-2 uppercase tracking-tighter">2. 生命周期与人设</h4>
+                    <div class="space-y-5">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="input-label">活跃时长 (天)</label><input type="number" value="30" class="w-full border border-slate-200 rounded p-2 font-black"></div>
+                        </div>
+                        <div class="p-4 bg-blue-50 rounded-sm border border-blue-100 flex items-center justify-between">
+                            <div><p class="text-[10px] font-black text-blue-600 uppercase">自动继承者逻辑</p><p class="text-[8px] text-blue-400 italic">结束后自动生成新地址承接参数</p></div>
+                            <input type="checkbox" checked class="w-5 h-5 accent-blue-600">
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-end space-x-3">
+        <div class="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-end space-x-3 shrink-0">
             <button onclick="toggleModal('modal-edit-shadow')" class="px-6 py-2 font-bold text-slate-400 uppercase">取消</button>
-            <button onclick="alert('影子账号已配置成功，正在同步调度引擎'); toggleModal('modal-edit-shadow')" class="px-10 py-2 bg-blue-600 text-white font-black rounded-sm shadow-xl shadow-blue-600/20 uppercase tracking-widest">保存并应用</button>
+            <button onclick="saveShadow()" class="px-10 py-2 bg-blue-600 text-white font-black rounded-sm shadow-xl shadow-blue-600/20 uppercase tracking-widest">保存并应用</button>
         </div>
     </div>
 </div>
 
 <script>
+    const ACTIVITY_MAP = {
+        'act-001': 'ForX嘉年华交易大赛',
+        'act-002': 'BTC 永续交易量冲榜',
+        'act-003': 'Q3 ROI 争霸赛',
+        'act-004': '新春积分排位赛'
+    };
+
+    let shadowRows = [
+        {
+            id: 1,
+            address: '0x7a8b...C443',
+            targetType: 'platform',
+            activityId: '',
+            activityName: '',
+            pnl: 'Top 1-3',
+            roi: 'Top 5-10',
+            points: 'Top 50-100',
+            status: 'active',
+            statusLabel: '活跃',
+            lifecycle: 'Day 10 / 30 (自动继承)',
+            lifecyclePct: 30,
+            pnlValue: '+$1,240,000',
+            roiValue: '124.52%',
+            pointsValue: '24,500 Pts'
+        },
+        {
+            id: 2,
+            address: '0x3f21...9A12',
+            targetType: 'activity',
+            activityId: 'act-001',
+            activityName: 'ForX嘉年华交易大赛',
+            pnl: 'Top 1-3',
+            roi: 'Top 4-10',
+            points: 'Top 11-20',
+            status: 'active',
+            statusLabel: '活跃',
+            lifecycle: 'Day 5 / 14 (自动继承)',
+            lifecyclePct: 36,
+            pnlValue: '+$86,420',
+            roiValue: '42.18%',
+            pointsValue: '8,120 Pts'
+        }
+    ];
+
+    let modalTargetType = 'platform';
+    let editingId = null;
+
     function toggleModal(id) {
         const modal = document.getElementById(id);
         modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
     }
+
+    function onFilterTargetTypeChange() {
+        const type = document.getElementById('filter-target-type').value;
+        const activityInput = document.getElementById('filter-activity-name');
+        activityInput.disabled = type !== 'activity';
+        if (type !== 'activity') activityInput.value = '';
+    }
+
+    function resetFilters() {
+        document.getElementById('filter-address').value = '';
+        document.getElementById('filter-target-type').value = 'all';
+        document.getElementById('filter-activity-name').value = '';
+        onFilterTargetTypeChange();
+        renderTable(shadowRows);
+    }
+
+    function applyFilters() {
+        const address = document.getElementById('filter-address').value.trim().toLowerCase();
+        const targetType = document.getElementById('filter-target-type').value;
+        const activityName = document.getElementById('filter-activity-name').value.trim().toLowerCase();
+
+        const filtered = shadowRows.filter(row => {
+            if (address && !row.address.toLowerCase().includes(address)) return false;
+            if (targetType !== 'all' && row.targetType !== targetType) return false;
+            if (targetType === 'activity' && activityName && !(row.activityName || '').toLowerCase().includes(activityName)) return false;
+            return true;
+        });
+
+        renderTable(filtered);
+    }
+
+    function renderTargetCell(row) {
+        if (row.targetType === 'platform') {
+            return '<span class="target-badge-platform">全平台</span>';
+        }
+        return '<div class="space-y-1"><span class="target-badge-activity">平台活动</span><p class="text-[10px] font-bold text-violet-700 leading-tight">' + row.activityName + '</p></div>';
+    }
+
+    function renderTable(rows) {
+        const tbody = document.getElementById('shadow-table-body');
+        document.getElementById('filter-result-hint').textContent = '共 ' + rows.length + ' 条';
+
+        if (!rows.length) {
+            tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-10 text-center text-slate-400 font-bold">暂无匹配的影子账户</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = rows.map(row => `
+            <tr class="hover:bg-slate-50/50 transition-colors">
+                <td class="px-6 py-4"><span class="font-mono font-black text-slate-900 block text-[12px]">${row.address}</span></td>
+                <td class="px-6 py-4">${renderTargetCell(row)}</td>
+                <td class="px-6 py-4 text-[10px] font-bold space-y-1">
+                    <div class="flex justify-between"><span>PnL:</span><span class="text-blue-600">${row.pnl}</span></div>
+                    <div class="flex justify-between"><span>ROI:</span><span class="text-slate-600">${row.roi}</span></div>
+                    <div class="flex justify-between"><span>Points:</span><span class="text-slate-600">${row.points}</span></div>
+                </td>
+                <td class="px-6 py-4 text-center"><span class="status-${row.status}">${row.statusLabel}</span></td>
+                <td class="px-6 py-4">
+                    <div class="w-24 h-1 bg-slate-100 rounded-full mb-1"><div class="bg-blue-500 h-full" style="width: ${row.lifecyclePct}%"></div></div>
+                    <span class="text-[9px] text-slate-400">${row.lifecycle}</span>
+                </td>
+                <td class="px-6 py-4 text-right space-y-1">
+                    <p class="text-green-600 font-black">${row.pnlValue}</p>
+                    <p class="text-slate-900 font-bold">${row.roiValue}</p>
+                    <p class="text-blue-500 font-bold uppercase">${row.pointsValue}</p>
+                </td>
+                <td class="px-6 py-4 text-right space-x-3">
+                    <button onclick="openShadowModal(${row.id})" class="text-blue-600 font-black hover:underline">编辑</button>
+                    <button onclick="offlineShadow(${row.id})" class="text-red-500 font-bold hover:underline">下线</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function setModalTargetType(type) {
+        modalTargetType = type;
+        document.getElementById('modal-target-platform').classList.toggle('active', type === 'platform');
+        document.getElementById('modal-target-activity').classList.toggle('active', type === 'activity');
+        document.getElementById('modal-activity-wrap').classList.toggle('hidden', type !== 'activity');
+
+        const hint = document.getElementById('modal-target-hint');
+        if (type === 'platform') {
+            hint.innerHTML = '当前目标：<strong>全平台榜单</strong>。影子账户将超越全站 PnL / ROI / 积分综合排名中的目标区间用户。';
+        } else {
+            const name = ACTIVITY_MAP[document.getElementById('modal-activity-select').value] || '（待选择活动）';
+            hint.innerHTML = '当前目标：<strong>平台活动榜单</strong> — ' + name + '。仅针对已报名该活动的用户进行排名竞争。';
+        }
+    }
+
+    function openShadowModal(id) {
+        editingId = id || null;
+        if (id) {
+            const row = shadowRows.find(r => r.id === id);
+            setModalTargetType(row.targetType);
+            document.getElementById('modal-activity-select').value = row.activityId || '';
+            setModalTargetType(row.targetType);
+        } else {
+            setModalTargetType('platform');
+            document.getElementById('modal-activity-select').value = '';
+        }
+        toggleModal('modal-edit-shadow');
+    }
+
+    function saveShadow() {
+        if (modalTargetType === 'activity' && !document.getElementById('modal-activity-select').value) {
+            alert('请选择交易排名活动');
+            return;
+        }
+        alert('影子账号已配置成功，正在同步调度引擎');
+        toggleModal('modal-edit-shadow');
+    }
+
+    function offlineShadow(id) {
+        if (confirm('确认下线？该账户将进入快速衰退并在周期结束时被继承。')) {
+            shadowRows = shadowRows.filter(r => r.id !== id);
+            applyFilters();
+        }
+    }
+
+    document.getElementById('modal-activity-select').addEventListener('change', () => {
+        if (modalTargetType === 'activity') setModalTargetType('activity');
+    });
+
+    renderTable(shadowRows);
 </script>
 </body>
 </html>
