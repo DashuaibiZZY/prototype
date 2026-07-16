@@ -50,6 +50,7 @@
         }
         .benefit-stat { font-size: 14px; font-weight: 900; line-height: 1.1; letter-spacing: -0.02em; word-break: break-all; }
         .expire-warn-sm { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; font-size: 9px; font-weight: 800; padding: 3px 6px; border-radius: 6px; }
+        .error-banner { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
     </style>
 </head>
 <body>
@@ -72,15 +73,14 @@
 
         <div class="flex-1 overflow-y-auto no-scrollbar pb-24 relative">
 
-            <!-- 网络异常 -->
-            <div id="error-panel" class="hidden absolute inset-0 z-20 bg-slate-50 flex flex-col items-center justify-center px-8 text-center">
-                <div class="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center text-2xl mb-4">📡</div>
-                <p class="text-[14px] font-black text-gray-900">网络异常</p>
-                <p class="text-[11px] text-gray-500 mt-2 leading-relaxed">奖励数据加载失败，请检查网络后重试</p>
-                <button type="button" onclick="setPageState('normal')" class="mt-6 bg-gray-900 text-white text-[12px] font-black px-8 py-2.5 rounded-xl active:scale-[0.98]">重新加载</button>
-            </div>
-
             <div id="main-content">
+                <!-- 网络异常提示条 -->
+                <div id="error-banner" class="hidden error-banner mx-4 mt-3 px-3.5 py-2.5 rounded-xl flex items-center gap-2">
+                    <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                    <p class="text-[11px] font-black leading-snug flex-1">加载失败，请检查网络后重试</p>
+                    <button type="button" onclick="setPageState('normal')" class="text-[10px] font-black underline underline-offset-2 shrink-0">重试</button>
+                </div>
+
                 <!-- 活动专区 -->
                 <section class="px-4 pt-4 pb-1" id="activity-section">
                     <div class="activity-hub text-white">
@@ -95,11 +95,11 @@
                             <div class="flex items-end justify-between">
                                 <div>
                                     <p id="activity-pool-label" class="text-[9px] font-bold text-violet-300 uppercase tracking-wide">进行中总奖池</p>
-                                    <p id="activity-pool-value" class="text-[24px] font-black leading-none tracking-tighter mt-0.5">250,000 <span class="text-[12px] font-bold text-violet-300">USDT</span></p>
+                                    <p id="activity-pool-value" class="text-[24px] font-black leading-none tracking-tighter mt-0.5" data-field="activity-pool">250,000 <span class="text-[12px] font-bold text-violet-300">USDT</span></p>
                                     <p id="activity-pool-hint" class="hidden text-[9px] font-bold text-violet-200/80 mt-2">暂无进行中活动，敬请期待</p>
                                 </div>
                                 <div id="activity-count-wrap" class="text-right pb-0.5">
-                                    <p class="text-[18px] font-black leading-none">3</p>
+                                    <p class="text-[18px] font-black leading-none" data-field="activity-count">3</p>
                                     <p class="text-[9px] font-bold text-violet-300 mt-0.5">场进行中</p>
                                 </div>
                             </div>
@@ -107,13 +107,13 @@
                         <a href="活动中心.html" id="activity-featured" class="activity-hub-featured block reward-card">
                             <div class="flex items-center gap-2 mb-1.5">
                                 <span class="text-[9px] font-black bg-white/15 px-2 py-0.5 rounded-full border border-white/20">交易大赛</span>
-                                <span class="text-[9px] font-bold text-violet-200">8,942 人参与</span>
-                            </div>
-                            <h3 class="text-[15px] font-black leading-tight">合约交易争霸赛</h3>
-                            <div class="flex items-center justify-between bg-white/10 rounded-xl px-3 py-2.5 mt-2.5 border border-white/10">
-                                <div>
-                                    <p class="text-[8px] font-bold text-violet-300 uppercase">本场奖池</p>
-                                    <p class="text-[17px] font-black tracking-tight leading-tight">100,000 <span class="text-[10px] text-violet-300">USDT</span></p>
+                            <span class="text-[9px] font-bold text-violet-200" data-field="activity-participants">8,942 人参与</span>
+                        </div>
+                        <h3 class="text-[15px] font-black leading-tight" data-field="activity-title">合约交易争霸赛</h3>
+                        <div class="flex items-center justify-between bg-white/10 rounded-xl px-3 py-2.5 mt-2.5 border border-white/10">
+                            <div>
+                                <p class="text-[8px] font-bold text-violet-300 uppercase">本场奖池</p>
+                                <p class="text-[17px] font-black tracking-tight leading-tight" data-field="activity-featured-pool">100,000 <span class="text-[10px] text-violet-300">USDT</span></p>
                                 </div>
                                 <span class="bg-white text-violet-700 text-[10px] font-black px-3 py-1.5 rounded-lg shrink-0">立即参与</span>
                             </div>
@@ -244,53 +244,44 @@
         'coupon-count': '2<span class="text-[10px] font-bold text-gray-400 ml-0.5">张</span>',
         'coupon-total': '100'
     };
+    const ACTIVITY_DATA = {
+        normal: {
+            pool: '250,000 <span class="text-[12px] font-bold text-violet-300">USDT</span>',
+            count: '3',
+            participants: '8,942 人参与',
+            title: '合约交易争霸赛',
+            featuredPool: '100,000 <span class="text-[10px] text-violet-300">USDT</span>'
+        },
+        'no-activity': {
+            pool: '12,850,000 <span class="text-[12px] font-bold text-violet-300">USDT</span>',
+            count: '3',
+            participants: '8,942 人参与',
+            title: '合约交易争霸赛',
+            featuredPool: '100,000 <span class="text-[10px] text-violet-300">USDT</span>'
+        },
+        error: {
+            pool: '--',
+            count: '--',
+            participants: '--',
+            title: '--',
+            featuredPool: '--'
+        }
+    };
     let pageState = 'normal';
 
-    function setPageState(state) {
-        pageState = state;
-        document.querySelectorAll('.proto-btn').forEach(btn => btn.classList.remove('active'));
-        const btnMap = { normal: 'btn-state-normal', 'no-activity': 'btn-state-no-activity', guest: 'btn-state-guest', error: 'btn-state-error' };
-        document.getElementById(btnMap[state])?.classList.add('active');
-
-        const isError = state === 'error';
-        const isGuest = state === 'guest';
-        const isNoActivity = state === 'no-activity';
-
-        document.getElementById('error-panel').classList.toggle('hidden', !isError);
-        document.getElementById('main-content').classList.toggle('hidden', isError);
-
-        if (!isError) {
-            document.getElementById('activity-hot').classList.toggle('hidden', isNoActivity);
-            document.getElementById('activity-count-wrap').classList.toggle('hidden', isNoActivity);
-            document.getElementById('activity-featured').classList.toggle('hidden', isNoActivity);
-            document.getElementById('activity-pool-hint').classList.toggle('hidden', !isNoActivity);
-            document.getElementById('activity-pool').classList.toggle('pool-only', isNoActivity);
-
-            const poolLabel = document.getElementById('activity-pool-label');
-            const poolValue = document.getElementById('activity-pool-value');
-            if (isNoActivity) {
-                poolLabel.textContent = '历史累计已瓜分奖池';
-                poolValue.innerHTML = '12,850,000 <span class="text-[12px] font-bold text-violet-300">USDT</span>';
-            } else {
-                poolLabel.textContent = '进行中总奖池';
-                poolValue.innerHTML = '250,000 <span class="text-[12px] font-bold text-violet-300">USDT</span>';
-            }
-        }
-
-        document.getElementById('guest-banner').classList.toggle('hidden', !isGuest || isError);
-        document.getElementById('coupon-expire')?.classList.toggle('hidden', isGuest);
-
+    function applyMaskedBenefits(masked) {
         document.querySelectorAll('[data-benefit-link]').forEach(card => {
-            card.classList.toggle('is-guest', isGuest);
-            card.querySelectorAll('[data-progress-block]').forEach(el => el.classList.toggle('hidden', isGuest));
-            card.querySelector('[data-fee-block]')?.classList.toggle('hidden', isGuest);
-            card.querySelectorAll('[data-guest-hint]').forEach(el => el.classList.toggle('hidden', !isGuest));
+            card.classList.toggle('is-guest', masked);
+            card.querySelectorAll('[data-progress-block]').forEach(el => el.classList.toggle('hidden', masked));
+            card.querySelector('[data-fee-block]')?.classList.toggle('hidden', masked);
+            card.querySelectorAll('[data-guest-hint]').forEach(el => el.classList.toggle('hidden', !masked || pageState === 'error'));
         });
+        document.getElementById('coupon-expire')?.classList.toggle('hidden', masked);
 
         Object.keys(LOGGED_DATA).forEach(key => {
             const el = document.querySelector(`[data-field="${key}"]`);
             if (!el) return;
-            if (isGuest) {
+            if (masked) {
                 if (key === 'coupon-count') el.innerHTML = '--';
                 else if (key === 'vip-title') el.textContent = 'VIP --';
                 else el.textContent = '--';
@@ -302,8 +293,48 @@
         });
     }
 
+    function applyActivityState(state) {
+        const isNoActivity = state === 'no-activity';
+        const isError = state === 'error';
+        const data = isError ? ACTIVITY_DATA.error : (isNoActivity ? ACTIVITY_DATA['no-activity'] : ACTIVITY_DATA.normal);
+
+        document.getElementById('activity-hot').classList.toggle('hidden', isNoActivity || isError);
+        document.getElementById('activity-count-wrap').classList.toggle('hidden', isNoActivity);
+        document.getElementById('activity-featured').classList.toggle('hidden', isNoActivity);
+        document.getElementById('activity-pool-hint').classList.toggle('hidden', !isNoActivity);
+        document.getElementById('activity-pool').classList.toggle('pool-only', isNoActivity);
+
+        const poolLabel = document.getElementById('activity-pool-label');
+        if (isError) poolLabel.textContent = '进行中总奖池';
+        else if (isNoActivity) poolLabel.textContent = '历史累计已瓜分奖池';
+        else poolLabel.textContent = '进行中总奖池';
+
+        document.querySelector('[data-field="activity-pool"]').innerHTML = data.pool;
+        document.querySelector('[data-field="activity-count"]').textContent = data.count;
+        document.querySelector('[data-field="activity-participants"]').textContent = data.participants;
+        document.querySelector('[data-field="activity-title"]').textContent = data.title;
+        document.querySelector('[data-field="activity-featured-pool"]').innerHTML = data.featuredPool;
+    }
+
+    function setPageState(state) {
+        pageState = state;
+        document.querySelectorAll('.proto-btn').forEach(btn => btn.classList.remove('active'));
+        const btnMap = { normal: 'btn-state-normal', 'no-activity': 'btn-state-no-activity', guest: 'btn-state-guest', error: 'btn-state-error' };
+        document.getElementById(btnMap[state])?.classList.add('active');
+
+        const isError = state === 'error';
+        const isGuest = state === 'guest';
+        const isMasked = isGuest || isError;
+
+        document.getElementById('error-banner').classList.toggle('hidden', !isError);
+        document.getElementById('guest-banner').classList.toggle('hidden', !isGuest);
+
+        applyActivityState(isError ? 'error' : state);
+        applyMaskedBenefits(isMasked);
+    }
+
     function guestCardClick(e) {
-        if (pageState !== 'guest') return;
+        if (pageState !== 'guest' && pageState !== 'error') return;
         e.preventDefault();
     }
 
