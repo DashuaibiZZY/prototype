@@ -65,6 +65,11 @@
             margin-top: 4px;
             text-transform: uppercase;
         }
+        .tpsl-estimate { font-size: 9px; font-weight: 700; line-height: 1.4; }
+        .tpsl-estimate.positive { color: #16a34a; }
+        .tpsl-estimate.negative { color: #dc2626; }
+        .tpsl-estimate.empty { color: #9ca3af; }
+        .tpsl-conflict-hint { font-size: 8px; color: #d97706; font-weight: 700; line-height: 1.4; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -77,7 +82,7 @@
             <a href="合约交易.html" class="text-black font-bold">交易</a>
             <a href="投资组合.html" class="text-gray-400 hover:text-black">投資組合</a>
             <!-- 熱門活動（HOT 标签紧贴） -->
-            <a href="热门活动.html" class="text-gray-400 hover:text-black relative">
+            <a href="活动中心.html" class="text-gray-400 hover:text-black relative">
                 熱門活動
                 <span class="absolute -top-1 -right-5 bg-red-500 text-white px-1 text-[8px] rounded-sm scale-90 leading-tight">HOT</span>
             </a>
@@ -856,7 +861,7 @@
                 <div id="price-input-container" class="flex gap-1.5 mb-2">
                     <div id="price-field" class="flex-1 bg-gray-50 border border-gray-100 h-8 flex items-center px-2 relative">
                         <span class="text-[9px] text-gray-400 mr-2 shrink-0">價格</span>
-                        <input id="price-input" class="w-full bg-transparent font-bold outline-none text-[11px]" value="65432.1">
+                        <input id="price-input" class="w-full bg-transparent font-bold outline-none text-[11px]" value="65432.1" oninput="updateTPSLEstimates()">
                         <select id="price-select" class="w-full bg-transparent font-bold outline-none text-[11px] hidden">
                             <option value="对手价 1">对手价 1</option>
                             <option value="对手价 5">对手价 5</option>
@@ -888,12 +893,13 @@
 
                     <!-- 动态触发/委托价格区域 (由JS根据模式生成) -->
                     <div id="tpsl-triggers-container" class="space-y-2"></div>
+                    <div id="tpsl-conflict-hint" class="tpsl-conflict-hint hidden"></div>
                 </div>
 
                 <!-- 数量输入 -->
                 <div class="bg-gray-50 border border-gray-100 h-8 flex items-center px-2 mb-2 relative">
                     <span class="text-[9px] text-gray-400 mr-2 shrink-0">数量</span>
-                    <input class="w-full bg-transparent font-bold outline-none text-[11px]" placeholder="0.0">
+                    <input id="qty-input" class="w-full bg-transparent font-bold outline-none text-[11px]" placeholder="0.0" oninput="updateTPSLEstimates()">
                     <div class="flex items-center text-[9px] font-bold text-gray-500 cursor-pointer shrink-0" onclick="toggleQtyUnitDropdown(event)">
                         <span id="qty-unit">USDT</span>
                         <svg width="8" height="8" class="ml-1" viewBox="0 0 16 16"><path d="M8 11.2L3.2 6.4h9.6L8 11.2z" fill="currentColor"></path></svg>
@@ -955,23 +961,25 @@
                         <div class="space-y-0.5">
                             <div class="flex justify-between text-[8px] text-gray-400"><span>止盈</span></div>
                             <div class="h-7 bg-gray-50 border border-gray-100 px-1.5 flex items-center">
-                                <input class="w-full bg-transparent font-bold text-[10px] outline-none" placeholder="價格">
+                                <input id="attach-tp-price" class="w-full bg-transparent font-bold text-[10px] outline-none" placeholder="價格" oninput="updateTPSLEstimates()">
                                 <select class="text-[8px] bg-transparent border-l border-gray-200 pl-1 text-gray-500 outline-none ml-1">
                                     <option>最新成交價</option>
                                     <option>標記價格</option>
                                 </select>
                             </div>
+                            <div id="attach-tp-estimate" class="tpsl-estimate empty">--</div>
                         </div>
                         <!-- 止損 -->
                         <div class="space-y-0.5">
                             <div class="flex justify-between text-[8px] text-gray-400"><span>止損</span></div>
                             <div class="h-7 bg-gray-50 border border-gray-100 px-1.5 flex items-center">
-                                <input class="w-full bg-transparent font-bold text-[10px] outline-none" placeholder="價格">
+                                <input id="attach-sl-price" class="w-full bg-transparent font-bold text-[10px] outline-none" placeholder="價格" oninput="updateTPSLEstimates()">
                                 <select class="text-[8px] bg-transparent border-l border-gray-200 pl-1 text-gray-500 outline-none ml-1">
                                     <option>最新成交價</option>
                                     <option>標記價格</option>
                                 </select>
                             </div>
+                            <div id="attach-sl-estimate" class="tpsl-estimate empty">--</div>
                         </div>
                     </div>
                 </div>
@@ -2878,6 +2886,126 @@
     // ==================== 止盈止损交互 ====================
     let currentTPSLMode = '单向委托';   // 单向委托 / 双向委托
     let currentTPSLDirection = ''; // 由开平仓决定
+    const MARK_PRICE = 72305.9;
+    const orderDelegateMap = { 'tp-order': 'market', 'sl-order': 'market' };
+    let currentOpenDirection = 'long';
+
+    function parseInputNum(val) {
+        if (val === null || val === undefined) return NaN;
+        const raw = String(val).replace(/,/g, '').trim();
+        if (!raw || raw === '市價' || raw === '市价') return NaN;
+        const n = parseFloat(raw);
+        return Number.isFinite(n) && n > 0 ? n : NaN;
+    }
+
+    function getMarkPrice() {
+        return MARK_PRICE;
+    }
+
+    function getOrderRefPrice() {
+        const priceInput = document.getElementById('price-input');
+        if (!priceInput || priceInput.disabled) return getMarkPrice();
+        const val = parseInputNum(priceInput.value);
+        return Number.isFinite(val) ? val : getMarkPrice();
+    }
+
+    function getDelegateRefPrice(role) {
+        const orderTypeId = role + '-order';
+        const delegateType = orderDelegateMap[orderTypeId] || 'market';
+        const priceEl = document.getElementById(role + '-price');
+        if (delegateType === 'limit') {
+            const limitPrice = parseInputNum(priceEl?.value);
+            if (Number.isFinite(limitPrice)) return limitPrice;
+        }
+        return getOrderRefPrice();
+    }
+
+    function getQtyUsdt() {
+        const qty = parseInputNum(document.getElementById('qty-input')?.value);
+        if (!Number.isFinite(qty)) return NaN;
+        const unit = document.getElementById('qty-unit')?.innerText || 'USDT';
+        const ref = getOrderRefPrice();
+        return unit === 'BTC' ? qty * ref : qty;
+    }
+
+    function getLegDisplayDirection(role, triggerPrice, refPrice) {
+        if (role === 'tp') return triggerPrice > refPrice ? 'long' : 'short';
+        return triggerPrice < refPrice ? 'long' : 'short';
+    }
+
+    function calcLegEstPnl(role, triggerPrice, refPrice, qtyUsdt) {
+        const dir = getLegDisplayDirection(role, triggerPrice, refPrice);
+        if (dir === 'long') return qtyUsdt * (triggerPrice - refPrice) / refPrice;
+        return qtyUsdt * (refPrice - triggerPrice) / refPrice;
+    }
+
+    function formatEstPnlText(role, triggerPrice, refPrice, qtyUsdt) {
+        if (!Number.isFinite(qtyUsdt) || !Number.isFinite(triggerPrice) || !Number.isFinite(refPrice)) return '--';
+        const pnl = calcLegEstPnl(role, triggerPrice, refPrice, qtyUsdt);
+        const side = getLegDisplayDirection(role, triggerPrice, refPrice) === 'long' ? '做多' : '做空';
+        const kind = role === 'tp' ? '止盈' : '止损';
+        const sign = pnl >= 0 ? '+' : '';
+        return `${side}${kind}预估收益 ${sign}${pnl.toFixed(2)} USDT`;
+    }
+
+    function setEstimateEl(el, text) {
+        if (!el) return;
+        el.textContent = text;
+        el.classList.remove('positive', 'negative', 'empty');
+        if (text === '--') el.classList.add('empty');
+        else if (text.includes('+')) el.classList.add('positive');
+        else el.classList.add('negative');
+    }
+
+    function updateTPSLConflictHint() {
+        const hint = document.getElementById('tpsl-conflict-hint');
+        if (!hint) return;
+        const tpTrigger = parseInputNum(document.getElementById('tp-trigger')?.value);
+        const slTrigger = parseInputNum(document.getElementById('sl-trigger')?.value);
+        if (!Number.isFinite(tpTrigger) || !Number.isFinite(slTrigger)) {
+            hint.classList.add('hidden');
+            hint.textContent = '';
+            return;
+        }
+        const ref = getDelegateRefPrice('tp');
+        const bothAbove = tpTrigger > ref && slTrigger > ref;
+        const bothBelow = tpTrigger < ref && slTrigger < ref;
+        if (bothAbove || bothBelow) {
+            hint.classList.remove('hidden');
+            hint.textContent = '触发价未形成有效区间（止盈/止损在同侧），请检查价格；各腿仍按触发价与委托价关系独立估算';
+            return;
+        }
+        hint.classList.add('hidden');
+        hint.textContent = '';
+    }
+
+    function updateTPSLEstimates() {
+        const qtyUsdt = getQtyUsdt();
+        ['tp', 'sl'].forEach(role => {
+            const trigger = parseInputNum(document.getElementById(role + '-trigger')?.value);
+            const ref = getDelegateRefPrice(role);
+            setEstimateEl(document.getElementById(role + '-estimate'), formatEstPnlText(role, trigger, ref, qtyUsdt));
+        });
+        const attachRef = getOrderRefPrice();
+        ['tp', 'sl'].forEach(role => {
+            const trigger = parseInputNum(document.getElementById('attach-' + role + '-price')?.value);
+            setEstimateEl(document.getElementById('attach-' + role + '-estimate'), formatEstPnlText(role, trigger, attachRef, qtyUsdt));
+        });
+        updateTPSLConflictHint();
+    }
+
+    function bindTPSLEstimateListeners() {
+        ['tp', 'sl'].forEach(role => {
+            ['trigger', 'price'].forEach(field => {
+                const el = document.getElementById(role + '-' + field);
+                if (el && !el.dataset.estBound) {
+                    el.dataset.estBound = '1';
+                    el.addEventListener('input', updateTPSLEstimates);
+                }
+            });
+        });
+        updateTPSLEstimates();
+    }
 
     // 订单模式切换扩展
     function switchOrderMode(mode) {
@@ -2990,7 +3118,7 @@
     <div class="space-y-1">
         <div class="flex justify-between text-[8px] text-gray-400"><span>${label}</span></div>
         <div class="h-7 bg-gray-50 border border-gray-100 px-1.5 flex items-center">
-            <input class="w-full bg-transparent font-bold text-[10px] outline-none" placeholder="${triggerPlaceholder}" id="${triggerTypeId}">
+            <input class="w-full bg-transparent font-bold text-[10px] outline-none" placeholder="${triggerPlaceholder}" id="${triggerTypeId}" oninput="updateTPSLEstimates()">
             <select class="text-[8px] bg-transparent border-l border-gray-200 pl-1 text-gray-500 outline-none ml-1" id="${triggerTypeId}-type">
                 <option>最新成交價</option>
                 <option>標記價格</option>
@@ -3008,6 +3136,7 @@
         <div class="h-7 bg-gray-50 border border-gray-100 px-1.5 flex items-center" id="${orderPriceId}-container">
             <input class="w-full bg-transparent font-bold text-[10px] outline-none" id="${orderPriceId}" placeholder="委托价" disabled>
         </div>
+        <div id="${orderRole}-estimate" class="tpsl-estimate empty">--</div>
     </div>`;
         };
 
@@ -3037,6 +3166,7 @@
             const orderRole = getOrderRoleFromTypeId(id);
             const labelEl = document.getElementById(id + '-label');
             const priceInput = document.getElementById(orderRole + '-price');
+            orderDelegateMap[id] = 'market';
             if (labelEl) labelEl.innerText = getTPSLOrderTypeLabel(orderRole, '市价');
             if (priceInput) {
                 priceInput.disabled = true;
@@ -3044,6 +3174,7 @@
                 priceInput.classList.add('text-center');
             }
         });
+        bindTPSLEstimateListeners();
     }
 
     // 展开/收起委托价格类型下拉
@@ -3059,6 +3190,7 @@
         const priceInput = document.getElementById(priceInputId);
         const dropdown = document.getElementById(orderTypeId + '-dropdown');
         const orderRole = getOrderRoleFromTypeId(orderTypeId);
+        orderDelegateMap[orderTypeId] = type === '市价' ? 'market' : 'limit';
         if (label) label.innerText = getTPSLOrderTypeLabel(orderRole, type);
         if (priceInput) {
             if (type === '市价') {
@@ -3073,6 +3205,7 @@
             }
         }
         if (dropdown) dropdown.classList.add('hidden');
+        updateTPSLEstimates();
     }
 
     // 渲染下单按钮（根据开平仓和订单模式）
@@ -3100,6 +3233,7 @@
         const container = document.getElementById('tpsl-inputs');
         if (!checkbox || !container) return;
         container.style.display = checkbox.checked ? 'grid' : 'none';
+        if (checkbox.checked) updateTPSLEstimates();
     }
 
     // GTC 下拉控制
@@ -3221,6 +3355,7 @@
 
         let price = '', qty = '', isMarket = currentOrderMode === 'market';
         if (direction === 'long') {
+            currentOpenDirection = 'long';
             title.innerText = "BTCUSDT 開多";
             title.className = "text-[13px] font-black uppercase italic text-green-500";
             actionBtn.className = "w-full bg-green-500 text-white py-3 rounded-sm font-black uppercase text-[12px] shadow-lg";
@@ -3228,6 +3363,7 @@
             qty = '800.00 USDT';
             typeText.innerText = isMarket ? '市價單' : '限價單';
         } else if (direction === 'short') {
+            currentOpenDirection = 'short';
             title.innerText = "BTCUSDT 開空";
             title.className = "text-[13px] font-black uppercase italic text-red-500";
             actionBtn.className = "w-full bg-red-500 text-white py-3 rounded-sm font-black uppercase text-[12px] shadow-lg";
@@ -3820,7 +3956,7 @@
     function setQtyUnit(unit) {
         document.getElementById('qty-unit').innerText = unit;
         document.getElementById('qty-unit-dropdown').classList.add('hidden');
-        // 这里可以加入联动逻辑，比如清空数量或切换显示
+        updateTPSLEstimates();
     }
 
     // 行情列表浮窗
