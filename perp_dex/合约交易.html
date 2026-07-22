@@ -66,9 +66,9 @@
             text-transform: uppercase;
         }
         .tpsl-estimate { font-size: 9px; font-weight: 700; line-height: 1.4; }
+        .tpsl-estimate.hidden { display: none; }
         .tpsl-estimate.positive { color: #16a34a; }
         .tpsl-estimate.negative { color: #dc2626; }
-        .tpsl-estimate.empty { color: #9ca3af; }
         .tpsl-conflict-hint { font-size: 8px; color: #d97706; font-weight: 700; line-height: 1.4; }
     </style>
 </head>
@@ -967,7 +967,7 @@
                                     <option>標記價格</option>
                                 </select>
                             </div>
-                            <div id="attach-tp-estimate" class="tpsl-estimate empty">--</div>
+                            <div id="attach-tp-estimate" class="tpsl-estimate hidden"></div>
                         </div>
                         <!-- 止損 -->
                         <div class="space-y-0.5">
@@ -979,7 +979,7 @@
                                     <option>標記價格</option>
                                 </select>
                             </div>
-                            <div id="attach-sl-estimate" class="tpsl-estimate empty">--</div>
+                            <div id="attach-sl-estimate" class="tpsl-estimate hidden"></div>
                         </div>
                     </div>
                 </div>
@@ -2939,10 +2939,26 @@
         return qtyUsdt * (refPrice - triggerPrice) / refPrice;
     }
 
-    function formatEstPnlText(role, triggerPrice, refPrice, qtyUsdt) {
-        if (!Number.isFinite(qtyUsdt) || !Number.isFinite(triggerPrice) || !Number.isFinite(refPrice)) return '--';
+    function inferBracketSide(tpTrigger, slTrigger, refPrice) {
+        const hasTp = Number.isFinite(tpTrigger);
+        const hasSl = Number.isFinite(slTrigger);
+        if (!hasTp && !hasSl) return null;
+        if (hasTp && hasSl) {
+            if (tpTrigger > refPrice && slTrigger < refPrice) return 'long';
+            if (tpTrigger < refPrice && slTrigger > refPrice) return 'short';
+            return 'conflict';
+        }
+        if (hasTp) return tpTrigger > refPrice ? 'long' : 'short';
+        return slTrigger < refPrice ? 'long' : 'short';
+    }
+
+    function formatEstPnlText(role, triggerPrice, refPrice, qtyUsdt, positionSide) {
+        if (!Number.isFinite(qtyUsdt) || !Number.isFinite(triggerPrice) || !Number.isFinite(refPrice)) return null;
+        if (!positionSide || positionSide === 'conflict') return null;
+        const legDir = getLegDisplayDirection(role, triggerPrice, refPrice);
+        if (legDir !== positionSide) return null;
         const pnl = calcLegEstPnl(role, triggerPrice, refPrice, qtyUsdt);
-        const side = getLegDisplayDirection(role, triggerPrice, refPrice) === 'long' ? '做多' : '做空';
+        const side = positionSide === 'long' ? '做多' : '做空';
         const kind = role === 'tp' ? '止盈' : '止损';
         const sign = pnl >= 0 ? '+' : '';
         return `${side}${kind}预估收益 ${sign}${pnl.toFixed(2)} USDT`;
@@ -2950,48 +2966,57 @@
 
     function setEstimateEl(el, text) {
         if (!el) return;
+        if (!text) {
+            el.textContent = '';
+            el.classList.add('hidden');
+            el.classList.remove('positive', 'negative');
+            return;
+        }
+        el.classList.remove('hidden');
         el.textContent = text;
-        el.classList.remove('positive', 'negative', 'empty');
-        if (text === '--') el.classList.add('empty');
-        else if (text.includes('+')) el.classList.add('positive');
+        el.classList.remove('positive', 'negative');
+        if (text.includes('+')) el.classList.add('positive');
         else el.classList.add('negative');
     }
 
-    function updateTPSLConflictHint() {
-        const hint = document.getElementById('tpsl-conflict-hint');
-        if (!hint) return;
-        const tpTrigger = parseInputNum(document.getElementById('tp-trigger')?.value);
-        const slTrigger = parseInputNum(document.getElementById('sl-trigger')?.value);
-        if (!Number.isFinite(tpTrigger) || !Number.isFinite(slTrigger)) {
-            hint.classList.add('hidden');
-            hint.textContent = '';
-            return;
+    function updateEstimateContext(tpTriggerEl, slTriggerEl, tpEstEl, slEstEl, hintEl, refPrice) {
+        const tpTrigger = parseInputNum(tpTriggerEl?.value);
+        const slTrigger = parseInputNum(slTriggerEl?.value);
+        const qtyUsdt = getQtyUsdt();
+        const bracket = inferBracketSide(tpTrigger, slTrigger, refPrice);
+
+        if (hintEl) {
+            if (bracket === 'conflict') {
+                hintEl.classList.remove('hidden');
+                hintEl.textContent = '触发价未形成有效区间，请检查价格';
+            } else {
+                hintEl.classList.add('hidden');
+                hintEl.textContent = '';
+            }
         }
-        const ref = getDelegateRefPrice('tp');
-        const bothAbove = tpTrigger > ref && slTrigger > ref;
-        const bothBelow = tpTrigger < ref && slTrigger < ref;
-        if (bothAbove || bothBelow) {
-            hint.classList.remove('hidden');
-            hint.textContent = '触发价未形成有效区间（止盈/止损在同侧），请检查价格；各腿仍按触发价与委托价关系独立估算';
-            return;
-        }
-        hint.classList.add('hidden');
-        hint.textContent = '';
+
+        setEstimateEl(tpEstEl, formatEstPnlText('tp', tpTrigger, refPrice, qtyUsdt, bracket));
+        setEstimateEl(slEstEl, formatEstPnlText('sl', slTrigger, refPrice, qtyUsdt, bracket));
     }
 
     function updateTPSLEstimates() {
-        const qtyUsdt = getQtyUsdt();
-        ['tp', 'sl'].forEach(role => {
-            const trigger = parseInputNum(document.getElementById(role + '-trigger')?.value);
-            const ref = getDelegateRefPrice(role);
-            setEstimateEl(document.getElementById(role + '-estimate'), formatEstPnlText(role, trigger, ref, qtyUsdt));
-        });
-        const attachRef = getOrderRefPrice();
-        ['tp', 'sl'].forEach(role => {
-            const trigger = parseInputNum(document.getElementById('attach-' + role + '-price')?.value);
-            setEstimateEl(document.getElementById('attach-' + role + '-estimate'), formatEstPnlText(role, trigger, attachRef, qtyUsdt));
-        });
-        updateTPSLConflictHint();
+        const orderRef = getOrderRefPrice();
+        updateEstimateContext(
+            document.getElementById('tp-trigger'),
+            document.getElementById('sl-trigger'),
+            document.getElementById('tp-estimate'),
+            document.getElementById('sl-estimate'),
+            document.getElementById('tpsl-conflict-hint'),
+            orderRef
+        );
+        updateEstimateContext(
+            document.getElementById('attach-tp-price'),
+            document.getElementById('attach-sl-price'),
+            document.getElementById('attach-tp-estimate'),
+            document.getElementById('attach-sl-estimate'),
+            null,
+            orderRef
+        );
     }
 
     function bindTPSLEstimateListeners() {
@@ -3136,7 +3161,7 @@
         <div class="h-7 bg-gray-50 border border-gray-100 px-1.5 flex items-center" id="${orderPriceId}-container">
             <input class="w-full bg-transparent font-bold text-[10px] outline-none" id="${orderPriceId}" placeholder="委托价" disabled>
         </div>
-        <div id="${orderRole}-estimate" class="tpsl-estimate empty">--</div>
+        <div id="${orderRole}-estimate" class="tpsl-estimate hidden"></div>
     </div>`;
         };
 
