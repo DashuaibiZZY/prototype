@@ -139,13 +139,28 @@
         .rank-tabs { display: flex; border-bottom: 1px solid #f3f4f6; }
         .rank-tab { padding: 10px 16px; font-size: 11px; font-weight: 700; color: #9ca3af; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
         .rank-tab.active { color: #111827; border-bottom-color: #111827; }
+        .contest-reward-mode { margin-top: 8px; }
+        .contest-reward-tag { font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 3px; }
+        .contest-reward-tag.proportional { background: #eff6ff; color: #2563eb; }
+        .contest-reward-tag.fixed-top3 { background: #fef3c7; color: #d97706; }
+        .rank-podium { display: flex; align-items: flex-end; justify-content: center; gap: 20px; padding: 28px 24px 0; background: linear-gradient(180deg,#fafafa 0%,#fff 100%); border-bottom: 1px solid #f3f4f6; }
+        .podium-item { display: flex; flex-direction: column; align-items: center; width: 132px; }
+        .podium-user { text-align: center; margin-bottom: 10px; min-height: 72px; }
+        .podium-avatar { width: 40px; height: 40px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 16px; margin: 0 auto 6px; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.08); }
+        .podium-item.first .podium-avatar { width: 48px; height: 48px; border-color: #fbbf24; }
+        .podium-name { font-size: 11px; font-weight: 700; margin-bottom: 2px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .podium-metric { font-size: 10px; color: #6b7280; margin-bottom: 2px; }
+        .podium-reward { font-size: 11px; font-weight: 900; color: #2563eb; }
+        .podium-stand { width: 100%; border-radius: 8px 8px 0 0; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; color: #fff; }
+        .podium-item.first .podium-stand { height: 88px; background: linear-gradient(180deg,#fcd34d,#f59e0b); }
+        .podium-item.second .podium-stand { height: 64px; background: linear-gradient(180deg,#e5e7eb,#9ca3af); }
+        .podium-item.third .podium-stand { height: 48px; background: linear-gradient(180deg,#fdba74,#ea580c); }
         .rank-table-wrap { border: 1px solid #f3f4f6; border-radius: 6px; overflow: hidden; }
-        .rank-table-head, .rank-table-row { display: grid; grid-template-columns: 72px 1fr 140px; padding: 10px 16px; align-items: center; }
+        .rank-table-head, .rank-table-row { display: grid; grid-template-columns: 72px 1fr 140px 120px; padding: 10px 16px; align-items: center; }
         .rank-table-head { background: #f9fafb; font-size: 10px; font-weight: 700; color: #9ca3af; border-bottom: 1px solid #f3f4f6; }
         .rank-table-row { font-size: 11px; border-bottom: 1px solid #f9fafb; }
-        .rank-table-row.top3 { background: #fffbeb; }
+        .rank-est-reward { font-weight: 900; color: #2563eb; text-align: right; }
         .rank-badge-sm { display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center; border-radius: 4px; font-size: 10px; font-weight: 900; color: #fff; }
-        .rank-badge-sm.r1 { background: #f59e0b; } .rank-badge-sm.r2 { background: #9ca3af; } .rank-badge-sm.r3 { background: #d97706; }
         .rank-pagination, .modal-pagination { display: flex; justify-content: center; gap: 6px; padding: 12px; border-top: 1px solid #f3f4f6; }
         .rank-page-btn { min-width: 28px; height: 28px; border: 1px solid #e5e7eb; background: #fff; border-radius: 4px; font-size: 10px; font-weight: 700; cursor: pointer; color: #6b7280; }
         .rank-page-btn.active { background: #111827; color: #fff; border-color: #111827; }
@@ -210,7 +225,7 @@
                 <p class="hero-subtitle" id="heroSubtitle">参与活动，赢取丰厚奖励</p>
                 <div class="hero-stats">
                     <div class="stat-item">
-                        <div class="stat-value" id="statValue1">220,000 USDT</div>
+                        <div class="stat-value" id="statValue1">270,000 USDT</div>
                         <div class="stat-label" id="statLabel1">总奖池</div>
                     </div>
                     <div class="stat-item">
@@ -283,7 +298,7 @@
     <script>
         const carouselData = [
             { tag: '组合活动', title: 'ForX嘉年华交易大赛', desc: '完成任务 + 交易大赛，瓜分 100,000 USDT', iconClass: 'carousel-icon-trophy' },
-            { tag: '交易大赛', title: '合约交易争霸赛', desc: 'Top100 按交易额和盈利率瓜分奖池', iconClass: 'carousel-icon-chart' },
+            { tag: '交易大赛', title: '合约交易争霸赛', desc: '前三固定奖励，其余按占比瓜分奖池', iconClass: 'carousel-icon-chart' },
             { tag: '任务活动', title: '三种任务奖励模式', desc: '单任务奖励 / 瓜分奖池 / 单任务奖励 + 瓜分奖池', iconClass: 'carousel-icon-target' }
         ];
 
@@ -302,6 +317,7 @@
                 status: 'ongoing',
                 taskPool: '20,000 USDT',
                 contestPool: '80,000 USDT',
+                contestRewardMode: 'proportional',
                 showProgress: true,
                 completedTasks: '2 / 4',
                 currentRank: '#1,240',
@@ -317,13 +333,15 @@
                 layout: 'contest',
                 poster: 'poster-contest',
                 title: '合约交易争霸赛',
-                desc: '按交易额和盈利率排名，Top100 用户瓜分奖池',
+                desc: '前三名固定奖励，第四名起按交易额和盈利率占比瓜分剩余奖池',
                 rewardPool: '100,000 USDT',
                 participants: '8,942',
                 period: '2026-05-20 至 2026-06-20',
                 countdown: '12D 03H 42M 68S',
                 status: 'ongoing',
                 contestPool: '100,000 USDT',
+                contestRewardMode: 'fixed-top3',
+                fixedTop3Rewards: [20000, 12000, 8000],
                 showProgress: false,
                 currentRank: '#36'
             },
@@ -403,6 +421,7 @@
                 date: '2026-03-01 至 2026-03-31',
                 status: 'ended',
                 contestPool: '50,000 USDT',
+                contestRewardMode: 'proportional',
                 showProgress: false
             }
         };
@@ -767,12 +786,19 @@
         function renderRankingSection(activity) {
             if (activity.layout === 'task') return '';
             const pool = activity.contestPool || activity.rewardPool;
+            const mode = activity.contestRewardMode || 'proportional';
+            const metricLabel = carnivalCurrentLeaderboardType === 'volume' ? '交易额' : '盈利率';
+            const userRank = parseInt((activity.currentRank || '#0').replace('#', '').replace(',', ''), 10) || 0;
+            const leaderboard = buildLeaderboardData(activity);
+            const userReward = userRank > 0 ? (leaderboard.find(item => item.rank === userRank)?.estReward || 0) : 0;
+
             return `
                 <div class="detail-section">
                     <div class="detail-section-head">
                         <div>
                             <div class="detail-section-title">交易大赛排行榜</div>
-                            <div class="detail-section-sub">按交易额和盈利率排名，Top100 用户瓜分奖池</div>
+                            <div class="detail-section-sub">${CONTEST_REWARD_SUBS[mode]}</div>
+                            <div class="contest-reward-mode"><span class="contest-reward-tag ${mode}">${CONTEST_REWARD_LABELS[mode]}</span></div>
                         </div>
                         <div class="detail-pool-tag"><div class="lbl">奖池</div><div class="val">${pool}</div></div>
                     </div>
@@ -780,7 +806,7 @@
                         <div class="item"><div class="val">${activity.currentRank || '#1,240'}</div><div class="lbl">当前排名</div></div>
                         <div class="item"><div class="val">12,450 USDT</div><div class="lbl">我的交易量</div></div>
                         <div class="item"><div class="val">8.5%</div><div class="lbl">我的盈利率</div></div>
-                        <div class="item"><div class="val">0.00 USDT</div><div class="lbl">预估奖励</div></div>
+                        <div class="item"><div class="val">${formatUsdt(userReward)}</div><div class="lbl">预估收益</div></div>
                         <button class="btn-trade-sm" onclick="showToast(t('toastGoTrade'))">去交易</button>
                     </div>` : ''}
                     <div class="rank-tabs">
@@ -788,10 +814,12 @@
                         <div class="rank-tab ${carnivalCurrentLeaderboardType === 'profit' ? 'active' : ''}" onclick="switchCarnivalLeaderboard('profit')">盈利率排名</div>
                     </div>
                     <div class="rank-table-wrap">
+                        <div id="carnivalPodium"></div>
                         <div class="rank-table-head">
                             <div>排名</div>
                             <div>用户</div>
-                            <div>${carnivalCurrentLeaderboardType === 'volume' ? '交易额' : '盈利率'}</div>
+                            <div>${metricLabel}</div>
+                            <div style="text-align:right">预估收益</div>
                         </div>
                         <div id="carnivalLeaderboardBody"></div>
                         <div class="rank-pagination" id="carnivalPagination"></div>
@@ -831,41 +859,131 @@
             renderActivityDetailPage();
         }
 
-        function renderCarnivalLeaderboard() {
-            const tbody = document.getElementById('carnivalLeaderboardBody');
-            const pagination = document.getElementById('carnivalPagination');
-            if (!tbody) return;
+        const CONTEST_REWARD_LABELS = {
+            proportional: '按交易额/盈利率占比瓜分',
+            'fixed-top3': '前三固定 + 占比瓜分'
+        };
 
-            let data = [];
+        const CONTEST_REWARD_SUBS = {
+            proportional: 'Top100 用户按交易额或盈利率占比瓜分奖池',
+            'fixed-top3': '前三名获得固定奖励，第四名起按交易额或盈利率占比瓜分剩余奖池'
+        };
+
+        const PODIUM_MEDALS = { 1: '🥇', 2: '🥈', 3: '🥉' };
+        const PODIUM_ORDER = [2, 1, 3];
+
+        function parsePoolAmount(poolStr) {
+            return parseFloat(String(poolStr).replace(/[^\d.]/g, '')) || 0;
+        }
+
+        function formatUsdt(amount) {
+            return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' USDT';
+        }
+
+        function buildLeaderboardData(activity) {
+            const items = [];
             for (let i = 0; i < 100; i++) {
-                data.push({
+                const rawValue = carnivalCurrentLeaderboardType === 'volume'
+                    ? 2500000 - i * 24000
+                    : 128.5 - i * 1.25;
+                items.push({
                     rank: i + 1,
                     nickname: nicknames[i % nicknames.length] + (i > 19 ? Math.floor(i / 20) : ''),
+                    rawValue,
                     value: carnivalCurrentLeaderboardType === 'volume'
-                        ? (2500000 - i * 24000).toLocaleString() + ' USDT'
-                        : ((128.5 - i * 1.25)).toFixed(1) + '%'
+                        ? rawValue.toLocaleString() + ' USDT'
+                        : rawValue.toFixed(1) + '%'
                 });
             }
+            return applyContestRewards(items, activity);
+        }
 
-            const pageData = data.slice((carnivalCurrentPage - 1) * 10, carnivalCurrentPage * 10);
-            tbody.innerHTML = pageData.map(item => {
-                let badge = '';
-                if (item.rank === 1) badge = '<span class="rank-badge-sm r1">1</span>';
-                else if (item.rank === 2) badge = '<span class="rank-badge-sm r2">2</span>';
-                else if (item.rank === 3) badge = '<span class="rank-badge-sm r3">3</span>';
-                return `<div class="rank-table-row ${item.rank <= 3 ? 'top3' : ''}"><div>${badge || item.rank}</div><div>${item.nickname}</div><div>${item.value}</div></div>`;
-            }).join('');
+        function applyContestRewards(items, activity) {
+            const pool = parsePoolAmount(activity.contestPool || activity.rewardPool);
+            const mode = activity.contestRewardMode || 'proportional';
+            const fixedTop3 = activity.fixedTop3Rewards || [20000, 12000, 8000];
+
+            if (mode === 'proportional') {
+                const total = items.reduce((sum, item) => sum + item.rawValue, 0);
+                items.forEach(item => {
+                    item.estReward = total > 0 ? pool * (item.rawValue / total) : 0;
+                });
+                return items;
+            }
+
+            const fixedTotal = fixedTop3.reduce((sum, val) => sum + val, 0);
+            const remainPool = Math.max(pool - fixedTotal, 0);
+            const restItems = items.slice(3);
+            const restTotal = restItems.reduce((sum, item) => sum + item.rawValue, 0);
+
+            items.forEach((item, idx) => {
+                if (idx < 3) {
+                    item.estReward = fixedTop3[idx] || 0;
+                } else {
+                    item.estReward = restTotal > 0 ? remainPool * (item.rawValue / restTotal) : 0;
+                }
+            });
+            return items;
+        }
+
+        function renderPodium(top3, metricLabel) {
+            const byRank = Object.fromEntries(top3.map(item => [item.rank, item]));
+            return `<div class="rank-podium">${PODIUM_ORDER.map(rank => {
+                const item = byRank[rank];
+                const cls = rank === 1 ? 'first' : rank === 2 ? 'second' : 'third';
+                return `
+                    <div class="podium-item ${cls}">
+                        <div class="podium-user">
+                            <div class="podium-avatar">${PODIUM_MEDALS[rank]}</div>
+                            <div class="podium-name">${item.nickname}</div>
+                            <div class="podium-metric">${metricLabel} ${item.value}</div>
+                            <div class="podium-reward">${formatUsdt(item.estReward)}</div>
+                        </div>
+                        <div class="podium-stand">${rank}</div>
+                    </div>`;
+            }).join('')}</div>`;
+        }
+
+        function renderCarnivalLeaderboard() {
+            const activity = activityCatalog[currentActivityId];
+            const podium = document.getElementById('carnivalPodium');
+            const tbody = document.getElementById('carnivalLeaderboardBody');
+            const pagination = document.getElementById('carnivalPagination');
+            if (!tbody || !activity) return;
+
+            const data = buildLeaderboardData(activity);
+            const metricLabel = carnivalCurrentLeaderboardType === 'volume' ? '交易额' : '盈利率';
+
+            if (podium) {
+                podium.innerHTML = renderPodium(data.slice(0, 3), metricLabel);
+            }
+
+            const tableData = data.slice(3);
+            const totalPages = Math.ceil(tableData.length / 10) || 1;
+            if (carnivalCurrentPage > totalPages) carnivalCurrentPage = totalPages;
+
+            const pageData = tableData.slice((carnivalCurrentPage - 1) * 10, carnivalCurrentPage * 10);
+            tbody.innerHTML = pageData.map(item => `
+                <div class="rank-table-row">
+                    <div>${item.rank}</div>
+                    <div>${item.nickname}</div>
+                    <div>${item.value}</div>
+                    <div class="rank-est-reward">${formatUsdt(item.estReward)}</div>
+                </div>`).join('');
 
             let html = `<button class="rank-page-btn" onclick="changeCarnivalPage(${carnivalCurrentPage - 1})" ${carnivalCurrentPage === 1 ? 'disabled' : ''}>‹</button>`;
-            for (let i = 1; i <= 10; i++) {
+            for (let i = 1; i <= totalPages; i++) {
                 html += `<button class="rank-page-btn ${i === carnivalCurrentPage ? 'active' : ''}" onclick="changeCarnivalPage(${i})">${i}</button>`;
             }
-            html += `<button class="rank-page-btn" onclick="changeCarnivalPage(${carnivalCurrentPage + 1})" ${carnivalCurrentPage === 10 ? 'disabled' : ''}>›</button>`;
+            html += `<button class="rank-page-btn" onclick="changeCarnivalPage(${carnivalCurrentPage + 1})" ${carnivalCurrentPage === totalPages ? 'disabled' : ''}>›</button>`;
             pagination.innerHTML = html;
         }
 
         function changeCarnivalPage(page) {
-            if (page < 1 || page > 10) return;
+            const activity = activityCatalog[currentActivityId];
+            if (!activity) return;
+            const totalPages = Math.ceil(97 / 10) || 1;
+            if (page < 1 || page > totalPages) return;
             carnivalCurrentPage = page;
             renderCarnivalLeaderboard();
         }
