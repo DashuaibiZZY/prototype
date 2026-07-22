@@ -58,7 +58,10 @@
         .poster-carnival { background-image: linear-gradient(135deg,#111827,#1f2937 40%,#f59e0b); }
         .poster-contest { background-image: linear-gradient(135deg,#1e3a8a,#2563eb 60%,#60a5fa); }
         .poster-newbie { background-image: linear-gradient(135deg,#065f46,#10b981); }
+        .poster-social { background-image: linear-gradient(135deg,#5b21b6,#8b5cf6); }
+        .poster-challenge { background-image: linear-gradient(135deg,#c2410c,#fb923c); }
         .poster-default { background-image: linear-gradient(135deg,#374151,#6b7280); }
+        .activity-reward-mode { margin-top: 8px; }
         .activity-card-body { padding: 14px 16px 16px; }
         .activity-header { display: flex; justify-content: flex-end; margin-bottom: 8px; }
         .activity-status { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 4px; }
@@ -211,7 +214,7 @@
                         <div class="stat-label" id="statLabel1">总奖池</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value" id="statValue2">3</div>
+                        <div class="stat-value" id="statValue2">5</div>
                         <div class="stat-label" id="statLabel2">进行中活动</div>
                     </div>
                     <div class="stat-item">
@@ -281,13 +284,14 @@
         const carouselData = [
             { tag: '组合活动', title: 'ForX嘉年华交易大赛', desc: '完成任务 + 交易大赛，瓜分 100,000 USDT', iconClass: 'carousel-icon-trophy' },
             { tag: '交易大赛', title: '合约交易争霸赛', desc: 'Top100 按交易额和盈利率瓜分奖池', iconClass: 'carousel-icon-chart' },
-            { tag: '任务活动', title: '新手成长任务', desc: '完成 KYC、充值、首笔交易赢取奖励', iconClass: 'carousel-icon-target' }
+            { tag: '任务活动', title: '三种任务奖励模式', desc: '单任务奖励 / 瓜分奖池 / 单任务奖励 + 瓜分奖池', iconClass: 'carousel-icon-target' }
         ];
 
         const activityCatalog = {
             'forx-carnival-contest': {
                 id: 'forx-carnival-contest',
                 layout: 'combo',
+                rewardMode: 'pool',
                 poster: 'poster-carnival',
                 title: 'ForX嘉年华交易大赛',
                 desc: '完成限时任务并参与交易大赛，瓜分总奖池',
@@ -299,8 +303,14 @@
                 taskPool: '20,000 USDT',
                 contestPool: '80,000 USDT',
                 showProgress: true,
-                completedTasks: '1 / 4',
-                currentRank: '#1,240'
+                completedTasks: '2 / 4',
+                currentRank: '#1,240',
+                tasks: [
+                    { template: 'deposit-100', progress: 100, done: true },
+                    { template: 'trade-100', progress: 100, done: true },
+                    { template: 'x-verify', progress: 0, done: false },
+                    { template: 'tg-join', progress: 0, done: false }
+                ]
             },
             'contract-contest': {
                 id: 'contract-contest',
@@ -317,20 +327,69 @@
                 showProgress: false,
                 currentRank: '#36'
             },
-            'newbie-growth': {
-                id: 'newbie-growth',
+            'task-single-reward': {
+                id: 'task-single-reward',
                 layout: 'task',
+                rewardMode: 'single',
                 poster: 'poster-newbie',
-                title: '新手成长任务',
-                desc: '完成 KYC、充值、首次合约交易，赢取新人奖励',
-                rewardPool: '20,000 USDT',
-                participants: '2,456',
+                title: '新人门槛礼',
+                desc: '新用户完成注册与交易门槛任务，领取单笔奖励',
+                rewardPool: '15,000 USDT',
+                participants: '3,218',
                 period: '2026-05-20 至 2026-06-20',
-                countdown: '6D 12H 30M 45S',
+                countdown: '18D 08H 15M 30S',
                 status: 'ongoing',
-                taskPool: '20,000 USDT',
+                taskPool: '15,000 USDT',
                 showProgress: true,
-                completedTasks: '2 / 3'
+                completedTasks: '1 / 3',
+                tasks: [
+                    { template: 'new-register', reward: '10 USDT', progress: 100, done: true },
+                    { template: 'deposit-100', reward: '20 USDT', progress: 60, done: false, action: '去充值' },
+                    { template: 'trade-100', reward: '30 USDT', progress: 0, done: false, action: '去交易' }
+                ]
+            },
+            'task-pool-share': {
+                id: 'task-pool-share',
+                layout: 'task',
+                rewardMode: 'pool',
+                poster: 'poster-social',
+                title: '社群认证计划',
+                desc: '完成社交认证与关注任务，瓜分统一奖池',
+                rewardPool: '25,000 USDT',
+                participants: '5,672',
+                period: '2026-05-20 至 2026-06-20',
+                countdown: '10D 05H 22M 18S',
+                status: 'ongoing',
+                taskPool: '25,000 USDT',
+                showProgress: true,
+                completedTasks: '1 / 4',
+                tasks: [
+                    { template: 'x-verify', progress: 100, done: true },
+                    { template: 'x-follow', progress: 0, done: false, action: '去关注' },
+                    { template: 'tg-verify', progress: 0, done: false, action: '去认证' },
+                    { template: 'tg-join', progress: 0, done: false, action: '去加入' }
+                ]
+            },
+            'task-both-reward': {
+                id: 'task-both-reward',
+                layout: 'task',
+                rewardMode: 'both',
+                poster: 'poster-challenge',
+                title: '全能成长挑战',
+                desc: '完成任务获得固定奖励，同时参与总奖池瓜分',
+                rewardPool: '30,000 USDT',
+                participants: '2,104',
+                period: '2026-05-20 至 2026-06-20',
+                countdown: '14D 11H 40M 55S',
+                status: 'ongoing',
+                taskPool: '30,000 USDT',
+                showProgress: true,
+                completedTasks: '0 / 3',
+                tasks: [
+                    { template: 'deposit-and-trade', reward: '50 USDT', progress: 35, done: false, action: '去完成' },
+                    { template: 'deposit-100', reward: '15 USDT', progress: 0, done: false, action: '去充值' },
+                    { template: 'trade-100', reward: '25 USDT', progress: 0, done: false, action: '去交易' }
+                ]
             },
             'contract-contest-ended': {
                 id: 'contract-contest-ended',
@@ -353,7 +412,9 @@
                 ongoing: [
                     activityCatalog['forx-carnival-contest'],
                     activityCatalog['contract-contest'],
-                    activityCatalog['newbie-growth']
+                    activityCatalog['task-single-reward'],
+                    activityCatalog['task-pool-share'],
+                    activityCatalog['task-both-reward']
                 ],
                 ended: [
                     activityCatalog['contract-contest-ended']
@@ -373,17 +434,19 @@
         const myJoinedActivities = [
             activityCatalog['forx-carnival-contest'],
             activityCatalog['contract-contest'],
-            activityCatalog['newbie-growth'],
+            activityCatalog['task-single-reward'],
+            activityCatalog['task-pool-share'],
+            activityCatalog['task-both-reward'],
             activityCatalog['contract-contest-ended']
         ];
 
         const myRewards = [
-            { name: '新手任务奖励', campaign: '新手成长任务', type: '体验金', amount: '10 USDT 等值' },
+            { name: '新用户注册奖励', campaign: '新人门槛礼', type: 'USDT', amount: '10 USDT' },
             { name: '合约交易争霸赛奖励', campaign: '合约交易争霸赛', type: 'USDT', amount: '待发放' },
             { name: '春季合约交易赛奖励', campaign: '春季合约交易赛', type: 'USDT', amount: '86 USDT' },
             { name: '嘉年华任务奖励', campaign: 'ForX嘉年华交易大赛', type: 'USDT', amount: '待发放' },
             { name: '嘉年华交易赛奖励', campaign: 'ForX嘉年华交易大赛', type: 'USDT', amount: '待发放' },
-            { name: '充值任务奖励', campaign: '新手成长任务', type: 'USDT', amount: '5 USDT' }
+            { name: '社群认证奖励', campaign: '社群认证计划', type: 'USDT', amount: '待发放' }
         ];
         const REWARD_PAGE_SIZE = 4;
         let rewardModalPage = 1;
@@ -594,30 +657,42 @@
             both: '单任务奖励 + 瓜分奖池'
         };
 
-        const LIMITED_TASKS = [
-            { name: 'X 认证', desc: '完成 X 账号认证并绑定活动账户', rewardMode: 'single', reward: '5 USDT', progress: 0, done: false, action: '去认证' },
-            { name: 'X 关注', desc: '关注 ForX 官方 X 账号', rewardMode: 'pool', poolNote: '参与瓜分 5,000 USDT', progress: 0, done: false, action: '去关注' },
-            { name: 'Telegram 认证', desc: '完成 Telegram 账号认证', rewardMode: 'both', reward: '3 USDT', poolNote: '参与瓜分 8,000 USDT', progress: 100, done: true },
-            { name: '加入 Telegram 社群', desc: '加入 ForX 官方 Telegram 社群', rewardMode: 'pool', poolNote: '参与瓜分 7,000 USDT', progress: 0, done: false, action: '去加入' }
-        ];
+        const TASK_REWARD_SUBS = {
+            single: '本活动采用单任务奖励模式：完成各任务即可获得对应奖励',
+            pool: '本活动采用瓜分奖池模式：完成任务参与奖池瓜分，任务本身无单独奖励',
+            both: '本活动采用单任务奖励 + 瓜分奖池模式：各任务有固定奖励，同时可参与奖池瓜分'
+        };
 
-        const NEWBIE_TASKS = [
-            { name: '完成 KYC 认证', desc: '完成身份认证后可参与新人奖励统计', rewardMode: 'single', reward: '最高 5 USDT', progress: 100, done: true },
-            { name: '完成首次充值', desc: '完成任意金额充值即可参与活动', rewardMode: 'single', reward: '最高 10 USDT', progress: 100, done: true },
-            { name: '完成首次合约交易', desc: '完成任意一笔合约交易', rewardMode: 'both', reward: '最高 20 USDT', poolNote: '参与瓜分新人奖池', progress: 0, done: false, action: '去交易' }
-        ];
+        const TASK_TEMPLATES = {
+            'new-register': { name: '新注册用户', desc: '活动期间新注册 ForX 账户', action: '去注册' },
+            'deposit-100': { name: '充值 ≥ 100 USDT', desc: '累计充值达到 100 USDT 及以上', action: '去充值' },
+            'trade-100': { name: '交易额 ≥ 100 USDT', desc: '累计合约交易额达到 100 USDT 及以上', action: '去交易' },
+            'deposit-and-trade': { name: '充值 100 USDT，并交易额 ≥ 100 USDT', desc: '同时完成充值与交易额门槛', action: '去完成' },
+            'x-verify': { name: 'X 认证', desc: '完成 X 账号认证并绑定活动账户', action: '去认证' },
+            'x-follow': { name: 'X 关注', desc: '关注 ForX 官方 X 账号', action: '去关注' },
+            'tg-verify': { name: 'Telegram 认证', desc: '完成 Telegram 账号认证', action: '去认证' },
+            'tg-join': { name: '加入 Telegram 社群', desc: '加入 ForX 官方 Telegram 社群', action: '去加入' }
+        };
 
-        function renderTaskRewardHtml(task) {
-            if (task.rewardMode === 'single') {
-                return `<div class="task-reward-line"><span class="task-reward-tag single">${TASK_REWARD_LABELS.single}</span><span class="task-pts">${task.reward}</span></div>`;
-            }
-            if (task.rewardMode === 'pool') {
-                return `<div class="task-reward-line"><span class="task-reward-tag pool">${TASK_REWARD_LABELS.pool}</span><span class="task-pool-note">${task.poolNote}</span></div>`;
-            }
-            return `<div class="task-reward-line"><span class="task-reward-tag both">${TASK_REWARD_LABELS.both}</span><span class="task-pts">${task.reward}</span><span class="task-pool-note">${task.poolNote}</span></div>`;
+        function resolveActivityTasks(activity) {
+            return (activity.tasks || []).map(task => {
+                const tpl = TASK_TEMPLATES[task.template] || {};
+                return { ...tpl, ...task };
+            });
         }
 
-        function renderTaskRow(task, index) {
+        function renderTaskRewardHtml(activity, task) {
+            const mode = activity.rewardMode || 'single';
+            if (mode === 'single') {
+                return `<div class="task-reward-line"><span class="task-pts">${task.reward || '—'}</span></div>`;
+            }
+            if (mode === 'pool') {
+                return `<div class="task-reward-line"><span class="task-pool-note">完成任务参与瓜分</span></div>`;
+            }
+            return `<div class="task-reward-line"><span class="task-pts">${task.reward || '—'}</span><span class="task-pool-note">另可参与奖池瓜分</span></div>`;
+        }
+
+        function renderTaskRow(activity, task, index) {
             const actionBtn = task.done
                 ? '<span class="task-done-tag">已完成</span>'
                 : `<button class="task-btn-sm" onclick="showToast('原型演示：${task.action}')">${task.action || '去完成'}</button>`;
@@ -627,10 +702,10 @@
                     <div class="task-body">
                         <div class="task-name">${task.name}</div>
                         <div class="task-desc">${task.desc}</div>
-                        <div class="task-progress-track"><div class="task-progress-fill" style="width:${task.progress}%"></div></div>
+                        <div class="task-progress-track"><div class="task-progress-fill" style="width:${task.progress || 0}%"></div></div>
                     </div>
                     <div class="task-right">
-                        ${renderTaskRewardHtml(task)}
+                        ${renderTaskRewardHtml(activity, task)}
                         ${actionBtn}
                     </div>
                 </div>`;
@@ -671,28 +746,21 @@
         function renderTaskSection(activity) {
             if (activity.layout === 'contest') return '';
             const pool = activity.taskPool || activity.rewardPool;
-            const isNewbie = activity.layout === 'task';
-            const tasks = isNewbie ? NEWBIE_TASKS : LIMITED_TASKS;
-            const sectionTitle = isNewbie ? '任务奖励' : '限时任务奖励';
-            const sectionSub = isNewbie
-                ? '完成任务即可获得对应奖励'
-                : '任务奖励支持三种方式：单任务奖励、瓜分奖池、单任务奖励 + 瓜分奖池';
+            const mode = activity.rewardMode || 'single';
+            const tasks = resolveActivityTasks(activity);
+            const sectionTitle = activity.layout === 'combo' ? '限时任务奖励' : '任务奖励';
 
             return `
                 <div class="detail-section">
                     <div class="detail-section-head">
                         <div>
                             <div class="detail-section-title">${sectionTitle}</div>
-                            <div class="detail-section-sub">${sectionSub}</div>
-                            ${!isNewbie ? `<div class="task-mode-legend">
-                                <span><span class="task-reward-tag single">${TASK_REWARD_LABELS.single}</span></span>
-                                <span><span class="task-reward-tag pool">${TASK_REWARD_LABELS.pool}</span></span>
-                                <span><span class="task-reward-tag both">${TASK_REWARD_LABELS.both}</span></span>
-                            </div>` : ''}
+                            <div class="detail-section-sub">${TASK_REWARD_SUBS[mode]}</div>
+                            <div class="activity-reward-mode"><span class="task-reward-tag ${mode}">${TASK_REWARD_LABELS[mode]}</span></div>
                         </div>
                         <div class="detail-pool-tag"><div class="lbl">奖池</div><div class="val">${pool}</div></div>
                     </div>
-                    ${tasks.map((task, i) => renderTaskRow(task, i)).join('')}
+                    ${tasks.map((task, i) => renderTaskRow(activity, task, i)).join('')}
                 </div>`;
         }
 
