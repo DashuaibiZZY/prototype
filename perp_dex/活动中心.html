@@ -83,12 +83,13 @@
 
         .detail-hero-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px 28px; margin-bottom: 20px; }
         .detail-hero-title { font-size: 22px; font-weight: 900; margin-bottom: 8px; }
-        .detail-hero-desc { font-size: 12px; color: #6b7280; line-height: 1.6; margin-bottom: 16px; }
-        .btn-register-block { padding: 10px 24px; background: #111827; color: #fff; border: none; border-radius: 4px; font-size: 12px; font-weight: 700; cursor: pointer; margin-bottom: 4px; }
-        .joined-info-block { margin-top: 4px; padding-top: 16px; border-top: 1px solid #f3f4f6; }
+        .detail-hero-desc { font-size: 12px; color: #6b7280; line-height: 1.6; margin-bottom: 0; }
+        .detail-stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; padding: 16px 0; border-top: 1px solid #f3f4f6; }
+        .detail-action-block { padding-top: 16px; border-top: 1px solid #f3f4f6; }
+        .btn-register-block { padding: 10px 24px; background: #111827; color: #fff; border: none; border-radius: 4px; font-size: 12px; font-weight: 700; cursor: pointer; }
+        .joined-info-block { padding-top: 0; }
         .joined-time { font-size: 11px; color: #6b7280; margin-bottom: 14px; }
         .joined-time strong { color: #111827; font-weight: 700; }
-        .detail-stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; padding: 16px 0; border-top: 1px solid #f3f4f6; }
         .detail-stat-box .val { font-size: 16px; font-weight: 900; }
         .detail-stat-box .val.highlight { color: #2563eb; }
         .detail-stat-box .lbl { font-size: 10px; color: #9ca3af; margin-top: 4px; }
@@ -113,9 +114,17 @@
         .task-desc { font-size: 10px; color: #6b7280; margin-bottom: 8px; }
         .task-progress-track { height: 4px; background: #f3f4f6; border-radius: 2px; overflow: hidden; }
         .task-progress-fill { height: 100%; background: #111827; }
-        .task-right { text-align: right; flex-shrink: 0; }
-        .task-pts { font-size: 11px; font-weight: 900; color: #2563eb; margin-bottom: 6px; }
-        .task-btn-sm, .task-done-tag { padding: 5px 12px; border-radius: 4px; font-size: 10px; font-weight: 700; border: none; cursor: pointer; }
+        .task-right { text-align: right; flex-shrink: 0; min-width: 120px; }
+        .task-reward-line { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .task-reward-tag { font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 3px; }
+        .task-reward-tag.single { background: #eff6ff; color: #2563eb; }
+        .task-reward-tag.pool { background: #fef3c7; color: #d97706; }
+        .task-reward-tag.both { background: #f3e8ff; color: #7c3aed; }
+        .task-pts { font-size: 11px; font-weight: 900; color: #111827; }
+        .task-pool-note { font-size: 10px; color: #6b7280; font-weight: 600; }
+        .task-mode-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .task-mode-legend span { font-size: 9px; color: #6b7280; display: inline-flex; align-items: center; gap: 4px; }
+        .task-btn-sm, .task-done-tag { padding: 5px 12px; border-radius: 4px; font-size: 10px; font-weight: 700; border: none; cursor: pointer; margin-top: 6px; }
         .task-btn-sm { background: #111827; color: #fff; }
         .task-done-tag { background: #ecfdf5; color: #059669; }
 
@@ -290,7 +299,7 @@
                 taskPool: '20,000 USDT',
                 contestPool: '80,000 USDT',
                 showProgress: true,
-                completedTasks: '1 / 2',
+                completedTasks: '1 / 4',
                 currentRank: '#1,240'
             },
             'contract-contest': {
@@ -579,19 +588,67 @@
             return `<div class="detail-progress-row">${items.join('')}</div>`;
         }
 
+        const TASK_REWARD_LABELS = {
+            single: '单任务奖励',
+            pool: '瓜分奖池',
+            both: '单任务奖励 + 瓜分奖池'
+        };
+
+        const LIMITED_TASKS = [
+            { name: 'X 认证', desc: '完成 X 账号认证并绑定活动账户', rewardMode: 'single', reward: '5 USDT', progress: 0, done: false, action: '去认证' },
+            { name: 'X 关注', desc: '关注 ForX 官方 X 账号', rewardMode: 'pool', poolNote: '参与瓜分 5,000 USDT', progress: 0, done: false, action: '去关注' },
+            { name: 'Telegram 认证', desc: '完成 Telegram 账号认证', rewardMode: 'both', reward: '3 USDT', poolNote: '参与瓜分 8,000 USDT', progress: 100, done: true },
+            { name: '加入 Telegram 社群', desc: '加入 ForX 官方 Telegram 社群', rewardMode: 'pool', poolNote: '参与瓜分 7,000 USDT', progress: 0, done: false, action: '去加入' }
+        ];
+
+        const NEWBIE_TASKS = [
+            { name: '完成 KYC 认证', desc: '完成身份认证后可参与新人奖励统计', rewardMode: 'single', reward: '最高 5 USDT', progress: 100, done: true },
+            { name: '完成首次充值', desc: '完成任意金额充值即可参与活动', rewardMode: 'single', reward: '最高 10 USDT', progress: 100, done: true },
+            { name: '完成首次合约交易', desc: '完成任意一笔合约交易', rewardMode: 'both', reward: '最高 20 USDT', poolNote: '参与瓜分新人奖池', progress: 0, done: false, action: '去交易' }
+        ];
+
+        function renderTaskRewardHtml(task) {
+            if (task.rewardMode === 'single') {
+                return `<div class="task-reward-line"><span class="task-reward-tag single">${TASK_REWARD_LABELS.single}</span><span class="task-pts">${task.reward}</span></div>`;
+            }
+            if (task.rewardMode === 'pool') {
+                return `<div class="task-reward-line"><span class="task-reward-tag pool">${TASK_REWARD_LABELS.pool}</span><span class="task-pool-note">${task.poolNote}</span></div>`;
+            }
+            return `<div class="task-reward-line"><span class="task-reward-tag both">${TASK_REWARD_LABELS.both}</span><span class="task-pts">${task.reward}</span><span class="task-pool-note">${task.poolNote}</span></div>`;
+        }
+
+        function renderTaskRow(task, index) {
+            const actionBtn = task.done
+                ? '<span class="task-done-tag">已完成</span>'
+                : `<button class="task-btn-sm" onclick="showToast('原型演示：${task.action}')">${task.action || '去完成'}</button>`;
+            return `
+                <div class="task-row">
+                    <div class="task-num">${String(index + 1).padStart(2, '0')}</div>
+                    <div class="task-body">
+                        <div class="task-name">${task.name}</div>
+                        <div class="task-desc">${task.desc}</div>
+                        <div class="task-progress-track"><div class="task-progress-fill" style="width:${task.progress}%"></div></div>
+                    </div>
+                    <div class="task-right">
+                        ${renderTaskRewardHtml(task)}
+                        ${actionBtn}
+                    </div>
+                </div>`;
+        }
+
         function renderHeroCard(activity) {
             const joined = hasParticipatedById(activity.id);
             const ended = activity.status === 'ended';
             const joinTime = userParticipatedActivities[activity.id]?.time || '2026-05-20 12:30:00';
 
-            let belowDesc = '';
+            let actionBlock = '';
             if (ended && activityRewards[activity.id]) {
-                belowDesc = `<button class="ended-reward-btn" onclick="openActivityRewardModal('${activity.id}')">查看奖励</button>`;
+                actionBlock = `<div class="detail-action-block"><button class="ended-reward-btn" onclick="openActivityRewardModal('${activity.id}')">查看奖励</button></div>`;
             } else if (!ended && !joined) {
-                belowDesc = `<button class="btn-register-block" onclick="registerForActivity('${activity.id}')">报名活动</button>`;
+                actionBlock = `<div class="detail-action-block"><button class="btn-register-block" onclick="registerForActivity('${activity.id}')">报名活动</button></div>`;
             } else if (joined) {
-                belowDesc = `
-                    <div class="joined-info-block">
+                actionBlock = `
+                    <div class="detail-action-block joined-info-block">
                         <div class="joined-time">活动报名时间：<strong>${joinTime}</strong></div>
                         ${renderProgressBlock(activity)}
                     </div>`;
@@ -601,13 +658,13 @@
                 <div class="detail-hero-card">
                     <h1 class="detail-hero-title">${activity.title}</h1>
                     <p class="detail-hero-desc">${activity.desc}</p>
-                    ${belowDesc}
                     <div class="detail-stats-row">
                         <div class="detail-stat-box"><div class="val highlight">${activity.rewardPool}</div><div class="lbl">总奖池</div></div>
                         <div class="detail-stat-box"><div class="val">${activity.participants}</div><div class="lbl">参与人数</div></div>
                         <div class="detail-stat-box"><div class="val">${activity.period}</div><div class="lbl">活动时间</div></div>
                         <div class="detail-stat-box"><div class="val">${ended ? '已结束' : activity.countdown}</div><div class="lbl">${ended ? '活动状态' : '剩余时间'}</div></div>
                     </div>
+                    ${actionBlock}
                 </div>`;
         }
 
@@ -615,38 +672,27 @@
             if (activity.layout === 'contest') return '';
             const pool = activity.taskPool || activity.rewardPool;
             const isNewbie = activity.layout === 'task';
-            const tasks = isNewbie ? [
-                { name: '完成 KYC 认证', desc: '完成身份认证后可参与新人奖励统计', progress: 100, label: '已完成', pts: '+5 USDT', done: true },
-                { name: '完成首次充值', desc: '完成任意金额充值即可参与活动', progress: 100, label: '已完成', pts: '+10 USDT', done: true },
-                { name: '完成首次合约交易', desc: '完成任意一笔合约交易', progress: 0, label: '0 / 1', pts: '+20 USDT', done: false, action: '去交易' }
-            ] : [
-                { name: '充值阶梯奖励', desc: '单笔净充值 ≥ 1,000 USDT，最多 5 次', progress: 0, label: '0 / 5', pts: '+100 Pts', done: false, action: '去充值' },
-                { name: '高杠杆交易挑战', desc: '完成 3 笔杠杆 ≥ 20X 的永续合约交易', progress: 100, label: '3 / 3', pts: '+250 Pts', done: true }
-            ];
+            const tasks = isNewbie ? NEWBIE_TASKS : LIMITED_TASKS;
+            const sectionTitle = isNewbie ? '任务奖励' : '限时任务奖励';
+            const sectionSub = isNewbie
+                ? '完成任务即可获得对应奖励'
+                : '任务奖励支持三种方式：单任务奖励、瓜分奖池、单任务奖励 + 瓜分奖池';
 
             return `
                 <div class="detail-section">
                     <div class="detail-section-head">
                         <div>
-                            <div class="detail-section-title">${isNewbie ? '任务奖励' : '限时任务奖励'}</div>
-                            <div class="detail-section-sub">完成任务即可获得对应奖励</div>
+                            <div class="detail-section-title">${sectionTitle}</div>
+                            <div class="detail-section-sub">${sectionSub}</div>
+                            ${!isNewbie ? `<div class="task-mode-legend">
+                                <span><span class="task-reward-tag single">${TASK_REWARD_LABELS.single}</span></span>
+                                <span><span class="task-reward-tag pool">${TASK_REWARD_LABELS.pool}</span></span>
+                                <span><span class="task-reward-tag both">${TASK_REWARD_LABELS.both}</span></span>
+                            </div>` : ''}
                         </div>
                         <div class="detail-pool-tag"><div class="lbl">奖池</div><div class="val">${pool}</div></div>
                     </div>
-                    ${tasks.map((task, i) => `
-                        <div class="task-row">
-                            <div class="task-num">${String(i + 1).padStart(2, '0')}</div>
-                            <div class="task-body">
-                                <div class="task-name">${task.name}</div>
-                                <div class="task-desc">${task.desc}</div>
-                                <div class="task-progress-track"><div class="task-progress-fill" style="width:${task.progress}%"></div></div>
-                            </div>
-                            <div class="task-right">
-                                <div class="task-pts">${task.pts}</div>
-                                ${task.done ? `<span class="task-done-tag">已完成</span>` : `<button class="task-btn-sm" onclick="showToast('${task.action === '去充值' ? t('toastDeposit') : t('toastGoTrade')}')">${task.action || '去完成'}</button>`}
-                            </div>
-                        </div>
-                    `).join('')}
+                    ${tasks.map((task, i) => renderTaskRow(task, i)).join('')}
                 </div>`;
         }
 
