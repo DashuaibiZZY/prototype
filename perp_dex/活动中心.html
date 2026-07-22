@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ForX Activity Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+
         * {
             margin: 0;
             padding: 0;
@@ -12,23 +15,24 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: #F5F5F7;
-            color: #1F1F1F;
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: #111827;
+            font-size: 11px;
             line-height: 1.6;
         }
 
         :root {
-            --primary-purple: #B634F6;
-            --primary-gradient: linear-gradient(90deg, #7C3CFF, #E42CFF);
-            --bg-page: #F5F5F7;
+            --primary-purple: #111827;
+            --primary-gradient: linear-gradient(90deg, #111827, #374151);
+            --bg-page: #ffffff;
             --bg-card: #FFFFFF;
-            --text-primary: #1F1F1F;
-            --text-secondary: #777A80;
-            --text-weak: #9A9CA3;
-            --border-color: #ECECF0;
-            --card-radius: 14px;
-            --btn-radius: 10px;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --text-weak: #9ca3af;
+            --border-color: #f3f4f6;
+            --card-radius: 8px;
+            --btn-radius: 4px;
         }
 
         .nav-header {
@@ -2450,32 +2454,49 @@
         .activity-card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 20px 24px;
+            border-radius: var(--card-radius);
+            padding: 0;
             cursor: pointer;
-            transition: all 0.25s ease;
+            transition: all 0.2s ease;
             position: relative;
+            overflow: hidden;
         }
 
         .activity-card:hover {
-            border-color: rgba(182, 52, 246, 0.3);
-            box-shadow: 0 4px 16px rgba(182, 52, 246, 0.08);
+            border-color: #d1d5db;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .activity-card-poster {
+            height: 110px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .activity-card-poster::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.35), transparent 60%);
+        }
+
+        .poster-carnival { background-image: linear-gradient(135deg, #111827 0%, #1f2937 40%, #f59e0b 100%); }
+        .poster-contest { background-image: linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #60a5fa 100%); }
+        .poster-newbie { background-image: linear-gradient(135deg, #065f46 0%, #10b981 100%); }
+        .poster-hot { background-image: linear-gradient(135deg, #7c2d12 0%, #ea580c 100%); }
+        .poster-invite { background-image: linear-gradient(135deg, #581c87 0%, #a855f7 100%); }
+        .poster-default { background-image: linear-gradient(135deg, #374151 0%, #6b7280 100%); }
+
+        .activity-card-body {
+            padding: 14px 16px 16px;
         }
 
         .activity-header {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
             align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .activity-type {
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--primary-purple);
-            background: rgba(182, 52, 246, 0.1);
-            padding: 4px 12px;
-            border-radius: 12px;
+            margin-bottom: 10px;
         }
 
         .activity-status {
@@ -2501,18 +2522,18 @@
         }
 
         .activity-title {
-            font-size: 18px;
-            font-weight: 600;
+            font-size: 14px;
+            font-weight: 700;
             color: var(--text-primary);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             line-height: 1.4;
         }
 
         .activity-desc {
-            font-size: 14px;
+            font-size: 11px;
             color: var(--text-secondary);
-            line-height: 1.6;
-            margin-bottom: 20px;
+            line-height: 1.5;
+            margin-bottom: 14px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
@@ -2581,19 +2602,75 @@
 
         .activity-view-btn {
             width: 100%;
-            padding: 12px;
-            background: var(--primary-gradient);
+            padding: 10px;
+            background: #111827;
             color: white;
             border: none;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
+            border-radius: var(--btn-radius);
+            font-size: 11px;
+            font-weight: 700;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: opacity 0.2s;
         }
 
         .activity-view-btn:hover {
-            transform: scale(1.02);
+            opacity: 0.88;
+        }
+
+        .my-activity-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .my-reward-btn {
+            padding: 6px 14px;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #111827;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .my-reward-btn:hover {
+            border-color: #111827;
+        }
+
+        .ended-reward-btn {
+            padding: 5px 12px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #111827;
+            cursor: pointer;
+            margin-bottom: 12px;
+        }
+
+        .ended-reward-btn:hover {
+            border-color: #111827;
+            background: #fff;
+        }
+
+        .detail-top-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 12px;
+        }
+
+        .carnival-ranking-table-header-3col,
+        .contest-detail-table-header-3col {
+            grid-template-columns: 60px 1fr 140px !important;
+        }
+
+        .carnival-ranking-row,
+        .contest-detail-table-row {
+            grid-template-columns: 60px 1fr 140px;
         }
 
         .home-page {
@@ -4250,31 +4327,39 @@
         }
     </style>
 </head>
-<body>
-    <header class="nav-header">
-        <div class="nav-container">
-            <div class="logo">
-                <div class="logo-icon">Fx</div>
-                <span>ForX</span>
+<body class="min-h-screen flex flex-col">
+    <nav class="h-10 border-b border-gray-100 flex items-center px-4 justify-between shrink-0 sticky top-0 z-50 bg-white">
+        <div class="flex items-center space-x-6">
+            <span class="font-black text-lg tracking-tighter cursor-pointer text-black">ForX</span>
+            <div class="flex space-x-5 text-[12px] font-medium">
+                <a href="合约交易.html" class="text-gray-400 hover:text-black">交易</a>
+                <a href="投资组合.html" class="text-gray-400 hover:text-black">投资组合</a>
+                <a href="活动中心.html" class="text-black font-bold relative">活动中心</a>
+                <a href="积分.html" class="text-gray-400 hover:text-black">积分</a>
+                <a href="邀请返佣.html" class="text-gray-400 hover:text-black relative">邀请返佣<span class="absolute -top-1 -right-5 bg-red-500 text-white px-1 text-[8px] rounded-sm scale-90">40%</span></a>
             </div>
-            <nav class="nav-menu">
-                <div class="nav-item">Trade</div>
-                <div class="nav-item">Portfolio</div>
-                <div class="nav-item">Funding Rate</div>
-                <div class="nav-item">Referral Rebate</div>
-                <div class="nav-item">LeaderBoard</div>
-                <div class="nav-item">More</div>
-                <div class="nav-item active">Activity Center</div>
-            </nav>
-            <div class="nav-right">
-                <div class="lang-selector" id="langSelector">English</div>
-                <div class="user-info">
-                    <div class="user-avatar">U</div>
-                    <div class="user-address">0xd593...2Dd2</div>
+            <div class="relative group h-full flex items-center">
+                <span class="text-gray-400 hover:text-black cursor-pointer flex items-center text-[12px] font-medium transition-colors">
+                    更多
+                    <svg class="w-3 h-3 ml-1 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="3"/></svg>
+                </span>
+                <div class="absolute top-full left-0 hidden group-hover:block pt-2 z-[100]">
+                    <div class="bg-white border border-gray-100 rounded-sm py-1 shadow-lg min-w-[140px] overflow-hidden">
+                        <a href="卡券中心.html" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 font-bold transition-colors">卡券中心</a>
+                        <a href="排行榜.html" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 font-bold transition-colors">排行榜</a>
+                        <a href="代理中心.html" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 font-bold transition-colors">代理中心</a>
+                    </div>
                 </div>
             </div>
         </div>
-    </header>
+        <div class="flex items-center space-x-3">
+            <div class="lang-selector text-[11px] font-bold text-gray-400 hover:text-black cursor-pointer" id="langSelector">English</div>
+            <div class="bg-gray-50 px-2.5 py-1 rounded-sm flex items-center space-x-2 border border-gray-100">
+                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span class="text-[11px] font-black text-gray-900 user-address">0xd593...2Dd2</span>
+            </div>
+        </div>
+    </nav>
 
     <main class="main-content home-page active" id="homePage">
         <section class="hero-section">
@@ -4337,105 +4422,24 @@
     </main>
 
     <main class="main-content my-activity-page" id="myActivityPage">
-        <div class="my-activity-hero">
-            <div class="my-activity-hero-content">
-                <button class="back-btn" id="backToHome">
-                    <span>←</span>
-                    <span id="backBtnText">Back to Activity Center</span>
-                </button>
-                <div class="my-activity-hero-text">
-                    <h2 class="page-title" id="myActivityTitle">My Activities</h2>
-                    <p class="page-subtitle" id="myActivitySubtitle">View my tasks, contests and reward status</p>
-                </div>
-            </div>
-            <div class="my-activity-hero-right">
-                <div class="hero-illustration">
-                    <div class="hero-illustration-item">🎯</div>
-                    <div class="hero-illustration-item">🏆</div>
-                    <div class="hero-illustration-item">🎁</div>
-                </div>
+        <div class="my-activity-header-row">
+            <button class="back-btn" id="backToHome">
+                <span>←</span>
+                <span id="backBtnText">Back to Activity Center</span>
+            </button>
+            <button class="my-reward-btn" id="myRewardBtn">My Rewards</button>
+        </div>
+        <h2 class="page-title" id="myActivityTitle" style="margin-bottom: 6px;">My Activities</h2>
+        <p class="page-subtitle" id="myActivitySubtitle" style="margin-bottom: 20px;">View my joined campaigns</p>
+
+        <div class="filter-row">
+            <div class="status-filter" id="myActivityStatusFilter">
+                <div class="status-item active" data-status="ongoing" id="myStatusOngoing">Ongoing</div>
+                <div class="status-item" data-status="ended" id="myStatusEnded">Ended</div>
             </div>
         </div>
 
-        <div class="my-activity-stats">
-            <div class="my-stat-item joined">
-                <div class="my-stat-icon">🎉</div>
-                <div class="my-stat-value">5</div>
-                <div class="my-stat-label" id="statJoined">Joined Campaigns</div>
-            </div>
-            <div class="my-stat-item ongoing">
-                <div class="my-stat-icon">📋</div>
-                <div class="my-stat-value">3</div>
-                <div class="my-stat-label" id="statOngoing">Ongoing Tasks</div>
-            </div>
-            <div class="my-stat-item contests">
-                <div class="my-stat-icon">🏆</div>
-                <div class="my-stat-value">2</div>
-                <div class="my-stat-label" id="statContests">Joined Contests</div>
-            </div>
-            <div class="my-stat-item pending-highlight">
-                <div class="my-stat-icon">💰</div>
-                <div class="my-stat-value">2</div>
-                <div class="my-stat-label" id="statPending">Pending Rewards</div>
-            </div>
-        </div>
-
-        <div class="my-tabs">
-            <div class="my-tab active" data-tab="tasks" id="tabMyTasks">My Tasks</div>
-            <div class="my-tab" data-tab="rewards" id="tabMyRewards">My Rewards</div>
-        </div>
-
-        <div id="rewardNotification" style="display: none;">
-            <div class="reward-notification-card">
-                <div class="notification-icon">🔔</div>
-                <div class="notification-content">
-                    <div class="notification-title" id="notificationTitle">Reward Review Notice</div>
-                    <div class="notification-text" id="notificationText">You have 1 reward review result to view</div>
-                </div>
-                <button class="notification-btn" id="viewNotification">View</button>
-            </div>
-        </div>
-
-        <div class="my-content-area active" id="contentTasks">
-            <div class="filter-row" style="margin-bottom: 16px;">
-                <div class="status-filter" id="taskStatusFilter">
-                    <div class="status-item active" data-status="all" id="taskAll">All</div>
-                    <div class="status-item" data-status="ongoing" id="taskOngoing">Ongoing</div>
-                    <div class="status-item" data-status="pending" id="taskPending">Pending</div>
-                    <div class="status-item" data-status="distributed" id="taskDistributed">Distributed</div>
-                    <div class="status-item" data-status="rejected" id="taskRejected">Rejected</div>
-                    <div class="status-item" data-status="ended" id="taskEnded">Ended</div>
-                    <div class="status-item" data-status="expired" id="taskExpired">Expired</div>
-                </div>
-            </div>
-            <div class="task-list" id="taskList"></div>
-        </div>
-
-        <div class="my-content-area" id="contentContests" style="display: none;">
-            <div class="filter-row" style="margin-bottom: 16px;">
-                <div class="status-filter" id="contestStatusFilter">
-                    <div class="status-item active" data-status="all" id="contestAll">All</div>
-                    <div class="status-item" data-status="ongoing" id="contestOngoing">Ongoing</div>
-                    <div class="status-item" data-status="ended" id="contestEnded">Ended</div>
-                    <div class="status-item" data-status="pending" id="contestPending">Pending</div>
-                    <div class="status-item" data-status="distributed" id="contestDistributed">Distributed</div>
-                    <div class="status-item" data-status="rejected" id="contestRejected">Rejected</div>
-                </div>
-            </div>
-            <div class="contest-list" id="contestList"></div>
-        </div>
-
-        <div class="my-content-area" id="contentRewards">
-            <div class="filter-row" style="margin-bottom: 16px;">
-                <div class="status-filter" id="rewardStatusFilter">
-                    <div class="status-item active" data-status="all" id="rewardAll">All</div>
-                    <div class="status-item" data-status="pending" id="rewardPending">Pending</div>
-                    <div class="status-item" data-status="distributed" id="rewardDistributed">Distributed</div>
-                    <div class="status-item" data-status="rejected" id="rewardRejected">Rejected</div>
-                </div>
-            </div>
-            <div class="rewards-container" id="rewardsContainer"></div>
-        </div>
+        <div id="myActivityCards" class="activity-cards-grid"></div>
     </main>
 
     <div class="reward-detail-modal" id="rewardDetailModal">
@@ -4658,8 +4662,7 @@
                 ongoing: [
                     { 
                         id: 'newbie-growth',
-                        type: 'New User',
-                        typeZh: '新手活动',
+                        poster: 'poster-newbie',
                         title: 'New User Growth Tasks',
                         titleZh: '新手成长任务',
                         desc: 'Complete KYC, deposit and first trade to participate in new user rewards',
@@ -4667,13 +4670,11 @@
                         rewardPool: '20,000 USDT',
                         participants: '2,456',
                         status: 'ongoing',
-                        countdown: '06D 12H 30M',
-                        tags: ['requireCode', 'manualReview']
+                        countdown: '06D 12H 30M'
                     },
                     { 
                         id: 'daily-trading',
-                        type: 'New User',
-                        typeZh: '新手活动',
+                        poster: 'poster-newbie',
                         title: 'Daily Trading Bonus',
                         titleZh: '每日交易福利',
                         desc: 'Complete daily trading tasks to earn rewards',
@@ -4681,8 +4682,7 @@
                         rewardPool: '15,000 USDT',
                         participants: '1,238',
                         status: 'ongoing',
-                        countdown: '01D 08H 12M',
-                        tags: ['manualReview']
+                        countdown: '01D 08H 12M'
                     }
                 ],
                 upcoming: [],
@@ -4692,8 +4692,7 @@
                 ongoing: [
                     { 
                         id: 'forx-carnival-contest',
-                        type: 'Trading Contest',
-                        typeZh: '交易大赛',
+                        poster: 'poster-carnival',
                         title: 'ForX Carnival Trading Contest',
                         titleZh: 'ForX嘉年华交易大赛',
                         desc: 'Complete limited-time tasks and join the trading contest to share the prize pool',
@@ -4701,8 +4700,7 @@
                         rewardPool: '100,000 USDT',
                         participants: '8,942',
                         status: 'ongoing',
-                        countdown: '12D 03H 42M',
-                        tags: ['requireCode', 'manualReview']
+                        countdown: '12D 03H 42M'
                     }
                 ],
                 upcoming: [],
@@ -4712,8 +4710,7 @@
                 ongoing: [
                     { 
                         id: 'contract-contest',
-                        type: 'Trading Contest',
-                        typeZh: '交易大赛',
+                        poster: 'poster-contest',
                         title: 'Contract Trading Contest',
                         titleZh: '合约交易争霸赛',
                         desc: 'Top100 users by contract volume and profit rate participate in reward evaluation',
@@ -4721,13 +4718,11 @@
                         rewardPool: '100,000 USDT',
                         participants: '8,942',
                         status: 'ongoing',
-                        countdown: '12D 03H 42M',
-                        tags: ['requireCode', 'manualReview']
+                        countdown: '12D 03H 42M'
                     },
                     { 
                         id: 'spot-contest',
-                        type: 'Trading Contest',
-                        typeZh: '交易大赛',
+                        poster: 'poster-contest',
                         title: 'Spot Trading Challenge',
                         titleZh: '现货交易挑战赛',
                         desc: 'Spot trading users exclusive rewards',
@@ -4735,8 +4730,7 @@
                         rewardPool: '50,000 USDT',
                         participants: '3,216',
                         status: 'ongoing',
-                        countdown: '09D 10H 21M',
-                        tags: ['manualReview']
+                        countdown: '09D 10H 21M'
                     }
                 ],
                 upcoming: [],
@@ -4746,8 +4740,7 @@
                 ongoing: [
                     { 
                         id: 'weekend-bonus',
-                        type: 'Hot',
-                        typeZh: '热门活动',
+                        poster: 'poster-hot',
                         title: 'Weekend Trading Bonus',
                         titleZh: '周末交易福利',
                         desc: 'Complete weekend trading tasks for rewards',
@@ -4755,13 +4748,11 @@
                         rewardPool: '10,000 USDT',
                         participants: '5,678',
                         status: 'ongoing',
-                        countdown: '02D 15H 45M',
-                        tags: ['manualReview']
+                        countdown: '02D 15H 45M'
                     },
                     { 
                         id: 'community-exclusive',
-                        type: 'Hot',
-                        typeZh: '热门活动',
+                        poster: 'poster-hot',
                         title: 'Community Exclusive',
                         titleZh: '社区专属活动',
                         desc: 'Participate through partner communities',
@@ -4769,15 +4760,13 @@
                         rewardPool: '25,000 USDT',
                         participants: '892',
                         status: 'ongoing',
-                        countdown: '05D 08H 30M',
-                        tags: ['requireCode', 'manualReview']
+                        countdown: '05D 08H 30M'
                     }
                 ],
                 upcoming: [
                     { 
                         id: 'invite-friends',
-                        type: 'Hot',
-                        typeZh: '热门活动',
+                        poster: 'poster-invite',
                         title: 'Invite Friends',
                         titleZh: '邀请好友赢奖励',
                         desc: 'Invite friends to participate and earn rewards',
@@ -4785,15 +4774,13 @@
                         rewardPool: '30,000 USDT',
                         participants: '0',
                         status: 'upcoming',
-                        countdown: '03D 12H 00M',
-                        tags: ['manualReview']
+                        countdown: '03D 12H 00M'
                     }
                 ],
                 ended: [
                     { 
                         id: 'weekend-bonus-ended',
-                        type: 'Hot',
-                        typeZh: '热门活动',
+                        poster: 'poster-hot',
                         title: 'Weekend Trading Bonus',
                         titleZh: '周末交易福利',
                         desc: 'Weekend trading bonus completed',
@@ -4801,12 +4788,42 @@
                         rewardPool: '10,000 USDT',
                         participants: '4,321',
                         status: 'ended',
-                        date: '2026-05-10 to 2026-05-12',
-                        tags: []
+                        date: '2026-05-10 to 2026-05-12'
                     }
                 ]
             }
         };
+
+        const activityRewards = {
+            'weekend-bonus-ended': {
+                name: 'Weekend Trading Bonus Reward',
+                nameZh: '周末交易福利奖励',
+                activityType: 'Hot Campaign',
+                activityTypeZh: '热门活动',
+                rewardType: 'USDT',
+                rewardTypeZh: 'USDT',
+                amount: '25 USDT',
+                amountZh: '25 USDT'
+            },
+            'spot-contest-ended': {
+                name: 'Spot Trading Challenge Reward',
+                nameZh: '现货交易挑战赛奖励',
+                activityType: 'Trading Contest',
+                activityTypeZh: '交易大赛',
+                rewardType: 'USDT',
+                rewardTypeZh: 'USDT',
+                amount: '120 USDT',
+                amountZh: '120 USDT'
+            }
+        };
+
+        const myJoinedActivities = [
+            { id: 'forx-carnival-contest', poster: 'poster-carnival', title: 'ForX Carnival Trading Contest', titleZh: 'ForX嘉年华交易大赛', desc: 'Complete limited-time tasks and join the trading contest to share the prize pool', descZh: '完成限时任务并参与交易大赛，瓜分总奖池', rewardPool: '100,000 USDT', participants: '8,942', status: 'ongoing', countdown: '12D 03H 42M' },
+            { id: 'contract-contest', poster: 'poster-contest', title: 'Contract Trading Contest', titleZh: '合约交易争霸赛', desc: 'Top100 users share the prize pool by volume and profit rate', descZh: '按交易额和盈利率排名，Top100 用户瓜分奖池', rewardPool: '100,000 USDT', participants: '8,942', status: 'ongoing', countdown: '12D 03H 42M' },
+            { id: 'newbie-growth', poster: 'poster-newbie', title: 'New User Growth Tasks', titleZh: '新手成长任务', desc: 'Complete KYC, deposit and first trade to participate in new user rewards', descZh: '完成KYC、充值、首次交易，参与新人奖励统计', rewardPool: '20,000 USDT', participants: '2,456', status: 'ongoing', countdown: '06D 12H 30M' },
+            { id: 'spot-contest-ended', poster: 'poster-contest', title: 'Spot Trading Challenge', titleZh: '现货交易挑战赛', desc: 'Spot trading users exclusive rewards', descZh: '现货交易用户专属奖励活动', rewardPool: '50,000 USDT', participants: '3,216', status: 'ended', date: '2026-04-01 to 2026-04-15' },
+            { id: 'weekend-bonus-ended', poster: 'poster-hot', title: 'Weekend Trading Bonus', titleZh: '周末交易福利', desc: 'Weekend trading bonus completed', descZh: '往期周末交易福利活动', rewardPool: '10,000 USDT', participants: '4,321', status: 'ended', date: '2026-05-10 to 2026-05-12' }
+        ];
 
         const hotTasksByStatus = {
             ongoing: [
@@ -4963,7 +4980,14 @@
                 participationCodeMethod: 'Participation Code',
                 participationStatus: 'Participation Status',
                 myActivityTitle: 'My Activities',
-                myActivitySubtitle: 'View my tasks, contests and reward status',
+                myActivitySubtitle: 'View my joined campaigns',
+                myRewardsBtn: 'My Rewards',
+                viewMyReward: 'View Reward',
+                registerActivity: 'Register',
+                registerActivityBtn: 'Register for Activity',
+                registerSuccess: 'Successfully registered',
+                activityType: 'Activity Type',
+                distributeAmount: 'Distributed Amount',
                 backToActivityCenter: 'Back to Activity Center',
                 statJoined: 'Joined Campaigns',
                 statOngoing: 'Ongoing Tasks',
@@ -5148,8 +5172,8 @@
                 participationMethodCode: 'Participation Method: Participation Code',
                 goRecharge: 'Go Recharge',
                 tradingContestRanking: 'Trading Contest Ranking',
-                tradingContestRankingDesc: 'Ranked by trading volume and profit rate. Final rewards are subject to operations review.',
-                leaderboardNoteRanking: 'Leaderboard updates every 5 minutes. Top100 users enter reward review.',
+                tradingContestRankingDesc: 'Ranked by trading volume and profit rate. Top100 users share the prize pool',
+                leaderboardNoteRanking: '',
                 volumeRankingTab: 'Volume Ranking',
                 profitRankingTab: 'Profit Rate Ranking',
                 myContestStatus: 'My Contest Status',
@@ -5229,7 +5253,14 @@
                 participationCodeMethod: '参与码',
                 participationStatus: '参与状态',
                 myActivityTitle: '我的活动',
-                myActivitySubtitle: '查看我的任务、交易大赛和奖励状态',
+                myActivitySubtitle: '查看我已参与的活动',
+                myRewardsBtn: '我的奖励',
+                viewMyReward: '查看奖励',
+                registerActivity: '报名活动',
+                registerActivityBtn: '报名活动',
+                registerSuccess: '报名成功',
+                activityType: '活动类型',
+                distributeAmount: '发放金额',
                 backToActivityCenter: '返回活动中心',
                 statJoined: '参与活动',
                 statOngoing: '进行中任务',
@@ -5410,8 +5441,8 @@
                 participationMethodCode: '参与方式：参与码',
                 goRecharge: '去充值',
                 tradingContestRanking: '交易大赛排行榜',
-                tradingContestRankingDesc: '按交易额和盈利率排名，活动结束后由运营审核最终奖励',
-                leaderboardNoteRanking: '排行榜每 5 分钟更新一次，Top100 用户进入奖励审核范围',
+                tradingContestRankingDesc: '按交易额和盈利率排名，Top100 用户瓜分奖池',
+                leaderboardNoteRanking: '',
                 volumeRankingTab: '交易量榜',
                 profitRankingTab: '盈利率榜',
                 myContestStatus: '我的大赛状态',
@@ -5452,7 +5483,8 @@
         // 页面状态
         let currentView = 'home'; // 'home', 'activityDetail', or 'myActivities'
         let currentActivityId = null;
-        let myCurrentTab = 'tasks'; // 'tasks', 'contests', 'rewards'
+        let myCurrentTab = 'ongoing';
+        let myActivityFilter = 'ongoing';
         let myTaskFilter = 'all';
         let myContestFilter = 'all';
         let myRewardFilter = 'all';
@@ -5505,6 +5537,43 @@
             goToSlide(currentSlide);
         });
 
+        function renderActivityCard(activity, isEn, lang) {
+            const posterClass = activity.poster || 'poster-default';
+            const timeLabel = activity.countdown ? activity.countdown : activity.date;
+            const statusLabelMap = {
+                ongoing: lang.statusOngoing || lang.filterOngoing,
+                upcoming: lang.statusUpcoming,
+                ended: lang.statusEnded || lang.filterEnded
+            };
+            const statusLabel = statusLabelMap[activity.status] || activity.status;
+            return `
+                <div class="activity-card" onclick="handleActivityCardClick('${activity.id}')">
+                    <div class="activity-card-poster ${posterClass}"></div>
+                    <div class="activity-card-body">
+                        <div class="activity-header">
+                            <span class="activity-status ${activity.status}">${statusLabel}</span>
+                        </div>
+                        <h3 class="activity-title">${isEn ? activity.title : activity.titleZh}</h3>
+                        <p class="activity-desc">${isEn ? activity.desc : activity.descZh}</p>
+                        <div class="activity-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">${isEn ? 'Reward Pool' : '奖池'}</span>
+                                <span class="stat-value">${activity.rewardPool}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">${isEn ? 'Participants' : '参与人数'}</span>
+                                <span class="stat-value">${activity.participants}</span>
+                            </div>
+                        </div>
+                        <div class="activity-meta">
+                            <span class="activity-time">${timeLabel}</span>
+                        </div>
+                        <button class="activity-view-btn" onclick="event.stopPropagation(); handleActivityCardClick('${activity.id}')">${lang.view}</button>
+                    </div>
+                </div>
+            `;
+        }
+
         function renderDynamicContent() {
             const container = document.getElementById('dynamicContent');
             const lang = i18n[currentLang];
@@ -5527,39 +5596,7 @@
             }
 
             const isEn = currentLang === 'en';
-            
-            container.innerHTML = allActivities.map(activity => {
-                const requireCodeTag = activity.tags?.includes('requireCode') 
-                    ? `<span class="activity-tag require-code">${isEn ? lang.requireParticipationCode : lang.requireParticipationCode}</span>` : '';
-                const manualReviewTag = activity.tags?.includes('manualReview') 
-                    ? `<span class="activity-tag manual-review">${isEn ? 'Manual Review' : '运营审核发放'}</span>` : '';
-                
-                return `
-                    <div class="activity-card" onclick="handleActivityCardClick('${activity.id}')">
-                        <div class="activity-header">
-                            <span class="activity-type">${isEn ? activity.type : activity.typeZh}</span>
-                            <span class="activity-status ${activity.status}">${lang['filter' + activity.status.charAt(0).toUpperCase() + activity.status.slice(1)]}</span>
-                        </div>
-                        <h3 class="activity-title">${isEn ? activity.title : activity.titleZh}</h3>
-                        <p class="activity-desc">${isEn ? activity.desc : activity.descZh}</p>
-                        <div class="activity-stats">
-                            <div class="stat-item">
-                                <span class="stat-label">${isEn ? 'Reward Pool' : '奖池'}</span>
-                                <span class="stat-value">${activity.rewardPool}</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">${isEn ? 'Participants' : '参与人数'}</span>
-                                <span class="stat-value">${activity.participants}</span>
-                            </div>
-                        </div>
-                        <div class="activity-meta">
-                            <span class="activity-time">${activity.countdown ? activity.countdown : activity.date}</span>
-                            <div class="activity-tags">${requireCodeTag}${manualReviewTag}</div>
-                        </div>
-                        <button class="activity-view-btn" onclick="event.stopPropagation(); handleActivityCardClick('${activity.id}')">${isEn ? lang.view : lang.view}</button>
-                    </div>
-                `;
-            }).join('');
+            container.innerHTML = allActivities.map(activity => renderActivityCard(activity, isEn, lang)).join('');
         }
 
         function showPage(view) {
@@ -5584,25 +5621,70 @@
             }
         }
 
+        function getActivityStatus(activityId) {
+            for (const category of Object.values(activities)) {
+                for (const statusKey of ['ongoing', 'upcoming', 'ended']) {
+                    const found = (category[statusKey] || []).find(a => a.id === activityId);
+                    if (found) return found.status;
+                }
+            }
+            const joined = myJoinedActivities.find(a => a.id === activityId);
+            return joined ? joined.status : 'ongoing';
+        }
+
+        function renderEndedRewardButton(activityId, isEn) {
+            if (getActivityStatus(activityId) !== 'ended') return '';
+            const label = isEn ? i18n.en.viewMyReward : i18n.zh.viewMyReward;
+            return `<div class="detail-top-actions"><button class="ended-reward-btn" onclick="openActivityRewardModal('${activityId}')">${label}</button></div>`;
+        }
+
+        function openActivityRewardModal(activityId) {
+            const reward = activityRewards[activityId];
+            if (!reward) return;
+            showSimpleRewardModal(reward);
+        }
+
+        function showSimpleRewardModal(reward) {
+            const isEn = currentLang === 'en';
+            const lang = i18n[currentLang];
+            const modal = document.getElementById('rewardDetailModal');
+            document.getElementById('detailModalTitle').textContent = isEn ? 'Activity Reward' : '活动奖励';
+            document.getElementById('detailModalContent').innerHTML = `
+                <div class="modal-detail-row">
+                    <span class="modal-detail-label">${lang.rewardName}</span>
+                    <span class="modal-detail-value">${isEn ? reward.name : reward.nameZh}</span>
+                </div>
+                <div class="modal-detail-row">
+                    <span class="modal-detail-label">${lang.activityType}</span>
+                    <span class="modal-detail-value">${isEn ? reward.activityType : reward.activityTypeZh}</span>
+                </div>
+                <div class="modal-detail-row">
+                    <span class="modal-detail-label">${lang.rewardType}</span>
+                    <span class="modal-detail-value">${isEn ? reward.rewardType : reward.rewardTypeZh}</span>
+                </div>
+                <div class="modal-detail-row">
+                    <span class="modal-detail-label">${lang.distributeAmount}</span>
+                    <span class="modal-detail-value">${isEn ? reward.amount : reward.amountZh}</span>
+                </div>
+            `;
+            modal.classList.add('active');
+        }
+
         function handleActivityCardClick(activityId) {
             showActivityDetail(activityId);
         }
 
-        function openParticipationCodeModalForCarnival() {
-            const modal = document.getElementById('participationCodeModal');
+        function registerForActivity(activityId) {
             const lang = i18n[currentLang];
-            
-            document.getElementById('participationCodeModalTitle').textContent = lang.participationCodeModalTitle;
-            document.getElementById('participationCodeModalDesc').textContent = lang.participationCodeModalDesc;
-            document.getElementById('participationCodeInput').placeholder = lang.participationCodePlaceholder;
-            document.getElementById('participationCodeCancel').textContent = lang.cancel;
-            document.getElementById('participationCodeConfirm').textContent = lang.confirmParticipate;
-            
-            document.getElementById('participationCodeInput').value = '';
-            document.getElementById('participationCodeInput').classList.remove('error');
-            document.getElementById('participationCodeError').classList.remove('show');
-            
-            modal.classList.add('active');
+            setParticipatedById(activityId);
+            showToast(lang.registerSuccess);
+            if (currentView === 'activityDetail' && currentActivityId === activityId) {
+                renderActivityDetailPage();
+            }
+        }
+
+        function openParticipationCodeModalForCarnival() {
+            registerForActivity('forx-carnival-contest');
         }
 
         function showActivityDetail(activityId) {
@@ -5633,17 +5715,17 @@
                 renderDailyTradingDetail(lang, isEn);
             } else if (currentActivityId === 'contract-contest') {
                 document.getElementById('activityDetailTitle').textContent = isEn ? 'Contract Trading Contest' : '合约交易争霸赛';
-                document.getElementById('activityDetailSubtitle').textContent = isEn ? 'Top100 users by contract volume and profit rate participate in reward evaluation' : '合约交易量及盈利率 Top100 用户参与奖励评估';
+                document.getElementById('activityDetailSubtitle').textContent = lang.tradingContestRankingDesc;
                 renderContractContestDetail(lang, isEn);
-            } else if (currentActivityId === 'spot-contest') {
+            } else if (currentActivityId === 'spot-contest' || currentActivityId === 'spot-contest-ended') {
                 document.getElementById('activityDetailTitle').textContent = isEn ? 'Spot Trading Challenge' : '现货交易挑战赛';
                 document.getElementById('activityDetailSubtitle').textContent = isEn ? 'Spot trading users exclusive rewards' : '现货交易用户专属奖励活动';
                 renderSpotContestDetail(lang, isEn);
             } else if (currentActivityId === 'community-exclusive') {
                 document.getElementById('activityDetailTitle').textContent = isEn ? 'Community Exclusive' : '社区专属活动';
-                document.getElementById('activityDetailSubtitle').textContent = isEn ? 'Participate through partner communities. Rewards are manually reviewed and distributed.' : '通过合作社区参与活动，奖励由运营审核发放';
+                document.getElementById('activityDetailSubtitle').textContent = isEn ? 'Participate through partner communities' : '通过合作社区参与活动';
                 renderCommunityExclusiveDetail(lang, isEn);
-            } else if (currentActivityId === 'weekend-bonus') {
+            } else if (currentActivityId === 'weekend-bonus' || currentActivityId === 'weekend-bonus-ended') {
                 document.getElementById('activityDetailTitle').textContent = isEn ? 'Weekend Trading Bonus' : '周末交易福利';
                 document.getElementById('activityDetailSubtitle').textContent = isEn ? 'Complete weekend trading tasks to earn rewards' : '周末完成指定交易行为，参与福利奖励统计';
                 renderWeekendBonusDetail(lang, isEn);
@@ -5660,38 +5742,33 @@
 
         function renderNewbieGrowthDetail(lang, isEn) {
             const content = document.getElementById('activityDetailContent');
-            const activityName = isEn ? 'New User Growth Tasks' : '新手成长任务';
-            const isParticipated = hasParticipated(activityName);
-            
-            const requireCodeTag = `<span class="activity-tag require-code">${lang.requireParticipationCode}</span>`;
-            const manualReviewTag = `<span class="activity-tag manual-review">${lang.manualReview}</span>`;
+            const isParticipated = hasParticipatedById('newbie-growth');
             
             const participationSection = isParticipated ? `
                 <div class="participation-section">
                     <div class="participation-header">
                         <span class="participation-status participated">${lang.participated}</span>
-                        <span class="tag-participated">${lang.participated}</span>
                     </div>
                     <p class="participation-time">${lang.participationTime}: 2026-05-20 12:30:00</p>
                 </div>
             ` : `
                 <div class="participation-section">
                     <div class="participation-header">
-                        <span class="participation-status not-participated">${lang.needParticipationCode}</span>
+                        <span class="participation-status not-participated">${lang.notParticipated}</span>
                     </div>
-                    <p class="participation-desc">${lang.participationCodeFrom}</p>
-                    <button class="participation-code-btn" onclick="handleDetailParticipation('${activityName}')">${lang.enterParticipationCode}</button>
+                    <p class="participation-desc">${isEn ? 'Click to register and start participating' : '点击报名即可参与活动统计与奖励结算'}</p>
+                    <button class="participation-code-btn" onclick="registerForActivity('newbie-growth')">${lang.registerActivityBtn}</button>
                 </div>
             `;
             
             content.innerHTML = `
+                ${renderEndedRewardButton('newbie-growth', isEn)}
                 <div class="activity-info-card">
                     <div class="activity-info-header">
                         <div>
                             <div class="activity-info-title">${isEn ? 'New User Growth Tasks' : '新手成长任务'}</div>
                             <div class="activity-info-subtitle">${isEn ? 'Complete tasks to participate in new user reward evaluation' : '完成任务，参与新人奖励统计'}</div>
                         </div>
-                        <div class="activity-info-tags">${requireCodeTag}${manualReviewTag}</div>
                     </div>
                     <div class="activity-info-stats">
                         <div class="activity-info-stat-item">
@@ -5725,7 +5802,7 @@
                         <div class="detail-task-content">
                             <div class="detail-task-title">${lang.completeKYC}</div>
                             <div class="detail-task-desc">${isEn ? 'Complete identity verification to participate' : '完成身份认证后，可参与新人奖励统计'}</div>
-                            <div class="detail-task-reward">${isEn ? 'Up to 5 USDT' : '最高 5 USDT'} (${lang.manualReview})</div>
+                            <div class="detail-task-reward">${isEn ? 'Up to 5 USDT' : '最高 5 USDT'}</div>
                         </div>
                         <button class="detail-task-btn" onclick="handleDetailTaskAction('KYC', '${activityName}')">${lang.goVerify}</button>
                     </div>
@@ -5807,43 +5884,33 @@
 
         function renderContractContestDetail(lang, isEn) {
             const content = document.getElementById('activityDetailContent');
-            const activityName = isEn ? 'Contract Trading Contest' : '合约交易争霸赛';
-            const isParticipated = hasParticipated(activityName);
-            
-            const requireCodeTag = `<span class="activity-tag require-code">${lang.requireParticipationCode}</span>`;
-            const manualReviewTag = `<span class="activity-tag manual-review">${lang.manualReview}</span>`;
-            const contestTag = `<span class="activity-type" style="background: rgba(182, 52, 246, 0.1); color: var(--primary-purple); padding: 4px 12px; border-radius: 12px; font-size: 12px;">${isEn ? 'Trading Contest' : '交易大赛'}</span>`;
+            const isParticipated = hasParticipatedById('contract-contest');
             
             const participationSection = isParticipated ? `
                 <div class="participation-section" style="margin-bottom: 16px;">
                     <div class="participation-header">
                         <span class="participation-status participated">${lang.participated}</span>
-                        <span class="tag-participated">${lang.participated}</span>
                     </div>
                     <p class="participation-time">${lang.participationTime}: 2026-05-20 12:30:00</p>
                 </div>
                 <div class="my-data-card" style="margin-bottom: 20px;">
-                    <div style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--text-primary);">${lang.myContestData}</div>
-                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;">
+                    <div style="font-size: 14px; font-weight: 700; margin-bottom: 16px; color: var(--text-primary);">${lang.myContestData}</div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
                         <div>
-                            <div style="font-size: 20px; font-weight: 700; color: var(--primary-purple);">#36</div>
-                            <div style="font-size: 13px; color: var(--text-weak);">${lang.myRank}</div>
+                            <div style="font-size: 18px; font-weight: 700; color: var(--text-primary);">#36</div>
+                            <div style="font-size: 11px; color: var(--text-weak);">${lang.myRank}</div>
                         </div>
                         <div>
-                            <div style="font-size: 20px; font-weight: 700; color: var(--primary-purple);">56,800 USDT</div>
-                            <div style="font-size: 13px; color: var(--text-weak);">${lang.myVolume}</div>
+                            <div style="font-size: 18px; font-weight: 700; color: var(--text-primary);">56,800 USDT</div>
+                            <div style="font-size: 11px; color: var(--text-weak);">${lang.myVolume}</div>
                         </div>
                         <div>
-                            <div style="font-size: 20px; font-weight: 700; color: var(--primary-purple);">12.5%</div>
-                            <div style="font-size: 13px; color: var(--text-weak);">${lang.myProfitRate}</div>
+                            <div style="font-size: 18px; font-weight: 700; color: var(--text-primary);">12.5%</div>
+                            <div style="font-size: 11px; color: var(--text-weak);">${lang.myProfitRate}</div>
                         </div>
                         <div>
-                            <div style="font-size: 20px; font-weight: 700; color: var(--primary-purple);"><span class="reward-status pending">${lang.pending}</span></div>
-                            <div style="font-size: 13px; color: var(--text-weak);">${lang.rewardStatus}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 20px; font-weight: 700; color: var(--text-primary);">2026-05-20</div>
-                            <div style="font-size: 13px; color: var(--text-weak);">${lang.dataUpdated}</div>
+                            <div style="font-size: 18px; font-weight: 700; color: var(--text-primary);">2026-05-20</div>
+                            <div style="font-size: 11px; color: var(--text-weak);">${lang.dataUpdated}</div>
                         </div>
                     </div>
                 </div>
@@ -5852,19 +5919,19 @@
                     <div class="participation-header">
                         <span class="participation-status not-participated">${lang.notParticipated}</span>
                     </div>
-                    <p class="participation-desc">${lang.participateHint}</p>
-                    <button class="participation-code-btn" onclick="handleContestParticipationFromDetail('${activityName}')">${lang.enterParticipationCode}</button>
+                    <p class="participation-desc">${isEn ? 'Click to register and start participating' : '点击报名即可参与活动统计与奖励结算'}</p>
+                    <button class="participation-code-btn" onclick="registerForActivity('contract-contest')">${lang.registerActivityBtn}</button>
                 </div>
             `;
             
             content.innerHTML = `
+                ${renderEndedRewardButton('contract-contest', isEn)}
                 <div class="activity-info-card">
                     <div class="activity-info-header">
                         <div>
                             <div class="activity-info-title">${isEn ? 'Contract Trading Contest' : '合约交易争霸赛'}</div>
-                            <div class="activity-info-subtitle">${isEn ? 'Top100 users by contract volume and profit rate participate in reward evaluation' : '合约交易量及盈利率 Top100 用户参与奖励评估'}</div>
+                            <div class="activity-info-subtitle">${lang.tradingContestRankingDesc}</div>
                         </div>
-                        <div class="activity-info-tags">${contestTag}${requireCodeTag}${manualReviewTag}</div>
                     </div>
                     <div class="activity-info-stats">
                         <div class="activity-info-stat-item">
@@ -5880,7 +5947,6 @@
                             <div class="activity-info-stat-label">${lang.dataUpdated}</div>
                         </div>
                     </div>
-                    <div style="font-size: 13px; color: var(--text-secondary); padding-top: 16px; border-top: 1px solid var(--border-color); margin-top: 16px;">${lang.leaderboardNote}</div>
                 </div>
                 
                 ${participationSection}
@@ -5891,11 +5957,10 @@
                         <div class="contest-detail-tab ${contestDetailLeaderboardType === 'volume' ? 'active' : ''}" onclick="switchContestDetailLeaderboard('volume')">${lang.volumeRanking}</div>
                         <div class="contest-detail-tab ${contestDetailLeaderboardType === 'profit' ? 'active' : ''}" onclick="switchContestDetailLeaderboard('profit')">${lang.profitRanking}</div>
                     </div>
-                    <div class="contest-detail-table-header">
+                    <div class="contest-detail-table-header contest-detail-table-header-3col">
                         <div>${lang.rank}</div>
                         <div>${lang.user}</div>
                         <div>${contestDetailLeaderboardType === 'volume' ? lang.volume : lang.profitRate}</div>
-                        <div>${lang.rewardStatus}</div>
                     </div>
                     <div class="contest-detail-table-body" id="contestDetailLeaderboardBody"></div>
                     <div class="contest-detail-pagination" id="contestDetailPagination"></div>
@@ -5968,10 +6033,6 @@
                         <div class="rank-cell">${rankBadge || item.rank}</div>
                         <div class="nickname-cell">${item.nickname}</div>
                         <div class="volume-cell">${item.value}</div>
-                        <div>
-                            <span class="reward-status ${statusClass}">${statusText}</span>
-                            ${rejectedReason}
-                        </div>
                     </div>
                 `;
             }).join('');
@@ -6009,15 +6070,12 @@
             const content = document.getElementById('activityDetailContent');
             
             content.innerHTML = `
+                ${renderEndedRewardButton(currentActivityId, isEn)}
                 <div class="activity-info-card">
                     <div class="activity-info-header">
                         <div>
                             <div class="activity-info-title">${isEn ? 'Spot Trading Challenge' : '现货交易挑战赛'}</div>
                             <div class="activity-info-subtitle">${isEn ? 'Spot trading users exclusive rewards' : '现货交易用户专属奖励活动'}</div>
-                        </div>
-                        <div class="activity-info-tags">
-                            <span class="activity-type" style="background: rgba(182, 52, 246, 0.1); color: var(--primary-purple); padding: 4px 12px; border-radius: 12px; font-size: 12px;">${isEn ? 'Trading Contest' : '交易大赛'}</span>
-                            <span class="activity-tag manual-review">${lang.manualReview}</span>
                         </div>
                     </div>
                     <div class="activity-info-stats">
@@ -6046,28 +6104,22 @@
 
         function renderCommunityExclusiveDetail(lang, isEn) {
             const content = document.getElementById('activityDetailContent');
-            const activityName = isEn ? 'Community Exclusive' : '社区专属活动';
-            const isParticipated = hasParticipated(activityName);
-            
-            const requireCodeTag = `<span class="activity-tag require-code">${lang.requireParticipationCode}</span>`;
-            const manualReviewTag = `<span class="activity-tag manual-review">${lang.manualReview}</span>`;
-            const hotTag = `<span class="activity-type" style="background: rgba(182, 52, 246, 0.1); color: var(--primary-purple); padding: 4px 12px; border-radius: 12px; font-size: 12px;">${isEn ? 'Hot Campaign' : '热门活动'}</span>`;
+            const isParticipated = hasParticipatedById('community-exclusive');
             
             const participationSection = isParticipated ? `
                 <div class="participation-section" style="margin-bottom: 16px;">
                     <div class="participation-header">
                         <span class="participation-status participated">${lang.participated}</span>
-                        <span class="tag-participated">${lang.participated}</span>
                     </div>
                     <p class="participation-time">${lang.participationTime}: 2026-05-20 12:30:00</p>
                 </div>
             ` : `
                 <div class="participation-section" style="margin-bottom: 16px;">
                     <div class="participation-header">
-                        <span class="participation-status not-participated">${lang.needParticipationCode}</span>
+                        <span class="participation-status not-participated">${lang.notParticipated}</span>
                     </div>
-                    <p class="participation-desc">${lang.participationCodeFrom}</p>
-                    <button class="participation-code-btn" onclick="handleCommunityParticipation('${activityName}')">${lang.enterParticipationCode}</button>
+                    <p class="participation-desc">${isEn ? 'Click to register and start participating' : '点击报名即可参与活动统计与奖励结算'}</p>
+                    <button class="participation-code-btn" onclick="registerForActivity('community-exclusive')">${lang.registerActivityBtn}</button>
                 </div>
             `;
             
@@ -6076,9 +6128,8 @@
                     <div class="activity-info-header">
                         <div>
                             <div class="activity-info-title">${isEn ? 'Community Exclusive' : '社区专属活动'}</div>
-                            <div class="activity-info-subtitle">${isEn ? 'Participate through partner communities. Rewards are manually reviewed and distributed.' : '通过合作社区参与活动，奖励由运营审核发放'}</div>
+                            <div class="activity-info-subtitle">${isEn ? 'Participate through partner communities' : '通过合作社区参与活动'}</div>
                         </div>
-                        <div class="activity-info-tags">${hotTag}${requireCodeTag}${manualReviewTag}</div>
                     </div>
                     <div class="activity-info-stats">
                         <div class="activity-info-stat-item">
@@ -6113,17 +6164,14 @@
         function renderWeekendBonusDetail(lang, isEn) {
             const content = document.getElementById('activityDetailContent');
             
-            const manualReviewTag = `<span class="activity-tag manual-review">${lang.manualReview}</span>`;
-            const hotTag = `<span class="activity-type" style="background: rgba(182, 52, 246, 0.1); color: var(--primary-purple); padding: 4px 12px; border-radius: 12px; font-size: 12px;">${isEn ? 'Hot Campaign' : '热门活动'}</span>`;
-            
             content.innerHTML = `
+                ${renderEndedRewardButton(currentActivityId, isEn)}
                 <div class="activity-info-card">
                     <div class="activity-info-header">
                         <div>
                             <div class="activity-info-title">${isEn ? 'Weekend Trading Bonus' : '周末交易福利'}</div>
                             <div class="activity-info-subtitle">${isEn ? 'Complete weekend trading tasks to earn rewards' : '周末完成指定交易行为，参与福利奖励统计'}</div>
                         </div>
-                        <div class="activity-info-tags">${hotTag}${manualReviewTag}</div>
                     </div>
                     <div class="activity-info-stats">
                         <div class="activity-info-stat-item">
@@ -6159,20 +6207,11 @@
             const content = document.getElementById('activityDetailContent');
             const isParticipated = hasParticipatedById('forx-carnival-contest');
 
-            const requireCodeTag = !isParticipated ? `<span class="activity-tag require-code">${lang.requireParticipationCode}</span>` : '';
-            const manualReviewTag = `<span class="activity-tag manual-review">${lang.manualReview}</span>`;
-            const participatedTag = isParticipated ? `<span class="tag-participated">${lang.participated}</span>` : '';
-
             const statusBarHtml = isParticipated ? `
                 <div class="carnival-hero-status-bar">
                     <div class="carnival-status-item">
                         <span class="carnival-status-label">${lang.participationStatus}:</span>
                         <span class="carnival-status-value" style="color: #22C55E;">${lang.participated}</span>
-                    </div>
-                    <div class="carnival-status-divider"></div>
-                    <div class="carnival-status-item">
-                        <span class="carnival-status-label">${lang.participationMethod}:</span>
-                        <span class="carnival-status-value">${lang.participationCodeMethod}</span>
                     </div>
                     <div class="carnival-status-divider"></div>
                     <div class="carnival-status-item">
@@ -6184,18 +6223,34 @@
                 <div class="participation-section">
                     <div class="participation-header">
                         <h3 class="participation-title">${isEn ? 'Participate in Activity' : '参与活动'}</h3>
-                        <p class="participation-desc">${isEn ? 'Please enter participation code to officially participate in activity statistics and reward settlement' : '本活动需输入参与码报名后方可正式参与统计与奖励结算'}</p>
+                        <p class="participation-desc">${isEn ? 'Click to register and start participating in this campaign' : '点击报名即可参与活动统计与奖励结算'}</p>
                     </div>
-                    <button class="participation-btn" onclick="openParticipationCodeModalForCarnival()">${isEn ? 'Enter Participation Code' : '输入参与码'}</button>
-                    <p class="participation-note">${isEn ? 'You can browse the activity details, but need to register to participate.' : '您当前尚未报名，输入参与码后方可正式参与活动统计与奖励结算。'}</p>
+                    <button class="participation-btn" onclick="registerForActivity('forx-carnival-contest')">${lang.registerActivityBtn}</button>
                 </div>
             `;
 
             content.innerHTML = `
-                <div class="activity-detail-header-card">
-                    <div class="detail-card-tags">
-                        ${participatedTag}${requireCodeTag}${manualReviewTag}
+                ${renderEndedRewardButton('forx-carnival-contest', isEn)}
+
+                <div class="activity-progress-summary">
+                    <div>
+                        <div class="progress-title">${lang.campaignProgress}</div>
+                        <div class="progress-subtitle">${isEn ? 'Track your campaign progress' : '追踪您的活动参与进度'}</div>
                     </div>
+                    <div class="progress-divider"></div>
+                    <div class="progress-stats">
+                        <div class="progress-stat">
+                            <div class="progress-stat-value">1 / 2</div>
+                            <div class="progress-stat-label">${lang.completedTasks}</div>
+                        </div>
+                        <div class="progress-stat">
+                            <div class="progress-stat-value">#1,240</div>
+                            <div class="progress-stat-label">${lang.currentRank}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="activity-detail-header-card">
                     <h1 class="detail-card-title">${lang.forxCarnivalTitle}</h1>
                     <p class="detail-card-subtitle">${lang.forxCarnivalDesc}</p>
                     <div class="detail-card-stats">
@@ -6213,32 +6268,6 @@
                         </div>
                     </div>
                     ${statusBarHtml}
-                </div>
-
-                <div class="activity-progress-summary">
-                    <div>
-                        <div class="progress-title">${lang.campaignProgress}</div>
-                        <div class="progress-subtitle">${isEn ? 'Track your campaign progress' : '追踪您的活动参与进度'}</div>
-                    </div>
-                    <div class="progress-divider"></div>
-                    <div class="progress-stats">
-                        <div class="progress-stat">
-                            <div class="progress-stat-value">1 / 2</div>
-                            <div class="progress-stat-label">${lang.completedTasks}</div>
-                        </div>
-                        <div class="progress-stat">
-                            <div class="progress-stat-value">250 Pts</div>
-                            <div class="progress-stat-label">${lang.earnedPoints}</div>
-                        </div>
-                        <div class="progress-stat">
-                            <div class="progress-stat-value">#1,240</div>
-                            <div class="progress-stat-label">${lang.currentRank}</div>
-                        </div>
-                        <div class="progress-stat">
-                            <div class="progress-stat-value highlight">38,200 USDT</div>
-                            <div class="progress-stat-label">${lang.distanceToTop100}</div>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="limited-task-section">
@@ -6298,25 +6327,23 @@
                         <div>
                             <h3 class="section-title">${lang.tradingContestRanking}</h3>
                             <p class="section-subtitle">${lang.tradingContestRankingDesc}</p>
-                            <p class="section-note">${lang.leaderboardNoteRanking}</p>
                         </div>
                         <div class="section-prize-pool contest-prize-pool">
                             <span class="prize-pool-label">${isEn ? 'Reward Pool' : '奖池'}</span>
                             <span class="prize-pool-amount">80,000 USDT</span>
                         </div>
                     </div>
-                    <div class="carnival-ranking-wrapper">
+                    <div class="carnival-ranking-wrapper" style="grid-template-columns: 1fr;">
                     <div class="carnival-ranking-main">
                         <div class="carnival-ranking-card">
                             <div class="carnival-ranking-card-tabs">
                                 <div class="carnival-ranking-card-tab ${carnivalCurrentLeaderboardType === 'volume' ? 'active' : ''}" onclick="switchCarnivalLeaderboard('volume')">${lang.volumeRankingTab}</div>
                                 <div class="carnival-ranking-card-tab ${carnivalCurrentLeaderboardType === 'profit' ? 'active' : ''}" onclick="switchCarnivalLeaderboard('profit')">${lang.profitRankingTab}</div>
                             </div>
-                            <div class="carnival-ranking-table-header">
+                            <div class="carnival-ranking-table-header carnival-ranking-table-header-3col">
                                 <div>${lang.rank}</div>
                                 <div>${lang.user}</div>
                                 <div>${carnivalCurrentLeaderboardType === 'volume' ? lang.volume : lang.profitRate}</div>
-                                <div>${lang.rewardStatus}</div>
                             </div>
                             <div class="carnival-ranking-table-body" id="carnivalLeaderboardBody"></div>
                             <div class="carnival-ranking-pagination" id="carnivalPagination"></div>
@@ -6334,29 +6361,11 @@
                                 <span class="carnival-my-status-value">12,450 USDT</span>
                             </div>
                             <div class="carnival-my-status-row">
-                                <span class="carnival-my-status-label">${lang.distanceToTop100Rank}</span>
-                                <span class="carnival-my-status-value warning">38,200 USDT</span>
-                            </div>
-                            <div class="carnival-my-status-row">
                                 <span class="carnival-my-status-label">${lang.estimatedReward}</span>
                                 <span class="carnival-my-status-value">0.00 USDT</span>
                             </div>
-                            <div class="carnival-my-status-row">
-                                <span class="carnival-my-status-label">${lang.rewardStatus}</span>
-                                <span class="rewards-status pending">${lang.pending}</span>
-                            </div>
                             <div class="carnival-motivation-text">${lang.motivationText}</div>
                             <button class="carnival-my-status-btn" onclick="handleCarnivalGoTrade()">${lang.goToTrade}</button>
-                        </div>
-                        <div class="carnival-rules-summary-card">
-                            <div class="carnival-rules-summary-title">${lang.rulesSummary}</div>
-                            <ul class="carnival-rules-summary-list">
-                                <li class="carnival-rules-summary-item">${lang.rule1}</li>
-                                <li class="carnival-rules-summary-item">${lang.rule2}</li>
-                                <li class="carnival-rules-summary-item">${lang.rule3}</li>
-                                <li class="carnival-rules-summary-item">${lang.rule4}</li>
-                                <li class="carnival-rules-summary-item">${lang.rule5}</li>
-                            </ul>
                         </div>
                     </div>
                 </div>
@@ -6366,34 +6375,26 @@
                     <ul class="carnival-activity-rules-list">
                         <li class="carnival-activity-rules-item">
                             <span class="carnival-activity-rules-item-num">1</span>
-                            <span>${lang.rule1}</span>
-                        </li>
-                        <li class="carnival-activity-rules-item">
-                            <span class="carnival-activity-rules-item-num">2</span>
                             <span>${lang.rule2}</span>
                         </li>
                         <li class="carnival-activity-rules-item">
-                            <span class="carnival-activity-rules-item-num">3</span>
+                            <span class="carnival-activity-rules-item-num">2</span>
                             <span>${lang.rule3}</span>
                         </li>
                         <li class="carnival-activity-rules-item">
-                            <span class="carnival-activity-rules-item-num">4</span>
+                            <span class="carnival-activity-rules-item-num">3</span>
                             <span>${lang.rule4}</span>
                         </li>
                         <li class="carnival-activity-rules-item">
-                            <span class="carnival-activity-rules-item-num">5</span>
+                            <span class="carnival-activity-rules-item-num">4</span>
                             <span>${lang.rule5}</span>
                         </li>
                         <li class="carnival-activity-rules-item">
-                            <span class="carnival-activity-rules-item-num">6</span>
+                            <span class="carnival-activity-rules-item-num">5</span>
                             <span>${lang.rule6}</span>
                         </li>
                         <li class="carnival-activity-rules-item">
-                            <span class="carnival-activity-rules-item-num">7</span>
-                            <span>${lang.rule7}</span>
-                        </li>
-                        <li class="carnival-activity-rules-item">
-                            <span class="carnival-activity-rules-item-num">8</span>
+                            <span class="carnival-activity-rules-item-num">6</span>
                             <span>${lang.rule8}</span>
                         </li>
                     </ul>
@@ -6461,10 +6462,6 @@
                         <div class="carnival-rank-cell">${rankBadge || item.rank}</div>
                         <div class="carnival-nickname-cell">${item.nickname}</div>
                         <div class="carnival-value-cell">${item.value}</div>
-                        <div class="carnival-status-cell">
-                            <span class="rewards-status ${statusClass}">${statusText}</span>
-                            ${rejectedReason}
-                        </div>
                     </div>
                 `;
             }).join('');
@@ -6629,7 +6626,9 @@
 
         function updateAllActivityStates() {
             renderMainContent();
-            renderMyTasks();
+            if (currentView === 'myActivities') {
+                renderMyActivityCards(myActivityFilter);
+            }
         }
 
         function handleHotTaskClick(titleEn, titleZh) {
@@ -6647,55 +6646,64 @@
 
         function renderMyActivityPage() {
             const lang = i18n[currentLang];
-            
-            // 更新头部
             document.getElementById('backBtnText').textContent = lang.backToActivityCenter;
             document.getElementById('myActivityTitle').textContent = lang.myActivityTitle;
             document.getElementById('myActivitySubtitle').textContent = lang.myActivitySubtitle;
-            
-            // 更新统计标签
-            document.getElementById('statJoined').textContent = lang.statJoined;
-            document.getElementById('statOngoing').textContent = lang.statOngoing;
-            document.getElementById('statContests').textContent = lang.statContests;
-            document.getElementById('statPending').textContent = lang.statPending;
-            
-            // 更新 tabs
-            document.getElementById('tabMyTasks').textContent = lang.tabMyTasks;
-            document.getElementById('tabMyRewards').textContent = lang.tabMyRewards;
-            
-            // 更新通知栏
-            document.getElementById('notificationTitle').textContent = lang.rewardReviewNotice;
-            document.getElementById('notificationText').textContent = lang.rewardReviewDesc;
-            document.getElementById('viewNotification').textContent = lang.view;
-            
-            // 更新筛选器 - 任务
-            const taskFilters = ['All', 'Ongoing', 'Pending', 'Distributed', 'Rejected', 'Ended', 'Expired'];
-            const taskFilterElems = document.querySelectorAll('#taskStatusFilter .status-item');
-            taskFilterElems.forEach((elem, idx) => {
-                const key = taskFilters[idx];
-                if (key) {
-                    elem.textContent = lang['filter' + key] || key;
-                }
-            });
-
-            // 更新筛选器 - 奖励
-            const rewardFilters = ['All', 'Pending', 'Distributed', 'Rejected'];
-            const rewardFilterElems = document.querySelectorAll('#rewardStatusFilter .status-item');
-            rewardFilterElems.forEach((elem, idx) => {
-                const key = rewardFilters[idx];
-                elem.textContent = lang['filter' + key];
-            });
-            
-            // 更新模态框按钮
+            document.getElementById('myRewardBtn').textContent = lang.myRewardsBtn;
+            document.getElementById('myStatusOngoing').textContent = lang.statusOngoing;
+            document.getElementById('myStatusEnded').textContent = lang.statusEnded;
             document.getElementById('closeDetailModal').textContent = lang.modalGotIt;
-            document.getElementById('closeReviewModal').textContent = lang.modalGotIt;
-            
-            // 重新渲染当前激活的内容
-            if (myCurrentTab === 'tasks') {
-                renderMyTasks(myTaskFilter);
-            } else if (myCurrentTab === 'rewards') {
-                renderMyRewards(myRewardFilter);
+            renderMyActivityCards(myActivityFilter);
+        }
+
+        function renderMyActivityCards(filter = 'ongoing') {
+            const container = document.getElementById('myActivityCards');
+            const lang = i18n[currentLang];
+            const isEn = currentLang === 'en';
+            const filtered = myJoinedActivities.filter(a => a.status === filter);
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-icon">📋</div>
+                        <p class="empty-text">${isEn ? 'No activities in this category' : '该分类下暂无活动'}</p>
+                    </div>
+                `;
+                return;
             }
+
+            container.innerHTML = filtered.map(activity => renderActivityCard(activity, isEn, lang)).join('');
+        }
+
+        function openMyRewardsModal() {
+            const isEn = currentLang === 'en';
+            const lang = i18n[currentLang];
+            const modal = document.getElementById('rewardDetailModal');
+            document.getElementById('detailModalTitle').textContent = lang.myRewardsBtn;
+
+            const rows = myRewards.map(reward => `
+                <div class="my-reward-item" style="padding: 12px 0; border-bottom: 1px solid var(--border-color);">
+                    <div class="modal-detail-row">
+                        <span class="modal-detail-label">${lang.rewardName}</span>
+                        <span class="modal-detail-value">${isEn ? reward.name : reward.nameZh}</span>
+                    </div>
+                    <div class="modal-detail-row">
+                        <span class="modal-detail-label">${lang.activityType}</span>
+                        <span class="modal-detail-value">${isEn ? reward.campaign : reward.campaignZh}</span>
+                    </div>
+                    <div class="modal-detail-row">
+                        <span class="modal-detail-label">${lang.rewardType}</span>
+                        <span class="modal-detail-value">${isEn ? getTypeText(reward.type) : reward.typeZh}</span>
+                    </div>
+                    <div class="modal-detail-row">
+                        <span class="modal-detail-label">${lang.distributeAmount}</span>
+                        <span class="modal-detail-value">${isEn ? reward.amount : reward.amountZh}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('detailModalContent').innerHTML = rows;
+            modal.classList.add('active');
         }
 
         function updateLanguage() {
@@ -6743,14 +6751,7 @@
             currentView = 'myActivities';
             showPage('myActivities');
             renderMyActivityPage();
-            renderMyTasks(myTaskFilter);
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            if (!notificationShown) {
-                const hasRejectedReward = myRewards.some(r => r.status === 'rejected');
-                if (hasRejectedReward) {
-                    document.getElementById('rewardNotification').style.display = 'block';
-                }
-            }
         }
 
         function goBackToHome() {
@@ -6763,17 +6764,6 @@
         document.getElementById('backToHome').addEventListener('click', goBackToHome);
         
         document.getElementById('backFromDetail').addEventListener('click', goBackToHome);
-
-        let notificationShown = false;
-
-        document.getElementById('viewNotification').addEventListener('click', () => {
-            notificationShown = true;
-            document.getElementById('rewardNotification').style.display = 'none';
-            const rejectedReward = myRewards.find(r => r.status === 'rejected');
-            if (rejectedReward) {
-                showReviewResultModal(rejectedReward);
-            }
-        });
 
         function renderMyTasks(filter = 'all') {
             const container = document.getElementById('taskList');
@@ -7009,15 +6999,6 @@ return `
             }
         }
 
-        document.querySelectorAll('#taskStatusFilter .status-item').forEach(item => {
-            item.addEventListener('click', () => {
-                document.querySelectorAll('#taskStatusFilter .status-item').forEach(i => i.classList.remove('active'));
-                item.classList.add('active');
-                myTaskFilter = item.dataset.status;
-                renderMyTasks(myTaskFilter);
-            });
-        });
-
         function renderMyContests(filter = 'all') {
             const container = document.getElementById('contestList');
             const isEn = currentLang === 'en';
@@ -7189,7 +7170,7 @@ return `
                     <span class="modal-detail-value">${isEn ? reward.name : reward.nameZh}</span>
                 </div>
                 <div class="modal-detail-row">
-                    <span class="modal-detail-label">${i18nObj.rewardCampaign}</span>
+                    <span class="modal-detail-label">${i18nObj.activityType}</span>
                     <span class="modal-detail-value">${isEn ? reward.campaign : reward.campaignZh}</span>
                 </div>
                 <div class="modal-detail-row">
@@ -7197,22 +7178,9 @@ return `
                     <span class="modal-detail-value">${isEn ? getTypeText(reward.type) : reward.typeZh}</span>
                 </div>
                 <div class="modal-detail-row">
-                    <span class="modal-detail-label">${i18nObj.rewardAmount}</span>
+                    <span class="modal-detail-label">${i18nObj.distributeAmount}</span>
                     <span class="modal-detail-value">${isEn ? reward.amount : reward.amountZh}</span>
                 </div>
-                <div class="modal-detail-row">
-                    <span class="modal-detail-label">${i18nObj.rewardStatus}</span>
-                    <span class="modal-detail-value"><span class="rewards-status ${reward.status}">${getStatusText(reward.status)}</span></span>
-                </div>
-                <div class="modal-detail-row">
-                    <span class="modal-detail-label">${i18nObj.rewardNotification}</span>
-                    <span class="modal-detail-value">${isEn ? reward.notify : reward.notifyZh}</span>
-                </div>
-                <div class="modal-detail-row">
-                    <span class="modal-detail-label">${i18nObj.rewardUpdated}</span>
-                    <span class="modal-detail-value">${reward.updateTime}</span>
-                </div>
-                <div class="modal-detail-note ${noteClass}">${noteText}</div>
             `;
             
             modal.classList.add('active');
@@ -7262,43 +7230,16 @@ return `
             }
         });
 
-        document.querySelectorAll('.my-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.my-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                
-                document.querySelectorAll('.my-content-area').forEach(c => c.classList.remove('active'));
-                document.getElementById('content' + tab.dataset.tab.charAt(0).toUpperCase() + tab.dataset.tab.slice(1)).classList.add('active');
+        document.getElementById('myRewardBtn').addEventListener('click', openMyRewardsModal);
 
-                if (tab.dataset.tab === 'tasks') {
-                    myCurrentTab = 'tasks';
-                    renderMyTasks(myTaskFilter);
-                } else if (tab.dataset.tab === 'rewards') {
-                    myCurrentTab = 'rewards';
-                    renderMyRewards(myRewardFilter);
-                }
-            });
-        });
-
-        document.querySelectorAll('#taskStatusFilter .status-item').forEach(item => {
+        document.querySelectorAll('#myActivityStatusFilter .status-item').forEach(item => {
             item.addEventListener('click', () => {
-                document.querySelectorAll('#taskStatusFilter .status-item').forEach(i => i.classList.remove('active'));
+                document.querySelectorAll('#myActivityStatusFilter .status-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
-                myTaskFilter = item.dataset.status;
-                renderMyTasks(myTaskFilter);
+                myActivityFilter = item.dataset.status;
+                renderMyActivityCards(myActivityFilter);
             });
         });
-
-        document.querySelectorAll('#rewardStatusFilter .status-item').forEach(item => {
-            item.addEventListener('click', () => {
-                document.querySelectorAll('#rewardStatusFilter .status-item').forEach(i => i.classList.remove('active'));
-                item.classList.add('active');
-                myRewardFilter = item.dataset.status;
-                renderMyRewards(myRewardFilter);
-            });
-        });
-
-        renderMyTasks('all');
 
         document.getElementById('modalClose').addEventListener('click', () => {
             document.getElementById('shareModal').classList.remove('active');
