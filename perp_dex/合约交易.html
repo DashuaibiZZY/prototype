@@ -2903,11 +2903,18 @@
         return MARK_PRICE;
     }
 
+    function getLastTradePrice() {
+        const el = document.getElementById('ob-last-price') || document.getElementById('market-last-price');
+        if (!el) return getMarkPrice();
+        const val = parseInputNum(el.textContent);
+        return Number.isFinite(val) ? val : getMarkPrice();
+    }
+
     function getOrderRefPrice() {
         const priceInput = document.getElementById('price-input');
-        if (!priceInput || priceInput.disabled) return getMarkPrice();
+        if (!priceInput || priceInput.disabled) return getLastTradePrice();
         const val = parseInputNum(priceInput.value);
-        return Number.isFinite(val) ? val : getMarkPrice();
+        return Number.isFinite(val) ? val : getLastTradePrice();
     }
 
     function getDelegateRefPrice(role) {
