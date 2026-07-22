@@ -107,6 +107,11 @@
         .tpsl-type-toggle { display: flex; background: #f3f4f6; border-radius: 6px; padding: 2px; }
         .tpsl-type-toggle button { flex: 1; padding: 4px 0; font-size: 9px; font-weight: 800; border-radius: 4px; color: #9ca3af; }
         .tpsl-type-toggle button.active { background: #fff; color: #111827; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+        .tpsl-estimate { font-size: 9px; font-weight: 700; line-height: 1.4; }
+        .tpsl-estimate.positive { color: #16a34a; }
+        .tpsl-estimate.negative { color: #dc2626; }
+        .tpsl-estimate.empty { color: #9ca3af; }
+        .tpsl-conflict-hint { font-size: 8px; color: #d97706; font-weight: 700; line-height: 1.4; }
     </style>
 </head>
 <body>
@@ -222,7 +227,7 @@
                     <div id="price-input-container" class="flex items-center space-x-1">
                         <div class="flex-1 input-box relative pt-4 cursor-pointer" id="price-field-wrap" onclick="handlePriceFieldClick()">
                             <span class="absolute top-1 left-2 text-[8px] text-gray-400 font-bold uppercase">價格</span>
-                            <input id="price-input" type="text" value="72305.9" class="bg-transparent text-[11px] font-bold w-full outline-none">
+                            <input id="price-input" type="text" value="72305.9" class="bg-transparent text-[11px] font-bold w-full outline-none" oninput="updateTPSLEstimates()">
                             <div id="price-bbo-display" class="hidden bg-transparent text-[11px] font-bold w-full flex items-center justify-between">
                                 <span id="price-bbo-label">对手价 1</span>
                                 <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
@@ -238,12 +243,13 @@
                             <svg class="w-2.5 h-2.5 ml-0.5 text-gray-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
                         </div>
                         <div id="tpsl-triggers-container" class="space-y-2"></div>
+                        <div id="tpsl-conflict-hint" class="tpsl-conflict-hint hidden"></div>
                     </div>
 
                     <!-- 數量輸入 -->
                     <div class="input-box field-tall relative flex min-w-0 pb-1.5">
                         <span class="absolute top-1 left-2 text-[8px] text-gray-400 font-bold uppercase">數量</span>
-                        <input id="qty-input" type="text" placeholder="0.00" class="bg-transparent text-[11px] font-bold flex-1 min-w-0 outline-none pb-0.5">
+                        <input id="qty-input" type="text" placeholder="0.00" class="bg-transparent text-[11px] font-bold flex-1 min-w-0 outline-none pb-0.5" oninput="updateTPSLEstimates()">
                         <button type="button" id="qty-unit-trigger" onclick="openSheet('unit-sheet')" class="picker-chip picker-chip-wide shrink-0 whitespace-nowrap">
                             <span id="qty-unit-label">BTC</span>
                             <svg class="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
@@ -279,22 +285,24 @@
                             <div class="space-y-0.5">
                                 <div class="text-[8px] text-gray-400 font-bold">止盈</div>
                                 <div class="input-box field-row trade-field flex items-center min-w-0">
-                                    <input id="attach-tp-price" class="bg-transparent text-[11px] font-bold flex-1 min-w-0 outline-none" placeholder="價格">
+                                    <input id="attach-tp-price" class="bg-transparent text-[11px] font-bold flex-1 min-w-0 outline-none" placeholder="價格" oninput="updateTPSLEstimates()">
                                     <button type="button" class="picker-chip" onclick="event.stopPropagation(); openPickerSheet('trigger-type', 'attach-tp')">
                                         <span id="attach-tp-trigger-label">最新价格</span>
                                         <svg class="w-2.5 h-2.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
                                     </button>
                                 </div>
+                                <div id="attach-tp-estimate" class="tpsl-estimate empty">--</div>
                             </div>
                             <div class="space-y-0.5">
                                 <div class="text-[8px] text-gray-400 font-bold">止損</div>
                                 <div class="input-box field-row trade-field flex items-center min-w-0">
-                                    <input id="attach-sl-price" class="bg-transparent text-[11px] font-bold flex-1 min-w-0 outline-none" placeholder="價格">
+                                    <input id="attach-sl-price" class="bg-transparent text-[11px] font-bold flex-1 min-w-0 outline-none" placeholder="價格" oninput="updateTPSLEstimates()">
                                     <button type="button" class="picker-chip" onclick="event.stopPropagation(); openPickerSheet('trigger-type', 'attach-sl')">
                                         <span id="attach-sl-trigger-label">最新价格</span>
                                         <svg class="w-2.5 h-2.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
                                     </button>
                                 </div>
+                                <div id="attach-sl-estimate" class="tpsl-estimate empty">--</div>
                             </div>
                         </div>
                     </div>
@@ -1306,6 +1314,7 @@
         currentQtyUnit = unit;
         updateQtyUnitDisplay();
         closeSheet('unit-sheet');
+        updateTPSLEstimates();
     }
 
     function getTriggerTypeLabel(value) {
@@ -1738,6 +1747,7 @@
         const container = document.getElementById('attach-tpsl-inputs');
         if (!checkbox || !container) return;
         container.classList.toggle('hidden', !checkbox.checked);
+        if (checkbox.checked) updateTPSLEstimates();
     }
 
     function renderPairList() {
@@ -1917,6 +1927,124 @@
         renderTPSLTriggers();
     }
 
+    const MARK_PRICE = 72305.9;
+
+    function parseInputNum(val) {
+        if (val === null || val === undefined) return NaN;
+        const raw = String(val).replace(/,/g, '').trim();
+        if (!raw || raw === '市價' || raw === '市价') return NaN;
+        const n = parseFloat(raw);
+        return Number.isFinite(n) && n > 0 ? n : NaN;
+    }
+
+    function getMarkPrice() {
+        return MARK_PRICE;
+    }
+
+    function getOrderRefPrice() {
+        const priceInput = document.getElementById('price-input');
+        if (!priceInput || priceInput.classList.contains('hidden')) return getMarkPrice();
+        const val = parseInputNum(priceInput.value);
+        return Number.isFinite(val) ? val : getMarkPrice();
+    }
+
+    function getDelegateRefPrice(role) {
+        const orderTypeId = role + '-order';
+        const delegateType = orderDelegateMap[orderTypeId] || 'market';
+        const priceEl = document.getElementById(role + '-price');
+        if (delegateType === 'limit') {
+            const limitPrice = parseInputNum(priceEl?.value);
+            if (Number.isFinite(limitPrice)) return limitPrice;
+        }
+        return getOrderRefPrice();
+    }
+
+    function getQtyUsdt() {
+        const qty = parseInputNum(document.getElementById('qty-input')?.value);
+        if (!Number.isFinite(qty)) return NaN;
+        if (currentQtyUnit === 'BTC') return qty * getOrderRefPrice();
+        return qty;
+    }
+
+    function getLegDisplayDirection(role, triggerPrice, refPrice) {
+        if (role === 'tp') return triggerPrice > refPrice ? 'long' : 'short';
+        return triggerPrice < refPrice ? 'long' : 'short';
+    }
+
+    function calcLegEstPnl(role, triggerPrice, refPrice, qtyUsdt) {
+        const dir = getLegDisplayDirection(role, triggerPrice, refPrice);
+        if (dir === 'long') return qtyUsdt * (triggerPrice - refPrice) / refPrice;
+        return qtyUsdt * (refPrice - triggerPrice) / refPrice;
+    }
+
+    function formatEstPnlText(role, triggerPrice, refPrice, qtyUsdt) {
+        if (!Number.isFinite(qtyUsdt) || !Number.isFinite(triggerPrice) || !Number.isFinite(refPrice)) return '--';
+        const pnl = calcLegEstPnl(role, triggerPrice, refPrice, qtyUsdt);
+        const side = getLegDisplayDirection(role, triggerPrice, refPrice) === 'long' ? '做多' : '做空';
+        const kind = role === 'tp' ? '止盈' : '止損';
+        const sign = pnl >= 0 ? '+' : '';
+        return `${side}${kind}預估收益 ${sign}${pnl.toFixed(2)} USDT`;
+    }
+
+    function setEstimateEl(el, text) {
+        if (!el) return;
+        el.textContent = text;
+        el.classList.remove('positive', 'negative', 'empty');
+        if (text === '--') el.classList.add('empty');
+        else if (text.includes('+')) el.classList.add('positive');
+        else el.classList.add('negative');
+    }
+
+    function updateTPSLConflictHint() {
+        const hint = document.getElementById('tpsl-conflict-hint');
+        if (!hint) return;
+        const tpTrigger = parseInputNum(document.getElementById('tp-trigger')?.value);
+        const slTrigger = parseInputNum(document.getElementById('sl-trigger')?.value);
+        if (!Number.isFinite(tpTrigger) || !Number.isFinite(slTrigger)) {
+            hint.classList.add('hidden');
+            hint.textContent = '';
+            return;
+        }
+        const ref = getDelegateRefPrice('tp');
+        const bothAbove = tpTrigger > ref && slTrigger > ref;
+        const bothBelow = tpTrigger < ref && slTrigger < ref;
+        if (bothAbove || bothBelow) {
+            hint.classList.remove('hidden');
+            hint.textContent = '觸發價未形成有效區間（止盈/止損在同側），請檢查價格；各腿仍按觸發價與委託價關係獨立估算';
+            return;
+        }
+        hint.classList.add('hidden');
+        hint.textContent = '';
+    }
+
+    function updateTPSLEstimates() {
+        const qtyUsdt = getQtyUsdt();
+        ['tp', 'sl'].forEach(role => {
+            const trigger = parseInputNum(document.getElementById(role + '-trigger')?.value);
+            const ref = getDelegateRefPrice(role);
+            setEstimateEl(document.getElementById(role + '-estimate'), formatEstPnlText(role, trigger, ref, qtyUsdt));
+        });
+        const attachRef = getOrderRefPrice();
+        ['tp', 'sl'].forEach(role => {
+            const trigger = parseInputNum(document.getElementById('attach-' + role + '-price')?.value);
+            setEstimateEl(document.getElementById('attach-' + role + '-estimate'), formatEstPnlText(role, trigger, attachRef, qtyUsdt));
+        });
+        updateTPSLConflictHint();
+    }
+
+    function bindTPSLEstimateListeners() {
+        ['tp', 'sl'].forEach(role => {
+            ['trigger', 'price'].forEach(field => {
+                const el = document.getElementById(role + '-' + field);
+                if (el && !el.dataset.estBound) {
+                    el.dataset.estBound = '1';
+                    el.addEventListener('input', updateTPSLEstimates);
+                }
+            });
+        });
+        updateTPSLEstimates();
+    }
+
     function getOrderRoleFromTypeId(orderTypeId) {
         return orderTypeId.startsWith('sl') ? 'sl' : 'tp';
     }
@@ -1951,7 +2079,7 @@
             <div class="space-y-1 min-w-0 overflow-hidden">
                 <div class="text-[8px] text-gray-400 font-bold">${label}</div>
                 <div class="input-box field-row trade-field flex items-center min-w-0">
-                    <input class="bg-transparent text-[11px] font-bold flex-1 min-w-0 outline-none" placeholder="${placeholder}" id="${role}-trigger">
+                    <input class="bg-transparent text-[11px] font-bold flex-1 min-w-0 outline-none" placeholder="${placeholder}" id="${role}-trigger" oninput="updateTPSLEstimates()">
                     <button type="button" class="picker-chip" onclick="event.stopPropagation(); openPickerSheet('trigger-type', '${triggerKey}')">
                         <span id="${role}-trigger-label">${triggerLabel}</span>
                         <svg class="w-2.5 h-2.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
@@ -1964,6 +2092,7 @@
                 <div class="input-box field-row trade-field min-w-0">
                     <input id="${orderPriceId}" class="bg-transparent text-[11px] font-bold w-full min-w-0 outline-none ${delegateType === 'market' ? 'text-center text-gray-400' : ''}" value="${delegateType === 'market' ? '市价' : ''}" placeholder="${delegateType === 'limit' ? '委託價' : ''}" ${delegateType === 'market' ? 'disabled' : ''}>
                 </div>
+                <div id="${role}-estimate" class="tpsl-estimate empty">--</div>
             </div>`;
         };
 
@@ -1983,6 +2112,7 @@
             }
         }
         container.innerHTML = html;
+        bindTPSLEstimateListeners();
     }
 
     function setOrderType(orderTypeId, type, priceInputId) {
@@ -2004,6 +2134,7 @@
                 priceInput.classList.remove('text-center', 'text-gray-400');
             }
         }
+        updateTPSLEstimates();
     }
 
     function adjustLeverage(side, delta) {
