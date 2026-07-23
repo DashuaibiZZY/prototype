@@ -91,15 +91,47 @@
         .detail-action-block { padding-top: 16px; border-top: 1px solid #f3f4f6; }
         .btn-register-block { padding: 10px 24px; background: #111827; color: #fff; border: none; border-radius: 4px; font-size: 12px; font-weight: 700; cursor: pointer; }
         .joined-info-block { padding-top: 0; }
-        .joined-time { font-size: 11px; color: #6b7280; margin-bottom: 14px; }
-        .joined-time strong { color: #111827; font-weight: 700; }
         .detail-stat-box .val { font-size: 16px; font-weight: 900; }
         .detail-stat-box .val.highlight { color: #2563eb; }
         .detail-stat-box .lbl { font-size: 10px; color: #9ca3af; margin-top: 4px; }
-        .detail-progress-row { display: flex; gap: 40px; }
+        .detail-progress-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
         .detail-progress-item .val { font-size: 15px; font-weight: 900; }
+        .detail-progress-item .val.highlight { color: #2563eb; }
         .detail-progress-item .lbl { font-size: 10px; color: #9ca3af; margin-top: 2px; }
         .ended-reward-btn { padding: 8px 16px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; }
+
+        .pool-unlock-section { margin-bottom: 16px; padding: 16px; background: linear-gradient(135deg,#f8fafc 0%,#fff 100%); border: 1px solid #e5e7eb; border-radius: 8px; }
+        .pool-unlock-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+        .pool-unlock-title { font-size: 13px; font-weight: 900; }
+        .pool-unlock-sub { font-size: 10px; color: #6b7280; margin-top: 4px; }
+        .pool-unlock-current { text-align: right; }
+        .pool-unlock-current .lbl { font-size: 9px; color: #9ca3af; }
+        .pool-unlock-current .val { font-size: 16px; font-weight: 900; color: #2563eb; }
+        .pool-unlock-current .vol { font-size: 10px; color: #6b7280; margin-top: 2px; }
+        .pool-unlock-track { position: relative; height: 8px; background: #e5e7eb; border-radius: 4px; margin-bottom: 18px; overflow: hidden; }
+        .pool-unlock-fill { height: 100%; background: linear-gradient(90deg,#60a5fa,#2563eb); border-radius: 4px; transition: width .4s ease; }
+        .pool-unlock-milestones { position: absolute; inset: 0; display: flex; justify-content: space-between; pointer-events: none; }
+        .pool-unlock-dot { width: 10px; height: 10px; border-radius: 50%; background: #fff; border: 2px solid #d1d5db; margin-top: -1px; transform: translateY(0); }
+        .pool-unlock-dot.unlocked { border-color: #2563eb; background: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.2); }
+        .pool-unlock-tiers { display: flex; flex-direction: column; gap: 0; }
+        .pool-unlock-tier { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f3f4f6; position: relative; }
+        .pool-unlock-tier:last-child { border-bottom: none; padding-bottom: 0; }
+        .pool-unlock-tier::before { content: ''; position: absolute; left: 15px; top: 36px; bottom: -12px; width: 2px; background: #e5e7eb; }
+        .pool-unlock-tier:last-child::before { display: none; }
+        .pool-unlock-tier.unlocked::before { background: #bfdbfe; }
+        .pool-unlock-icon { width: 32px; height: 32px; border-radius: 50%; background: #f3f4f6; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; z-index: 1; border: 2px solid #e5e7eb; }
+        .pool-unlock-tier.unlocked .pool-unlock-icon { background: #eff6ff; border-color: #2563eb; }
+        .pool-unlock-tier.active .pool-unlock-icon { background: #2563eb; border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37,99,235,.15); }
+        .pool-unlock-tier.active .pool-unlock-icon span { filter: brightness(10); }
+        .pool-unlock-body { flex: 1; }
+        .pool-unlock-tier-title { font-size: 11px; font-weight: 700; color: #374151; }
+        .pool-unlock-tier.unlocked .pool-unlock-tier-title { color: #111827; }
+        .pool-unlock-tier-pool { font-size: 12px; font-weight: 900; color: #9ca3af; margin-top: 2px; }
+        .pool-unlock-tier.unlocked .pool-unlock-tier-pool { color: #2563eb; }
+        .pool-unlock-tier-tag { font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 4px; flex-shrink: 0; }
+        .pool-unlock-tier-tag.locked { background: #f3f4f6; color: #9ca3af; }
+        .pool-unlock-tier-tag.unlocked { background: #ecfdf5; color: #059669; }
+        .pool-unlock-tier-tag.active { background: #eff6ff; color: #2563eb; }
 
         .detail-section { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px 24px; margin-bottom: 20px; }
         .detail-section-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid #f3f4f6; }
@@ -422,6 +454,14 @@
                 showProgress: true,
                 completedTasks: '2 / 4',
                 currentRank: '#1,240',
+                estContestReward: '2,500 USDT+',
+                totalTradeVolume: 156000000,
+                poolUnlockTiers: [
+                    { volume: 10000000, pool: 50000 },
+                    { volume: 50000000, pool: 100000 },
+                    { volume: 100000000, pool: 200000 },
+                    { volume: 500000000, pool: 300000 }
+                ],
                 tasks: [
                     { template: 'deposit-100', progress: 100, done: true },
                     { template: 'trade-100', progress: 100, done: true },
@@ -444,7 +484,15 @@
                 contestRewardMode: 'fixed-top3',
                 fixedTop3Rewards: [20000, 12000, 8000],
                 showProgress: false,
-                currentRank: '#36'
+                currentRank: '#36',
+                estContestReward: '1,280 USDT+',
+                totalTradeVolume: 156000000,
+                poolUnlockTiers: [
+                    { volume: 10000000, pool: 50000 },
+                    { volume: 50000000, pool: 100000 },
+                    { volume: 100000000, pool: 200000 },
+                    { volume: 500000000, pool: 300000 }
+                ]
             },
             'task-single-reward': {
                 id: 'task-single-reward',
@@ -764,11 +812,104 @@
             if (activity.showProgress && activity.completedTasks) {
                 items.push(`<div class="detail-progress-item"><div class="val">${activity.completedTasks}</div><div class="lbl">已完成任务</div></div>`);
             }
-            if (activity.currentRank) {
+            if (activity.layout !== 'task' && activity.currentRank) {
                 items.push(`<div class="detail-progress-item"><div class="val">${activity.currentRank}</div><div class="lbl">当前排名</div></div>`);
+            }
+            if (activity.layout !== 'task') {
+                const estReward = activity.estContestReward || getEstContestRewardLabel(activity);
+                items.push(`<div class="detail-progress-item"><div class="val highlight">${estReward}</div><div class="lbl">交易赛预估奖励</div></div>`);
             }
             if (!items.length) return '';
             return `<div class="detail-progress-row">${items.join('')}</div>`;
+        }
+
+        function getEstContestRewardLabel(activity) {
+            const userRank = parseInt(String(activity.currentRank || '0').replace(/[^\d]/g, ''), 10) || 0;
+            if (!userRank) return '—';
+            const leaderboard = buildLeaderboardData(activity);
+            const reward = leaderboard.find(item => item.rank === userRank)?.estReward || 0;
+            return reward > 0 ? formatUsdt(reward) : '—';
+        }
+
+        function formatVolume(amount) {
+            if (amount >= 1000000000) return (amount / 1000000000).toFixed(2) + 'B';
+            if (amount >= 1000000) return (amount / 1000000).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + 'M';
+            return amount.toLocaleString('en-US');
+        }
+
+        function getPoolUnlockState(activity) {
+            const tiers = activity.poolUnlockTiers || [];
+            const currentVolume = activity.totalTradeVolume || 0;
+            let unlockedPool = 0;
+            let unlockedCount = 0;
+            let nextTier = null;
+
+            tiers.forEach(tier => {
+                const unlocked = currentVolume >= tier.volume;
+                if (unlocked) {
+                    unlockedPool = tier.pool;
+                    unlockedCount += 1;
+                } else if (!nextTier) {
+                    nextTier = tier;
+                }
+            });
+
+            const maxVolume = tiers.length ? tiers[tiers.length - 1].volume : 1;
+            const progressPct = Math.min((currentVolume / maxVolume) * 100, 100);
+            return { tiers, currentVolume, unlockedPool, unlockedCount, nextTier, progressPct, maxVolume };
+        }
+
+        function renderPoolUnlockSection(activity) {
+            const state = getPoolUnlockState(activity);
+            if (!state.tiers.length) return '';
+
+            const nextHint = state.nextTier
+                ? `距下一档还差 ${formatVolume(state.nextTier.volume - state.currentVolume)} USDT`
+                : '已解锁最高档奖池';
+
+            return `
+                <div class="pool-unlock-section">
+                    <div class="pool-unlock-head">
+                        <div>
+                            <div class="pool-unlock-title">奖池解锁进度</div>
+                            <div class="pool-unlock-sub">根据活动参与者总交易额解锁交易大赛奖池 · ${nextHint}</div>
+                        </div>
+                        <div class="pool-unlock-current">
+                            <div class="lbl">当前已解锁奖池</div>
+                            <div class="val">${formatUsdt(state.unlockedPool)}</div>
+                            <div class="vol">总交易额 ${formatVolume(state.currentVolume)} USDT</div>
+                        </div>
+                    </div>
+                    <div class="pool-unlock-track">
+                        <div class="pool-unlock-fill" style="width:${state.progressPct}%"></div>
+                        <div class="pool-unlock-milestones">
+                            ${state.tiers.map((tier, idx) => {
+                                const pct = (tier.volume / state.maxVolume) * 100;
+                                const unlocked = state.currentVolume >= tier.volume;
+                                return `<div class="pool-unlock-dot ${unlocked ? 'unlocked' : ''}" style="position:absolute;left:calc(${pct}% - 5px)"></div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                    <div class="pool-unlock-tiers">
+                        ${state.tiers.map((tier, idx) => {
+                            const unlocked = state.currentVolume >= tier.volume;
+                            const isActive = unlocked && (idx === state.unlockedCount - 1);
+                            const isNext = state.nextTier && state.nextTier.volume === tier.volume;
+                            const tagCls = isActive ? 'active' : (unlocked ? 'unlocked' : 'locked');
+                            const tagText = isActive ? '当前档位' : (unlocked ? '已解锁' : (isNext ? '即将解锁' : '未解锁'));
+                            const icon = unlocked ? (isActive ? '🔓' : '✓') : '🔒';
+                            return `
+                                <div class="pool-unlock-tier ${unlocked ? 'unlocked' : ''} ${isActive ? 'active' : ''}">
+                                    <div class="pool-unlock-icon"><span>${icon}</span></div>
+                                    <div class="pool-unlock-body">
+                                        <div class="pool-unlock-tier-title">交易额达到 ${tier.volume.toLocaleString('en-US')} USDT</div>
+                                        <div class="pool-unlock-tier-pool">交易大赛奖池 ${formatUsdt(tier.pool)}</div>
+                                    </div>
+                                    <span class="pool-unlock-tier-tag ${tagCls}">${tagText}</span>
+                                </div>`;
+                        }).join('')}
+                    </div>
+                </div>`;
         }
 
         const TASK_REWARD_LABELS = {
@@ -834,7 +975,6 @@
         function renderHeroCard(activity) {
             const joined = hasParticipatedById(activity.id);
             const ended = activity.status === 'ended';
-            const joinTime = userParticipatedActivities[activity.id]?.time || '2026-05-20 12:30:00';
 
             let actionBlock = '';
             if (ended && activityRewards[activity.id]) {
@@ -844,7 +984,6 @@
             } else if (joined) {
                 actionBlock = `
                     <div class="detail-action-block joined-info-block">
-                        <div class="joined-time">活动报名时间：<strong>${joinTime}</strong></div>
                         ${renderProgressBlock(activity)}
                     </div>`;
             }
@@ -886,7 +1025,10 @@
 
         function renderRankingSection(activity) {
             if (activity.layout === 'task') return '';
-            const pool = activity.contestPool || activity.rewardPool;
+            const unlockState = getPoolUnlockState(activity);
+            const pool = unlockState.unlockedPool > 0
+                ? formatUsdt(unlockState.unlockedPool)
+                : (activity.contestPool || activity.rewardPool);
             const mode = activity.contestRewardMode || 'proportional';
             const metricLabel = carnivalCurrentLeaderboardType === 'volume' ? '交易额' : '盈利率';
             const userRank = parseInt((activity.currentRank || '#0').replace('#', '').replace(',', ''), 10) || 0;
@@ -902,13 +1044,14 @@
                             ${mode === 'fixed-top3' ? `<div class="detail-section-sub" style="margin-top:4px">前三名固定奖励：${(activity.fixedTop3Rewards || []).map(formatUsdt).join(' / ')}</div>` : ''}
                             <div class="contest-reward-mode"><span class="contest-reward-tag ${mode}">${CONTEST_REWARD_LABELS[mode]}</span></div>
                         </div>
-                        <div class="detail-pool-tag"><div class="lbl">奖池</div><div class="val">${pool}</div></div>
+                        <div class="detail-pool-tag"><div class="lbl">已解锁奖池</div><div class="val">${pool}</div></div>
                     </div>
+                    ${renderPoolUnlockSection(activity)}
                     ${hasParticipatedById(activity.id) ? `<div class="my-status-strip">
                         <div class="item"><div class="val">${activity.currentRank || '#1,240'}</div><div class="lbl">当前排名</div></div>
                         <div class="item"><div class="val">12,450 USDT</div><div class="lbl">我的交易量</div></div>
                         <div class="item"><div class="val">8.5%</div><div class="lbl">我的盈利率</div></div>
-                        <div class="item"><div class="val">${formatUsdt(userReward)}</div><div class="lbl">预估收益</div></div>
+                        <div class="item"><div class="val">${activity.estContestReward || formatUsdt(userReward)}</div><div class="lbl">预估奖励</div></div>
                         <button class="btn-trade-sm" onclick="showToast(t('toastGoTrade'))">去交易</button>
                     </div>` : ''}
                     <div class="rank-tabs">
@@ -921,7 +1064,7 @@
                             <div>排名</div>
                             <div>用户</div>
                             <div>${metricLabel}</div>
-                            <div style="text-align:right">预估收益</div>
+                            <div style="text-align:right">预估奖励</div>
                         </div>
                         <div id="carnivalLeaderboardBody"></div>
                         <div class="rank-pagination" id="carnivalPagination"></div>
@@ -1001,7 +1144,10 @@
         }
 
         function applyContestRewards(items, activity) {
-            const pool = parsePoolAmount(activity.contestPool || activity.rewardPool);
+            const unlockState = getPoolUnlockState(activity);
+            const pool = unlockState.unlockedPool > 0
+                ? unlockState.unlockedPool
+                : parsePoolAmount(activity.contestPool || activity.rewardPool);
             const mode = activity.contestRewardMode || 'proportional';
             const fixedTop3 = activity.fixedTop3Rewards || [20000, 12000, 8000];
 
