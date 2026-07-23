@@ -86,10 +86,10 @@
 
         .pool-unlock-section { margin: 0 0 12px; padding: 14px; background: linear-gradient(135deg,#0f172a 0%,#1e293b 45%,#0f172a 100%); border-radius: 10px; position: relative; overflow: hidden; }
         .pool-unlock-section::before { content: ''; position: absolute; top: -40%; right: -10%; width: 160px; height: 160px; background: radial-gradient(circle,rgba(251,191,36,.12) 0%,transparent 70%); pointer-events: none; }
-        .pool-unlock-top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; position: relative; z-index: 1; }
-        .pool-unlock-title { font-size: 10px; font-weight: 800; color: #94a3b8; letter-spacing: 0.04em; }
-        .pool-unlock-current .val { font-size: 18px; font-weight: 900; color: #fbbf24; line-height: 1.1; text-align: right; }
-        .pool-unlock-current .max { font-size: 9px; color: #64748b; margin-top: 2px; text-align: right; }
+        .pool-unlock-top { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; position: relative; z-index: 1; }
+        .pool-unlock-title { font-size: 11px; font-weight: 800; color: #e2e8f0; line-height: 1.45; }
+        .pool-unlock-title .amount { color: #fbbf24; }
+        .pool-unlock-subline { font-size: 9px; color: #64748b; }
         .pool-unlock-rail { position: relative; z-index: 1; margin-bottom: 10px; padding: 0 2px; }
         .pool-unlock-track { position: relative; height: 6px; background: rgba(255,255,255,.08); border-radius: 3px; }
         .pool-unlock-fill { height: 100%; background: linear-gradient(90deg,#2563eb,#fbbf24); border-radius: 3px; box-shadow: 0 0 10px rgba(251,191,36,.4); transition: width .5s ease; }
@@ -190,6 +190,12 @@
         .reward-flow-amount { font-size: 13px; font-weight: 900; color: #2563eb; text-align: right; flex-shrink: 0; }
         .reward-flow-amount.pending { color: #d97706; }
 
+        .reward-search-row { padding: 8px 16px 12px; }
+        .reward-search-input { width: 100%; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 12px; font-weight: 600; color: #111827; background: #fff; outline: none; }
+        .reward-search-input::placeholder { color: #9ca3af; font-weight: 500; }
+        .reward-search-input:focus { border-color: #111827; }
+        .reward-empty-hint { text-align: center; padding: 32px 20px; color: #9ca3af; font-size: 11px; }
+
         .sheet-overlay { display: none; position: absolute; inset: 0; background: rgba(0,0,0,.5); z-index: 100; border-radius: 38px; }
         .sheet-overlay.active { display: block; }
         .bottom-sheet { position: absolute; bottom: 0; left: 0; right: 0; background: #fff; border-radius: 20px 20px 0 0; z-index: 110; transform: translateY(100%); transition: transform .3s ease-out; max-height: 78%; display: flex; flex-direction: column; }
@@ -266,10 +272,7 @@
                 <button class="app-nav-reward" type="button" id="myRewardBtn">我的奖励</button>
             </header>
             <div class="app-scroll no-scrollbar bg-slate-50">
-                <div class="px-4 pt-2 pb-1">
-                    <p class="page-head-sub" id="myActivitySubtitle">查看我已参与的活动</p>
-                </div>
-                <div class="filter-row">
+                <div class="filter-row" style="padding-top:12px">
                     <div class="status-filter" id="myActivityStatusFilter">
                         <div class="status-item active" data-status="ongoing" id="myStatusOngoing">进行中</div>
                         <div class="status-item" data-status="ended" id="myStatusEnded">已结束</div>
@@ -289,8 +292,8 @@
                 <div class="w-8"></div>
             </header>
             <div class="app-scroll no-scrollbar bg-slate-50">
-                <div class="px-4 pt-2 pb-1">
-                    <p class="page-head-sub">奖励发放流水记录</p>
+                <div class="reward-search-row">
+                    <input class="reward-search-input" id="rewardSearchInput" type="search" placeholder="搜索活动名">
                 </div>
                 <div id="myRewardsList" class="reward-flow-list"></div>
             </div>
@@ -494,6 +497,7 @@
         let currentView = 'home';
         let currentActivityId = null;
         let myActivityFilter = 'ongoing';
+        let rewardSearchQuery = '';
 
         const nicknames = ['AlphaTrader', 'CryptoFox', 'BlueWhale', 'MoonHunter', 'ChainKing',
                           'LuckyBear', 'FutureMan', 'Web3Tiger', 'ForXStar', 'NightWhale',
@@ -686,6 +690,10 @@
             return String(amount);
         }
 
+        function formatPoolUsdt(amount) {
+            return formatPoolGrand(amount) + ' USDT';
+        }
+
         function renderPoolUnlockSection(activity) {
             const state = getPoolUnlockState(activity);
             if (!state.tiers.length) return '';
@@ -693,11 +701,8 @@
             return `
                 <div class="pool-unlock-section">
                     <div class="pool-unlock-top">
-                        <div class="pool-unlock-title">奖池解锁</div>
-                        <div class="pool-unlock-current">
-                            <div class="val">${formatUsdt(state.unlockedPool)}</div>
-                            <div class="max">最高 ${formatUsdt(state.maxPool)}</div>
-                        </div>
+                        <div class="pool-unlock-title">当前交易额已解锁奖池 <span class="amount">${formatPoolUsdt(state.unlockedPool)}</span></div>
+                        <div class="pool-unlock-subline">当前总交易额 ${formatVolumeShort(state.currentVolume)}</div>
                     </div>
                     <div class="pool-unlock-rail">
                         <div class="pool-unlock-track">
@@ -829,10 +834,6 @@
 
         function renderRankingSection(activity) {
             if (activity.layout === 'task') return '';
-            const unlockState = getPoolUnlockState(activity);
-            const poolLabel = unlockState.unlockedPool > 0
-                ? `${formatUsdt(unlockState.unlockedPool)} / ${formatUsdt(unlockState.maxPool)}`
-                : (activity.contestPool || activity.rewardPool);
             const mode = activity.contestRewardMode || 'proportional';
             const metricLabel = carnivalCurrentLeaderboardType === 'volume' ? '交易额' : '盈利率';
             const userRank = parseInt((activity.currentRank || '#0').replace('#', '').replace(',', ''), 10) || 0;
@@ -842,12 +843,9 @@
             return `
                 <div class="detail-section">
                     <div class="detail-section-head">
-                        <div class="detail-section-head-row">
-                            <div class="detail-section-title">交易大赛排行榜</div>
-                            <div class="detail-section-pool">${poolLabel}</div>
-                        </div>
+                        <div class="detail-section-title">交易大赛排行榜</div>
                         <div class="detail-section-sub">${CONTEST_REWARD_SUBS[mode]}</div>
-                        ${mode === 'fixed-top3' ? `<div class="detail-section-sub" style="margin-top:4px">前三名固定奖励：${(activity.fixedTop3Rewards || []).map(formatUsdt).join(' / ')}</div>` : ''}
+                        ${mode === 'fixed-top3' ? `<div class="detail-section-sub" style="margin-top:4px">前三名固定奖励：${(activity.fixedTop3Rewards || []).map(formatPoolUsdt).join(' / ')}</div>` : ''}
                         <div class="contest-reward-mode"><span class="contest-reward-tag ${mode}">${CONTEST_REWARD_LABELS[mode]}</span></div>
                     </div>
                     ${renderPoolUnlockSection(activity)}
@@ -1062,7 +1060,15 @@
         function renderMyRewardsPage() {
             const container = document.getElementById('myRewardsList');
             if (!container) return;
-            container.innerHTML = myRewards.map(r => {
+            const query = rewardSearchQuery.trim().toLowerCase();
+            const filtered = query
+                ? myRewards.filter(r => r.campaign.toLowerCase().includes(query))
+                : myRewards;
+            if (!filtered.length) {
+                container.innerHTML = `<div class="reward-empty-hint">${query ? '未找到匹配的活动奖励' : '暂无奖励记录'}</div>`;
+                return;
+            }
+            container.innerHTML = filtered.map(r => {
                 const pending = r.amount.includes('待发放');
                 return `
                     <div class="reward-flow-item">
@@ -1091,6 +1097,10 @@
 
         document.getElementById('myActivitiesLink').addEventListener('click', goToMyActivity);
         document.getElementById('myRewardBtn').addEventListener('click', goToMyRewards);
+        document.getElementById('rewardSearchInput').addEventListener('input', (e) => {
+            rewardSearchQuery = e.target.value;
+            renderMyRewardsPage();
+        });
         document.querySelectorAll('#myActivityStatusFilter .status-item').forEach(item => {
             item.addEventListener('click', () => {
                 document.querySelectorAll('#myActivityStatusFilter .status-item').forEach(i => i.classList.remove('active'));

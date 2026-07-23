@@ -877,9 +877,10 @@
             if (!state.tiers.length) return '';
 
             const tierCount = state.tiers.length;
+            const currentVolText = `当前总交易额 ${formatVolume(state.currentVolume)}`;
             const nextHint = state.nextTier
-                ? `距下一档还差 ${formatVolume(state.nextTier.volume - state.currentVolume)} USDT`
-                : '已解锁最高档奖池';
+                ? `${currentVolText}，距下一档还差 ${formatVolume(state.nextTier.volume - state.currentVolume)} USDT`
+                : `${currentVolText}，已解锁最高档奖池`;
 
             return `
                 <div class="pool-unlock-section">
@@ -891,7 +892,7 @@
                         <div class="pool-unlock-current">
                             <div class="lbl">当前已解锁奖池</div>
                             <div class="val">${formatPoolGrand(state.unlockedPool)}</div>
-                            <div class="vol">最高 ${formatPoolGrand(state.maxPool)} USDT · 总交易额 ${formatVolume(state.currentVolume)}</div>
+                            <div class="vol">最高 ${formatPoolGrand(state.maxPool)} USDT</div>
                         </div>
                     </div>
                     <div class="pool-unlock-rail">
@@ -1032,10 +1033,6 @@
 
         function renderRankingSection(activity) {
             if (activity.layout === 'task') return '';
-            const unlockState = getPoolUnlockState(activity);
-            const pool = unlockState.unlockedPool > 0
-                ? `${formatUsdt(unlockState.unlockedPool)} / ${formatUsdt(unlockState.maxPool)}`
-                : (activity.contestPool || activity.rewardPool);
             const mode = activity.contestRewardMode || 'proportional';
             const metricLabel = carnivalCurrentLeaderboardType === 'volume' ? '交易额' : '盈利率';
             const userRank = parseInt((activity.currentRank || '#0').replace('#', '').replace(',', ''), 10) || 0;
@@ -1051,7 +1048,6 @@
                             ${mode === 'fixed-top3' ? `<div class="detail-section-sub" style="margin-top:4px">前三名固定奖励：${(activity.fixedTop3Rewards || []).map(formatUsdt).join(' / ')}</div>` : ''}
                             <div class="contest-reward-mode"><span class="contest-reward-tag ${mode}">${CONTEST_REWARD_LABELS[mode]}</span></div>
                         </div>
-                        <div class="detail-pool-tag"><div class="lbl">已解锁 / 最高奖池</div><div class="val">${pool}</div></div>
                     </div>
                     ${renderPoolUnlockSection(activity)}
                     ${hasParticipatedById(activity.id) ? `<div class="my-status-strip">
