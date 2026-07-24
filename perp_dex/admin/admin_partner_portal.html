@@ -13,20 +13,7 @@
 <body class="flex h-screen overflow-hidden text-[12px]">
 
 <!-- 侧边栏 -->
-<aside class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0">
-    <div class="p-6 text-white font-black text-xl italic tracking-tighter">ForX ADMIN</div>
-    <nav class="flex-1 px-4 space-y-1">
-        <button onclick="showPage('page-agent-mgmt')" id="nav-agent" class="sidebar-item-active w-full flex items-center px-4 py-3 rounded-lg transition-all">
-            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-            一级代理管理
-        </button>
-        <button onclick="showPage('page-operator-mgmt')" id="nav-operator" class="w-full flex items-center px-4 py-3 rounded-lg hover:bg-slate-800 transition-all">
-            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-            运营权限配置
-        </button>
-    </nav>
-    <div class="p-4 border-t border-slate-800 text-slate-500">登录身份: 超级管理员</div>
-</aside>
+<aside id="admin-sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0"></aside>
 
 <!-- 主内容区 -->
 <main class="flex-1 flex flex-col overflow-hidden">
@@ -318,20 +305,20 @@
 
 <script>
     // 之前已有的 showPage 函数保持不变，但要确保它能正常切换
-    function showPage(id) {
+    const PORTAL_PAGE_HASH = { 'page-agent-mgmt': 'agent', 'page-operator-mgmt': 'operator' };
+    const PORTAL_PAGE_TITLES = { 'page-agent-mgmt': '一级代理管理', 'page-operator-mgmt': '运营权限配置' };
+
+    function showPage(id, updateHash) {
         document.getElementById('page-agent-mgmt').classList.add('hidden');
         document.getElementById('page-operator-mgmt').classList.add('hidden');
         document.getElementById(id).classList.remove('hidden');
 
-        document.getElementById('nav-agent').classList.remove('sidebar-item-active');
-        document.getElementById('nav-operator').classList.remove('sidebar-item-active');
+        const titleEl = document.getElementById('header-title');
+        if (titleEl && PORTAL_PAGE_TITLES[id]) titleEl.innerText = PORTAL_PAGE_TITLES[id];
 
-        if(id === 'page-agent-mgmt') {
-            document.getElementById('nav-agent').classList.add('sidebar-item-active');
-            document.getElementById('header-title').innerText = '一级代理管理';
-        } else {
-            document.getElementById('nav-operator').classList.add('sidebar-item-active');
-            document.getElementById('header-title').innerText = '运营权限配置';
+        if (updateHash !== false && PORTAL_PAGE_HASH[id]) {
+            const hash = PORTAL_PAGE_HASH[id];
+            if (location.hash !== '#' + hash) location.hash = hash;
         }
     }
 
@@ -368,6 +355,14 @@
             closeModal('modal-modify-ratio');
         }
     }
+</script>
+<script src="admin-sidebar.js"></script>
+<script>
+    initAdminSidebar('agent-portal', '登录身份: 代理伙伴');
+    initAdminHashRouter({
+        agent: function () { showPage('page-agent-mgmt', false); },
+        operator: function () { showPage('page-operator-mgmt', false); }
+    }, 'agent', { agent: 'agent-portal', operator: 'agent-portal' });
 </script>
 </body>
 </html>

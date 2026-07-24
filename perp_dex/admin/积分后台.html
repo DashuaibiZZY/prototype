@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ForX 后台管理 - 合约体验金系统</title>
+    <title>ForX 后台管理 - 积分系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -28,31 +28,12 @@
 <body class="flex h-screen overflow-hidden">
 
 <!-- 侧边导航栏 -->
-<aside class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0">
-    <div class="p-6">
-        <span class="text-white font-black text-2xl tracking-tighter italic uppercase">ForX Admin</span>
-    </div>
-    <nav class="flex-1 px-4 space-y-1">
-        <div class="py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">合约体验金管理</div>
-        <button onclick="showPage('page-config')" id="nav-config" class="sidebar-item-active w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors">
-            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-            卡组配置
-        </button>
-        <button onclick="showPage('page-issue')" id="nav-issue" class="w-full flex items-center px-4 py-3 text-sm font-medium hover:bg-slate-800 rounded-lg transition-colors">
-            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-            批量发放
-        </button>
-        <button onclick="showPage('page-risk')" id="nav-risk" class="w-full flex items-center px-4 py-3 text-sm font-medium hover:bg-slate-800 rounded-lg transition-colors">
-            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-            风控回收
-        </button>
-    </nav>
-</aside>
+<aside id="admin-sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0"></aside>
 
 <!-- 主体内容 -->
 <main class="flex-1 flex flex-col overflow-hidden">
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
-        <h1 id="page-title" class="text-xl font-bold text-slate-800">卡组配置</h1>
+        <h1 id="page-title" class="text-xl font-bold text-slate-800">积分规则配置</h1>
         <div class="flex items-center space-x-4">
             <span class="text-sm text-slate-500 font-medium">管理员: Admin_User</span>
             <div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">AU</div>
@@ -348,31 +329,21 @@
 
 <script>
     // ========== 页面切换 ==========
-    function showPage(pageId) {
+    const POINTS_PAGE_HASH = { 'page-config': 'config', 'page-issue': 'issue', 'page-risk': 'adjust' };
+    const POINTS_PAGE_TITLES = { 'page-config': '积分规则配置', 'page-issue': '积分发放', 'page-risk': '积分调整' };
+
+    function showPage(pageId, updateHash) {
         document.getElementById('page-config').classList.add('hidden');
         document.getElementById('page-issue').classList.add('hidden');
         document.getElementById('page-risk').classList.add('hidden');
         document.getElementById(pageId).classList.remove('hidden');
 
-        const navConfig = document.getElementById('nav-config');
-        const navIssue = document.getElementById('nav-issue');
-        const navRisk = document.getElementById('nav-risk');
         const titleEl = document.getElementById('page-title');
+        if (titleEl && POINTS_PAGE_TITLES[pageId]) titleEl.innerText = POINTS_PAGE_TITLES[pageId];
 
-        // 重置所有导航样式
-        [navConfig, navIssue, navRisk].forEach(nav => {
-            nav.className = "w-full flex items-center px-4 py-3 text-sm font-medium hover:bg-slate-800 rounded-lg transition-colors";
-        });
-
-        if(pageId === 'page-config') {
-            navConfig.classList.add('sidebar-item-active');
-            titleEl.innerText = '卡组配置';
-        } else if(pageId === 'page-issue') {
-            navIssue.classList.add('sidebar-item-active');
-            titleEl.innerText = '批量发放体验金';
-        } else if(pageId === 'page-risk') {
-            navRisk.classList.add('sidebar-item-active');
-            titleEl.innerText = '风控回收';
+        if (updateHash !== false && POINTS_PAGE_HASH[pageId]) {
+            const hash = POINTS_PAGE_HASH[pageId];
+            if (location.hash !== '#' + hash) location.hash = hash;
         }
     }
 
@@ -534,6 +505,15 @@
         document.getElementById('riskTotalCount').innerText = riskUserCoupons.length;
         document.getElementById('riskTotalBalance').innerText = riskUserCoupons.reduce((sum, c) => sum + c.balance, 0);
     }
+</script>
+<script src="admin-sidebar.js"></script>
+<script>
+    initAdminSidebar('points-config', '登录身份: 积分管理员');
+    initAdminHashRouter({
+        config: function () { showPage('page-config', false); },
+        issue: function () { showPage('page-issue', false); },
+        adjust: function () { showPage('page-risk', false); }
+    }, 'config', { config: 'points-config', issue: 'points-issue', adjust: 'points-adjust' });
 </script>
 </body>
 </html>
