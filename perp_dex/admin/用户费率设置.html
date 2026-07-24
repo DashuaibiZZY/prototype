@@ -19,6 +19,16 @@
         .vip-preset:hover { border-color: #93c5fd; }
         .vip-preset.selected { border-color: #3b82f6; background: #eff6ff; }
         .table-scroll { overflow-x: auto; }
+        .tier-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; background: #f1f5f9; color: #475569; }
+        .tier-badge.volume { background: #eff6ff; color: #2563eb; }
+        .tier-badge.custom { background: #f3e8ff; color: #7c3aed; }
+        .upload-box { border: 2px dashed #e2e8f0; border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; transition: all .15s; }
+        .upload-box:hover { border-color: #93c5fd; background: #f8fafc; }
+        .upload-box.has-file { border-color: #3b82f6; background: #eff6ff; border-style: solid; }
+        .upload-box input { display: none; }
+        .vip-ref-table { width: 100%; font-size: 10px; border-collapse: collapse; }
+        .vip-ref-table th, .vip-ref-table td { border: 1px solid #e2e8f0; padding: 6px 8px; text-align: left; }
+        .vip-ref-table th { background: #f8fafc; color: #64748b; font-weight: 700; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -74,21 +84,23 @@
         </section>
 
         <section class="card overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                 <span class="text-sm font-bold text-slate-700">用户列表 <span id="userCount" class="text-slate-400 font-medium"></span></span>
+                <span class="text-[10px] text-slate-400">交易量对应等级按近 14 日交易额自动计算</span>
             </div>
             <div class="table-scroll">
-                <table class="w-full text-left min-w-[960px]">
+                <table class="w-full text-left min-w-[1100px]">
                     <thead class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase">
                     <tr>
-                        <th class="px-5 py-3">UID / 钱包</th>
-                        <th class="px-4 py-3 text-center">VIP</th>
-                        <th class="px-4 py-3 text-center">费率 (Taker / Maker)</th>
-                        <th class="px-4 py-3 text-right">总交易额</th>
-                        <th class="px-4 py-3 text-right">近30日交易额</th>
-                        <th class="px-4 py-3 text-right">总手续费收入</th>
-                        <th class="px-4 py-3 text-right">近30日手续费收入</th>
-                        <th class="px-5 py-3 text-right">操作</th>
+                        <th class="px-4 py-3">UID / 钱包</th>
+                        <th class="px-3 py-3 text-center">配置等级</th>
+                        <th class="px-3 py-3 text-center">交易量对应等级</th>
+                        <th class="px-3 py-3 text-center">费率 (Taker / Maker)</th>
+                        <th class="px-3 py-3 text-right">近30日交易额</th>
+                        <th class="px-3 py-3 text-right">近30日手续费收入</th>
+                        <th class="px-3 py-3 text-right">近14日交易额</th>
+                        <th class="px-3 py-3 text-right">近14日手续费收入</th>
+                        <th class="px-4 py-3 text-right">操作</th>
                     </tr>
                     </thead>
                     <tbody id="userTableBody" class="divide-y divide-slate-50 text-[12px]"></tbody>
@@ -104,13 +116,24 @@
         <div>
             <h2 class="text-base font-bold text-slate-800">费率配置</h2>
             <p id="drawerUserMeta" class="text-xs text-slate-400 mt-1 font-mono"></p>
+            <p id="drawerVolumeTier" class="text-[11px] text-blue-600 font-bold mt-1"></p>
         </div>
         <button onclick="closeDrawer()" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 text-lg">&times;</button>
     </div>
     <div class="flex-1 overflow-y-auto px-6 py-5 space-y-6">
         <section class="card p-5">
+            <h3 class="text-sm font-bold text-slate-800 mb-2">VIP 费率参考表</h3>
+            <table class="vip-ref-table">
+                <thead>
+                <tr><th>等级</th><th>14 天交易量门槛</th><th>Maker</th><th>Taker</th></tr>
+                </thead>
+                <tbody id="vipRefTableBody"></tbody>
+            </table>
+        </section>
+
+        <section class="card p-5">
             <h3 class="text-sm font-bold text-slate-800 mb-1">用户费率配置</h3>
-            <p class="text-[11px] text-slate-400 mb-4">支持按 VIP 等级套用，或单独自定义 Taker / Maker 费率</p>
+            <p class="text-[11px] text-slate-400 mb-4">手动配置仅支持 VIP 1–4 或自定义费率（VIP 0 由交易量自动判定）</p>
             <div class="flex bg-slate-100 p-1 rounded-lg w-fit mb-4">
                 <button id="feeTabVip" onclick="switchFeeMode('vip')" class="fee-mode-tab active">VIP 等级</button>
                 <button id="feeTabCustom" onclick="switchFeeMode('custom')" class="fee-mode-tab">自定义费率</button>
@@ -127,6 +150,25 @@
                 </div>
             </div>
         </section>
+
+        <section class="card p-5 space-y-4">
+            <h3 class="text-sm font-bold text-slate-800">审批材料（必填）</h3>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">审批截图 <span class="text-red-500">*</span></label>
+                <label class="upload-box" id="approvalUploadBox">
+                    <input type="file" id="approvalFile" accept="image/*" onchange="onFileSelect('approval', this)">
+                    <div id="approvalUploadText" class="text-[11px] text-slate-500">点击上传审批截图</div>
+                </label>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">用户价值证明（其他交易所截图）<span class="text-red-500">*</span></label>
+                <label class="upload-box" id="proofUploadBox">
+                    <input type="file" id="proofFile" accept="image/*" onchange="onFileSelect('proof', this)">
+                    <div id="proofUploadText" class="text-[11px] text-slate-500">点击上传其他交易所交易量 / VIP 等级截图</div>
+                </label>
+            </div>
+        </section>
+
         <section class="card p-5">
             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">操作备注（必填）</label>
             <textarea id="configRemark" rows="3" placeholder="请填写变更原因..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
@@ -151,57 +193,98 @@
 <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-lg text-sm font-bold shadow-xl z-[70] hidden"></div>
 
 <script>
-    const VIP_PRESETS = [
-        { level: 0, name: 'VIP 0', taker: 0.06, maker: 0.02 },
-        { level: 1, name: 'VIP 1', taker: 0.055, maker: 0.018 },
-        { level: 2, name: 'VIP 2', taker: 0.05, maker: 0.015 },
-        { level: 3, name: 'VIP 3', taker: 0.045, maker: 0.012 },
-        { level: 4, name: 'VIP 4', taker: 0.04, maker: 0.01 },
-        { level: 5, name: 'VIP 5', taker: 0.035, maker: 0.008 }
+    const VIP_TIERS = [
+        { level: 0, name: 'VIP 0', threshold: '< $5M',       taker: 0.00045, maker: 0.00015 },
+        { level: 1, name: 'VIP 1', threshold: '≥ $5M',       taker: 0.00039, maker: 0.00013 },
+        { level: 2, name: 'VIP 2', threshold: '≥ $25M',      taker: 0.00034, maker: 0.00010 },
+        { level: 3, name: 'VIP 3', threshold: '≥ $100M',     taker: 0.00029, maker: 0.00006 },
+        { level: 4, name: 'VIP 4', threshold: '≥ $500M',     taker: 0.00026, maker: 0.00004 }
     ];
 
+    const VIP_PRESETS = VIP_TIERS.filter(v => v.level >= 1);
+
     let users = [
-        { uid: '10028471', wallet: '0x7a3f...9c2e', vip: 2, feeMode: 'vip', taker: 0.05, maker: 0.015, totalVolume: 12540000, volume30d: 890000, totalFeeIncome: 45230, feeIncome30d: 3280 },
-        { uid: '10031592', wallet: '0x2b91...4f8a', vip: 0, feeMode: 'custom', taker: 0.03, maker: 0.01, totalVolume: 520000, volume30d: 120000, totalFeeIncome: 1860, feeIncome30d: 420 },
-        { uid: '10019833', wallet: '0xd5e2...1a7b', vip: 4, feeMode: 'vip', taker: 0.04, maker: 0.01, totalVolume: 89200000, volume30d: 12500000, totalFeeIncome: 312500, feeIncome30d: 43800 },
-        { uid: '10042105', wallet: '0x9c44...6d31', vip: 1, feeMode: 'vip', taker: 0.055, maker: 0.018, totalVolume: 3100000, volume30d: 560000, totalFeeIncome: 12400, feeIncome30d: 2100 },
-        { uid: '10005678', wallet: '0x1f88...e903', vip: 3, feeMode: 'vip', taker: 0.045, maker: 0.012, totalVolume: 24600000, volume30d: 3200000, totalFeeIncome: 88600, feeIncome30d: 11500 }
+        { uid: '10028471', wallet: '0x7a3f...9c2e', vip: 2, feeMode: 'vip', taker: 0.00034, maker: 0.00010, volume30d: 8900000, feeIncome30d: 32800, volume14d: 4200000, feeIncome14d: 15400 },
+        { uid: '10031592', wallet: '0x2b91...4f8a', vip: 0, feeMode: 'custom', taker: 0.00020, maker: 0.00008, volume30d: 1200000, feeIncome30d: 4200, volume14d: 580000, feeIncome14d: 2100 },
+        { uid: '10019833', wallet: '0xd5e2...1a7b', vip: 4, feeMode: 'vip', taker: 0.00026, maker: 0.00004, volume30d: 125000000, feeIncome30d: 438000, volume14d: 680000000, feeIncome14d: 238000 },
+        { uid: '10042105', wallet: '0x9c44...6d31', vip: 1, feeMode: 'vip', taker: 0.00039, maker: 0.00013, volume30d: 5600000, feeIncome30d: 21000, volume14d: 8200000, feeIncome14d: 30500 },
+        { uid: '10005678', wallet: '0x1f88...e903', vip: 3, feeMode: 'vip', taker: 0.00029, maker: 0.00006, volume30d: 32000000, feeIncome30d: 115000, volume14d: 185000000, feeIncome14d: 66500 }
     ];
 
     let filteredUsers = [...users];
     let currentUserId = null;
     let draftConfig = null;
+    let uploadState = { approval: null, proof: null };
+
+    function calcVolumeTier(volume14d) {
+        if (volume14d >= 500000000) return 4;
+        if (volume14d >= 100000000) return 3;
+        if (volume14d >= 25000000) return 2;
+        if (volume14d >= 5000000) return 1;
+        return 0;
+    }
+
+    function getTierByLevel(level) {
+        return VIP_TIERS.find(v => v.level === level) || VIP_TIERS[0];
+    }
 
     function formatMoney(n) {
+        if (n >= 1000000000) return '$' + (n / 1000000000).toFixed(2) + 'B';
         if (n >= 1000000) return '$' + (n / 1000000).toFixed(2) + 'M';
         if (n >= 1000) return '$' + (n / 1000).toFixed(1) + 'K';
         return '$' + n.toLocaleString('en-US');
     }
 
+    function formatFeePct(rate) {
+        return (rate * 100).toFixed(3) + '%';
+    }
+
     function formatFee(taker, maker) {
-        return `${(taker * 100).toFixed(3)}% / ${(maker * 100).toFixed(3)}%`;
+        return `${formatFeePct(taker)} / ${formatFeePct(maker)}`;
+    }
+
+    function configLevelLabel(u) {
+        if (u.feeMode === 'custom') return '<span class="tier-badge custom">自定义</span>';
+        return `<span class="tier-badge">VIP ${u.vip}</span>`;
+    }
+
+    function volumeTierLabel(volume14d) {
+        const level = calcVolumeTier(volume14d);
+        return `<span class="tier-badge volume">VIP ${level}</span>`;
+    }
+
+    function renderVipRefTable() {
+        document.getElementById('vipRefTableBody').innerHTML = VIP_TIERS.map(v => `
+            <tr>
+                <td class="font-bold">${v.name}</td>
+                <td>${v.threshold}</td>
+                <td>${formatFeePct(v.maker)}</td>
+                <td>${formatFeePct(v.taker)}</td>
+            </tr>
+        `).join('');
     }
 
     function renderUserTable() {
         const tbody = document.getElementById('userTableBody');
         document.getElementById('userCount').textContent = `(${filteredUsers.length})`;
         if (!filteredUsers.length) {
-            tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-12 text-center text-slate-400">未找到匹配用户</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-12 text-center text-slate-400">未找到匹配用户</td></tr>';
             return;
         }
         tbody.innerHTML = filteredUsers.map(u => `
             <tr class="hover:bg-slate-50">
-                <td class="px-5 py-4">
+                <td class="px-4 py-4">
                     <div class="font-bold text-slate-800">UID ${u.uid}</div>
                     <div class="text-[10px] text-slate-400 font-mono mt-0.5">${u.wallet}</div>
                 </td>
-                <td class="px-4 py-4 text-center font-black text-slate-700">VIP ${u.vip}</td>
-                <td class="px-4 py-4 text-center font-mono text-[11px]">${formatFee(u.taker, u.maker)}${u.feeMode === 'custom' ? ' <span class="text-blue-500 font-bold">自定义</span>' : ''}</td>
-                <td class="px-4 py-4 text-right font-bold text-slate-700">${formatMoney(u.totalVolume)}</td>
-                <td class="px-4 py-4 text-right font-bold text-slate-600">${formatMoney(u.volume30d)}</td>
-                <td class="px-4 py-4 text-right font-bold text-blue-600">${formatMoney(u.totalFeeIncome)}</td>
-                <td class="px-4 py-4 text-right font-bold text-blue-500">${formatMoney(u.feeIncome30d)}</td>
-                <td class="px-5 py-4 text-right"><button onclick="openDrawer('${u.uid}')" class="text-blue-600 font-bold hover:underline">配置费率</button></td>
+                <td class="px-3 py-4 text-center">${configLevelLabel(u)}</td>
+                <td class="px-3 py-4 text-center">${volumeTierLabel(u.volume14d)}</td>
+                <td class="px-3 py-4 text-center font-mono text-[11px]">${formatFee(u.taker, u.maker)}</td>
+                <td class="px-3 py-4 text-right font-bold text-slate-700">${formatMoney(u.volume30d)}</td>
+                <td class="px-3 py-4 text-right font-bold text-blue-600">${formatMoney(u.feeIncome30d)}</td>
+                <td class="px-3 py-4 text-right font-bold text-slate-600">${formatMoney(u.volume14d)}</td>
+                <td class="px-3 py-4 text-right font-bold text-blue-500">${formatMoney(u.feeIncome14d)}</td>
+                <td class="px-4 py-4 text-right"><button onclick="openDrawer('${u.uid}')" class="text-blue-600 font-bold hover:underline">配置费率</button></td>
             </tr>
         `).join('');
     }
@@ -228,9 +311,38 @@
         document.getElementById('feeVipPanel').innerHTML = VIP_PRESETS.map(v => `
             <div class="vip-preset ${v.level === selectedVip ? 'selected' : ''}" onclick="selectVip(${v.level})">
                 <div class="font-bold text-slate-800">${v.name}</div>
-                <div class="text-[10px] text-slate-400 mt-1">Taker ${(v.taker * 100).toFixed(3)}% · Maker ${(v.maker * 100).toFixed(3)}%</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">${v.threshold}</div>
+                <div class="text-[10px] text-slate-500 mt-1">Taker ${formatFeePct(v.taker)} · Maker ${formatFeePct(v.maker)}</div>
             </div>
         `).join('');
+    }
+
+    function resetUploads() {
+        uploadState = { approval: null, proof: null };
+        ['approval', 'proof'].forEach(key => {
+            const input = document.getElementById(key + 'File');
+            const box = document.getElementById(key + 'UploadBox');
+            const text = document.getElementById(key + 'UploadText');
+            if (input) input.value = '';
+            if (box) box.classList.remove('has-file');
+            if (text) {
+                text.textContent = key === 'approval'
+                    ? '点击上传审批截图'
+                    : '点击上传其他交易所交易量 / VIP 等级截图';
+                text.className = 'text-[11px] text-slate-500';
+            }
+        });
+    }
+
+    function onFileSelect(type, input) {
+        const file = input.files[0];
+        if (!file) return;
+        uploadState[type] = file.name;
+        const box = document.getElementById(type + 'UploadBox');
+        const text = document.getElementById(type + 'UploadText');
+        box.classList.add('has-file');
+        text.textContent = '✓ ' + file.name;
+        text.className = 'text-[11px] text-blue-600 font-bold';
     }
 
     function openDrawer(uid) {
@@ -238,12 +350,18 @@
         if (!user) return;
         currentUserId = uid;
         draftConfig = { vip: user.vip, feeMode: user.feeMode, taker: user.taker, maker: user.maker };
+        const volTier = calcVolumeTier(user.volume14d);
         document.getElementById('drawerUserMeta').textContent = `UID ${user.uid} · ${user.wallet}`;
+        document.getElementById('drawerVolumeTier').textContent =
+            `近 14 日交易额 ${formatMoney(user.volume14d)} → 自动对应 ${getTierByLevel(volTier).name}`;
         switchFeeMode(user.feeMode);
-        renderVipPresets(user.vip);
+        const selectVip = user.feeMode === 'vip' && user.vip >= 1 ? user.vip : 1;
+        if (user.feeMode === 'vip' && user.vip < 1) draftConfig.vip = 1;
+        renderVipPresets(user.feeMode === 'vip' ? selectVip : user.vip);
         document.getElementById('customTaker').value = (user.taker * 100).toFixed(3);
         document.getElementById('customMaker').value = (user.maker * 100).toFixed(3);
         document.getElementById('configRemark').value = '';
+        resetUploads();
         document.getElementById('drawerOverlay').classList.remove('hidden');
         document.getElementById('configDrawer').classList.remove('hidden');
     }
@@ -253,6 +371,7 @@
         document.getElementById('configDrawer').classList.add('hidden');
         currentUserId = null;
         draftConfig = null;
+        resetUploads();
     }
 
     function switchFeeMode(mode) {
@@ -283,8 +402,15 @@
     function saveConfig() {
         const remark = document.getElementById('configRemark').value.trim();
         if (!remark) { showToast('请填写操作备注'); return; }
+        if (!uploadState.approval) { showToast('请上传审批截图'); return; }
+        if (!uploadState.proof) { showToast('请上传用户价值证明截图'); return; }
+
+        const configLabel = draftConfig.feeMode === 'vip'
+            ? 'VIP ' + draftConfig.vip
+            : '自定义 ' + formatFee(draftConfig.taker, draftConfig.maker);
+
         document.getElementById('confirmSummary').innerHTML =
-            `UID ${currentUserId}<br>费率模式：${draftConfig.feeMode === 'vip' ? 'VIP ' + draftConfig.vip : '自定义 ' + formatFee(draftConfig.taker, draftConfig.maker)}<br>备注：${remark}`;
+            `UID ${currentUserId}<br>配置等级：${configLabel}<br>审批截图：${uploadState.approval}<br>价值证明：${uploadState.proof}<br>备注：${remark}`;
         document.getElementById('confirmModal').classList.remove('hidden');
         document.getElementById('confirmModal').classList.add('flex');
     }
@@ -297,10 +423,10 @@
     function confirmSave() {
         const user = users.find(u => u.uid === currentUserId);
         if (user && draftConfig) {
-            user.vip = draftConfig.vip;
             user.feeMode = draftConfig.feeMode;
             user.taker = draftConfig.taker;
             user.maker = draftConfig.maker;
+            user.vip = draftConfig.feeMode === 'custom' ? 0 : draftConfig.vip;
         }
         closeConfirmModal();
         closeDrawer();
@@ -315,6 +441,7 @@
         setTimeout(() => el.classList.add('hidden'), 2500);
     }
 
+    renderVipRefTable();
     renderUserTable();
 </script>
 </body>
