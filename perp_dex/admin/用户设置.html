@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX Admin - 用户设置</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+        .sidebar-item-active { background: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; inset: 0; background: #cbd5e1; transition: .25s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background: #fff; transition: .25s; border-radius: 50%; }
+        input:checked + .slider { background: #3b82f6; }
+        input:checked + .slider.danger { background: #ef4444; }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .status-tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+        .status-normal { background: #ecfdf5; color: #059669; }
+        .status-partial { background: #fff7ed; color: #ea580c; }
+        .status-frozen { background: #fef2f2; color: #dc2626; }
+        .drawer-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 40; }
+        .drawer-panel { position: fixed; top: 0; right: 0; width: 520px; max-width: 100%; height: 100%; background: #fff; z-index: 50; box-shadow: -8px 0 24px rgba(0,0,0,.12); display: flex; flex-direction: column; }
+        .config-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid #f1f5f9; }
+        .config-row:last-child { border-bottom: none; }
+        .config-row-title { font-size: 13px; font-weight: 700; color: #0f172a; }
+        .config-row-desc { font-size: 11px; color: #94a3b8; margin-top: 3px; line-height: 1.45; max-width: 300px; }
+        .fee-mode-tab { padding: 6px 14px; font-size: 12px; font-weight: 700; border-radius: 6px; cursor: pointer; }
+        .fee-mode-tab.active { background: #fff; color: #0f172a; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+        .fee-mode-tab:not(.active) { color: #64748b; }
+        .vip-preset { border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; cursor: pointer; transition: all .15s; }
+        .vip-preset:hover { border-color: #93c5fd; }
+        .vip-preset.selected { border-color: #3b82f6; background: #eff6ff; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-[12px]">
+
+<aside class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0">
+    <div class="p-6">
+        <span class="text-white font-black text-2xl tracking-tighter italic uppercase">ForX Admin</span>
+    </div>
+    <nav class="flex-1 px-4 space-y-1">
+        <div class="py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">风控与用户</div>
+        <button class="sidebar-item-active w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            用户设置
+        </button>
+        <a href="体验金后台.html" class="w-full flex items-center px-4 py-3 text-sm font-medium hover:bg-slate-800 rounded-lg transition-colors">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            体验金后台
+        </a>
+        <a href="积分后台.html" class="w-full flex items-center px-4 py-3 text-sm font-medium hover:bg-slate-800 rounded-lg transition-colors">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+            积分后台
+        </a>
+        <a href="代理中心后台.html" class="w-full flex items-center px-4 py-3 text-sm font-medium hover:bg-slate-800 rounded-lg transition-colors">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            代理中心
+        </a>
+    </nav>
+    <div class="p-4 border-t border-slate-800 text-slate-500 text-[11px]">登录身份: 超级管理员</div>
+</aside>
+
+<main class="flex-1 flex flex-col overflow-hidden">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+        <div>
+            <h1 class="text-xl font-bold text-slate-800">用户设置</h1>
+            <p class="text-xs text-slate-400 mt-0.5">费率、冻结状态等敏感配置，操作将记录审计日志</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-sm text-slate-500">Admin_User</span>
+            <div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">AU</div>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8 space-y-6">
+        <!-- 筛选 -->
+        <section class="card p-5">
+            <div class="grid grid-cols-4 gap-4 items-end">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">钱包地址</label>
+                    <input id="filterWallet" type="text" placeholder="0x..." class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID</label>
+                    <input id="filterUid" type="text" placeholder="输入 UID" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">冻结状态</label>
+                    <select id="filterFreeze" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none bg-white">
+                        <option value="all">全部</option>
+                        <option value="normal">正常</option>
+                        <option value="partial">部分冻结</option>
+                        <option value="frozen">账户冻结</option>
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="applyFilters()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-slate-800">查询</button>
+                    <button onclick="resetFilters()" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50">重置</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 用户列表 -->
+        <section class="card overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <span class="text-sm font-bold text-slate-700">用户列表 <span id="userCount" class="text-slate-400 font-medium"></span></span>
+                <span class="text-[10px] text-slate-400">账户冻结将联动禁止：划转、提现、开平仓、充值</span>
+            </div>
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase">
+                <tr>
+                    <th class="px-6 py-3">UID / 钱包</th>
+                    <th class="px-6 py-3 text-center">VIP</th>
+                    <th class="px-6 py-3 text-center">费率 (Taker / Maker)</th>
+                    <th class="px-6 py-3 text-center">冻结状态</th>
+                    <th class="px-6 py-3 text-center">风控标签</th>
+                    <th class="px-6 py-3 text-right">操作</th>
+                </tr>
+                </thead>
+                <tbody id="userTableBody" class="divide-y divide-slate-50 text-[12px]"></tbody>
+            </table>
+        </section>
+    </div>
+</main>
+
+<!-- 配置抽屉 -->
+<div id="drawerOverlay" class="drawer-overlay hidden" onclick="closeDrawer()"></div>
+<div id="configDrawer" class="drawer-panel hidden">
+    <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between shrink-0">
+        <div>
+            <h2 class="text-base font-bold text-slate-800">用户敏感配置</h2>
+            <p id="drawerUserMeta" class="text-xs text-slate-400 mt-1 font-mono"></p>
+        </div>
+        <button onclick="closeDrawer()" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 text-lg">&times;</button>
+    </div>
+    <div class="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+        <!-- 费率配置 -->
+        <section class="card p-5">
+            <h3 class="text-sm font-bold text-slate-800 mb-1">用户费率配置</h3>
+            <p class="text-[11px] text-slate-400 mb-4">支持按 VIP 等级套用，或单独自定义 Taker / Maker 费率</p>
+            <div class="flex bg-slate-100 p-1 rounded-lg w-fit mb-4">
+                <button id="feeTabVip" onclick="switchFeeMode('vip')" class="fee-mode-tab active">VIP 等级</button>
+                <button id="feeTabCustom" onclick="switchFeeMode('custom')" class="fee-mode-tab">自定义费率</button>
+            </div>
+            <div id="feeVipPanel" class="grid grid-cols-2 gap-2">
+                <!-- VIP presets injected -->
+            </div>
+            <div id="feeCustomPanel" class="hidden grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Taker (%)</label>
+                    <input id="customTaker" type="number" step="0.001" min="0" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Maker (%)</label>
+                    <input id="customMaker" type="number" step="0.001" min="0" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+        </section>
+
+        <!-- 冻结与限制 -->
+        <section class="card p-5">
+            <h3 class="text-sm font-bold text-slate-800 mb-1">冻结与交易限制</h3>
+            <p class="text-[11px] text-slate-400 mb-2">按严重程度递增；账户冻结为最高级别，将覆盖所有资金行为</p>
+            <div id="freezeConfigList"></div>
+        </section>
+
+        <!-- 备注 -->
+        <section class="card p-5">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">操作备注（必填）</label>
+            <textarea id="configRemark" rows="3" placeholder="请填写变更原因，如：风控复核、用户申诉处理..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+        </section>
+    </div>
+    <div class="px-6 py-4 border-t border-slate-100 flex gap-3 shrink-0">
+        <button onclick="closeDrawer()" class="flex-1 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50">取消</button>
+        <button onclick="saveUserConfig()" class="flex-1 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700">保存配置</button>
+    </div>
+</div>
+
+<!-- 保存确认 -->
+<div id="confirmModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/50">
+    <div class="bg-white w-[400px] rounded-xl p-6 shadow-2xl">
+        <h3 class="text-base font-bold text-slate-800 mb-2">确认保存配置？</h3>
+        <p id="confirmSummary" class="text-xs text-slate-500 leading-relaxed mb-6"></p>
+        <div class="flex gap-3">
+            <button onclick="closeConfirmModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button onclick="confirmSave()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">确认保存</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-lg text-sm font-bold shadow-xl z-[70] hidden"></div>
+
+<script>
+    const VIP_PRESETS = [
+        { level: 0, name: 'VIP 0', taker: 0.06, maker: 0.02 },
+        { level: 1, name: 'VIP 1', taker: 0.055, maker: 0.018 },
+        { level: 2, name: 'VIP 2', taker: 0.05, maker: 0.015 },
+        { level: 3, name: 'VIP 3', taker: 0.045, maker: 0.012 },
+        { level: 4, name: 'VIP 4', taker: 0.04, maker: 0.01 },
+        { level: 5, name: 'VIP 5', taker: 0.035, maker: 0.008 }
+    ];
+
+    const FREEZE_CONFIGS = [
+        { key: 'withdrawFreeze', title: '提现冻结', desc: '禁止发起链上提现申请', severity: 'partial' },
+        { key: 'orderFreeze', title: '下单冻结', desc: '禁止开新仓、加仓及挂单，不影响已有仓位平仓', severity: 'partial' },
+        { key: 'closeOnly', title: '仅平仓模式', desc: '仅允许平掉已有仓位，禁止任何开仓行为', severity: 'partial' },
+        { key: 'transferFreeze', title: '资金划转冻结', desc: '禁止合约账户与现货/子账户之间的资金划转', severity: 'partial' },
+        { key: 'depositFreeze', title: '充值冻结', desc: '禁止向平台合约账户充值（链上到账后不入账）', severity: 'partial' },
+        { key: 'apiFreeze', title: 'API 交易冻结', desc: '禁止使用 API Key 进行下单，Web/App 不受影响', severity: 'partial' },
+        { key: 'loginFreeze', title: '登录冻结', desc: '禁止登录 Web / App，已有会话将被强制下线', severity: 'partial' },
+        { key: 'accountFreeze', title: '账户冻结', desc: '最高级别：禁止划转、提现、充值、开平仓等一切资金行为', severity: 'frozen', danger: true }
+    ];
+
+    const RISK_TAGS = ['正常', '高频套利', '多账户关联', '异常盈亏', 'AML 观察'];
+
+    let users = [
+        { uid: '10028471', wallet: '0x7a3f...9c2e', vip: 2, feeMode: 'vip', taker: 0.05, maker: 0.015, freezeStatus: 'normal', riskTag: '正常', flags: {} },
+        { uid: '10031592', wallet: '0x2b91...4f8a', vip: 0, feeMode: 'custom', taker: 0.03, maker: 0.01, freezeStatus: 'partial', riskTag: '高频套利', flags: { orderFreeze: true, apiFreeze: true } },
+        { uid: '10019833', wallet: '0xd5e2...1a7b', vip: 4, feeMode: 'vip', taker: 0.04, maker: 0.01, freezeStatus: 'frozen', riskTag: 'AML 观察', flags: { accountFreeze: true, loginFreeze: true } },
+        { uid: '10042105', wallet: '0x9c44...6d31', vip: 1, feeMode: 'vip', taker: 0.055, maker: 0.018, freezeStatus: 'partial', riskTag: '异常盈亏', flags: { withdrawFreeze: true, closeOnly: true } },
+        { uid: '10005678', wallet: '0x1f88...e903', vip: 3, feeMode: 'vip', taker: 0.045, maker: 0.012, freezeStatus: 'normal', riskTag: '正常', flags: {} }
+    ];
+
+    let filteredUsers = [...users];
+    let currentUserId = null;
+    let draftConfig = null;
+    let feeMode = 'vip';
+
+    function getFreezeStatus(flags) {
+        if (flags.accountFreeze) return 'frozen';
+        const hasPartial = FREEZE_CONFIGS.some(c => c.key !== 'accountFreeze' && flags[c.key]);
+        return hasPartial ? 'partial' : 'normal';
+    }
+
+    function freezeStatusLabel(status) {
+        if (status === 'frozen') return '<span class="status-tag status-frozen">账户冻结</span>';
+        if (status === 'partial') return '<span class="status-tag status-partial">部分冻结</span>';
+        return '<span class="status-tag status-normal">正常</span>';
+    }
+
+    function formatFee(taker, maker) {
+        return `${(taker * 100).toFixed(3)}% / ${(maker * 100).toFixed(3)}%`;
+    }
+
+    function renderUserTable() {
+        const tbody = document.getElementById('userTableBody');
+        document.getElementById('userCount').textContent = `(${filteredUsers.length})`;
+        if (!filteredUsers.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">未找到匹配用户</td></tr>';
+            return;
+        }
+        tbody.innerHTML = filteredUsers.map(u => `
+            <tr class="hover:bg-slate-50">
+                <td class="px-6 py-4">
+                    <div class="font-bold text-slate-800">UID ${u.uid}</div>
+                    <div class="text-[10px] text-slate-400 font-mono mt-0.5">${u.wallet}</div>
+                </td>
+                <td class="px-6 py-4 text-center font-black text-slate-700">VIP ${u.vip}</td>
+                <td class="px-6 py-4 text-center font-mono text-[11px]">${formatFee(u.taker, u.maker)}${u.feeMode === 'custom' ? ' <span class="text-blue-500 font-bold">自定义</span>' : ''}</td>
+                <td class="px-6 py-4 text-center">${freezeStatusLabel(u.freezeStatus)}</td>
+                <td class="px-6 py-4 text-center"><span class="text-[11px] font-bold ${u.riskTag === '正常' ? 'text-slate-500' : 'text-orange-600'}">${u.riskTag}</span></td>
+                <td class="px-6 py-4 text-right"><button onclick="openDrawer('${u.uid}')" class="text-blue-600 font-bold hover:underline">配置</button></td>
+            </tr>
+        `).join('');
+    }
+
+    function applyFilters() {
+        const wallet = document.getElementById('filterWallet').value.trim().toLowerCase();
+        const uid = document.getElementById('filterUid').value.trim();
+        const freeze = document.getElementById('filterFreeze').value;
+        filteredUsers = users.filter(u => {
+            if (wallet && !u.wallet.toLowerCase().includes(wallet)) return false;
+            if (uid && !u.uid.includes(uid)) return false;
+            if (freeze !== 'all' && u.freezeStatus !== freeze) return false;
+            return true;
+        });
+        renderUserTable();
+    }
+
+    function resetFilters() {
+        document.getElementById('filterWallet').value = '';
+        document.getElementById('filterUid').value = '';
+        document.getElementById('filterFreeze').value = 'all';
+        filteredUsers = [...users];
+        renderUserTable();
+    }
+
+    function renderVipPresets(selectedVip) {
+        document.getElementById('feeVipPanel').innerHTML = VIP_PRESETS.map(v => `
+            <div class="vip-preset ${v.level === selectedVip ? 'selected' : ''}" onclick="selectVip(${v.level})">
+                <div class="font-bold text-slate-800">${v.name}</div>
+                <div class="text-[10px] text-slate-400 mt-1">Taker ${(v.taker * 100).toFixed(3)}% · Maker ${(v.maker * 100).toFixed(3)}%</div>
+            </div>
+        `).join('');
+    }
+
+    function renderFreezeList(flags) {
+        document.getElementById('freezeConfigList').innerHTML = FREEZE_CONFIGS.map(c => `
+            <div class="config-row">
+                <div>
+                    <div class="config-row-title">${c.title}</div>
+                    <div class="config-row-desc">${c.desc}</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" data-key="${c.key}" ${flags[c.key] ? 'checked' : ''} onchange="onFreezeToggle('${c.key}', this.checked)">
+                    <span class="slider ${c.danger ? 'danger' : ''}"></span>
+                </label>
+            </div>
+        `).join('');
+    }
+
+    function openDrawer(uid) {
+        const user = users.find(u => u.uid === uid);
+        if (!user) return;
+        currentUserId = uid;
+        draftConfig = JSON.parse(JSON.stringify({ vip: user.vip, feeMode: user.feeMode, taker: user.taker, maker: user.maker, flags: { ...user.flags } }));
+        feeMode = user.feeMode;
+        document.getElementById('drawerUserMeta').textContent = `UID ${user.uid} · ${user.wallet}`;
+        switchFeeMode(user.feeMode);
+        renderVipPresets(user.vip);
+        document.getElementById('customTaker').value = (user.taker * 100).toFixed(3);
+        document.getElementById('customMaker').value = (user.maker * 100).toFixed(3);
+        renderFreezeList(draftConfig.flags);
+        document.getElementById('configRemark').value = '';
+        document.getElementById('drawerOverlay').classList.remove('hidden');
+        document.getElementById('configDrawer').classList.remove('hidden');
+    }
+
+    function closeDrawer() {
+        document.getElementById('drawerOverlay').classList.add('hidden');
+        document.getElementById('configDrawer').classList.add('hidden');
+        currentUserId = null;
+        draftConfig = null;
+    }
+
+    function switchFeeMode(mode) {
+        feeMode = mode;
+        draftConfig.feeMode = mode;
+        document.getElementById('feeTabVip').classList.toggle('active', mode === 'vip');
+        document.getElementById('feeTabCustom').classList.toggle('active', mode === 'custom');
+        document.getElementById('feeVipPanel').classList.toggle('hidden', mode !== 'vip');
+        document.getElementById('feeCustomPanel').classList.toggle('hidden', mode !== 'custom');
+    }
+
+    function selectVip(level) {
+        const preset = VIP_PRESETS.find(v => v.level === level);
+        if (!preset || !draftConfig) return;
+        draftConfig.vip = level;
+        draftConfig.taker = preset.taker;
+        draftConfig.maker = preset.maker;
+        renderVipPresets(level);
+    }
+
+    function onFreezeToggle(key, checked) {
+        if (!draftConfig) return;
+        draftConfig.flags[key] = checked;
+        if (key === 'accountFreeze' && checked) {
+            FREEZE_CONFIGS.forEach(c => { if (c.key !== 'accountFreeze') draftConfig.flags[c.key] = true; });
+            renderFreezeList(draftConfig.flags);
+        }
+    }
+
+    document.getElementById('customTaker').addEventListener('input', (e) => {
+        if (draftConfig) draftConfig.taker = parseFloat(e.target.value) / 100 || 0;
+    });
+    document.getElementById('customMaker').addEventListener('input', (e) => {
+        if (draftConfig) draftConfig.maker = parseFloat(e.target.value) / 100 || 0;
+    });
+
+    function saveUserConfig() {
+        const remark = document.getElementById('configRemark').value.trim();
+        if (!remark) {
+            showToast('请填写操作备注');
+            return;
+        }
+        const freezeCount = Object.values(draftConfig.flags).filter(Boolean).length;
+        document.getElementById('confirmSummary').innerHTML =
+            `UID ${currentUserId}<br>费率模式：${draftConfig.feeMode === 'vip' ? 'VIP ' + draftConfig.vip : '自定义 ' + formatFee(draftConfig.taker, draftConfig.maker)}<br>冻结项：${freezeCount} 项<br>备注：${remark}`;
+        document.getElementById('confirmModal').classList.remove('hidden');
+        document.getElementById('confirmModal').classList.add('flex');
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirmModal').classList.add('hidden');
+        document.getElementById('confirmModal').classList.remove('flex');
+    }
+
+    function confirmSave() {
+        const user = users.find(u => u.uid === currentUserId);
+        if (user && draftConfig) {
+            user.vip = draftConfig.vip;
+            user.feeMode = draftConfig.feeMode;
+            user.taker = draftConfig.taker;
+            user.maker = draftConfig.maker;
+            user.flags = { ...draftConfig.flags };
+            user.freezeStatus = getFreezeStatus(user.flags);
+        }
+        closeConfirmModal();
+        closeDrawer();
+        applyFilters();
+        showToast('配置已保存，审计日志已记录');
+    }
+
+    function showToast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.remove('hidden');
+        setTimeout(() => el.classList.add('hidden'), 2500);
+    }
+
+    renderUserTable();
+</script>
+</body>
+</html>
