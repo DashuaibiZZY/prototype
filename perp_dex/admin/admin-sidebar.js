@@ -45,7 +45,7 @@
         {
             title: '积分',
             items: [
-                { key: 'points-config', label: '积分规则配置', href: '积分后台.html#config' },
+                { key: 'points-config', label: '每周积分总池设置', href: '积分后台.html#config' },
                 { key: 'points-users', label: '用户积分查询', href: '积分后台.html#users' },
                 { key: 'points-manual', label: '手动发放积分', href: '积分后台.html#manual' },
                 { key: 'points-logs', label: '操作记录', href: '积分后台.html#logs' }
