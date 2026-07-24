@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX Admin - 用户费率设置</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+        .sidebar-item-active { background: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+        .drawer-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 40; }
+        .drawer-panel { position: fixed; top: 0; right: 0; width: 520px; max-width: 100%; height: 100%; background: #fff; z-index: 50; box-shadow: -8px 0 24px rgba(0,0,0,.12); display: flex; flex-direction: column; }
+        .fee-mode-tab { padding: 6px 14px; font-size: 12px; font-weight: 700; border-radius: 6px; cursor: pointer; }
+        .fee-mode-tab.active { background: #fff; color: #0f172a; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+        .fee-mode-tab:not(.active) { color: #64748b; }
+        .vip-preset { border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; cursor: pointer; transition: all .15s; }
+        .vip-preset:hover { border-color: #93c5fd; }
+        .vip-preset.selected { border-color: #3b82f6; background: #eff6ff; }
+        .table-scroll { overflow-x: auto; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-[12px]">
+
+<aside class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0">
+    <div class="p-6"><span class="text-white font-black text-2xl tracking-tighter italic uppercase">ForX Admin</span></div>
+    <nav class="flex-1 px-4 space-y-1">
+        <div class="py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">风控与用户</div>
+        <a href="用户费率设置.html" class="sidebar-item-active w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            用户费率设置
+        </a>
+        <a href="用户冻结设置.html" class="w-full flex items-center px-4 py-3 text-sm font-medium hover:bg-slate-800 rounded-lg transition-colors">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            用户冻结设置
+        </a>
+        <a href="体验金后台.html" class="w-full flex items-center px-4 py-3 text-sm font-medium hover:bg-slate-800 rounded-lg transition-colors">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            体验金后台
+        </a>
+    </nav>
+    <div class="p-4 border-t border-slate-800 text-slate-500 text-[11px]">登录身份: 费率管理员</div>
+</aside>
+
+<main class="flex-1 flex flex-col overflow-hidden">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+        <div>
+            <h1 class="text-xl font-bold text-slate-800">用户费率设置</h1>
+            <p class="text-xs text-slate-400 mt-0.5">VIP 等级与自定义 Taker / Maker 费率，操作将记录审计日志</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-sm text-slate-500">Fee_Admin</span>
+            <div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">FA</div>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8 space-y-6">
+        <section class="card p-5">
+            <div class="grid grid-cols-3 gap-4 items-end">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">钱包地址</label>
+                    <input id="filterWallet" type="text" placeholder="0x..." class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID</label>
+                    <input id="filterUid" type="text" placeholder="输入 UID" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="applyFilters()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-slate-800">查询</button>
+                    <button onclick="resetFilters()" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50">重置</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="card overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100">
+                <span class="text-sm font-bold text-slate-700">用户列表 <span id="userCount" class="text-slate-400 font-medium"></span></span>
+            </div>
+            <div class="table-scroll">
+                <table class="w-full text-left min-w-[960px]">
+                    <thead class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase">
+                    <tr>
+                        <th class="px-5 py-3">UID / 钱包</th>
+                        <th class="px-4 py-3 text-center">VIP</th>
+                        <th class="px-4 py-3 text-center">费率 (Taker / Maker)</th>
+                        <th class="px-4 py-3 text-right">总交易额</th>
+                        <th class="px-4 py-3 text-right">近30日交易额</th>
+                        <th class="px-4 py-3 text-right">总手续费收入</th>
+                        <th class="px-4 py-3 text-right">近30日手续费收入</th>
+                        <th class="px-5 py-3 text-right">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="userTableBody" class="divide-y divide-slate-50 text-[12px]"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div id="drawerOverlay" class="drawer-overlay hidden" onclick="closeDrawer()"></div>
+<div id="configDrawer" class="drawer-panel hidden">
+    <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between shrink-0">
+        <div>
+            <h2 class="text-base font-bold text-slate-800">费率配置</h2>
+            <p id="drawerUserMeta" class="text-xs text-slate-400 mt-1 font-mono"></p>
+        </div>
+        <button onclick="closeDrawer()" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 text-lg">&times;</button>
+    </div>
+    <div class="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+        <section class="card p-5">
+            <h3 class="text-sm font-bold text-slate-800 mb-1">用户费率配置</h3>
+            <p class="text-[11px] text-slate-400 mb-4">支持按 VIP 等级套用，或单独自定义 Taker / Maker 费率</p>
+            <div class="flex bg-slate-100 p-1 rounded-lg w-fit mb-4">
+                <button id="feeTabVip" onclick="switchFeeMode('vip')" class="fee-mode-tab active">VIP 等级</button>
+                <button id="feeTabCustom" onclick="switchFeeMode('custom')" class="fee-mode-tab">自定义费率</button>
+            </div>
+            <div id="feeVipPanel" class="grid grid-cols-2 gap-2"></div>
+            <div id="feeCustomPanel" class="hidden grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Taker (%)</label>
+                    <input id="customTaker" type="number" step="0.001" min="0" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Maker (%)</label>
+                    <input id="customMaker" type="number" step="0.001" min="0" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+        </section>
+        <section class="card p-5">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">操作备注（必填）</label>
+            <textarea id="configRemark" rows="3" placeholder="请填写变更原因..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+        </section>
+    </div>
+    <div class="px-6 py-4 border-t border-slate-100 flex gap-3 shrink-0">
+        <button onclick="closeDrawer()" class="flex-1 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50">取消</button>
+        <button onclick="saveConfig()" class="flex-1 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700">保存配置</button>
+    </div>
+</div>
+
+<div id="confirmModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/50">
+    <div class="bg-white w-[400px] rounded-xl p-6 shadow-2xl">
+        <h3 class="text-base font-bold text-slate-800 mb-2">确认保存费率配置？</h3>
+        <p id="confirmSummary" class="text-xs text-slate-500 leading-relaxed mb-6"></p>
+        <div class="flex gap-3">
+            <button onclick="closeConfirmModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button onclick="confirmSave()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">确认保存</button>
+        </div>
+    </div>
+</div>
+<div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-lg text-sm font-bold shadow-xl z-[70] hidden"></div>
+
+<script>
+    const VIP_PRESETS = [
+        { level: 0, name: 'VIP 0', taker: 0.06, maker: 0.02 },
+        { level: 1, name: 'VIP 1', taker: 0.055, maker: 0.018 },
+        { level: 2, name: 'VIP 2', taker: 0.05, maker: 0.015 },
+        { level: 3, name: 'VIP 3', taker: 0.045, maker: 0.012 },
+        { level: 4, name: 'VIP 4', taker: 0.04, maker: 0.01 },
+        { level: 5, name: 'VIP 5', taker: 0.035, maker: 0.008 }
+    ];
+
+    let users = [
+        { uid: '10028471', wallet: '0x7a3f...9c2e', vip: 2, feeMode: 'vip', taker: 0.05, maker: 0.015, totalVolume: 12540000, volume30d: 890000, totalFeeIncome: 45230, feeIncome30d: 3280 },
+        { uid: '10031592', wallet: '0x2b91...4f8a', vip: 0, feeMode: 'custom', taker: 0.03, maker: 0.01, totalVolume: 520000, volume30d: 120000, totalFeeIncome: 1860, feeIncome30d: 420 },
+        { uid: '10019833', wallet: '0xd5e2...1a7b', vip: 4, feeMode: 'vip', taker: 0.04, maker: 0.01, totalVolume: 89200000, volume30d: 12500000, totalFeeIncome: 312500, feeIncome30d: 43800 },
+        { uid: '10042105', wallet: '0x9c44...6d31', vip: 1, feeMode: 'vip', taker: 0.055, maker: 0.018, totalVolume: 3100000, volume30d: 560000, totalFeeIncome: 12400, feeIncome30d: 2100 },
+        { uid: '10005678', wallet: '0x1f88...e903', vip: 3, feeMode: 'vip', taker: 0.045, maker: 0.012, totalVolume: 24600000, volume30d: 3200000, totalFeeIncome: 88600, feeIncome30d: 11500 }
+    ];
+
+    let filteredUsers = [...users];
+    let currentUserId = null;
+    let draftConfig = null;
+
+    function formatMoney(n) {
+        if (n >= 1000000) return '$' + (n / 1000000).toFixed(2) + 'M';
+        if (n >= 1000) return '$' + (n / 1000).toFixed(1) + 'K';
+        return '$' + n.toLocaleString('en-US');
+    }
+
+    function formatFee(taker, maker) {
+        return `${(taker * 100).toFixed(3)}% / ${(maker * 100).toFixed(3)}%`;
+    }
+
+    function renderUserTable() {
+        const tbody = document.getElementById('userTableBody');
+        document.getElementById('userCount').textContent = `(${filteredUsers.length})`;
+        if (!filteredUsers.length) {
+            tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-12 text-center text-slate-400">未找到匹配用户</td></tr>';
+            return;
+        }
+        tbody.innerHTML = filteredUsers.map(u => `
+            <tr class="hover:bg-slate-50">
+                <td class="px-5 py-4">
+                    <div class="font-bold text-slate-800">UID ${u.uid}</div>
+                    <div class="text-[10px] text-slate-400 font-mono mt-0.5">${u.wallet}</div>
+                </td>
+                <td class="px-4 py-4 text-center font-black text-slate-700">VIP ${u.vip}</td>
+                <td class="px-4 py-4 text-center font-mono text-[11px]">${formatFee(u.taker, u.maker)}${u.feeMode === 'custom' ? ' <span class="text-blue-500 font-bold">自定义</span>' : ''}</td>
+                <td class="px-4 py-4 text-right font-bold text-slate-700">${formatMoney(u.totalVolume)}</td>
+                <td class="px-4 py-4 text-right font-bold text-slate-600">${formatMoney(u.volume30d)}</td>
+                <td class="px-4 py-4 text-right font-bold text-blue-600">${formatMoney(u.totalFeeIncome)}</td>
+                <td class="px-4 py-4 text-right font-bold text-blue-500">${formatMoney(u.feeIncome30d)}</td>
+                <td class="px-5 py-4 text-right"><button onclick="openDrawer('${u.uid}')" class="text-blue-600 font-bold hover:underline">配置费率</button></td>
+            </tr>
+        `).join('');
+    }
+
+    function applyFilters() {
+        const wallet = document.getElementById('filterWallet').value.trim().toLowerCase();
+        const uid = document.getElementById('filterUid').value.trim();
+        filteredUsers = users.filter(u => {
+            if (wallet && !u.wallet.toLowerCase().includes(wallet)) return false;
+            if (uid && !u.uid.includes(uid)) return false;
+            return true;
+        });
+        renderUserTable();
+    }
+
+    function resetFilters() {
+        document.getElementById('filterWallet').value = '';
+        document.getElementById('filterUid').value = '';
+        filteredUsers = [...users];
+        renderUserTable();
+    }
+
+    function renderVipPresets(selectedVip) {
+        document.getElementById('feeVipPanel').innerHTML = VIP_PRESETS.map(v => `
+            <div class="vip-preset ${v.level === selectedVip ? 'selected' : ''}" onclick="selectVip(${v.level})">
+                <div class="font-bold text-slate-800">${v.name}</div>
+                <div class="text-[10px] text-slate-400 mt-1">Taker ${(v.taker * 100).toFixed(3)}% · Maker ${(v.maker * 100).toFixed(3)}%</div>
+            </div>
+        `).join('');
+    }
+
+    function openDrawer(uid) {
+        const user = users.find(u => u.uid === uid);
+        if (!user) return;
+        currentUserId = uid;
+        draftConfig = { vip: user.vip, feeMode: user.feeMode, taker: user.taker, maker: user.maker };
+        document.getElementById('drawerUserMeta').textContent = `UID ${user.uid} · ${user.wallet}`;
+        switchFeeMode(user.feeMode);
+        renderVipPresets(user.vip);
+        document.getElementById('customTaker').value = (user.taker * 100).toFixed(3);
+        document.getElementById('customMaker').value = (user.maker * 100).toFixed(3);
+        document.getElementById('configRemark').value = '';
+        document.getElementById('drawerOverlay').classList.remove('hidden');
+        document.getElementById('configDrawer').classList.remove('hidden');
+    }
+
+    function closeDrawer() {
+        document.getElementById('drawerOverlay').classList.add('hidden');
+        document.getElementById('configDrawer').classList.add('hidden');
+        currentUserId = null;
+        draftConfig = null;
+    }
+
+    function switchFeeMode(mode) {
+        if (!draftConfig) return;
+        draftConfig.feeMode = mode;
+        document.getElementById('feeTabVip').classList.toggle('active', mode === 'vip');
+        document.getElementById('feeTabCustom').classList.toggle('active', mode === 'custom');
+        document.getElementById('feeVipPanel').classList.toggle('hidden', mode !== 'vip');
+        document.getElementById('feeCustomPanel').classList.toggle('hidden', mode !== 'custom');
+    }
+
+    function selectVip(level) {
+        const preset = VIP_PRESETS.find(v => v.level === level);
+        if (!preset || !draftConfig) return;
+        draftConfig.vip = level;
+        draftConfig.taker = preset.taker;
+        draftConfig.maker = preset.maker;
+        renderVipPresets(level);
+    }
+
+    document.getElementById('customTaker').addEventListener('input', (e) => {
+        if (draftConfig) draftConfig.taker = parseFloat(e.target.value) / 100 || 0;
+    });
+    document.getElementById('customMaker').addEventListener('input', (e) => {
+        if (draftConfig) draftConfig.maker = parseFloat(e.target.value) / 100 || 0;
+    });
+
+    function saveConfig() {
+        const remark = document.getElementById('configRemark').value.trim();
+        if (!remark) { showToast('请填写操作备注'); return; }
+        document.getElementById('confirmSummary').innerHTML =
+            `UID ${currentUserId}<br>费率模式：${draftConfig.feeMode === 'vip' ? 'VIP ' + draftConfig.vip : '自定义 ' + formatFee(draftConfig.taker, draftConfig.maker)}<br>备注：${remark}`;
+        document.getElementById('confirmModal').classList.remove('hidden');
+        document.getElementById('confirmModal').classList.add('flex');
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirmModal').classList.add('hidden');
+        document.getElementById('confirmModal').classList.remove('flex');
+    }
+
+    function confirmSave() {
+        const user = users.find(u => u.uid === currentUserId);
+        if (user && draftConfig) {
+            user.vip = draftConfig.vip;
+            user.feeMode = draftConfig.feeMode;
+            user.taker = draftConfig.taker;
+            user.maker = draftConfig.maker;
+        }
+        closeConfirmModal();
+        closeDrawer();
+        applyFilters();
+        showToast('费率配置已保存，审计日志已记录');
+    }
+
+    function showToast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.remove('hidden');
+        setTimeout(() => el.classList.add('hidden'), 2500);
+    }
+
+    renderUserTable();
+</script>
+</body>
+</html>
