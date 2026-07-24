@@ -64,6 +64,58 @@
             z-index: 100;
             backdrop-filter: blur(2px);
         }
+
+        /* 登录后权益卡片 - 轻量样式 */
+        .equity-card {
+            background: #f9fafb;
+            border: 1px solid #f3f4f6;
+            border-radius: 14px;
+            padding: 14px 16px;
+            color: #111827;
+        }
+        .equity-label { font-size: 10px; font-weight: 700; color: #9ca3af; letter-spacing: 0.02em; }
+        .equity-amount { font-size: 22px; font-weight: 900; line-height: 1.2; color: #111827; }
+        .equity-change { font-size: 11px; font-weight: 700; }
+        .equity-deposit-btn {
+            background: #111827;
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        /* 快捷入口 */
+        .quick-entry-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .quick-entry-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 4px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #111827;
+            transition: background 0.15s;
+        }
+        .quick-entry-item:active { background: #f3f4f6; }
+        .quick-entry-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f9fafb;
+            border: 1px solid #f3f4f6;
+        }
+        .quick-entry-icon svg { width: 20px; height: 20px; }
+        .quick-entry-label { font-size: 10px; font-weight: 800; color: #374151; }
     </style>
 </head>
 <body>
@@ -117,28 +169,53 @@
                         </div>
                     </div>
 
-                    <!-- 登录状态：优化后的紧凑版 -->
-                    <div id="status-logged-in" class="hidden bg-black rounded-xl p-4 text-white">
+                    <!-- 登录状态：轻量权益卡片 -->
+                    <div id="status-logged-in" class="hidden equity-card">
                         <div class="flex justify-between items-center">
-                            <!-- 左侧：权益信息 -->
                             <div class="space-y-1">
-                                <!-- 标题与眼睛 -->
-                                <div class="flex items-center space-x-2 text-gray-400">
-                                    <span class="text-[10px] uppercase font-bold tracking-wider">賬戶總權益 (USDT)</span>
-                                    <button onclick="toggleEye()" class="focus:outline-none">
+                                <div class="flex items-center space-x-2">
+                                    <span class="equity-label">賬戶總權益 (USDT)</span>
+                                    <button onclick="toggleEye()" class="focus:outline-none text-gray-400">
                                         <svg id="eye-icon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                     </button>
                                 </div>
-                                <!-- 权益金额 (独占一行) -->
-                                <div id="asset-amount" class="text-2xl font-black leading-tight">12,450.82</div>
-                                <!-- 今日盈亏 (金额底下) -->
-                                <div id="asset-change" class="text-[11px] font-bold text-green-400">
+                                <div id="asset-amount" class="equity-amount">12,450.82</div>
+                                <div id="asset-change" class="equity-change text-green-500">
                                     +$420.15 <span class="ml-1 opacity-90">+3.42%</span>
                                 </div>
                             </div>
-                            <!-- 右侧：充值按钮 -->
-                            <button onclick="window.location.href='充值.html'" class="bg-yellow-400 text-black px-4 py-1.5 rounded-lg text-[11px] font-bold shadow-lg shadow-yellow-400/20">充值</button>
+                            <button onclick="window.location.href='充值.html'" class="equity-deposit-btn">充值</button>
                         </div>
+                    </div>
+                </section>
+
+                <!-- 快捷入口（登录后显示） -->
+                <section id="quick-entry-section" class="hidden">
+                    <div class="quick-entry-grid">
+                        <a href="活动中心.html" class="quick-entry-item">
+                            <div class="quick-entry-icon text-amber-500">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm7 4v1a9 9 0 11-18 0v-1"/></svg>
+                            </div>
+                            <span class="quick-entry-label">活动</span>
+                        </a>
+                        <a href="积分.html" class="quick-entry-item">
+                            <div class="quick-entry-icon text-blue-600">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                            </div>
+                            <span class="quick-entry-label">积分</span>
+                        </a>
+                        <a href="邀请返佣.html" class="quick-entry-item">
+                            <div class="quick-entry-icon text-violet-600">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            </div>
+                            <span class="quick-entry-label">邀请</span>
+                        </a>
+                        <a href="VIP费率等级.html" class="quick-entry-item">
+                            <div class="quick-entry-icon text-yellow-600">
+                                <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            </div>
+                            <span class="quick-entry-label">VIP</span>
+                        </a>
                     </div>
                 </section>
 
@@ -365,14 +442,17 @@
         isLoggedIn = !isLoggedIn;
         const loggedOutEl = document.getElementById('status-logged-out');
         const loggedInEl = document.getElementById('status-logged-in');
+        const quickEntryEl = document.getElementById('quick-entry-section');
 
         if(isLoggedIn) {
             loggedOutEl.classList.add('hidden');
             loggedInEl.classList.remove('hidden');
+            quickEntryEl.classList.remove('hidden');
             document.getElementById('toggle-login').innerText = "切换为：未登录";
         } else {
             loggedOutEl.classList.remove('hidden');
             loggedInEl.classList.add('hidden');
+            quickEntryEl.classList.add('hidden');
             document.getElementById('toggle-login').innerText = "切换为：已登录";
         }
     });
