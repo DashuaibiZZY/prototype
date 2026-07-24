@@ -45,6 +45,10 @@
             <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
             用户冻结设置
         </a>
+        <a href="费率操作记录.html" class="w-full flex items-center px-4 py-3 text-sm font-medium hover:bg-slate-800 rounded-lg transition-colors">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            费率操作记录
+        </a>
         <a href="体验金后台.html" class="w-full flex items-center px-4 py-3 text-sm font-medium hover:bg-slate-800 rounded-lg transition-colors">
             <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
             体验金后台
@@ -60,6 +64,7 @@
             <p class="text-xs text-slate-400 mt-0.5">VIP 等级与自定义 Taker / Maker 费率，操作将记录审计日志</p>
         </div>
         <div class="flex items-center gap-3">
+            <a href="费率操作记录.html" class="text-xs font-bold text-blue-600 hover:underline">费率操作记录</a>
             <span class="text-sm text-slate-500">Fee_Admin</span>
             <div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">FA</div>
         </div>
@@ -175,8 +180,22 @@
         </section>
     </div>
     <div class="px-6 py-4 border-t border-slate-100 flex gap-3 shrink-0">
+        <button id="revokeFeeBtn" onclick="revokeConfig()" class="hidden py-3 px-4 border border-red-200 rounded-lg text-sm font-bold text-red-600 hover:bg-red-50">撤销费率设置</button>
         <button onclick="closeDrawer()" class="flex-1 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50">取消</button>
         <button onclick="saveConfig()" class="flex-1 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700">保存配置</button>
+    </div>
+</div>
+
+<div id="revokeModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/50">
+    <div class="bg-white w-[400px] rounded-xl p-6 shadow-2xl">
+        <h3 class="text-base font-bold text-slate-800 mb-2">确认撤销费率设置？</h3>
+        <p class="text-xs text-slate-500 leading-relaxed mb-4">撤销后用户将恢复 VIP 自然升降级，按近 14 日交易量匹配费率。</p>
+        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">操作备注（必填）</label>
+        <textarea id="revokeRemark" rows="3" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none mb-4"></textarea>
+        <div class="flex gap-3">
+            <button onclick="closeRevokeModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button onclick="confirmRevoke()" class="flex-1 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold">确认撤销</button>
+        </div>
     </div>
 </div>
 
@@ -203,12 +222,15 @@
 
     const VIP_PRESETS = VIP_TIERS.filter(v => v.level >= 1);
 
+    const FEE_LOG_KEY = 'forx_fee_operation_logs';
+    const OPERATOR = 'Fee_Admin';
+
     let users = [
-        { uid: '10028471', wallet: '0x7a3f...9c2e', vip: 2, feeMode: 'vip', taker: 0.00034, maker: 0.00010, volume30d: 8900000, feeIncome30d: 32800, volume14d: 4200000, feeIncome14d: 15400 },
-        { uid: '10031592', wallet: '0x2b91...4f8a', vip: 0, feeMode: 'custom', taker: 0.00020, maker: 0.00008, volume30d: 1200000, feeIncome30d: 4200, volume14d: 580000, feeIncome14d: 2100 },
-        { uid: '10019833', wallet: '0xd5e2...1a7b', vip: 4, feeMode: 'vip', taker: 0.00026, maker: 0.00004, volume30d: 125000000, feeIncome30d: 438000, volume14d: 680000000, feeIncome14d: 238000 },
-        { uid: '10042105', wallet: '0x9c44...6d31', vip: 1, feeMode: 'vip', taker: 0.00039, maker: 0.00013, volume30d: 5600000, feeIncome30d: 21000, volume14d: 8200000, feeIncome14d: 30500 },
-        { uid: '10005678', wallet: '0x1f88...e903', vip: 3, feeMode: 'vip', taker: 0.00029, maker: 0.00006, volume30d: 32000000, feeIncome30d: 115000, volume14d: 185000000, feeIncome14d: 66500 }
+        { uid: '10028471', wallet: '0x7a3f...9c2e', vip: 2, feeMode: 'natural', adminOverride: false, taker: 0.00034, maker: 0.00010, volume30d: 8900000, feeIncome30d: 32800, volume14d: 4200000, feeIncome14d: 15400 },
+        { uid: '10031592', wallet: '0x2b91...4f8a', vip: 0, feeMode: 'custom', adminOverride: true, taker: 0.00020, maker: 0.00008, volume30d: 1200000, feeIncome30d: 4200, volume14d: 580000, feeIncome14d: 2100 },
+        { uid: '10019833', wallet: '0xd5e2...1a7b', vip: 4, feeMode: 'vip', adminOverride: true, taker: 0.00026, maker: 0.00004, volume30d: 125000000, feeIncome30d: 438000, volume14d: 680000000, feeIncome14d: 238000 },
+        { uid: '10042105', wallet: '0x9c44...6d31', vip: 1, feeMode: 'natural', adminOverride: false, taker: 0.00039, maker: 0.00013, volume30d: 5600000, feeIncome30d: 21000, volume14d: 8200000, feeIncome14d: 30500 },
+        { uid: '10005678', wallet: '0x1f88...e903', vip: 3, feeMode: 'natural', adminOverride: false, taker: 0.00029, maker: 0.00006, volume30d: 32000000, feeIncome30d: 115000, volume14d: 185000000, feeIncome14d: 66500 }
     ];
 
     let filteredUsers = [...users];
@@ -243,7 +265,23 @@
         return `${formatFeePct(taker)} / ${formatFeePct(maker)}`;
     }
 
+    function applyNaturalRates(user) {
+        const tier = getTierByLevel(calcVolumeTier(user.volume14d));
+        user.feeMode = 'natural';
+        user.vip = tier.level;
+        user.taker = tier.taker;
+        user.maker = tier.maker;
+        user.adminOverride = false;
+    }
+
+    function appendFeeLog(entry) {
+        const logs = JSON.parse(localStorage.getItem(FEE_LOG_KEY) || '[]');
+        logs.unshift({ id: Date.now(), operator: OPERATOR, time: new Date().toLocaleString('zh-CN', { hour12: false }), ...entry });
+        localStorage.setItem(FEE_LOG_KEY, JSON.stringify(logs.slice(0, 200)));
+    }
+
     function configLevelLabel(u) {
+        if (!u.adminOverride) return '<span class="tier-badge" style="background:#ecfdf5;color:#059669">自然升降</span>';
         if (u.feeMode === 'custom') return '<span class="tier-badge custom">自定义</span>';
         return `<span class="tier-badge">VIP ${u.vip}</span>`;
     }
@@ -284,7 +322,10 @@
                 <td class="px-3 py-4 text-right font-bold text-blue-600">${formatMoney(u.feeIncome30d)}</td>
                 <td class="px-3 py-4 text-right font-bold text-slate-600">${formatMoney(u.volume14d)}</td>
                 <td class="px-3 py-4 text-right font-bold text-blue-500">${formatMoney(u.feeIncome14d)}</td>
-                <td class="px-4 py-4 text-right"><button onclick="openDrawer('${u.uid}')" class="text-blue-600 font-bold hover:underline">配置费率</button></td>
+                <td class="px-4 py-4 text-right space-x-2 whitespace-nowrap">
+                    <button onclick="openDrawer('${u.uid}')" class="text-blue-600 font-bold hover:underline">配置费率</button>
+                    ${u.adminOverride ? `<button onclick="openRevokeModal('${u.uid}')" class="text-red-500 font-bold hover:underline ml-2">撤销</button>` : ''}
+                </td>
             </tr>
         `).join('');
     }
@@ -354,12 +395,14 @@
         document.getElementById('drawerUserMeta').textContent = `UID ${user.uid} · ${user.wallet}`;
         document.getElementById('drawerVolumeTier').textContent =
             `近 14 日交易额 ${formatMoney(user.volume14d)} → 自动对应 ${getTierByLevel(volTier).name}`;
-        switchFeeMode(user.feeMode);
-        const selectVip = user.feeMode === 'vip' && user.vip >= 1 ? user.vip : 1;
-        if (user.feeMode === 'vip' && user.vip < 1) draftConfig.vip = 1;
-        renderVipPresets(user.feeMode === 'vip' ? selectVip : user.vip);
+        const mode = user.adminOverride ? user.feeMode : 'vip';
+        switchFeeMode(mode === 'custom' ? 'custom' : 'vip');
+        const selectVip = user.adminOverride && user.feeMode === 'vip' && user.vip >= 1 ? user.vip : 1;
+        if (user.adminOverride && user.feeMode === 'vip' && user.vip < 1) draftConfig.vip = 1;
+        renderVipPresets(user.adminOverride && user.feeMode === 'vip' ? selectVip : 1);
         document.getElementById('customTaker').value = (user.taker * 100).toFixed(3);
         document.getElementById('customMaker').value = (user.maker * 100).toFixed(3);
+        document.getElementById('revokeFeeBtn').classList.toggle('hidden', !user.adminOverride);
         document.getElementById('configRemark').value = '';
         resetUploads();
         document.getElementById('drawerOverlay').classList.remove('hidden');
@@ -422,16 +465,57 @@
 
     function confirmSave() {
         const user = users.find(u => u.uid === currentUserId);
+        const remark = document.getElementById('configRemark').value.trim();
         if (user && draftConfig) {
+            const before = `${user.adminOverride ? (user.feeMode === 'custom' ? '自定义' : 'VIP ' + user.vip) : '自然升降'} ${formatFee(user.taker, user.maker)}`;
             user.feeMode = draftConfig.feeMode;
             user.taker = draftConfig.taker;
             user.maker = draftConfig.maker;
             user.vip = draftConfig.feeMode === 'custom' ? 0 : draftConfig.vip;
+            user.adminOverride = true;
+            const after = draftConfig.feeMode === 'vip' ? `VIP ${draftConfig.vip} ${formatFee(user.taker, user.maker)}` : `自定义 ${formatFee(user.taker, user.maker)}`;
+            appendFeeLog({
+                uid: user.uid, wallet: user.wallet, action: '配置费率',
+                detail: `${before} → ${after}`,
+                remark, attachments: [uploadState.approval, uploadState.proof].filter(Boolean).join('、')
+            });
         }
         closeConfirmModal();
         closeDrawer();
         applyFilters();
-        showToast('费率配置已保存，审计日志已记录');
+        showToast('费率配置已保存，已写入操作记录');
+    }
+
+    let revokeUserId = null;
+    function openRevokeModal(uid) {
+        revokeUserId = uid;
+        document.getElementById('revokeRemark').value = '';
+        document.getElementById('revokeModal').classList.remove('hidden');
+        document.getElementById('revokeModal').classList.add('flex');
+    }
+    function closeRevokeModal() {
+        revokeUserId = null;
+        document.getElementById('revokeModal').classList.add('hidden');
+        document.getElementById('revokeModal').classList.remove('flex');
+    }
+    function revokeConfig() { if (currentUserId) openRevokeModal(currentUserId); }
+    function confirmRevoke() {
+        const remark = document.getElementById('revokeRemark').value.trim();
+        if (!remark) { showToast('请填写撤销备注'); return; }
+        const user = users.find(u => u.uid === revokeUserId);
+        if (user) {
+            const before = user.adminOverride ? (user.feeMode === 'custom' ? `自定义 ${formatFee(user.taker, user.maker)}` : `VIP ${user.vip} ${formatFee(user.taker, user.maker)}`) : '自然升降';
+            applyNaturalRates(user);
+            appendFeeLog({
+                uid: user.uid, wallet: user.wallet, action: '撤销费率设置',
+                detail: `${before} → 恢复自然升降 ${formatFee(user.taker, user.maker)}`,
+                remark, attachments: '—'
+            });
+        }
+        closeRevokeModal();
+        closeDrawer();
+        applyFilters();
+        showToast('已撤销运营费率配置，恢复自然升降级');
     }
 
     function showToast(msg) {

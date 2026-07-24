@@ -49,6 +49,10 @@
             <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
             体验金后台
         </a>
+        <a href="冻结操作记录.html" class="w-full flex items-center px-4 py-3 text-sm font-medium hover:bg-slate-800 rounded-lg transition-colors">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            冻结操作记录
+        </a>
     </nav>
     <div class="p-4 border-t border-slate-800 text-slate-500 text-[11px]">登录身份: 风控管理员</div>
 </aside>
@@ -60,6 +64,7 @@
             <p class="text-xs text-slate-400 mt-0.5">账户冻结、交易限制与风控标签，操作将记录审计日志</p>
         </div>
         <div class="flex items-center gap-3">
+            <a href="冻结操作记录.html" class="text-xs font-bold text-blue-600 hover:underline">冻结操作记录</a>
             <span class="text-sm text-slate-500">Risk_Admin</span>
             <div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">RA</div>
         </div>
@@ -171,6 +176,9 @@
 
     const FREEZE_LABELS = Object.fromEntries(FREEZE_CONFIGS.map(c => [c.key, c.title]));
 
+    const FREEZE_LOG_KEY = 'forx_freeze_operation_logs';
+    const OPERATOR = 'Risk_Admin';
+
     let users = [
         { uid: '10028471', wallet: '0x7a3f...9c2e', freezeStatus: 'normal', riskTag: '', flags: {} },
         { uid: '10031592', wallet: '0x2b91...4f8a', freezeStatus: 'partial', riskTag: '高频套利', flags: { orderFreeze: true, apiFreeze: true } },
@@ -182,6 +190,12 @@
     let filteredUsers = [...users];
     let currentUserId = null;
     let draftConfig = null;
+
+    function appendFreezeLog(entry) {
+        const logs = JSON.parse(localStorage.getItem(FREEZE_LOG_KEY) || '[]');
+        logs.unshift({ id: Date.now(), operator: OPERATOR, time: new Date().toLocaleString('zh-CN', { hour12: false }), ...entry });
+        localStorage.setItem(FREEZE_LOG_KEY, JSON.stringify(logs.slice(0, 200)));
+    }
 
     function displayRiskTag(tag) {
         return (tag && tag.trim()) ? tag.trim() : '正常';
@@ -328,15 +342,24 @@
 
     function confirmSave() {
         const user = users.find(u => u.uid === currentUserId);
+        const remark = document.getElementById('configRemark').value.trim();
         if (user && draftConfig) {
+            const freezeItems = FREEZE_CONFIGS.filter(c => draftConfig.flags[c.key]).map(c => c.title).join('、') || '无';
+            const tagLabel = displayRiskTag(draftConfig.riskTag);
             user.riskTag = draftConfig.riskTag.trim();
             user.flags = { ...draftConfig.flags };
             user.freezeStatus = getFreezeStatus(user.flags);
+            appendFreezeLog({
+                uid: user.uid, wallet: user.wallet,
+                action: '配置冻结',
+                detail: `冻结项：${freezeItems}；风控标签：${tagLabel}`,
+                remark
+            });
         }
         closeConfirmModal();
         closeDrawer();
         applyFilters();
-        showToast('冻结配置已保存，审计日志已记录');
+        showToast('冻结配置已保存，已写入操作记录');
     }
 
     function showToast(msg) {
