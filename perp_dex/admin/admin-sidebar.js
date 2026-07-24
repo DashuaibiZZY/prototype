@@ -10,8 +10,7 @@
             items: [
                 { key: 'agent-mgmt', label: '一级代理管理', href: '代理中心后台.html#agent' },
                 { key: 'agent-operator', label: '运营权限配置', href: '代理中心后台.html#operator' },
-                { key: 'agent-settlement', label: '佣金对账与发放', href: 'admin_rebate_approval.html' },
-                { key: 'agent-portal', label: '代理伙伴门户', href: 'admin_partner_portal.html#agent' }
+                { key: 'agent-settlement', label: '佣金对账与发放', href: '代理中心后台.html#settlement' }
             ]
         },
         {
