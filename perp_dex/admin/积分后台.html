@@ -27,7 +27,7 @@
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
         <div class="flex items-center gap-3">
             <button id="userBackBtn" onclick="showPointsUsers()" class="hidden text-slate-500 hover:text-slate-800 font-bold text-sm">← 返回用户列表</button>
-            <h1 id="page-title" class="text-xl font-bold text-slate-800">积分规则配置</h1>
+            <h1 id="page-title" class="text-xl font-bold text-slate-800">每周积分总池设置</h1>
         </div>
         <div class="flex items-center gap-4">
             <span class="text-sm text-slate-500">管理员: Points_Admin</span>
@@ -37,10 +37,10 @@
 
     <div class="flex-1 overflow-y-auto p-8">
 
-        <!-- 积分规则配置 -->
+        <!-- 每周积分总池设置 -->
         <div id="page-config" class="space-y-6">
             <div>
-                <h2 class="text-lg font-bold text-slate-700">积分规则配置</h2>
+                <h2 class="text-lg font-bold text-slate-700">每周积分总池设置</h2>
                 <p class="text-sm text-slate-400 mt-1">配置每周积分总池、六维度子池占比及个人等级加成系数。系统每周一 00:00 (UTC+8) 自动结算发放。</p>
             </div>
 
@@ -179,29 +179,32 @@
 
         <!-- 手动发放积分 -->
         <div id="page-manual" class="hidden space-y-6">
-            <div class="card p-8 max-w-3xl">
+            <div class="card p-8 max-w-4xl">
                 <h2 class="text-lg font-bold text-slate-700 mb-6 border-b pb-4">手动发放积分</h2>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">UID 或钱包地址</label>
-                        <input id="manualUserInput" type="text" placeholder="UID / 0x..." class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">发放积分数量</label>
-                            <input id="manualPointsInput" type="number" min="1" placeholder="正整数" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">活动名称（写入流水）</label>
-                            <input id="manualActivityInput" type="text" placeholder="例如：运营补偿活动" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">操作备注（必填）</label>
-                        <textarea id="manualRemarkInput" rows="3" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none" placeholder="请填写发放原因及审批依据"></textarea>
-                    </div>
-                    <button onclick="submitManualPoints()" class="w-full bg-slate-900 text-white py-4 rounded-lg font-bold hover:bg-slate-800">确认发放</button>
+                <div class="flex gap-2 bg-slate-100 p-1 rounded-lg w-fit mb-4">
+                    <button onclick="switchManualTab('lines')" id="tab-manual-lines" class="px-5 py-2 text-sm font-bold bg-white rounded-md shadow-sm">多行录入</button>
+                    <button onclick="switchManualTab('file')" id="tab-manual-file" class="px-5 py-2 text-sm font-bold text-slate-500 rounded-md">文件上传</button>
                 </div>
+                <div id="manual-lines-panel" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">UID 或钱包,积分（每行一个，英文逗号分隔）</label>
+                        <textarea id="manualBatchInput" rows="6" placeholder="200445,50&#10;0xfeed...cdef,100" class="w-full border border-slate-200 rounded-lg p-3 text-sm font-mono outline-none"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">活动名称（写入流水）</label>
+                        <input id="manualActivityInput" type="text" placeholder="例如：运营补偿活动" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
+                    </div>
+                </div>
+                <div id="manual-file-panel" class="hidden py-12 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center">
+                    <p class="text-sm text-slate-500 font-bold mb-1">拖拽 Excel / CSV 文件至此</p>
+                    <span class="text-[10px] text-slate-400">需包含列：uid_or_wallet, points, activity_name</span>
+                    <button class="mt-3 bg-slate-100 px-4 py-2 rounded text-xs font-bold text-slate-600">选择文件</button>
+                </div>
+                <div class="mt-4">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">申请备注（必填）</label>
+                    <textarea id="manualRemarkInput" rows="2" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none" placeholder="请填写发放原因及审批依据"></textarea>
+                </div>
+                <button onclick="openPointsApprovalModal()" class="w-full mt-4 bg-slate-900 text-white py-3.5 rounded-lg font-bold hover:bg-slate-800">提交审批申请</button>
             </div>
         </div>
 
@@ -243,6 +246,26 @@
     </div>
 </main>
 
+<!-- 积分发放审批 -->
+<div id="modal-points-approval" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-[520px] overflow-hidden">
+        <div class="px-6 py-5 border-b"><h3 class="text-lg font-bold">提交积分发放审批</h3></div>
+        <div class="p-6 space-y-4 text-sm">
+            <div class="bg-slate-50 rounded-lg p-4 space-y-2">
+                <div class="flex justify-between"><span class="text-slate-500">发放人数</span><span id="ptsApprovalCount" class="font-black">—</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">发放总积分</span><span id="ptsApprovalTotal" class="font-black text-blue-600">—</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">活动名称</span><span id="ptsApprovalActivity" class="font-bold">—</span></div>
+            </div>
+            <div id="pointsApprovalFlow"></div>
+        </div>
+        <div class="p-5 bg-slate-50 flex gap-3">
+            <button onclick="closePtsApprovalModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button onclick="submitPointsApproval()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">确认提交</button>
+        </div>
+    </div>
+</div>
+
+<script src="admin-approval.js"></script>
 <script>
     const POINTS_USERS = [
         { uid: '200112', wallet: '0xa1b2c3d4e5f6789012345678901234567890abcd', balance: 12850, level: 3, multiplier: '1.2x', umbrellaVolume: '$620M', lastWeek: { trade: 4200, position: 980, invite: 650, total: 5830 } },
@@ -252,18 +275,18 @@
 
     const POINTS_HISTORY = {
         '200112': [
-            { time: '2026-07-21 00:05', source: '系统周结算', sourceTag: 'tag-system', activity: '交易积分 / 持仓积分 / 邀请贡献', delta: '+5,830', balance: 12850, note: '2026-W29 周结算，截断取整' },
-            { time: '2026-07-14 00:05', source: '系统周结算', sourceTag: 'tag-system', activity: '六维度综合', delta: '+6,120', balance: 7020, note: '2026-W28 周结算' },
+            { time: '2026-07-21 00:05', source: '系统周结算', sourceTag: 'tag-system', activity: '2026-W29 周结算', delta: '+5,830', balance: 12850, note: '等级加成 1.2x，截断取整', dimensions: { trade: 4200, position: 980, loss: 320, profit: 80, balance: 150, invite: 650 } },
+            { time: '2026-07-14 00:05', source: '系统周结算', sourceTag: 'tag-system', activity: '2026-W28 周结算', delta: '+6,120', balance: 7020, note: '等级加成 1.2x', dimensions: { trade: 4500, position: 1020, loss: 280, profit: 60, balance: 140, invite: 720 } },
             { time: '2026-06-02 00:01', source: '新人任务', sourceTag: 'tag-newbie', activity: '新人專屬交易任務', delta: '+5', balance: 5, note: '任务 A 自动完成' }
         ],
         '200445': [
-            { time: '2026-07-21 00:05', source: '系统周结算', sourceTag: 'tag-system', activity: '交易积分', delta: '+250', balance: 320, note: '2026-W29 周结算' },
+            { time: '2026-07-21 00:05', source: '系统周结算', sourceTag: 'tag-system', activity: '2026-W29 周结算', delta: '+250', balance: 320, note: '等级加成 1.1x', dimensions: { trade: 180, position: 42, loss: 12, profit: 5, balance: 8, invite: 28 } },
             { time: '2026-07-10 15:30', source: '手动发放', sourceTag: 'tag-manual', activity: '运营补偿活动', delta: '+50', balance: 70, note: '客诉补偿' },
             { time: '2026-07-05 00:01', source: '新人任务', sourceTag: 'tag-newbie', activity: '新人專屬推廣先鋒獎勵', delta: '+10', balance: 20, note: '任务 B 自动完成' },
             { time: '2026-07-01 00:01', source: '新人任务', sourceTag: 'tag-newbie', activity: '新人專屬交易任務', delta: '+5', balance: 10, note: '任务 A 自动完成' }
         ],
         '200891': [
-            { time: '2026-07-21 00:05', source: '系统周结算', sourceTag: 'tag-system', activity: '邀请贡献积分', delta: '+15', balance: 45, note: '2026-W29 周结算' },
+            { time: '2026-07-21 00:05', source: '系统周结算', sourceTag: 'tag-system', activity: '2026-W29 周结算', delta: '+15', balance: 45, note: '等级加成 1.0x', dimensions: { trade: 0, position: 0, loss: 0, profit: 0, balance: 5, invite: 15 } },
             { time: '2026-07-18 00:01', source: '新人任务', sourceTag: 'tag-newbie', activity: '新人專屬交易任務', delta: '+5', balance: 30, note: '任务 A 自动完成' }
         ]
     };
@@ -276,7 +299,7 @@
     let currentPtsUid = null;
 
     const PAGE_MAP = {
-        config: { id: 'page-config', title: '积分规则配置', sidebar: 'points-config' },
+        config: { id: 'page-config', title: '每周积分总池设置', sidebar: 'points-config' },
         users: { id: 'page-users', title: '用户积分查询', sidebar: 'points-users' },
         manual: { id: 'page-manual', title: '手动发放积分', sidebar: 'points-manual' },
         logs: { id: 'page-logs', title: '操作记录', sidebar: 'points-logs' }
@@ -326,10 +349,16 @@
         }).join('');
     }
 
+    function renderDimBreakdown(d) {
+        if (!d) return '';
+        return '<div class="mt-2 grid grid-cols-3 gap-1 text-[10px] bg-slate-50 rounded p-2"><span>交易 <b>' + d.trade + '</b></span><span>持仓 <b>' + d.position + '</b></span><span>亏损激励 <b>' + d.loss + '</b></span><span>盈利额外 <b>' + d.profit + '</b></span><span>资沉 <b>' + d.balance + '</b></span><span>邀请 <b>' + d.invite + '</b></span></div>';
+    }
+
     function renderPointsHistory(uid) {
         const rows = POINTS_HISTORY[uid] || [];
         document.getElementById('pointsHistoryTableBody').innerHTML = rows.length ? rows.map(function (r) {
-            return '<tr class="hover:bg-slate-50"><td class="px-4 py-3">' + r.time + '</td><td class="px-3 py-3"><span class="status-tag ' + r.sourceTag + '">' + r.source + '</span></td><td class="px-3 py-3">' + r.activity + '</td><td class="px-3 py-3 text-right font-bold text-green-600">' + r.delta + '</td><td class="px-3 py-3 text-right">' + r.balance.toLocaleString() + '</td><td class="px-4 py-3 text-slate-500">' + r.note + '</td></tr>';
+            const dimHtml = r.source === '系统周结算' && r.dimensions ? renderDimBreakdown(r.dimensions) : '';
+            return '<tr class="hover:bg-slate-50 align-top"><td class="px-4 py-3">' + r.time + '</td><td class="px-3 py-3"><span class="status-tag ' + r.sourceTag + '">' + r.source + '</span></td><td class="px-3 py-3"><div>' + r.activity + dimHtml + '</div></td><td class="px-3 py-3 text-right font-bold text-green-600">' + r.delta + '</td><td class="px-3 py-3 text-right">' + r.balance.toLocaleString() + '</td><td class="px-4 py-3 text-slate-500">' + r.note + '</td></tr>';
         }).join('') : '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">暂无流水记录</td></tr>';
     }
 
@@ -380,19 +409,59 @@
         alert('总池配置已保存，已写入操作记录');
     }
 
-    function submitManualPoints() {
-        const userInput = document.getElementById('manualUserInput').value.trim();
-        const points = parseInt(document.getElementById('manualPointsInput').value, 10);
+    function switchManualTab(type) {
+        const lines = type === 'lines';
+        document.getElementById('tab-manual-lines').className = lines ? 'px-5 py-2 text-sm font-bold bg-white rounded-md shadow-sm' : 'px-5 py-2 text-sm font-bold text-slate-500 rounded-md';
+        document.getElementById('tab-manual-file').className = lines ? 'px-5 py-2 text-sm font-bold text-slate-500 rounded-md' : 'px-5 py-2 text-sm font-bold bg-white rounded-md shadow-sm';
+        document.getElementById('manual-lines-panel').classList.toggle('hidden', !lines);
+        document.getElementById('manual-file-panel').classList.toggle('hidden', lines);
+    }
+
+    function parseManualBatch() {
+        const text = document.getElementById('manualBatchInput').value.trim();
+        if (!text) return { count: 3, total: 200 };
+        const lines = text.split('\n').filter(function (l) { return l.trim(); });
+        let total = 0;
+        lines.forEach(function (l) {
+            const p = l.split(',');
+            if (p[1]) total += parseInt(p[1].trim(), 10) || 0;
+        });
+        return { count: lines.length || 3, total: total || 200 };
+    }
+
+    function openPointsApprovalModal() {
         const activity = document.getElementById('manualActivityInput').value.trim();
         const remark = document.getElementById('manualRemarkInput').value.trim();
-        if (!userInput || !points || points < 1) { alert('请填写用户和有效积分数量'); return; }
         if (!activity) { alert('请填写活动名称'); return; }
-        if (!remark) { alert('请填写操作备注'); return; }
-        POINTS_LOGS.unshift({ time: new Date().toISOString().slice(0, 16).replace('T', ' '), operator: 'Points_Admin', type: '手动发放', user: userInput, detail: activity, points: '+' + points, remark: remark });
-        renderPointsLogs(POINTS_LOGS);
-        alert('积分发放成功，已写入操作记录');
-        document.getElementById('manualUserInput').value = '';
-        document.getElementById('manualPointsInput').value = '';
+        if (!remark) { alert('请填写申请备注'); return; }
+        const batch = parseManualBatch();
+        document.getElementById('ptsApprovalCount').innerText = batch.count + ' 人';
+        document.getElementById('ptsApprovalTotal').innerText = batch.total.toLocaleString() + ' 积分';
+        document.getElementById('ptsApprovalActivity').innerText = activity;
+        document.getElementById('pointsApprovalFlow').innerHTML = renderApprovalFlow('draft', true);
+        document.getElementById('modal-points-approval').classList.remove('hidden');
+    }
+
+    function closePtsApprovalModal() {
+        document.getElementById('modal-points-approval').classList.add('hidden');
+    }
+
+    function submitPointsApproval() {
+        const activity = document.getElementById('manualActivityInput').value.trim();
+        const remark = document.getElementById('manualRemarkInput').value.trim();
+        const batch = parseManualBatch();
+        submitApprovalApplication({
+            title: '积分手动发放',
+            applicant: 'Points_Admin',
+            remark: remark,
+            onSubmit: function (app) {
+                POINTS_LOGS.unshift({ time: app.createdAt, operator: 'Points_Admin', type: '手动发放', user: batch.count + ' 人', detail: activity + ' · 待审批 ' + app.id, points: '+' + batch.total, remark: remark + '（审批中）' });
+                renderPointsLogs(POINTS_LOGS);
+            }
+        });
+        closePtsApprovalModal();
+        alert('审批申请已提交，等待运营负责人 → 风控依次审批通过后生效');
+        document.getElementById('manualBatchInput').value = '';
         document.getElementById('manualActivityInput').value = '';
         document.getElementById('manualRemarkInput').value = '';
     }

@@ -156,11 +156,16 @@
             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">操作备注（必填）</label>
             <textarea id="configRemark" rows="3" placeholder="请填写变更原因..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
         </section>
+        <section class="card p-5">
+            <h3 class="text-sm font-bold text-slate-800 mb-3">审批流程</h3>
+            <div id="feeApprovalFlowPreview"></div>
+            <p class="text-[10px] text-slate-400 mt-2">提交后依次经运营负责人、风控审批通过后生效</p>
+        </section>
     </div>
     <div class="px-6 py-4 border-t border-slate-100 flex gap-3 shrink-0">
         <button id="revokeFeeBtn" onclick="revokeConfig()" class="hidden py-3 px-4 border border-red-200 rounded-lg text-sm font-bold text-red-600 hover:bg-red-50">撤销费率设置</button>
         <button onclick="closeDrawer()" class="flex-1 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50">取消</button>
-        <button onclick="saveConfig()" class="flex-1 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700">保存配置</button>
+        <button onclick="saveConfig()" class="flex-1 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700">提交审批申请</button>
     </div>
 </div>
 
@@ -178,12 +183,13 @@
 </div>
 
 <div id="confirmModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/50">
-    <div class="bg-white w-[400px] rounded-xl p-6 shadow-2xl">
-        <h3 class="text-base font-bold text-slate-800 mb-2">确认保存费率配置？</h3>
-        <p id="confirmSummary" class="text-xs text-slate-500 leading-relaxed mb-6"></p>
+    <div class="bg-white w-[440px] rounded-xl p-6 shadow-2xl">
+        <h3 class="text-base font-bold text-slate-800 mb-2">确认提交费率审批？</h3>
+        <p id="confirmSummary" class="text-xs text-slate-500 leading-relaxed mb-4"></p>
+        <div id="confirmApprovalFlow" class="mb-4"></div>
         <div class="flex gap-3">
             <button onclick="closeConfirmModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
-            <button onclick="confirmSave()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">确认保存</button>
+            <button onclick="confirmSave()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">确认提交</button>
         </div>
     </div>
 </div>
@@ -383,6 +389,7 @@
         document.getElementById('revokeFeeBtn').classList.toggle('hidden', !user.adminOverride);
         document.getElementById('configRemark').value = '';
         resetUploads();
+        document.getElementById('feeApprovalFlowPreview').innerHTML = renderApprovalFlow('draft', true);
         document.getElementById('drawerOverlay').classList.remove('hidden');
         document.getElementById('configDrawer').classList.remove('hidden');
     }
@@ -432,6 +439,7 @@
 
         document.getElementById('confirmSummary').innerHTML =
             `UID ${currentUserId}<br>配置等级：${configLabel}<br>审批截图：${uploadState.approval}<br>价值证明：${uploadState.proof}<br>备注：${remark}`;
+        document.getElementById('confirmApprovalFlow').innerHTML = renderApprovalFlow('draft', true);
         document.getElementById('confirmModal').classList.remove('hidden');
         document.getElementById('confirmModal').classList.add('flex');
     }
@@ -445,23 +453,25 @@
         const user = users.find(u => u.uid === currentUserId);
         const remark = document.getElementById('configRemark').value.trim();
         if (user && draftConfig) {
-            const before = `${user.adminOverride ? (user.feeMode === 'custom' ? '自定义' : 'VIP ' + user.vip) : '自然升降'} ${formatFee(user.taker, user.maker)}`;
-            user.feeMode = draftConfig.feeMode;
-            user.taker = draftConfig.taker;
-            user.maker = draftConfig.maker;
-            user.vip = draftConfig.feeMode === 'custom' ? 0 : draftConfig.vip;
-            user.adminOverride = true;
-            const after = draftConfig.feeMode === 'vip' ? `VIP ${draftConfig.vip} ${formatFee(user.taker, user.maker)}` : `自定义 ${formatFee(user.taker, user.maker)}`;
-            appendFeeLog({
-                uid: user.uid, wallet: user.wallet, action: '配置费率',
-                detail: `${before} → ${after}`,
-                remark, attachments: [uploadState.approval, uploadState.proof].filter(Boolean).join('、')
+            const configLabel = draftConfig.feeMode === 'vip'
+                ? 'VIP ' + draftConfig.vip + ' ' + formatFee(draftConfig.taker, draftConfig.maker)
+                : '自定义 ' + formatFee(draftConfig.taker, draftConfig.maker);
+            submitApprovalApplication({
+                title: '用户费率配置',
+                applicant: OPERATOR,
+                remark: remark,
+                onSubmit: function (app) {
+                    appendFeeLog({
+                        uid: user.uid, wallet: user.wallet, action: '费率审批申请',
+                        detail: `申请 ${configLabel} · 待审批 ${app.id}`,
+                        remark: remark, attachments: [uploadState.approval, uploadState.proof].filter(Boolean).join('、')
+                    });
+                }
             });
         }
         closeConfirmModal();
         closeDrawer();
-        applyFilters();
-        showToast('费率配置已保存，已写入操作记录');
+        showToast('审批申请已提交，等待运营负责人 → 风控审批');
     }
 
     let revokeUserId = null;
@@ -506,6 +516,7 @@
     renderVipRefTable();
     renderUserTable();
 </script>
+<script src="admin-approval.js"></script>
 <script src="admin-sidebar.js"></script>
 <script>initAdminSidebar('fee-settings', '登录身份: 费率管理员');</script>
 </body>
