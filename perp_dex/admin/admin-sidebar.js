@@ -18,7 +18,8 @@
             items: [
                 { key: 'trial-config', label: '卡组配置', href: '体验金后台.html#config' },
                 { key: 'trial-issue', label: '批量发放', href: '体验金后台.html#issue' },
-                { key: 'trial-risk', label: '风控回收', href: '体验金后台.html#risk' }
+                { key: 'trial-users', label: '用户查询与回收', href: '体验金后台.html#users' },
+                { key: 'trial-logs', label: '操作记录', href: '体验金后台.html#logs' }
             ]
         },
         {
@@ -45,8 +46,9 @@
             title: '积分',
             items: [
                 { key: 'points-config', label: '积分规则配置', href: '积分后台.html#config' },
-                { key: 'points-issue', label: '积分发放', href: '积分后台.html#issue' },
-                { key: 'points-adjust', label: '积分调整', href: '积分后台.html#adjust' }
+                { key: 'points-users', label: '用户积分查询', href: '积分后台.html#users' },
+                { key: 'points-manual', label: '手动发放积分', href: '积分后台.html#manual' },
+                { key: 'points-logs', label: '操作记录', href: '积分后台.html#logs' }
             ]
         }
     ];
