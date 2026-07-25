@@ -190,15 +190,17 @@
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-2">UID 或钱包,积分（每行一个，英文逗号分隔）</label>
                         <textarea id="manualBatchInput" rows="6" placeholder="200445,50&#10;0xfeed...cdef,100" class="w-full border border-slate-200 rounded-lg p-3 text-sm font-mono outline-none"></textarea>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">活动名称（写入流水）</label>
-                        <input id="manualActivityInput" type="text" placeholder="例如：运营补偿活动" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
-                    </div>
                 </div>
                 <div id="manual-file-panel" class="hidden py-12 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center">
                     <p class="text-sm text-slate-500 font-bold mb-1">拖拽 Excel / CSV 文件至此</p>
-                    <span class="text-[10px] text-slate-400">需包含列：uid_or_wallet, points, activity_name</span>
+                    <span class="text-[10px] text-slate-400">需包含列：uid_or_wallet, points</span>
                     <button class="mt-3 bg-slate-100 px-4 py-2 rounded text-xs font-bold text-slate-600">选择文件</button>
+                    <p class="text-[10px] text-slate-400 mt-3">演示模式：上传后按示例名单解析（3 人 · 200 积分）</p>
+                </div>
+                <div class="mt-4">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">活动名称（写入流水）</label>
+                    <input id="manualActivityInput" type="text" placeholder="例如：运营补偿活动" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
+                    <p class="text-[10px] text-slate-400 mt-1">多行录入与文件上传共用，审批通过后将写入积分流水备注。</p>
                 </div>
                 <div class="mt-4">
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-2">申请备注（必填）</label>
@@ -409,7 +411,10 @@
         alert('总池配置已保存，已写入操作记录');
     }
 
+    let manualInputMode = 'lines';
+
     function switchManualTab(type) {
+        manualInputMode = type;
         const lines = type === 'lines';
         document.getElementById('tab-manual-lines').className = lines ? 'px-5 py-2 text-sm font-bold bg-white rounded-md shadow-sm' : 'px-5 py-2 text-sm font-bold text-slate-500 rounded-md';
         document.getElementById('tab-manual-file').className = lines ? 'px-5 py-2 text-sm font-bold text-slate-500 rounded-md' : 'px-5 py-2 text-sm font-bold bg-white rounded-md shadow-sm';
@@ -417,16 +422,33 @@
         document.getElementById('manual-file-panel').classList.toggle('hidden', lines);
     }
 
-    function parseManualBatch() {
+    function getManualRecipients() {
+        if (manualInputMode === 'file') {
+            return [
+                { uid_or_wallet: '200445', points: '50' },
+                { uid_or_wallet: '200112', points: '100' },
+                { uid_or_wallet: '200891', points: '50' }
+            ];
+        }
         const text = document.getElementById('manualBatchInput').value.trim();
-        if (!text) return { count: 3, total: 200 };
-        const lines = text.split('\n').filter(function (l) { return l.trim(); });
-        let total = 0;
-        lines.forEach(function (l) {
+        if (!text) {
+            return [
+                { uid_or_wallet: '200445', points: '50' },
+                { uid_or_wallet: '200112', points: '100' },
+                { uid_or_wallet: '200891', points: '50' }
+            ];
+        }
+        return text.split('\n').filter(function (l) { return l.trim(); }).map(function (l) {
             const p = l.split(',');
-            if (p[1]) total += parseInt(p[1].trim(), 10) || 0;
+            return { uid_or_wallet: (p[0] || '').trim(), points: (p[1] || '').trim() };
         });
-        return { count: lines.length || 3, total: total || 200 };
+    }
+
+    function parseManualBatch() {
+        const recipients = getManualRecipients();
+        let total = 0;
+        recipients.forEach(function (r) { total += parseInt(r.points, 10) || 0; });
+        return { count: recipients.length, total: total, recipients: recipients };
     }
 
     function openPointsApprovalModal() {
@@ -451,9 +473,18 @@
         const remark = document.getElementById('manualRemarkInput').value.trim();
         const batch = parseManualBatch();
         submitApprovalApplication({
+            type: 'points_manual',
             title: '积分手动发放',
             applicant: 'Points_Admin',
             remark: remark,
+            summary: batch.count + ' 人 · ' + batch.total.toLocaleString() + ' 积分 · ' + activity,
+            payload: {
+                activityName: activity,
+                inputMode: manualInputMode,
+                recipientCount: batch.count,
+                totalPoints: batch.total,
+                recipients: batch.recipients
+            },
             onSubmit: function (app) {
                 POINTS_LOGS.unshift({ time: app.createdAt, operator: 'Points_Admin', type: '手动发放', user: batch.count + ' 人', detail: activity + ' · 待审批 ' + app.id, points: '+' + batch.total, remark: remark + '（审批中）' });
                 renderPointsLogs(POINTS_LOGS);
