@@ -634,17 +634,55 @@
     openModal('modal-issue-approval');
   }
 
+  function getIssueRecipients() {
+    const isExcel = !document.getElementById('issue-excel').classList.contains('hidden');
+    if (isExcel) {
+      return [
+        { uid_or_wallet: '100891', amount: '250' },
+        { uid_or_wallet: '100234', amount: '100' },
+        { uid_or_wallet: '0x8f3c12ab45cd6789ef0123456789abcdefdcba', amount: '250' }
+      ];
+    }
+    const text = document.getElementById('issueManualInput').value.trim();
+    if (!text) {
+      return [
+        { uid_or_wallet: '100891', amount: '250' },
+        { uid_or_wallet: '100234', amount: '100' }
+      ];
+    }
+    return text.split('\n').filter(function (l) { return l.trim(); }).map(function (l) {
+      const p = l.split(',');
+      return { uid_or_wallet: (p[0] || '').trim(), amount: (p[1] || '').trim() };
+    });
+  }
+
   function submitIssueApproval() {
     const remark = document.getElementById('issueApprovalRemark').value.trim();
     if (!remark) { alert('请填写申请备注'); return; }
     const g = CARD_GROUPS.find(function (x) { return x.id === selectedGroupId; });
-    const act = document.getElementById('issueActivityName').value || '批量发放';
+    const act = document.getElementById('issueActivityName').value.trim() || '批量发放';
+    const inputMode = document.getElementById('issue-excel').classList.contains('hidden') ? 'manual' : 'excel';
+    const recipients = getIssueRecipients();
+    let totalAmount = 0;
+    recipients.forEach(function (r) { totalAmount += parseFloat(r.amount) || 0; });
+    const totalStr = totalAmount.toLocaleString() + ' USDT';
     submitApprovalApplication({
+      type: 'trial_issue',
       title: '体验金批量发放',
       applicant: 'Trial_Admin',
       remark: remark,
+      summary: recipients.length + ' 人 · ' + totalStr + ' · ' + (g ? g.name : '-'),
+      payload: {
+        activityName: act,
+        cardGroup: g ? g.name : '-',
+        cardGroupId: selectedGroupId,
+        inputMode: inputMode,
+        recipientCount: recipients.length,
+        totalAmount: totalStr,
+        recipients: recipients
+      },
       onSubmit: function (app) {
-        TRIAL_LOGS.unshift({ time: app.createdAt, operator: 'Trial_Admin', type: '发放', user: '批量 120 人', detail: act + ' · ' + g.name + ' · 待审批 ' + app.id, amount: '12,540 USDT', remark: remark + '（审批中）' });
+        TRIAL_LOGS.unshift({ time: app.createdAt, operator: 'Trial_Admin', type: '发放', user: '批量 ' + recipients.length + ' 人', detail: act + ' · ' + (g ? g.name : '-') + ' · 待审批 ' + app.id, amount: totalStr, remark: remark + '（审批中）' });
         renderTrialLogs(TRIAL_LOGS);
       }
     });

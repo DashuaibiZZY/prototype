@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX 后台管理 - 审批中心</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .sidebar-item-active { background-color: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .status-pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+        .status-pending_manager { background: #fff7ed; color: #c2410c; }
+        .status-pending_risk { background: #eff6ff; color: #1d4ed8; }
+        .status-approved { background: #f0fdf4; color: #15803d; }
+        .status-rejected { background: #fef2f2; color: #b91c1c; }
+        .type-pill { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; background: #f1f5f9; color: #475569; }
+        .timeline-item { position: relative; padding-left: 20px; padding-bottom: 16px; }
+        .timeline-item:before { content: ''; position: absolute; left: 5px; top: 6px; bottom: 0; width: 2px; background: #e2e8f0; }
+        .timeline-item:last-child:before { display: none; }
+        .timeline-item .dot { position: absolute; left: 0; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: #3b82f6; border: 2px solid #fff; box-shadow: 0 0 0 1px #e2e8f0; }
+        .role-tab { padding: 6px 14px; font-size: 12px; font-weight: 700; border-radius: 8px; cursor: pointer; border: 1px solid #e2e8f0; }
+        .role-tab.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-[12px]">
+
+<aside id="admin-sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0"></aside>
+
+<main class="flex-1 flex flex-col overflow-hidden">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+        <div class="flex items-center gap-3">
+            <button id="detailBackBtn" onclick="backToList()" class="hidden text-slate-500 hover:text-slate-800 font-bold text-sm">← 返回审批列表</button>
+            <div>
+                <h1 id="page-title" class="text-xl font-bold text-slate-800">待我审批</h1>
+                <p id="page-subtitle" class="text-xs text-slate-400 mt-0.5">运营负责人与风控可在此查看、审批各业务申请</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="flex gap-2">
+                <button id="roleTabManager" onclick="switchViewRole('manager')" class="role-tab active">运营负责人</button>
+                <button id="roleTabRisk" onclick="switchViewRole('risk')" class="role-tab">风控</button>
+            </div>
+            <span id="roleBadge" class="text-sm text-slate-500">Ops_Manager</span>
+            <div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">AP</div>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8">
+
+        <!-- 列表页 -->
+        <div id="page-list" class="space-y-6">
+            <section class="card p-5">
+                <div class="grid grid-cols-5 gap-4 items-end">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">业务类型</label>
+                        <select id="filterType" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none">
+                            <option value="all">全部</option>
+                            <option value="trial_issue">体验金发放</option>
+                            <option value="points_manual">积分手动发放</option>
+                            <option value="fee_config">用户费率配置</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">审批状态</label>
+                        <select id="filterStatus" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none">
+                            <option value="all">全部</option>
+                            <option value="pending_manager">待运营负责人审批</option>
+                            <option value="pending_risk">待风控审批</option>
+                            <option value="approved">已通过</option>
+                            <option value="rejected">已驳回</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">申请人</label>
+                        <input id="filterApplicant" type="text" placeholder="模糊匹配" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">审批单号</label>
+                        <input id="filterId" type="text" placeholder="APR..." class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="applyFilters()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold">查询</button>
+                        <button onclick="exportListCsv()" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50">导出 CSV</button>
+                    </div>
+                </div>
+            </section>
+
+            <div class="card overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                    <span class="text-sm font-bold text-slate-700">审批列表 <span id="listCount" class="text-slate-400 font-medium"></span></span>
+                    <span id="pendingHint" class="text-[10px] text-amber-600 font-bold"></span>
+                </div>
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 border-b">
+                    <tr>
+                        <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">审批单号</th>
+                        <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">业务类型</th>
+                        <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">申请人</th>
+                        <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">申请时间</th>
+                        <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">摘要</th>
+                        <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">状态</th>
+                        <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="approvalTableBody" class="divide-y divide-slate-50"></tbody>
+                </table>
+                <div id="emptyList" class="hidden py-16 text-center text-slate-400 text-sm">暂无符合条件的审批记录</div>
+            </div>
+        </div>
+
+        <!-- 详情页 -->
+        <div id="page-detail" class="hidden space-y-6 max-w-5xl">
+            <div class="grid grid-cols-3 gap-6">
+                <div class="col-span-2 space-y-6">
+                    <section class="card p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">审批单号</p>
+                                <p id="detailId" class="text-lg font-black text-slate-800 mt-1">—</p>
+                            </div>
+                            <span id="detailStatus" class="status-pill">—</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div><span class="text-slate-400">业务类型</span><p id="detailType" class="font-bold mt-1">—</p></div>
+                            <div><span class="text-slate-400">申请人</span><p id="detailApplicant" class="font-bold mt-1">—</p></div>
+                            <div><span class="text-slate-400">申请时间</span><p id="detailCreatedAt" class="font-bold mt-1">—</p></div>
+                            <div><span class="text-slate-400">摘要</span><p id="detailSummary" class="font-bold mt-1">—</p></div>
+                        </div>
+                        <div class="mt-4 p-4 bg-slate-50 rounded-lg">
+                            <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">申请备注</p>
+                            <p id="detailRemark" class="text-sm text-slate-700">—</p>
+                        </div>
+                    </section>
+
+                    <section class="card p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-800">申请原数据</h3>
+                            <button onclick="exportDetailCsv()" class="text-xs font-bold text-blue-600 hover:underline">导出明细 CSV</button>
+                        </div>
+                        <div id="detailPayloadMeta" class="grid grid-cols-2 gap-3 mb-4 text-sm"></div>
+                        <div id="detailRecipientsWrap" class="hidden">
+                            <p class="text-[10px] font-bold text-slate-500 uppercase mb-2" id="detailRecipientsTitle">发放名单</p>
+                            <div class="border border-slate-200 rounded-lg overflow-hidden max-h-72 overflow-y-auto">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-slate-50 border-b sticky top-0">
+                                    <tr id="detailRecipientsHead"></tr>
+                                    </thead>
+                                    <tbody id="detailRecipientsBody" class="divide-y divide-slate-50"></tbody>
+                                </table>
+                            </div>
+                            <p id="detailRecipientsMore" class="text-[10px] text-slate-400 mt-2 hidden"></p>
+                        </div>
+                    </section>
+
+                    <section class="card p-6">
+                        <h3 class="font-bold text-slate-800 mb-4">审批时间线</h3>
+                        <div id="detailTimeline"></div>
+                    </section>
+                </div>
+
+                <div class="space-y-6">
+                    <section class="card p-6">
+                        <h3 class="font-bold text-slate-800 mb-4">审批进度</h3>
+                        <div id="detailApprovalFlow"></div>
+                    </section>
+
+                    <section id="actionPanel" class="card p-6 hidden">
+                        <h3 class="font-bold text-slate-800 mb-4">审批操作</h3>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">审批意见（选填）</label>
+                        <textarea id="actionNote" rows="3" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none mb-4" placeholder="填写通过或驳回说明"></textarea>
+                        <div class="flex gap-2">
+                            <button onclick="doReject()" class="flex-1 py-2.5 border border-red-200 text-red-600 rounded-lg text-sm font-bold hover:bg-red-50">驳回</button>
+                            <button onclick="doApprove()" class="flex-1 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700">通过</button>
+                        </div>
+                    </section>
+
+                    <section id="readonlyPanel" class="card p-6 hidden">
+                        <p id="readonlyHint" class="text-sm text-slate-500 text-center">当前角色无需处理此审批</p>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="admin-approval.js"></script>
+<script>
+    let listView = 'pending';
+    let filteredList = [];
+    let currentDetailId = null;
+
+    function getViewRole() {
+        return getApprovalViewRole();
+    }
+
+    function switchViewRole(role) {
+        setApprovalViewRole(role);
+        document.getElementById('roleTabManager').classList.toggle('active', role === 'manager');
+        document.getElementById('roleTabRisk').classList.toggle('active', role === 'risk');
+        document.getElementById('roleBadge').textContent = role === 'manager' ? 'Ops_Manager' : 'Risk_Control';
+        if (!location.hash.startsWith('#detail=')) {
+            applyFilters();
+        } else if (currentDetailId) {
+            showDetail(currentDetailId);
+        }
+    }
+
+    function statusPillClass(status) {
+        return 'status-pill status-' + status;
+    }
+
+    function isPendingForRole(app, role) {
+        if (role === 'manager') return app.status === 'pending_manager';
+        if (role === 'risk') return app.status === 'pending_risk';
+        return false;
+    }
+
+    function applyFilters() {
+        const type = document.getElementById('filterType').value;
+        const status = document.getElementById('filterStatus').value;
+        const applicant = document.getElementById('filterApplicant').value.trim().toLowerCase();
+        const id = document.getElementById('filterId').value.trim().toLowerCase();
+        const role = getViewRole();
+
+        filteredList = getApprovalApps().filter(function (app) {
+            if (listView === 'pending' && !isPendingForRole(app, role)) return false;
+            if (type !== 'all' && app.type !== type) return false;
+            if (status !== 'all' && app.status !== status) return false;
+            if (applicant && app.applicant.toLowerCase().indexOf(applicant) === -1) return false;
+            if (id && app.id.toLowerCase().indexOf(id) === -1) return false;
+            return true;
+        });
+
+        renderList();
+    }
+
+    function renderList() {
+        const tbody = document.getElementById('approvalTableBody');
+        const role = getViewRole();
+        const pendingCount = getApprovalApps().filter(function (a) { return isPendingForRole(a, role); }).length;
+
+        document.getElementById('listCount').textContent = '（' + filteredList.length + ' 条）';
+        document.getElementById('pendingHint').textContent = listView === 'pending'
+            ? '当前角色待处理 ' + pendingCount + ' 条'
+            : '';
+
+        if (!filteredList.length) {
+            tbody.innerHTML = '';
+            document.getElementById('emptyList').classList.remove('hidden');
+            return;
+        }
+        document.getElementById('emptyList').classList.add('hidden');
+
+        tbody.innerHTML = filteredList.map(function (app) {
+            const actionable = canApproveApplication(app, role);
+            return '<tr class="hover:bg-slate-50">' +
+                '<td class="px-4 py-3 font-mono text-[11px] font-bold">' + app.id + '</td>' +
+                '<td class="px-3 py-3"><span class="type-pill">' + getApprovalTypeLabel(app.type) + '</span></td>' +
+                '<td class="px-3 py-3">' + app.applicant + '</td>' +
+                '<td class="px-3 py-3 text-slate-500">' + app.createdAt + '</td>' +
+                '<td class="px-3 py-3 max-w-[200px] truncate" title="' + (app.summary || '') + '">' + (app.summary || '—') + '</td>' +
+                '<td class="px-3 py-3"><span class="' + statusPillClass(app.status) + '">' + getApprovalStatusLabel(app.status) + '</span></td>' +
+                '<td class="px-4 py-3 text-right space-x-2">' +
+                '<button onclick="openDetail(\'' + app.id + '\')" class="text-blue-600 font-bold hover:underline">查看</button>' +
+                (actionable ? '<button onclick="openDetail(\'' + app.id + '\')" class="text-green-600 font-bold hover:underline">审批</button>' : '') +
+                '</td></tr>';
+        }).join('');
+    }
+
+    function openDetail(id) {
+        location.hash = 'detail=' + id;
+        showDetail(id);
+    }
+
+    function showDetail(id) {
+        const app = getApprovalAppById(id);
+        if (!app) {
+            alert('审批单不存在');
+            backToList();
+            return;
+        }
+        currentDetailId = id;
+        const role = getViewRole();
+
+        document.getElementById('page-list').classList.add('hidden');
+        document.getElementById('page-detail').classList.remove('hidden');
+        document.getElementById('detailBackBtn').classList.remove('hidden');
+        document.getElementById('page-title').textContent = '审批详情';
+        document.getElementById('page-subtitle').textContent = app.id;
+
+        document.getElementById('detailId').textContent = app.id;
+        document.getElementById('detailType').textContent = getApprovalTypeLabel(app.type);
+        document.getElementById('detailApplicant').textContent = app.applicant;
+        document.getElementById('detailCreatedAt').textContent = app.createdAt;
+        document.getElementById('detailSummary').textContent = app.summary || '—';
+        document.getElementById('detailRemark').textContent = app.remark || '—';
+        const statusEl = document.getElementById('detailStatus');
+        statusEl.textContent = getApprovalStatusLabel(app.status);
+        statusEl.className = statusPillClass(app.status);
+
+        document.getElementById('detailApprovalFlow').innerHTML = renderApprovalFlow(app.status);
+        renderPayload(app);
+        renderTimeline(app);
+
+        const canAct = canApproveApplication(app, role);
+        document.getElementById('actionPanel').classList.toggle('hidden', !canAct);
+        document.getElementById('readonlyPanel').classList.toggle('hidden', canAct);
+        document.getElementById('actionNote').value = '';
+        if (!canAct) {
+            let hint = '当前审批已结束或无需您处理';
+            if (app.status === 'pending_manager' && role === 'risk') hint = '等待运营负责人审批后，风控方可处理';
+            else if (app.status === 'pending_risk' && role === 'manager') hint = '运营负责人已审批，等待风控处理';
+            document.getElementById('readonlyHint').textContent = hint;
+        }
+    }
+
+    function renderPayload(app) {
+        const p = app.payload || {};
+        const meta = document.getElementById('detailPayloadMeta');
+        const wrap = document.getElementById('detailRecipientsWrap');
+        const rows = [];
+
+        if (app.type === 'trial_issue') {
+            rows.push(['活动名称', p.activityName], ['关联卡组', p.cardGroup], ['录入方式', p.inputMode === 'excel' ? 'Excel 导入' : '手动录入'], ['发放人数', p.recipientCount], ['发放总额', p.totalAmount]);
+        } else if (app.type === 'points_manual') {
+            rows.push(['活动名称（流水）', p.activityName], ['录入方式', p.inputMode === 'file' ? '文件上传' : '多行录入'], ['发放人数', p.recipientCount], ['发放总积分', p.totalPoints]);
+        } else if (app.type === 'fee_config') {
+            rows.push(['UID', p.uid], ['钱包地址', p.wallet], ['费率模式', p.feeMode === 'vip' ? 'VIP 等级' : '自定义'], ['VIP 等级', p.vipLevel != null ? 'VIP ' + p.vipLevel : '—'], ['Taker', p.taker], ['Maker', p.maker], ['附件', (p.attachments || []).join('、') || '—']);
+        }
+
+        meta.innerHTML = rows.map(function (r) {
+            return '<div class="p-3 bg-slate-50 rounded-lg"><p class="text-[10px] text-slate-400 font-bold">' + r[0] + '</p><p class="font-bold text-slate-800 mt-1 break-all">' + (r[1] || '—') + '</p></div>';
+        }).join('');
+
+        if ((app.type === 'trial_issue' || app.type === 'points_manual') && p.recipients && p.recipients.length) {
+            wrap.classList.remove('hidden');
+            const isTrial = app.type === 'trial_issue';
+            document.getElementById('detailRecipientsTitle').textContent = isTrial ? '体验金发放名单' : '积分发放名单';
+            document.getElementById('detailRecipientsHead').innerHTML = isTrial
+                ? '<th class="px-4 py-2 text-xs font-bold text-slate-500">uid_or_wallet</th><th class="px-4 py-2 text-xs font-bold text-slate-500 text-right">amount (USDT)</th>'
+                : '<th class="px-4 py-2 text-xs font-bold text-slate-500">uid_or_wallet</th><th class="px-4 py-2 text-xs font-bold text-slate-500 text-right">points</th>';
+            const show = p.recipients.slice(0, 100);
+            document.getElementById('detailRecipientsBody').innerHTML = show.map(function (r) {
+                return '<tr><td class="px-4 py-2 font-mono text-[11px]">' + r.uid_or_wallet + '</td><td class="px-4 py-2 text-right font-bold">' + (isTrial ? r.amount : r.points) + '</td></tr>';
+            }).join('');
+            const more = document.getElementById('detailRecipientsMore');
+            if (p.recipients.length > 100) {
+                more.textContent = '共 ' + p.recipients.length + ' 条，页面展示前 100 条，完整名单请导出 CSV';
+                more.classList.remove('hidden');
+            } else {
+                more.classList.add('hidden');
+            }
+        } else {
+            wrap.classList.add('hidden');
+        }
+    }
+
+    function renderTimeline(app) {
+        const el = document.getElementById('detailTimeline');
+        const items = app.timeline || [];
+        el.innerHTML = items.map(function (t) {
+            return '<div class="timeline-item"><div class="dot"></div><p class="font-bold text-slate-800">' + t.action + ' <span class="text-slate-400 font-normal">· ' + t.actor + '</span></p><p class="text-[10px] text-slate-400 mt-0.5">' + t.at + '</p>' + (t.note ? '<p class="text-xs text-slate-600 mt-1">' + t.note + '</p>' : '') + '</div>';
+        }).join('');
+    }
+
+    function backToList() {
+        currentDetailId = null;
+        location.hash = listView;
+        document.getElementById('page-detail').classList.add('hidden');
+        document.getElementById('page-list').classList.remove('hidden');
+        document.getElementById('detailBackBtn').classList.add('hidden');
+        document.getElementById('page-title').textContent = listView === 'pending' ? '待我审批' : '全部审批';
+        document.getElementById('page-subtitle').textContent = '运营负责人与风控可在此查看、审批各业务申请';
+        applyFilters();
+    }
+
+    function doApprove() {
+        if (!currentDetailId) return;
+        const note = document.getElementById('actionNote').value.trim();
+        approveApplication(currentDetailId, getViewRole(), note);
+        alert('审批已通过');
+        showDetail(currentDetailId);
+    }
+
+    function doReject() {
+        if (!currentDetailId) return;
+        const note = document.getElementById('actionNote').value.trim();
+        if (!note) { alert('驳回时请填写审批意见'); return; }
+        rejectApplication(currentDetailId, getViewRole(), note);
+        alert('已驳回该申请');
+        showDetail(currentDetailId);
+    }
+
+    function exportListCsv() {
+        exportApprovalListCsv(filteredList);
+    }
+
+    function exportDetailCsv() {
+        if (!currentDetailId) return;
+        exportApprovalDetailCsv(getApprovalAppById(currentDetailId));
+    }
+
+    function initRoute() {
+        const hash = (location.hash || '').replace('#', '');
+        if (hash.indexOf('detail=') === 0) {
+            showDetail(hash.replace('detail=', ''));
+            return;
+        }
+        listView = hash === 'all' ? 'all' : 'pending';
+        document.getElementById('page-title').textContent = listView === 'pending' ? '待我审批' : '全部审批';
+        if (listView === 'pending') {
+            document.getElementById('filterStatus').value = 'all';
+        }
+        backToList();
+    }
+
+    switchViewRole(getViewRole());
+    window.addEventListener('hashchange', initRoute);
+    initRoute();
+</script>
+<script src="admin-sidebar.js"></script>
+<script>
+    function updateSidebarActive() {
+        const hash = (location.hash || '').replace('#', '');
+        const key = hash === 'all' ? 'approval-all' : 'approval-pending';
+        initAdminSidebar(key, '审批角色可在页头切换');
+    }
+    updateSidebarActive();
+    window.addEventListener('hashchange', updateSidebarActive);
+</script>
+</body>
+</html>

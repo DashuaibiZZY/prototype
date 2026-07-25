@@ -456,10 +456,22 @@
             const configLabel = draftConfig.feeMode === 'vip'
                 ? 'VIP ' + draftConfig.vip + ' ' + formatFee(draftConfig.taker, draftConfig.maker)
                 : '自定义 ' + formatFee(draftConfig.taker, draftConfig.maker);
+            const feePayload = {
+                uid: user.uid,
+                wallet: user.wallet,
+                feeMode: draftConfig.feeMode,
+                vipLevel: draftConfig.feeMode === 'vip' ? draftConfig.vip : null,
+                taker: formatFee(draftConfig.taker, draftConfig.maker).split(' / ')[0],
+                maker: formatFee(draftConfig.taker, draftConfig.maker).split(' / ')[1],
+                attachments: [uploadState.approval, uploadState.proof].filter(Boolean)
+            };
             submitApprovalApplication({
+                type: 'fee_config',
                 title: '用户费率配置',
                 applicant: OPERATOR,
                 remark: remark,
+                summary: 'UID ' + user.uid + ' · ' + configLabel,
+                payload: feePayload,
                 onSubmit: function (app) {
                     appendFeeLog({
                         uid: user.uid, wallet: user.wallet, action: '费率审批申请',
