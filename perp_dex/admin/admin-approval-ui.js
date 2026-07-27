@@ -78,7 +78,7 @@
         } else if (app.type === 'points_bonus_config') {
             rows.push(['加成系数', p.bonusMultiplier ? p.bonusMultiplier + 'x' : '—'], ['配置人数', p.recipientCount], ['异常人数', p.anomalyCount || 0]);
         } else if (app.type === 'fee_config') {
-            rows.push(['UID', p.uid], ['钱包', p.wallet], ['费率模式', p.feeMode === 'vip' ? 'VIP 等级' : '自定义'], ['VIP 等级', p.vipLevel != null ? 'VIP ' + p.vipLevel : '—'], ['Taker', p.taker], ['Maker', p.maker], ['有效期', p.validDays ? p.validDays + ' 天（到期日 24:00 失效）' : '永久有效']);
+            rows.push(['UID', p.uid], ['钱包', p.wallet], ['费率模式', p.feeMode === 'vip' ? 'VIP 等级' : '自定义'], ['VIP 等级', p.vipLevel != null ? 'VIP ' + p.vipLevel : '—'], ['Taker', p.taker], ['Maker', p.maker], ['有效期', p.validDays ? p.validDays + ' 天（到期日 24:00:00（UTC+8）失效）' : '永久有效']);
             if (opts && opts.detailImagePreview && p.attachments && p.attachments.length) {
                 const previews = p.attachmentPreviews || {};
                 rows.push(['附件', p.attachments.map(function (name) {
