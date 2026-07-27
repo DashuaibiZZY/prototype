@@ -288,14 +288,9 @@
             </div>
         </div>
 
-        <!-- 发放审批 -->
+        <!-- 积分审核 -->
         <div id="page-approval" class="hidden">
             <div id="points-approval-root"></div>
-        </div>
-
-        <!-- 加成配置审批 -->
-        <div id="page-bonus-approval" class="hidden">
-            <div id="points-bonus-approval-root"></div>
         </div>
     </div>
 </main>
@@ -397,11 +392,10 @@
         users: { id: 'page-users', title: '用户积分查询', sidebar: 'points-users' },
         manual: { id: 'page-manual', title: '手动发放积分', sidebar: 'points-manual' },
         logs: { id: 'page-logs', title: '操作记录', sidebar: 'points-logs' },
-        approval: { id: 'page-approval', title: '积分发放审批', sidebar: 'points-approval' },
-        'bonus-approval': { id: 'page-bonus-approval', title: '积分加成配置审批', sidebar: 'points-bonus-approval' }
+        approval: { id: 'page-approval', title: '积分审核', sidebar: 'points-approval' }
     };
 
-    const ALL_PAGE_IDS = ['page-config', 'page-bonus', 'page-users', 'page-user-detail', 'page-manual', 'page-logs', 'page-approval', 'page-bonus-approval'];
+    const ALL_PAGE_IDS = ['page-config', 'page-bonus', 'page-users', 'page-user-detail', 'page-manual', 'page-logs', 'page-approval'];
 
     function showPage(key, updateHash) {
         ALL_PAGE_IDS.forEach(function (id) {
@@ -423,7 +417,7 @@
         currentPtsUid = uid;
         const user = POINTS_USERS.find(function (u) { return u.uid === uid; });
         if (!user) return;
-        ['page-config', 'page-bonus', 'page-users', 'page-manual', 'page-logs', 'page-approval', 'page-bonus-approval'].forEach(function (id) {
+        ['page-config', 'page-bonus', 'page-users', 'page-manual', 'page-logs', 'page-approval'].forEach(function (id) {
             document.getElementById(id).classList.add('hidden');
         });
         document.getElementById('page-user-detail').classList.remove('hidden');
@@ -735,37 +729,35 @@
     renderPointsLogs(POINTS_LOGS);
     mountActivityPicker('points-activity-picker', { prefix: 'points-act', defaultMode: 'custom', defaultCustomName: '' });
     mountActivityPicker('bonus-activity-picker', { prefix: 'bonus-act', defaultMode: 'custom', defaultCustomName: '' });
-    initModuleApproval({ type: 'points_manual', rootId: 'points-approval-root', title: '积分发放审批', showExportList: false, showExportDetail: false });
-    initModuleApproval({ type: 'points_bonus_config', rootId: 'points-bonus-approval-root', title: '积分加成配置审批', showExportList: false, showExportDetail: false });
+    initModuleApproval({
+        types: ['points_manual', 'points_bonus_config'],
+        rootId: 'points-approval-root',
+        title: '积分审核',
+        showExportList: false,
+        showExportDetail: true
+    });
 </script>
 <script src="admin-sidebar.js"></script>
 <script>
     function applyPointsHash() {
         const hash = (location.hash || '').replace('#', '') || 'config';
-        if (hash.indexOf('approval-detail=') === 0) {
+        if (hash.indexOf('approval-detail=') === 0 || hash.indexOf('bonus-approval-detail=') === 0) {
             showPage('approval', false);
-            moduleApprovalHandleHash('points-approval-root', hash, 'approval', 'approval-detail');
+            const detailHash = hash.indexOf('bonus-approval-detail=') === 0
+                ? hash.replace('bonus-approval-detail=', 'approval-detail=')
+                : hash;
+            moduleApprovalHandleHash('points-approval-root', detailHash, 'approval', 'approval-detail');
             return;
         }
-        if (hash.indexOf('bonus-approval-detail=') === 0) {
-            showPage('bonus-approval', false);
-            moduleApprovalHandleHash('points-bonus-approval-root', hash, 'bonus-approval', 'bonus-approval-detail');
-            return;
-        }
-        if (hash === 'approval') {
+        if (hash === 'approval' || hash === 'bonus-approval') {
             showPage('approval', false);
             moduleApprovalBackList('points-approval-root', false);
-            return;
-        }
-        if (hash === 'bonus-approval') {
-            showPage('bonus-approval', false);
-            moduleApprovalBackList('points-bonus-approval-root', false);
             return;
         }
         const routes = { config: 'config', bonus: 'bonus', users: 'users', manual: 'manual', logs: 'logs' };
         if (routes[hash]) showPage(routes[hash], false);
         else showPage('config', false);
-        const keyMap = { config: 'points-config', bonus: 'points-bonus', users: 'points-users', manual: 'points-manual', logs: 'points-logs', approval: 'points-approval', 'bonus-approval': 'points-bonus-approval' };
+        const keyMap = { config: 'points-config', bonus: 'points-bonus', users: 'points-users', manual: 'points-manual', logs: 'points-logs', approval: 'points-approval', 'bonus-approval': 'points-approval' };
         initAdminSidebar(keyMap[hash] || 'points-config', '登录身份: 积分管理员');
     }
     window.addEventListener('hashchange', applyPointsHash);
