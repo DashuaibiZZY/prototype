@@ -93,16 +93,13 @@
               <label class="block text-xs font-bold text-slate-500 uppercase mb-2">钱包地址,金额（每行一个，英文逗号分隔）</label>
               <textarea id="issueManualInput" placeholder="0x123...abc,100&#10;0x456...def,250" class="w-full h-40 border border-slate-200 rounded-lg p-3 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500"></textarea>
             </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-500 uppercase mb-2">合约体验金所属活动名称</label>
-              <input id="issueActivityName" type="text" placeholder="例如：社区 KOL 合作激励" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
-            </div>
           </div>
           <div id="issue-excel" class="hidden py-16 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center">
             <p class="text-sm text-slate-500 font-bold mb-2">拖拽 Excel 文件至此或点击上传</p>
-            <span class="text-[10px] text-slate-400">需包含列：wallet_address, amount, activity_name</span>
+            <span class="text-[10px] text-slate-400">需包含列：wallet_address, amount</span>
             <button class="mt-4 bg-slate-100 px-4 py-2 rounded text-xs font-bold text-slate-600">选择文件</button>
           </div>
+          <div id="issue-activity-picker" class="pt-2"></div>
           <div class="pt-4 border-t border-slate-100">
             <label class="block text-xs font-bold text-slate-500 uppercase mb-2">第二步：关联已配置的卡组参数</label>
             <input id="groupSearchInput" type="text" placeholder="搜索卡组名称…" oninput="groupSearchPage=1;renderCardGroupSelector()" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none mb-2">
@@ -270,6 +267,11 @@
         </table>
       </div>
     </div>
+
+    <!-- 发放审批 -->
+    <div id="page-approval" class="hidden">
+      <div id="trial-approval-root"></div>
+    </div>
   </div>
 </main>
 
@@ -293,6 +295,28 @@
         <div>
           <label class="block text-xs font-bold text-slate-500 uppercase mb-2">开仓有效期 (天)</label>
           <input type="number" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
+        </div>
+      </div>
+      <div class="p-4 bg-slate-50 rounded-xl space-y-3">
+        <div class="flex justify-between items-center">
+          <label class="text-sm font-bold text-slate-700">亏损抵扣上限</label>
+          <label class="switch"><input type="checkbox" checked onchange="toggleConfigInput(this, 'cfg-loss-limit')"><span class="slider"></span></label>
+        </div>
+        <div id="cfg-loss-limit" class="flex items-center gap-3">
+          <span class="text-xs text-slate-500 whitespace-nowrap">累计亏损达面额的</span>
+          <div class="relative w-24"><input type="number" value="20" class="w-full border border-slate-200 rounded-lg p-2 text-sm pr-6 outline-none"><span class="absolute right-2 top-2 text-xs text-slate-400">%</span></div>
+          <span class="text-xs text-slate-500">时强制回收</span>
+        </div>
+      </div>
+      <div class="p-4 bg-slate-50 rounded-xl space-y-3">
+        <div class="flex justify-between items-center">
+          <label class="text-sm font-bold text-slate-700">费用抵扣上限</label>
+          <label class="switch"><input type="checkbox" onchange="toggleConfigInput(this, 'cfg-fee-limit')"><span class="slider"></span></label>
+        </div>
+        <div id="cfg-fee-limit" class="hidden flex items-center gap-3">
+          <span class="text-xs text-slate-500 whitespace-nowrap">累计手续费/资金费达面额的</span>
+          <div class="relative w-24"><input type="number" value="10" class="w-full border border-slate-200 rounded-lg p-2 text-sm pr-6 outline-none"><span class="absolute right-2 top-2 text-xs text-slate-400">%</span></div>
+          <span class="text-xs text-slate-500">时强制回收</span>
         </div>
       </div>
     </div>
@@ -367,6 +391,8 @@
 </div>
 
 <script src="admin-approval.js"></script>
+<script src="admin-activity-picker.js"></script>
+<script src="admin-approval-ui.js"></script>
 <script>
   const CARD_GROUPS = [
     { id: 'g1', name: '标准新人礼包组', couponValidDays: 7, openValidDays: 30, lossEnabled: true, lossPct: 20, feeEnabled: false, feePct: 0 },
@@ -427,11 +453,19 @@
     config: { id: 'page-config', title: '卡组配置', sidebar: 'trial-config' },
     issue: { id: 'page-issue', title: '批量发放体验金', sidebar: 'trial-issue' },
     users: { id: 'page-users', title: '用户查询与风控回收', sidebar: 'trial-users' },
-    logs: { id: 'page-logs', title: '操作记录', sidebar: 'trial-logs' }
+    logs: { id: 'page-logs', title: '操作记录', sidebar: 'trial-logs' },
+    approval: { id: 'page-approval', title: '体验金发放审批', sidebar: 'trial-approval' }
   };
 
+  function toggleConfigInput(checkbox, targetId) {
+    const el = document.getElementById(targetId);
+    if (!el) return;
+    el.classList.toggle('hidden', !checkbox.checked);
+    el.classList.toggle('flex', checkbox.checked);
+  }
+
   function showPage(pageKey, updateHash) {
-    ['page-config', 'page-issue', 'page-users', 'page-user-detail', 'page-logs'].forEach(function (id) {
+    ['page-config', 'page-issue', 'page-users', 'page-user-detail', 'page-logs', 'page-approval'].forEach(function (id) {
       document.getElementById(id).classList.add('hidden');
     });
     const meta = PAGE_MAP[pageKey];
@@ -626,9 +660,11 @@
   }
 
   function openIssueApprovalModal() {
+    const act = getActivityPickerValue('issue-act');
+    if (!act.valid) { alert(act.message); return; }
     const g = CARD_GROUPS.find(function (x) { return x.id === selectedGroupId; });
     document.getElementById('approvalGroupName').innerText = g ? g.name : '-';
-    document.getElementById('approvalActivityName').innerText = document.getElementById('issueActivityName').value || '—';
+    document.getElementById('approvalActivityName').innerText = act.displayLabel;
     document.getElementById('issueApprovalFlow').innerHTML = renderApprovalFlow('draft', true);
     document.getElementById('issueApprovalRemark').value = '';
     openModal('modal-issue-approval');
@@ -659,8 +695,9 @@
   function submitIssueApproval() {
     const remark = document.getElementById('issueApprovalRemark').value.trim();
     if (!remark) { alert('请填写申请备注'); return; }
+    const act = getActivityPickerValue('issue-act');
+    if (!act.valid) { alert(act.message); return; }
     const g = CARD_GROUPS.find(function (x) { return x.id === selectedGroupId; });
-    const act = document.getElementById('issueActivityName').value.trim() || '批量发放';
     const inputMode = document.getElementById('issue-excel').classList.contains('hidden') ? 'manual' : 'excel';
     const recipients = getIssueRecipients();
     let totalAmount = 0;
@@ -671,9 +708,11 @@
       title: '体验金批量发放',
       applicant: 'Trial_Admin',
       remark: remark,
-      summary: recipients.length + ' 人 · ' + totalStr + ' · ' + (g ? g.name : '-'),
+      summary: recipients.length + ' 人 · ' + totalStr + ' · ' + act.displayLabel,
       payload: {
-        activityName: act,
+        activityMode: act.activityMode,
+        activityId: act.activityId,
+        activityName: act.activityName,
         cardGroup: g ? g.name : '-',
         cardGroupId: selectedGroupId,
         inputMode: inputMode,
@@ -682,17 +721,18 @@
         recipients: recipients
       },
       onSubmit: function (app) {
-        TRIAL_LOGS.unshift({ time: app.createdAt, operator: 'Trial_Admin', type: '发放', user: '批量 ' + recipients.length + ' 人', detail: act + ' · ' + (g ? g.name : '-') + ' · 待审批 ' + app.id, amount: totalStr, remark: remark + '（审批中）' });
+        TRIAL_LOGS.unshift({ time: app.createdAt, operator: 'Trial_Admin', type: '发放', user: '批量 ' + recipients.length + ' 人', detail: act.displayLabel + ' · ' + (g ? g.name : '-') + ' · 待审批 ' + app.id, amount: totalStr, remark: remark + '（审批中）' });
         renderTrialLogs(TRIAL_LOGS);
       }
     });
     closeModal('modal-issue-approval');
-    alert('审批申请已提交，等待运营负责人 → 风控依次审批通过后生效');
+    alert('审批申请已提交，等待市场运营交叉审核 → 风控 → 老板审批');
   }
 
   function submitIssue() {
     const g = CARD_GROUPS.find(function (x) { return x.id === selectedGroupId; });
-    TRIAL_LOGS.unshift({ time: new Date().toISOString().slice(0, 16).replace('T', ' '), operator: 'Trial_Admin', type: '发放', user: '批量 120 人', detail: g.name + ' · 批量发放', amount: '12,540 USDT', remark: document.getElementById('issueActivityName').value || '批量发放任务' });
+    const act = getActivityPickerValue('issue-act');
+    TRIAL_LOGS.unshift({ time: new Date().toISOString().slice(0, 16).replace('T', ' '), operator: 'Trial_Admin', type: '发放', user: '批量 120 人', detail: (act.valid ? act.displayLabel : '批量发放') + ' · ' + g.name, amount: '12,540 USDT', remark: '批量发放任务' });
     closeModal('modal-confirm');
     renderTrialLogs(TRIAL_LOGS);
     alert('发放任务已提交，已写入操作记录');
@@ -719,16 +759,37 @@
   renderCardGroupSelector();
   renderTrialUserTable(TRIAL_USERS);
   renderTrialLogs(TRIAL_LOGS);
+  mountActivityPicker('issue-activity-picker', { prefix: 'issue-act', defaultMode: 'platform', defaultActivityId: 'ACT202605001' });
+  initModuleApproval({ type: 'trial_issue', rootId: 'trial-approval-root', title: '体验金发放审批' });
 </script>
 <script src="admin-sidebar.js"></script>
 <script>
   initAdminSidebar('trial-config', '登录身份: 体验金管理员');
-  initAdminHashRouter({
-    config: function () { showPage('config', false); },
-    issue: function () { showPage('issue', false); },
-    users: function () { showPage('users', false); },
-    logs: function () { showPage('logs', false); }
-  }, 'config', { config: 'trial-config', issue: 'trial-issue', users: 'trial-users', logs: 'trial-logs' });
+  function applyTrialHash() {
+    const hash = (location.hash || '').replace('#', '') || 'config';
+    if (hash.indexOf('approval-detail=') === 0) {
+      showPage('approval', false);
+      moduleApprovalHandleHash('trial-approval-root', hash, 'approval', 'approval-detail');
+      return;
+    }
+    if (hash === 'approval') {
+      showPage('approval', false);
+      moduleApprovalBackList('trial-approval-root', false);
+      return;
+    }
+    const routes = {
+      config: function () { showPage('config', false); },
+      issue: function () { showPage('issue', false); },
+      users: function () { showPage('users', false); },
+      logs: function () { showPage('logs', false); }
+    };
+    if (routes[hash]) routes[hash]();
+    else showPage('config', false);
+    const keyMap = { config: 'trial-config', issue: 'trial-issue', users: 'trial-users', logs: 'trial-logs', approval: 'trial-approval' };
+    if (keyMap[hash]) initAdminSidebar(keyMap[hash], '登录身份: 体验金管理员');
+  }
+  window.addEventListener('hashchange', applyTrialHash);
+  applyTrialHash();
 </script>
 </body>
 </html>
