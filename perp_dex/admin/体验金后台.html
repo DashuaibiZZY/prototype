@@ -62,6 +62,18 @@
         </div>
         <button onclick="openModal('modal-new-config')" class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-lg hover:bg-blue-700">+ 新建卡组配置</button>
       </div>
+      <section class="card p-5">
+        <div class="grid grid-cols-4 gap-4 items-end">
+          <div class="col-span-2">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">卡组名称</label>
+            <input id="configFilterName" type="text" placeholder="模糊匹配卡组名称" oninput="renderConfigTable()" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
+          </div>
+          <div class="flex gap-2 col-span-2">
+            <button onclick="renderConfigTable()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold">查询</button>
+            <button onclick="resetConfigFilter()" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">重置</button>
+          </div>
+        </div>
+      </section>
       <div class="card overflow-hidden">
         <table class="w-full text-left text-sm">
           <thead class="bg-slate-50 border-b border-slate-200">
@@ -153,12 +165,12 @@
               <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">UID / 钱包</th>
               <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">累计发放</th>
               <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">剩余体验金</th>
-              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-center">卡券数</th>
-              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-center">可用/使用中/已失效</th>
-              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">亏损/费用抵扣</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-center">状态</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">亏损抵扣</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">费用抵扣</th>
               <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">风控标签</th>
-              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">最近发放活动</th>
-              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">最近发放时间</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">活动</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">发放时间</th>
               <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">操作</th>
             </tr>
             </thead>
@@ -174,7 +186,7 @@
         <div>
           <p class="text-xs text-slate-400">UID <span id="detailUid" class="font-bold text-slate-700"></span></p>
           <p id="detailWallet" class="text-sm font-mono font-bold text-slate-800 mt-1"></p>
-          <p class="text-xs text-slate-400 mt-2">累计发放 <span id="detailTotalIssued" class="font-bold text-slate-700"></span> · 剩余 <span id="detailRemaining" class="font-bold text-blue-600"></span> · 卡券 <span id="detailCouponCount"></span> 张</p>
+          <p class="text-xs text-slate-400 mt-2">累计发放 <span id="detailTotalIssued" class="font-bold text-slate-700"></span> · 剩余 <span id="detailRemaining" class="font-bold text-blue-600"></span></p>
         </div>
         <button onclick="recycleUserAll()" class="bg-red-50 text-red-600 px-5 py-2.5 rounded-lg text-sm font-bold border border-red-200 hover:bg-red-100">回收该用户全部可用卡券</button>
       </div>
@@ -192,7 +204,8 @@
               <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">发放活动</th>
               <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">发放时间</th>
               <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">激活/开仓截止</th>
-              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">亏损/费用抵扣</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">亏损抵扣</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">费用抵扣</th>
               <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">操作</th>
             </tr>
             </thead>
@@ -336,7 +349,7 @@
         <div class="flex justify-between"><span class="text-slate-500">发放人数</span><span class="font-black">120 人</span></div>
         <div class="flex justify-between"><span class="text-slate-500">发放总额</span><span class="font-black text-blue-600">12,540 USDT</span></div>
         <div class="flex justify-between"><span class="text-slate-500">关联卡组</span><span id="approvalGroupName" class="font-bold"></span></div>
-        <div class="flex justify-between"><span class="text-slate-500">活动名称</span><span id="approvalActivityName" class="font-bold"></span></div>
+        <div class="flex justify-between"><span class="text-slate-500">活动信息</span><span id="approvalActivityName" class="font-bold"></span></div>
       </div>
       <div id="issueApprovalFlow"></div>
       <div>
@@ -408,23 +421,23 @@
   const GROUP_PAGE_SIZE = 5;
 
   const TRIAL_USERS = [
-    { uid: '100234', wallet: '0xd5a2b8c91f3e4d567890abcdef1234567890ab8f3c', totalIssued: 350, remaining: 200, couponCount: 3, available: 1, used: 1, expired: 1, lossUsed: 60, feeUsed: 17, riskTag: '套利嫌疑', riskWarn: true, lastActivity: '社区 KOL 合作激励', lastIssueAt: '2026-07-18 14:30' },
-    { uid: '100891', wallet: '0x8f3c2a1b9e7d6543210fedcba9876543210fedcba', totalIssued: 500, remaining: 500, couponCount: 2, available: 2, used: 0, expired: 0, lossUsed: 0, feeUsed: 0, riskTag: '正常', riskWarn: false, lastActivity: '新用户注册礼包', lastIssueAt: '2026-07-20 09:15' },
-    { uid: '101205', wallet: '0x1a2b3c4d5e6f7890abcdef1234567890abcdef12', totalIssued: 150, remaining: 0, couponCount: 1, available: 0, used: 0, expired: 1, lossUsed: 0, feeUsed: 0, riskTag: '正常', riskWarn: false, lastActivity: '交易大赛奖励', lastIssueAt: '2026-06-28 16:00' }
+    { uid: '100234', wallet: '0xd5a2b8c91f3e4d567890abcdef1234567890ab8f3c', totalIssued: 350, remaining: 200, couponStatus: 'used', lossUsed: 15, lossLimit: 50, feeUsed: 5, feeLimit: 10, riskTag: '套利嫌疑', riskWarn: true, activity: '社区 KOL 合作激励', issuedAt: '2026-07-18 14:30' },
+    { uid: '100891', wallet: '0x8f3c2a1b9e7d6543210fedcba9876543210fedcba', totalIssued: 500, remaining: 500, couponStatus: 'available', lossUsed: 0, lossLimit: 50, feeUsed: 0, feeLimit: 25, riskTag: '正常', riskWarn: false, activity: '新用户注册礼包', issuedAt: '2026-07-20 09:15' },
+    { uid: '101205', wallet: '0x1a2b3c4d5e6f7890abcdef1234567890abcdef12', totalIssued: 150, remaining: 0, couponStatus: 'expired', lossUsed: 0, lossLimit: 30, feeUsed: 0, feeLimit: 15, riskTag: '正常', riskWarn: false, activity: '交易大赛奖励', issuedAt: '2026-06-28 16:00' }
   ];
 
   const USER_COUPONS = {
     '100234': [
-      { id: 'CPN001', total: 100, balance: 80, status: 'used', group: '标准新人礼包组', activity: '社区 KOL 合作激励', issuedAt: '2026-07-10 10:00', activateDeadline: '2026-07-17', openDeadline: '2026-08-09', lossUsed: 15, feeUsed: 5 },
-      { id: 'CPN002', total: 50, balance: 50, status: 'available', group: '标准新人礼包组', activity: '社区 KOL 合作激励', issuedAt: '2026-07-18 14:30', activateDeadline: '2026-07-25', openDeadline: '2026-08-17', lossUsed: 0, feeUsed: 0 },
-      { id: 'CPN003', total: 200, balance: 70, status: 'used', group: 'KOL大额专属组', activity: 'KOL 专属活动', issuedAt: '2026-07-05 11:20', activateDeadline: '2026-07-19', openDeadline: '2026-09-03', lossUsed: 45, feeUsed: 12 }
+      { id: 'CPN001', total: 100, balance: 80, status: 'used', group: '标准新人礼包组', activity: '社区 KOL 合作激励', issuedAt: '2026-07-10 10:00', activateDeadline: '2026-07-17', openDeadline: '2026-08-09', lossUsed: 15, lossLimit: 20, feeUsed: 5, feeLimit: 10 },
+      { id: 'CPN002', total: 50, balance: 50, status: 'available', group: '标准新人礼包组', activity: '社区 KOL 合作激励', issuedAt: '2026-07-18 14:30', activateDeadline: '2026-07-25', openDeadline: '2026-08-17', lossUsed: 0, lossLimit: 10, feeUsed: 0, feeLimit: 5 },
+      { id: 'CPN003', total: 200, balance: 70, status: 'used', group: 'KOL大额专属组', activity: 'KOL 专属活动', issuedAt: '2026-07-05 11:20', activateDeadline: '2026-07-19', openDeadline: '2026-09-03', lossUsed: 45, lossLimit: 60, feeUsed: 12, feeLimit: 30 }
     ],
     '100891': [
-      { id: 'CPN010', total: 250, balance: 250, status: 'available', group: '标准新人礼包组', activity: '新用户注册礼包', issuedAt: '2026-07-20 09:15', activateDeadline: '2026-07-27', openDeadline: '2026-08-19', lossUsed: 0, feeUsed: 0 },
-      { id: 'CPN011', total: 250, balance: 250, status: 'available', group: '标准新人礼包组', activity: '新用户注册礼包', issuedAt: '2026-07-20 09:15', activateDeadline: '2026-07-27', openDeadline: '2026-08-19', lossUsed: 0, feeUsed: 0 }
+      { id: 'CPN010', total: 250, balance: 250, status: 'available', group: '标准新人礼包组', activity: '新用户注册礼包', issuedAt: '2026-07-20 09:15', activateDeadline: '2026-07-27', openDeadline: '2026-08-19', lossUsed: 0, lossLimit: 50, feeUsed: 0, feeLimit: 25 },
+      { id: 'CPN011', total: 250, balance: 250, status: 'available', group: '标准新人礼包组', activity: '新用户注册礼包', issuedAt: '2026-07-20 09:15', activateDeadline: '2026-07-27', openDeadline: '2026-08-19', lossUsed: 0, lossLimit: 50, feeUsed: 0, feeLimit: 25 }
     ],
     '101205': [
-      { id: 'CPN020', total: 150, balance: 0, status: 'expired', group: '标准新人礼包组', activity: '交易大赛奖励', issuedAt: '2026-06-01 12:00', activateDeadline: '2026-06-08', openDeadline: '2026-07-01', lossUsed: 0, feeUsed: 0 }
+      { id: 'CPN020', total: 150, balance: 0, status: 'expired', group: '标准新人礼包组', activity: '交易大赛奖励', issuedAt: '2026-06-01 12:00', activateDeadline: '2026-06-08', openDeadline: '2026-07-01', lossUsed: 0, lossLimit: 30, feeUsed: 0, feeLimit: 15 }
     ]
   };
 
@@ -495,14 +508,24 @@
     document.getElementById('detailWallet').innerText = user.wallet;
     document.getElementById('detailTotalIssued').innerText = user.totalIssued + ' USDT';
     document.getElementById('detailRemaining').innerText = user.remaining + ' USDT';
-    document.getElementById('detailCouponCount').innerText = user.couponCount;
     renderUserCoupons(uid);
   }
 
+  function formatDeduct(used, limit) {
+    return used + '（已用）/' + limit + '（上限）';
+  }
+
   function renderConfigTable() {
-    document.getElementById('configTableBody').innerHTML = CARD_GROUPS.map(function (g) {
+    const q = (document.getElementById('configFilterName').value || '').trim().toLowerCase();
+    const list = CARD_GROUPS.filter(function (g) { return !q || g.name.toLowerCase().indexOf(q) !== -1; });
+    document.getElementById('configTableBody').innerHTML = list.length ? list.map(function (g) {
       return '<tr class="hover:bg-slate-50"><td class="px-6 py-4 font-bold">' + g.name + '</td><td class="px-6 py-4">' + g.couponValidDays + ' 天</td><td class="px-6 py-4">' + g.openValidDays + ' 天</td><td class="px-6 py-4 text-green-600 font-bold">' + (g.lossEnabled ? '开启 (' + g.lossPct + '%)' : '关闭') + '</td><td class="px-6 py-4">' + (g.feeEnabled ? '开启 (' + g.feePct + '%)' : '关闭') + '</td><td class="px-6 py-4 text-right"><button class="text-blue-600 font-bold">编辑</button></td></tr>';
-    }).join('');
+    }).join('') : '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">无匹配卡组</td></tr>';
+  }
+
+  function resetConfigFilter() {
+    document.getElementById('configFilterName').value = '';
+    renderConfigTable();
   }
 
   function renderCardGroupSelector() {
@@ -536,14 +559,14 @@
   }
 
   function statusText(s) {
-    return { available: '可使用', used: '使用中', expired: '已过期', recycled: '已回收', pending: '待激活' }[s] || s;
+    return { available: '可用', used: '使用中', expired: '已过期', recycled: '已失效', pending: '待激活' }[s] || s;
   }
 
   function renderTrialUserTable(list) {
     document.getElementById('trialUserTableBody').innerHTML = list.map(function (u) {
       const canRecycle = u.remaining > 0;
       const tagCls = u.riskWarn ? 'risk-tag-warn' : 'risk-tag-normal';
-      return '<tr class="hover:bg-slate-50"><td class="px-4 py-3"><div class="font-bold">' + u.uid + '</div><div class="text-[10px] text-slate-400 font-mono">' + shortWallet(u.wallet) + '</div></td><td class="px-3 py-3 text-right font-medium">' + u.totalIssued + ' U</td><td class="px-3 py-3 text-right font-bold text-blue-600">' + u.remaining + ' U</td><td class="px-3 py-3 text-center">' + u.couponCount + '</td><td class="px-3 py-3 text-center text-xs"><span class="text-blue-600">' + u.available + '</span> / <span class="text-green-600">' + u.used + '</span> / <span class="text-slate-400">' + u.expired + '</span></td><td class="px-3 py-3 text-right text-xs font-mono">' + u.lossUsed + 'U / ' + u.feeUsed + 'U</td><td class="px-3 py-3"><span class="' + tagCls + '">' + u.riskTag + '</span></td><td class="px-3 py-3">' + u.lastActivity + '</td><td class="px-3 py-3 text-slate-500">' + u.lastIssueAt + '</td><td class="px-4 py-3 text-right space-x-2"><button onclick="showUserDetail(\'' + u.uid + '\')" class="text-blue-600 font-bold">查看详情</button>' + (canRecycle ? '<button onclick="recycleUserFromList(\'' + u.uid + '\')" class="text-red-600 font-bold">回收</button>' : '') + '</td></tr>';
+      return '<tr class="hover:bg-slate-50"><td class="px-4 py-3"><div class="font-bold">' + u.uid + '</div><div class="text-[10px] text-slate-400 font-mono">' + shortWallet(u.wallet) + '</div></td><td class="px-3 py-3 text-right font-medium">' + u.totalIssued + ' U</td><td class="px-3 py-3 text-right font-bold text-blue-600">' + u.remaining + ' U</td><td class="px-3 py-3 text-center"><span class="status-tag status-' + u.couponStatus + '">' + statusText(u.couponStatus) + '</span></td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(u.lossUsed, u.lossLimit) + '</td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(u.feeUsed, u.feeLimit) + '</td><td class="px-3 py-3"><span class="' + tagCls + '">' + u.riskTag + '</span></td><td class="px-3 py-3">' + u.activity + '</td><td class="px-3 py-3 text-slate-500">' + u.issuedAt + '</td><td class="px-4 py-3 text-right space-x-2"><button onclick="showUserDetail(\'' + u.uid + '\')" class="text-blue-600 font-bold">查看详情</button>' + (canRecycle ? '<button onclick="recycleUserFromList(\'' + u.uid + '\')" class="text-red-600 font-bold">回收</button>' : '') + '</td></tr>';
     }).join('');
   }
 
@@ -551,7 +574,7 @@
     const coupons = USER_COUPONS[uid] || [];
     document.getElementById('userCouponTableBody').innerHTML = coupons.map(function (c) {
       const canRecycle = c.status === 'available' || c.status === 'used';
-      return '<tr class="hover:bg-slate-50"><td class="px-4 py-3 font-mono font-bold">' + c.id + '</td><td class="px-3 py-3">' + c.total + ' U</td><td class="px-3 py-3 font-bold">' + c.balance + ' U</td><td class="px-3 py-3"><span class="status-tag status-' + c.status + '">' + statusText(c.status) + '</span></td><td class="px-3 py-3">' + c.group + '</td><td class="px-3 py-3">' + c.activity + '</td><td class="px-3 py-3 text-slate-500">' + c.issuedAt + '</td><td class="px-3 py-3 text-xs text-slate-500">' + c.activateDeadline + ' / ' + c.openDeadline + '</td><td class="px-3 py-3 text-right text-xs">' + c.lossUsed + 'U / ' + c.feeUsed + 'U</td><td class="px-4 py-3 text-right">' + (canRecycle ? '<button onclick="recycleSingleCoupon(\'' + c.id + '\')" class="text-red-600 font-bold">回收</button>' : '-') + '</td></tr>';
+      return '<tr class="hover:bg-slate-50"><td class="px-4 py-3 font-mono font-bold">' + c.id + '</td><td class="px-3 py-3">' + c.total + ' U</td><td class="px-3 py-3 font-bold">' + c.balance + ' U</td><td class="px-3 py-3"><span class="status-tag status-' + c.status + '">' + statusText(c.status) + '</span></td><td class="px-3 py-3">' + c.group + '</td><td class="px-3 py-3">' + c.activity + '</td><td class="px-3 py-3 text-slate-500">' + c.issuedAt + '</td><td class="px-3 py-3 text-xs text-slate-500">' + c.activateDeadline + ' / ' + c.openDeadline + '</td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(c.lossUsed, c.lossLimit) + '</td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(c.feeUsed, c.feeLimit) + '</td><td class="px-4 py-3 text-right">' + (canRecycle ? '<button onclick="recycleSingleCoupon(\'' + c.id + '\')" class="text-red-600 font-bold">回收</button>' : '-') + '</td></tr>';
     }).join('');
     let usageRows = [];
     coupons.forEach(function (c) {
@@ -573,9 +596,9 @@
     let list = TRIAL_USERS.filter(function (u) {
       if (uid && u.uid.indexOf(uid) === -1) return false;
       if (wallet && u.wallet.toLowerCase().indexOf(wallet) === -1) return false;
-      if (activity && u.lastActivity.indexOf(activity) === -1) return false;
+      if (activity && u.activity.indexOf(activity) === -1) return false;
       if (status === 'has_balance' && u.remaining <= 0) return false;
-      if (status === 'in_use' && u.used <= 0) return false;
+      if (status === 'in_use' && u.couponStatus !== 'used') return false;
       return true;
     });
     renderTrialUserTable(list);
@@ -632,7 +655,7 @@
     const user = TRIAL_USERS.find(function (u) { return u.uid === uid; });
     openRecycleConfirm('确认回收用户 <b>' + uid + '</b> 全部可用卡券（剩余 ' + user.remaining + ' USDT）？', function (remark) {
       TRIAL_LOGS.unshift({ time: new Date().toISOString().slice(0, 16).replace('T', ' '), operator: 'Trial_Admin', type: '回收', user: uid + ' / ' + shortWallet(user.wallet), detail: '回收全部可用卡券', amount: user.remaining + ' USDT', remark: remark });
-      user.remaining = 0; user.available = 0;
+      user.remaining = 0; user.couponStatus = 'recycled';
       (USER_COUPONS[uid] || []).forEach(function (c) { if (c.status === 'available' || c.status === 'used') { c.status = 'recycled'; c.balance = 0; } });
       renderTrialUserTable(TRIAL_USERS);
       renderTrialLogs(TRIAL_LOGS);
@@ -760,7 +783,7 @@
   renderTrialUserTable(TRIAL_USERS);
   renderTrialLogs(TRIAL_LOGS);
   mountActivityPicker('issue-activity-picker', { prefix: 'issue-act', defaultMode: 'platform', defaultActivityId: 'ACT202605001' });
-  initModuleApproval({ type: 'trial_issue', rootId: 'trial-approval-root', title: '体验金发放审批' });
+  initModuleApproval({ type: 'trial_issue', rootId: 'trial-approval-root', title: '体验金发放审批', showExportList: false, showExportDetail: false });
 </script>
 <script src="admin-sidebar.js"></script>
 <script>
