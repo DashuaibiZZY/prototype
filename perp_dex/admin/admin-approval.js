@@ -585,6 +585,11 @@
         return getApps().filter(function (a) { return a.type === type; });
     };
 
+    window.getApprovalAppsByTypes = function (types) {
+        if (!types || !types.length) return getApps();
+        return getApps().filter(function (a) { return types.indexOf(a.type) !== -1; });
+    };
+
     window.getApprovalAppById = getAppById;
 
     window.getApprovalViewRole = function () {
@@ -714,6 +719,12 @@
             rows.push([]);
             rows.push(['uid_or_wallet', 'points']);
             p.recipients.forEach(function (r) { rows.push([r.uid_or_wallet, r.points]); });
+        } else if (app.type === 'points_bonus_config' && p.items) {
+            rows.push([]);
+            rows.push(['uid', 'natural_bonus', 'new_bonus', 'anomaly']);
+            p.items.forEach(function (r) {
+                rows.push([r.uid, r.naturalBonus, r.newBonus, r.anomaly ? 'yes' : 'no']);
+            });
         } else if (app.type === 'fee_config') {
             Object.keys(p).forEach(function (k) {
                 if (k !== 'recipients') rows.push([k, Array.isArray(p[k]) ? p[k].join('; ') : p[k]]);
