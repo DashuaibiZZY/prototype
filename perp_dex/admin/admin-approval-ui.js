@@ -8,16 +8,27 @@
         return 'status-pill status-' + status;
     }
 
-    function renderPayloadMeta(app) {
+    function renderPayloadMeta(app, opts) {
         const p = app.payload || {};
         const rows = [];
-        rows.push(['活动信息', formatApprovalActivity(p)]);
+        if (p.activityName || p.activityId || p.activityMode) rows.push(['活动信息', formatApprovalActivity(p)]);
         if (app.type === 'trial_issue') {
             rows.push(['关联卡组', p.cardGroup], ['录入方式', p.inputMode === 'excel' ? 'Excel 导入' : '手动录入'], ['发放人数', p.recipientCount], ['发放总额', p.totalAmount]);
         } else if (app.type === 'points_manual') {
             rows.push(['录入方式', p.inputMode === 'file' ? '文件上传' : '多行录入'], ['发放人数', p.recipientCount], ['发放总积分', p.totalPoints]);
+        } else if (app.type === 'points_bonus_config') {
+            rows.push(['加成系数', p.bonusMultiplier ? p.bonusMultiplier + 'x' : '—'], ['配置人数', p.recipientCount], ['异常人数', p.anomalyCount || 0]);
         } else if (app.type === 'fee_config') {
-            rows.push(['UID', p.uid], ['钱包', p.wallet], ['费率模式', p.feeMode === 'vip' ? 'VIP 等级' : '自定义'], ['VIP 等级', p.vipLevel != null ? 'VIP ' + p.vipLevel : '—'], ['Taker', p.taker], ['Maker', p.maker], ['有效期', p.validDays ? p.validDays + ' 天（到期日 24:00 失效）' : '永久有效'], ['附件', (p.attachments || []).join('、') || '—']);
+            rows.push(['UID', p.uid], ['钱包', p.wallet], ['费率模式', p.feeMode === 'vip' ? 'VIP 等级' : '自定义'], ['VIP 等级', p.vipLevel != null ? 'VIP ' + p.vipLevel : '—'], ['Taker', p.taker], ['Maker', p.maker], ['有效期', p.validDays ? p.validDays + ' 天（到期日 24:00 失效）' : '永久有效']);
+            if (opts && opts.detailImagePreview && p.attachments && p.attachments.length) {
+                const previews = p.attachmentPreviews || {};
+                rows.push(['附件', p.attachments.map(function (name) {
+                    const url = previews[name] || '';
+                    return '<button type="button" class="text-blue-600 font-bold hover:underline mr-2" onclick="openApprovalAttachment(\'' + name.replace(/'/g, "\\'") + '\', \'' + url.replace(/'/g, "\\'") + '\')">' + name + '（查看）</button>';
+                }).join('')]);
+            } else {
+                rows.push(['附件', (p.attachments || []).join('、') || '—']);
+            }
         }
         return rows.map(function (r) {
             return '<div class="p-3 bg-slate-50 rounded-lg"><p class="text-[10px] text-slate-400 font-bold">' + r[0] + '</p><p class="font-bold text-slate-800 mt-1 break-all">' + (r[1] || '—') + '</p></div>';
@@ -26,10 +37,21 @@
 
     function renderRecipients(app) {
         const p = app.payload || {};
+        if (app.type === 'points_bonus_config' && p.items && p.items.length) {
+            let html = '<div class="mt-4 col-span-2"><p class="text-[10px] font-bold text-slate-500 uppercase mb-2">积分加成配置名单</p>';
+            html += '<div class="border border-slate-200 rounded-lg overflow-hidden max-h-72 overflow-y-auto"><table class="w-full text-sm"><thead class="bg-slate-50 border-b sticky top-0"><tr>';
+            html += '<th class="px-4 py-2 text-xs font-bold text-slate-500">UID</th><th class="px-4 py-2 text-xs font-bold text-slate-500">自然加成</th><th class="px-4 py-2 text-xs font-bold text-slate-500">新加成</th><th class="px-4 py-2 text-xs font-bold text-slate-500">异常</th>';
+            html += '</tr></thead><tbody class="divide-y divide-slate-50">';
+            p.items.forEach(function (r) {
+                html += '<tr' + (r.anomaly ? ' class="bg-amber-50"' : '') + '><td class="px-4 py-2 font-mono">' + r.uid + '</td><td class="px-4 py-2">' + r.naturalBonus + '</td><td class="px-4 py-2 font-bold">' + r.newBonus + '</td><td class="px-4 py-2 text-amber-600">' + (r.anomaly ? '自然加成更高' : '—') + '</td></tr>';
+            });
+            html += '</tbody></table></div></div>';
+            return html;
+        }
         if ((app.type !== 'trial_issue' && app.type !== 'points_manual') || !p.recipients || !p.recipients.length) return '';
         const isTrial = app.type === 'trial_issue';
         const show = p.recipients.slice(0, 100);
-        let html = '<div class="mt-4"><p class="text-[10px] font-bold text-slate-500 uppercase mb-2">' + (isTrial ? '体验金发放名单' : '积分发放名单') + '</p>';
+        let html = '<div class="mt-4 col-span-2"><p class="text-[10px] font-bold text-slate-500 uppercase mb-2">' + (isTrial ? '体验金发放名单' : '积分发放名单') + '</p>';
         html += '<div class="border border-slate-200 rounded-lg overflow-hidden max-h-72 overflow-y-auto"><table class="w-full text-sm"><thead class="bg-slate-50 border-b sticky top-0"><tr>';
         html += isTrial
             ? '<th class="px-4 py-2 text-xs font-bold text-slate-500">uid_or_wallet</th><th class="px-4 py-2 text-xs font-bold text-slate-500 text-right">amount</th>'
@@ -38,9 +60,7 @@
         show.forEach(function (r) {
             html += '<tr><td class="px-4 py-2 font-mono text-[11px]">' + r.uid_or_wallet + '</td><td class="px-4 py-2 text-right font-bold">' + (isTrial ? r.amount : r.points) + '</td></tr>';
         });
-        html += '</tbody></table></div>';
-        if (p.recipients.length > 100) html += '<p class="text-[10px] text-slate-400 mt-2">共 ' + p.recipients.length + ' 条，展示前 100 条，完整名单请导出 CSV</p>';
-        html += '</div>';
+        html += '</tbody></table></div></div>';
         return html;
     }
 
@@ -50,31 +70,56 @@
         }).join('');
     }
 
+    window.openApprovalAttachment = function (name, dataUrl) {
+        let modal = document.getElementById('approval-attachment-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'approval-attachment-modal';
+            modal.className = 'hidden fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/70 p-4';
+            modal.innerHTML = '<div class="bg-white rounded-xl max-w-2xl w-full p-4"><div class="flex justify-between items-center mb-3"><span id="approval-attachment-title" class="font-bold text-sm"></span><button type="button" onclick="document.getElementById(\'approval-attachment-modal\').classList.add(\'hidden\')" class="text-slate-400 text-xl">&times;</button></div><div class="bg-slate-100 rounded-lg min-h-[200px] flex items-center justify-center text-slate-400 text-sm overflow-auto" id="approval-attachment-preview"></div></div>';
+            document.body.appendChild(modal);
+        }
+        document.getElementById('approval-attachment-title').textContent = name;
+        const preview = document.getElementById('approval-attachment-preview');
+        if (dataUrl) {
+            preview.innerHTML = '<img src="' + dataUrl + '" alt="' + name + '" class="max-w-full max-h-[480px] rounded">';
+        } else {
+            preview.innerHTML = '<div class="text-center p-8"><p class="font-bold text-slate-600 mb-2">' + name + '</p><p class="text-xs">演示模式：实际环境将展示上传的图片</p></div>';
+        }
+        modal.classList.remove('hidden');
+    };
+
     window.initModuleApproval = function (options) {
         options = options || {};
         const type = options.type;
         const rootId = options.rootId || 'module-approval-root';
         const title = options.title || '审批管理';
+        const showExportList = options.showExportList === true;
+        const showExportDetail = options.showExportDetail === true;
+        const detailImagePreview = options.detailImagePreview === true;
         const root = document.getElementById(rootId);
         if (!root || !type) return;
 
-        const state = { type: type, view: 'list', detailId: null, listMode: 'pending' };
+        const state = { type: type, view: 'list', detailId: null, listMode: 'pending', options: options };
         instances[rootId] = state;
+
+        const exportBtn = showExportList ? '<button type="button" onclick="moduleApprovalExportList(\'' + rootId + '\')" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">导出 CSV</button>' : '';
 
         root.innerHTML =
             '<div id="' + rootId + '-list" class="space-y-6">' +
             '<div class="flex flex-wrap justify-between items-start gap-4">' +
-            '<div><h2 class="text-lg font-bold text-slate-700">' + title + '</h2><p class="text-sm text-slate-400 mt-1">本模块审批在此处理，支持查看原数据、导出 CSV 及 Lark 老板审批联动</p></div>' +
+            '<div><h2 class="text-lg font-bold text-slate-700">' + title + '</h2><p class="text-sm text-slate-400 mt-1">本模块审批在此处理，支持查看原数据及 Lark 老板审批联动</p></div>' +
             '<div class="flex flex-wrap gap-2 items-center">' +
             '<button type="button" class="role-tab active" data-root="' + rootId + '" data-role="cross" onclick="moduleApprovalSwitchRole(\'' + rootId + '\',\'cross\')">市场运营交叉</button>' +
             '<button type="button" class="role-tab" data-root="' + rootId + '" data-role="risk" onclick="moduleApprovalSwitchRole(\'' + rootId + '\',\'risk\')">风控</button>' +
             '<button type="button" class="role-tab" data-root="' + rootId + '" data-role="boss" onclick="moduleApprovalSwitchRole(\'' + rootId + '\',\'boss\')">老板</button>' +
             '</div></div>' +
-            '<section class="card p-5"><div class="grid grid-cols-4 gap-4 items-end">' +
+            '<section class="card p-5"><div class="grid grid-cols-5 gap-4 items-end">' +
             '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">视图</label><select id="' + rootId + '-view-mode" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white" onchange="moduleApprovalRenderList(\'' + rootId + '\')"><option value="pending">待我审批</option><option value="all">全部审批</option></select></div>' +
             '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">状态</label><select id="' + rootId + '-filter-status" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white" onchange="moduleApprovalRenderList(\'' + rootId + '\')"><option value="all">全部</option><option value="pending_cross">待交叉审核</option><option value="pending_risk">待风控</option><option value="pending_boss">待老板</option><option value="approved">已通过</option><option value="rejected">已驳回</option></select></div>' +
+            '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">活动名称</label><input id="' + rootId + '-filter-activity" type="text" placeholder="模糊匹配" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm" oninput="moduleApprovalRenderList(\'' + rootId + '\')"></div>' +
             '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">审批单号</label><input id="' + rootId + '-filter-id" type="text" placeholder="APR..." class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm" oninput="moduleApprovalRenderList(\'' + rootId + '\')"></div>' +
-            '<div class="flex gap-2"><button type="button" onclick="moduleApprovalRenderList(\'' + rootId + '\')" class="flex-1 bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold">查询</button><button type="button" onclick="moduleApprovalExportList(\'' + rootId + '\')" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">导出 CSV</button></div>' +
+            '<div class="flex gap-2"><button type="button" onclick="moduleApprovalRenderList(\'' + rootId + '\')" class="flex-1 bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold">查询</button>' + exportBtn + '</div>' +
             '</div></section>' +
             '<div class="card overflow-hidden"><div class="px-6 py-4 border-b flex justify-between"><span class="text-sm font-bold text-slate-700">审批列表 <span id="' + rootId + '-count" class="text-slate-400"></span></span><span id="' + rootId + '-hint" class="text-[10px] text-amber-600 font-bold"></span></div>' +
             '<table class="w-full text-left text-sm"><thead class="bg-slate-50 border-b"><tr>' +
@@ -107,10 +152,12 @@
         const viewMode = document.getElementById(rootId + '-view-mode').value;
         const status = document.getElementById(rootId + '-filter-status').value;
         const idQ = (document.getElementById(rootId + '-filter-id').value || '').trim().toLowerCase();
+        const actQ = (document.getElementById(rootId + '-filter-activity').value || '').trim().toLowerCase();
         let list = getApprovalAppsByType(state.type);
         if (viewMode === 'pending') list = list.filter(function (a) { return isApprovalPendingForRole(a, role); });
         if (status !== 'all') list = list.filter(function (a) { return a.status === status; });
         if (idQ) list = list.filter(function (a) { return a.id.toLowerCase().indexOf(idQ) !== -1; });
+        if (actQ) list = list.filter(function (a) { return formatApprovalActivity(a.payload || {}).toLowerCase().indexOf(actQ) !== -1; });
         state.filtered = list;
 
         document.getElementById(rootId + '-count').textContent = '（' + list.length + ' 条）';
@@ -153,15 +200,19 @@
     };
 
     window.moduleApprovalShowDetail = function (rootId, id) {
+        const state = instances[rootId];
         const app = getApprovalAppById(id);
         const detailEl = document.getElementById(rootId + '-detail');
         if (!app || !detailEl) return;
         const role = getApprovalViewRole();
         const canAct = canApproveApplication(app, role);
+        const opts = state ? state.options : {};
         let readonlyHint = '当前审批已结束或无需您处理';
         if (app.status === 'pending_cross' && role !== 'cross') readonlyHint = '等待市场运营交叉审核';
         else if (app.status === 'pending_risk' && role !== 'risk') readonlyHint = '等待风控审核';
         else if (app.status === 'pending_boss' && role !== 'boss') readonlyHint = '等待老板审批（可在 Lark 完成）';
+
+        const exportDetailBtn = opts.showExportDetail ? '<button type="button" onclick="exportApprovalDetailCsv(getApprovalAppById(\'' + app.id + '\'))" class="text-xs font-bold text-blue-600 hover:underline">导出明细 CSV</button>' : '';
 
         detailEl.innerHTML =
             '<div class="flex items-center gap-3 mb-2"><button type="button" onclick="moduleApprovalBackList(\'' + rootId + '\')" class="text-slate-500 hover:text-slate-800 font-bold text-sm">← 返回审批列表</button></div>' +
@@ -169,10 +220,10 @@
             '<section class="card p-6"><div class="flex justify-between items-start mb-4"><div><p class="text-[10px] text-slate-400 font-bold uppercase">审批单号</p><p class="text-lg font-black">' + app.id + '</p></div><span class="' + statusPillClass(app.status) + '">' + getApprovalStatusLabel(app.status) + '</span></div>' +
             '<div class="grid grid-cols-2 gap-4 text-sm"><div><span class="text-slate-400">申请人</span><p class="font-bold mt-1">' + app.applicant + '</p></div><div><span class="text-slate-400">申请时间</span><p class="font-bold mt-1">' + app.createdAt + '</p></div><div class="col-span-2"><span class="text-slate-400">摘要</span><p class="font-bold mt-1">' + (app.summary || '—') + '</p></div></div>' +
             '<div class="mt-4 p-4 bg-slate-50 rounded-lg"><p class="text-[10px] text-slate-400 font-bold uppercase mb-1">申请备注</p><p class="text-sm">' + (app.remark || '—') + '</p></div></section>' +
-            '<section class="card p-6"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-slate-800">申请原数据</h3><button type="button" onclick="exportApprovalDetailCsv(getApprovalAppById(\'' + app.id + '\'))" class="text-xs font-bold text-blue-600 hover:underline">导出明细 CSV</button></div>' +
-            '<div class="grid grid-cols-2 gap-3 text-sm">' + renderPayloadMeta(app) + '</div>' + renderRecipients(app) + '</section>' +
+            '<section class="card p-6"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-slate-800">申请原数据</h3>' + exportDetailBtn + '</div>' +
+            '<div class="grid grid-cols-2 gap-3 text-sm">' + renderPayloadMeta(app, opts) + renderRecipients(app) + '</div></section>' +
             '<section class="card p-6"><h3 class="font-bold mb-4">审批时间线</h3>' + renderTimeline(app) + '</section></div>' +
-            '<div class="space-y-6"><section class="card p-6"><h3 class="font-bold mb-4">审批进度</h3><div id="' + rootId + '-flow">' + renderApprovalFlow(app.status) + '</div>' + renderLarkApprovalCard(app) + '</section>' +
+            '<div class="space-y-6"><section class="card p-6"><h3 class="font-bold mb-4">审批进度</h3><div>' + renderApprovalFlow(app.status) + '</div>' + renderLarkApprovalCard(app) + '</section>' +
             (canAct ? '<section class="card p-6"><h3 class="font-bold mb-4">审批操作</h3><textarea id="' + rootId + '-note" rows="3" class="w-full border border-slate-200 rounded-lg p-3 text-sm mb-4" placeholder="审批意见（驳回时必填）"></textarea><div class="flex gap-2"><button type="button" onclick="moduleApprovalReject(\'' + rootId + '\',\'' + app.id + '\')" class="flex-1 py-2.5 border border-red-200 text-red-600 rounded-lg text-sm font-bold">驳回</button><button type="button" onclick="moduleApprovalApprove(\'' + rootId + '\',\'' + app.id + '\')" class="flex-1 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold">通过</button></div></section>' :
                 '<section class="card p-6"><p class="text-sm text-slate-500 text-center">' + readonlyHint + '</p></section>') +
             '</div></div>';

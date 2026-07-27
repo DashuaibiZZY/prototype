@@ -4,6 +4,8 @@
 (function () {
     const STORAGE_KEY = 'forx_approval_applications';
     const ROLE_KEY = 'forx_approval_view_role';
+    const SEED_VERSION = '2026-07-27-v3';
+    const SEED_VERSION_KEY = 'forx_approval_seed_v';
 
     const STEPS = [
         { key: 'apply', label: '市场运营提交', role: '市场运营' },
@@ -15,7 +17,8 @@
     const TYPE_LABELS = {
         trial_issue: '体验金发放',
         points_manual: '积分手动发放',
-        fee_config: '用户费率配置'
+        fee_config: '用户费率配置',
+        points_bonus_config: '积分加成配置'
     };
 
     const ROLE_LABELS = {
@@ -77,71 +80,257 @@
         return app;
     }
 
-    function seedIfEmpty() {
-        const apps = getApps().map(migrateLegacyStatus);
-        if (apps.length) {
-            saveApps(apps);
-            return;
-        }
-        const seed = [
+    function feeAttachmentPreview() {
+        return 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="480" height="280"><rect fill="#f0f4f8" width="480" height="280"/><text x="24" y="48" font-size="18" fill="#334155" font-family="sans-serif">用户价值证明截图（演示）</text><text x="24" y="88" font-size="14" fill="#64748b" font-family="sans-serif">其他交易所 VIP / 交易量证明</text></svg>');
+    }
+
+    function buildSeedData() {
+        const feeImg = feeAttachmentPreview();
+        return [
             {
-                id: 'APR20260724001',
+                id: 'APR20260727001',
                 type: 'trial_issue',
                 title: '体验金批量发放',
                 applicant: 'Trial_Admin',
                 status: 'pending_cross',
-                createdAt: '2026-07-24 10:30',
-                remark: 'KOL 合作活动补发',
-                summary: '120 人 · 12,540 USDT · 标准新人礼包组',
+                createdAt: '2026-07-27 09:00',
+                remark: '新用户注册礼包补发',
+                summary: '200 人 · 10,000 USDT · 标准新人礼包组',
                 payload: {
                     activityMode: 'platform',
                     activityId: 'ACT202605001',
-                    activityName: 'ForX嘉年华交易大赛',
+                    activityName: '新用户注册礼包',
                     cardGroup: '标准新人礼包组',
-                    recipientCount: 120,
-                    totalAmount: '12,540 USDT',
+                    recipientCount: 200,
+                    totalAmount: '10,000 USDT',
                     inputMode: 'manual',
-                    recipients: [
-                        { uid_or_wallet: '100891', amount: '250' },
-                        { uid_or_wallet: '100234', amount: '100' }
-                    ]
+                    recipients: [{ uid_or_wallet: '100891', amount: '50' }, { uid_or_wallet: '100234', amount: '100' }]
                 },
-                timeline: [{ at: '2026-07-24 10:30', actor: 'Trial_Admin', action: '提交申请', note: 'KOL 合作活动补发' }]
+                timeline: [{ at: '2026-07-27 09:00', actor: 'Trial_Admin', action: '提交申请', note: '新用户注册礼包补发' }]
             },
             {
-                id: 'APR20260724002',
+                id: 'APR20260726002',
+                type: 'trial_issue',
+                title: '体验金批量发放',
+                applicant: 'Trial_Admin',
+                status: 'pending_risk',
+                createdAt: '2026-07-26 14:20',
+                remark: '交易大赛周赛奖励',
+                summary: '50 人 · 5,000 USDT · 交易大赛奖励组',
+                payload: {
+                    activityMode: 'custom',
+                    activityName: '交易大赛奖励',
+                    cardGroup: '交易大赛奖励组',
+                    recipientCount: 50,
+                    totalAmount: '5,000 USDT',
+                    inputMode: 'excel',
+                    recipients: [{ uid_or_wallet: '101205', amount: '100' }]
+                },
+                timeline: [
+                    { at: '2026-07-26 14:20', actor: 'Trial_Admin', action: '提交申请', note: '交易大赛周赛奖励' },
+                    { at: '2026-07-26 16:00', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '名单已核对' }
+                ]
+            },
+            {
+                id: 'APR20260725003',
+                type: 'trial_issue',
+                title: '体验金批量发放',
+                applicant: 'Trial_Admin',
+                status: 'pending_boss',
+                createdAt: '2026-07-25 11:00',
+                remark: 'VIP 召回活动',
+                summary: '30 人 · 6,000 USDT · VIP 专属体验组',
+                payload: {
+                    activityMode: 'custom',
+                    activityName: 'VIP 召回活动',
+                    cardGroup: 'VIP 专属体验组',
+                    recipientCount: 30,
+                    totalAmount: '6,000 USDT',
+                    inputMode: 'manual',
+                    recipients: [{ uid_or_wallet: '100234', amount: '200' }]
+                },
+                lark: { id: 'LARK-20260725-5521', status: 'pending', url: 'https://www.feishu.cn/approval/admin/preview/LARK-20260725-5521', syncedAt: '2026-07-25 15:30' },
+                timeline: [
+                    { at: '2026-07-25 11:00', actor: 'Trial_Admin', action: '提交申请', note: 'VIP 召回活动' },
+                    { at: '2026-07-25 12:30', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '通过' },
+                    { at: '2026-07-25 14:00', actor: 'Risk_Control', action: '风控通过', note: '风险可控' },
+                    { at: '2026-07-25 15:30', actor: 'System', action: '已同步 Lark 审批', note: '等待老板在 Lark 完成审批' }
+                ]
+            },
+            {
+                id: 'APR20260720004',
+                type: 'trial_issue',
+                title: '体验金批量发放',
+                applicant: 'Trial_Admin',
+                status: 'approved',
+                createdAt: '2026-07-20 10:00',
+                remark: '社群裂变活动',
+                summary: '500 人 · 10,000 USDT · 限时拉新活动组',
+                payload: {
+                    activityMode: 'platform',
+                    activityId: 'ACT202605003',
+                    activityName: '社群裂变',
+                    cardGroup: '限时拉新活动组',
+                    recipientCount: 500,
+                    totalAmount: '10,000 USDT',
+                    inputMode: 'excel',
+                    recipients: [{ uid_or_wallet: '100891', amount: '20' }]
+                },
+                timeline: [
+                    { at: '2026-07-20 10:00', actor: 'Trial_Admin', action: '提交申请', note: '社群裂变' },
+                    { at: '2026-07-20 11:00', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '通过' },
+                    { at: '2026-07-20 14:00', actor: 'Risk_Control', action: '风控通过', note: '通过' },
+                    { at: '2026-07-20 16:00', actor: 'Boss', action: '老板审批通过', note: '批准发放' }
+                ]
+            },
+            {
+                id: 'APR20260727011',
+                type: 'points_manual',
+                title: '积分手动发放',
+                applicant: 'Points_Admin',
+                status: 'pending_cross',
+                createdAt: '2026-07-27 08:30',
+                remark: '周交易返积分',
+                summary: '120 人 · 5,000 积分 · 交易返积分',
+                payload: {
+                    activityMode: 'platform',
+                    activityId: 'ACT202607001',
+                    activityName: '交易返积分',
+                    inputMode: 'lines',
+                    recipientCount: 120,
+                    totalPoints: 5000,
+                    recipients: [{ uid_or_wallet: '200112', points: '500' }, { uid_or_wallet: '200445', points: '200' }]
+                },
+                timeline: [{ at: '2026-07-27 08:30', actor: 'Points_Admin', action: '提交申请', note: '周交易返积分' }]
+            },
+            {
+                id: 'APR20260726012',
                 type: 'points_manual',
                 title: '积分手动发放',
                 applicant: 'Points_Admin',
                 status: 'pending_risk',
-                createdAt: '2026-07-23 16:00',
-                remark: '客诉补偿批量发放',
-                summary: '3 人 · 200 积分 · 运营补偿活动',
+                createdAt: '2026-07-26 15:00',
+                remark: 'KOL 合作结算',
+                summary: '8 人 · 20,000 积分 · KOL 合作奖励',
                 payload: {
                     activityMode: 'custom',
-                    activityId: null,
-                    activityName: '运营补偿活动',
+                    activityName: 'KOL 合作奖励',
                     inputMode: 'lines',
-                    recipientCount: 3,
-                    totalPoints: 200,
-                    recipients: [
-                        { uid_or_wallet: '200445', points: '50' },
-                        { uid_or_wallet: '200112', points: '100' },
-                        { uid_or_wallet: '200891', points: '50' }
-                    ]
+                    recipientCount: 8,
+                    totalPoints: 20000,
+                    recipients: [{ uid_or_wallet: '200112', points: '5000' }]
                 },
                 timeline: [
-                    { at: '2026-07-23 16:00', actor: 'Points_Admin', action: '提交申请', note: '客诉补偿批量发放' },
-                    { at: '2026-07-23 17:20', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '已与客服确认名单' }
+                    { at: '2026-07-26 15:00', actor: 'Points_Admin', action: '提交申请', note: 'KOL 合作结算' },
+                    { at: '2026-07-26 17:00', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '已与商务确认' }
                 ]
             },
             {
-                id: 'APR20260722003',
+                id: 'APR20260724013',
+                type: 'points_manual',
+                title: '积分手动发放',
+                applicant: 'Points_Admin',
+                status: 'pending_boss',
+                createdAt: '2026-07-24 10:00',
+                remark: '签到活动补发',
+                summary: '45 人 · 800 积分 · 签到补发',
+                payload: {
+                    activityMode: 'custom',
+                    activityName: '签到补发',
+                    inputMode: 'file',
+                    recipientCount: 45,
+                    totalPoints: 800,
+                    recipients: [{ uid_or_wallet: '200891', points: '20' }]
+                },
+                lark: { id: 'LARK-20260724-3310', status: 'pending', url: 'https://www.feishu.cn/approval/admin/preview/LARK-20260724-3310', syncedAt: '2026-07-24 14:20' },
+                timeline: [
+                    { at: '2026-07-24 10:00', actor: 'Points_Admin', action: '提交申请', note: '签到活动补发' },
+                    { at: '2026-07-24 11:30', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '通过' },
+                    { at: '2026-07-24 13:00', actor: 'Risk_Control', action: '风控通过', note: '通过' },
+                    { at: '2026-07-24 14:20', actor: 'System', action: '已同步 Lark 审批', note: '等待老板审批' }
+                ]
+            },
+            {
+                id: 'APR20260722014',
+                type: 'points_manual',
+                title: '积分手动发放',
+                applicant: 'Points_Admin',
+                status: 'rejected',
+                createdAt: '2026-07-22 09:00',
+                remark: '临时补发申请',
+                summary: '3 人 · 150 积分 · 临时活动',
+                payload: {
+                    activityMode: 'custom',
+                    activityName: '临时活动',
+                    inputMode: 'lines',
+                    recipientCount: 3,
+                    totalPoints: 150,
+                    recipients: [{ uid_or_wallet: '200445', points: '50' }]
+                },
+                timeline: [
+                    { at: '2026-07-22 09:00', actor: 'Points_Admin', action: '提交申请', note: '临时补发申请' },
+                    { at: '2026-07-22 10:30', actor: 'Mkt_Cross', action: '驳回', note: '请关联平台活动后重新提交' }
+                ]
+            },
+            {
+                id: 'APR20260727021',
+                type: 'fee_config',
+                title: '用户费率配置',
+                applicant: 'Fee_Admin',
+                status: 'pending_cross',
+                createdAt: '2026-07-27 10:00',
+                remark: 'VIP3 大客户申请',
+                summary: 'UID 10028471 · VIP 3 · 90 天有效',
+                payload: {
+                    activityMode: 'custom',
+                    activityName: 'VIP3 费率优惠',
+                    uid: '10028471',
+                    wallet: '0x7a3f...9c2e',
+                    feeMode: 'vip',
+                    vipLevel: 3,
+                    taker: '0.029%',
+                    maker: '0.006%',
+                    validDays: 90,
+                    attachments: ['币安VIP证明.png'],
+                    attachmentPreviews: { '币安VIP证明.png': feeImg }
+                },
+                timeline: [{ at: '2026-07-27 10:00', actor: 'Fee_Admin', action: '提交申请', note: 'VIP3 大客户申请' }]
+            },
+            {
+                id: 'APR20260726022',
+                type: 'fee_config',
+                title: '用户费率配置',
+                applicant: 'Fee_Admin',
+                status: 'pending_risk',
+                createdAt: '2026-07-26 11:30',
+                remark: '做市商专属费率',
+                summary: 'UID 10019833 · 自定义 · 180 天有效',
+                payload: {
+                    activityMode: 'platform',
+                    activityId: 'ACT202605004',
+                    activityName: '做市商专属费率',
+                    uid: '10019833',
+                    wallet: '0xd5e2...1a7b',
+                    feeMode: 'custom',
+                    vipLevel: null,
+                    taker: '0.030%',
+                    maker: '0.000%',
+                    validDays: 180,
+                    attachments: ['做市商协议.png'],
+                    attachmentPreviews: { '做市商协议.png': feeImg }
+                },
+                timeline: [
+                    { at: '2026-07-26 11:30', actor: 'Fee_Admin', action: '提交申请', note: '做市商专属费率' },
+                    { at: '2026-07-26 14:00', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '协议已核实' }
+                ]
+            },
+            {
+                id: 'APR20260725023',
                 type: 'fee_config',
                 title: '用户费率配置',
                 applicant: 'Fee_Admin',
                 status: 'pending_boss',
-                createdAt: '2026-07-22 11:15',
+                createdAt: '2026-07-25 09:15',
                 remark: '大客户 VIP2 费率申请',
                 summary: 'UID 10031592 · VIP 2 · 30 天有效',
                 payload: {
@@ -155,23 +344,77 @@
                     taker: '0.034%',
                     maker: '0.010%',
                     validDays: 30,
-                    attachments: ['币安VIP证明.png']
+                    attachments: ['币安VIP证明.png'],
+                    attachmentPreviews: { '币安VIP证明.png': feeImg }
                 },
-                lark: {
-                    id: 'LARK-20260722-8831',
-                    status: 'pending',
-                    url: 'https://www.feishu.cn/approval/admin/preview/LARK-20260722-8831',
-                    syncedAt: '2026-07-22 15:40'
+                lark: { id: 'LARK-20260725-8831', status: 'pending', url: 'https://www.feishu.cn/approval/admin/preview/LARK-20260725-8831', syncedAt: '2026-07-25 13:40' },
+                timeline: [
+                    { at: '2026-07-25 09:15', actor: 'Fee_Admin', action: '提交申请', note: '大客户 VIP2 费率申请' },
+                    { at: '2026-07-25 10:05', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '大客户专属费率' },
+                    { at: '2026-07-25 11:20', actor: 'Risk_Control', action: '风控通过', note: '风险可控' },
+                    { at: '2026-07-25 13:40', actor: 'System', action: '已同步 Lark 审批', note: '等待老板在 Lark 完成审批' }
+                ]
+            },
+            {
+                id: 'APR20260727031',
+                type: 'points_bonus_config',
+                title: '积分加成配置',
+                applicant: 'Points_Admin',
+                status: 'pending_cross',
+                createdAt: '2026-07-27 07:00',
+                remark: '大客户专属加成',
+                summary: '5 人 · 1.5x 加成 · 大客户积分加成',
+                payload: {
+                    activityMode: 'custom',
+                    activityName: '大客户积分加成',
+                    bonusMultiplier: 1.5,
+                    recipientCount: 5,
+                    anomalyCount: 1,
+                    items: [
+                        { uid: '200112', naturalBonus: '1.2x', newBonus: '1.5x', anomaly: false },
+                        { uid: '200445', naturalBonus: '1.8x', newBonus: '1.5x', anomaly: true },
+                        { uid: '200891', naturalBonus: '1.0x', newBonus: '1.5x', anomaly: false }
+                    ]
+                },
+                timeline: [{ at: '2026-07-27 07:00', actor: 'Points_Admin', action: '提交申请', note: '含 1 名用户自然加成高于新设置' }]
+            },
+            {
+                id: 'APR20260726032',
+                type: 'points_bonus_config',
+                title: '积分加成配置',
+                applicant: 'Points_Admin',
+                status: 'pending_risk',
+                createdAt: '2026-07-26 10:30',
+                remark: '暑期活动临时加成',
+                summary: '50 人 · 2.0x 加成 · 暑期活动加成',
+                payload: {
+                    activityMode: 'platform',
+                    activityId: 'ACT202607002',
+                    activityName: '暑期活动加成',
+                    bonusMultiplier: 2.0,
+                    recipientCount: 50,
+                    anomalyCount: 0,
+                    items: [
+                        { uid: '200112', naturalBonus: '1.2x', newBonus: '2.0x', anomaly: false },
+                        { uid: '200445', naturalBonus: '1.1x', newBonus: '2.0x', anomaly: false }
+                    ]
                 },
                 timeline: [
-                    { at: '2026-07-22 11:15', actor: 'Fee_Admin', action: '提交申请', note: '大客户 VIP2 费率申请' },
-                    { at: '2026-07-22 12:05', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '大客户专属费率' },
-                    { at: '2026-07-22 14:20', actor: 'Risk_Control', action: '风控通过', note: '风险可控' },
-                    { at: '2026-07-22 15:40', actor: 'System', action: '已同步 Lark 审批', note: '等待老板在 Lark 完成审批' }
+                    { at: '2026-07-26 10:30', actor: 'Points_Admin', action: '提交申请', note: '暑期活动批量配置' },
+                    { at: '2026-07-26 12:00', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '已与活动方确认' }
                 ]
             }
         ];
-        saveApps(seed);
+    }
+
+    function seedIfEmpty() {
+        if (localStorage.getItem(SEED_VERSION_KEY) === SEED_VERSION) {
+            const apps = getApps().map(migrateLegacyStatus);
+            if (apps.length) saveApps(apps);
+            return;
+        }
+        saveApps(buildSeedData());
+        localStorage.setItem(SEED_VERSION_KEY, SEED_VERSION);
     }
 
     function renderApprovalFlow(status, compact) {

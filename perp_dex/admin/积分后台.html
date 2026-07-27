@@ -15,6 +15,8 @@
         .tag-manual { background: #fff7e6; color: #d46b08; }
         .tag-newbie { background: #f6ffed; color: #389e0d; }
         .tag-config { background: #f9f0ff; color: #722ed1; }
+        .tag-custom-bonus { background: #fff0f6; color: #c41d7f; }
+        .tag-natural-bonus { background: #f6ffed; color: #389e0d; }
         .dim-bar { height: 6px; border-radius: 3px; background: #e2e8f0; overflow: hidden; }
         .dim-bar span { display: block; height: 100%; background: #3b82f6; }
     </style>
@@ -113,11 +115,15 @@
             </div>
             <section class="card p-5">
                 <div class="grid grid-cols-4 gap-4 items-end">
-                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID</label><input id="ptsFilterUid" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none"></div>
-                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">钱包地址</label><input id="ptsFilterWallet" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none"></div>
+                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID / 钱包地址</label><input id="ptsFilterUser" type="text" placeholder="输入 UID 或钱包地址" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none"></div>
                     <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">等级加成</label>
                         <select id="ptsFilterLevel" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none">
                             <option value="all">全部</option><option value="1">级别 1+</option><option value="3">级别 3+</option>
+                        </select>
+                    </div>
+                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">加成类型</label>
+                        <select id="ptsFilterBonusType" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none">
+                            <option value="all">全部</option><option value="natural">自然等级</option><option value="custom">自定义配置</option>
                         </select>
                     </div>
                     <div class="flex gap-2">
@@ -134,6 +140,7 @@
                             <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">UID / 钱包</th>
                             <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">当前积分</th>
                             <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-center">等级加成</th>
+                            <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-center">积分加成</th>
                             <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">伞下周交易额</th>
                             <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">上周交易积分</th>
                             <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">上周持仓积分</th>
@@ -153,9 +160,10 @@
             <div class="card p-5">
                 <p class="text-xs text-slate-400">UID <span id="ptsDetailUid" class="font-bold text-slate-700"></span></p>
                 <p id="ptsDetailWallet" class="text-sm font-mono font-bold mt-1"></p>
-                <div class="flex gap-6 mt-3 text-sm">
+                <div class="flex gap-6 mt-3 text-sm flex-wrap">
                     <span>当前积分 <b id="ptsDetailBalance" class="text-blue-600 text-lg"></b></span>
-                    <span>等级加成 <b id="ptsDetailMultiplier"></b></span>
+                    <span>自然等级加成 <b id="ptsDetailNaturalBonus"></b></span>
+                    <span id="ptsDetailCustomBonusWrap" class="hidden">自定义加成 <b id="ptsDetailCustomBonus" class="text-purple-600"></b></span>
                     <span>伞下周交易额 <b id="ptsDetailVolume"></b></span>
                 </div>
             </div>
@@ -174,6 +182,44 @@
                     </thead>
                     <tbody id="pointsHistoryTableBody" class="divide-y divide-slate-50"></tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- 积分加成配置 -->
+        <div id="page-bonus" class="hidden space-y-6">
+            <div>
+                <h2 class="text-lg font-bold text-slate-700">积分加成配置</h2>
+                <p class="text-sm text-slate-400 mt-1">为单个或批量用户配置自定义积分加成系数。提交前将校验自然等级加成是否高于新设置，需市场运营确认后进入审批流程。</p>
+            </div>
+            <div class="card p-8 max-w-4xl">
+                <div class="flex gap-2 bg-slate-100 p-1 rounded-lg w-fit mb-6">
+                    <button onclick="switchBonusTab('single')" id="tab-bonus-single" class="px-5 py-2 text-sm font-bold bg-white rounded-md shadow-sm">单用户配置</button>
+                    <button onclick="switchBonusTab('batch')" id="tab-bonus-batch" class="px-5 py-2 text-sm font-bold text-slate-500 rounded-md">批量配置</button>
+                </div>
+                <div id="bonus-single-panel" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">UID 或钱包地址</label>
+                            <input id="bonusSingleUser" type="text" placeholder="200112 或 0x..." class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">新积分加成系数</label>
+                            <input id="bonusSingleMultiplier" type="number" step="0.05" min="1" max="3" value="1.5" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
+                        </div>
+                    </div>
+                </div>
+                <div id="bonus-batch-panel" class="hidden space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">UID 或钱包,加成系数（每行一个，英文逗号分隔）</label>
+                        <textarea id="bonusBatchInput" rows="6" placeholder="200112,1.5&#10;200445,1.8&#10;0xfeed...cdef,2.0" class="w-full border border-slate-200 rounded-lg p-3 text-sm font-mono outline-none"></textarea>
+                    </div>
+                </div>
+                <div class="mt-4" id="bonus-activity-picker"></div>
+                <div class="mt-4">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">申请备注（必填）</label>
+                    <textarea id="bonusRemarkInput" rows="2" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none" placeholder="请填写配置原因及审批依据"></textarea>
+                </div>
+                <button onclick="openBonusConfirmModal()" class="w-full mt-4 bg-slate-900 text-white py-3.5 rounded-lg font-bold hover:bg-slate-800">提交审批申请</button>
             </div>
         </div>
 
@@ -246,6 +292,11 @@
         <div id="page-approval" class="hidden">
             <div id="points-approval-root"></div>
         </div>
+
+        <!-- 加成配置审批 -->
+        <div id="page-bonus-approval" class="hidden">
+            <div id="points-bonus-approval-root"></div>
+        </div>
     </div>
 </main>
 
@@ -257,7 +308,7 @@
             <div class="bg-slate-50 rounded-lg p-4 space-y-2">
                 <div class="flex justify-between"><span class="text-slate-500">发放人数</span><span id="ptsApprovalCount" class="font-black">—</span></div>
                 <div class="flex justify-between"><span class="text-slate-500">发放总积分</span><span id="ptsApprovalTotal" class="font-black text-blue-600">—</span></div>
-                <div class="flex justify-between"><span class="text-slate-500">活动名称</span><span id="ptsApprovalActivity" class="font-bold">—</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">活动信息</span><span id="ptsApprovalActivity" class="font-bold">—</span></div>
             </div>
             <div id="pointsApprovalFlow"></div>
         </div>
@@ -268,14 +319,49 @@
     </div>
 </div>
 
+<!-- 积分加成异常确认 -->
+<div id="modal-bonus-confirm" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-[640px] max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="px-6 py-5 border-b shrink-0"><h3 class="text-lg font-bold">确认提交积分加成配置</h3><p class="text-xs text-slate-400 mt-1">以下用户自然等级加成高于新设置，请市场运营确认后继续</p></div>
+        <div class="p-6 overflow-y-auto flex-1 space-y-4 text-sm">
+            <div class="bg-slate-50 rounded-lg p-4 space-y-2">
+                <div class="flex justify-between"><span class="text-slate-500">配置人数</span><span id="bonusConfirmCount" class="font-black">—</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">加成系数</span><span id="bonusConfirmMultiplier" class="font-black text-blue-600">—</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">活动信息</span><span id="bonusConfirmActivity" class="font-bold">—</span></div>
+            </div>
+            <div id="bonusAnomalySection" class="hidden">
+                <p class="text-xs font-bold text-amber-600 mb-2">异常情况（自然加成 &gt; 新设置加成）</p>
+                <div class="border border-amber-200 rounded-lg overflow-hidden">
+                    <table class="w-full text-sm">
+                        <thead class="bg-amber-50 border-b"><tr>
+                            <th class="px-4 py-2 text-xs font-bold text-slate-500">UID</th>
+                            <th class="px-4 py-2 text-xs font-bold text-slate-500">当前积分加成</th>
+                            <th class="px-4 py-2 text-xs font-bold text-slate-500">新更新积分加成</th>
+                        </tr></thead>
+                        <tbody id="bonusAnomalyTableBody" class="divide-y divide-amber-100"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="bonusNoAnomalyHint" class="hidden text-xs text-green-600 font-bold">✓ 无异常情况，可直接提交审批</div>
+            <div id="bonusApprovalFlow"></div>
+        </div>
+        <div class="p-5 bg-slate-50 flex gap-3 shrink-0">
+            <button onclick="closeBonusConfirmModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button onclick="submitBonusApproval()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">确认提交审批</button>
+        </div>
+    </div>
+</div>
+
 <script src="admin-approval.js"></script>
 <script src="admin-activity-picker.js"></script>
 <script src="admin-approval-ui.js"></script>
 <script>
+    const NATURAL_BONUS_BY_LEVEL = { 0: 1.0, 1: 1.1, 2: 1.15, 3: 1.2, 4: 1.3, 5: 1.5 };
+
     const POINTS_USERS = [
-        { uid: '200112', wallet: '0xa1b2c3d4e5f6789012345678901234567890abcd', balance: 12850, level: 3, multiplier: '1.2x', umbrellaVolume: '$620M', lastWeek: { trade: 4200, position: 980, invite: 650, total: 5830 } },
-        { uid: '200445', wallet: '0xfeedface1234567890abcdef1234567890abcdef', balance: 320, level: 1, multiplier: '1.1x', umbrellaVolume: '$128M', lastWeek: { trade: 180, position: 42, invite: 28, total: 250 } },
-        { uid: '200891', wallet: '0x1234567890abcdef1234567890abcdef12345678', balance: 45, level: 0, multiplier: '1.0x', umbrellaVolume: '$12M', lastWeek: { trade: 0, position: 0, invite: 0, total: 15 } }
+        { uid: '200112', wallet: '0xa1b2c3d4e5f6789012345678901234567890abcd', balance: 12850, level: 3, multiplier: '1.2x', naturalMultiplier: 1.2, customBonus: null, bonusType: 'natural', umbrellaVolume: '$620M', lastWeek: { trade: 4200, position: 980, invite: 650, total: 5830 } },
+        { uid: '200445', wallet: '0xfeedface1234567890abcdef1234567890abcdef', balance: 320, level: 1, multiplier: '1.5x', naturalMultiplier: 1.1, customBonus: 1.5, bonusType: 'custom', umbrellaVolume: '$128M', lastWeek: { trade: 180, position: 42, invite: 28, total: 250 } },
+        { uid: '200891', wallet: '0x1234567890abcdef1234567890abcdef12345678', balance: 45, level: 0, multiplier: '1.0x', naturalMultiplier: 1.0, customBonus: null, bonusType: 'natural', umbrellaVolume: '$12M', lastWeek: { trade: 0, position: 0, invite: 0, total: 15 } }
     ];
 
     const POINTS_HISTORY = {
@@ -302,17 +388,23 @@
     ];
 
     let currentPtsUid = null;
+    let bonusInputMode = 'single';
+    let pendingBonusItems = [];
 
     const PAGE_MAP = {
         config: { id: 'page-config', title: '每周积分总池设置', sidebar: 'points-config' },
+        bonus: { id: 'page-bonus', title: '积分加成配置', sidebar: 'points-bonus' },
         users: { id: 'page-users', title: '用户积分查询', sidebar: 'points-users' },
         manual: { id: 'page-manual', title: '手动发放积分', sidebar: 'points-manual' },
         logs: { id: 'page-logs', title: '操作记录', sidebar: 'points-logs' },
-        approval: { id: 'page-approval', title: '积分发放审批', sidebar: 'points-approval' }
+        approval: { id: 'page-approval', title: '积分发放审批', sidebar: 'points-approval' },
+        'bonus-approval': { id: 'page-bonus-approval', title: '积分加成配置审批', sidebar: 'points-bonus-approval' }
     };
 
+    const ALL_PAGE_IDS = ['page-config', 'page-bonus', 'page-users', 'page-user-detail', 'page-manual', 'page-logs', 'page-approval', 'page-bonus-approval'];
+
     function showPage(key, updateHash) {
-        ['page-config', 'page-users', 'page-user-detail', 'page-manual', 'page-logs', 'page-approval'].forEach(function (id) {
+        ALL_PAGE_IDS.forEach(function (id) {
             document.getElementById(id).classList.add('hidden');
         });
         const meta = PAGE_MAP[key];
@@ -331,7 +423,7 @@
         currentPtsUid = uid;
         const user = POINTS_USERS.find(function (u) { return u.uid === uid; });
         if (!user) return;
-        ['page-config', 'page-users', 'page-manual', 'page-logs'].forEach(function (id) {
+        ['page-config', 'page-bonus', 'page-users', 'page-manual', 'page-logs', 'page-approval', 'page-bonus-approval'].forEach(function (id) {
             document.getElementById(id).classList.add('hidden');
         });
         document.getElementById('page-user-detail').classList.remove('hidden');
@@ -340,7 +432,14 @@
         document.getElementById('ptsDetailUid').innerText = user.uid;
         document.getElementById('ptsDetailWallet').innerText = user.wallet;
         document.getElementById('ptsDetailBalance').innerText = user.balance.toLocaleString();
-        document.getElementById('ptsDetailMultiplier').innerText = user.multiplier + ' (级别 ' + (user.level || '无') + ')';
+        document.getElementById('ptsDetailNaturalBonus').innerText = user.naturalMultiplier + 'x (级别 ' + (user.level || '无') + ')';
+        const customWrap = document.getElementById('ptsDetailCustomBonusWrap');
+        if (user.bonusType === 'custom' && user.customBonus) {
+            customWrap.classList.remove('hidden');
+            document.getElementById('ptsDetailCustomBonus').innerText = user.customBonus + 'x';
+        } else {
+            customWrap.classList.add('hidden');
+        }
         document.getElementById('ptsDetailVolume').innerText = user.umbrellaVolume;
         renderPointsHistory(uid);
     }
@@ -349,9 +448,16 @@
         return w.length > 14 ? w.slice(0, 6) + '...' + w.slice(-4) : w;
     }
 
+    function bonusTypeLabel(u) {
+        if (u.bonusType === 'custom') {
+            return '<span class="status-tag tag-custom-bonus">自定义 ' + u.customBonus + 'x</span>';
+        }
+        return '<span class="status-tag tag-natural-bonus">自然等级 ' + u.naturalMultiplier + 'x</span>';
+    }
+
     function renderPointsUserTable(list) {
         document.getElementById('pointsUserTableBody').innerHTML = list.map(function (u) {
-            return '<tr class="hover:bg-slate-50"><td class="px-4 py-3"><div class="font-bold">' + u.uid + '</div><div class="text-[10px] text-slate-400 font-mono">' + shortWallet(u.wallet) + '</div></td><td class="px-3 py-3 text-right font-black text-blue-600">' + u.balance.toLocaleString() + '</td><td class="px-3 py-3 text-center font-bold">' + u.multiplier + '</td><td class="px-3 py-3 text-right">' + u.umbrellaVolume + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.trade.toLocaleString() + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.position.toLocaleString() + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.invite.toLocaleString() + '</td><td class="px-3 py-3 text-right font-bold">' + u.lastWeek.total.toLocaleString() + '</td><td class="px-4 py-3 text-right"><button onclick="showPointsUserDetail(\'' + u.uid + '\')" class="text-blue-600 font-bold">查看流水</button></td></tr>';
+            return '<tr class="hover:bg-slate-50"><td class="px-4 py-3"><div class="font-bold">' + u.uid + '</div><div class="text-[10px] text-slate-400 font-mono">' + shortWallet(u.wallet) + '</div></td><td class="px-3 py-3 text-right font-black text-blue-600">' + u.balance.toLocaleString() + '</td><td class="px-3 py-3 text-center font-bold">' + u.multiplier + '</td><td class="px-3 py-3 text-center">' + bonusTypeLabel(u) + '</td><td class="px-3 py-3 text-right">' + u.umbrellaVolume + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.trade.toLocaleString() + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.position.toLocaleString() + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.invite.toLocaleString() + '</td><td class="px-3 py-3 text-right font-bold">' + u.lastWeek.total.toLocaleString() + '</td><td class="px-4 py-3 text-right"><button onclick="showPointsUserDetail(\'' + u.uid + '\')" class="text-blue-600 font-bold">查看流水</button></td></tr>';
         }).join('');
     }
 
@@ -369,22 +475,22 @@
     }
 
     function applyPtsUserFilters() {
-        const uid = document.getElementById('ptsFilterUid').value.trim();
-        const wallet = document.getElementById('ptsFilterWallet').value.trim().toLowerCase();
+        const userQ = document.getElementById('ptsFilterUser').value.trim().toLowerCase();
         const level = document.getElementById('ptsFilterLevel').value;
+        const bonusType = document.getElementById('ptsFilterBonusType').value;
         let list = POINTS_USERS.filter(function (u) {
-            if (uid && u.uid.indexOf(uid) === -1) return false;
-            if (wallet && u.wallet.toLowerCase().indexOf(wallet) === -1) return false;
+            if (userQ && u.uid.indexOf(userQ) === -1 && u.wallet.toLowerCase().indexOf(userQ) === -1) return false;
             if (level !== 'all' && u.level < parseInt(level, 10)) return false;
+            if (bonusType !== 'all' && u.bonusType !== bonusType) return false;
             return true;
         });
         renderPointsUserTable(list);
     }
 
     function resetPtsUserFilters() {
-        document.getElementById('ptsFilterUid').value = '';
-        document.getElementById('ptsFilterWallet').value = '';
+        document.getElementById('ptsFilterUser').value = '';
         document.getElementById('ptsFilterLevel').value = 'all';
+        document.getElementById('ptsFilterBonusType').value = 'all';
         renderPointsUserTable(POINTS_USERS);
     }
 
@@ -503,10 +609,134 @@
         document.getElementById('manualRemarkInput').value = '';
     }
 
+    function findPointsUser(key) {
+        const q = (key || '').trim().toLowerCase();
+        return POINTS_USERS.find(function (u) {
+            return u.uid === q || u.wallet.toLowerCase() === q || u.wallet.toLowerCase().indexOf(q) !== -1;
+        });
+    }
+
+    function getNaturalMultiplierForUser(userOrKey) {
+        const user = typeof userOrKey === 'object' ? userOrKey : findPointsUser(userOrKey);
+        if (!user) return 1.0;
+        return user.naturalMultiplier || NATURAL_BONUS_BY_LEVEL[user.level] || 1.0;
+    }
+
+    function switchBonusTab(mode) {
+        bonusInputMode = mode;
+        const single = mode === 'single';
+        document.getElementById('tab-bonus-single').className = single ? 'px-5 py-2 text-sm font-bold bg-white rounded-md shadow-sm' : 'px-5 py-2 text-sm font-bold text-slate-500 rounded-md';
+        document.getElementById('tab-bonus-batch').className = single ? 'px-5 py-2 text-sm font-bold text-slate-500 rounded-md' : 'px-5 py-2 text-sm font-bold bg-white rounded-md shadow-sm';
+        document.getElementById('bonus-single-panel').classList.toggle('hidden', !single);
+        document.getElementById('bonus-batch-panel').classList.toggle('hidden', single);
+    }
+
+    function parseBonusItems() {
+        if (bonusInputMode === 'single') {
+            const key = document.getElementById('bonusSingleUser').value.trim();
+            const mult = parseFloat(document.getElementById('bonusSingleMultiplier').value);
+            if (!key) return { error: '请填写 UID 或钱包地址' };
+            if (!mult || mult < 1) return { error: '请填写有效的加成系数' };
+            const user = findPointsUser(key);
+            const natural = getNaturalMultiplierForUser(user || { level: 0, naturalMultiplier: 1.0 });
+            return { items: [{ uid: user ? user.uid : key, key: key, naturalMultiplier: natural, newMultiplier: mult }] };
+        }
+        const text = document.getElementById('bonusBatchInput').value.trim();
+        if (!text) return { error: '请填写批量配置名单' };
+        const items = text.split('\n').filter(function (l) { return l.trim(); }).map(function (line) {
+            const p = line.split(',');
+            const key = (p[0] || '').trim();
+            const mult = parseFloat((p[1] || '').trim());
+            const user = findPointsUser(key);
+            return {
+                uid: user ? user.uid : key,
+                key: key,
+                naturalMultiplier: getNaturalMultiplierForUser(user || { level: 0, naturalMultiplier: 1.0 }),
+                newMultiplier: mult
+            };
+        });
+        if (items.some(function (i) { return !i.newMultiplier || i.newMultiplier < 1; })) {
+            return { error: '批量名单中存在无效的加成系数' };
+        }
+        return { items: items };
+    }
+
+    function openBonusConfirmModal() {
+        const act = getActivityPickerValue('bonus-act');
+        const remark = document.getElementById('bonusRemarkInput').value.trim();
+        if (!act.valid) { alert(act.message); return; }
+        if (!remark) { alert('请填写申请备注'); return; }
+        const parsed = parseBonusItems();
+        if (parsed.error) { alert(parsed.error); return; }
+        pendingBonusItems = parsed.items;
+        const anomalies = pendingBonusItems.filter(function (i) { return i.naturalMultiplier > i.newMultiplier; });
+        const multSet = pendingBonusItems.map(function (i) { return i.newMultiplier; });
+        const multLabel = multSet.length === 1 ? multSet[0] + 'x' : '多种';
+        document.getElementById('bonusConfirmCount').innerText = pendingBonusItems.length + ' 人';
+        document.getElementById('bonusConfirmMultiplier').innerText = multLabel;
+        document.getElementById('bonusConfirmActivity').innerText = act.displayLabel;
+        document.getElementById('bonusAnomalySection').classList.toggle('hidden', !anomalies.length);
+        document.getElementById('bonusNoAnomalyHint').classList.toggle('hidden', !!anomalies.length);
+        document.getElementById('bonusAnomalyTableBody').innerHTML = anomalies.map(function (a) {
+            return '<tr><td class="px-4 py-2 font-mono font-bold">' + a.uid + '</td><td class="px-4 py-2">' + a.naturalMultiplier + 'x</td><td class="px-4 py-2 font-bold text-amber-700">' + a.newMultiplier + 'x</td></tr>';
+        }).join('');
+        document.getElementById('bonusApprovalFlow').innerHTML = renderApprovalFlow('draft', true);
+        document.getElementById('modal-bonus-confirm').classList.remove('hidden');
+    }
+
+    function closeBonusConfirmModal() {
+        document.getElementById('modal-bonus-confirm').classList.add('hidden');
+    }
+
+    function submitBonusApproval() {
+        const act = getActivityPickerValue('bonus-act');
+        const remark = document.getElementById('bonusRemarkInput').value.trim();
+        if (!act.valid || !remark || !pendingBonusItems.length) return;
+        const anomalies = pendingBonusItems.filter(function (i) { return i.naturalMultiplier > i.newMultiplier; });
+        const payloadItems = pendingBonusItems.map(function (i) {
+            return {
+                uid: i.uid,
+                naturalBonus: i.naturalMultiplier + 'x',
+                newBonus: i.newMultiplier + 'x',
+                anomaly: i.naturalMultiplier > i.newMultiplier
+            };
+        });
+        const multSet = pendingBonusItems.map(function (i) { return i.newMultiplier; });
+        const bonusMultiplier = multSet.length === 1 ? multSet[0] : null;
+        submitApprovalApplication({
+            type: 'points_bonus_config',
+            title: '积分加成配置',
+            applicant: 'Points_Admin',
+            remark: remark,
+            summary: pendingBonusItems.length + ' 人 · ' + (bonusMultiplier ? bonusMultiplier + 'x' : '多种加成') + ' · ' + act.displayLabel,
+            payload: {
+                activityMode: act.activityMode,
+                activityId: act.activityId,
+                activityName: act.activityName,
+                bonusMultiplier: bonusMultiplier,
+                recipientCount: pendingBonusItems.length,
+                anomalyCount: anomalies.length,
+                items: payloadItems
+            },
+            onSubmit: function () {
+                POINTS_LOGS.unshift({ time: new Date().toISOString().slice(0, 16).replace('T', ' '), operator: 'Points_Admin', type: '规则配置', user: pendingBonusItems.length + ' 人', detail: '积分加成配置 · ' + act.displayLabel, points: '-', remark: remark + '（审批中）' });
+                renderPointsLogs(POINTS_LOGS);
+            }
+        });
+        closeBonusConfirmModal();
+        alert('积分加成配置已提交审批，等待市场运营交叉审核 → 风控 → 老板审批');
+        if (bonusInputMode === 'single') document.getElementById('bonusSingleUser').value = '';
+        else document.getElementById('bonusBatchInput').value = '';
+        document.getElementById('bonusRemarkInput').value = '';
+        pendingBonusItems = [];
+    }
+
     renderPointsUserTable(POINTS_USERS);
     renderPointsLogs(POINTS_LOGS);
     mountActivityPicker('points-activity-picker', { prefix: 'points-act', defaultMode: 'custom', defaultCustomName: '' });
-    initModuleApproval({ type: 'points_manual', rootId: 'points-approval-root', title: '积分发放审批' });
+    mountActivityPicker('bonus-activity-picker', { prefix: 'bonus-act', defaultMode: 'custom', defaultCustomName: '' });
+    initModuleApproval({ type: 'points_manual', rootId: 'points-approval-root', title: '积分发放审批', showExportList: false, showExportDetail: false });
+    initModuleApproval({ type: 'points_bonus_config', rootId: 'points-bonus-approval-root', title: '积分加成配置审批', showExportList: false, showExportDetail: false });
 </script>
 <script src="admin-sidebar.js"></script>
 <script>
@@ -517,15 +747,25 @@
             moduleApprovalHandleHash('points-approval-root', hash, 'approval', 'approval-detail');
             return;
         }
+        if (hash.indexOf('bonus-approval-detail=') === 0) {
+            showPage('bonus-approval', false);
+            moduleApprovalHandleHash('points-bonus-approval-root', hash, 'bonus-approval', 'bonus-approval-detail');
+            return;
+        }
         if (hash === 'approval') {
             showPage('approval', false);
             moduleApprovalBackList('points-approval-root', false);
             return;
         }
-        const routes = { config: 'config', users: 'users', manual: 'manual', logs: 'logs' };
+        if (hash === 'bonus-approval') {
+            showPage('bonus-approval', false);
+            moduleApprovalBackList('points-bonus-approval-root', false);
+            return;
+        }
+        const routes = { config: 'config', bonus: 'bonus', users: 'users', manual: 'manual', logs: 'logs' };
         if (routes[hash]) showPage(routes[hash], false);
         else showPage('config', false);
-        const keyMap = { config: 'points-config', users: 'points-users', manual: 'points-manual', logs: 'points-logs', approval: 'points-approval' };
+        const keyMap = { config: 'points-config', bonus: 'points-bonus', users: 'points-users', manual: 'points-manual', logs: 'points-logs', approval: 'points-approval', 'bonus-approval': 'points-bonus-approval' };
         initAdminSidebar(keyMap[hash] || 'points-config', '登录身份: 积分管理员');
     }
     window.addEventListener('hashchange', applyPointsHash);

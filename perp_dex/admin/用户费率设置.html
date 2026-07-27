@@ -50,14 +50,22 @@
 
     <div class="flex-1 overflow-y-auto p-8 space-y-6" id="page-fee-settings">
         <section class="card p-5">
-            <div class="grid grid-cols-3 gap-4 items-end">
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">钱包地址</label>
-                    <input id="filterWallet" type="text" placeholder="0x..." class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="grid grid-cols-4 gap-4 items-end">
+                <div class="col-span-2">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID / 钱包地址</label>
+                    <input id="filterUser" type="text" placeholder="输入 UID 或钱包地址" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID</label>
-                    <input id="filterUid" type="text" placeholder="输入 UID" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">配置等级</label>
+                    <select id="filterLevel" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">全部</option>
+                        <option value="natural">自然升降</option>
+                        <option value="vip1">VIP 1</option>
+                        <option value="vip2">VIP 2</option>
+                        <option value="vip3">VIP 3</option>
+                        <option value="vip4">VIP 4</option>
+                        <option value="custom">自定义</option>
+                    </select>
                 </div>
                 <div class="flex gap-2">
                     <button onclick="applyFilters()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-slate-800">查询</button>
@@ -79,6 +87,7 @@
                         <th class="px-3 py-3 text-center">配置等级</th>
                         <th class="px-3 py-3 text-center">交易量对应等级</th>
                         <th class="px-3 py-3 text-center">费率 (Taker / Maker)</th>
+                        <th class="px-3 py-3 text-center">有效期天数</th>
                         <th class="px-3 py-3 text-right">近30日交易额</th>
                         <th class="px-3 py-3 text-right">近30日手续费收入</th>
                         <th class="px-3 py-3 text-right">近14日交易额</th>
@@ -216,17 +225,17 @@
     const OPERATOR = 'Fee_Admin';
 
     let users = [
-        { uid: '10028471', wallet: '0x7a3f...9c2e', vip: 2, feeMode: 'natural', adminOverride: false, taker: 0.00034, maker: 0.00010, volume30d: 8900000, feeIncome30d: 32800, volume14d: 4200000, feeIncome14d: 15400 },
-        { uid: '10031592', wallet: '0x2b91...4f8a', vip: 0, feeMode: 'custom', adminOverride: true, taker: 0.00020, maker: 0.00008, volume30d: 1200000, feeIncome30d: 4200, volume14d: 580000, feeIncome14d: 2100 },
-        { uid: '10019833', wallet: '0xd5e2...1a7b', vip: 4, feeMode: 'vip', adminOverride: true, taker: 0.00026, maker: 0.00004, volume30d: 125000000, feeIncome30d: 438000, volume14d: 680000000, feeIncome14d: 238000 },
-        { uid: '10042105', wallet: '0x9c44...6d31', vip: 1, feeMode: 'natural', adminOverride: false, taker: 0.00039, maker: 0.00013, volume30d: 5600000, feeIncome30d: 21000, volume14d: 8200000, feeIncome14d: 30500 },
-        { uid: '10005678', wallet: '0x1f88...e903', vip: 3, feeMode: 'natural', adminOverride: false, taker: 0.00029, maker: 0.00006, volume30d: 32000000, feeIncome30d: 115000, volume14d: 185000000, feeIncome14d: 66500 }
+        { uid: '10028471', wallet: '0x7a3f...9c2e', vip: 2, feeMode: 'natural', adminOverride: false, taker: 0.00034, maker: 0.00010, validDays: null, volume30d: 8900000, feeIncome30d: 32800, volume14d: 4200000, feeIncome14d: 15400 },
+        { uid: '10031592', wallet: '0x2b91...4f8a', vip: 0, feeMode: 'custom', adminOverride: true, taker: 0.00020, maker: 0.00008, validDays: 30, volume30d: 1200000, feeIncome30d: 4200, volume14d: 580000, feeIncome14d: 2100 },
+        { uid: '10019833', wallet: '0xd5e2...1a7b', vip: 4, feeMode: 'vip', adminOverride: true, taker: 0.00026, maker: 0.00004, validDays: 180, volume30d: 125000000, feeIncome30d: 438000, volume14d: 680000000, feeIncome14d: 238000 },
+        { uid: '10042105', wallet: '0x9c44...6d31', vip: 1, feeMode: 'natural', adminOverride: false, taker: 0.00039, maker: 0.00013, validDays: null, volume30d: 5600000, feeIncome30d: 21000, volume14d: 8200000, feeIncome14d: 30500 },
+        { uid: '10005678', wallet: '0x1f88...e903', vip: 3, feeMode: 'natural', adminOverride: false, taker: 0.00029, maker: 0.00006, validDays: null, volume30d: 32000000, feeIncome30d: 115000, volume14d: 185000000, feeIncome14d: 66500 }
     ];
 
     let filteredUsers = [...users];
     let currentUserId = null;
     let draftConfig = null;
-    let uploadState = { proof: null };
+    let uploadState = { proof: null, proofDataUrl: null };
 
     function calcVolumeTier(volume14d) {
         if (volume14d >= 500000000) return 4;
@@ -296,7 +305,7 @@
         const tbody = document.getElementById('userTableBody');
         document.getElementById('userCount').textContent = `(${filteredUsers.length})`;
         if (!filteredUsers.length) {
-            tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-12 text-center text-slate-400">未找到匹配用户</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" class="px-6 py-12 text-center text-slate-400">未找到匹配用户</td></tr>';
             return;
         }
         tbody.innerHTML = filteredUsers.map(u => `
@@ -308,6 +317,7 @@
                 <td class="px-3 py-4 text-center">${configLevelLabel(u)}</td>
                 <td class="px-3 py-4 text-center">${volumeTierLabel(u.volume14d)}</td>
                 <td class="px-3 py-4 text-center font-mono text-[11px]">${formatFee(u.taker, u.maker)}</td>
+                <td class="px-3 py-4 text-center font-bold text-slate-600">${u.validDays != null ? u.validDays + ' 天' : '-'}</td>
                 <td class="px-3 py-4 text-right font-bold text-slate-700">${formatMoney(u.volume30d)}</td>
                 <td class="px-3 py-4 text-right font-bold text-blue-600">${formatMoney(u.feeIncome30d)}</td>
                 <td class="px-3 py-4 text-right font-bold text-slate-600">${formatMoney(u.volume14d)}</td>
@@ -320,20 +330,28 @@
         `).join('');
     }
 
+    function matchLevelFilter(u, levelFilter) {
+        if (levelFilter === 'all') return true;
+        if (levelFilter === 'natural') return !u.adminOverride;
+        if (levelFilter === 'custom') return u.adminOverride && u.feeMode === 'custom';
+        const vipLevel = parseInt(levelFilter.replace('vip', ''), 10);
+        return u.adminOverride && u.feeMode === 'vip' && u.vip === vipLevel;
+    }
+
     function applyFilters() {
-        const wallet = document.getElementById('filterWallet').value.trim().toLowerCase();
-        const uid = document.getElementById('filterUid').value.trim();
+        const userQ = document.getElementById('filterUser').value.trim().toLowerCase();
+        const levelFilter = document.getElementById('filterLevel').value;
         filteredUsers = users.filter(u => {
-            if (wallet && !u.wallet.toLowerCase().includes(wallet)) return false;
-            if (uid && !u.uid.includes(uid)) return false;
+            if (userQ && !u.wallet.toLowerCase().includes(userQ) && !u.uid.includes(userQ)) return false;
+            if (!matchLevelFilter(u, levelFilter)) return false;
             return true;
         });
         renderUserTable();
     }
 
     function resetFilters() {
-        document.getElementById('filterWallet').value = '';
-        document.getElementById('filterUid').value = '';
+        document.getElementById('filterUser').value = '';
+        document.getElementById('filterLevel').value = 'all';
         filteredUsers = [...users];
         renderUserTable();
     }
@@ -349,7 +367,7 @@
     }
 
     function resetUploads() {
-        uploadState = { proof: null };
+        uploadState = { proof: null, proofDataUrl: null };
         const input = document.getElementById('proofFile');
         const box = document.getElementById('proofUploadBox');
         const text = document.getElementById('proofUploadText');
@@ -365,6 +383,11 @@
         const file = input.files[0];
         if (!file) return;
         uploadState[type] = file.name;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            uploadState[type + 'DataUrl'] = e.target.result;
+        };
+        reader.readAsDataURL(file);
         const box = document.getElementById(type + 'UploadBox');
         const text = document.getElementById(type + 'UploadText');
         box.classList.add('has-file');
@@ -477,7 +500,8 @@
                 taker: formatFeePct(draftConfig.taker),
                 maker: formatFeePct(draftConfig.maker),
                 validDays: validDays,
-                attachments: [uploadState.proof].filter(Boolean)
+                attachments: [uploadState.proof].filter(Boolean),
+                attachmentPreviews: uploadState.proof ? { [uploadState.proof]: uploadState.proofDataUrl || '' } : {}
             };
             const summaryExtra = validDays ? ' · ' + validDays + ' 天有效' : '';
             submitApprovalApplication({
@@ -548,7 +572,7 @@
 <script src="admin-approval-ui.js"></script>
 <script src="admin-sidebar.js"></script>
 <script>
-    initModuleApproval({ type: 'fee_config', rootId: 'fee-approval-root', title: '用户费率审批' });
+    initModuleApproval({ type: 'fee_config', rootId: 'fee-approval-root', title: '用户费率审批', showExportList: false, showExportDetail: false, detailImagePreview: true });
 
     function showFeePage(page) {
         const isApproval = page === 'approval';
