@@ -6,13 +6,6 @@
 (function () {
     const MODULES = [
         {
-            title: '审批中心',
-            items: [
-                { key: 'approval-pending', label: '待我审批', href: '审批中心.html#pending' },
-                { key: 'approval-all', label: '全部审批', href: '审批中心.html#all' }
-            ]
-        },
-        {
             title: '代理中心',
             items: [
                 { key: 'agent-mgmt', label: '一级代理管理', href: '代理中心后台.html#agent' },
@@ -25,6 +18,7 @@
             items: [
                 { key: 'trial-config', label: '卡组配置', href: '体验金后台.html#config' },
                 { key: 'trial-issue', label: '批量发放', href: '体验金后台.html#issue' },
+                { key: 'trial-approval', label: '发放审批', href: '体验金后台.html#approval' },
                 { key: 'trial-users', label: '用户查询与回收', href: '体验金后台.html#users' },
                 { key: 'trial-logs', label: '操作记录', href: '体验金后台.html#logs' }
             ]
@@ -46,6 +40,7 @@
             title: '费率',
             items: [
                 { key: 'fee-settings', label: '用户费率设置', href: '用户费率设置.html' },
+                { key: 'fee-approval', label: '费率审批', href: '用户费率设置.html#approval' },
                 { key: 'fee-log', label: '费率操作记录', href: '费率操作记录.html' }
             ]
         },
@@ -55,6 +50,7 @@
                 { key: 'points-config', label: '每周积分总池设置', href: '积分后台.html#config' },
                 { key: 'points-users', label: '用户积分查询', href: '积分后台.html#users' },
                 { key: 'points-manual', label: '手动发放积分', href: '积分后台.html#manual' },
+                { key: 'points-approval', label: '发放审批', href: '积分后台.html#approval' },
                 { key: 'points-logs', label: '操作记录', href: '积分后台.html#logs' }
             ]
         }

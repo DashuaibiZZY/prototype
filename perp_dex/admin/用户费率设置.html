@@ -48,7 +48,7 @@
         </div>
     </header>
 
-    <div class="flex-1 overflow-y-auto p-8 space-y-6">
+    <div class="flex-1 overflow-y-auto p-8 space-y-6" id="page-fee-settings">
         <section class="card p-5">
             <div class="grid grid-cols-3 gap-4 items-end">
                 <div>
@@ -91,6 +91,10 @@
             </div>
         </section>
     </div>
+
+    <div id="page-fee-approval" class="hidden flex-1 overflow-y-auto p-8">
+        <div id="fee-approval-root"></div>
+    </div>
 </main>
 
 <div id="drawerOverlay" class="drawer-overlay hidden" onclick="closeDrawer()"></div>
@@ -132,17 +136,19 @@
                     <input id="customMaker" type="number" step="0.001" min="0" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
             </div>
+            <div class="mt-4">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">有效期天数（可选）</label>
+                <input id="feeValidDays" type="number" min="1" placeholder="留空表示永久有效" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                <p class="text-[10px] text-slate-400 mt-1">填写后，自审批通过日起算，到期日当天 24:00 费率自动失效并恢复自然升降。</p>
+            </div>
+        </section>
+
+        <section class="card p-5">
+            <div id="fee-activity-picker"></div>
         </section>
 
         <section class="card p-5 space-y-4">
-            <h3 class="text-sm font-bold text-slate-800">审批材料（必填）</h3>
-            <div>
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">审批截图 <span class="text-red-500">*</span></label>
-                <label class="upload-box" id="approvalUploadBox">
-                    <input type="file" id="approvalFile" accept="image/*" onchange="onFileSelect('approval', this)">
-                    <div id="approvalUploadText" class="text-[11px] text-slate-500">点击上传审批截图</div>
-                </label>
-            </div>
+            <h3 class="text-sm font-bold text-slate-800">证明材料</h3>
             <div>
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">用户价值证明（其他交易所截图）<span class="text-red-500">*</span></label>
                 <label class="upload-box" id="proofUploadBox">
@@ -159,7 +165,7 @@
         <section class="card p-5">
             <h3 class="text-sm font-bold text-slate-800 mb-3">审批流程</h3>
             <div id="feeApprovalFlowPreview"></div>
-            <p class="text-[10px] text-slate-400 mt-2">提交后依次经运营负责人、风控审批通过后生效</p>
+            <p class="text-[10px] text-slate-400 mt-2">提交后依次经市场运营交叉审核 → 风控 → 老板审批（支持 Lark 联动）后生效</p>
         </section>
     </div>
     <div class="px-6 py-4 border-t border-slate-100 flex gap-3 shrink-0">
@@ -220,7 +226,7 @@
     let filteredUsers = [...users];
     let currentUserId = null;
     let draftConfig = null;
-    let uploadState = { approval: null, proof: null };
+    let uploadState = { proof: null };
 
     function calcVolumeTier(volume14d) {
         if (volume14d >= 500000000) return 4;
@@ -343,20 +349,16 @@
     }
 
     function resetUploads() {
-        uploadState = { approval: null, proof: null };
-        ['approval', 'proof'].forEach(key => {
-            const input = document.getElementById(key + 'File');
-            const box = document.getElementById(key + 'UploadBox');
-            const text = document.getElementById(key + 'UploadText');
-            if (input) input.value = '';
-            if (box) box.classList.remove('has-file');
-            if (text) {
-                text.textContent = key === 'approval'
-                    ? '点击上传审批截图'
-                    : '点击上传其他交易所交易量 / VIP 等级截图';
-                text.className = 'text-[11px] text-slate-500';
-            }
-        });
+        uploadState = { proof: null };
+        const input = document.getElementById('proofFile');
+        const box = document.getElementById('proofUploadBox');
+        const text = document.getElementById('proofUploadText');
+        if (input) input.value = '';
+        if (box) box.classList.remove('has-file');
+        if (text) {
+            text.textContent = '点击上传其他交易所交易量 / VIP 等级截图';
+            text.className = 'text-[11px] text-slate-500';
+        }
     }
 
     function onFileSelect(type, input) {
@@ -388,7 +390,9 @@
         document.getElementById('customMaker').value = (user.maker * 100).toFixed(3);
         document.getElementById('revokeFeeBtn').classList.toggle('hidden', !user.adminOverride);
         document.getElementById('configRemark').value = '';
+        document.getElementById('feeValidDays').value = '';
         resetUploads();
+        if (!document.getElementById('fee-act-platform-select')) mountActivityPicker('fee-activity-picker', { prefix: 'fee-act', defaultMode: 'platform' });
         document.getElementById('feeApprovalFlowPreview').innerHTML = renderApprovalFlow('draft', true);
         document.getElementById('drawerOverlay').classList.remove('hidden');
         document.getElementById('configDrawer').classList.remove('hidden');
@@ -430,15 +434,18 @@
     function saveConfig() {
         const remark = document.getElementById('configRemark').value.trim();
         if (!remark) { showToast('请填写操作备注'); return; }
-        if (!uploadState.approval) { showToast('请上传审批截图'); return; }
         if (!uploadState.proof) { showToast('请上传用户价值证明截图'); return; }
+        const act = getActivityPickerValue('fee-act');
+        if (!act.valid) { showToast(act.message); return; }
 
         const configLabel = draftConfig.feeMode === 'vip'
             ? 'VIP ' + draftConfig.vip
             : '自定义 ' + formatFee(draftConfig.taker, draftConfig.maker);
+        const validDays = document.getElementById('feeValidDays').value.trim();
+        const validText = validDays ? validDays + ' 天（到期日 24:00 失效）' : '永久有效';
 
         document.getElementById('confirmSummary').innerHTML =
-            `UID ${currentUserId}<br>配置等级：${configLabel}<br>审批截图：${uploadState.approval}<br>价值证明：${uploadState.proof}<br>备注：${remark}`;
+            `UID ${currentUserId}<br>配置等级：${configLabel}<br>活动：${act.displayLabel}<br>有效期：${validText}<br>价值证明：${uploadState.proof}<br>备注：${remark}`;
         document.getElementById('confirmApprovalFlow').innerHTML = renderApprovalFlow('draft', true);
         document.getElementById('confirmModal').classList.remove('hidden');
         document.getElementById('confirmModal').classList.add('flex');
@@ -452,38 +459,46 @@
     function confirmSave() {
         const user = users.find(u => u.uid === currentUserId);
         const remark = document.getElementById('configRemark').value.trim();
-        if (user && draftConfig) {
+        const act = getActivityPickerValue('fee-act');
+        const validDaysRaw = document.getElementById('feeValidDays').value.trim();
+        const validDays = validDaysRaw ? parseInt(validDaysRaw, 10) : null;
+        if (user && draftConfig && act.valid) {
             const configLabel = draftConfig.feeMode === 'vip'
                 ? 'VIP ' + draftConfig.vip + ' ' + formatFee(draftConfig.taker, draftConfig.maker)
                 : '自定义 ' + formatFee(draftConfig.taker, draftConfig.maker);
             const feePayload = {
+                activityMode: act.activityMode,
+                activityId: act.activityId,
+                activityName: act.activityName,
                 uid: user.uid,
                 wallet: user.wallet,
                 feeMode: draftConfig.feeMode,
                 vipLevel: draftConfig.feeMode === 'vip' ? draftConfig.vip : null,
-                taker: formatFee(draftConfig.taker, draftConfig.maker).split(' / ')[0],
-                maker: formatFee(draftConfig.taker, draftConfig.maker).split(' / ')[1],
-                attachments: [uploadState.approval, uploadState.proof].filter(Boolean)
+                taker: formatFeePct(draftConfig.taker),
+                maker: formatFeePct(draftConfig.maker),
+                validDays: validDays,
+                attachments: [uploadState.proof].filter(Boolean)
             };
+            const summaryExtra = validDays ? ' · ' + validDays + ' 天有效' : '';
             submitApprovalApplication({
                 type: 'fee_config',
                 title: '用户费率配置',
                 applicant: OPERATOR,
                 remark: remark,
-                summary: 'UID ' + user.uid + ' · ' + configLabel,
+                summary: 'UID ' + user.uid + ' · ' + configLabel + summaryExtra,
                 payload: feePayload,
                 onSubmit: function (app) {
                     appendFeeLog({
                         uid: user.uid, wallet: user.wallet, action: '费率审批申请',
                         detail: `申请 ${configLabel} · 待审批 ${app.id}`,
-                        remark: remark, attachments: [uploadState.approval, uploadState.proof].filter(Boolean).join('、')
+                        remark: remark, attachments: uploadState.proof || '—'
                     });
                 }
             });
         }
         closeConfirmModal();
         closeDrawer();
-        showToast('审批申请已提交，等待运营负责人 → 风控审批');
+        showToast('审批申请已提交，等待市场运营交叉审核 → 风控 → 老板审批');
     }
 
     let revokeUserId = null;
@@ -529,7 +544,35 @@
     renderUserTable();
 </script>
 <script src="admin-approval.js"></script>
+<script src="admin-activity-picker.js"></script>
+<script src="admin-approval-ui.js"></script>
 <script src="admin-sidebar.js"></script>
-<script>initAdminSidebar('fee-settings', '登录身份: 费率管理员');</script>
+<script>
+    initModuleApproval({ type: 'fee_config', rootId: 'fee-approval-root', title: '用户费率审批' });
+
+    function showFeePage(page) {
+        const isApproval = page === 'approval';
+        document.getElementById('page-fee-settings').classList.toggle('hidden', isApproval);
+        document.getElementById('page-fee-approval').classList.toggle('hidden', !isApproval);
+        initAdminSidebar(isApproval ? 'fee-approval' : 'fee-settings', '登录身份: 费率管理员');
+    }
+
+    function applyFeeHash() {
+        const hash = (location.hash || '').replace('#', '') || 'settings';
+        if (hash.indexOf('approval-detail=') === 0) {
+            showFeePage('approval');
+            moduleApprovalHandleHash('fee-approval-root', hash, 'approval', 'approval-detail');
+            return;
+        }
+        if (hash === 'approval') {
+            showFeePage('approval');
+            moduleApprovalBackList('fee-approval-root', false);
+            return;
+        }
+        showFeePage('settings');
+    }
+    window.addEventListener('hashchange', applyFeeHash);
+    applyFeeHash();
+</script>
 </body>
 </html>
