@@ -381,17 +381,13 @@
                             </div>
                             <div class="flex justify-between items-end">
                                 <div class="space-y-1">
-                                    <p class="text-[10px] text-gray-400 font-bold uppercase">未實現盈虧(USDT)</p>
+                                    <p class="text-[10px] text-gray-400 font-bold uppercase dashed-underline inline-block cursor-pointer active:opacity-70" onclick="openRealizedPnlSheet(REALIZED_PNL_BREAKDOWN.pos)">未實現盈虧(USDT)</p>
                                     <p id="pos-pnl" class="text-lg font-black text-green-500">+125.42</p>
                                 </div>
                                 <div class="text-right space-y-1">
                                     <p class="text-[10px] text-gray-400 font-bold dashed-underline inline-block">投資回報率</p>
                                     <p id="pos-roi" class="text-sm font-black text-green-500">+12.35%</p>
                                 </div>
-                            </div>
-                            <div class="pt-1">
-                                <p class="text-[10px] text-gray-400 font-bold uppercase">已實現盈虧 (USDT)</p>
-                                <p class="text-sm font-black text-red-500 dashed-underline inline-block cursor-pointer active:opacity-70" onclick="openRealizedPnlSheet(REALIZED_PNL_BREAKDOWN.pos)">-579.30</p>
                             </div>
                             <div class="grid grid-cols-3 gap-2 py-2 border-t border-gray-50">
                                 <div class="space-y-1">
@@ -1087,7 +1083,7 @@
     const orderTypeLabels = { limit: '限價委託', market: '市價委託', 'profit-loss': '止盈止損' };
 
     const REALIZED_PNL_BREAKDOWN = {
-        pos: { total: -579.30, closePnl: -554.02, funding: 11.35, fee: -36.64 },
+        pos: { total: -45.20, closePnl: -38.10, funding: 2.15, fee: -9.25 },
         hist: { total: -579.30, closePnl: -554.02, funding: 11.35, fee: -36.64 }
     };
     let obLayoutMode = 'split';
@@ -1137,14 +1133,20 @@
             buyEl.classList.remove('hidden');
             sellEl.classList.add('flex-1');
             buyEl.classList.add('flex-1');
+            sellEl.classList.remove('justify-between');
+            buyEl.classList.remove('justify-between');
         } else if (obLayoutMode === 'buy') {
             sellEl.classList.add('hidden');
             buyEl.classList.remove('hidden');
             buyEl.classList.add('flex-1');
+            buyEl.classList.add('justify-between');
+            sellEl.classList.remove('justify-between');
         } else {
             buyEl.classList.add('hidden');
             sellEl.classList.remove('hidden');
             sellEl.classList.add('flex-1');
+            sellEl.classList.add('justify-between');
+            buyEl.classList.remove('justify-between');
         }
         if (midBar) midBar.classList.toggle('hidden', obLayoutMode !== 'split');
     }
@@ -1194,10 +1196,25 @@
         `).join('');
     }
 
+    function getObRowsForMode(rows, side) {
+        const targetCount = obLayoutMode === 'split' ? 8 : 16;
+        if (rows.length >= targetCount) return rows.slice(0, targetCount);
+        const expanded = rows.slice();
+        const basePrice = side === 'sell' ? (rows[0]?.price || 72314.2) : (rows[rows.length - 1]?.price || 72298.1);
+        while (expanded.length < targetCount) {
+            const idx = expanded.length + 1;
+            expanded.push({
+                price: side === 'sell' ? basePrice + idx * 1.1 : basePrice - idx * 1.1,
+                qty: Math.random() * 2.5 + 0.15
+            });
+        }
+        return expanded;
+    }
+
     function renderOrderBookDepth() {
         if (isPremarketMode) return;
-        renderObSide('ob-sell-list', obSellRows, 'sell');
-        renderObSide('ob-buy-list', obBuyRows, 'buy');
+        renderObSide('ob-sell-list', getObRowsForMode(obSellRows, 'sell'), 'sell');
+        renderObSide('ob-buy-list', getObRowsForMode(obBuyRows, 'buy'), 'buy');
     }
 
     function tickOrderBookDepth() {
