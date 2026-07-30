@@ -10,9 +10,12 @@
         body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #111827; font-size: 11px; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .dashed-hint { border-bottom: 1px dashed #9ca3af; cursor: help; }
-        .realized-pnl-tip { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); z-index: 60; min-width: 188px; background: #fff; border: 1px solid #e5e7eb; border-radius: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 10px 12px; font-size: 10px; line-height: 1.6; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity .15s, visibility .15s; }
+        .realized-pnl-wrap { position: relative; z-index: 1; }
+        .realized-pnl-wrap:hover { z-index: 200; }
+        .realized-pnl-tip { position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); z-index: 200; min-width: 188px; background: #fff; border: 1px solid #e5e7eb; border-radius: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 10px 12px; font-size: 10px; line-height: 1.6; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity .15s, visibility .15s; }
         .realized-pnl-wrap:hover .realized-pnl-tip { opacity: 1; visibility: visible; }
-        .realized-pnl-tip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: #e5e7eb; }
+        .realized-pnl-tip::before { content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-bottom-color: #e5e7eb; }
+        #data-body td { overflow: visible; position: relative; }
         .ob-layout-btn { width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; color: #9ca3af; transition: color .15s, background .15s; }
         .ob-layout-btn:hover { color: #111827; background: #f3f4f6; }
         .ob-layout-btn.active { color: #111827; background: #f3f4f6; }
@@ -2739,11 +2742,11 @@
         } else if (obLayoutMode === 'buy') {
             sellEl.classList.add('hidden');
             buyEl.classList.remove('hidden');
-            buyEl.className = 'flex-1 flex flex-col overflow-hidden font-medium';
+            buyEl.className = 'flex-1 flex flex-col overflow-hidden font-medium justify-between';
         } else {
             buyEl.classList.add('hidden');
             sellEl.classList.remove('hidden');
-            sellEl.className = 'flex-1 flex flex-col-reverse overflow-hidden font-medium';
+            sellEl.className = 'flex-1 flex flex-col-reverse overflow-hidden font-medium justify-between';
         }
         if (midBar) midBar.classList.toggle('hidden', obLayoutMode !== 'split');
     }
@@ -2761,12 +2764,13 @@
         buyEl.innerHTML = '';
 
         const basePrice = 65432.1;
+        const rowCount = obLayoutMode === 'split' ? 12 : 24;
         // 生成卖单：价格从低到高（近 -> 远）
         const sells = [];
-        for (let i = 1; i <= 12; i++) sells.push({ price: basePrice + i * 2.5, qty: Math.random() * 2 + 0.1 });
+        for (let i = 1; i <= rowCount; i++) sells.push({ price: basePrice + i * 2.5, qty: Math.random() * 2 + 0.1 });
         // 生成买单：价格从高到低（近 -> 远）
         const buys = [];
-        for (let i = 1; i <= 12; i++) buys.push({ price: basePrice - i * 2.5, qty: Math.random() * 2 + 0.1 });
+        for (let i = 1; i <= rowCount; i++) buys.push({ price: basePrice - i * 2.5, qty: Math.random() * 2 + 0.1 });
 
         // ---- 卖单：渲染为价格降序（远处在上，近处在下） ----
         const sellsDesc = [...sells].sort((a,b) => b.price - a.price); // 远->近
