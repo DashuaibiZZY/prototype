@@ -1,12 +1,12 @@
 # 积分（后台/Web/APP）
 
-> 文档配图存放在 Git 分支 **`doc-assets`**，正文以「页面截图：[链接文案](GitHub raw URL)」超链接引用（只显示文案，点击在新页查看图片；勿用 `![]()` 图片语法）；`main` 分支不包含 PNG。更新配图：`node scripts/capture-points-doc-screenshots.mjs` → `node scripts/push-doc-assets.mjs`。
+> 文档配图存放在 Git 分支 **doc-assets**，正文以「页面截图：[**链接文案**](GitHub raw URL)」与「**原型**：[完整 URL](完整 URL)」引用；勿用 ![]() 图片语法。更新配图：node scripts/capture-points-doc-screenshots.mjs → node scripts/push-doc-assets.mjs。
 
 ## 积分机制
 
 ### **机制1：新人任务**
 
-页面截图：[后台 · 新人任务规则（只读）](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-config-newbie-tasks.png)
+页面截图：[**后台 · 新人任务规则（只读）**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-config-newbie-tasks.png)
 
 - 后端业务逻辑描述：新人专属任务检查
 
@@ -28,7 +28,7 @@
 
 ### 机制2：积分加成自动化规则
 
-页面截图：[后台 · 个人等级加成系数表](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-config-level-bonus.png)
+页面截图：[**后台 · 个人等级加成系数表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-config-level-bonus.png)
 
 在计算任何积分维度之前，系统首先根据用户的**“伞下周交易额”确定其当周的个人等级加成系数**。
 
@@ -44,7 +44,7 @@
 
 ### 机制3：积分得分计算公式
 
-页面截图：[后台 · 六维度子池分配](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-config-dimensions.png)
+页面截图：[**后台 · 六维度子池分配**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-config-dimensions.png)
 
 - 系统每周设定一个**固定积分总池（后台管理可配置）**。积分按 6 个维度进行拆分，每个维度都有独立的固定子池。
 
@@ -115,7 +115,7 @@
 - **模块名称**：积分后台管理系统
 - **核心目标**：配置每周积分总池与瓜分规则、查询用户积分与流水、执行积分手动发放与自定义加成配置，并通过统一四级审批保障敏感操作合规
 - **使用人员**：平台运营（积分管理员提交申请）；市场运营交叉 / 风控 / 老板（按角色审批）
-- **原型链接**：`https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html`
+- **原型链接**：[https://dashuaibizzy.github.io/prototype/https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html](https://dashuaibizzy.github.io/prototype/https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html)
 
 ---
 
@@ -132,20 +132,20 @@
 | 积分审核 | 积分手动发放 + 积分加成配置审批（合并） | `#approval` |
 | 操作记录 | 手动发放与规则配置审计日志 | `#logs` |
 
-**原型主文件**：`perp_dex/admin/积分后台.html`  
+**原型主文件**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html](https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html)  
 **权限**：积分管理员（提交申请）；市场运营交叉 / 风控 / 老板（按角色审批）。
 
 ---
 
 ### 3.1 每周积分总池设置
 
-**原型**：`perp_dex/admin/积分后台.html#config`
+**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#config](https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#config)
 
 本页用于配置每周自动瓜分的积分总池，并展示六维度子池占比、个人等级加成系数及新人任务规则（系统只读）。系统每周一 **00:00（UTC+8）** 根据上周数据自动结算发放。
 
 #### 每周积分总池
 
-页面截图：[后台 · 每周积分总池配置](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-config-pool.png)
+页面截图：[**后台 · 每周积分总池配置**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-config-pool.png)
 
 | 配置项 | 说明 |
 |---|---|
@@ -194,9 +194,9 @@
 
 ### 3.2 积分加成配置
 
-**原型**：`perp_dex/admin/积分后台.html#bonus`
+**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#bonus](https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#bonus)
 
-页面截图：[后台 · 积分加成配置](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-bonus-config.png)
+页面截图：[**后台 · 积分加成配置**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-bonus-config.png)
 
 为单个或批量用户配置**自定义积分加成系数**，覆盖自然等级加成。提交前系统校验自然等级加成是否高于新设置值，存在异常时须市场运营确认后进入审批流程。
 
@@ -238,9 +238,9 @@
 
 ### 3.3 用户积分查询
 
-**原型**：`perp_dex/admin/积分后台.html#users`
+**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#users](https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#users)
 
-页面截图：[后台 · 用户积分列表](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-users-list.png)
+页面截图：[**后台 · 用户积分列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-users-list.png)
 
 查询用户当前积分、等级加成、加成类型及上周各维度得分，可进入查看完整发放流水。
 
@@ -269,7 +269,7 @@
 
 #### 用户积分流水详情
 
-页面截图：[后台 · 用户积分流水详情](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-user-detail.png)
+页面截图：[**后台 · 用户积分流水详情**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-user-detail.png)
 
 点击「查看流水」进入详情子页，顶部展示：
 
@@ -298,9 +298,9 @@
 
 ### 3.4 手动发放积分
 
-**原型**：`perp_dex/admin/积分后台.html#manual`
+**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#manual](https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#manual)
 
-页面截图：[后台 · 手动发放积分](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-manual-grant.png)
+页面截图：[**后台 · 手动发放积分**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-manual-grant.png)
 
 用于活动奖励、空投、补偿等场景的批量积分增发，须关联活动并走四级审批。
 
@@ -340,10 +340,10 @@
 
 ### 3.5 积分审核
 
-**原型**：`perp_dex/admin/积分后台.html#approval`  
+**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#approval](https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#approval)  
 **侧栏入口**：积分 → 积分审核
 
-页面截图：[后台 · 积分审核列表](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-approval-list.png)
+页面截图：[**后台 · 积分审核列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-approval-list.png)
 
 积分审核页将**积分手动发放**与**积分加成配置**两类审批合并为统一列表，共用四级审批引擎（与费率、体验金一致）。
 
@@ -382,7 +382,7 @@
 
 #### 审批详情页
 
-页面截图：[后台 · 审批详情](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-approval-detail.png)
+页面截图：[**后台 · 审批详情**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-approval-detail.png)
 
 点击「查看」或「审批」进入详情子页（Hash：`#approval-detail=<审批单号>`）。
 
@@ -461,9 +461,9 @@
 
 ### 3.6 操作记录
 
-**原型**：`perp_dex/admin/积分后台.html#logs`
+**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#logs](https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#logs)
 
-页面截图：[后台 · 操作记录](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-operation-logs.png)
+页面截图：[**后台 · 操作记录**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-operation-logs.png)
 
 记录手动发放积分及规则配置（总池变更、加成配置提交等）的审计日志。
 
@@ -506,7 +506,7 @@
 
 - **核心功能点**：建立‘积分即权重’的强空投预期，通过每周动态奖池瓜分、阶梯式新人任务以及倍率加成体系
 
-- **原型链接**：https://dashuaibizzy\.github\.io/prototype/perp\_dex/points\.html
+- **原型链接**：[https://dashuaibizzy.github.io/prototype/perp_dex/points.html](https://dashuaibizzy.github.io/prototype/perp_dex/points.html)
 
 ---
 
@@ -516,7 +516,7 @@
 
 **位置**：页面顶部核心卡片
 
-页面截图：[Web · 积分看板](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/web-points-dashboard.png)
+页面截图：[**Web · 积分看板**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/web-points-dashboard.png)
 
 - **功能需求**：
 
@@ -528,13 +528,13 @@
 
     - **加成倍率**：显示当前生效的倍率
 
-    页面截图：[Web · 加成倍率阶梯弹窗](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/web-multiplier-rules-modal.png)
+    页面截图：[**Web · 加成倍率阶梯弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/web-multiplier-rules-modal.png)
 
     - **全站总积分**：静态展示全平台累计已产生积分总量，数值取自后台统计（示例：12,450,234,124）。
 
 - **查看详情（积分流水详情）**：
 
-    页面截图：[Web · 积分发放明细弹窗](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/web-points-detail-modal.png)
+    页面截图：[**Web · 积分发放明细弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/web-points-detail-modal.png)
 
     - **查看详情按钮**：点击触发弹窗，展示流水
 
@@ -548,7 +548,7 @@
 
 **位置**：页面中部，分为“循环任务”与“单次任务”
 
-页面截图：[Web · 积分获取体系](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/web-points-tasks.png)
+页面截图：[**Web · 积分获取体系**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/web-points-tasks.png)
 
 - 新人专属任务 \- 功能样式与交互
 
@@ -578,7 +578,7 @@
 
 #### **2\.3 常见问题**
 
-页面截图：[Web · 常见问题](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/web-points-faq.png)
+页面截图：[**Web · 常见问题**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/web-points-faq.png)
 
 - **位置**：全局统计数据下方。
 
@@ -598,7 +598,7 @@
 
 - **核心目标**：在移动端清晰展示用户积分资产、排名及加成倍率，并引导用户完成积分任务，建立积分价值预期。
 
-- **原型参考**：https://dashuaibizzy\.github\.io/prototype/perp\_dex/app/%E7%A7%AF%E5%88%86\.html
+- **原型参考**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/%E7%A7%AF%E5%88%86.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/%E7%A7%AF%E5%88%86.html)
 
     
 
@@ -620,7 +620,7 @@
 
 #### **2\.2 核心积分看板**
 
-页面截图：[App · 核心积分看板](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/app-points-dashboard.png)
+页面截图：[**App · 核心积分看板**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/app-points-dashboard.png)
 
 - **位置**：导航栏下方主视觉区域
 
@@ -634,7 +634,7 @@
 
     - **加成规则入口**：加成系数旁设“感叹号”图标按钮。点击后弹出弹窗，展示具体加成阶梯对照表及触发条件简述。
 
-    页面截图：[App · 加成规则弹窗](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/app-multiplier-rules-modal.png)
+    页面截图：[**App · 加成规则弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/app-multiplier-rules-modal.png)
 
     - **全站排名**：显示“排名 \#数字”，如 `#982`。若排名超过1000则显示 `1000+`。
 
@@ -646,7 +646,7 @@
 
 #### **2\.3 积分获取体系**
 
-页面截图：[App · 积分获取体系](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/app-points-tasks.png)
+页面截图：[**App · 积分获取体系**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/app-points-tasks.png)
 
 - **位置**：积分看板下方
 
@@ -688,7 +688,7 @@
 
 #### **2\.4 常见问题**
 
-页面截图：[App · 常见问题](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/app-points-faq.png)
+页面截图：[**App · 常见问题**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/app-points-faq.png)
 
 - **位置**：全局统计数据下方。
 
@@ -708,13 +708,13 @@
 
 - **核心目标**：以时间线列表形式，清晰展示用户每一笔积分的来源、时间及变动数额，支持上拉加载更多历史记录。
 
-- **原型参考**：https://dashuaibizzy\.github\.io/prototype/perp\_dex/app/%E7%A7%AF%E5%88%86%E5%8F%91%E6%94%BE%E8%AE%B0%E5%BD%95\.html
+- **原型参考**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/%E7%A7%AF%E5%88%86%E5%8F%91%E6%94%BE%E8%AE%B0%E5%BD%95.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/%E7%A7%AF%E5%88%86%E5%8F%91%E6%94%BE%E8%AE%B0%E5%BD%95.html)
 
     
 
 ### **2\. 页面结构**
 
-页面截图：[App · 积分发放明细页](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/app-points-history.png)
+页面截图：[**App · 积分发放明细页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/app-points-history.png)
 
 **2\.1 顶部导航栏**
 

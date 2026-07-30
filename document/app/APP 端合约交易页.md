@@ -1,5 +1,11 @@
 # APP 端合约交易页
 
+> 文档配图存放在 Git 分支 **doc-assets**，正文以「页面截图：[**链接文案**](GitHub raw URL)」与「**原型**：[完整 URL](完整 URL)」引用；勿用 ![]() 图片语法。更新配图：node scripts/capture-app-contract-doc-screenshots.mjs → node scripts/push-doc-assets.mjs。
+
+**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/合约交易.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/合约交易.html)
+
+**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/合约偏好设置.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/合约偏好设置.html)
+
 # **【重要说明】**
 
 > 本文档为 APP 端合约交易页面的交互与功能需求说明，供产品、UI 及前端开发参考。
@@ -52,6 +58,9 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 
 ## 1\.2 交易对与涨跌幅
 
+页面截图：[**App · 顶部导航栏**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-header.png)
+
+
 **（1）交易对名称**
 
 - 左侧展示当前交易对名称（如 BTCUSDT），字体加粗。
@@ -90,9 +99,15 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 
 ## 2\.1 功能概述
 
+页面截图：[**App · 盘口深度区**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-trade-area.png)
+
+
 以紧凑纵向布局展示当前交易对的实时买卖挂单深度、最新价、标记价及资金费率倒计时，支持精度切换与深度可视化。
 
 ## 2\.2 资金费率 / 倒计时
+
+页面截图：[**App · 资金费率说明弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-sheet-funding.png)
+
 
 - 位于盘口区域最上方，文案格式：「資金費率 / 时:分:秒」（距下次结算倒计时）。
 
@@ -137,6 +152,9 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 - 每行背景有**绿色深度渐变条**，宽度表示买盘深度占比；自右向左延伸。
 
 ## 2\.7 盘口精度切换
+
+页面截图：[**App · 盘口精度弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-sheet-precision.png)
+
 
 - 默认显示当前生效的精度值（如“0\.01”），旁边有下拉三角图标。
 
@@ -222,6 +240,11 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 
 ## 3\.2 仓位模式与杠杆
 
+页面截图：[**App · 杠杆调整弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-sheet-leverage.png)
+
+页面截图：[**App · 保证金模式弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-sheet-margin.png)
+
+
 ### 3\.2\.1 仓位模式切换
 
 **业务规则（与 Web 一致）：**
@@ -293,6 +316,9 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 - 点击平多/平空进入下单确认流程（交易终端内）；**持仓卡片「平倉」按钮**则先打开平仓设置弹层（见 4\.3\.3）。
 
 ## 3\.4 订单类型选择
+
+页面截图：[**App · 订单类型弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-sheet-order-type.png)
+
 
 **（1）触发方式**
 
@@ -460,6 +486,9 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 - 止盈止损双向模式下，两个触发条件共用同一数量。
 
 ## 3\.6 最优价功能（仅限价单）
+
+页面截图：[**App · 最优价弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-sheet-best-price.png)
+
 
 **选项（与 Web 一致）：**
 
@@ -690,6 +719,9 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 
 ### 3\.8\.2 确认弹窗字段
 
+页面截图：[**App · 下单确认弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-modal-order-confirm.png)
+
+
 **限价/市价开仓：**
 
 |字段|说明|
@@ -783,6 +815,11 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 
 ## 4\.2 当前持仓
 
+页面截图：[**App · 当前持仓卡片**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-positions.png)
+
+页面截图：[**App · 已实现盈亏拆解弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-sheet-realized-pnl.png)
+
+
 ### 4\.2\.1 工具栏
 
 - **隐藏其他合约**：复选框，勾选后仅展示当前交易对持仓。
@@ -852,6 +889,11 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 
 ### 4\.2\.3 持仓止盈止损设置弹层
 
+页面截图：[**App · 持仓止盈止损设置弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-sheet-position-tpsl.png)
+
+页面截图：[**App · 持仓止盈止损确认弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-modal-tpsl-confirm.png)
+
+
 参考 Web 端持仓区「设置止盈止损」弹窗，APP 以**底部弹层**实现。
 
 **（1）头部**
@@ -897,6 +939,9 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 - 点击触发价类型，打开通用选择器弹层（最新价格 / 标记价格），叠放层级须高于本弹层。
 
 ### 4\.2\.4 持仓平仓设置弹层
+
+页面截图：[**App · 持仓平仓设置弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-sheet-close-position.png)
+
 
 点击持仓卡片「平倉」先打开本弹层，确认后再进入下单确认（非直接平仓）。
 
@@ -1063,6 +1108,9 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 
 ## 6\.2 选择合约弹层（交易对切换）
 
+页面截图：[**App · 选择合约弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-sheet-pair.png)
+
+
 **结构与 Web 2\.3 业务规则一致，交互为底部弹层：**
 
 **（1）结构**
@@ -1153,6 +1201,9 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 
 ## 6\.9 更多功能弹层
 
+页面截图：[**App · 更多功能弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-sheet-more-menu.png)
+
+
 四列图标网格：
 
 |入口|跳转/行为|
@@ -1191,6 +1242,9 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 见 3\.8。
 
 ## 6\.13 一键平仓确认居中弹窗
+
+页面截图：[**App · 一键平仓确认弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-modal-close-all.png)
+
 
 - 标题「一鍵平倉確認」。
 
