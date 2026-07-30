@@ -61,6 +61,86 @@ const shots = [
     before: "document.getElementById('modal-close-all').style.display='flex'",
     selector: '#modal-close-all > div.bg-white',
   },
+  // —— 浮窗 / 浮层 / Tooltip ——
+  {
+    file: 'web-float-mark-hint.png',
+    before:
+      "(() => { const t = document.querySelector('.market-hint-wrap .market-hint-tip'); if (t) { t.style.opacity='1'; t.style.visibility='visible'; } })()",
+    selector: '.market-hint-wrap .market-hint-tip',
+  },
+  {
+    file: 'web-float-index-hint.png',
+    before:
+      "(() => { const t = document.querySelector('div.flex.items-center.space-x-6 > div.flex.flex-col:nth-child(2) .market-hint-tip'); if (t) { t.style.opacity='1'; t.style.visibility='visible'; } })()",
+    selector: 'div.flex.items-center.space-x-6 > div.flex.flex-col:nth-child(2) .market-hint-tip',
+  },
+  {
+    file: 'web-float-funding-hint.png',
+    before:
+      "(() => { const t = document.getElementById('market-funding-hint-tip'); if (t) { t.style.opacity='1'; t.style.visibility='visible'; } })()",
+    selector: '#market-funding-hint-tip',
+  },
+  {
+    file: 'web-float-precision.png',
+    before: "document.getElementById('precision-trigger').click()",
+    selector: '#precision-dropdown',
+  },
+  {
+    file: 'web-float-gtc.png',
+    before: "toggleGtcDropdown({ stopPropagation: () => {} })",
+    selector: '#gtc-dropdown',
+  },
+  {
+    file: 'web-float-qty-unit.png',
+    before: "toggleQtyUnitDropdown({ stopPropagation: () => {} })",
+    selector: '#qty-unit-dropdown',
+  },
+  {
+    file: 'web-float-best-price-select.png',
+    before: 'toggleBestPriceMode()',
+    selector: '#price-input-container',
+  },
+  {
+    file: 'web-float-deposit.png',
+    before: 'openDepositModal()',
+    selector: 'body > div.fixed.inset-0 .bg-white.w-80',
+  },
+  {
+    file: 'web-float-transfer.png',
+    before: 'openTransferModal()',
+    selector: '#transfer-modal > div',
+  },
+  {
+    file: 'web-float-unit-switch.png',
+    before: "document.getElementById('modal-unit-switch').style.display='flex'",
+    selector: '#modal-unit-switch > .bn-modal',
+  },
+  {
+    file: 'web-float-cancel-order.png',
+    before: "switchDataTab('order'); openCancelConfirm('OR_882910')",
+    selector: '#modal-cancel-order > div.bg-white',
+  },
+  {
+    file: 'web-float-cancel-all-orders.png',
+    before: "switchDataTab('order'); openCancelAllConfirm()",
+    selector: '#modal-cancel-all > div.bg-white',
+  },
+  {
+    file: 'web-float-share-pnl.png',
+    before: "document.getElementById('modal-share-pnl').style.display='flex'",
+    selector: '#modal-share-pnl > div',
+  },
+  {
+    file: 'web-float-order-tpsl.png',
+    before: "document.getElementById('modal-order-tpsl').style.display='flex'",
+    selector: '#modal-order-tpsl > div',
+  },
+  {
+    file: 'web-float-realized-pnl-tip.png',
+    before:
+      "(() => { const w = document.querySelector('#data-body .realized-pnl-wrap'); if (w) { w.dispatchEvent(new MouseEvent('mouseenter')); const t = w.querySelector('.realized-pnl-tip'); if (t) { t.style.opacity='1'; t.style.visibility='visible'; } } })()",
+    selector: '#data-body .realized-pnl-tip',
+  },
 ];
 
 fs.mkdirSync(OUT, { recursive: true });
@@ -114,7 +194,19 @@ for (const shot of shots) {
         },
       });
     } else await el.screenshot({ path: outPath, type: 'png' });
-  } else await el.screenshot({ path: outPath, type: 'png' });
+  } else {
+    try {
+      await el.screenshot({ path: outPath, type: 'png' });
+    } catch {
+      const box = await el.boundingBox();
+      if (box) {
+        await page.screenshot({
+          path: outPath,
+          clip: { x: box.x, y: box.y, width: box.width, height: box.height },
+        });
+      }
+    }
+  }
   console.log('OK', shot.file);
   await page.close();
 }

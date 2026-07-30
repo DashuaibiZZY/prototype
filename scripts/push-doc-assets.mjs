@@ -5,6 +5,7 @@
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const ASSETS = path.join(ROOT, 'document/assets');
@@ -32,29 +33,39 @@ if (!images.length) {
 
 console.log(`找到 ${images.length} 张配图，准备推送到 doc-assets 分支…`);
 
-sh('git fetch origin doc-assets 2>/dev/null || true');
-sh('git stash push -u -m "doc-assets-temp" -- document/assets 2>/dev/null || true');
+const workBranch = execSync('git branch --show-current', { encoding: 'utf8' }).trim();
+const tmpAssets = path.join(os.tmpdir(), 'doc-assets-push-' + Date.now());
 
-try {
-  sh('git checkout doc-assets 2>/dev/null || git checkout -b doc-assets origin/doc-assets 2>/dev/null || git checkout -b doc-assets');
-} catch {
-  sh('git checkout -b doc-assets');
+fs.cpSync(ASSETS, tmpAssets, { recursive: true });
+
+sh('git fetch origin doc-assets 2>/dev/null || true');
+
+const status = execSync('git status --porcelain', { encoding: 'utf8' }).trim();
+let stashed = false;
+if (status) {
+  sh('git stash push -u -m "doc-assets-temp-all"');
+  stashed = true;
 }
 
-sh('git checkout stash -- document/assets 2>/dev/null || git stash pop 2>/dev/null || true');
+try {
+  sh('git checkout doc-assets');
+} catch {
+  sh('git checkout -B doc-assets origin/doc-assets');
+}
+
+fs.cpSync(tmpAssets, ASSETS, { recursive: true });
+fs.rmSync(tmpAssets, { recursive: true, force: true });
 
 sh('git add document/assets');
 sh('git commit -m "chore(doc-assets): 更新需求文档配图" || true');
 sh('git push -u origin doc-assets');
 
-const prev = execSync('git branch --show-current', { encoding: 'utf8' }).trim();
-// Return to previous branch if possible
-try {
-  const branches = execSync('git branch --format=%(refname:short)', { encoding: 'utf8' });
-  const workBranch = branches.split('\n').find((b) => b !== 'doc-assets' && b);
-  if (workBranch) sh(`git checkout ${workBranch}`);
-} catch {
-  sh('git checkout main');
+if (workBranch !== 'doc-assets') {
+  sh(`git checkout ${workBranch}`);
+}
+
+if (stashed) {
+  sh('git stash pop');
 }
 
 console.log('完成。配图已推送到 origin/doc-assets');
