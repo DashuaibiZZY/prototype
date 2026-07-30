@@ -1,6 +1,6 @@
 # 积分（后台/Web/APP）
 
-> 文档配图存放在 Git 分支 **`doc-assets`**，正文以「页面截图：」+ GitHub raw URL 形式引用（上传 Lark 时请复制链接，勿用 `![]()` 图片语法）；`main` 分支不包含 PNG。更新配图：`node scripts/capture-points-doc-screenshots.mjs` → `node scripts/push-doc-assets.mjs`。
+> 文档配图存放在 Git 分支 **`doc-assets`**，正文以「页面截图：[链接文案](GitHub raw URL)」超链接引用（只显示文案，点击在新页查看图片；勿用 `![]()` 图片语法）；`main` 分支不包含 PNG。更新配图：`node scripts/capture-points-doc-screenshots.mjs` → `node scripts/push-doc-assets.mjs`。
 
 ## 积分机制
 

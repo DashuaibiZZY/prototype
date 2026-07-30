@@ -4,10 +4,10 @@
 
 ## 文档中的引用格式
 
-上传 Lark 时勿使用 `![]()` 图片语法（会显示无法导入图片），请用纯链接：
+上传 Lark 时勿使用 `![]()` 图片语法（会显示无法导入图片），请用超链接（只显示链接文案，点击在新页打开图片）：
 
 ```markdown
-页面截图：https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/示例.png
+页面截图：[后台 · 新人任务规则（只读）](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-config-newbie-tasks.png)
 ```
 
 本地 `git pull main` **不会**拉取 PNG 文件。
