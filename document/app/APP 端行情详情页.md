@@ -1,6 +1,12 @@
 # APP 端行情详情页
 
+**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/行情详情.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/行情详情.html)
+
+**原型（指标设置子页）**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/指标设置.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/指标设置.html)
+
 ## 1\. 页面概述
+
+页面截图：[**App · 行情详情页整体**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情详情-app/app-market-detail-page.png)
 
 行情详情页用于展示单个交易对的实时行情、K线走势、订单簿及最新成交信息，并为用户提供快速进入合约开仓的入口。用户可通过行情列表页点击任意交易对进入此页面。
 
@@ -21,6 +27,8 @@
     
 
 ## 2\. 顶部导航栏
+
+页面截图：[**App · 顶部导航栏**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情详情-app/app-market-detail-header.png)
 
 ### 2\.1 返回按钮
 
@@ -58,7 +66,7 @@
 
 ## 3\. 价格概览模块
 
-
+页面截图：[**App · 价格概览模块**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情详情-app/app-market-detail-price.png)
 
 该模块展示当前交易对的核心行情数据，数据应实时或准实时更新。
 
@@ -123,6 +131,8 @@
 ---
 
 ## 4\. K线图表区
+
+页面截图：[**App · K 线图表区**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情详情-app/app-market-detail-kline.png)
 
 K线图是详情页核心数据展示区域，支持多种时间周期和常用技术指标。
 
@@ -221,6 +231,8 @@ K线图表区由主图和多个附图（可选）组成，采用上下分区布�
 
 ### 4\.3 技术指标选择栏
 
+页面截图：[**App · 技术指标选择栏**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情详情-app/app-market-detail-indicators.png)
+
 - 位置：位于主图与附图区域上方（或图表底部），一行内平铺所有可用指标名称，支持横向滚动（若屏宽不足）。
 
 - 指标分类：
@@ -259,11 +271,17 @@ K线图表区由主图和多个附图（可选）组成，采用上下分区布�
 
 ### 4\.4 指标设置入口
 
+页面截图：[**App · 指标设置列表页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情详情-app/app-market-detail-subpage-indicator-list.png)
+
+页面截图：[**App · MA 指标设置页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情详情-app/app-market-detail-subpage-indicator-ma.png)
+
 - 在时间周期切换右侧有一个设置齿轮图标，点击进入“指标设置”页面，用户可自定义指标参数（如 MA 的周期天数）。
 
     
 
 ### 4\.5 K线异常状态
+
+页面截图：[**App · 网络异常状态**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情详情-app/app-market-detail-network-error.png)
 
 - 当网络异常或数据加载失败时，K线图区域隐藏，显示异常占位视图：
 
@@ -283,6 +301,8 @@ K线图表区由主图和多个附图（可选）组成，采用上下分区布�
 
 ### 5\.1 订单簿（买盘/卖盘）
 
+页面截图：[**App · 订单簿**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情详情-app/app-market-detail-orderbook.png)
+
 - 展示当前交易对的挂单深度，分为左右两列：
 
     - 左侧：买盘（绿色调），价格从高到低排列，展示每个价位的委托数量。
@@ -298,6 +318,8 @@ K线图表区由主图和多个附图（可选）组成，采用上下分区布�
     
 
 ### 5\.2 最新成交
+
+页面截图：[**App · 最新成交**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情详情-app/app-market-detail-trades.png)
 
 - 展示最近的逐笔成交记录，以表格形式列出：
 
@@ -324,6 +346,8 @@ K线图表区由主图和多个附图（可选）组成，采用上下分区布�
     
 
 ### 5\.4 资金费率
+
+页面截图：[**App · 资金费率**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情详情-app/app-market-detail-funding.png)
 
 展示当前合约的资金费率相关信息，包括实时费率、历史趋势及历史结算记录，帮助用户了解持仓成本。内容与 Web 端合约交易页「资金费率」视图保持一致，采用移动端布局适配。
 
@@ -414,6 +438,8 @@ K线图表区由主图和多个附图（可选）组成，采用上下分区布�
 
 ## 6\. 底部交易按钮
 
+页面截图：[**App · 底部开多/开空按钮**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情详情-app/app-market-detail-footer.png)
+
 页面底部固定两个按钮，用于快速进入合约交易页面。
 
 
@@ -429,6 +455,8 @@ K线图表区由主图和多个附图（可选）组成，采用上下分区布�
 ---
 
 ## 7\. 分享功能
+
+页面截图：[**App · 分享海报弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情详情-app/app-market-detail-modal-share.png)
 
 点击右上角分享按钮，弹出分享海报弹窗。
 
