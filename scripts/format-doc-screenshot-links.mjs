@@ -42,19 +42,24 @@ const labels = {
   },
 };
 
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function formatFile(relPath, folder) {
   const p = path.join(ROOT, relPath);
   let s = fs.readFileSync(p, 'utf8');
   const map = labels[folder];
+  const prefix = escapeRegExp(`页面截图：${BASE}/${folder}/`);
   s = s.replace(
-    new RegExp(`^(\\s*)页面截图：${BASE}/${folder}/([a-z0-9-]+\\.png)$`, 'gm'),
+    new RegExp(`^(\\s*)${prefix}([a-z0-9-]+\\.png)$`, 'gm'),
     (_, indent, file) => {
       const label = map[file] || file.replace('.png', '');
       return `${indent}页面截图：[${label}](${BASE}/${folder}/${file})`;
     },
   );
   fs.writeFileSync(p, s);
-  const count = (s.match(/页面截图：\[/g) || []).length;
+  const count = (s.match(new RegExp(`^\\s*页面截图：\\[`, 'gm')) || []).length;
   console.log(relPath, count);
 }
 
