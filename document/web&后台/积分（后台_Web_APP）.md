@@ -226,6 +226,8 @@
 
 #### 提交确认弹窗
 
+页面截图：[**后台 · 积分加成提交确认弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-modal-bonus-confirm.png)
+
 汇总展示：配置人数、加成系数、活动信息、异常名单（如有）、四级审批流程预览。确认后生成审批单，类型为「积分加成配置」，状态为「待市场运营交叉审核」。
 
 #### 生效规则
@@ -326,6 +328,8 @@
 - 多行录入单次上限 **100 行**；文件上传单次上限 **10,000 行**，超出须提示分批处理。
 
 #### 提交确认弹窗
+
+页面截图：[**后台 · 手动发放提交确认弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-modal-manual-approval.png)
 
 汇总展示：发放人数、发放总积分、活动信息、四级审批流程预览。确认后生成审批单，类型为「积分手动发放」，状态为「待市场运营交叉审核」，同时写入操作记录（状态：审批中）。
 
@@ -560,6 +564,8 @@
 
         - 任务B“推广先锋奖励”：按钮文案 “去邀请 →”，点击弹出邀请分享弹窗，可保存海报或调用系统分享。
 
+页面截图：[**Web · 邀请分享弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/web-modal-share.png)
+
     - 已完成任务
 
         - 卡片整体置灰，标题增加删除线，积分数字变灰。
@@ -669,6 +675,8 @@
             - **任务B：推广先锋奖励**
 
                 - 未完成：卡片高亮，积分 `+10 Pts` 下方显示 “去邀请” 文字按钮，点击唤起分享弹窗，展示邀请海报、邀请码和分享/保存按钮。
+
+页面截图：[**App · 邀请分享弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/app-modal-share.png)
 
                 - 已完成：置灰处理及印章表现同上，按钮隐藏。
 

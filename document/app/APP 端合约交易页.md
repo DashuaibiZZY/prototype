@@ -991,6 +991,8 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 
 ## 4\.3 当前委托
 
+页面截图：[**App · 当前委托列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-orders-panel.png)
+
 ### 4\.3\.1 子 Tab
 
 |子 Tab|说明|
@@ -1001,6 +1003,8 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 - 选中项加粗高亮，切换刷新列表。
 
 ### 4\.3\.2 筛选栏
+
+页面截图：[**App · 委托合约筛选面板**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-sheet-order-filter.png)
 
 - **合約**：点击弹出筛选底部面板，支持搜索币对、选择「全部」或指定合约。
 
@@ -1029,6 +1033,8 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 |明细|數量、止盈/止損觸發價、止盈/止損單價格（含箭头可展开详情）|
 
 ### 4\.3\.5 全部取消流程
+
+页面截图：[**App · 全部撤单类型选择**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-sheet-cancel-type.png)
 
 **（1）触发**
 
@@ -1180,6 +1186,8 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 
 ## 6\.6 货币单位弹层
 
+页面截图：[**App · 货币单位弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-sheet-unit.png)
+
 - 选项：BTC、USDT。
 
 - 选中后更新数量单位标签及盘口数量列单位。
@@ -1223,6 +1231,8 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 
 ## 6\.11 通用选择器弹层
 
+页面截图：[**App · 止盈止损委托模式选择器**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-sheet-picker-tpsl-mode.png)
+
 动态内容，用于：
 
 - 触发价格类型（最新价格 / 标记价格）
@@ -1257,6 +1267,8 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 见 4\.2\.3（6）。
 
 ## 6\.15 委托筛选底部面板
+
+页面截图：[**App · 委托筛选底部面板**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-sheet-order-filter.png)
 
 - 自底部滑入，带遮罩；支持合约搜索、订单类型点选。
 

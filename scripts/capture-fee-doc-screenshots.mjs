@@ -48,6 +48,21 @@ const shots = [
     viewport: { w: 1440, h: 900 },
     clipHeight: 480,
   },
+  {
+    file: 'admin-fee-submit-confirm.png',
+    url: 'file://' + path.join(ROOT, 'perp_dex/admin/用户费率设置.html'),
+    before:
+      "(() => { document.getElementById('confirmSummary').innerHTML='UID 10028471<br>配置等级：VIP 3<br>活动：VIP 大客户专属<br>有效期：90 天（到期日 24:00:00（UTC+8）失效）<br>价值证明：proof.png<br>备注：大客户专属费率'; document.getElementById('confirmApprovalFlow').innerHTML=renderApprovalFlow('draft', true); document.getElementById('confirmModal').classList.remove('hidden'); document.getElementById('confirmModal').classList.add('flex'); })()",
+    selector: '#confirmModal > div',
+    viewport: { w: 1440, h: 900 },
+  },
+  {
+    file: 'admin-fee-revoke-confirm.png',
+    url: 'file://' + path.join(ROOT, 'perp_dex/admin/用户费率设置.html'),
+    before: "openRevokeModal('10031592')",
+    selector: '#revokeModal > div',
+    viewport: { w: 1440, h: 900 },
+  },
   // Web · 投资组合 VIP
   {
     file: 'web-vip-card.png',
