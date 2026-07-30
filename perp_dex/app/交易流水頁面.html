@@ -81,6 +81,7 @@
             justify-content: center;
             font-size: 8px;
         }
+        .dashed-underline { border-bottom: 1px dashed #d1d5db; }
     </style>
 </head>
 <body>
@@ -221,10 +222,56 @@
             </div>
         </div>
 
+        <!-- 已实现盈亏拆解 -->
+        <div id="realized-pnl-sheet" class="hidden absolute inset-0 z-[120] flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeRealizedPnlSheet()"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl">
+                <div class="py-4 px-5 border-b border-gray-50">
+                    <h3 class="text-[13px] font-black text-gray-900">已實現盈虧明細</h3>
+                </div>
+                <div id="realized-pnl-sheet-body" class="px-5 py-4 space-y-3 text-[12px]"></div>
+                <div class="p-4"><button onclick="closeRealizedPnlSheet()" class="w-full py-3 text-[13px] font-bold text-gray-400 bg-gray-50 rounded-xl">關閉</button></div>
+            </div>
+        </div>
+
     </div>
 </div>
 
 <script>
+    const REALIZED_PNL_BREAKDOWN = {
+        hist: { total: -579.30, closePnl: -554.02, funding: 11.35, fee: -36.64 }
+    };
+
+    function formatSignedUsdt(n) {
+        return (n >= 0 ? '+' : '') + n.toFixed(2) + ' USDT';
+    }
+
+    function pnlColorClass(n) {
+        return n >= 0 ? 'text-green-500' : 'text-red-500';
+    }
+
+    function renderRealizedPnlSheetRows(data) {
+        const rows = [
+            ['已實現盈虧', data.total],
+            ['平倉盈虧', data.closePnl],
+            ['資金費用', data.funding],
+            ['交易手續費', data.fee]
+        ];
+        return rows.map(function (row) {
+            return '<div class="flex justify-between items-center"><span class="text-gray-500 font-bold">' + row[0] + '</span><span class="font-black ' + pnlColorClass(row[1]) + '">' + formatSignedUsdt(row[1]) + '</span></div>';
+        }).join('');
+    }
+
+    function openRealizedPnlSheet(data) {
+        const body = document.getElementById('realized-pnl-sheet-body');
+        if (body) body.innerHTML = renderRealizedPnlSheetRows(data);
+        document.getElementById('realized-pnl-sheet')?.classList.remove('hidden');
+    }
+
+    function closeRealizedPnlSheet() {
+        document.getElementById('realized-pnl-sheet')?.classList.add('hidden');
+    }
+
     // 數據模擬
     const mockData = {
         current: {
@@ -380,7 +427,7 @@
                     </div>
                 </div>
                 <div class="grid grid-cols-3 gap-4 mb-4 text-center">
-                    <div class="flex flex-col text-left"><span class="text-[8px] text-gray-400 font-bold uppercase">已實現盈虧 (USDT)</span><span class="text-[11px] font-black text-green-500">+12.50</span></div>
+                    <div class="flex flex-col text-left"><span class="text-[8px] text-gray-400 font-bold uppercase">已實現盈虧 (USDT)</span><span class="text-[11px] font-black text-red-500 dashed-underline inline-block cursor-pointer active:opacity-70" onclick="openRealizedPnlSheet(REALIZED_PNL_BREAKDOWN.hist)">-579.30</span></div>
                     <div class="flex flex-col"><span class="text-[8px] text-gray-400 font-bold uppercase">投資回報率</span><span class="text-[11px] font-black text-green-500">+8.42%</span></div>
                     <div class="flex flex-col text-right"><span class="text-[8px] text-gray-400 font-bold uppercase">已平倉量</span><span class="text-[11px] font-black text-gray-900">1.02 BNB</span></div>
                     <div class="flex flex-col text-left"><span class="text-[8px] text-gray-400 font-bold uppercase">開倉價格</span><span class="text-[11px] font-black text-gray-900 font-mono">592.15</span></div>

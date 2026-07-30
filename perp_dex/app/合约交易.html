@@ -46,6 +46,8 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
 
         .dashed-underline { border-bottom: 1px dashed #d1d5db; }
+        .ob-layout-btn { width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; color: #9ca3af; }
+        .ob-layout-btn.active { color: #111827; background: #f3f4f6; }
         .input-box { background-color: #f3f4f6; border-radius: 4px; padding: 6px 8px; }
 
         .slider-container { position: relative; height: 20px; display: flex; align-items: center; }
@@ -159,17 +161,27 @@
                         <span>價格(USDT)</span>
                         <span id="ob-qty-unit-label">數量(BTC)</span>
                     </div>
-                    <div id="ob-sell-list" class="flex flex-col space-y-1 text-[11px] font-bold"></div>
-                    <div class="py-2 flex flex-col items-center">
+                    <div id="ob-sell-list" class="flex flex-col space-y-1 text-[11px] font-bold flex-1 min-h-0 overflow-hidden"></div>
+                    <div id="ob-mid-price-bar" class="py-2 flex flex-col items-center shrink-0">
                         <span id="ob-last-price" class="text-green-500 text-sm font-black">72305.9</span>
                         <span id="ob-mark-price" class="text-gray-400 text-[10px] dashed-underline">72311.9</span>
                     </div>
-                    <div id="ob-buy-list" class="flex flex-col space-y-1 text-[11px] font-bold"></div>
-                    <div class="mt-3 flex justify-between items-center">
+                    <div id="ob-buy-list" class="flex flex-col space-y-1 text-[11px] font-bold flex-1 min-h-0 overflow-hidden"></div>
+                    <div class="mt-3 flex justify-between items-center shrink-0">
+                        <div class="flex items-center gap-1.5" id="ob-layout-btns">
+                            <button type="button" class="ob-layout-btn active" data-ob-layout="split" title="買賣各半" onclick="setObLayoutMode('split')">
+                                <svg width="16" height="16" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="1" width="12" height="5.5" rx="1" fill="#ef4444" opacity=".85"/><rect x="1" y="7.5" width="12" height="5.5" rx="1" fill="#22c55e" opacity=".85"/></svg>
+                            </button>
+                            <button type="button" class="ob-layout-btn" data-ob-layout="buy" title="僅買單" onclick="setObLayoutMode('buy')">
+                                <svg width="16" height="16" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="1" width="12" height="12" rx="1" fill="#22c55e" opacity=".85"/></svg>
+                            </button>
+                            <button type="button" class="ob-layout-btn" data-ob-layout="sell" title="僅賣單" onclick="setObLayoutMode('sell')">
+                                <svg width="16" height="16" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="1" width="12" height="12" rx="1" fill="#ef4444" opacity=".85"/></svg>
+                            </button>
+                        </div>
                         <div id="ob-precision-trigger" onclick="openSheet('precision-sheet')" class="bg-gray-100 px-2 py-0.5 rounded text-[10px] font-bold flex items-center cursor-pointer active:bg-gray-200">
                             <span id="ob-precision-label">0.1</span> <svg class="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
                         </div>
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
                     </div>
                     </div>
 
@@ -376,6 +388,10 @@
                                     <p class="text-[10px] text-gray-400 font-bold dashed-underline inline-block">投資回報率</p>
                                     <p id="pos-roi" class="text-sm font-black text-green-500">+12.35%</p>
                                 </div>
+                            </div>
+                            <div class="pt-1">
+                                <p class="text-[10px] text-gray-400 font-bold uppercase">已實現盈虧 (USDT)</p>
+                                <p class="text-sm font-black text-red-500 dashed-underline inline-block cursor-pointer active:opacity-70" onclick="openRealizedPnlSheet(REALIZED_PNL_BREAKDOWN.pos)">-579.30</p>
                             </div>
                             <div class="grid grid-cols-3 gap-2 py-2 border-t border-gray-50">
                                 <div class="space-y-1">
@@ -845,6 +861,18 @@
             </div>
         </div>
 
+        <!-- ===== 底部弹层：已实现盈亏拆解 ===== -->
+        <div id="realized-pnl-sheet" class="hidden absolute inset-0 z-50 flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('realized-pnl-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet">
+                <div class="py-4 px-5 border-b border-gray-50">
+                    <h3 class="text-[13px] font-black text-gray-900">已實現盈虧明細</h3>
+                </div>
+                <div id="realized-pnl-sheet-body" class="px-5 py-4 space-y-3 text-[12px]"></div>
+                <div class="p-4"><button onclick="closeSheet('realized-pnl-sheet')" class="w-full py-3 text-[13px] font-bold text-gray-400 bg-gray-50 rounded-xl">關閉</button></div>
+            </div>
+        </div>
+
         <!-- ===== 底部弹层：资金费率 ===== -->
         <div id="funding-sheet" class="hidden absolute inset-0 z-50 flex items-end rounded-[38px] overflow-hidden">
             <div class="absolute inset-0 bg-black/40" onclick="closeSheet('funding-sheet')"></div>
@@ -1057,6 +1085,69 @@
     };
 
     const orderTypeLabels = { limit: '限價委託', market: '市價委託', 'profit-loss': '止盈止損' };
+
+    const REALIZED_PNL_BREAKDOWN = {
+        pos: { total: -579.30, closePnl: -554.02, funding: 11.35, fee: -36.64 },
+        hist: { total: -579.30, closePnl: -554.02, funding: 11.35, fee: -36.64 }
+    };
+    let obLayoutMode = 'split';
+
+    function formatSignedUsdt(n) {
+        return (n >= 0 ? '+' : '') + n.toFixed(2) + ' USDT';
+    }
+
+    function pnlColorClass(n) {
+        return n >= 0 ? 'text-green-500' : 'text-red-500';
+    }
+
+    function renderRealizedPnlSheetRows(data) {
+        const rows = [
+            ['已實現盈虧', data.total],
+            ['平倉盈虧', data.closePnl],
+            ['資金費用', data.funding],
+            ['交易手續費', data.fee]
+        ];
+        return rows.map(function (row) {
+            return '<div class="flex justify-between items-center"><span class="text-gray-500 font-bold">' + row[0] + '</span><span class="font-black ' + pnlColorClass(row[1]) + '">' + formatSignedUsdt(row[1]) + '</span></div>';
+        }).join('');
+    }
+
+    function openRealizedPnlSheet(data) {
+        const body = document.getElementById('realized-pnl-sheet-body');
+        if (body) body.innerHTML = renderRealizedPnlSheetRows(data);
+        openSheet('realized-pnl-sheet');
+    }
+
+    function setObLayoutMode(mode) {
+        obLayoutMode = mode;
+        document.querySelectorAll('#ob-layout-btns .ob-layout-btn').forEach(function (btn) {
+            btn.classList.toggle('active', btn.getAttribute('data-ob-layout') === mode);
+        });
+        applyObLayoutMode();
+        renderOrderBookDepth();
+    }
+
+    function applyObLayoutMode() {
+        const sellEl = document.getElementById('ob-sell-list');
+        const buyEl = document.getElementById('ob-buy-list');
+        const midBar = document.getElementById('ob-mid-price-bar');
+        if (!sellEl || !buyEl) return;
+        if (obLayoutMode === 'split') {
+            sellEl.classList.remove('hidden');
+            buyEl.classList.remove('hidden');
+            sellEl.classList.add('flex-1');
+            buyEl.classList.add('flex-1');
+        } else if (obLayoutMode === 'buy') {
+            sellEl.classList.add('hidden');
+            buyEl.classList.remove('hidden');
+            buyEl.classList.add('flex-1');
+        } else {
+            buyEl.classList.add('hidden');
+            sellEl.classList.remove('hidden');
+            sellEl.classList.add('flex-1');
+        }
+        if (midBar) midBar.classList.toggle('hidden', obLayoutMode !== 'split');
+    }
 
     let obSellRows = [
         { price: 72314.2, qty: 4.38 }, { price: 72314.1, qty: 4.08 }, { price: 72313.1, qty: 3.08 },
@@ -2271,6 +2362,7 @@
     setInterval(tickPremarketCountdown, 1000);
     updateQtyUnitDisplay();
     updateMoreMenuFavoriteUI();
+    applyObLayoutMode();
     renderOrderBookDepth();
     setInterval(tickOrderBookDepth, 900);
     renderOrderList();
