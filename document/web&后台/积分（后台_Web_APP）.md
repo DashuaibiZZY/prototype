@@ -1,6 +1,6 @@
 # 积分（后台/Web/APP）
 
-> 文档配图由对应原型页面区域自动截取，存放于 `document/assets/积分/`。原型更新后可在仓库根目录执行 `node scripts/capture-points-doc-screenshots.mjs` 重新生成。
+> 文档配图存放在 Git 分支 **`doc-assets`**，正文使用 GitHub raw 链接引用；`main` 分支不包含 PNG，本地 `git pull` 不会下载截图。更新配图：`node scripts/capture-points-doc-screenshots.mjs` → `node scripts/push-doc-assets.mjs`。
 
 ## 积分机制
 
