@@ -1,11 +1,11 @@
 import puppeteer from 'puppeteer-core';
 
-const url = process.argv[2];
+const pageUrl = process.argv[2];
 const selector = process.argv[3];
 const outPath = process.argv[4];
 const beforeScript = process.argv[5] || '';
 
-if (!url || !selector || !outPath) {
+if (!pageUrl || !selector || !outPath) {
   console.error('Usage: node screenshot-element.mjs <url> <selector> <outPath> [beforeEval]');
   process.exit(1);
 }
@@ -17,7 +17,14 @@ const browser = await puppeteer.launch({
 });
 const page = await browser.newPage();
 await page.setViewport({ width: 1440, height: 900 });
-await page.goto(url, { waitUntil: 'networkidle0', timeout: 90000 });
+const hashIdx = pageUrl.indexOf('#');
+const fileUrl = hashIdx >= 0 ? pageUrl.slice(0, hashIdx) : pageUrl;
+const hash = hashIdx >= 0 ? pageUrl.slice(hashIdx + 1) : '';
+await page.goto(fileUrl, { waitUntil: 'networkidle0', timeout: 90000 });
+if (hash) {
+  await page.evaluate((h) => { location.hash = h; }, hash);
+  await new Promise((r) => setTimeout(r, 800));
+}
 if (beforeScript) {
   await page.evaluate(beforeScript);
   await new Promise((r) => setTimeout(r, 600));
