@@ -1,7 +1,5 @@
 # 积分（后台/Web/APP）
 
-> 文档配图存放在 Git 分支 **doc-assets**，正文以「页面截图：[**链接文案**](GitHub raw URL)」与「**原型**：[完整 URL](完整 URL)」引用；勿用 ![]() 图片语法。更新配图：node scripts/capture-points-doc-screenshots.mjs → node scripts/push-doc-assets.mjs。
-
 ## 积分机制
 
 ### **机制1：新人任务**
