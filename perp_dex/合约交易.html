@@ -17,6 +17,12 @@
         .realized-pnl-tip::before { content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-bottom-color: #e5e7eb; }
         .realized-pnl-tip-title { border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; margin-bottom: 6px; }
         .realized-pnl-tip-details { display: flex; flex-direction: column; gap: 4px; }
+        .market-hint-wrap { position: relative; display: inline-block; z-index: 1; }
+        .market-hint-wrap:hover { z-index: 200; }
+        .market-hint-tip { position: absolute; top: calc(100% + 8px); left: 0; z-index: 200; min-width: 220px; max-width: 280px; background: #fff; border: 1px solid #e5e7eb; border-radius: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 10px 12px; font-size: 10px; line-height: 1.6; color: #4b5563; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity .15s, visibility .15s; }
+        .market-hint-wrap:hover .market-hint-tip { opacity: 1; visibility: visible; }
+        .market-hint-tip.funding-tip { min-width: 260px; }
+        .market-hint-tip strong { color: #111827; font-weight: 800; }
         #data-body td { overflow: visible; position: relative; }
         .ob-layout-btn { width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; color: #9ca3af; transition: color .15s, background .15s; }
         .ob-layout-btn:hover { color: #111827; background: #f3f4f6; }
@@ -247,9 +253,30 @@
     </div>
     <!-- 其余信息列 -->
     <div class="flex items-center space-x-6 text-[10px]">
-        <div class="flex flex-col"><span class="text-gray-400 dashed-hint">標記價格</span><span id="market-mark-price" class="text-gray-900 font-medium">65,391.3</span></div>
-        <div class="flex flex-col"><span class="text-gray-400 dashed-hint">指數價格</span><span id="market-index-price" class="text-gray-900 font-medium">65,391.3</span></div>
-        <div class="flex flex-col"><span class="text-gray-400 dashed-hint">資金費率 / 倒計時</span><span id="market-funding" class="text-blue-500 font-medium">0.0001% <span class="text-gray-400">00:25:13</span></span></div>
+        <div class="flex flex-col">
+            <span class="market-hint-wrap text-gray-400 dashed-hint">標記價格
+                <div class="market-hint-tip">标记价格用于计算您的强平价格和持仓保证金。标记价格源自经过处理的指数价格。</div>
+            </span>
+            <span id="market-mark-price" class="text-gray-900 font-medium">65,391.3</span>
+        </div>
+        <div class="flex flex-col">
+            <span class="market-hint-wrap text-gray-400 dashed-hint">指數價格
+                <div class="market-hint-tip">指数价格是基于多家主流交易所价格进行加权平均计算得出的综合价格。</div>
+            </span>
+            <span id="market-index-price" class="text-gray-900 font-medium">65,391.3</span>
+        </div>
+        <div class="flex flex-col">
+            <span id="market-hint-funding" class="market-hint-wrap text-gray-400 dashed-hint">資金費率 / 倒計時
+                <div id="market-funding-hint-tip" class="market-hint-tip funding-tip">
+                    <div><strong>间隔</strong>：8 小时</div>
+                    <div><strong>方向</strong>：买入 付款 卖出</div>
+                    <div><strong>资金费率</strong>：0.0001%</div>
+                    <div><strong>年化</strong>：10.95%</div>
+                    <div class="mt-1 text-gray-400">下一次资金的多头和空头头寸之间交换的支付利率。如果资金利率为正，多头支付空头。如果为负，空头支付多头。</div>
+                </div>
+            </span>
+            <span id="market-funding" class="text-blue-500 font-medium">0.0001% <span class="text-gray-400">00:25:13</span></span>
+        </div>
         <div class="flex flex-col"><span class="text-gray-400">24h成交量 (USDT)</span><span id="market-volume" class="text-gray-900 font-medium">60.23 M</span></div>
         <div class="flex flex-col"><span class="text-gray-400">未平倉合約 (USDT)</span><span id="market-oi" class="text-gray-900 font-medium">3.23 M</span></div>
         <div class="flex flex-col"><span class="text-gray-400">24h 最高價</span><span id="market-high" class="text-gray-900">66,332.5</span></div>
@@ -2656,6 +2683,31 @@
     </div>
 </div>
 
+<!-- 資金劃轉彈窗（与投资组合页一致） -->
+<div id="transfer-modal" class="modal-overlay" style="display: none; background: rgba(0,0,0,0.6); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; align-items: center; justify-content: center;">
+    <div class="bg-white w-[420px] rounded-lg overflow-hidden shadow-2xl">
+        <div class="p-6 border-b border-gray-50 flex justify-between items-center bg-slate-50">
+            <h2 class="text-base font-black uppercase tracking-tight italic">資金劃轉</h2>
+            <span class="cursor-pointer text-gray-400 text-xl hover:text-black" onclick="closeTransferModal()">✕</span>
+        </div>
+        <div class="p-8 space-y-6">
+            <div class="flex items-center justify-between p-4 bg-gray-50 border border-gray-100 rounded-md">
+                <span class="text-[11px] font-bold text-gray-400 uppercase w-12">從</span>
+                <span class="flex-1 font-black text-[13px] text-gray-900">資金帳戶</span>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gray-50 border border-gray-100 rounded-md">
+                <span class="text-[11px] font-bold text-gray-400 uppercase w-12">到</span>
+                <span class="flex-1 font-black text-[13px] text-gray-900">交易帳戶</span>
+            </div>
+            <div class="space-y-2">
+                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">劃轉數量</label>
+                <input type="text" placeholder="0.00" class="w-full border border-gray-200 p-4 rounded-md outline-none font-black text-lg">
+            </div>
+            <button class="w-full bg-blue-600 text-white py-4 rounded-md font-black uppercase tracking-widest">確認劃轉</button>
+        </div>
+    </div>
+</div>
+
 <script>
     // ==================== 通用工具 ====================
     // 底部公告轮播 - 鼠标悬停暂停
@@ -2673,6 +2725,15 @@
         const modal = document.getElementById(id);
         if (!modal) return;
         modal.style.display = (modal.style.display === 'flex' || modal.style.display === '') ? 'none' : 'flex';
+    }
+
+    function openTransferModal() {
+        const m = document.getElementById('transfer-modal');
+        if (m) m.style.display = 'flex';
+    }
+    function closeTransferModal() {
+        const m = document.getElementById('transfer-modal');
+        if (m) m.style.display = 'none';
     }
 
     function showNotification(msg) {
