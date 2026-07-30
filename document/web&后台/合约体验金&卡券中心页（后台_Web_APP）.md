@@ -550,7 +550,7 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 - **模块名称**：合约体验金后台管理系统
 - **核心目标**：配置体验金卡组规则、批量发放体验金、查询用户持卡与使用流水、执行风控强制回收，并通过统一四级审批保障发放操作合规
 - **使用人员**：平台运营（体验金管理员提交发放申请）；风控人员（执行强制回收）；市场运营交叉 / 风控 / 老板（按角色审批）
-- **原型链接**：`https://dashuaibizzy.github.io/prototype/perp_dex/admin/体验金后台.html`
+- **原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/体验金后台.html](https://dashuaibizzy.github.io/prototype/perp_dex/admin/体验金后台.html)
 
 ---
 
@@ -573,7 +573,9 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 
 ## 9.1 卡组配置
 
-**原型**：`perp_dex/admin/体验金后台.html#config`
+**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/体验金后台.html#config](https://dashuaibizzy.github.io/prototype/perp_dex/admin/体验金后台.html#config)
+
+页面截图：[**后台 · 卡组配置列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/admin-config-list.png)
 
 运营人员通过创建不同的「卡组」，预设一套体验金的使用规则。发放时只需关联卡组，无需重复设置参数。
 
@@ -608,6 +610,8 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 
 ### 新建卡组配置
 
+页面截图：[**后台 · 新建卡组配置弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/admin-modal-new-config.png)
+
 点击「+ 新建卡组配置」打开弹窗：
 
 1. 填写卡组配置名称；
@@ -621,7 +625,9 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 
 ## 9.2 批量发放体验金
 
-**原型**：`perp_dex/admin/体验金后台.html#issue`
+**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/体验金后台.html#issue](https://dashuaibizzy.github.io/prototype/perp_dex/admin/体验金后台.html#issue)
+
+页面截图：[**后台 · 批量发放表单**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/admin-issue-form.png)
 
 支持运营人员向特定用户名单发放差异化金额的体验金，须关联卡组规则与活动信息，并提交四级审批。
 
@@ -666,6 +672,8 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 
 ### 提交审批
 
+页面截图：[**后台 · 发放提交审批确认弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/admin-modal-issue-approval.png)
+
 点击「提交审批申请」后弹出确认弹窗，汇总展示：
 
 | 字段 | 说明 |
@@ -690,7 +698,9 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 
 ## 9.3 用户查询与风控回收
 
-**原型**：`perp_dex/admin/体验金后台.html#users`
+**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/体验金后台.html#users](https://dashuaibizzy.github.io/prototype/perp_dex/admin/体验金后台.html#users)
+
+页面截图：[**后台 · 用户持卡列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/admin-users-list.png)
 
 查询体验金发放与用户持卡情况，支持进入详情查看卡券使用记录，或执行强制回收。风控回收独立于到期、划转、比例上限等自动化回收逻辑，拥有最高执行优先级。
 
@@ -719,6 +729,8 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 | 操作 | 「查看详情」；有剩余体验金时展示「回收」 |
 
 ### 用户卡券详情
+
+页面截图：[**后台 · 用户卡券详情**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/admin-user-detail.png)
 
 点击「查看详情」进入详情子页，顶部展示：
 
@@ -773,6 +785,8 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 
 ### 回收确认弹窗
 
+页面截图：[**后台 · 风控回收确认弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/admin-modal-recycle-confirm.png)
+
 执行回收前弹出二次确认：
 
 | 元素 | 说明 |
@@ -794,8 +808,10 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 
 ## 9.4 体验金发放审批
 
-**原型**：`perp_dex/admin/体验金后台.html#approval`  
+**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/体验金后台.html#approval](https://dashuaibizzy.github.io/prototype/perp_dex/admin/体验金后台.html#approval)  
 **侧栏入口**：体验金 → 发放审批
+
+页面截图：[**后台 · 发放审批列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/admin-approval-list.png)
 
 体验金批量发放提交后进入统一四级审批，与费率配置、积分发放/加成配置共用同一审批引擎。
 
@@ -831,6 +847,8 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 | 操作 | 查看 / 审批（当前角色可操作时显示） |
 
 ### 审批详情页
+
+页面截图：[**后台 · 发放审批详情**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/admin-approval-detail.png)
 
 点击「查看」或「审批」进入详情子页（Hash：`#approval-detail=<审批单号>`）。
 
@@ -897,7 +915,9 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 
 ## 9.5 操作记录
 
-**原型**：`perp_dex/admin/体验金后台.html#logs`
+**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/体验金后台.html#logs](https://dashuaibizzy.github.io/prototype/perp_dex/admin/体验金后台.html#logs)
+
+页面截图：[**后台 · 操作记录**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/admin-logs.png)
 
 记录体验金发放与风控回收操作，支持审计追溯。
 
@@ -939,13 +959,15 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 
 - **核心功能**：展示并管理用户获得的合约体验金卡券，支持激活、状态查询及跳转交易。
 
-- **页面原型**：https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E5%8D%A1%E5%88%B8%E4%B8%AD%E5%BF%83\.html
+- **原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/卡券中心.html](https://dashuaibizzy.github.io/prototype/perp_dex/卡券中心.html)
 
 
 
 ### 2\. 页面需求
 
 **2\.1 页面标题与类型切换**
+
+页面截图：[**Web · 卡券中心标题与类型 Tab**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/web-coupon-header.png)
 
 - **位置**：页面顶部内容区
 
@@ -977,6 +999,8 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 
 **2\.3 卡券卡片列表**
 
+页面截图：[**Web · 卡券卡片列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/web-coupon-grid.png)
+
 - **位置**：状态过滤器下方
 
 - **布局**：网格布局（3 列），响应式适配（小屏 2 列，移动端 1 列）
@@ -997,6 +1021,10 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 
 
 **抵扣规则 Tooltip**：
+
+页面截图：[**Web · 亏损抵扣上限说明浮窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/web-float-loss-hint.png)
+
+页面截图：[**Web · 费用抵扣上限说明浮窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/web-float-fee-hint.png)
 
 - 鼠标悬停在「亏损抵扣上限」「费用抵扣上限」旁的信息图标上时，浮出说明文案：
 
@@ -1052,6 +1080,8 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 
 **2\.6 底部温馨提示**
 
+页面截图：[**Web · 底部温馨提示**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/web-coupon-tips.png)
+
 - **位置**：页面底部
 
 - **样式**：灰色底色区块，带信息图标
@@ -1071,6 +1101,8 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 ---
 
 ### 3\. 划转二次确认弹窗
+
+页面截图：[**Web · 划转回收体验金确认弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/web-modal-transfer-trial-confirm.png)
 
 **触发条件**：用户从交易账户发起划转至资金账户，且当前合约交易账户中存在未失效的体验金。
 
@@ -1125,7 +1157,7 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 
 - **适配要点**：符合移动端触控交互规范，适配 iOS 和 Android。
 
-- **原型链接**：https://dashuaibizzy\.github\.io/prototype/perp\_dex/app/%E5%8D%A1%E5%88%B8%E4%B8%AD%E5%BF%83\.html
+- **原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/卡券中心.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/卡券中心.html)
 
 ---
 
@@ -1142,6 +1174,8 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
     
 
 **2\.2 顶部统计概览**
+
+页面截图：[**App · 卡券统计概览**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/app-coupon-overview.png)
 
 - **位置**：导航栏下方
 
@@ -1173,6 +1207,14 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
     
 
 **2\.4 卡券卡片列表**
+
+页面截图：[**App · 可使用卡券列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/app-coupon-available.png)
+
+页面截图：[**App · 使用中卡券列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/app-coupon-used.png)
+
+页面截图：[**App · 已过期卡券列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/app-coupon-expired.png)
+
+页面截图：[**App · 已失效卡券列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/app-coupon-invalid.png)
 
 - **位置**：Tab 下方，纵向可滚动
 
@@ -1225,6 +1267,8 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 
 **2\.5 空状态**
 
+页面截图：[**App · 空状态**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/app-coupon-empty.png)
+
 - 图标：礼盒插画
 
 - 主文案：「暂无可用卡券」
@@ -1234,6 +1278,8 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
     
 
 **2\.6 加载与异常状态**
+
+页面截图：[**App · 网络异常状态**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/app-coupon-error.png)
 
 - **加载中**：卡片区域展示骨架屏（3 个占位卡片）。
 
@@ -1252,6 +1298,8 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
     
 
 **2\.8 规则说明底部浮层**
+
+页面截图：[**App · 卡券使用规则浮层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/app-sheet-rules.png)
 
 - **样式**：从底部滑出，圆角面板 \+ 顶部拖动指示条
 

@@ -1,7 +1,5 @@
 # APP 端合约交易页
 
-> 文档配图存放在 Git 分支 **doc-assets**，正文以「页面截图：[**链接文案**](GitHub raw URL)」与「**原型**：[完整 URL](完整 URL)」引用；勿用 ![]() 图片语法。更新配图：node scripts/capture-app-contract-doc-screenshots.mjs → node scripts/push-doc-assets.mjs。
-
 **原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/合约交易.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/合约交易.html)
 
 **原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/合约偏好设置.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/合约偏好设置.html)
