@@ -514,6 +514,8 @@
 
 ### 模块详细需求描述
 
+页面截图：[**Web · 页面标题区**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/web-points-header.png)
+
 #### 2\.1 积分看板
 
 **位置**：页面顶部核心卡片
@@ -609,6 +611,8 @@
 ### **2\. 页面结构与功能详述**
 
 #### **2\.1 顶部导航栏**
+
+页面截图：[**App · 顶部导航栏**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/app-points-header.png)
 
 - **位置**：页面顶部
 

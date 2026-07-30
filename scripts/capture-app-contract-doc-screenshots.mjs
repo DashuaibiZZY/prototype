@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const OUT = path.join(ROOT, 'document/assets/合约交易-app');
 const CHROME = '/usr/local/bin/google-chrome';
-const HTML = 'file://' + path.join(ROOT, 'perp_dex/app/合约交易.html');
+const CONTRACT_HTML = 'file://' + path.join(ROOT, 'perp_dex/app/合约交易.html');
 
 const shots = [
   { file: 'app-contract-header.png', selector: 'header.pt-12', clipHeight: 56 },
@@ -78,6 +78,64 @@ const shots = [
     selector: '#orders-panel',
     clipHeight: 420,
   },
+  // —— 局部功能区域 ——
+  {
+    file: 'app-contract-terminal-limit.png',
+    before: "(() => { switchPositionSide('open'); selectOrderMode('limit'); })()",
+    selector: '#trade-panel',
+    clipHeight: 420,
+  },
+  {
+    file: 'app-contract-terminal-market.png',
+    before: "(() => { switchPositionSide('open'); selectOrderMode('market'); })()",
+    selector: '#trade-panel',
+    clipHeight: 420,
+  },
+  {
+    file: 'app-contract-terminal-tpsl.png',
+    before: "(() => { switchPositionSide('open'); selectOrderMode('profit-loss'); })()",
+    selector: '#trade-panel',
+    clipHeight: 480,
+  },
+  {
+    file: 'app-contract-terminal-stats.png',
+    before: "(() => { switchPositionSide('open'); selectOrderMode('limit'); })()",
+    selector: '#open-order-section',
+    clipHeight: 140,
+  },
+  {
+    file: 'app-contract-attach-tpsl.png',
+    before:
+      "(() => { switchPositionSide('open'); selectOrderMode('limit'); const cb = document.getElementById('check-tpsl'); if (cb) { cb.checked = true; toggleAttachTPSL(); } })()",
+    selector: '#attach-tpsl-section',
+    clipHeight: 200,
+  },
+  { file: 'app-contract-bottom-nav.png', selector: 'nav.absolute.bottom-0', clipHeight: 72 },
+  { file: 'app-contract-premarket-ob.png', before: 'togglePremarketMode()', selector: '#premarket-ob-panel', clipHeight: 320 },
+  {
+    file: 'app-contract-guest-state.png',
+    before: 'toggleGuestMode()',
+    selector: '#app-screen',
+    clipHeight: 520,
+  },
+  {
+    file: 'app-subpage-trade-prefs.png',
+    url: 'file://' + path.join(ROOT, 'perp_dex/app/合约偏好设置.html'),
+    selector: '.screen',
+    clipHeight: 700,
+  },
+  {
+    file: 'app-subpage-pair-info.png',
+    url: 'file://' + path.join(ROOT, 'perp_dex/app/交易对信息.html'),
+    selector: '.screen',
+    clipHeight: 700,
+  },
+  {
+    file: 'app-subpage-risk-limit.png',
+    url: 'file://' + path.join(ROOT, 'perp_dex/app/风险限额.html'),
+    selector: '.screen',
+    clipHeight: 700,
+  },
 ];
 
 fs.mkdirSync(OUT, { recursive: true });
@@ -91,7 +149,7 @@ const browser = await puppeteer.launch({
 for (const shot of shots) {
   const page = await browser.newPage();
   await page.setViewport({ width: 420, height: 900 });
-  await page.goto(HTML, { waitUntil: 'networkidle0', timeout: 120000 });
+  await page.goto(shot.url || CONTRACT_HTML, { waitUntil: 'networkidle0', timeout: 120000 });
   await new Promise((r) => setTimeout(r, 800));
   if (shot.before) {
     await page.evaluate(shot.before);
@@ -103,6 +161,7 @@ for (const shot of shots) {
     await page.close();
     continue;
   }
+  await el.evaluate((n) => n.scrollIntoView({ block: 'center' }));
   const outPath = path.join(OUT, shot.file);
   if (shot.clipHeight) {
     const box = await el.boundingBox();

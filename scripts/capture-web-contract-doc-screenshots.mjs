@@ -141,6 +141,59 @@ const shots = [
       "(() => { const w = document.querySelector('#data-body .realized-pnl-wrap'); if (w) { w.dispatchEvent(new MouseEvent('mouseenter')); const t = w.querySelector('.realized-pnl-tip'); if (t) { t.style.opacity='1'; t.style.visibility='visible'; } } })()",
     selector: '#data-body .realized-pnl-tip',
   },
+  // —— 局部功能区域（图表子视图 / 终端订单类型 / 账户区 / 状态栏）——
+  { file: 'web-contract-depth-chart.png', before: "switchView('depth')", selector: '#view-depth', clipHeight: 360 },
+  { file: 'web-contract-details.png', before: "switchView('details')", selector: '#view-details', clipHeight: 360 },
+  { file: 'web-contract-funding-view.png', before: "switchView('funding')", selector: '#view-funding', clipHeight: 360 },
+  {
+    file: 'web-contract-trades.png',
+    before: "switchAreaTab('ob', 'trades')",
+    selector: '#ob-content-trades',
+    clipHeight: 480,
+  },
+  {
+    file: 'web-contract-terminal-limit.png',
+    before: "switchOrderMode('limit')",
+    selector: 'aside.w-\\[300px\\]',
+    clipHeight: 400,
+  },
+  {
+    file: 'web-contract-terminal-market.png',
+    before: "switchOrderMode('market')",
+    selector: 'aside.w-\\[300px\\]',
+    clipHeight: 400,
+  },
+  {
+    file: 'web-contract-terminal-tpsl.png',
+    before: "switchOrderMode('profit-loss')",
+    selector: 'aside.w-\\[300px\\]',
+    clipHeight: 480,
+  },
+  {
+    file: 'web-contract-terminal-stats.png',
+    before: "switchOrderMode('limit')",
+    selector: 'aside.w-\\[300px\\] .border-t.border-gray-50.pt-2',
+    clipHeight: 120,
+  },
+  {
+    file: 'web-contract-attach-tpsl.png',
+    before:
+      "(() => { switchOrderMode('limit'); const cb = document.getElementById('check-tpsl'); if (cb) { cb.checked = true; toggleTPSL(); } })()",
+    selector: '#tpsl-section',
+    clipHeight: 220,
+  },
+  {
+    file: 'web-contract-account-assets.png',
+    before:
+      "(() => { const el = document.querySelector('div.flex-1.flex.overflow-hidden > aside'); if (el) el.scrollIntoView({ block: 'center' }); })()",
+    selector: 'div.flex-1.flex.overflow-hidden > aside',
+    clipHeight: 360,
+  },
+  {
+    file: 'web-contract-status-bar.png',
+    selector: 'div.fixed.bottom-0.left-0.w-full.h-7',
+    clipHeight: 28,
+  },
 ];
 
 fs.mkdirSync(OUT, { recursive: true });
