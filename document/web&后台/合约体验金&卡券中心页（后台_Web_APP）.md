@@ -979,6 +979,8 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 
 **2\.2 状态过滤器**
 
+页面截图：[**Web · 状态过滤器**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/web-coupon-status-tabs.png)
+
 - **位置**：页面标题下方
 
 - **布局**：横向排列的 Tab 切换

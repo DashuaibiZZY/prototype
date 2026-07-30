@@ -137,6 +137,13 @@ const shots = [
     selector: '#modal-transfer-trial-confirm > div',
     viewport: { w: 1440, h: 900 },
   },
+  {
+    file: 'web-coupon-status-tabs.png',
+    url: 'file://' + path.join(ROOT, 'perp_dex/卡券中心.html'),
+    selector: 'main .flex.space-x-6.text-\\[11px\\]',
+    viewport: { w: 1440, h: 900 },
+    clipHeight: 40,
+  },
   // App · 卡券中心
   {
     file: 'app-coupon-overview.png',

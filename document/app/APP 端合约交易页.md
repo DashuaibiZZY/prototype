@@ -204,6 +204,8 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 
 ## 2\.10 新币未开盘状态（盘口区）
 
+页面截图：[**App · 新币未开盘盘口区**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-premarket-ob.png)
+
 当选中尚未正式开启交易的合约时，正常盘口内容隐藏，盘口区域被**待开盘倒计时面板**覆盖：
 
 **（1）展示内容**
@@ -340,6 +342,8 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 
 ### 3\.5\.1 限价单
 
+页面截图：[**App · 限价单下单区**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-terminal-limit.png)
+
 **参数（与 Web 一致）：**
 
 |字段|说明|
@@ -370,6 +374,8 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 
 ### 3\.5\.2 市价单
 
+页面截图：[**App · 市价单下单区**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-terminal-market.png)
+
 **参数：**
 
 |字段|说明|
@@ -381,6 +387,8 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 - 订单有效期后端为 IOC（与 Web 一致）。
 
 ### 3\.5\.3 止盈止损单
+
+页面截图：[**App · 止盈止损单下单区**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-terminal-tpsl.png)
 
 **功能定位（与 Web 5\.4\.3 一致）：**
 
@@ -508,6 +516,8 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 - 市价单、止盈止损单模式下不可用。
 
 ## 3\.7 跟随止盈止损（勾选框）
+
+页面截图：[**App · 跟随止盈止损输入区**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-attach-tpsl.png)
 
 **（1）功能定位**
 
@@ -770,6 +780,8 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 - 轻提示居中偏上显示，约 1\.6 秒自动消失。
 
 ## 3\.9 交易终端数据摘要
+
+页面截图：[**App · 交易终端数据摘要**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-terminal-stats.png)
 
 开仓模式下，每个方向按钮上方展示：
 
@@ -1070,6 +1082,8 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 
 ## 5\.1 功能概述
 
+页面截图：[**App · 底部导航栏**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-bottom-nav.png)
+
 全局 APP 底部 Tab，合约交易页中「永续合约」为当前选中项。
 
 ## 5\.2 Tab 项
@@ -1282,6 +1296,8 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 
 ### 7\.1\.1 功能概述
 
+页面截图：[**App · 交易偏好设置页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-subpage-trade-prefs.png)
+
 集中管理合约下单二次确认与成交提示音等个人偏好。对应 Web 端导航栏「偏好设置抽屉」，APP 以独立子页面呈现。
 
 ### 7\.1\.2 入口与返回
@@ -1335,6 +1351,8 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 ## 7\.2 交易对详情页
 
 ### 7\.2\.1 功能概述
+
+页面截图：[**App · 交易对详情页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-subpage-pair-info.png)
 
 展示当前交易对的合约规格与交易规则参数，帮助用户了解该合约的下单限制与风控参数。对应 Web 端图表区「合约详情」视图。
 
@@ -1394,6 +1412,8 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 ## 7\.3 交易对风险限额页
 
 ### 7\.3\.1 功能概述
+
+页面截图：[**App · 交易对风险限额页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-subpage-risk-limit.png)
 
 以表格形式展示当前交易对的仓位价值阶梯与对应保证金率、可用杠杆，供用户了解不同仓位规模下的风控要求。对应 Web 端合约详情视图中的「风险限额表格」。
 
@@ -1462,6 +1482,8 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 # 8\. 特殊页面状态
 
 ## 8\.1 未登录状态
+
+页面截图：[**App · 未登录状态**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-guest-state.png)
 
 **（1）交易终端**
 

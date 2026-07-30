@@ -67,6 +67,21 @@ const shots = [
   },
   // App history
   { file: 'app-points-history.png', url: 'file://' + path.join(ROOT, 'perp_dex/app/积分发放记录.html'), selector: '.screen', viewport: { w: 420, h: 900 }, mobile: true },
+  {
+    file: 'app-points-header.png',
+    url: 'file://' + path.join(ROOT, 'perp_dex/app/积分.html'),
+    selector: 'header.flex.justify-between',
+    viewport: { w: 420, h: 900 },
+    mobile: true,
+    clipHeight: 56,
+  },
+  {
+    file: 'web-points-header.png',
+    url: 'file://' + path.join(ROOT, 'perp_dex/积分.html'),
+    selector: 'h1.text-4xl',
+    viewport: { w: 1440, h: 900 },
+    clipHeight: 80,
+  },
 ];
 
 fs.mkdirSync(OUT_DIR, { recursive: true });
