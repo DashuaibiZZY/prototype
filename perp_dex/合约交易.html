@@ -15,6 +15,8 @@
         .realized-pnl-tip { position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); z-index: 200; min-width: 188px; background: #fff; border: 1px solid #e5e7eb; border-radius: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 10px 12px; font-size: 10px; line-height: 1.6; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity .15s, visibility .15s; }
         .realized-pnl-wrap:hover .realized-pnl-tip { opacity: 1; visibility: visible; }
         .realized-pnl-tip::before { content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-bottom-color: #e5e7eb; }
+        .realized-pnl-tip-title { border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; margin-bottom: 6px; }
+        .realized-pnl-tip-details { display: flex; flex-direction: column; gap: 4px; }
         #data-body td { overflow: visible; position: relative; }
         .ob-layout-btn { width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; color: #9ca3af; transition: color .15s, background .15s; }
         .ob-layout-btn:hover { color: #111827; background: #f3f4f6; }
@@ -2707,16 +2709,27 @@
         return n >= 0 ? 'text-green-500' : 'text-red-500';
     }
 
+    function renderRealizedPnlBreakdownHtml(data) {
+        return `<div class="realized-pnl-tip-title flex justify-between gap-4"><span class="text-gray-900 font-black">已实现盈亏</span><span class="font-black ${pnlColorClass(data.total)}">${formatSignedUsdt(data.total)}</span></div>
+            <div class="realized-pnl-tip-details">
+                <div class="flex justify-between gap-4"><span class="text-gray-500">平仓盈亏</span><span class="font-bold ${pnlColorClass(data.closePnl)}">${formatSignedUsdt(data.closePnl)}</span></div>
+                <div class="flex justify-between gap-4"><span class="text-gray-500">资金费用</span><span class="font-bold ${pnlColorClass(data.funding)}">${formatSignedUsdt(data.funding)}</span></div>
+                <div class="flex justify-between gap-4"><span class="text-gray-500">交易手续费</span><span class="font-bold ${pnlColorClass(data.fee)}">${formatSignedUsdt(data.fee)}</span></div>
+            </div>`;
+    }
+
+    function renderUnrealizedPnlHoverCell(amountText, roeText, data, colorClass) {
+        return `<span class="realized-pnl-wrap relative inline-block">
+            <span class="dashed-hint font-black ${colorClass || 'text-green-500'}">${amountText} <span class="text-[8px] font-black">${roeText}</span></span>
+            <div class="realized-pnl-tip text-left whitespace-nowrap">${renderRealizedPnlBreakdownHtml(data)}</div>
+        </span>`;
+    }
+
     function renderRealizedPnlHoverCell(data, amountClass) {
         const cls = pnlColorClass(data.total);
         return `<span class="realized-pnl-wrap relative inline-block">
             <span class="dashed-hint font-black ${cls} ${amountClass || ''}">${formatSignedUsdt(data.total)}</span>
-            <div class="realized-pnl-tip text-left whitespace-nowrap">
-                <div class="flex justify-between gap-4"><span class="text-gray-500">已实现盈亏</span><span class="font-bold ${pnlColorClass(data.total)}">${formatSignedUsdt(data.total)}</span></div>
-                <div class="flex justify-between gap-4"><span class="text-gray-500">平仓盈亏</span><span class="font-bold ${pnlColorClass(data.closePnl)}">${formatSignedUsdt(data.closePnl)}</span></div>
-                <div class="flex justify-between gap-4"><span class="text-gray-500">资金费用</span><span class="font-bold ${pnlColorClass(data.funding)}">${formatSignedUsdt(data.funding)}</span></div>
-                <div class="flex justify-between gap-4"><span class="text-gray-500">交易手续费</span><span class="font-bold ${pnlColorClass(data.fee)}">${formatSignedUsdt(data.fee)}</span></div>
-            </div>
+            <div class="realized-pnl-tip text-left whitespace-nowrap">${renderRealizedPnlBreakdownHtml(data)}</div>
         </span>`;
     }
 
@@ -3568,7 +3581,7 @@
             <td class="px-3 py-2.5 whitespace-nowrap text-gray-900">1,627.50 USDT</td>
             <td class="px-3 py-2.5 whitespace-nowrap">
                 <div class="flex items-center space-x-1">
-                    <div><div class="text-green-500 font-black">+166.05 USDT</div><div class="text-green-500 text-[8px]">(+25.40%)</div><div class="mt-0.5">${renderRealizedPnlHoverCell(REALIZED_PNL_BREAKDOWN_DEMO.pos, 'text-[10px]')}</div></div>
+                    <div>${renderUnrealizedPnlHoverCell('+166.05 USDT', '(+25.40%)', REALIZED_PNL_BREAKDOWN_DEMO.pos, 'text-green-500')}</div>
                     <button onclick="toggleModal('modal-share-pnl')" class="text-gray-400 hover:text-blue-600 transition-colors p-0.5" title="分享战绩">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6zM8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
