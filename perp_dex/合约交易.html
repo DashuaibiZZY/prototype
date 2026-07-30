@@ -10,6 +10,12 @@
         body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #111827; font-size: 11px; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .dashed-hint { border-bottom: 1px dashed #9ca3af; cursor: help; }
+        .realized-pnl-tip { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); z-index: 60; min-width: 188px; background: #fff; border: 1px solid #e5e7eb; border-radius: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 10px 12px; font-size: 10px; line-height: 1.6; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity .15s, visibility .15s; }
+        .realized-pnl-wrap:hover .realized-pnl-tip { opacity: 1; visibility: visible; }
+        .realized-pnl-tip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: #e5e7eb; }
+        .ob-layout-btn { width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; color: #9ca3af; transition: color .15s, background .15s; }
+        .ob-layout-btn:hover { color: #111827; background: #f3f4f6; }
+        .ob-layout-btn.active { color: #111827; background: #f3f4f6; }
         .order-book-gradient-sell { background: linear-gradient(to left, rgba(239, 68, 68, 0.08) var(--percent), transparent var(--percent)); }
         .order-book-gradient-buy { background: linear-gradient(to left, rgba(34, 197, 94, 0.08) var(--percent), transparent var(--percent)); }
         .modal-overlay { background: rgba(0,0,0,0.4); display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; align-items: center; justify-content: center; }
@@ -806,14 +812,19 @@
 
                 <!-- 底部工具欄 -->
                 <div class="h-8 border-t border-gray-50 flex items-center px-3 justify-between text-gray-400">
-                    <!-- 精度选择 -->
+                    <div class="flex items-center gap-1" id="ob-layout-btns">
+                        <button type="button" class="ob-layout-btn active" data-ob-layout="split" title="買賣各半" onclick="setObLayoutMode('split')">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="1" width="12" height="5.5" rx="1" fill="#ef4444" opacity=".85"/><rect x="1" y="7.5" width="12" height="5.5" rx="1" fill="#22c55e" opacity=".85"/></svg>
+                        </button>
+                        <button type="button" class="ob-layout-btn" data-ob-layout="buy" title="僅買單" onclick="setObLayoutMode('buy')">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="1" width="12" height="12" rx="1" fill="#22c55e" opacity=".85"/></svg>
+                        </button>
+                        <button type="button" class="ob-layout-btn" data-ob-layout="sell" title="僅賣單" onclick="setObLayoutMode('sell')">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="1" width="12" height="12" rx="1" fill="#ef4444" opacity=".85"/></svg>
+                        </button>
+                    </div>
                     <div class="relative flex items-center hover:text-black cursor-pointer text-[10px] font-bold" id="precision-trigger">
                         <span id="precision-value">0.1</span>
-                        <svg width="8" height="8" class="ml-1" viewBox="0 0 16 16"><path d="M8 11.2L3.2 6.4h9.6L8 11.2z" fill="currentColor"></path></svg>
-                    </div>
-                    <!-- 资产选择 -->
-                    <div class="relative flex items-center hover:text-black cursor-pointer text-[10px] font-bold" id="asset-trigger">
-                        <span id="asset-value">USDT</span>
                         <svg width="8" height="8" class="ml-1" viewBox="0 0 16 16"><path d="M8 11.2L3.2 6.4h9.6L8 11.2z" fill="currentColor"></path></svg>
                     </div>
                 </div>
@@ -2677,8 +2688,65 @@
 
     // ==================== 订单簿 ====================
     let currentPrecision = 0.1;
-    let currentAsset = 'USDT';
     let currentBase = 'BTC';
+    let obLayoutMode = 'split';
+
+    const REALIZED_PNL_BREAKDOWN_DEMO = {
+        pos: { total: -45.20, closePnl: -38.10, funding: 2.15, fee: -9.25 },
+        hist: { total: -579.30, closePnl: -554.02, funding: 11.35, fee: -36.64 }
+    };
+
+    function formatSignedUsdt(n) {
+        return (n >= 0 ? '+' : '') + n.toFixed(2) + ' USDT';
+    }
+
+    function pnlColorClass(n) {
+        return n >= 0 ? 'text-green-500' : 'text-red-500';
+    }
+
+    function renderRealizedPnlHoverCell(data, amountClass) {
+        const cls = pnlColorClass(data.total);
+        return `<span class="realized-pnl-wrap relative inline-block">
+            <span class="dashed-hint font-black ${cls} ${amountClass || ''}">${formatSignedUsdt(data.total)}</span>
+            <div class="realized-pnl-tip text-left whitespace-nowrap">
+                <div class="flex justify-between gap-4"><span class="text-gray-500">已实现盈亏</span><span class="font-bold ${pnlColorClass(data.total)}">${formatSignedUsdt(data.total)}</span></div>
+                <div class="flex justify-between gap-4"><span class="text-gray-500">平仓盈亏</span><span class="font-bold ${pnlColorClass(data.closePnl)}">${formatSignedUsdt(data.closePnl)}</span></div>
+                <div class="flex justify-between gap-4"><span class="text-gray-500">资金费用</span><span class="font-bold ${pnlColorClass(data.funding)}">${formatSignedUsdt(data.funding)}</span></div>
+                <div class="flex justify-between gap-4"><span class="text-gray-500">交易手续费</span><span class="font-bold ${pnlColorClass(data.fee)}">${formatSignedUsdt(data.fee)}</span></div>
+            </div>
+        </span>`;
+    }
+
+    function setObLayoutMode(mode) {
+        obLayoutMode = mode;
+        document.querySelectorAll('#ob-layout-btns .ob-layout-btn').forEach(function (btn) {
+            btn.classList.toggle('active', btn.getAttribute('data-ob-layout') === mode);
+        });
+        applyObLayoutMode();
+        renderOrderBook();
+    }
+
+    function applyObLayoutMode() {
+        const sellEl = document.getElementById('sell-orders');
+        const buyEl = document.getElementById('buy-orders');
+        const midBar = document.getElementById('ob-mid-price-bar');
+        if (!sellEl || !buyEl) return;
+        if (obLayoutMode === 'split') {
+            sellEl.classList.remove('hidden');
+            buyEl.classList.remove('hidden');
+            sellEl.className = 'flex-1 flex flex-col-reverse overflow-hidden font-medium';
+            buyEl.className = 'flex-1 flex flex-col overflow-hidden font-medium';
+        } else if (obLayoutMode === 'buy') {
+            sellEl.classList.add('hidden');
+            buyEl.classList.remove('hidden');
+            buyEl.className = 'flex-1 flex flex-col overflow-hidden font-medium';
+        } else {
+            buyEl.classList.add('hidden');
+            sellEl.classList.remove('hidden');
+            sellEl.className = 'flex-1 flex flex-col-reverse overflow-hidden font-medium';
+        }
+        if (midBar) midBar.classList.toggle('hidden', obLayoutMode !== 'split');
+    }
 
     function renderOrderBook() {
         const sellEl = document.getElementById('sell-orders');
@@ -2798,34 +2866,15 @@
         <div class="px-3 py-1 hover:bg-gray-100 cursor-pointer" data-val="100">100</div>
     `;
 
-        // 创建资产下拉框
-        const assetDD = document.createElement('div');
-        assetDD.id = 'asset-dropdown';
-        assetDD.className = 'fixed bg-white border border-gray-200 shadow rounded-sm text-[10px] hidden z-50';
-        assetDD.innerHTML = `
-        <div class="px-3 py-1 hover:bg-gray-100 cursor-pointer" data-base="BTC" data-quote="USDT">USDT</div>
-        <div class="px-3 py-1 hover:bg-gray-100 cursor-pointer" data-base="BTC" data-quote="USDT">BTC</div>
-    `;
-
         document.body.appendChild(precisionDD);
-        document.body.appendChild(assetDD);
 
         // 精度触发器
         document.getElementById('precision-trigger').addEventListener('click', function(e) {
             e.stopPropagation();
             const rect = this.getBoundingClientRect();
             precisionDD.style.top = (rect.bottom + 4) + 'px';
-            precisionDD.style.left = rect.left + 'px';
+            precisionDD.style.left = (rect.left + rect.width - precisionDD.offsetWidth) + 'px';
             precisionDD.classList.toggle('hidden');
-        });
-
-        // 资产触发器
-        document.getElementById('asset-trigger').addEventListener('click', function(e) {
-            e.stopPropagation();
-            const rect = this.getBoundingClientRect();
-            assetDD.style.top = (rect.bottom + 4) + 'px';
-            assetDD.style.left = rect.left + 'px';
-            assetDD.classList.toggle('hidden');
         });
 
         // 选择事件委托
@@ -2836,18 +2885,7 @@
                 currentPrecision = parseFloat(val);
                 document.getElementById('precision-value').innerText = val;
                 precisionDD.classList.add('hidden');
-                // 可在此重新渲染订单簿
-            }
-            e.stopPropagation();
-        });
-
-        assetDD.addEventListener('click', function(e) {
-            const item = e.target.closest('[data-base]');
-            if (item) {
-                const base = item.getAttribute('data-base');
-                const quote = item.getAttribute('data-quote');
-                setAsset(base, quote);
-                assetDD.classList.add('hidden');
+                renderOrderBook();
             }
             e.stopPropagation();
         });
@@ -2855,7 +2893,6 @@
         // 点击外部关闭
         document.addEventListener('click', function(e) {
             if (!e.target.closest('#precision-trigger')) precisionDD.classList.add('hidden');
-            if (!e.target.closest('#asset-trigger')) assetDD.classList.add('hidden');
         });
     })();
 
@@ -3527,7 +3564,7 @@
             <td class="px-3 py-2.5 whitespace-nowrap text-gray-900">1,627.50 USDT</td>
             <td class="px-3 py-2.5 whitespace-nowrap">
                 <div class="flex items-center space-x-1">
-                    <div><div class="text-green-500 font-black">+166.05 USDT</div><div class="text-green-500 text-[8px]">(+25.40%)</div></div>
+                    <div><div class="text-green-500 font-black">+166.05 USDT</div><div class="text-green-500 text-[8px]">(+25.40%)</div><div class="mt-0.5">${renderRealizedPnlHoverCell(REALIZED_PNL_BREAKDOWN_DEMO.pos, 'text-[10px]')}</div></div>
                     <button onclick="toggleModal('modal-share-pnl')" class="text-gray-400 hover:text-blue-600 transition-colors p-0.5" title="分享战绩">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6zM8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
@@ -3600,7 +3637,7 @@
             h.innerHTML = '<th class="px-4 py-2">合約</th><th class="px-4 py-2">開倉均價</th><th class="px-4 py-2">平倉均價</th><th class="px-4 py-2">持倉數量</th><th class="px-4 py-2">已平倉數量</th><th class="px-4 py-2">已平仓盈虧</th><th class="px-4 py-2">狀態</th><th class="px-4 py-2">開倉時間</th><th class="px-4 py-2">最新平倉時間</th>';
             b.innerHTML = `<tr class="border-b border-gray-50">
             <td class="px-4 py-3 font-bold">ETHUSDT</td><td class="px-4 py-3">2,400.0</td><td class="px-4 py-3">2,450.0</td><td class="px-4 py-3">10.0 ETH</td><td class="px-4 py-3">10.0 ETH</td>
-            <td class="px-4 py-3 text-green-500 flex items-center space-x-1"><span>+500.00</span><button onclick="toggleModal('modal-share-pnl')" class="text-gray-400 hover:text-blue-600 p-0.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6zM8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" stroke-linecap="round" stroke-linejoin="round"/></svg></button></td>
+            <td class="px-4 py-3 flex items-center space-x-1">${renderRealizedPnlHoverCell(REALIZED_PNL_BREAKDOWN_DEMO.hist, 'text-[11px]')}<button onclick="toggleModal('modal-share-pnl')" class="text-gray-400 hover:text-blue-600 p-0.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6zM8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" stroke-linecap="round" stroke-linejoin="round"/></svg></button></td>
             <td class="px-4 py-3">已全部平仓</td><td class="px-4 py-3">10:00:00</td><td class="px-4 py-3">2026-05-11 11:47:17</td>
         </tr>`;
         } else if (tabId === 'asset-log') {
@@ -3652,12 +3689,8 @@
         }
         // 在全局 click 监听器里，找到关闭其他浮窗的代码，添加：
         const precisionDD = document.getElementById('precision-dropdown');
-        const assetDD = document.getElementById('asset-dropdown');
-        if (precisionDD && !precisionDD.contains(e.target) && !e.target.closest('[onclick="togglePrecisionDropdown(event)"]')) {
+        if (precisionDD && !precisionDD.contains(e.target) && !e.target.closest('#precision-trigger')) {
             precisionDD.classList.add('hidden');
-        }
-        if (assetDD && !assetDD.contains(e.target) && !e.target.closest('[onclick="toggleAssetDropdown(event)"]')) {
-            assetDD.classList.add('hidden');
         }
     });
 
@@ -4171,6 +4204,7 @@
     updateFooterTime();
     // ==================== 初始化 ====================
     window.addEventListener('DOMContentLoaded', function() {
+        applyObLayoutMode();
         renderOrderBook();
         switchDataTab('pos');
     });
