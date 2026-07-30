@@ -14,10 +14,38 @@
 
 本地 `git pull main` **不会**拉取 PNG 文件。
 
+## 配图覆盖标准（与《合约交易页》Web 对齐）
+
+每份需求文档应对原型中**可独立触发的 UI** 配图，并在对应章节正文引用：
+
+| 类型 | 说明 | 示例 |
+|---|---|---|
+| **局部功能区域** | 单页内固定区块、列表、卡片 | 市场信息栏、积分看板、VIP 权益卡 |
+| **子页面** | 独立路由/Hash 页（非弹层） | 用户积分详情、积分发放记录、审批详情 |
+| **弹窗 / 居中 Modal** | 二次确认、审批提交确认 | 下单确认、费率撤销确认 |
+| **浮窗 / 浮层 / Sheet** | Tooltip、下拉、底部弹层、抽屉 | 资金费率说明、货币单位、委托筛选 |
+
+原则：**文档里描述了交互入口的 UI，应有对应截图**；同一弹层在概述章与细则章可只引用一次。
+
+## 各文档覆盖情况
+
+| 文档 | 配图目录 | Capture 脚本 | 状态 |
+|---|---|---|---|
+| 积分（后台/Web/APP） | `积分/` | `capture-points-doc-screenshots.mjs` | 后台列表/详情/抽屉式确认弹窗、Web/App 页面与分享弹窗 |
+| VIP 费率与后台配置 | `费率/` | `capture-fee-doc-screenshots.mjs` | 后台列表/抽屉/审批、提交与撤销确认弹窗、Web VIP 卡/弹窗、App VIP 页 |
+| 合约交易页（Web） | `合约交易-web/` | `capture-web-contract-doc-screenshots.mjs` | 区域 + 弹窗 + 浮窗/tooltip/下拉 |
+| APP 端合约交易页 | `合约交易-app/` | `capture-app-contract-doc-screenshots.mjs` | 区域 + Sheet/Modal + 委托筛选与撤单流程 |
+
+### 已知未纳入（低优先级 / 跨文档）
+
+- 投资组合页历史订单/持仓**筛选下拉**（费率文档仅覆盖 VIP 卡片与费率表弹窗）
+- 审批详情内**附件图片预览**浮层（列表/详情页已配图）
+- APP 合约**充币入口**跳转页（文档描述为跳转充值页，非本页弹层）
+
 ## 生成与上传配图
 
 ```bash
-# 1. 按各文档的 capture 脚本生成 PNG（写入本目录，已被 .gitignore 忽略）
+# 1. 按各文档的 capture 脚本生成 PNG（写入本目录，main 分支 .gitignore 忽略）
 node scripts/capture-points-doc-screenshots.mjs
 node scripts/capture-fee-doc-screenshots.mjs
 node scripts/capture-web-contract-doc-screenshots.mjs

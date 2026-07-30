@@ -56,6 +56,28 @@ const shots = [
     before: 'openPositionTPSLConfirm()',
     selector: '#position-tpsl-confirm-modal > div.relative',
   },
+  { file: 'app-contract-sheet-unit.png', before: "openSheet('unit-sheet')", selector: '#unit-sheet .app-sheet' },
+  {
+    file: 'app-contract-sheet-picker-tpsl-mode.png',
+    before: "openPickerSheet('tpsl-mode')",
+    selector: '#picker-sheet .app-sheet',
+  },
+  {
+    file: 'app-contract-sheet-order-filter.png',
+    before: "switchPositionTab('orders'); openOrderFilterModal('contract')",
+    selector: '#order-filter-sheet',
+  },
+  {
+    file: 'app-contract-sheet-cancel-type.png',
+    before: "switchPositionTab('orders'); openCancelFlow()",
+    selector: '#order-filter-sheet',
+  },
+  {
+    file: 'app-contract-orders-panel.png',
+    before: "switchPositionTab('orders')",
+    selector: '#orders-panel',
+    clipHeight: 420,
+  },
 ];
 
 fs.mkdirSync(OUT, { recursive: true });
