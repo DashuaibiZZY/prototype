@@ -69,5 +69,6 @@ node scripts/push-doc-assets.mjs
 | `document/assets/合约交易-web/` | 《合约交易页》（Web）配图 |
 | `document/assets/合约交易-app/` | 《APP 端合约交易页》配图 |
 | `document/assets/行情-app/` | 《APP 端行情页面》配图 |
+| `document/assets/指标设置-app/` | 《APP 端指标设置页》配图 |
 
 新增文档配图时，在对应子目录存放 PNG，并更新 `doc-assets` 分支。
