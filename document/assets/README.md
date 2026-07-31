@@ -36,6 +36,7 @@
 | 合约体验金&卡券中心 | `体验金/` | `capture-trial-doc-screenshots.mjs` | 后台五页/弹窗、Web/App 卡券中心与划转确认 |
 | 合约交易页（Web） | `合约交易-web/` | `capture-web-contract-doc-screenshots.mjs` | 区域 + 弹窗 + 浮窗/tooltip/下拉 |
 | APP 端合约交易页 | `合约交易-app/` | `capture-app-contract-doc-screenshots.mjs` | 区域 + Sheet/Modal + 委托筛选与撤单流程 |
+| APP 端行情页面 | `行情-app/` | `capture-markets-doc-screenshots.mjs` | 搜索/Tab/列表/排序表头、各 Tab 列表与自选空态、网络异常与超时弹窗、编辑自选子页、底栏 |
 
 ### 已知未纳入（低优先级 / 跨文档）
 
@@ -52,6 +53,7 @@ node scripts/capture-fee-doc-screenshots.mjs
 node scripts/capture-trial-doc-screenshots.mjs
 node scripts/capture-web-contract-doc-screenshots.mjs
 node scripts/capture-app-contract-doc-screenshots.mjs
+node scripts/capture-markets-doc-screenshots.mjs
 
 # 2. 推送到 doc-assets 分支
 node scripts/push-doc-assets.mjs
@@ -66,5 +68,6 @@ node scripts/push-doc-assets.mjs
 | `document/assets/体验金/` | 《合约体验金&卡券中心页》（后台/Web/APP）配图 |
 | `document/assets/合约交易-web/` | 《合约交易页》（Web）配图 |
 | `document/assets/合约交易-app/` | 《APP 端合约交易页》配图 |
+| `document/assets/行情-app/` | 《APP 端行情页面》配图 |
 
 新增文档配图时，在对应子目录存放 PNG，并更新 `doc-assets` 分支。

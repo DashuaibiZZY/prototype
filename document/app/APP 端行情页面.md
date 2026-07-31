@@ -1,16 +1,22 @@
 # APP 端行情页面
 
+**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/行情.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/行情.html)
+
+**子页面原型（编辑自选）**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/编辑自选.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/编辑自选.html)
+
 ## 页面概述
+
+页面截图：[**App · 行情页整体**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-page.png)
 
 行情页面是用户浏览所有可交易币种实时行情的核心入口。页面支持通过顶部标签（Tab）快速筛选不同分类的代币，并提供自选管理、排序和异常状态处理等功能。整体交互流畅，数据更新及时。
 
-- 原型链接：
-
-
+- 原型链接：见文档顶部。
 
 ## 功能模块详述
 
 ### 2\.1 搜索框
+
+页面截图：[**App · 搜索框**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-search.png)
 
 - 位置：页面顶部，Tab标签上方。
 
@@ -23,6 +29,8 @@
 
 
 ### 2\.2 分类标签栏（Tab）
+
+页面截图：[**App · 分类标签栏**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-tabs.png)
 
 - 展示规则：
 
@@ -59,6 +67,18 @@
 ---
 
 ### 2\.3 行情列表
+
+页面截图：[**App · 列表表头与排序**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-list-header.png)
+
+页面截图：[**App · 全部 Tab 列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-list-all.png)
+
+页面截图：[**App · 自选 Tab 列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-tab-fav.png)
+
+页面截图：[**App · 热门 Tab 列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-tab-hot.png)
+
+页面截图：[**App · 新币 Tab 列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-tab-new.png)
+
+页面截图：[**App · 动态标签列表（TradeFi）**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-tab-dynamic.png)
 
 - 列表项字段（每行展示一个交易对）：
 
@@ -102,6 +122,12 @@
 
 ### 2\.4 页面状态与异常处理
 
+页面截图：[**App · 网络异常态**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-error.png)
+
+页面截图：[**App · 数据加载失败占位**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-error-view.png)
+
+页面截图：[**App · 请求超时弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-modal-timeout.png)
+
 - 正常状态：展示列表。
 
 - 加载中：可显示骨架屏或加载动画，避免白屏。
@@ -123,6 +149,10 @@
     
 
 ### 2\.5 自选功能
+
+页面截图：[**App · 自选空状态**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-tab-fav-empty.png)
+
+页面截图：[**App · 编辑自选子页面**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-subpage-edit-fav.png)
 
 - 添加自选：在行情详情页或列表项上提供收藏入口（如星形图标），收藏后出现在“自选”Tab中。
 
@@ -148,7 +178,7 @@
 
 - 底部导航栏保留，当前高亮“行情”图标。
 
-
+页面截图：[**App · 底部导航栏**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-bottom-nav.png)
 
 #### 2\.7\.1 从首页涨跌榜跳转至行情页的特殊逻辑
 
