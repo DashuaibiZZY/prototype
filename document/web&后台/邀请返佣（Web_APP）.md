@@ -1,5 +1,11 @@
 # 邀请返佣（后台/Web/APP）
 
+**Web 原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/邀请返佣.html](https://dashuaibizzy.github.io/prototype/perp_dex/邀请返佣.html)
+
+**App 原型（邀请返佣）**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/邀请返佣.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/邀请返佣.html)
+
+**App 原型（直邀好友明细）**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/邀请好友明细.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/邀请好友明细.html)
+
 ## 邀请返佣等级
 
 ### 等级配置表
@@ -158,7 +164,7 @@
 
 ## Web页 \- 邀请返佣
 
-> **原型链接**：https://dashuaibizzy\.github\.io/prototype/perp\_dex/referral\.html  
+> **原型链接**：[https://dashuaibizzy.github.io/prototype/perp_dex/邀请返佣.html](https://dashuaibizzy.github.io/prototype/perp_dex/邀请返佣.html)
 > 
 > **导航入口**：全局顶部导航 “邀請返佣”（选中态加粗黑色 \+ 底部 2px 黑色下划线）  
 > 
@@ -180,9 +186,9 @@
 
 ### 2\. 页面布局与模块需求
 
-![Image](https://internal-api-drive-stream-sg.larksuite.com/space/api/box/stream/download/authcode/?code=ZTgyNmIxZjU2ODg0YjE1MGQ3OTk2ZjhiOTM2OTQyMjVfYzdhODlhZjMwNjY1YjkwOGQ4NWRjYjdlNTc5ZjQwMjNfSUQ6NzY0ODY5NDA0ODg0NTgyNzgwM18xNzg1NDkxNDI0OjE3ODU1Nzc4MjRfVjM)
-
 #### 2\.1 顶部邀请工具箱
+
+页面截图：[**Web · 邀请工具箱**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-toolbox.png)
 
 - **位置**：页面标题下方首屏模块，灰色背景条
 
@@ -212,7 +218,7 @@
 
 #### 2\.2 核心数据看板（黑色卡片）
 
-![Image](https://internal-api-drive-stream-sg.larksuite.com/space/api/box/stream/download/authcode/?code=MjdjYWMzYThlZmFhMDBjY2I3N2FlZWNmNjFjZTA3YTNfYTM0OTlhNzRkY2Q2OTM5ZTU0ODBiMmNkNjU2M2I1NGNfSUQ6NzY0ODY5NDEwNDY3NDU2OTk1MF8xNzg1NDkxNDI0OjE3ODU1Nzc4MjRfVjM)
+页面截图：[**Web · 核心数据看板**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-dashboard.png)
 
 - **布局**：四列等高黑色背景卡片，白字 \+ 灰/绿辅助色，视觉强对比
 
@@ -244,7 +250,9 @@
 
 #### 2\.3 返佣等级成长路径（左侧区块）
 
-![Image](https://internal-api-drive-stream-sg.larksuite.com/space/api/box/stream/download/authcode/?code=OTAzN2Q4ZTdiZmNkM2UxOGM0NjE3OTgyMGM2MzBjM2RfYzI5ODk0YTZhMzA1ZTY0Y2JmMDg4YzgyYzUyYTZiNWRfSUQ6NzY0ODY5NDE2MjkxMjQ2NDYxM18xNzg1NDkxNDI0OjE3ODU1Nzc4MjRfVjM)
+页面截图：[**Web · 等级成长路径**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-tier-path.png)
+
+页面截图：[**Web · 活跃好友 Tooltip**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-tier-tooltip.png)
 
 - **等级阶梯**：节点式进度展示 10% → 15% → 20% → 25%  
 
@@ -272,6 +280,8 @@
 
 #### 2\.4 大使计划申请（右侧区块）
 
+页面截图：[**Web · 大使计划卡片**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-ambassador.png)
+
 - **样式**：蓝色底色卡片，白色文字
 
 - **文案**：  
@@ -288,7 +298,7 @@
 
 #### 2\.5 直邀好友明细（底部数据表格）
 
-![Image](https://internal-api-drive-stream-sg.larksuite.com/space/api/box/stream/download/authcode/?code=Zjc0MWFmZWJmOGJhMmEyMmRhNGQwYWM1OGI0MzllOTNfODlmZjIwZGY1YTQ0ZDNlMmQwZWE3NzdhNjNmZThkMTFfSUQ6NzY0ODY5NDMyNDM4MDYwMjA3N18xNzg1NDkxNDI0OjE3ODU1Nzc4MjRfVjM)
+页面截图：[**Web · 直邀好友明细表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-friends-table.png)
 
 **2\.5\.1 标题栏**
 
@@ -326,7 +336,7 @@
 
 #### 2\.6 分享海报模态框
 
-![Image](https://internal-api-drive-stream-sg.larksuite.com/space/api/box/stream/download/authcode/?code=YTVlYWI2OGM4MWVkMzk4Mjc0ZWI3YmJmZmU3ZjhmMzdfNThlOTJiNDc0MDM4OTE2MTE3NjQyNzJlM2VkMTkxOWNfSUQ6NzY0ODY5NDM4NzI2OTk5NjI1M18xNzg1NDkxNDI0OjE3ODU1Nzc4MjRfVjM)
+页面截图：[**Web · 分享海报弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-share-modal.png)
 
 - **触发**：点击工具箱“分享海報”按钮
 
@@ -375,19 +385,23 @@
 
 ### 页面概述
 
+页面截图：[**App · 邀请返佣页整体**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-page.png)
+
 - **入口**：奖励页面邀请返佣卡片
 
 - **核心定位**：移动端邀请工具箱 \+ 返佣成长可视化 \+ 收益快览 \+ 好友明细入口
 
 - **数据更新**：与 Web 端一致，核心数据每 5 分钟刷新
 
-- **原型链接**：https://dashuaibizzy\.github\.io/prototype/perp\_dex/app/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3\.html
+- **原型链接**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/邀请返佣.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/邀请返佣.html)
 
     
 
 ### 页面布局与模块
 
 #### 1\. 顶部导航
+
+页面截图：[**App · 顶部导航**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-header.png)
 
 - 左侧返回按钮（关闭当前页 / 返回上一级）
 
@@ -398,6 +412,8 @@
     
 
 #### 2\. 邀请工具箱（首屏核心）
+
+页面截图：[**App · 邀请工具箱**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-toolbox.png)
 
 - **返佣比例**：左侧蓝色图标 \+ “当前比例”标签 \+ 百分比数字（蓝色加粗大字）
 
@@ -412,6 +428,8 @@
     
 
 #### 3\. 代理用户引导信息框
+
+页面截图：[**App · 代理用户引导信息框**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-agent-info.png)
 
 - **显示条件**：当前用户为**代理身份**时，在工具箱下方显示
 
@@ -428,6 +446,8 @@
     
 
 #### 4\. 等级成长路径
+
+页面截图：[**App · 等级成长路径**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-tier.png)
 
 - **标题**：“等级成长进度” \+ 右侧蓝色胶囊标签显示下一级目标（如“下一级: 15%”）
 
@@ -459,6 +479,8 @@
 
 #### 5\. 收益核心数据（黑卡）
 
+页面截图：[**App · 收益核心数据黑卡**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-earnings.png)
+
 - 深色背景卡片，左右分列：
 
     - 左侧：**累积推广收益**（标签可点击查看说明）  
@@ -475,6 +497,8 @@
 
 #### 6\. 推广统计与详情入口
 
+页面截图：[**App · 推广统计与明细入口**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-stats-entry.png)
+
 - 两个指标卡片并排：**直接推荐**（人数）、**下级总交易量**（金额简写，如 `$2.4M`）
 
 - 卡片整体可点击，进入**直邀好友明细页**
@@ -485,6 +509,8 @@
 
 #### 7\. 大使计划申请
 
+页面截图：[**App · 大使计划申请**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-ambassador.png)
+
 - 蓝色卡片，标题“ForX 大使申请”，描述“解锁 40% 返佣上限与专属奖励”
 
 - “立即申请”按钮，点击跳转外部申请表单
@@ -492,6 +518,8 @@
     
 
 #### 8\. 分享海报弹窗（App 内嵌）
+
+页面截图：[**App · 分享海报弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-share-modal.png)
 
 - 触发：右上角分享图标
 
@@ -514,6 +542,8 @@
         
 
 #### 9\. 信息说明弹窗
+
+页面截图：[**App · 信息说明弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-info-modal.png)
 
 - **触发**：点击下方带虚线下划线的文字标签（活跃好友、累积收益、待结算收益）
 
@@ -543,11 +573,13 @@
 
 ### 页面概述
 
+页面截图：[**App · 直邀好友明细页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-friends-page.png)
+
 - **入口**：从邀请返佣页“查看直邀好友明细数据”卡片点击进入
 
 - **核心功能**：查看所有直邀好友的贡献数据，支持搜索与排序
 
-- **原型链接**：https://dashuaibizzy\.github\.io/prototype/perp\_dex/app/%E9%82%80%E8%AF%B7%E5%A5%BD%E5%8F%8B%E6%98%8E%E7%BB%86\.html
+- **原型链接**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/邀请好友明细.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/邀请好友明细.html)
 
     
 
@@ -564,6 +596,10 @@
     
 
 #### 2\. 搜索与排序栏
+
+页面截图：[**App · 搜索栏**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-friends-search.png)
+
+页面截图：[**App · 排序 Action Sheet**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-friends-sort-sheet.png)
 
 **搜索框**：圆角输入框，左侧搜索图标，placeholder “搜索钱包地址”
 
@@ -613,6 +649,8 @@
 
 
 #### 3\. 好友列表
+
+页面截图：[**App · 好友列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-friends-list.png)
 
 - 每个好友条目为一张独立卡片，包含：
 
@@ -666,7 +704,13 @@
 
 **占位状态下页面表现：**
 
-![Image](https://internal-api-drive-stream-sg.larksuite.com/space/api/box/stream/download/authcode/?code=NjM3MzEzZDVhOWUyOTZjZTRhZGE4NTJmYmY1MjZlNjdfODczNmEzYmQ4NmIwNGU4ODFiZjFiZmFlYjMzZjgxODNfSUQ6NzY1MjE3NTM2MjY3MTE2OTI0Nl8xNzg1NDkxNDI0OjE3ODU1Nzc4MjRfVjM)
+页面截图：[**Web · 代理引导条**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-agent-banner.png)
+
+页面截图：[**Web · 代理占位看板**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-agent-placeholder.png)
+
+页面截图：[**Web · 代理占位等级路径**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-agent-tier-empty.png)
+
+页面截图：[**Web · 代理好友明细空态**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-agent-friends-empty.png)
 
 1. **顶部邀请工具箱**：正常显示（返佣比例、推荐人、专属链接、复制、分享海报按钮均可用）
 
@@ -704,7 +748,9 @@
 
 #### 代理用户访问邀请返佣页
 
-![Image](https://internal-api-drive-stream-sg.larksuite.com/space/api/box/stream/download/authcode/?code=N2UyNmYyMTMyYTZiZGMyODMxZDA2NzkxOTQ0NDE5Y2VfNzQ3OGYwMzE2ZmQ5ZTkzMzRkMDQ5OGRmMTVjZDNhMjdfSUQ6NzY1MjE3NTUxNTQwMjQ3MzE4Nl8xNzg1NDkxNDI0OjE3ODU1Nzc4MjRfVjM)
+页面截图：[**App · 代理占位收益卡**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-agent-placeholder.png)
+
+页面截图：[**App · 代理占位统计入口**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-agent-stats-empty.png)
 
 1. **邀请工具箱**：保持正常显示（比例、推荐人、链接复制、分享海报）
 
