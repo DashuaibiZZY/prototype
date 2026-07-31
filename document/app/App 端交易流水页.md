@@ -1,12 +1,18 @@
 # App 端交易流水页
 
+**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/交易流水頁面.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/交易流水頁面.html)
+
+**子页面原型（历史委托详情）**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/历史委托详情页.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/历史委托详情页.html)
+
 ## 模块概述
 
 ### 1\.1 页面定位
 
+页面截图：[**App · 交易流水页整体**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-page.png)
+
 交易流水页是 App 端集中展示用户合约交易相关数据的核心页面。与 Web 端相比，App 端字段更精简，交互适配移动端触控操作。
 
-- 原型链接：
+- 原型链接：见文档顶部。
 
 ### 1\.2 与 Web 端差异
 
@@ -50,15 +56,30 @@
 
 ### 2\.2 导航栏
 
+- 左侧返回按钮，回到合约交易页。
+
+- 居中标题「合约流水」。
+
+- 右侧导出图标（部分标签显示，按产品配置）。
+
 ---
 
 ## 一级标签栏
 
+页面截图：[**App · 当前委托 · 基础单**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-tab-current-basic.png)
+
 ### 3\.1 标签列表
 
-> 注意：App 端无「当前持仓」和「充提记录」两个标签。
-> 
-> 
+|标签|说明|
+|---|---|
+|當前委託\(n\)|当前活跃委托，含基础单与止盈止损单子 Tab|
+|歷史委託|已结束委托记录|
+|持倉歷史|已关闭仓位记录|
+|歷史成交|逐笔成交明细|
+|資金流水|账户资金变动汇总|
+|資金費率|各合约资金费用结算记录|
+
+> 注意：App 端无「当前持仓」和「充提记录」两个标签。 
 
 ### 3\.2 交互
 
@@ -78,6 +99,13 @@
 
 ### 4\.2 子标签
 
+|子 Tab|说明|
+|---|---|
+|基礎單 \(n\)|限价单、市价单等常规委托|
+|止盈止損單 \(n\)|条件止盈止损委托|
+
+页面截图：[**App · 当前委托 · 止盈止损单**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-tab-current-tpsl.png)
+
 ### 4\.3 交互
 
 - 选中标签黑色加粗，未选中灰色。
@@ -94,7 +122,36 @@
 
 ### 5\.2 各标签筛选配置
 
+|标签 / 子标签|筛选项|
+|---|---|
+|當前委託 · 基礎單|合約、訂單類型|
+|當前委託 · 止盈止損單|合約、訂單類型|
+|歷史委託 · 基礎單|合約、類型、方向、狀態 \+ 日期|
+|歷史委託 · 止盈止損單|合約、狀態 \+ 日期|
+|持倉歷史|合約、倉位模式、狀態 \+ 日期|
+|歷史成交|合約、方向 \+ 日期|
+|資金流水|類型 \+ 日期|
+|資金費率|仅日期|
+
+页面截图：[**App · 日期筛选弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-sheet-date.png)
+
+页面截图：[**App · 合约筛选弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-sheet-contract.png)
+
+页面截图：[**App · 订单类型筛选弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-sheet-order-type.png)
+
+页面截图：[**App · 状态多选筛选弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-sheet-status.png)
+
+页面截图：[**App · 方向筛选弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-sheet-direction.png)
+
+页面截图：[**App · 仓位模式筛选弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-sheet-pos-mode.png)
+
+页面截图：[**App · 资金流水类型筛选弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-sheet-log-type.png)
+
 ### 5\.3 全部取消按钮
+
+页面截图：[**App · 全部撤单类型选择**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-sheet-cancel-type.png)
+
+页面截图：[**App · 全部撤单确认**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-sheet-cancel-confirm.png)
 
 - 仅在「当前委托」标签下显示。
 
@@ -111,6 +168,16 @@
 ## 数据列表
 
 ### 6\.1 当前委托 \- 基础单
+
+页面截图：[**App · 当前委托 · 基础单列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-tab-current-basic.png)
+
+|区域|字段|说明|
+|---|---|---|
+|头部|合約、永續标签|交易对名称|
+|头部|撤單按钮|撤销该笔委托|
+|类型行|订单类型 / 方向、委托时间|如「限價 / 開多」|
+|明细|成交數量 / 數量|已成交与委托总量（USDT）|
+|明细|價格|委托价格|
 
 订单类型枚举：限价单、市价单。
 
@@ -132,6 +199,16 @@
 
 ### 6\.2 当前委托 \- 止盈止损单
 
+页面截图：[**App · 当前委托 · 止盈止损单列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-tab-current-tpsl.png)
+
+|区域|字段|说明|
+|---|---|---|
+|头部|合約、撤單|同基础单|
+|类型行|止盈止損單 / 方向、时间|如「止盈止損單 / 平多」|
+|明细|數量|委托数量（USDT）|
+|明细|止盈/止損觸發價|两个触发价，可展开详情|
+|明细|止盈/止損單價格|委托价或「市價」|
+
 订单类型枚举：市价止盈、市价止损、限价止盈、限价止损。
 
 方向：平多、平空。
@@ -145,6 +222,16 @@
 ---
 
 ### 6\.3 历史委托 \- 基础单
+
+页面截图：[**App · 历史委托 · 基础单列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-tab-hist-basic.png)
+
+|区域|字段|说明|
+|---|---|---|
+|头部|合約、时间、详情箭头|点击箭头进入详情页|
+|类型行|订单类型 / 方向|如「市價 / 平多」|
+|明细|數量|成交数量 / 委托数量|
+|明细|價格|成交均价或委托价；市价显示「市價」|
+|明细|狀態|全部成交、部分成交、已取消等|
 
 订单类型枚举：限价单、市价单、强平委托。
 
@@ -166,6 +253,17 @@
 
 ### 6\.4 历史委托 \- 止盈止损单
 
+页面截图：[**App · 历史委托 · 止盈止损单列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-tab-hist-tpsl.png)
+
+|区域|字段|说明|
+|---|---|---|
+|头部|合約、时间、详情箭头|同基础单|
+|类型行|止盈止损类型 / 方向|如「市價止盈 / 平空」|
+|明细|數量|委托数量|
+|明细|触发条件|如「最新價格 ≥ 68,000.00」|
+|明细|委託價格|市价或限价|
+|明细|狀態|已完成、已取消|
+
 - 状态枚举：
 
     - 已完成：条件触发后完全成交，绿色文字。
@@ -177,6 +275,8 @@
 ---
 
 ### 6\.5 持仓历史
+
+页面截图：[**App · 持仓历史列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-tab-position.png)
 
 #### 6\.5\.1 卡片字段
 
@@ -194,6 +294,8 @@
 |开仓时间 / 全部平仓时间|时间戳|
 
 #### 6\.5\.2 已实现盈亏拆解弹层（持仓历史）
+
+页面截图：[**App · 已实现盈亏拆解弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-sheet-realized-pnl.png)
 
 **触发方式：** 点击卡片中「已實現盈虧 (USDT)」**标签文案**（虚线下划线处）；下方数值仅作展示，不可点击。
 
@@ -249,6 +351,8 @@
 
 分享功能：
 
+页面截图：[**App · 分享盈亏海报弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-modal-share.png)
+
 - 点击分享图标，弹出分享海报弹窗。
 
 - 海报内容：合约、方向、收益率、开仓均价、平仓均价、时间等。
@@ -256,6 +360,18 @@
 ---
 
 ### 6\.6 历史成交
+
+页面截图：[**App · 历史成交列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-tab-trades.png)
+
+|字段|说明|
+|---|---|
+|合約、方向、时间|头部信息|
+|訂單號|可复制|
+|價格|成交价格|
+|成交數量|USDT 名义价值|
+|手續費|该笔成交手续费|
+|角色|吃單 (Taker) / 掛單 (Maker)|
+|已實現盈虧|开仓成交为 `--`；平仓成交显示实际盈亏|
 
 方向标签：开多/开空/平多/平空，绿色/红色文字。
 
@@ -270,6 +386,15 @@
 ---
 
 ### 6\.7 资金流水
+
+页面截图：[**App · 资金流水列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-tab-logs.png)
+
+|字段|说明|
+|---|---|
+|幣種、时间|卡片头部|
+|類型|转账、已实现盈亏、手续费等|
+|合約|关联合约（如有）|
+|總額|变动金额，正绿负红|
 
 类型枚举（筛选下拉选项）：
 
@@ -299,6 +424,14 @@
 
 ### 6\.8 资金费率
 
+页面截图：[**App · 资金费率列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-tab-funding.png)
+
+|字段|说明|
+|---|---|
+|幣種、时间|卡片头部|
+|合約|结算关联合约|
+|资金费用|该次结算费用金额，正绿负红|
+
 颜色规则：正数绿色，负数红色。
 
 ---
@@ -318,6 +451,18 @@
 ### 7\.4 订单状态头部
 
 页面顶部显示订单最终状态的大图标\+文案：
+
+页面截图：[**App · 详情 · 全部成交**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-detail-basic-filled.png)
+
+页面截图：[**App · 详情 · 部分成交**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-detail-basic-partial.png)
+
+页面截图：[**App · 详情 · 已取消**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-detail-basic-cancelled.png)
+
+页面截图：[**App · 详情 · 强平成交**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-detail-basic-liquidated.png)
+
+页面截图：[**App · 详情 · 止盈止损已完成**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-detail-tpsl-completed.png)
+
+页面截图：[**App · 详情 · 止盈止损已取消**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/交易流水-app/app-flow-detail-tpsl-cancelled.png)
 
 ### 7\.5 基础单详情字段
 
