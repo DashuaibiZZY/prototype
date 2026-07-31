@@ -1,6 +1,10 @@
 # APP 端指标设置页
 
+**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/指标设置.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/指标设置.html)
+
 ## 页面概述
+
+页面截图：[**App · 指标设置主列表页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/指标设置-app/app-indicator-list-page.png)
 
 指标设置页用于用户自定义行情详情页K线图表的主图与附图指标显示样式和计算参数，所有修改保存后即时生效。页面由指标主列表页和各个指标的子设置页构成，采用右侧滑入式导航。
 
@@ -8,11 +12,17 @@
 
 ### 2\.1 导航栏
 
+页面截图：[**App · 指标设置导航栏**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/指标设置-app/app-indicator-list-header.png)
+
 - 标题居中显示“指标设置”，字体加粗倾斜。
 
 - 左侧返回按钮，点击返回行情详情页。
 
 ### 2\.2 指标分类列表
+
+页面截图：[**App · 主图指标列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/指标设置-app/app-indicator-list-main.png)
+
+页面截图：[**App · 副图指标列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/指标设置-app/app-indicator-list-sub.png)
 
 列表分为两大区块：主图指标与副图指标，每个区块有灰色背景的小标题。
 
@@ -42,6 +52,10 @@
 
 ## 指标设置子页面（通用结构）
 
+页面截图：[**App · MA 指标设置子页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/指标设置-app/app-indicator-subpage-ma.png)
+
+页面截图：[**App · 底部重置与确认**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/指标设置-app/app-indicator-footer-actions.png)
+
 每个指标的子页面布局类似，包含：
 
 - 顶部状态栏（示意，实际以真机为准）
@@ -60,6 +74,8 @@
 
 ### 4\.1 MA（移动平均线）
 
+页面截图：[**App · MA 设置页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/指标设置-app/app-indicator-subpage-ma.png)
+
 性质：主图指标，可有多条线，每条线有独立的启用开关、周期、线宽、颜色。
 
 - 配置行（最多5条，示例已有3条启用\+2条禁用）
@@ -72,13 +88,19 @@
 
     - 线宽选择：点击弹出线宽选择器（预设几个线宽如1px,2px,3px），当前选中预览显示一条横线示意。
 
+页面截图：[**App · 线宽选择浮层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/指标设置-app/app-indicator-picker-width.png)
+
     - 颜色选择：点击弹出颜色选择器，当前选中预览显示一个色块。
+
+页面截图：[**App · 颜色选择浮层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/指标设置-app/app-indicator-picker-color.png)
 
 - 默认状态：三条MA线启用，周期分别为7、25、99，线宽默认2px，颜色分别为黄、紫、蓝。额外两条默认禁用。
 
 - 重置行为：恢复为上述默认值。
 
 ### 4\.2 EMA（指数移动平均线）
+
+页面截图：[**App · EMA 设置页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/指标设置-app/app-indicator-subpage-ema.png)
 
 性质：主图指标，结构同MA，但指标线名称显示为`EMA`。
 
@@ -89,6 +111,8 @@
 - 重置行为：恢复为默认值。
 
 ### 4\.3 BOLL（布林带）
+
+页面截图：[**App · BOLL 设置页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/指标设置-app/app-indicator-subpage-boll.png)
 
 性质：主图指标，由三条线组成（上轨UP、中轨MB、下轨DN），共享计算参数，每条线可单独控制显示/隐藏及样式。
 
@@ -112,6 +136,8 @@
 
 ### 4\.4 MACD（指数平滑异同移动平均线）
 
+页面截图：[**App · MACD 设置页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/指标设置-app/app-indicator-subpage-macd.png)
+
 性质：副图指标，包含两条曲线（DIF、DEA）和柱状图（MACD柱）。柱状图通常不设置线宽，仅通过涨跌颜色区分。
 
 - 基础参数区：
@@ -134,6 +160,8 @@
 
 ### 4\.5 KDJ（随机指标）
 
+页面截图：[**App · KDJ 设置页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/指标设置-app/app-indicator-subpage-kdj.png)
+
 性质：副图指标，由三条曲线组成（K、D、J），有共享参数。
 
 - 基础参数区：
@@ -155,6 +183,8 @@
 - 重置行为：参数恢复9/3/3，三条线全部启用，线宽2px，颜色默认。
 
 ### 4\.6 RSI（相对强弱指标）
+
+页面截图：[**App · RSI 设置页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/指标设置-app/app-indicator-subpage-rsi.png)
 
 性质：副图指标，可添加多条不同周期的RSI线，每条线独立设置周期、线宽、颜色。
 
@@ -193,6 +223,8 @@
 - 每个子页面底部的重置按钮仅重置当前指标的设置项至默认值，不自动保存；用户需点确认才生效。
 
 ### 5\.4 数值输入校验
+
+页面截图：[**App · 参数输入错误提示**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/指标设置-app/app-indicator-input-error.png)
 
 - 参数值必须为正整数，输入非数字或0时给出错误提示。
 
