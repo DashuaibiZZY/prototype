@@ -1,5 +1,7 @@
 # APP 端首页
 
+**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/首页.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/首页.html)
+
 ## 1\. 页面概述
 
 ### 1\.1 页面定位
@@ -28,6 +30,8 @@
 
 ## 2\. 整体页面结构
 
+页面截图：[**App · 首页整体（未登录）**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/首页-app/app-home-page-guest.png)
+
 ```Plain Text
 开屏页（Splash）
     ↓
@@ -55,6 +59,8 @@
 
 ### 3\.1 开屏页（Splash）
 
+页面截图：[**App · 开屏页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/首页-app/app-home-splash.png)
+
 **功能描述**  
 
 APP 冷启动时展示品牌开屏，传递“ForX”品牌感知，固定时长后自动过渡至首页。
@@ -72,6 +78,8 @@ APP 冷启动时展示品牌开屏，传递“ForX”品牌感知，固定时长
 ---
 
 ### 3\.2 全局网络异常处理
+
+页面截图：[**App · 网络异常态**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/首页-app/app-home-net-error.png)
 
 **功能描述**  
 
@@ -119,6 +127,8 @@ APP 冷启动时展示品牌开屏，传递“ForX”品牌感知，固定时长
 
 ### 3\.3 顶部导航栏
 
+页面截图：[**App · 顶部导航栏**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/首页-app/app-home-header.png)
+
 **功能描述**  
 
 提供页面标识与核心入口（消息中心），结构固定不随页面滚动。
@@ -153,7 +163,7 @@ APP 冷启动时展示品牌开屏，传递“ForX”品牌感知，固定时长
 
 #### 3\.4\.1 未登录状态
 
-
+页面截图：[**App · 新人礼包 Banner**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/首页-app/app-home-guest-banner.png)
 
 **展示内容**  
 
@@ -173,7 +183,9 @@ APP 冷启动时展示品牌开屏，传递“ForX”品牌感知，固定时长
 
 #### 3\.4\.2 已登录状态
 
+页面截图：[**App · 账户总权益卡片**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/首页-app/app-home-equity-card.png)
 
+页面截图：[**App · 快捷入口四宫格**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/首页-app/app-home-quick-entry.png)
 
 **展示内容**  
 
@@ -221,6 +233,8 @@ APP 冷启动时展示品牌开屏，传递“ForX”品牌感知，固定时长
 
 ### 3\.5 Banner 轮播区
 
+页面截图：[**App · 活动 Banner**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/首页-app/app-home-banner.png)
+
 **功能描述**  
 
 通过轮播形式展示运营活动入口，引导用户参与交易大赛、新币活动等。
@@ -260,6 +274,8 @@ APP 冷启动时展示品牌开屏，传递“ForX”品牌感知，固定时长
 ---
 
 ### 3\.6 行情 Tab 区
+
+页面截图：[**App · 行情 Tab 与收藏区**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/首页-app/app-home-market-tabs.png)
 
 **功能描述**  
 
@@ -307,6 +323,10 @@ APP 冷启动时展示品牌开屏，传递“ForX”品牌感知，固定时长
 
 #### 3\.6\.4 收藏 Tab 特殊逻辑
 
+页面截图：[**App · 收藏初始态（推荐卡片）**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/首页-app/app-home-fav-empty.png)
+
+页面截图：[**App · 收藏列表态**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/首页-app/app-home-fav-filled.png)
+
 - **首次使用（无收藏）**：展示热门推荐币种（取热门 Top 6 作为推荐），每个币种右侧有勾选框且默认勾选。底部有“一键收藏”按钮
 
     - 点击“一键收藏” → 将当前所有勾选币种加入我的收藏，界面变为已收藏列表样式
@@ -321,6 +341,10 @@ APP 冷启动时展示品牌开屏，传递“ForX”品牌感知，固定时长
 
 #### 3\.6\.5 其他 Tab 底部入口
 
+页面截图：[**App · 热门列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/首页-app/app-home-market-hot.png)
+
+页面截图：[**App · 新币上线列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/首页-app/app-home-market-new.png)
+
 - 热门、新币上线、涨幅榜、跌幅榜列表下方显示“查看更多 \>”文字链接
 
 - 点击后跳转至行情列表页，并自动定位到对应分类视图（例如涨幅榜）
@@ -334,6 +358,8 @@ APP 冷启动时展示品牌开屏，传递“ForX”品牌感知，固定时长
 ---
 
 ### 3\.7 公告区
+
+页面截图：[**App · 公告列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/首页-app/app-home-announcements.png)
 
 **功能描述**  
 
@@ -397,7 +423,7 @@ APP 冷启动时展示品牌开屏，传递“ForX”品牌感知，固定时长
 
 ### 3\.8 底部导航栏（Tab Bar）
 
-
+页面截图：[**App · 底部导航栏**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/首页-app/app-home-bottom-nav.png)
 
 **功能描述**  
 
@@ -428,6 +454,8 @@ APP 冷启动时展示品牌开屏，传递“ForX”品牌感知，固定时长
 ---
 
 ### 3\.9 请求超时全局弹窗
+
+页面截图：[**App · 请求超时弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/首页-app/app-home-modal-timeout.png)
 
 **功能描述**  
 
