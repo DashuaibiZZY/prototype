@@ -1,10 +1,8 @@
-# 积分（后台/Web/APP）
+# 积分（后台\_Web\_APP）
 
 ## 积分机制
 
 ### **机制1：新人任务**
-
-页面截图：[**后台 · 新人任务规则（只读）**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-config-newbie-tasks.png)
 
 - 后端业务逻辑描述：新人专属任务检查
 
@@ -26,8 +24,6 @@
 
 ### 机制2：积分加成自动化规则
 
-页面截图：[**后台 · 个人等级加成系数表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-config-level-bonus.png)
-
 在计算任何积分维度之前，系统首先根据用户的**“伞下周交易额”确定其当周的个人等级加成系数**。
 
 - **伞下周交易额定义**：用户本人当周交易额 \+ 该用户所有邀请的下级（整个邀请树）当周交易额的总和。
@@ -36,19 +32,23 @@
 
 - **等级加成对照表：**
 
+    |    等级|    伞下周交易额要求|    个人等级加成系数|
+    |---|---|---|
+    |    级别 1|    ≥ $100M|    1\.1x|
+    |    级别 2|    ≥ $200M|    1\.15x|
+    |    级别 3|    ≥ $500M|    1\.2x|
+    |    级别 4|    ≥ $1B|    1\.3x|
+    |    级别 5|    ≥ $5B|    1\.5x|
+
 - **生效时间**：系统在每周一 00:00 \(UTC\+8\) 结算，根据上周数据自动判定用户的等级系数。
 
 ---
 
 ### 机制3：积分得分计算公式
 
-页面截图：[**后台 · 六维度子池分配**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-config-dimensions.png)
-
 - 系统每周设定一个**固定积分总池（后台管理可配置）**。积分按 6 个维度进行拆分，每个维度都有独立的固定子池。
 
 - **计算积分时间**：系统在每周一 00:00 \(UTC\+8\) 计算上周数据进行自动化积分发放。
-
-
 
 **核心计算逻辑：**
 
@@ -56,15 +56,11 @@
 
 - **后进行精度问题处理：**取整数，然后默认直接截断，不进行任何进位
 
-
-
 1. **交易积分 \(占总池 60%\)**
 
 - **原始数据**：个人本周净手续费（总手续费 \- 产生的返佣支出）
 
 - **计算公式：个人交易积分** = `(个人净手续费 × 个人等级加成)` ÷ `全站所有人的 (净手续费 × 各自等级加成) 之和` × `(总积分池 × 60%)`
-
-
 
 2. **有效持仓积分 \(占总池 15%\)**
 
@@ -72,15 +68,11 @@
 
 - **计算公式**：**个人持仓积分** = `(个人平均持仓价值 × 个人等级加成)` ÷ `全站所有人的 (平均持仓价值 × 各自等级加成) 之和` × `(总积分池 × 15%)`
 
-
-
 3. **持仓亏损激励积分 \(占总池 8%\)**
 
 - **原始数据**：个人本周累计已实现净亏损额（绝对值）
 
 - **计算公式**：**个人亏损激励积分** = `(个人净亏损额 × 个人等级加成)` ÷ `全站所有人的 (净亏损额 × 各自等级加成) 之和` × `(总积分池 × 8%)`
-
-
 
 4. **持仓盈利额外积分 \(占总池 2%\)**
 
@@ -88,15 +80,11 @@
 
 - **计算公式**：**个人盈利积分** = `(个人净盈利额 × 个人等级加成)` ÷ `全站所有人的 (净盈利额 × 各自等级加成) 之和` × `(总积分池 × 2%)`
 
-
-
 5. **平均资沉积分 \(占总池 5%\)**
 
 - **原始数据**：个人当周平均资沉（账户余额，每日随机快照 1 次取周平均值）
 
 - **计算公式**：**个人资沉积分** = `(个人账户余额 × 个人等级加成)` ÷ `全站所有人的 (账户余额 × 各自等级加成) 之和` × `(总积分池 × 5%)`
-
-
 
 6. **邀请贡献积分 \(占总池 10%\)**
 
@@ -104,16 +92,17 @@
 
 - **计算公式**：**个人邀请积分** = `(好友净手续费总和 × 个人等级加成)` ÷ `全站所有人的 (好友净手续费总和 × 各自等级加成) 之和` × `(总积分池 × 10%)`
 
-
-
 ## 积分管理后台
 
 ### 模块概述
 
 - **模块名称**：积分后台管理系统
+
 - **核心目标**：配置每周积分总池与瓜分规则、查询用户积分与流水、执行积分手动发放与自定义加成配置，并通过统一四级审批保障敏感操作合规
+
 - **使用人员**：平台运营（积分管理员提交申请）；市场运营交叉 / 风控 / 老板（按角色审批）
-- **原型链接**：[https://dashuaibizzy.github.io/prototype/https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html](https://dashuaibizzy.github.io/prototype/https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html)
+
+- **原型链接**：[https://dashuaibizzy\.github\.io/prototype/https://dashuaibizzy\.github\.io/prototype/perp\_dex/admin/积分后台\.html](https://dashuaibizzy.github.io/prototype/https://dashuaibizzy.github.io/prototype/perp_dex/admin/%E7%A7%AF%E5%88%86%E5%90%8E%E5%8F%B0.html)
 
 ---
 
@@ -121,231 +110,241 @@
 
 后台采用 **ForX Admin 统一侧栏**，积分模块包含六个子页面：
 
-| 侧栏入口 | 页面 | Hash |
+|侧栏入口|页面|Hash|
 |---|---|---|
-| 每周积分总池设置 | 总池、六维度子池、等级加成、新人任务（只读） | `#config` |
-| 积分加成配置 | 单用户 / 批量配置自定义加成系数 | `#bonus` |
-| 用户积分查询 | 用户列表 + 积分流水详情 | `#users` |
-| 手动发放积分 | 多行录入 / 文件上传批量发放 | `#manual` |
-| 积分审核 | 积分手动发放 + 积分加成配置审批（合并） | `#approval` |
-| 操作记录 | 手动发放与规则配置审计日志 | `#logs` |
+|每周积分总池设置|总池、六维度子池、等级加成、新人任务（只读）|`#config`|
+|积分加成配置|单用户 / 批量配置自定义加成系数|`#bonus`|
+|用户积分查询|用户列表 \+ 积分流水详情|`#users`|
+|手动发放积分|多行录入 / 文件上传批量发放|`#manual`|
+|积分审核|积分手动发放 \+ 积分加成配置审批（合并）|`#approval`|
+|操作记录|手动发放与规则配置审计日志|`#logs`|
 
-**原型主文件**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html](https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html)  
+**原型主文件**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/admin/积分后台\.html](https://dashuaibizzy.github.io/prototype/perp_dex/admin/%E7%A7%AF%E5%88%86%E5%90%8E%E5%8F%B0.html)
 **权限**：积分管理员（提交申请）；市场运营交叉 / 风控 / 老板（按角色审批）。
 
 ---
 
-### 3.1 每周积分总池设置
+### 3\.1 每周积分总池设置
 
-**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#config](https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#config)
+**原型**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/admin/积分后台\.html\#config](https://dashuaibizzy.github.io/prototype/perp_dex/admin/%E7%A7%AF%E5%88%86%E5%90%8E%E5%8F%B0.html#config)
 
-本页用于配置每周自动瓜分的积分总池，并展示六维度子池占比、个人等级加成系数及新人任务规则（系统只读）。系统每周一 **00:00（UTC+8）** 根据上周数据自动结算发放。
+本页用于配置每周自动瓜分的积分总池，并展示六维度子池占比、个人等级加成系数及新人任务规则（系统只读）。系统每周一 **00:00（UTC\+8）** 根据上周数据自动结算发放。
 
 #### 每周积分总池
 
-页面截图：[**后台 · 每周积分总池配置**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-config-pool.png)
+页面截图：[**后台 · 每周积分总池配置**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/admin-config-pool.png)
 
-| 配置项 | 说明 |
+|配置项|说明|
 |---|---|
-| 本周总池（积分） | 正整数，如 `1,000,000`；保存后写入操作记录 |
-| 生效周期 | 只读展示当前结算周，如 `2026-W30 (07/21 - 07/27)` |
-| 保存总池配置 | 点击后更新总池数值，记录操作日志 |
+|本周总池（积分）|正整数，如 `1,000,000`；保存后写入操作记录|
+|生效周期|只读展示当前结算周，如 `2026-W30 (07/21 - 07/27)`|
+|保存总池配置|点击后更新总池数值，记录操作日志|
 
 #### 六维度子池分配（固定占比）
 
 各维度子池占比为系统固定规则，本页只读展示：
 
-| 维度 | 占比 | 原始数据 |
+|维度|占比|原始数据|
 |---|---|---|
-| 交易积分 | 60% | 个人本周净手续费 |
-| 有效持仓积分 | 15% | 周平仓 + 当前持仓 |
-| 持仓亏损激励 | 8% | 已实现净亏损（绝对值） |
-| 持仓盈利额外 | 2% | 已实现净盈利 |
-| 平均资沉积分 | 5% | 当周平均账户余额 |
-| 邀请贡献积分 | 10% | 一级好友净手续费总和 |
+|交易积分|60%|个人本周净手续费|
+|有效持仓积分|15%|周平仓 \+ 当前持仓|
+|持仓亏损激励|8%|已实现净亏损（绝对值）|
+|持仓盈利额外|2%|已实现净盈利|
+|平均资沉积分|5%|当周平均账户余额|
+|邀请贡献积分|10%|一级好友净手续费总和|
 
-**计算公式**：维度得分 = (个人原始数据 × 等级加成) ÷ 全站加权总和 × 该维度子池；结果取整截断，不进位。
+**计算公式**：维度得分 = \(个人原始数据 × 等级加成\) ÷ 全站加权总和 × 该维度子池；结果取整截断，不进位。
 
 #### 个人等级加成系数（机制 2）
 
-- **伞下周交易额** = 本人当周交易额 + 邀请树全体下级当周交易额。
-- 每周一 **00:00（UTC+8）** 根据上周数据判定等级。
+- **伞下周交易额** = 本人当周交易额 \+ 邀请树全体下级当周交易额。
 
-| 等级 | 伞下周交易额要求 | 个人等级加成系数 |
+- 每周一 **00:00（UTC\+8）** 根据上周数据判定等级。
+
+|等级|伞下周交易额要求|个人等级加成系数|
 |---|---|---|
-| 级别 1 | ≥ $100M | 1.1x |
-| 级别 2 | ≥ $200M | 1.15x |
-| 级别 3 | ≥ $500M | 1.2x |
-| 级别 4 | ≥ $1B | 1.3x |
-| 级别 5 | ≥ $5B | 1.5x |
+|级别 1|≥ $100M|1\.1x|
+|级别 2|≥ $200M|1\.15x|
+|级别 3|≥ $500M|1\.2x|
+|级别 4|≥ $1B|1\.3x|
+|级别 5|≥ $5B|1\.5x|
 
 #### 新人任务自动发放（机制 1 · 系统只读）
 
 扫描频率：每日 **00:00（UTC）**。完成后自动发放积分并标记任务完成。
 
-| 任务 | 条件 | 发放积分 | 活动名称 |
+|任务|条件|发放积分|活动名称|
 |---|---|---|---|
-| 任务 A：首次交易奖励 | 净累计充值 ≥ 100 USDT 且永续合约至少一笔成交 | 5 积分 | 新人專屬交易任務 |
-| 任务 B：推广先锋奖励 | 3 名好友完成「首次交易奖励」 | 10 积分 | 新人專屬推廣先鋒獎勵 |
+|任务 A：首次交易奖励|净累计充值 ≥ 100 USDT 且永续合约至少一笔成交|5 积分|新人專屬交易任務|
+|任务 B：推广先锋奖励|3 名好友完成「首次交易奖励」|10 积分|新人專屬推廣先鋒獎勵|
 
 ---
 
-### 3.2 积分加成配置
+### 3\.2 积分加成配置
 
-**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#bonus](https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#bonus)
+**原型**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/admin/积分后台\.html\#bonus](https://dashuaibizzy.github.io/prototype/perp_dex/admin/%E7%A7%AF%E5%88%86%E5%90%8E%E5%8F%B0.html#bonus)
 
-页面截图：[**后台 · 积分加成配置**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-bonus-config.png)
+页面截图：[**后台 · 积分加成配置**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/admin-bonus-config.png)
 
 为单个或批量用户配置**自定义积分加成系数**，覆盖自然等级加成。提交前系统校验自然等级加成是否高于新设置值，存在异常时须市场运营确认后进入审批流程。
 
 #### 录入模式
 
-| 模式 | 说明 |
+|模式|说明|
 |---|---|
-| 单用户配置 | 填写 UID 或钱包地址 + 新积分加成系数 |
-| 批量配置 | 多行文本，每行 `UID或钱包,加成系数`，英文逗号分隔 |
+|单用户配置|填写 UID 或钱包地址 \+ 新积分加成系数|
+|批量配置|多行文本，每行 `UID或钱包,加成系数`，英文逗号分隔|
 
 #### 配置项
 
-| 配置项 | 说明 |
+|配置项|说明|
 |---|---|
-| UID 或钱包地址 | 单用户模式必填；支持 UID 或 EVM 钱包地址 |
-| 新积分加成系数 | 数值，步进 0.05，范围 1.0–3.0，如 `1.5`、`2.0` |
-| 活动关联 | **必填**，二选一：平台活动（下拉选择活动 ID + 名称）或自定义活动名 |
-| 申请备注 | **必填**，说明配置原因及审批依据 |
+|UID 或钱包地址|单用户模式必填；支持 UID 或 EVM 钱包地址|
+|新积分加成系数|数值，步进 0\.05，范围 1\.0–3\.0，如 `1.5`、`2.0`|
+|活动关联|**必填**，二选一：平台活动（下拉选择活动 ID \+ 名称）或自定义活动名|
+|申请备注|**必填**，说明配置原因及审批依据|
 
 #### 异常校验
 
 提交时系统自动比对每位用户的**自然等级加成**与**新设置加成**：
 
-- 若存在用户自然加成 > 新设置加成，弹出「确认提交积分加成配置」弹窗，列出异常用户（UID、当前积分加成、新更新积分加成）。
+- 若存在用户自然加成 \> 新设置加成，弹出「确认提交积分加成配置」弹窗，列出异常用户（UID、当前积分加成、新更新积分加成）。
+
 - 市场运营确认异常情况后，方可继续提交审批。
+
 - 若无异常，弹窗提示「无异常情况，可直接提交审批」。
 
 #### 提交确认弹窗
 
-页面截图：[**后台 · 积分加成提交确认弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-modal-bonus-confirm.png)
+页面截图：[**后台 · 积分加成提交确认弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/admin-modal-bonus-confirm.png)
 
 汇总展示：配置人数、加成系数、活动信息、异常名单（如有）、四级审批流程预览。确认后生成审批单，类型为「积分加成配置」，状态为「待市场运营交叉审核」。
 
 #### 生效规则
 
 - 审批通过后，目标用户的自定义加成系数正式生效。
+
 - 用户此后新增积分按**自定义加成**与**自然等级加成**中的较高者（或业务约定的取高逻辑）计算；列表「积分加成」列展示当前生效类型。
+
 - 配置变更写入操作记录。
 
 ---
 
-### 3.3 用户积分查询
+### 3\.3 用户积分查询
 
-**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#users](https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#users)
+**原型**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/admin/积分后台\.html\#users](https://dashuaibizzy.github.io/prototype/perp_dex/admin/%E7%A7%AF%E5%88%86%E5%90%8E%E5%8F%B0.html#users)
 
-页面截图：[**后台 · 用户积分列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-users-list.png)
+页面截图：[**后台 · 用户积分列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/admin-users-list.png)
 
 查询用户当前积分、等级加成、加成类型及上周各维度得分，可进入查看完整发放流水。
 
 #### 列表筛选
 
-| 字段 | 说明 |
+|字段|说明|
 |---|---|
-| UID / 钱包地址 | **合并为一个输入框**，支持模糊匹配 UID 或钱包地址 |
-| 等级加成 | 全部 / 级别 1+ / 级别 3+ |
-| 加成类型 | 全部 / 自然等级 / 自定义配置 |
+|UID / 钱包地址|**合并为一个输入框**，支持模糊匹配 UID 或钱包地址|
+|等级加成|全部 / 级别 1\+ / 级别 3\+|
+|加成类型|全部 / 自然等级 / 自定义配置|
 
 #### 列表字段
 
-| 列 | 说明 |
+|列|说明|
 |---|---|
-| UID / 钱包 | 用户标识，钱包地址缩短展示 |
-| 当前积分 | 用户累计总积分 |
-| 等级加成 | 当前生效的等级加成系数，如 `1.2x` |
-| 积分加成 | 加成类型标签：「自然等级 1.2x」或「自定义 1.5x」 |
-| 伞下周交易额 | 用于等级判定的伞下周交易额 |
-| 上周交易积分 | 上周交易维度得分 |
-| 上周持仓积分 | 上周有效持仓维度得分 |
-| 上周邀请积分 | 上周邀请贡献维度得分 |
-| 上周合计 | 上周各维度得分合计 |
-| 操作 | 「查看流水」进入用户详情 |
+|UID / 钱包|用户标识，钱包地址缩短展示|
+|当前积分|用户累计总积分|
+|等级加成|当前生效的等级加成系数，如 `1.2x`|
+|积分加成|加成类型标签：「自然等级 1\.2x」或「自定义 1\.5x」|
+|伞下周交易额|用于等级判定的伞下周交易额|
+|上周交易积分|上周交易维度得分|
+|上周持仓积分|上周有效持仓维度得分|
+|上周邀请积分|上周邀请贡献维度得分|
+|上周合计|上周各维度得分合计|
+|操作|「查看流水」进入用户详情|
 
 #### 用户积分流水详情
 
-页面截图：[**后台 · 用户积分流水详情**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-user-detail.png)
+页面截图：[**后台 · 用户积分流水详情**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/admin-user-detail.png)
 
 点击「查看流水」进入详情子页，顶部展示：
 
-| 字段 | 说明 |
+|字段|说明|
 |---|---|
-| UID / 钱包 | 用户完整标识 |
-| 当前积分 | 累计总积分 |
-| 自然等级加成 | 如 `1.2x (级别 3)` |
-| 自定义加成 | 仅当存在自定义配置时展示，如 `1.5x` |
-| 伞下周交易额 | 当前伞下周交易额 |
+|UID / 钱包|用户完整标识|
+|当前积分|累计总积分|
+|自然等级加成|如 `1.2x (级别 3)`|
+|自定义加成|仅当存在自定义配置时展示，如 `1.5x`|
+|伞下周交易额|当前伞下周交易额|
 
 **积分发放历史记录**表格：
 
-| 列 | 说明 |
+|列|说明|
 |---|---|
-| 时间 | 发放时间 |
-| 来源 | 标签：系统周结算 / 手动发放 / 新人任务 |
-| 活动 / 维度 | 活动名称；系统周结算行展开六维度得分明细（交易、持仓、亏损激励、盈利额外、资沉、邀请） |
-| 积分变动 | 如 `+5,830` |
-| 变更后余额 | 变动后账户积分余额 |
-| 备注 | 如「等级加成 1.2x，截断取整」 |
+|时间|发放时间|
+|来源|标签：系统周结算 / 手动发放 / 新人任务|
+|活动 / 维度|活动名称；系统周结算行展开六维度得分明细（交易、持仓、亏损激励、盈利额外、资沉、邀请）|
+|积分变动|如 `+5,830`|
+|变更后余额|变动后账户积分余额|
+|备注|如「等级加成 1\.2x，截断取整」|
 
 详情页左上角提供「← 返回用户列表」。
 
 ---
 
-### 3.4 手动发放积分
+### 3\.4 手动发放积分
 
-**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#manual](https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#manual)
+**原型**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/admin/积分后台\.html\#manual](https://dashuaibizzy.github.io/prototype/perp_dex/admin/%E7%A7%AF%E5%88%86%E5%90%8E%E5%8F%B0.html#manual)
 
-页面截图：[**后台 · 手动发放积分**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-manual-grant.png)
+页面截图：[**后台 · 手动发放积分**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/admin-manual-grant.png)
 
 用于活动奖励、空投、补偿等场景的批量积分增发，须关联活动并走四级审批。
 
 #### 录入模式
 
-| 模式 | 说明 |
+|模式|说明|
 |---|---|
-| 多行录入 | 文本框，每行 `UID或钱包,积分`，英文逗号分隔 |
-| 文件上传 | 拖拽或选择 Excel / CSV，须包含列：`uid_or_wallet`, `points` |
+|多行录入|文本框，每行 `UID或钱包,积分`，英文逗号分隔|
+|文件上传|拖拽或选择 Excel / CSV，须包含列：`uid_or_wallet`, `points`|
 
 #### 配置项
 
-| 配置项 | 说明 |
+|配置项|说明|
 |---|---|
-| 发放名单 | 多行录入或文件解析后的 UID / 钱包 + 积分数 |
-| 活动关联 | **必填**，二选一：平台活动或自定义活动名 |
-| 申请备注 | **必填**，说明发放原因及审批依据 |
+|发放名单|多行录入或文件解析后的 UID / 钱包 \+ 积分数|
+|活动关联|**必填**，二选一：平台活动或自定义活动名|
+|申请备注|**必填**，说明发放原因及审批依据|
 
 #### 校验逻辑
 
 - UID 或钱包地址须为有效用户标识。
+
 - 积分数须为正整数。
+
 - 多行录入单次上限 **100 行**；文件上传单次上限 **10,000 行**，超出须提示分批处理。
 
 #### 提交确认弹窗
 
-页面截图：[**后台 · 手动发放提交确认弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-modal-manual-approval.png)
+页面截图：[**后台 · 手动发放提交确认弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/admin-modal-manual-approval.png)
 
 汇总展示：发放人数、发放总积分、活动信息、四级审批流程预览。确认后生成审批单，类型为「积分手动发放」，状态为「待市场运营交叉审核」，同时写入操作记录（状态：审批中）。
 
 #### 审批通过后的系统行为
 
 1. 审批单状态变为「已通过」。
+
 2. 按名单为每位用户增加对应积分，更新总积分与积分流水。
+
 3. 流水「活动」字段写入关联活动名称。
+
 4. 操作记录中对应条目更新为已生效。
 
 ---
 
-### 3.5 积分审核
+### 3\.5 积分审核
 
-**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#approval](https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#approval)  
+**原型**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/admin/积分后台\.html\#approval](https://dashuaibizzy.github.io/prototype/perp_dex/admin/%E7%A7%AF%E5%88%86%E5%90%8E%E5%8F%B0.html#approval)
 **侧栏入口**：积分 → 积分审核
 
-页面截图：[**后台 · 积分审核列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-approval-list.png)
+页面截图：[**后台 · 积分审核列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/admin-approval-list.png)
 
 积分审核页将**积分手动发放**与**积分加成配置**两类审批合并为统一列表，共用四级审批引擎（与费率、体验金一致）。
 
@@ -353,79 +352,80 @@
 
 页面顶部提供角色 Tab，用于原型演示不同审批视角（实际生产环境按登录账号权限控制）：
 
-| Tab | 角色 | 可操作 |
+|Tab|角色|可操作|
 |---|---|---|
-| 市场运营交叉 | 市场运营（交叉） | 审批「待交叉审核」的单据 |
-| 风控 | 风控 | 审批「待风控审核」的单据 |
-| 老板 | 老板 | 审批「待老板审批」的单据 |
+|市场运营交叉|市场运营（交叉）|审批「待交叉审核」的单据|
+|风控|风控|审批「待风控审核」的单据|
+|老板|老板|审批「待老板审批」的单据|
 
 #### 列表筛选
 
-| 字段 | 说明 |
+|字段|说明|
 |---|---|
-| 视图 | 待我审批 / 全部审批 |
-| 状态 | 全部 / 待交叉审核 / 待风控 / 待老板 / 已通过 / 已驳回 |
-| 类型 | 全部 / 积分手动发放 / 积分加成配置 |
-| 活动名称 | 模糊匹配关联活动名 |
-| 审批单号 | 模糊匹配 APR 单号 |
+|视图|待我审批 / 全部审批|
+|状态|全部 / 待交叉审核 / 待风控 / 待老板 / 已通过 / 已驳回|
+|类型|全部 / 积分手动发放 / 积分加成配置|
+|活动名称|模糊匹配关联活动名|
+|审批单号|模糊匹配 APR 单号|
 
 #### 列表字段
 
-| 列 | 说明 |
+|列|说明|
 |---|---|
-| 审批单号 | 如 `APR20260727015` |
-| 类型 | 积分手动发放 / 积分加成配置 |
-| 申请人 | 提交申请的积分管理员账号 |
-| 申请时间 | 提交时间 |
-| 活动 | 关联的平台活动或自定义活动名 |
-| 摘要 | 如 `3 人 · 200 积分 · 运营补偿活动` 或 `2 人 · 1.5x · 大使专属加成` |
-| 状态 | 当前审批状态 |
-| 操作 | 查看 / 审批（当前角色可操作时显示） |
+|审批单号|如 `APR20260727015`|
+|类型|积分手动发放 / 积分加成配置|
+|申请人|提交申请的积分管理员账号|
+|申请时间|提交时间|
+|活动|关联的平台活动或自定义活动名|
+|摘要|如 `3 人 · 200 积分 · 运营补偿活动` 或 `2 人 · 1.5x · 大使专属加成`|
+|状态|当前审批状态|
+|操作|查看 / 审批（当前角色可操作时显示）|
 
 #### 审批详情页
 
-页面截图：[**后台 · 审批详情**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-approval-detail.png)
+页面截图：[**后台 · 审批详情**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/admin-approval-detail.png)
 
 点击「查看」或「审批」进入详情子页（Hash：`#approval-detail=<审批单号>`）。
 
 ##### 基本信息区
 
-| 字段 | 说明 |
+|字段|说明|
 |---|---|
-| 审批单号 | 唯一标识 |
-| 类型 | 积分手动发放 / 积分加成配置 |
-| 状态 | 当前审批状态标签 |
-| 申请人 / 申请时间 | 提交信息 |
-| 摘要 | 发放或加成配置概要 |
-| 申请备注 | 运营填写的变更原因 |
+|审批单号|唯一标识|
+|类型|积分手动发放 / 积分加成配置|
+|状态|当前审批状态标签|
+|申请人 / 申请时间|提交信息|
+|摘要|发放或加成配置概要|
+|申请备注|运营填写的变更原因|
 
 ##### 申请原数据区
 
 **积分手动发放**类型展示：
 
-| 字段 | 说明 |
+|字段|说明|
 |---|---|
-| 活动信息 | 平台活动 ID + 名称，或自定义活动名 |
-| 录入方式 | 多行录入 / 文件上传 |
-| 发放人数 | 名单人数 |
-| 发放总积分 | 积分合计 |
-| 发放名单 | 表格：uid_or_wallet、points；支持 **UID/钱包搜索** 与 **分页**（每页 10 条） |
+|活动信息|平台活动 ID \+ 名称，或自定义活动名|
+|录入方式|多行录入 / 文件上传|
+|发放人数|名单人数|
+|发放总积分|积分合计|
+|发放名单|表格：uid\_or\_wallet、points；支持 **UID/钱包搜索** 与 **分页**（每页 10 条）|
 
 **积分加成配置**类型展示：
 
-| 字段 | 说明 |
+|字段|说明|
 |---|---|
-| 活动信息 | 平台活动或自定义活动名 |
-| 加成系数 | 统一系数（如 `1.5x`）或「多种」 |
-| 配置人数 | 名单人数 |
-| 异常人数 | 自然加成高于新设置的用户数 |
-| 配置名单 | 表格：UID、自然加成、新加成、是否异常；支持搜索与分页 |
+|活动信息|平台活动或自定义活动名|
+|加成系数|统一系数（如 `1.5x`）或「多种」|
+|配置人数|名单人数|
+|异常人数|自然加成高于新设置的用户数|
+|配置名单|表格：UID、自然加成、新加成、是否异常；支持搜索与分页|
 
 详情页提供「**导出原数据**」按钮，可导出当前审批单的完整名单。
 
 ##### 审批进度区
 
 - 四级审批步骤条：市场运营提交 → 市场运营交叉审核 → 风控 → 老板。
+
 - 若已进入老板审批阶段，展示 Lark 联动卡片（审批单号、同步时间、Lark 链接）。
 
 ##### 审批时间线
@@ -436,14 +436,14 @@
 
 当前角色有权审批时展示：
 
-| 操作 | 说明 |
+|操作|说明|
 |---|---|
-| 通过 | 可选填审批意见，进入下一审批环节 |
-| 驳回 | **须填写**审批意见，申请单变为已驳回 |
+|通过|可选填审批意见，进入下一审批环节|
+|驳回|**须填写**审批意见，申请单变为已驳回|
 
 #### 四级审批流程
 
-```
+```Plaintext
 市场运营（积分管理员）提交申请
         ↓
 市场运营交叉审核（须另一位市场运营审核，不可自审自批）
@@ -461,46 +461,44 @@
 
 ---
 
-### 3.6 操作记录
+### 3\.6 操作记录
 
-**原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#logs](https://dashuaibizzy.github.io/prototype/perp_dex/admin/积分后台.html#logs)
+**原型**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/admin/积分后台\.html\#logs](https://dashuaibizzy.github.io/prototype/perp_dex/admin/%E7%A7%AF%E5%88%86%E5%90%8E%E5%8F%B0.html#logs)
 
-页面截图：[**后台 · 操作记录**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/admin-operation-logs.png)
+页面截图：[**后台 · 操作记录**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/admin-operation-logs.png)
 
 记录手动发放积分及规则配置（总池变更、加成配置提交等）的审计日志。
 
 #### 筛选
 
-| 字段 | 说明 |
+|字段|说明|
 |---|---|
-| UID / 钱包 | 目标用户（规则配置类操作可为 `-`） |
-| 操作人 | 后台账号 |
-| 操作类型 | 全部 / 手动发放 / 规则配置 |
+|UID / 钱包|目标用户（规则配置类操作可为 `-`）|
+|操作人|后台账号|
+|操作类型|全部 / 手动发放 / 规则配置|
 
 #### 列表字段
 
-| 列 | 说明 |
+|列|说明|
 |---|---|
-| 操作时间 | UTC+8 展示 |
-| 操作人 | 后台账号 |
-| 操作类型 | 手动发放 / 规则配置 |
-| 目标用户 | UID + 钱包，或批量人数摘要 |
-| 变更详情 | 如：`每周积分总池 800,000 → 1,000,000`；`运营补偿活动 · 待审批 APR...` |
-| 积分 | 发放积分数，规则配置显示 `-` |
-| 备注 | 操作备注摘要 |
+|操作时间|UTC\+8 展示|
+|操作人|后台账号|
+|操作类型|手动发放 / 规则配置|
+|目标用户|UID \+ 钱包，或批量人数摘要|
+|变更详情|如：`每周积分总池 800,000 → 1,000,000`；`运营补偿活动 · 待审批 APR...`|
+|积分|发放积分数，规则配置显示 `-`|
+|备注|操作备注摘要|
 
 #### 记录时机
 
-| 操作 | 记录内容 |
+|操作|记录内容|
 |---|---|
-| 保存总池配置 | 立即写入，记录变更前后总池数值 |
-| 提交积分手动发放审批 | 立即写入，状态标注「审批中」及审批单号 |
-| 提交积分加成配置审批 | 立即写入，记录配置人数与活动 |
-| 审批通过（系统） | 可补充更新记录状态为已生效 |
+|保存总池配置|立即写入，记录变更前后总池数值|
+|提交积分手动发放审批|立即写入，状态标注「审批中」及审批单号|
+|提交积分加成配置审批|立即写入，记录配置人数与活动|
+|审批通过（系统）|可补充更新记录状态为已生效|
 
 ---
-
-
 
 ## Web \- 积分页
 
@@ -508,19 +506,19 @@
 
 - **核心功能点**：建立‘积分即权重’的强空投预期，通过每周动态奖池瓜分、阶梯式新人任务以及倍率加成体系
 
-- **原型链接**：[https://dashuaibizzy.github.io/prototype/perp_dex/points.html](https://dashuaibizzy.github.io/prototype/perp_dex/points.html)
+- **原型链接**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/points\.html](https://dashuaibizzy.github.io/prototype/perp_dex/points.html)
 
 ---
 
 ### 模块详细需求描述
 
-页面截图：[**Web · 页面标题区**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/web-points-header.png)
+页面截图：[**Web · 页面标题区**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/web-points-header.png)
 
 #### 2\.1 积分看板
 
 **位置**：页面顶部核心卡片
 
-页面截图：[**Web · 积分看板**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/web-points-dashboard.png)
+页面截图：[**Web · 积分看板**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/web-points-dashboard.png)
 
 - **功能需求**：
 
@@ -532,13 +530,13 @@
 
     - **加成倍率**：显示当前生效的倍率
 
-    页面截图：[**Web · 加成倍率阶梯弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/web-multiplier-rules-modal.png)
+- 页面截图：[**Web · 加成倍率阶梯弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/web-multiplier-rules-modal.png)
 
     - **全站总积分**：静态展示全平台累计已产生积分总量，数值取自后台统计（示例：12,450,234,124）。
 
 - **查看详情（积分流水详情）**：
 
-    页面截图：[**Web · 积分发放明细弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/web-points-detail-modal.png)
+- 页面截图：[**Web · 积分发放明细弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/web-points-detail-modal.png)
 
     - **查看详情按钮**：点击触发弹窗，展示流水
 
@@ -546,13 +544,11 @@
 
     - **分页逻辑**：支持每页 10 条数据，带“上一页/下一页”切换
 
-
-
 #### 2\.2 积分获取体系
 
 **位置**：页面中部，分为“循环任务”与“单次任务”
 
-页面截图：[**Web · 积分获取体系**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/web-points-tasks.png)
+页面截图：[**Web · 积分获取体系**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/web-points-tasks.png)
 
 - 新人专属任务 \- 功能样式与交互
 
@@ -564,27 +560,27 @@
 
         - 任务B“推广先锋奖励”：按钮文案 “去邀请 →”，点击弹出邀请分享弹窗，可保存海报或调用系统分享。
 
-页面截图：[**Web · 邀请分享弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/web-modal-share.png)
+页面截图：[**Web · 邀请分享弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/web-modal-share.png)
 
-    - 已完成任务
+```Plaintext
+- 已完成任务
 
-        - 卡片整体置灰，标题增加删除线，积分数字变灰。
+    - 卡片整体置灰，标题增加删除线，积分数字变灰。
 
-        - 右上角显示 绿色圆形“已完成”印章图标。
+    - 右上角显示 绿色圆形“已完成”印章图标。
 
-        - 积分下方的操作按钮自动隐藏。
+    - 积分下方的操作按钮自动隐藏。
 
-    - 进度展示
+- 进度展示
 
-        - 模块头部显示“进度: 1/2”或“进度: 2/2”。
+    - 模块头部显示“进度: 1/2”或“进度: 2/2”。
 
-        - 任务B可额外显示好友邀请进度条，文案如“已邀请 X/3 名有效好友”。
-
-
+    - 任务B可额外显示好友邀请进度条，文案如“已邀请 X/3 名有效好友”。
+```
 
 #### **2\.3 常见问题**
 
-页面截图：[**Web · 常见问题**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/web-points-faq.png)
+页面截图：[**Web · 常见问题**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/web-points-faq.png)
 
 - **位置**：全局统计数据下方。
 
@@ -604,15 +600,13 @@
 
 - **核心目标**：在移动端清晰展示用户积分资产、排名及加成倍率，并引导用户完成积分任务，建立积分价值预期。
 
-- **原型参考**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/%E7%A7%AF%E5%88%86.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/%E7%A7%AF%E5%88%86.html)
-
-    
+- **原型参考**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/app/%E7%A7%AF%E5%88%86\.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/%E7%A7%AF%E5%88%86.html)
 
 ### **2\. 页面结构与功能详述**
 
 #### **2\.1 顶部导航栏**
 
-页面截图：[**App · 顶部导航栏**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/app-points-header.png)
+页面截图：[**App · 顶部导航栏**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/app-points-header.png)
 
 - **位置**：页面顶部
 
@@ -624,11 +618,9 @@
 
     - **交互**：无下拉刷新，页面为静态展示。
 
-        
-
 #### **2\.2 核心积分看板**
 
-页面截图：[**App · 核心积分看板**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/app-points-dashboard.png)
+页面截图：[**App · 核心积分看板**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/app-points-dashboard.png)
 
 - **位置**：导航栏下方主视觉区域
 
@@ -642,7 +634,7 @@
 
     - **加成规则入口**：加成系数旁设“感叹号”图标按钮。点击后弹出弹窗，展示具体加成阶梯对照表及触发条件简述。
 
-    页面截图：[**App · 加成规则弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/app-multiplier-rules-modal.png)
+- 页面截图：[**App · 加成规则弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/app-multiplier-rules-modal.png)
 
     - **全站排名**：显示“排名 \#数字”，如 `#982`。若排名超过1000则显示 `1000+`。
 
@@ -650,11 +642,9 @@
 
     - **全站总积分**：静态展示全平台累计已产生积分总量，数值取自后台统计，并根据K、M、B进行两位点数展示优化（示例：12\.45M）。
 
-        
-
 #### **2\.3 积分获取体系**
 
-页面截图：[**App · 积分获取体系**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/app-points-tasks.png)
+页面截图：[**App · 积分获取体系**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/app-points-tasks.png)
 
 - **位置**：积分看板下方
 
@@ -678,27 +668,27 @@
 
                 - 未完成：卡片高亮，积分 `+10 Pts` 下方显示 “去邀请” 文字按钮，点击唤起分享弹窗，展示邀请海报、邀请码和分享/保存按钮。
 
-页面截图：[**App · 邀请分享弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/app-modal-share.png)
+页面截图：[**App · 邀请分享弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/app-modal-share.png)
 
-                - 已完成：置灰处理及印章表现同上，按钮隐藏。
+```Plaintext
+- 已完成：置灰处理及印章表现同上，按钮隐藏。
 
-            - 状态切换（仅原型演示）
-
-    
-
-    2. **每周自动瓜分池**
-
-        - **标题**：每周自動瓜分池
-
-        - **说明文案**：系统每周一自动结算并分发
-
-        - **标签展示**：以标签组形式展示核心积分维度（如：交易、持倉、盈虧、存款、邀请好友），无具体数值，仅作告知。
+        - 状态切换（仅原型演示）
 
 
+
+2. **每周自动瓜分池**
+
+    - **标题**：每周自動瓜分池
+
+    - **说明文案**：系统每周一自动结算并分发
+
+    - **标签展示**：以标签组形式展示核心积分维度（如：交易、持倉、盈虧、存款、邀请好友），无具体数值，仅作告知。
+```
 
 #### **2\.4 常见问题**
 
-页面截图：[**App · 常见问题**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/app-points-faq.png)
+页面截图：[**App · 常见问题**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/app-points-faq.png)
 
 - **位置**：全局统计数据下方。
 
@@ -718,13 +708,11 @@
 
 - **核心目标**：以时间线列表形式，清晰展示用户每一笔积分的来源、时间及变动数额，支持上拉加载更多历史记录。
 
-- **原型参考**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/%E7%A7%AF%E5%88%86%E5%8F%91%E6%94%BE%E8%AE%B0%E5%BD%95.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/%E7%A7%AF%E5%88%86%E5%8F%91%E6%94%BE%E8%AE%B0%E5%BD%95.html)
-
-    
+- **原型参考**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/app/%E7%A7%AF%E5%88%86%E5%8F%91%E6%94%BE%E8%AE%B0%E5%BD%95\.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/%E7%A7%AF%E5%88%86%E5%8F%91%E6%94%BE%E8%AE%B0%E5%BD%95.html)
 
 ### **2\. 页面结构**
 
-页面截图：[**App · 积分发放明细页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/积分/app-points-history.png)
+页面截图：[**App · 积分发放明细页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/app-points-history.png)
 
 **2\.1 顶部导航栏**
 
@@ -736,8 +724,6 @@
 
     - **页面标题**：居中显示“积分发放明细”。
 
-        
-
 **2\.2 累计积分概览**
 
 - **位置**：导航栏下方，吸顶展示或置于列表顶部。
@@ -747,8 +733,6 @@
     - 左侧文案：`累计获得积分`
 
     - 右侧数值：字体加粗高亮，展示用户`总积分`数字。
-
-        
 
 **2\.3 积分流水列表**
 
@@ -773,8 +757,6 @@
     - **已加载全部**：无更多数据时，底部展示“已显示全部记录”文案。
 
     - **空状态**：无任何积分记录时，居中展示“暂无积分记录”提示。
-
-        
 
 ### **3\. 数据对接说明**
 

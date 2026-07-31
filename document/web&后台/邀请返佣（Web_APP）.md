@@ -1,10 +1,10 @@
-# 邀请返佣（后台/Web/APP）
+# 邀请返佣（Web/APP）
 
-**Web 原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/邀请返佣.html](https://dashuaibizzy.github.io/prototype/perp_dex/邀请返佣.html)
+**Web 原型**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/邀请返佣\.html](https://dashuaibizzy.github.io/prototype/perp_dex/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3.html)
 
-**App 原型（邀请返佣）**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/邀请返佣.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/邀请返佣.html)
+**App 原型（邀请返佣）**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/app/邀请返佣\.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3.html)
 
-**App 原型（直邀好友明细）**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/邀请好友明细.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/邀请好友明细.html)
+**App 原型（直邀好友明细）**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/app/邀请好友明细\.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/%E9%82%80%E8%AF%B7%E5%A5%BD%E5%8F%8B%E6%98%8E%E7%BB%86.html)
 
 ## 邀请返佣等级
 
@@ -32,16 +32,13 @@
 
 ### 后端每日 00:00 更新\+结算机制
 
-系统在每天** 00:00:00 \(UTC\+8\) **触发自动化任务，顺序执行“结算”与“等级更新”。
-
+系统在每天 00:00:00 \(UTC\+8\) 触发自动化任务，顺序执行“结算”与“等级更新”。
 
 **核心限制**：
 
 - 前一自然日（T\-1日）及更早产生的未结算返佣，其**计算比例不受今日（T日）等级变更的影响**。
 
 - 即：等级更新不回溯，所有历史返佣按产生交易时的用户等级锁定。
-
-
 
 #### 3\.1 处理流程
 
@@ -53,8 +50,6 @@
 
     - 将锁定后的返佣金额计入用户“待结算收益”，等待后续发放。
 
-        
-
 2. **等级快照与升级判断：**
 
     - 完成昨日收益锁定后，获取所有用户的实时邀请关系网和指标。
@@ -63,15 +58,13 @@
 
     - 对照【等级配置表】，判断用户当前应属等级。
 
-        
-
 3. **等级更新：**
 
     - 若应属等级 \> 用户当前等级，则实时升级并记录升级时间。
 
     - 当系统判定用户当前应属等级 \< 用户现有等级时，不立即降级，而是进入 “7日缓冲期” 保护状态。
 
-        缓冲期机制：
+    - 缓冲期机制：
 
         - 触发条件：每日 00:00 等级快照发现不满足当前等级门槛。
 
@@ -91,51 +84,39 @@
 
         - 消息中心推送内容设计：
 
-            节点一：触发缓冲期（第1天）
+        - 节点一：触发缓冲期（第1天）
 
-            > 标题：你的邀请等级保护已开启
-            > 正文：近期活跃好友或交易量暂未达标，我们将为你保留当前返佣比例 7 天，抓紧邀请好友交易吧。
-            > 
-            > 
+        - 标题：你的邀请等级保护已开启
+        正文：近期活跃好友或交易量暂未达标，我们将为你保留当前返佣比例 7 天，抓紧邀请好友交易吧。
 
-            ---
+        ---
 
-            节点二：缓冲期倒计时预警（第5天）
+        - 节点二：缓冲期倒计时预警（第5天）
 
-            > 标题：邀请等级保护还剩 3 天
-            > 正文：若到期仍未恢复条件，返佣比例将从 x% 降至 y%。别让等级溜走，现在就邀请邀请好友交易吧。
-            > 
-            > 
+        - 标题：邀请等级保护还剩 3 天
+        正文：若到期仍未恢复条件，返佣比例将从 x% 降至 y%。别让等级溜走，现在就邀请邀请好友交易吧。
 
-            ---
+        ---
 
-            节点三：缓冲期倒计时预警（第7天）
+        - 节点三：缓冲期倒计时预警（第7天）
 
-            > 标题：邀请等级保护还剩 24 小时
-            > 正文：若到期仍未恢复条件，返佣比例将从 x% 降至 y%。别让等级溜走，现在就邀请邀请好友交易吧。
-            > 
-            > 
+        - 标题：邀请等级保护还剩 24 小时
+        正文：若到期仍未恢复条件，返佣比例将从 x% 降至 y%。别让等级溜走，现在就邀请邀请好友交易吧。
 
-            ---
+        ---
 
-            节点四：执行降级（第8天）
+        - 节点四：执行降级（第8天）
 
-            > 标题：邀请等级已调整
-            > 正文：返佣比例已从 x% 调整为 y%。继续邀请好友提升交易量，随时可以升回来。
-            > 
-            > 
+        - 标题：邀请等级已调整
+        正文：返佣比例已从 x% 调整为 y%。继续邀请好友提升交易量，随时可以升回来。
 
     - 更新后的等级，从今日（T\+1日）00:00起生效。
-
-        
 
 4. **生效范围：**
 
     - 今日00:00后产生的新交易，将按更新后的等级计算返佣。
 
     - 昨日及之前已锁定的返佣，不再受此次等级变动影响。
-
-        
 
 #### 3\.2 举例说明
 
@@ -156,21 +137,13 @@
 |T日 00:01|**等级更新**|升至 15%|\-|
 |T日 10:00|交易发生|T日 15%|$150|
 
-
-
-
-
-
-
 ## Web页 \- 邀请返佣
 
-> **原型链接**：[https://dashuaibizzy.github.io/prototype/perp_dex/邀请返佣.html](https://dashuaibizzy.github.io/prototype/perp_dex/邀请返佣.html)
-> 
-> **导航入口**：全局顶部导航 “邀請返佣”（选中态加粗黑色 \+ 底部 2px 黑色下划线）  
-> 
+> **原型链接**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/邀请返佣\.html](https://dashuaibizzy.github.io/prototype/perp_dex/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3.html)
+
+> **导航入口**：全局顶部导航 “邀請返佣”（选中态加粗黑色 \+ 底部 2px 黑色下划线）
+
 > **页面状态**：需连接钱包后方可进入，未连接钱包时跳转至首页并弹出连接提示
-> 
-> 
 
 ---
 
@@ -188,7 +161,7 @@
 
 #### 2\.1 顶部邀请工具箱
 
-页面截图：[**Web · 邀请工具箱**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-toolbox.png)
+页面截图：[**Web · 邀请工具箱**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/web-referral-toolbox.png)
 
 - **位置**：页面标题下方首屏模块，灰色背景条
 
@@ -218,31 +191,31 @@
 
 #### 2\.2 核心数据看板（黑色卡片）
 
-页面截图：[**Web · 核心数据看板**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-dashboard.png)
+页面截图：[**Web · 核心数据看板**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/web-referral-dashboard.png)
 
 - **布局**：四列等高黑色背景卡片，白字 \+ 灰/绿辅助色，视觉强对比
 
 - **数据项**：
 
-    1. **累计返佣收益**  
+    1. **累计返佣收益**
 
-        - 展示总收益（如 `324.13 USDT`）  
+        - 展示总收益（如 `324.13 USDT`）
 
         - 辅助文案：`每 5 分钟更新，实时统计`
 
-    2. **待结算收益**  
+    2. **待结算收益**
 
-        - 金额（如 `124.52 USDT`），绿色高亮  ，并在0点时间结算发放后，清0重新计算
+        - 金额（如 `124.52 USDT`），绿色高亮 ，并在0点时间结算发放后，清0重新计算
 
         - 辅助文案：`每日 0 点（UTC+8）结算发放，届时自动到账`
 
-    3. **直接推荐人数**  
+    3. **直接推荐人数**
 
-        - 整数 \+ `Users` 后缀（如 `12 Users`）  
+        - 整数 \+ `Users` 后缀（如 `12 Users`）
 
         - 即通过该用户邀请码成功注册并关联的钱包数
 
-    4. **下级累计交易量**  
+    4. **下级累计交易量**
 
         - 所有直属下级历史总成交额（如 `1,502,400 USDT`）
 
@@ -250,27 +223,27 @@
 
 #### 2\.3 返佣等级成长路径（左侧区块）
 
-页面截图：[**Web · 等级成长路径**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-tier-path.png)
+页面截图：[**Web · 等级成长路径**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/web-referral-tier-path.png)
 
-页面截图：[**Web · 活跃好友 Tooltip**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-tier-tooltip.png)
+页面截图：[**Web · 活跃好友 Tooltip**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/web-referral-tier-tooltip.png)
 
-- **等级阶梯**：节点式进度展示 10% → 15% → 20% → 25%  
+- **等级阶梯**：节点式进度展示 10% → 15% → 20% → 25%
 
-    - `earned`：已完成等级，黑色实心圆 \+ 白勾，连接线变黑  
+    - `earned`：已完成等级，黑色实心圆 \+ 白勾，连接线变黑
 
-    - `active`：当前冲击等级，黑色描边圆，标签注“進行中”及蓝色提示  
+    - `active`：当前冲击等级，黑色描边圆，标签注“進行中”及蓝色提示
 
     - `locked`：未激活等级，灰色描边圆 \+ 灰色数字，连接线浅灰
 
 - **升级任务看板**（位于路径下方，双列布局）：
 
-    - **活跃好友数**（带 `ⓘ` 提示）：  
+    - **活跃好友数**（带 `ⓘ` 提示）：
 
-        - Tooltip 说明：\*“单个好友在过去 30 天内累计交易额 ≥ 10,000 USDT，即被计为活跃好友。”\*  
+        - Tooltip 说明：\*“单个好友在过去 30 天内累计交易额 ≥ 10,000 USDT，即被计为活跃好友。”\*
 
         - 显示数值 `X / 目标数量`，下方进度条（黑色填充）
 
-    - **下级总交易量**：  
+    - **下级总交易量**：
 
         - 显示 `当前量 / 目标量 USDT`，下方进度条
 
@@ -280,13 +253,13 @@
 
 #### 2\.4 大使计划申请（右侧区块）
 
-页面截图：[**Web · 大使计划卡片**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-ambassador.png)
+页面截图：[**Web · 大使计划卡片**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/web-referral-ambassador.png)
 
 - **样式**：蓝色底色卡片，白色文字
 
-- **文案**：  
+- **文案**：
 
-    - 标题：`ForX 大使計劃`  
+    - 标题：`ForX 大使計劃`
 
     - 描述：`具備交易社區資源？申請解鎖最高 40% 返佣。`
 
@@ -298,15 +271,13 @@
 
 #### 2\.5 直邀好友明细（底部数据表格）
 
-页面截图：[**Web · 直邀好友明细表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-friends-table.png)
+页面截图：[**Web · 直邀好友明细表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/web-referral-friends-table.png)
 
 **2\.5\.1 标题栏**
 
 - 左侧 Tab 标签：“直邀好友明細”（`tab-active` 样式）
 
 - 右侧搜索框：支持模糊搜索钱包地址（实时前端过滤或调用接口搜索，建议前端过滤以降低延迟）
-
-
 
 **2\.5\.2 表格列定义**
 
@@ -322,8 +293,6 @@
 
 - **空状态**：当无好友数据时，显示“暫無好友，快去邀請吧”居中文字
 
-    
-
 **2\.5\.3 分页**
 
 - 左下角统计文字：`顯示 1-10 條，共 N 名好友`
@@ -336,7 +305,7 @@
 
 #### 2\.6 分享海报模态框
 
-页面截图：[**Web · 分享海报弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-share-modal.png)
+页面截图：[**Web · 分享海报弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/web-referral-share-modal.png)
 
 - **触发**：点击工具箱“分享海報”按钮
 
@@ -364,8 +333,6 @@
 
     - “保存圖片”调用 DOM 截图（html2canvas）或 Canvas 生成，将海报保存为图片到本地；同时提供系统分享 API（如可用）
 
-        
-
 ---
 
 ### 3\. 全局交互与规则
@@ -379,13 +346,11 @@
 |多语言|本页面适配简体中文、繁体中文、英文、日文，通过顶部语言切换统一控制|
 |深色/浅色模式|页面主体采用白色背景；后续深色模式通过全局主题 class 驱动，暂不做独立适配|
 
-
-
 ## APP – 邀请返佣
 
 ### 页面概述
 
-页面截图：[**App · 邀请返佣页整体**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-page.png)
+页面截图：[**App · 邀请返佣页整体**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/app-referral-page.png)
 
 - **入口**：奖励页面邀请返佣卡片
 
@@ -393,15 +358,13 @@
 
 - **数据更新**：与 Web 端一致，核心数据每 5 分钟刷新
 
-- **原型链接**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/邀请返佣.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/邀请返佣.html)
-
-    
+- **原型链接**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/app/邀请返佣\.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3.html)
 
 ### 页面布局与模块
 
 #### 1\. 顶部导航
 
-页面截图：[**App · 顶部导航**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-header.png)
+页面截图：[**App · 顶部导航**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/app-referral-header.png)
 
 - 左侧返回按钮（关闭当前页 / 返回上一级）
 
@@ -409,11 +372,9 @@
 
 - 右侧分享图标，点击调起**分享海报弹窗**（见第 8 点）
 
-    
-
 #### 2\. 邀请工具箱（首屏核心）
 
-页面截图：[**App · 邀请工具箱**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-toolbox.png)
+页面截图：[**App · 邀请工具箱**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/app-referral-toolbox.png)
 
 - **返佣比例**：左侧蓝色图标 \+ “当前比例”标签 \+ 百分比数字（蓝色加粗大字）
 
@@ -425,11 +386,9 @@
 
 - **分享海报**：该页面通过右上角图标触发，工具箱内不重复放置按钮
 
-    
-
 #### 3\. 代理用户引导信息框
 
-页面截图：[**App · 代理用户引导信息框**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-agent-info.png)
+页面截图：[**App · 代理用户引导信息框**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/app-referral-agent-info.png)
 
 - **显示条件**：当前用户为**代理身份**时，在工具箱下方显示
 
@@ -443,11 +402,9 @@
 
 - **注意**：代理模式下，**工具箱本身仍正常显示**（比例、推荐人、链接均可复制和分享），但下方所有数据模块均变为占位状态（见角色分离文档）
 
-    
-
 #### 4\. 等级成长路径
 
-页面截图：[**App · 等级成长路径**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-tier.png)
+页面截图：[**App · 等级成长路径**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/app-referral-tier.png)
 
 - **标题**：“等级成长进度” \+ 右侧蓝色胶囊标签显示下一级目标（如“下一级: 15%”）
 
@@ -475,29 +432,25 @@
 
 - **提示弹窗**：点击“活跃好友”或“累计推广收益”/“待结算收益”的标签，弹出说明浮层（见第 9 点）
 
-    
-
 #### 5\. 收益核心数据（黑卡）
 
-页面截图：[**App · 收益核心数据黑卡**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-earnings.png)
+页面截图：[**App · 收益核心数据黑卡**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/app-referral-earnings.png)
 
 - 深色背景卡片，左右分列：
 
-    - 左侧：**累积推广收益**（标签可点击查看说明）  
+    - 左侧：**累积推广收益**（标签可点击查看说明）
 
         - 数值 \+ USDT 单位（白色大号字体）
 
-    - 右侧：**待结算收益**（标签可点击查看说明）  
+    - 右侧：**待结算收益**（标签可点击查看说明）
 
         - 数值 \+ USDT（绿色高亮，金额前带 `+`）
 
 - 背景装饰：模糊货币符号
 
-    
-
 #### 6\. 推广统计与详情入口
 
-页面截图：[**App · 推广统计与明细入口**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-stats-entry.png)
+页面截图：[**App · 推广统计与明细入口**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/app-referral-stats-entry.png)
 
 - 两个指标卡片并排：**直接推荐**（人数）、**下级总交易量**（金额简写，如 `$2.4M`）
 
@@ -505,21 +458,17 @@
 
 - 底部引导文字：“查看直邀好友明细数据” \+ 箭头
 
-    
-
 #### 7\. 大使计划申请
 
-页面截图：[**App · 大使计划申请**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-ambassador.png)
+页面截图：[**App · 大使计划申请**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/app-referral-ambassador.png)
 
 - 蓝色卡片，标题“ForX 大使申请”，描述“解锁 40% 返佣上限与专属奖励”
 
 - “立即申请”按钮，点击跳转外部申请表单
 
-    
-
 #### 8\. 分享海报弹窗（App 内嵌）
 
-页面截图：[**App · 分享海报弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-share-modal.png)
+页面截图：[**App · 分享海报弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/app-referral-share-modal.png)
 
 - 触发：右上角分享图标
 
@@ -539,11 +488,9 @@
 
     - **分享海报** → 调用系统分享（保存图片 \+ 分享渠道）
 
-        
-
 #### 9\. 信息说明弹窗
 
-页面截图：[**App · 信息说明弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-info-modal.png)
+页面截图：[**App · 信息说明弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/app-referral-info-modal.png)
 
 - **触发**：点击下方带虚线下划线的文字标签（活跃好友、累积收益、待结算收益）
 
@@ -556,8 +503,6 @@
     - 待结算收益：*每日 0 点（UTC\+8）系统将统一结算当日返佣，并发放至您的账户。结算完成前，收益将暂存于“待结算”状态。*
 
 - **关闭**：点击“好的”按钮
-
-    
 
 #### 10\. 数据刷新与状态
 
@@ -573,15 +518,13 @@
 
 ### 页面概述
 
-页面截图：[**App · 直邀好友明细页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-friends-page.png)
+页面截图：[**App · 直邀好友明细页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/app-referral-friends-page.png)
 
 - **入口**：从邀请返佣页“查看直邀好友明细数据”卡片点击进入
 
 - **核心功能**：查看所有直邀好友的贡献数据，支持搜索与排序
 
-- **原型链接**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/邀请好友明细.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/邀请好友明细.html)
-
-    
+- **原型链接**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/app/邀请好友明细\.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/%E9%82%80%E8%AF%B7%E5%A5%BD%E5%8F%8B%E6%98%8E%E7%BB%86.html)
 
 ### 页面布局与模块
 
@@ -593,19 +536,15 @@
 
 - 右侧占位空白（保持标题居中）
 
-    
-
 #### 2\. 搜索与排序栏
 
-页面截图：[**App · 搜索栏**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-friends-search.png)
+页面截图：[**App · 搜索栏**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/app-referral-friends-search.png)
 
-页面截图：[**App · 排序 Action Sheet**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-friends-sort-sheet.png)
+页面截图：[**App · 排序 Action Sheet**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/app-referral-friends-sort-sheet.png)
 
 **搜索框**：圆角输入框，左侧搜索图标，placeholder “搜索钱包地址”
 
 - 输入时实时过滤好友列表（前端模糊匹配）
-
-
 
 **排序交互**
 
@@ -646,11 +585,9 @@
 
     - 面板弹出时锁定背景滚动。
 
-
-
 #### 3\. 好友列表
 
-页面截图：[**App · 好友列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-friends-list.png)
+页面截图：[**App · 好友列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/app-referral-friends-list.png)
 
 - 每个好友条目为一张独立卡片，包含：
 
@@ -674,8 +611,6 @@
 
 - **列表底部**：加载完全部数据后显示 “End of List” 文字标记
 
-    
-
 #### 4\. 数据加载与性能
 
 - 页面初始化时一次性拉取10条直邀好友数据，后面的数据分页下滑时加载
@@ -692,8 +627,6 @@
 
 - **代理用户**：拥有独立的代理管理体系，其邀请返佣数据需在 **Web 端代理管理中心** 查看
 
-    
-
 ### Web 端分离
 
 #### 代理用户访问邀请返佣页
@@ -704,21 +637,21 @@
 
 **占位状态下页面表现：**
 
-页面截图：[**Web · 代理引导条**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-agent-banner.png)
+页面截图：[**Web · 代理引导条**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/web-referral-agent-banner.png)
 
-页面截图：[**Web · 代理占位看板**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-agent-placeholder.png)
+页面截图：[**Web · 代理占位看板**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/web-referral-agent-placeholder.png)
 
-页面截图：[**Web · 代理占位等级路径**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-agent-tier-empty.png)
+页面截图：[**Web · 代理占位等级路径**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/web-referral-agent-tier-empty.png)
 
-页面截图：[**Web · 代理好友明细空态**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/web-referral-agent-friends-empty.png)
+页面截图：[**Web · 代理好友明细空态**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/web-referral-agent-friends-empty.png)
 
 1. **顶部邀请工具箱**：正常显示（返佣比例、推荐人、专属链接、复制、分享海报按钮均可用）
 
 2. **工具箱下方**：显示蓝色引导信息条，文案：
 
-    “您当前为代理身份，邀请返佣数据请在代理管理中心查看”
+2. “您当前为代理身份，邀请返佣数据请在代理管理中心查看”
 
-    右侧按钮：“前往代理管理中心”（点击跳转至代理中心页）
+2. 右侧按钮：“前往代理管理中心”（点击跳转至代理中心页）
 
 3. **核心数据看板**：四列黑卡数值全部显示 `--`（灰色）
 
@@ -736,27 +669,23 @@
 
 6. **大使申请**：保留正常显示
 
-    
-
 #### 普通用户访问邀请返佣页
 
 - 所有模块按原有逻辑正常展示真实数据
-
-
 
 ### App 端分离
 
 #### 代理用户访问邀请返佣页
 
-页面截图：[**App · 代理占位收益卡**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-agent-placeholder.png)
+页面截图：[**App · 代理占位收益卡**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/app-referral-agent-placeholder.png)
 
-页面截图：[**App · 代理占位统计入口**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/邀请返佣/app-referral-agent-stats-empty.png)
+页面截图：[**App · 代理占位统计入口**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E9%82%80%E8%AF%B7%E8%BF%94%E4%BD%A3/app-referral-agent-stats-empty.png)
 
 1. **邀请工具箱**：保持正常显示（比例、推荐人、链接复制、分享海报）
 
 2. **工具箱下方**：显示引导信息框（蓝色圆角卡片），文案：
 
-    “代理用户请前往 ForX 网页版「代理管理中心」查看完整邀请数据与收益明细。”
+2. “代理用户请前往 ForX 网页版「代理管理中心」查看完整邀请数据与收益明细。”
 
 3. **等级成长路径**：
 
@@ -774,13 +703,9 @@
 
 6. **大使申请**：保留正常显示
 
-
-
 #### 普通用户访问 App 端页面
 
 - 所有模块展示真实数据，交互正常
-
-    
 
 ### 后端逻辑
 
