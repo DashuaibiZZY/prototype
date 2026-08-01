@@ -16,9 +16,24 @@
         .page-active { transform: translateX(0); }
         .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f9f9f9; cursor: pointer; }
         .setting-row:active { background-color: #f5f5f5; }
+        body { flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+        .proto-controls { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+        .proto-btn { background: #111827; color: #fff; padding: 10px 16px; border-radius: 999px; font-size: 11px; font-weight: 800; border: none; cursor: pointer; }
+        .proto-btn.alt { background: #fff; color: #111827; border: 1px solid #e5e7eb; }
+        .proto-btn.active { outline: 2px solid #6366f1; outline-offset: 2px; }
+        .phone-shell { flex-shrink: 0; }
+        .section-label { padding: 12px 20px 4px; font-size: 10px; font-weight: 900; color: #9ca3af; letter-spacing: 0.06em; }
+        .status-badge { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px; }
+        .status-ok { background: #ecfdf5; color: #059669; }
+        .status-warn { background: #fffbeb; color: #d97706; }
     </style>
 </head>
 <body>
+
+<div class="proto-controls">
+    <button type="button" id="btn-wallet" class="proto-btn active" onclick="setLoginType('wallet')">钱包登录</button>
+    <button type="button" id="btn-email" class="proto-btn alt" onclick="setLoginType('email')">邮箱登录</button>
+</div>
 
 <div class="phone-shell">
     <div class="screen">
@@ -33,6 +48,17 @@
             </header>
 
             <div class="flex-1 overflow-y-auto no-scrollbar">
+                <div id="section-security" class="hidden">
+                    <p class="section-label">账户安全</p>
+                    <div onclick="location.href='身份验证器.html'" class="setting-row">
+                        <span class="text-sm font-medium text-gray-700">身份验证器 App</span>
+                        <span class="text-sm text-gray-400 flex items-center gap-2">
+                            <span id="auth-status-badge" class="status-badge status-warn">未绑定</span>
+                            <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+                        </span>
+                    </div>
+                </div>
+                <p class="section-label" id="label-general">通用</p>
                 <div onclick="openPage('page-currency')" class="setting-row">
                     <span class="text-sm font-medium text-gray-700">币种设置</span>
                     <span class="text-sm text-gray-400" id="currency-display">美元 (USD) <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></span>
@@ -180,6 +206,16 @@ function closePage(pageId) {
 function selectCurrency(label) {
     document.getElementById('currency-display').innerHTML = label + ' <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>';
 }
+function setLoginType(type) {
+    const isEmail = type === 'email';
+    document.getElementById('section-security').classList.toggle('hidden', !isEmail);
+    document.getElementById('btn-wallet').classList.toggle('active', !isEmail);
+    document.getElementById('btn-wallet').classList.toggle('alt', isEmail);
+    document.getElementById('btn-email').classList.toggle('active', isEmail);
+    document.getElementById('btn-email').classList.toggle('alt', !isEmail);
+}
+const params = new URLSearchParams(window.location.search);
+if (params.get('login') === 'email') setLoginType('email');
 </script>
 </body>
 </html>
