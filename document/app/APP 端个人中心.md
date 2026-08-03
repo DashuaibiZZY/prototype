@@ -8,6 +8,8 @@
 
 **原型（身份验证器）**：[https://dashuaibizzy.github.io/prototype/perp_dex/app/身份验证器.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/身份验证器.html)
 
+页面截图：[**App · 个人中心（钱包登录）**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-profile-hub-wallet.png)
+
 ---
 
 ## 1\. 页面概述
@@ -73,17 +75,23 @@
 └─ 修改：验证旧码 → 重新绑定流程
 ```
 
+页面截图：[**App · 个人中心（邮箱登录）**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-profile-hub-email.png)
+
 ---
 
 ## 2\. 个人中心主页面
 
 ### 2\.1 整体布局
 
+页面截图：[**App · 个人中心整体（钱包）**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-profile-hub-wallet.png)
+
 - **单列纵向滚动**，无页面级标题文案（顶部仅返回与设置，中间留白）。
 - 自上而下：账户信息行 → 分割线 → 快捷入口 → 分割线 → 活动和奖励 → 分割线 → 更多。
 - **不展示**底部 Tab 高亮变化（仍停留在进入前的 Tab，通常为首页）。
 
 ### 2\.2 顶部栏
+
+页面截图：[**App · 个人中心顶部栏**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-profile-hub-header.png)
 
 | 位置 | 元素 | 行为 |
 |---|---|---|
@@ -92,6 +100,8 @@
 | 右侧 | 设置（齿轮） | 进入设置页；邮箱登录态进入时设置页展示「账户安全」分区 |
 
 ### 2\.3 账户信息行
+
+页面截图：[**App · 账户信息行**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-profile-account-row.png)
 
 **功能描述**  
 
@@ -124,6 +134,8 @@
 
 ### 2\.4 快捷入口
 
+页面截图：[**App · 快捷入口**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-profile-quick-entry.png)
+
 **分区标题**：`快捷入口`（灰色小标题，左对齐）。
 
 **布局**：一行 **4 列**图标宫格，图标 + 短标签。
@@ -141,6 +153,8 @@
 - 未登录点击充提/划转：弹出登录引导，成功后回跳目标页。
 
 ### 2\.5 活动和奖励
+
+页面截图：[**App · 活动和奖励入口**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-profile-rewards-grid.png)
 
 **分区标题**：`活动和奖励`。
 
@@ -160,6 +174,8 @@
 
 ### 2\.6 更多
 
+页面截图：[**App · 更多入口**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-profile-more-grid.png)
+
 **分区标题**：`更多`。
 
 **布局**：**2 列**宫格（仅占半宽区域，左对齐两格）。
@@ -170,6 +186,8 @@
 | 文档 | 帮助文档 | 外链或内置帮助中心 URL，由运营配置 |
 
 ### 2\.7 个人中心 · 登录态差异汇总
+
+页面截图：[**App · 个人中心（邮箱登录）**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-profile-hub-email.png)
 
 | 能力 | 钱包登录 | 邮箱登录 |
 |---|---|---|
@@ -187,6 +205,8 @@
 
 **原型**：[个人资料.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/个人资料.html)
 
+页面截图：[**App · 个人资料（钱包登录）**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-profile-detail-wallet.png)
+
 ### 3\.1 顶部导航栏
 
 | 位置 | 元素 |
@@ -201,6 +221,8 @@
 - V1 不支持编辑头像；无「更换头像」入口。
 
 ### 3\.3 信息卡片列表
+
+页面截图：[**App · 个人资料（邮箱登录）**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-profile-detail-email.png)
 
 所有卡片**左右边距一致**（与页面 `padding` 对齐），圆角白底卡片 + 卡片间距统一；VIP 卡片宽度与其他卡片**拉齐**，不得缩进或全宽例外。
 
@@ -251,6 +273,8 @@
 
 #### 3\.3\.6 VIP 等级与合约费率卡片（可点击）
 
+页面截图：[**App · VIP 等级与合约费率卡**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-profile-detail-vip-card.png)
+
 整卡点击进入 **VIP 费率等级页**。
 
 **卡片结构**
@@ -274,6 +298,8 @@
 **路由**：个人中心右上角设置进入；系统返回键与左上角返回均回到个人中心（或页面栈上一级）。
 
 **原型**：[设置.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/设置.html)
+
+页面截图：[**App · 设置主页（钱包登录）**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-settings-main-wallet.png)
 
 ### 4\.1 设置主页 · 顶部栏
 
@@ -304,6 +330,8 @@
 
 ### 4\.3 账户安全（仅邮箱登录）
 
+页面截图：[**App · 设置主页（邮箱登录 · 账户安全）**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-settings-main-email.png)
+
 | 项 | 右侧展示 | 点击行为 |
 |---|---|---|
 | 身份验证器 App | 状态标签 + 箭头 | 进入身份验证器页 |
@@ -318,6 +346,8 @@
 钱包登录用户**不展示**整个「账户安全」分区（含分区标题）。
 
 ### 4\.4 币种设置子页
+
+页面截图：[**App · 币种设置子页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-settings-currency.png)
 
 **进入**：设置主页「币种设置」行。
 
@@ -341,6 +371,8 @@
 
 ### 4\.5 语言设置子页
 
+页面截图：[**App · 语言设置子页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-settings-language.png)
+
 **选项**（单选）：
 
 - English
@@ -351,6 +383,8 @@
 切换后触发 App 语言包切换（若采用跟随系统策略，则本页可改为「跟随系统 / 自定义」——以客户端 i18n 方案为准）；返回设置主页后右侧展示当前语言。
 
 ### 4\.6 主题模式子页
+
+页面截图：[**App · 主题模式子页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-settings-theme.png)
 
 **选项**（单选）：
 
@@ -366,6 +400,8 @@
 - URL 由运营/法务配置，支持多语言版本跳转。
 
 ### 4\.8 关于 ForX 子页
+
+页面截图：[**App · 关于 ForX 子页**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-settings-about.png)
 
 **顶栏**：仅左侧返回，**中间无标题**（顶部留白，与原型一致）。
 
@@ -402,6 +438,8 @@
 
 **技术标准**：TOTP（RFC 6238），兼容 Google Authenticator、Microsoft Authenticator 等；密钥 6 位数字动态码，周期 30 秒。
 
+页面截图：[**App · 身份验证器 · 未绑定引导**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-totp-not-set.png)
+
 ### 5\.1 状态机总览
 
 ```Plain Text
@@ -414,6 +452,8 @@
 ```
 
 ### 5\.2 未绑定 · 引导页
+
+页面截图：[**App · 身份验证器 · 未绑定引导**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-totp-not-set.png)
 
 **顶栏**：返回（设置/个人资料）；标题「身份验证器 App」。
 
@@ -431,6 +471,8 @@
 
 ### 5\.3 绑定 · 扫码/密钥页
 
+页面截图：[**App · 身份验证器 · 扫码绑定**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-totp-setup-qr.png)
+
 **顶栏**：返回 → 未绑定引导页；标题「绑定验证器」。
 
 **内容**
@@ -445,6 +487,8 @@
 - 密钥仅在一次绑定流程中展示；绑定成功后不可再次查看完整密钥（修改流程重新下发新密钥）。
 
 ### 5\.4 绑定 · 验证码确认页
+
+页面截图：[**App · 身份验证器 · 验证码确认**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-totp-setup-verify.png)
 
 **顶栏**：返回 → 扫码/密钥页；标题「验证绑定」。
 
@@ -465,6 +509,8 @@
 | 连续失败 N 次 | 冷却 5 分钟（N 由风控配置，建议 5 次） |
 
 ### 5\.5 已绑定 · 管理页
+
+页面截图：[**App · 身份验证器 · 已绑定管理**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-totp-bound.png)
 
 **顶栏**：返回；标题「身份验证器 App」。
 
@@ -491,6 +537,8 @@
 
 ### 5\.6 修改验证器 · 验证旧码页
 
+页面截图：[**App · 身份验证器 · 修改验证旧码**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-totp-modify.png)
+
 **顶栏**：返回 → 已绑定管理页；标题「修改验证器」。
 
 **内容**
@@ -504,6 +552,8 @@
 **失败**：同 5\.4 错误处理。
 
 ### 5\.7 移除验证器 · 安全确认页
+
+页面截图：[**App · 身份验证器 · 移除确认**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-totp-remove.png)
 
 **顶栏**：返回 → 已绑定管理页；标题「移除验证器」。
 
