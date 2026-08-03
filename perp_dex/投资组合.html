@@ -19,6 +19,8 @@
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .dashed-hint { border-bottom: 1px dashed #9ca3af; cursor: help; }
         .tab-active { color: #000; border-bottom: 2px solid #000; font-weight: 900; }
+        .copy-icon-btn { color: #9ca3af; padding: 2px; flex-shrink: 0; border: none; background: transparent; cursor: pointer; line-height: 0; }
+        .copy-icon-btn:hover { color: #2563eb; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -107,33 +109,40 @@
             <!-- 下拉菜单（丰富版） -->
             <div class="absolute top-full right-0 hidden group-hover:block pt-2 z-[110]">
                 <div class="bg-white border border-gray-100 rounded-sm shadow-2xl p-4 min-w-[280px] space-y-4">
-                    <!-- UID 与复制 -->
-                    <div class="flex items-center justify-between pb-2 border-b border-gray-50">
-                        <div class="flex items-center space-x-2">
-                            <div class="w-8 h-8 bg-blue-600 rounded-sm flex items-center justify-center text-white font-black text-[10px]">FX</div>
-                            <div>
-                                <span class="text-[10px] text-gray-400">UID: <strong id="menu-uid" class="text-gray-900">123456</strong></span>
-                            </div>
+                    <!-- UID -->
+                    <div class="flex items-center justify-between pb-2 border-b border-gray-50 gap-2">
+                        <div class="flex items-center space-x-2 min-w-0">
+                            <div class="w-8 h-8 bg-blue-600 rounded-sm flex items-center justify-center text-white font-black text-[10px] shrink-0">FX</div>
+                            <span class="text-[10px] text-gray-400">UID: <strong id="menu-uid" class="text-gray-900">123456</strong></span>
                         </div>
-                        <button class="text-gray-400 hover:text-blue-600 p-1" onclick="copyText('123456')" title="复制UID">📋</button>
+                        <button type="button" id="btn-copy-uid" class="copy-icon-btn" onclick="copyMenuField('uid')" title="复制 UID" aria-label="复制 UID">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        </button>
                     </div>
 
-                    <!-- 绑定信息 -->
+                    <!-- 绑定信息（与 App 一致：钱包登录仅地址；邮箱登录展示邮箱 + Privy 钱包，不可交叉绑定） -->
                     <div class="space-y-2 text-[11px]">
-                        <div class="flex justify-between">
-                            <span class="text-gray-400">钱包</span>
-                            <span id="menu-wallet-status" class="font-bold text-gray-900">0xd593...2Dd2</span>
+                        <div id="menu-email-row" class="hidden flex justify-between items-center gap-2">
+                            <span class="text-gray-400 shrink-0">邮箱</span>
+                            <div class="flex items-center gap-1 min-w-0 justify-end">
+                                <span id="menu-email-status" class="font-bold text-gray-900 truncate"></span>
+                                <button type="button" id="btn-copy-email" class="copy-icon-btn" onclick="copyMenuField('email')" title="复制邮箱" aria-label="复制邮箱">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                </button>
+                            </div>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-400">邮箱</span>
-                            <span id="menu-email-status" class="font-bold text-gray-900">
-                        <!-- 动态填充：未绑定时显示“未绑定 <button>添加</button>” -->
-                    </span>
+                        <div id="menu-wallet-row" class="flex justify-between items-center gap-2">
+                            <span class="text-gray-400 shrink-0" id="menu-wallet-label">钱包</span>
+                            <div class="flex items-center gap-1 min-w-0 justify-end">
+                                <span id="menu-wallet-status" class="font-bold text-gray-900 truncate text-right"></span>
+                                <button type="button" id="btn-copy-wallet" class="copy-icon-btn" onclick="copyMenuField('wallet')" title="复制钱包地址" aria-label="复制钱包地址">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                </button>
+                            </div>
                         </div>
-                        <!-- 仅邮箱登录时显示GA绑定入口 -->
-                        <div id="menu-ga-entry" class="hidden flex justify-between">
-                            <span class="text-gray-400">GA认证</span>
-                            <button onclick="showGaBindModal()" class="text-blue-600 font-bold text-[10px] hover:underline">绑定GA</button>
+                        <div id="menu-ga-row" class="hidden flex justify-between items-center">
+                            <span class="text-gray-400">身份验证器</span>
+                            <div id="menu-ga-action" class="text-right"></div>
                         </div>
                     </div>
 
@@ -151,6 +160,11 @@
                         <button onclick="openModal('withdraw')" class="py-2 border border-gray-200 text-[10px] font-black uppercase rounded-sm">提现</button>
                         <button onclick="openTransferModal()" class="py-2 bg-gray-900 text-white text-[10px] font-black uppercase rounded-sm">划转</button>
                     </div>
+
+                    <button type="button" id="menu-export-wallet-row" class="hidden w-full flex items-center justify-between px-2 py-2.5 text-[11px] font-bold text-gray-700 hover:text-black hover:bg-gray-50 transition rounded-sm border border-gray-100" onclick="openExportWalletEntry()">
+                        <span>导出邮箱钱包</span>
+                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    </button>
 
                     <!-- 退出登录 -->
                     <button onclick="logout()" class="w-full flex items-center justify-between px-2 py-2 text-[11px] font-bold text-red-400 hover:text-red-600 hover:bg-red-50 transition rounded-sm">
@@ -765,22 +779,21 @@
     </div>
 </div>
 
-<!-- GA 绑定弹窗 -->
-<div id="modal-ga-bind" class="modal-overlay" style="display:none; background:rgba(0,0,0,0.5); position:fixed; top:0; left:0; width:100%; height:100%; z-index:2000; align-items:center; justify-content:center;">
-    <div class="bg-white w-[400px] rounded-lg p-6 shadow-2xl">
-        <div class="flex justify-between mb-4"><h3 class="font-black text-lg">绑定 Google 身份验证器</h3><span onclick="closeGaBindModal()" class="cursor-pointer">✕</span></div>
-        <div class="space-y-4 text-sm">
-            <p>请使用 Google Authenticator 扫描以下二维码或输入密钥：</p>
-            <div class="w-40 h-40 bg-gray-100 mx-auto flex items-center justify-center font-bold text-gray-400">QR CODE</div>
-            <p class="text-[10px] text-gray-500 break-all">密钥: ABCD1234EFGH5678</p>
-            <div class="flex space-x-2">
-                <input type="text" id="ga-code-input" placeholder="6位动态码" class="flex-1 border p-2 rounded">
-                <button onclick="confirmGaBind()" class="px-4 bg-blue-600 text-white font-bold rounded">确认绑定</button>
-            </div>
-            <p id="ga-bind-error" class="text-red-500 text-[10px] hidden">验证码错误，请重试</p>
-        </div>
+<!-- 身份验证器弹窗（Web 多步 Modal，对齐 App 绑定 / 修改 / 移除流程） -->
+<div id="modal-totp" class="modal-overlay" style="display:none; background:rgba(0,0,0,0.5); position:fixed; top:0; left:0; width:100%; height:100%; z-index:2000; align-items:center; justify-content:center;">
+    <div class="bg-white w-[420px] rounded-lg overflow-hidden shadow-2xl">
+        <div id="modal-totp-content"></div>
     </div>
 </div>
+
+<!-- 导出邮箱钱包弹窗 -->
+<div id="modal-export-wallet" class="modal-overlay" style="display:none; background:rgba(0,0,0,0.5); position:fixed; top:0; left:0; width:100%; height:100%; z-index:2000; align-items:center; justify-content:center;">
+    <div class="bg-white w-[420px] rounded-lg overflow-hidden shadow-2xl">
+        <div id="modal-export-wallet-content"></div>
+    </div>
+</div>
+
+<div id="nav-toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[11px] font-bold px-4 py-2 rounded-full opacity-0 pointer-events-none transition-opacity z-[2100]">已复制</div>
 
 <!-- 提现二次确认 + 安全验证弹窗（动态内容容器，可重用） -->
 <div id="modal-withdraw-confirm" class="modal-overlay" style="display:none; background:rgba(0,0,0,0.5); position:fixed; top:0; left:0; width:100%; height:100%; z-index:2000; align-items:center; justify-content:center;">
@@ -1307,43 +1320,66 @@
     });
 
     // ================== 登录管理 ==================
-    let currentUser = null; // { uid, loginMethod: 'wallet'|'email', address?, email?, gaBound: false }
+    let currentUser = null; // wallet: { loginMethod:'wallet', address } | email: { loginMethod:'email', email, privyAddress, gaBound }
 
-    let loginMode = 'login'; // 记录当前弹窗用途
+    const PRIVY_WALLET_DISPLAY = '0x8b2e...4f1a';
+    const PRIVY_WALLET_FULL = '0x8b2e1a4f5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c4f1a';
+    const WALLET_ADDRESS_DISPLAY = '0xd593...2Dd2';
+    const WALLET_ADDRESS_FULL = '0xd5938b2c9d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f2d';
+    const EXPORT_WALLET_DISPLAY = '0x972...0E79';
+    const EXPORT_WALLET_FULL = '0x9720a1b2c3d4e5f678901234567890abcdef0E79';
+    const MOCK_PRIVATE_KEY = '0x4f3c8e1a9b2d7c6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2';
+    const MOCK_SEED_PHRASE = 'apple river canyon orbit maple velvet prism harbor quiet ledger frost dawn';
+    const TOTP_MOCK_CODE = '123456';
 
-    function openLoginModal(mode = 'login') {
-        loginMode = mode;
-        const modal = document.getElementById('modal-login');
-        const title = document.getElementById('login-modal-title');
-        const emailSection = document.getElementById('login-email-section');
-        const walletSection = document.getElementById('login-wallet-section');
-        const emailStep1 = document.getElementById('email-step1');
-        const emailStep2 = document.getElementById('email-step2');
+    function showNavToast(msg) {
+        const t = document.getElementById('nav-toast');
+        if (!t) return;
+        t.textContent = msg;
+        t.classList.remove('opacity-0');
+        clearTimeout(window._navToastTimer);
+        window._navToastTimer = setTimeout(() => t.classList.add('opacity-0'), 1800);
+    }
 
-        // 重置邮箱步骤
-        emailStep1.classList.remove('hidden');
-        emailStep2.classList.add('hidden');
-
-        if (mode === 'login') {
-            title.innerText = '登录 / 注册';
-            emailSection.style.display = 'block';
-            walletSection.style.display = 'block';
-        } else if (mode === 'bindEmail') {
-            title.innerText = '绑定邮箱';
-            emailSection.style.display = 'block';
-            walletSection.style.display = 'none';
-        } else if (mode === 'bindWallet') {
-            title.innerText = '绑定钱包';
-            emailSection.style.display = 'none';
-            walletSection.style.display = 'block';
+    function copyText(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => showNavToast('已复制')).catch(() => showNavToast('已复制'));
+        } else {
+            showNavToast('已复制');
         }
+    }
 
+    function copyMenuField(field) {
+        if (!currentUser) return;
+        if (field === 'uid') {
+            copyText(currentUser.uid);
+            return;
+        }
+        if (field === 'email' && currentUser.email) {
+            copyText(currentUser.email);
+            return;
+        }
+        if (field === 'wallet') {
+            if (currentUser.loginMethod === 'wallet') {
+                copyText(currentUser.addressFull || currentUser.address);
+            } else {
+                copyText(currentUser.privyAddressFull || currentUser.privyAddress);
+            }
+        }
+    }
+
+    function openLoginModal() {
+        const modal = document.getElementById('modal-login');
+        document.getElementById('login-modal-title').innerText = '登录 / 注册';
+        document.getElementById('login-email-section').style.display = 'block';
+        document.getElementById('login-wallet-section').style.display = 'block';
+        document.getElementById('email-step1').classList.remove('hidden');
+        document.getElementById('email-step2').classList.add('hidden');
         modal.style.display = 'flex';
     }
 
     function closeLoginModal() {
         document.getElementById('modal-login').style.display = 'none';
-        loginMode = 'login';
     }
 
     function sendEmailCode() {
@@ -1356,25 +1392,14 @@
 
     function emailLogin() {
         const code = document.getElementById('login-code-input').value.trim();
-        if (code !== '123456') { alert('验证码错误（模拟：正确验证码 123456）'); return; }
+        if (code !== TOTP_MOCK_CODE) { alert('验证码错误（模拟：正确验证码 123456）'); return; }
         const email = window.loginEmail || 'user@example.com';
-
-        if (loginMode === 'bindEmail') {
-            // 绑定邮箱逻辑
-            currentUser.email = email;
-            currentUser.boundEmail = true; // 标记
-            updateUIAfterLogin();
-            closeLoginModal();
-            return;
-        }
-
-        // 原有登录逻辑
         currentUser = {
             uid: '123456',
             loginMethod: 'email',
             email: email,
-            address: null,
-            boundWallet: false,
+            privyAddress: PRIVY_WALLET_DISPLAY,
+            privyAddressFull: PRIVY_WALLET_FULL,
             gaBound: false
         };
         updateUIAfterLogin();
@@ -1384,13 +1409,11 @@
     function resendEmailCode() { sendEmailCode(); }
 
     function mockWalletLogin(walletName) {
-        const address = '0xd593...2Dd2';
         currentUser = {
             uid: '123456',
             loginMethod: 'wallet',
-            address: address,
-            email: null,
-            boundEmail: false,
+            address: WALLET_ADDRESS_DISPLAY,
+            addressFull: WALLET_ADDRESS_FULL,
             gaBound: false
         };
         updateUIAfterLogin();
@@ -1401,82 +1424,313 @@
         currentUser = null;
         document.getElementById('btn-connect-wallet').classList.remove('hidden');
         document.getElementById('user-account-wrapper').classList.add('hidden');
-        // 重置到初始状态
         document.getElementById('nav-login-label').innerText = '0xd593...2Dd2';
+    }
+
+    function updateGaMenuEntry() {
+        const actionEl = document.getElementById('menu-ga-action');
+        if (!actionEl || !currentUser || currentUser.loginMethod !== 'email') return;
+        if (currentUser.gaBound) {
+            actionEl.innerHTML = '<span class="text-green-600 font-bold text-[10px]">已绑定</span><button type="button" onclick="openTotpModal(\'bound\')" class="text-blue-600 font-bold text-[10px] hover:underline ml-2">管理</button>';
+        } else {
+            actionEl.innerHTML = '<span class="text-amber-600 font-bold text-[10px]">未设置</span><button type="button" onclick="openTotpModal(\'not_set\')" class="text-blue-600 font-bold text-[10px] hover:underline ml-2">绑定</button>';
+        }
     }
 
     function updateUIAfterLogin() {
         document.getElementById('btn-connect-wallet').classList.add('hidden');
-        const wrapper = document.getElementById('user-account-wrapper');
-        wrapper.classList.remove('hidden');
+        document.getElementById('user-account-wrapper').classList.remove('hidden');
 
-        // 更新导航栏标签
         const label = document.getElementById('nav-login-label');
+        const emailRow = document.getElementById('menu-email-row');
+        const walletRow = document.getElementById('menu-wallet-row');
+        const gaRow = document.getElementById('menu-ga-row');
+        const exportRow = document.getElementById('menu-export-wallet-row');
+        const walletStatus = document.getElementById('menu-wallet-status');
+        const walletLabel = document.getElementById('menu-wallet-label');
+
+        document.getElementById('menu-uid').innerText = currentUser.uid;
+
         if (currentUser.loginMethod === 'wallet') {
             label.innerText = currentUser.address;
+            emailRow.classList.add('hidden');
+            walletRow.classList.remove('hidden');
+            gaRow.classList.add('hidden');
+            exportRow.classList.add('hidden');
+            walletLabel.innerText = '钱包';
+            walletStatus.innerText = currentUser.address;
         } else {
             label.innerText = currentUser.email;
-        }
-
-        // 更新菜单
-        document.getElementById('menu-uid').innerText = currentUser.uid;
-        document.getElementById('menu-wallet-status').innerText = currentUser.address || '';
-        if (currentUser.email) {
+            emailRow.classList.remove('hidden');
+            walletRow.classList.remove('hidden');
+            gaRow.classList.remove('hidden');
+            exportRow.classList.remove('hidden');
             document.getElementById('menu-email-status').innerText = currentUser.email;
-        } else {
-            document.getElementById('menu-email-status').innerHTML = '<button onclick="bindEmail()" class="font-bold text-blue-500 underline text-[10px]">绑定</button>';
-        }
-
-        // GA入口：仅邮箱登录且未绑定GA时显示
-        const gaEntry = document.getElementById('menu-ga-entry');
-        if (currentUser.loginMethod === 'email' && !currentUser.gaBound) {
-            gaEntry.classList.remove('hidden');
-        } else {
-            gaEntry.classList.add('hidden');
-        }
-
-        // 钱包状态
-        const walletStatusEl = document.getElementById('menu-wallet-status');
-        if (currentUser.address || currentUser.boundWallet) {
-            walletStatusEl.innerText = currentUser.address || '(已绑定)';
-        } else {
-            walletStatusEl.innerHTML = '<button onclick="bindWallet()" class="font-bold text-blue-500 underline text-[10px]">绑定</button>';
-        }
-
-        // 邮箱状态
-        const emailStatusEl = document.getElementById('menu-email-status');
-        if (currentUser.email || currentUser.boundEmail) {
-            emailStatusEl.innerText = currentUser.email || '(已绑定)';
-        } else {
-            emailStatusEl.innerHTML = '<button onclick="bindEmail()" class="font-bold text-blue-500 underline text-[10px]">绑定</button>';
+            walletLabel.innerText = '钱包';
+            walletStatus.innerText = currentUser.privyAddress;
+            updateGaMenuEntry();
         }
     }
 
-    function bindEmail() {
-        openLoginModal('bindEmail');
+    // ================== 身份验证器（Web Modal 多步流程） ==================
+    const totpTemplates = {
+        not_set: `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-black">身份验证器 App</h2>
+                <span class="cursor-pointer text-gray-400 hover:text-black" onclick="closeTotpModal()">✕</span>
+            </div>
+            <div class="text-center mb-6">
+                <div class="w-14 h-14 rounded-md bg-blue-50 border border-blue-100 flex items-center justify-center mx-auto mb-4 text-blue-600 text-xl">🔐</div>
+                <h3 class="font-black text-base text-gray-900">绑定身份验证器 App</h3>
+                <p class="text-[11px] text-gray-500 mt-2 leading-relaxed">绑定后可使用动态验证码保护账户安全。</p>
+                <p class="text-[10px] text-gray-400 mt-4">支持 Google Authenticator、Microsoft Authenticator 等标准 TOTP 应用</p>
+            </div>
+            <button type="button" onclick="updateTotpModal('setup_qr')" class="w-full py-3 bg-black text-white font-black text-sm rounded-md">立即绑定</button>
+        </div>`,
+        setup_qr: `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center">
+                    <span class="cursor-pointer mr-3 text-gray-400 hover:text-black" onclick="updateTotpModal('not_set')">←</span>
+                    <h2 class="text-lg font-black">绑定验证器</h2>
+                </div>
+                <span class="cursor-pointer text-gray-400 hover:text-black" onclick="closeTotpModal()">✕</span>
+            </div>
+            <p class="text-[11px] text-gray-500 text-center leading-relaxed mb-4">使用身份验证器 App 扫描下方二维码，或手动输入密钥</p>
+            <div class="w-36 h-36 bg-gray-100 mx-auto flex items-center justify-center font-bold text-gray-400 border border-dashed border-gray-200 rounded-md mb-3">QR CODE</div>
+            <p class="text-[10px] font-bold text-gray-400 text-center uppercase tracking-wide">手动输入密钥</p>
+            <p class="text-[11px] font-mono font-bold bg-gray-50 border border-gray-100 rounded-md p-3 mt-2 text-center break-all">JBSW Y3DP EHPK 3PXP</p>
+            <button type="button" onclick="copyText('JBSWY3DPEHPK3PXP')" class="text-[10px] font-black text-blue-600 mx-auto block mt-2 hover:underline">复制密钥</button>
+            <button type="button" onclick="updateTotpModal('setup_verify')" class="w-full py-3 bg-black text-white font-black text-sm rounded-md mt-6">下一步</button>
+        </div>`,
+        setup_verify: `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center">
+                    <span class="cursor-pointer mr-3 text-gray-400 hover:text-black" onclick="updateTotpModal('setup_qr')">←</span>
+                    <h2 class="text-lg font-black">验证绑定</h2>
+                </div>
+                <span class="cursor-pointer text-gray-400 hover:text-black" onclick="closeTotpModal()">✕</span>
+            </div>
+            <p class="text-sm font-black text-gray-900 text-center">输入验证器中的 6 位验证码</p>
+            <p class="text-[10px] text-gray-400 text-center mt-2">验证码每 30 秒更新一次（模拟码：123456）</p>
+            <input type="text" id="totp-setup-code" maxlength="6" placeholder="6 位动态码" class="w-full border border-gray-200 p-3 rounded-md text-center font-black text-lg mt-6 outline-none focus:border-black">
+            <p id="totp-setup-error" class="text-red-500 text-[10px] text-center mt-2 hidden">验证码错误，请重试</p>
+            <button type="button" onclick="confirmTotpBind()" class="w-full py-3 bg-blue-600 text-white font-black text-sm rounded-md mt-4">确认绑定</button>
+        </div>`,
+        bound: `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-black">身份验证器 App</h2>
+                <span class="cursor-pointer text-gray-400 hover:text-black" onclick="closeTotpModal()">✕</span>
+            </div>
+            <div class="bg-gray-50 border border-gray-100 rounded-md p-5 text-center mb-6">
+                <div class="w-12 h-12 rounded-full bg-green-50 border border-green-100 flex items-center justify-center mx-auto mb-3 text-green-600 text-lg">✓</div>
+                <p class="font-black text-gray-900">已绑定身份验证器</p>
+                <p class="text-[10px] text-gray-400 mt-2">已启用动态验证码保护</p>
+                <span class="inline-block mt-3 text-[10px] font-black text-green-700 bg-green-50 px-3 py-1 rounded-full border border-green-100">安全等级：高</span>
+            </div>
+            <button type="button" onclick="updateTotpModal('modify')" class="w-full py-3 border border-gray-200 font-black text-sm rounded-md hover:bg-gray-50">修改验证器</button>
+            <p class="text-[10px] text-gray-400 text-center mt-2">更换手机或验证器 App 时需重新绑定</p>
+            <button type="button" onclick="updateTotpModal('remove')" class="w-full py-3 mt-3 bg-red-50 text-red-600 font-black text-sm rounded-md border border-red-100 hover:bg-red-100">移除验证器</button>
+            <p class="text-[10px] text-gray-400 text-center mt-2">移除后账户安全等级将降低</p>
+        </div>`,
+        modify: `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center">
+                    <span class="cursor-pointer mr-3 text-gray-400 hover:text-black" onclick="updateTotpModal('bound')">←</span>
+                    <h2 class="text-lg font-black">修改验证器</h2>
+                </div>
+                <span class="cursor-pointer text-gray-400 hover:text-black" onclick="closeTotpModal()">✕</span>
+            </div>
+            <p class="text-sm font-black text-gray-900 text-center">验证当前身份验证器</p>
+            <p class="text-[10px] text-gray-400 text-center mt-2">请输入旧验证器中的 6 位动态码以继续</p>
+            <input type="text" id="totp-modify-code" maxlength="6" placeholder="6 位动态码" class="w-full border border-gray-200 p-3 rounded-md text-center font-black text-lg mt-6 outline-none focus:border-black">
+            <p id="totp-modify-error" class="text-red-500 text-[10px] text-center mt-2 hidden">验证码错误，请重试</p>
+            <button type="button" onclick="confirmTotpModify()" class="w-full py-3 bg-black text-white font-black text-sm rounded-md mt-4">下一步</button>
+        </div>`,
+        remove: `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center">
+                    <span class="cursor-pointer mr-3 text-gray-400 hover:text-black" onclick="updateTotpModal('bound')">←</span>
+                    <h2 class="text-lg font-black">移除验证器</h2>
+                </div>
+                <span class="cursor-pointer text-gray-400 hover:text-black" onclick="closeTotpModal()">✕</span>
+            </div>
+            <div class="p-4 bg-red-50 border border-red-100 rounded-md mb-5">
+                <p class="text-[12px] font-black text-red-800">安全风险提示</p>
+                <p class="text-[10px] text-red-700 mt-1 leading-relaxed">移除后将无法使用验证器进行安全验证。建议仅在无法继续使用当前验证器时操作。</p>
+            </div>
+            <p class="text-sm font-black text-gray-900 text-center">输入验证器动态码确认移除</p>
+            <input type="text" id="totp-remove-code" maxlength="6" placeholder="6 位动态码" class="w-full border border-gray-200 p-3 rounded-md text-center font-black text-lg mt-6 outline-none focus:border-black">
+            <p id="totp-remove-error" class="text-red-500 text-[10px] text-center mt-2 hidden">验证码错误，请重试</p>
+            <button type="button" onclick="confirmTotpRemove()" class="w-full py-3 mt-4 bg-red-600 text-white font-black text-sm rounded-md">确认移除</button>
+            <button type="button" onclick="updateTotpModal('bound')" class="w-full py-3 mt-2 border border-gray-200 font-black text-sm rounded-md">取消</button>
+        </div>`
+    };
+
+    function openTotpModal(step) {
+        if (!currentUser || currentUser.loginMethod !== 'email') return;
+        const initial = step || (currentUser.gaBound ? 'bound' : 'not_set');
+        updateTotpModal(initial);
+        document.getElementById('modal-totp').style.display = 'flex';
     }
 
-    function bindWallet() {
-        openLoginModal('bindWallet');
+    function updateTotpModal(step) {
+        document.getElementById('modal-totp-content').innerHTML = totpTemplates[step] || totpTemplates.not_set;
     }
 
-    // ================== GA 绑定 ==================
-    function showGaBindModal() {
-        document.getElementById('modal-ga-bind').style.display = 'flex';
+    function closeTotpModal() {
+        document.getElementById('modal-totp').style.display = 'none';
     }
-    function closeGaBindModal() {
-        document.getElementById('modal-ga-bind').style.display = 'none';
-    }
-    function confirmGaBind() {
-        const code = document.getElementById('ga-code-input').value.trim();
-        if (code === '123456') { // 模拟正确
-            currentUser.gaBound = true;
-            document.getElementById('menu-ga-entry').classList.add('hidden');
-            closeGaBindModal();
-            alert('GA 绑定成功！提现时将需要 GA 验证。');
-        } else {
-            document.getElementById('ga-bind-error').classList.remove('hidden');
+
+    function confirmTotpBind() {
+        const code = (document.getElementById('totp-setup-code')?.value || '').trim();
+        const err = document.getElementById('totp-setup-error');
+        if (code !== TOTP_MOCK_CODE) {
+            if (err) err.classList.remove('hidden');
+            return;
         }
+        currentUser.gaBound = true;
+        updateGaMenuEntry();
+        updateTotpModal('bound');
+    }
+
+    function confirmTotpModify() {
+        const code = (document.getElementById('totp-modify-code')?.value || '').trim();
+        const err = document.getElementById('totp-modify-error');
+        if (code !== TOTP_MOCK_CODE) {
+            if (err) err.classList.remove('hidden');
+            return;
+        }
+        updateTotpModal('setup_qr');
+    }
+
+    function confirmTotpRemove() {
+        const code = (document.getElementById('totp-remove-code')?.value || '').trim();
+        const err = document.getElementById('totp-remove-error');
+        if (code !== TOTP_MOCK_CODE) {
+            if (err) err.classList.remove('hidden');
+            return;
+        }
+        currentUser.gaBound = false;
+        updateGaMenuEntry();
+        updateTotpModal('not_set');
+    }
+
+    // ================== 导出邮箱钱包 ==================
+    const exportWalletTemplates = {
+        verify_email: `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-black">安全验证</h2>
+                <span class="cursor-pointer text-gray-400 hover:text-black" onclick="closeExportWalletModal()">✕</span>
+            </div>
+            <p class="text-[11px] text-gray-500 leading-relaxed mb-4">导出钱包前需验证邮箱。验证码将发送至 <strong class="text-gray-900">__EMAIL__</strong></p>
+            <div id="export-email-step1" class="space-y-3">
+                <button type="button" onclick="sendExportEmailCode()" class="w-full py-3 bg-black text-white font-black text-sm rounded-md">发送验证码</button>
+            </div>
+            <div id="export-email-step2" class="hidden space-y-3">
+                <input type="text" id="export-email-code" maxlength="6" placeholder="输入 6 位邮箱验证码" class="w-full border border-gray-200 p-3 rounded-md text-sm outline-none focus:border-black">
+                <p id="export-email-error" class="text-red-500 text-[10px] hidden">验证码错误，请重试（模拟码：123456）</p>
+                <button type="button" onclick="confirmExportVerify()" class="w-full py-3 bg-blue-600 text-white font-black text-sm rounded-md">验证并继续</button>
+                <button type="button" onclick="sendExportEmailCode()" class="w-full text-[11px] text-gray-400 font-bold text-center hover:text-black">重新发送验证码</button>
+            </div>
+        </div>`,
+        verify_totp: `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-black">安全验证</h2>
+                <span class="cursor-pointer text-gray-400 hover:text-black" onclick="closeExportWalletModal()">✕</span>
+            </div>
+            <p class="text-[11px] text-gray-500 leading-relaxed mb-4">导出钱包前需验证身份验证器动态码。</p>
+            <input type="text" id="export-totp-code" maxlength="6" placeholder="6 位动态码" class="w-full border border-gray-200 p-3 rounded-md text-center font-black text-lg outline-none focus:border-black">
+            <p id="export-totp-error" class="text-red-500 text-[10px] text-center mt-2 hidden">验证码错误，请重试（模拟码：123456）</p>
+            <button type="button" onclick="confirmExportVerify()" class="w-full py-3 bg-blue-600 text-white font-black text-sm rounded-md mt-4">验证并继续</button>
+        </div>`,
+        export_main: `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-black">Export wallet</h2>
+                <span class="cursor-pointer text-gray-400 hover:text-black" onclick="closeExportWalletModal()">✕</span>
+            </div>
+            <p class="text-[11px] text-gray-600 leading-relaxed">
+                Copy either your private key or seed phrase to export your wallet.
+                <a href="#" class="text-blue-600 font-bold hover:underline" onclick="return false;">Learn more</a>
+            </p>
+            <div class="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-md">
+                <p class="text-[10px] text-amber-800 leading-relaxed font-medium">Never share your private key or seed phrase with anyone.</p>
+            </div>
+            <div class="mt-5">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2">Your wallet</p>
+                <div class="flex items-center justify-between gap-2 bg-gray-50 border border-gray-100 rounded-md px-3 py-2.5">
+                    <span class="font-mono font-black text-[12px] text-gray-900">${EXPORT_WALLET_DISPLAY}</span>
+                    <button type="button" class="copy-icon-btn" onclick="copyText('${EXPORT_WALLET_FULL}')" title="复制钱包地址" aria-label="复制钱包地址">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mt-5">
+                <button type="button" onclick="copyExportPrivateKey()" class="py-3 border border-gray-200 font-black text-[11px] rounded-md hover:bg-gray-50 uppercase tracking-wide">Copy key</button>
+                <button type="button" onclick="copyExportSeedPhrase()" class="py-3 border border-gray-200 font-black text-[11px] rounded-md hover:bg-gray-50 uppercase tracking-wide">Copy Phrase</button>
+            </div>
+        </div>`
+    };
+
+    function openExportWalletEntry() {
+        if (!currentUser || currentUser.loginMethod !== 'email') return;
+        updateExportWalletModal(currentUser.gaBound ? 'verify_totp' : 'verify_email');
+        document.getElementById('modal-export-wallet').style.display = 'flex';
+    }
+
+    function updateExportWalletModal(step) {
+        let html = exportWalletTemplates[step] || exportWalletTemplates.verify_email;
+        if (step === 'verify_email' && currentUser) {
+            html = html.replace('__EMAIL__', currentUser.email);
+        }
+        document.getElementById('modal-export-wallet-content').innerHTML = html;
+    }
+
+    function closeExportWalletModal() {
+        document.getElementById('modal-export-wallet').style.display = 'none';
+    }
+
+    function sendExportEmailCode() {
+        const step1 = document.getElementById('export-email-step1');
+        const step2 = document.getElementById('export-email-step2');
+        if (step1) step1.classList.add('hidden');
+        if (step2) step2.classList.remove('hidden');
+    }
+
+    function confirmExportVerify() {
+        if (!currentUser) return;
+        if (currentUser.gaBound) {
+            const code = (document.getElementById('export-totp-code')?.value || '').trim();
+            const err = document.getElementById('export-totp-error');
+            if (code !== TOTP_MOCK_CODE) {
+                if (err) err.classList.remove('hidden');
+                return;
+            }
+        } else {
+            const code = (document.getElementById('export-email-code')?.value || '').trim();
+            const err = document.getElementById('export-email-error');
+            if (code !== TOTP_MOCK_CODE) {
+                if (err) err.classList.remove('hidden');
+                return;
+            }
+        }
+        updateExportWalletModal('export_main');
+    }
+
+    function copyExportPrivateKey() {
+        copyText(MOCK_PRIVATE_KEY);
+    }
+
+    function copyExportSeedPhrase() {
+        copyText(MOCK_SEED_PHRASE);
     }
 
     // ================== 充值/提现权限控制 ==================
@@ -1510,15 +1764,15 @@
             proceedWithdrawConfirm();
         } else { // 邮箱登录
             if (!currentUser.gaBound) {
-                alert('请先绑定 Google 身份验证器');
-                showGaBindModal();
+                alert('请先绑定身份验证器 App');
+                openTotpModal('not_set');
                 return;
             }
             // 弹出GA+邮箱验证码窗口
             document.getElementById('withdraw-confirm-content').innerHTML = `
             <h3 class="font-black text-lg mb-4">安全验证</h3>
             <div class="space-y-3">
-                <input type="text" id="ga-confirm-input" placeholder="GA 动态码" class="w-full border p-2 rounded">
+                <input type="text" id="ga-confirm-input" placeholder="身份验证器动态码" class="w-full border p-2 rounded">
                 <div class="flex space-x-2">
                     <input type="text" id="email-code-confirm" placeholder="邮箱验证码" class="flex-1 border p-2 rounded">
                     <button onclick="sendEmailCodeConfirm()" class="px-4 bg-black text-white rounded text-sm">获取</button>
@@ -1534,7 +1788,9 @@
         // 模拟当前提现参数（实际可从表单取值，原型中硬编码）
         const mockData = {
             chain: 'Arbitrum',
-            address: currentUser.address || '0x1234...abcd',
+            address: currentUser.loginMethod === 'email'
+                ? (currentUser.privyAddress || PRIVY_WALLET_FULL)
+                : (currentUser.address || '0x1234...abcd'),
             amount: '100.00',
             fee: '2.50',
             receive: '97.50',
@@ -1596,23 +1852,6 @@
     openTransferModal = function() {
         if (!currentUser) { alert('请先登录'); return; }
         origOpenTransfer();
-    }
-
-    function walletAction(walletName) {
-        if (loginMode === 'bindWallet') {
-            bindWalletComplete(walletName);
-        } else {
-            mockWalletLogin(walletName);
-        }
-    }
-
-    function bindWalletComplete(walletName) {
-        // 模拟获取地址
-        const address = '0x' + Math.floor(Math.random()*1000000).toString(16) + '...' + walletName.slice(0,3);
-        currentUser.address = address;
-        currentUser.boundWallet = true;
-        updateUIAfterLogin();
-        closeLoginModal();
     }
 </script>
 </body>
