@@ -59,6 +59,7 @@ node scripts/capture-app-contract-doc-screenshots.mjs
 node scripts/capture-markets-doc-screenshots.mjs
 node scripts/capture-indicator-settings-doc-screenshots.mjs
 node scripts/capture-navbar-doc-screenshots.mjs
+node scripts/capture-referral-doc-screenshots.mjs
 
 # 2. 推送到 doc-assets 分支
 node scripts/push-doc-assets.mjs
@@ -76,5 +77,6 @@ node scripts/push-doc-assets.mjs
 | `document/assets/行情-app/` | 《APP 端行情页面》配图 |
 | `document/assets/指标设置-app/` | 《APP 端指标设置页》配图 |
 | `document/assets/导航栏/` | 《导航栏》（Web 顶部导航）配图 |
+| `document/assets/邀请返佣/` | 《邀请返佣（Web/APP）》配图 |
 
 新增文档配图时，在对应子目录存放 PNG，并更新 `doc-assets` 分支。
