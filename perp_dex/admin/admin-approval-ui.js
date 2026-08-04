@@ -77,8 +77,6 @@
             rows.push(['录入方式', p.inputMode === 'file' ? '文件上传' : '多行录入'], ['发放人数', p.recipientCount], ['发放总积分', p.totalPoints]);
         } else if (app.type === 'points_bonus_config') {
             rows.push(['加成系数', p.bonusMultiplier ? p.bonusMultiplier + 'x' : '—'], ['配置人数', p.recipientCount], ['异常人数', p.anomalyCount || 0]);
-        } else if (app.type === 'points_pool_config') {
-            rows.push(['生效周期', p.effectivePeriod || '—'], ['变更项数', (p.changes && p.changes.length) || 0]);
         } else if (app.type === 'fee_config') {
             rows.push(['UID', p.uid], ['钱包', p.wallet], ['费率模式', p.feeMode === 'vip' ? 'VIP 等级' : '自定义'], ['VIP 等级', p.vipLevel != null ? 'VIP ' + p.vipLevel : '—'], ['Taker', p.taker], ['Maker', p.maker], ['有效期', p.validDays ? p.validDays + ' 天（到期日 24:00:00（UTC+8）失效）' : '永久有效']);
             if (opts && opts.detailImagePreview && p.attachments && p.attachments.length) {
@@ -96,13 +94,39 @@
         }).join('');
     }
 
-    function renderPoolConfigChangesSection(app) {
+    function formatPoolMinHolding(cfg) {
+        if (!cfg) return '—';
+        return cfg.duration + (cfg.unit === 'minute' ? ' 分钟' : ' 小时');
+    }
+
+    function renderPoolConfigDetailSection(app) {
+        if (app.type !== 'points_pool_config') return '';
         const p = app.payload || {};
-        if (app.type !== 'points_pool_config' || !p.changes || !p.changes.length) return '';
-        const rows = p.changes.map(function (c) {
-            return '<tr class="hover:bg-slate-50"><td class="px-4 py-2 font-bold text-slate-700">' + c.field + '</td><td class="px-4 py-2 text-slate-500">' + c.before + '</td><td class="px-4 py-2 font-bold text-blue-600">' + c.after + '</td></tr>';
+        const after = p.after || {};
+        const dimPct = after.dimPct || {};
+        const dimLabels = ['交易积分', '有效持仓积分', '持仓亏损激励', '持仓盈利额外', '平均资沉积分', '邀请贡献积分'];
+        const dimKeys = ['trade', 'position', 'loss', 'profit', 'balance', 'invite'];
+        const changeMap = {};
+        (p.changes || []).forEach(function (c) { changeMap[c.field] = c; });
+
+        const items = [
+            { label: '生效周期', value: p.effectivePeriod || '—', key: '生效周期' },
+            { label: '本周总池（积分）', value: after.weeklyPool != null ? Number(after.weeklyPool).toLocaleString() : '—', key: '本周总池（积分）' }
+        ];
+        dimKeys.forEach(function (k, i) {
+            items.push({ label: dimLabels[i] + '占比', value: dimPct[k] != null ? dimPct[k] + '%' : '—', key: dimLabels[i] + '占比' });
+        });
+        items.push({ label: '有效持仓最小时长', value: formatPoolMinHolding(after.minHolding), key: '有效持仓最小时长' });
+
+        const listHtml = items.map(function (item) {
+            const ch = changeMap[item.key];
+            const valueHtml = ch
+                ? '<span class="text-slate-400">' + ch.before + '</span> <span class="text-slate-300 mx-1">→</span> <span class="text-blue-600 font-bold">' + ch.after + '</span>'
+                : '<span class="font-bold text-slate-800">' + item.value + '</span>';
+            return '<div class="flex justify-between items-center py-2.5 border-b border-slate-100 last:border-0"><span class="text-slate-600">' + item.label + '</span>' + valueHtml + '</div>';
         }).join('');
-        return '<div class="col-span-2 mt-2"><p class="text-xs font-bold text-slate-500 uppercase mb-2">配置变更对比</p><div class="border border-slate-200 rounded-lg overflow-hidden"><table class="w-full text-sm"><thead class="bg-slate-50 border-b"><tr><th class="px-4 py-2 text-xs font-bold text-slate-500 text-left">配置项</th><th class="px-4 py-2 text-xs font-bold text-slate-500 text-left">变更前</th><th class="px-4 py-2 text-xs font-bold text-slate-500 text-left">变更后</th></tr></thead><tbody class="divide-y">' + rows + '</tbody></table></div></div>';
+
+        return '<div class="col-span-2"><div class="border border-slate-200 rounded-lg px-4 py-2 text-sm">' + listHtml + '</div></div>';
     }
 
     function renderRecipientSection(rootId, app) {
@@ -331,9 +355,14 @@
         else if (app.status === 'pending_risk' && role !== 'risk') readonlyHint = '等待风控审核';
         else if (app.status === 'pending_boss' && role !== 'boss') readonlyHint = '等待老板审批（可在 Lark 完成）';
 
-        const exportDetailBtn = opts.showExportDetail
+        const isPoolConfig = app.type === 'points_pool_config';
+        const exportDetailBtn = opts.showExportDetail && !isPoolConfig
             ? '<button type="button" onclick="exportApprovalDetailCsv(getApprovalAppById(\'' + app.id + '\'))" class="text-xs font-bold text-blue-600 hover:underline">导出原数据</button>'
             : '';
+        const dataSectionTitle = isPoolConfig ? '配置内容' : '申请原数据';
+        const dataSectionBody = isPoolConfig
+            ? '<div class="text-sm">' + renderPoolConfigDetailSection(app) + '</div>'
+            : '<div class="grid grid-cols-2 gap-3 text-sm">' + renderPayloadMeta(app, opts) + renderRecipientSection(rootId, app) + '</div>';
         const typeBadge = state.types.length > 1
             ? '<span class="inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">' + getApprovalTypeLabel(app.type) + '</span>'
             : '';
@@ -344,8 +373,8 @@
             '<section class="card p-6"><div class="flex justify-between items-start mb-4"><div><p class="text-[10px] text-slate-400 font-bold uppercase">审批单号</p><p class="text-lg font-black">' + app.id + '</p>' + typeBadge + '</div><span class="' + statusPillClass(app.status) + '">' + getApprovalStatusLabel(app.status) + '</span></div>' +
             '<div class="grid grid-cols-2 gap-4 text-sm"><div><span class="text-slate-400">申请人</span><p class="font-bold mt-1">' + app.applicant + '</p></div><div><span class="text-slate-400">申请时间</span><p class="font-bold mt-1">' + app.createdAt + '</p></div><div class="col-span-2"><span class="text-slate-400">摘要</span><p class="font-bold mt-1">' + (app.summary || '—') + '</p></div></div>' +
             '<div class="mt-4 p-4 bg-slate-50 rounded-lg"><p class="text-[10px] text-slate-400 font-bold uppercase mb-1">申请备注</p><p class="text-sm">' + (app.remark || '—') + '</p></div></section>' +
-            '<section class="card p-6"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-slate-800">申请原数据</h3>' + exportDetailBtn + '</div>' +
-            '<div class="grid grid-cols-2 gap-3 text-sm">' + renderPayloadMeta(app, opts) + renderPoolConfigChangesSection(app) + renderRecipientSection(rootId, app) + '</div></section>' +
+            '<section class="card p-6"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-slate-800">' + dataSectionTitle + '</h3>' + exportDetailBtn + '</div>' +
+            dataSectionBody + '</section>' +
             '<section class="card p-6"><h3 class="font-bold mb-4">审批时间线</h3>' + renderTimeline(app) + '</section></div>' +
             '<div class="space-y-6"><section class="card p-6"><h3 class="font-bold mb-4">审批进度</h3><div>' + renderApprovalFlow(app.status, false, app) + '</div>' + (app.lark ? renderLarkApprovalCard(app) : '') + '</section>' +
             (canAct ? '<section class="card p-6"><h3 class="font-bold mb-4">审批操作</h3><textarea id="' + rootId + '-note" rows="3" class="w-full border border-slate-200 rounded-lg p-3 text-sm mb-4" placeholder="审批意见（驳回时必填）"></textarea><div class="flex gap-2"><button type="button" onclick="moduleApprovalReject(\'' + rootId + '\',\'' + app.id + '\')" class="flex-1 py-2.5 border border-red-200 text-red-600 rounded-lg text-sm font-bold">驳回</button><button type="button" onclick="moduleApprovalApprove(\'' + rootId + '\',\'' + app.id + '\')" class="flex-1 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold">通过</button></div></section>' :
