@@ -49,7 +49,7 @@ const shots = [
     hash: 'users',
     selector: '#page-users',
     viewport: { w: 1440, h: 900 },
-    clipHeight: 520,
+    clipHeight: 680,
   },
   {
     file: 'admin-user-detail.png',
