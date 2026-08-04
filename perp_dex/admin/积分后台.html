@@ -207,17 +207,13 @@
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div>
                     <h2 class="text-lg font-bold text-slate-700">积分发放总览</h2>
-                    <p class="text-sm text-slate-400 mt-1">全站积分发放统计，区分真实用户与排行榜影子用户分摊。</p>
+                    <p class="text-sm text-slate-400 mt-1">全站积分发放统计与每周发放记录，区分真实用户与排行榜影子用户分摊。</p>
                 </div>
-                <div class="flex items-center gap-2">
-                    <select id="overviewPeriod" onchange="renderPointsOverview()" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white outline-none">
-                        <option value="all">全部</option>
-                        <option value="30d">近 30 天</option>
-                        <option value="90d">近 90 天</option>
-                    </select>
-                    <button onclick="exportOverviewCsv()" class="px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50">导出总览摘要</button>
-                    <a href="#weekly" class="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-bold">每周发放记录</a>
-                </div>
+                <select id="overviewPeriod" onchange="renderPointsOverview()" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white outline-none">
+                    <option value="all">全部</option>
+                    <option value="30d">近 30 天</option>
+                    <option value="90d">近 90 天</option>
+                </select>
             </div>
             <div id="overviewStatsGrid" class="grid grid-cols-3 gap-4"></div>
             <div class="grid grid-cols-2 gap-4">
@@ -230,16 +226,10 @@
                     <div id="overviewLastWeek" class="space-y-2 text-sm"></div>
                 </div>
             </div>
-        </div>
 
-        <!-- 每周发放记录 -->
-        <div id="page-weekly" class="hidden space-y-6">
-            <div class="flex flex-wrap items-end justify-between gap-4">
-                <div>
-                    <h2 class="text-lg font-bold text-slate-700">每周发放记录</h2>
-                    <p class="text-sm text-slate-400 mt-1">系统周结算与手动发放批次，支持查看详情与导出。</p>
-                </div>
-                <button onclick="exportWeeklyBatchCsv()" class="px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50">下载 CSV</button>
+            <div class="pt-2">
+                <h3 class="text-base font-bold text-slate-800 mb-1">每周发放记录</h3>
+                <p class="text-xs text-slate-400 mb-4">系统周结算与手动发放批次，点击「查看详情」进入发放明细（明细页支持下载 CSV）。</p>
             </div>
             <section class="card p-5">
                 <div class="grid grid-cols-5 gap-4 items-end">
@@ -266,7 +256,7 @@
                 </div>
             </section>
             <div class="card overflow-hidden">
-                <table class="w-full text-left text-sm min-w-[1100px]">
+                <table class="w-full text-left text-sm min-w-[1000px]">
                     <thead class="bg-slate-50 border-b">
                         <tr>
                             <th class="px-4 py-3 text-xs font-bold text-slate-500">发放时间</th>
@@ -275,7 +265,6 @@
                             <th class="px-3 py-3 text-xs font-bold text-slate-500 text-right">计划发放</th>
                             <th class="px-3 py-3 text-xs font-bold text-slate-500 text-right">实发积分</th>
                             <th class="px-3 py-3 text-xs font-bold text-slate-500 text-right">影子分摊</th>
-                            <th class="px-3 py-3 text-xs font-bold text-slate-500 text-right">尾差</th>
                             <th class="px-3 py-3 text-xs font-bold text-slate-500 text-right">用户数</th>
                             <th class="px-4 py-3 text-xs font-bold text-slate-500 text-right">操作</th>
                         </tr>
@@ -620,9 +609,9 @@
     ];
 
     const OVERVIEW_STATS = {
-        all: { total: 28542000, real: 24156800, shadow: 3284200, realUsers: 18452, shadowUsers: 4256, balance: 31245000, system: 24890000, manual: 2850000, newbie: 380000, planned: 1000000, actual: 982156, tail: 17844, shadowPct: 32.8 },
-        '30d': { total: 4208000, real: 3581200, shadow: 486800, realUsers: 8920, shadowUsers: 4256, balance: 31245000, system: 3600000, manual: 450000, newbie: 58000, planned: 1000000, actual: 982156, tail: 17844, shadowPct: 32.8 },
-        '90d': { total: 11250000, real: 9584000, shadow: 1366000, realUsers: 14230, shadowUsers: 4256, balance: 31245000, system: 10200000, manual: 850000, newbie: 120000, planned: 1000000, actual: 982156, tail: 17844, shadowPct: 32.8 }
+        all: { total: 28542000, real: 24156800, shadow: 3284200, realUsers: 18452, shadowUsers: 4256, system: 24890000, manual: 2850000, newbie: 380000, planned: 1000000, actual: 982156, shadowPct: 32.8 },
+        '30d': { total: 4208000, real: 3581200, shadow: 486800, realUsers: 8920, shadowUsers: 4256, system: 3600000, manual: 450000, newbie: 58000, planned: 1000000, actual: 982156, shadowPct: 32.8 },
+        '90d': { total: 11250000, real: 9584000, shadow: 1366000, realUsers: 14230, shadowUsers: 4256, system: 10200000, manual: 850000, newbie: 120000, planned: 1000000, actual: 982156, shadowPct: 32.8 }
     };
 
     function makeDim(raw, pct, points) {
@@ -638,7 +627,6 @@
             planned: 1000000,
             actual: 982156,
             shadow: 328420,
-            tail: 17844,
             userCount: 12480,
             realUserCount: 8234,
             shadowUserCount: 4256,
@@ -659,7 +647,6 @@
             planned: 1000000,
             actual: 978890,
             shadow: 325100,
-            tail: 19610,
             userCount: 12100,
             realUserCount: 8100,
             shadowUserCount: 4200,
@@ -678,7 +665,6 @@
             planned: 200,
             actual: 200,
             shadow: 0,
-            tail: 0,
             userCount: 3,
             realUserCount: 3,
             shadowUserCount: 0,
@@ -704,12 +690,11 @@
         const period = document.getElementById('overviewPeriod').value;
         const s = OVERVIEW_STATS[period] || OVERVIEW_STATS.all;
         document.getElementById('overviewStatsGrid').innerHTML = [
-            { label: '累计发放总积分', value: s.total.toLocaleString(), sub: '含所有来源' },
+            { label: '累计发放总积分', value: s.total.toLocaleString(), sub: '含系统周结算、手动发放、新人任务', color: 'text-slate-800' },
             { label: '真实用户获得', value: s.real.toLocaleString(), sub: '计入账户', color: 'text-blue-600' },
             { label: '影子用户分摊', value: s.shadow.toLocaleString(), sub: '稀释量，不入账', color: 'text-amber-600' },
             { label: '获得积分用户（真实）', value: s.realUsers.toLocaleString(), sub: '去重人数' },
-            { label: '影子用户参与人数', value: s.shadowUsers.toLocaleString(), sub: '排行榜配置' },
-            { label: '全站积分余额合计', value: s.balance.toLocaleString(), sub: '当前存量' }
+            { label: '影子用户参与人数', value: s.shadowUsers.toLocaleString(), sub: '排行榜配置' }
         ].map(function (c) {
             return '<div class="card p-5"><p class="text-[10px] font-bold text-slate-500 uppercase">' + c.label + '</p><p class="text-2xl font-black mt-2 ' + (c.color || 'text-slate-800') + '">' + c.value + '</p><p class="text-[10px] text-slate-400 mt-1">' + c.sub + '</p></div>';
         }).join('');
@@ -725,7 +710,6 @@
             '<div class="flex justify-between"><span class="text-slate-500">计划总池</span><span class="font-bold">' + s.planned.toLocaleString() + '</span></div>' +
             '<div class="flex justify-between"><span class="text-slate-500">实发（真实用户）</span><span class="font-bold text-blue-600">' + s.actual.toLocaleString() + '</span></div>' +
             '<div class="flex justify-between"><span class="text-slate-500">影子分摊</span><span class="font-bold text-amber-600">' + s.shadow.toLocaleString() + '</span></div>' +
-            '<div class="flex justify-between"><span class="text-slate-500">截断尾差</span><span class="font-bold">' + s.tail.toLocaleString() + '</span></div>' +
             '<div class="flex justify-between"><span class="text-slate-500">影子分摊占比</span><span class="font-bold">' + s.shadowPct + '%</span></div>';
     }
 
@@ -744,29 +728,14 @@
         URL.revokeObjectURL(a.href);
     }
 
-    function exportOverviewCsv() {
-        const period = document.getElementById('overviewPeriod').value;
-        const s = OVERVIEW_STATS[period] || OVERVIEW_STATS.all;
-        downloadCsv('points_overview_' + period + '.csv', [
-            ['指标', '数值'],
-            ['累计发放总积分', s.total],
-            ['真实用户获得', s.real],
-            ['影子用户分摊', s.shadow],
-            ['获得积分用户(真实)', s.realUsers],
-            ['影子用户参与人数', s.shadowUsers],
-            ['全站积分余额', s.balance]
-        ]);
-    }
-
     function renderWeeklyBatchTable(list) {
         document.getElementById('weeklyBatchTableBody').innerHTML = list.map(function (b) {
             const typeTag = b.type === 'system' ? '<span class="status-tag tag-system">系统周结算</span>' : '<span class="status-tag tag-manual">手动发放</span>';
             const shadow = b.type === 'system' ? b.shadow.toLocaleString() : '—';
-            const tail = b.type === 'system' ? b.tail.toLocaleString() : '—';
             const users = b.realUserCount + ' / ' + b.shadowUserCount;
             return '<tr class="hover:bg-slate-50"><td class="px-4 py-3">' + b.time + '</td><td class="px-3 py-3">' + typeTag + '</td><td class="px-3 py-3 font-bold">' + b.label + '</td>' +
                 '<td class="px-3 py-3 text-right">' + b.planned.toLocaleString() + '</td><td class="px-3 py-3 text-right font-bold text-blue-600">' + b.actual.toLocaleString() + '</td>' +
-                '<td class="px-3 py-3 text-right text-amber-600">' + shadow + '</td><td class="px-3 py-3 text-right text-slate-500">' + tail + '</td>' +
+                '<td class="px-3 py-3 text-right text-amber-600">' + shadow + '</td>' +
                 '<td class="px-3 py-3 text-right text-xs">' + users + '</td>' +
                 '<td class="px-4 py-3 text-right"><button onclick="showWeeklyDetail(\'' + b.id + '\')" class="text-blue-600 font-bold hover:underline">查看详情</button></td></tr>';
         }).join('');
@@ -798,16 +767,8 @@
         renderWeeklyBatchTable(filteredWeeklyBatches);
     }
 
-    function exportWeeklyBatchCsv() {
-        const rows = [['发放时间', '类型', '结算周/活动', '计划发放', '实发', '影子分摊', '尾差', '真实用户', '影子用户']];
-        filteredWeeklyBatches.forEach(function (b) {
-            rows.push([b.time, b.type === 'system' ? '系统周结算' : '手动发放', b.label, b.planned, b.actual, b.shadow || '', b.tail || '', b.realUserCount, b.shadowUserCount]);
-        });
-        downloadCsv('weekly_batches.csv', rows);
-    }
-
     function showWeeklyList() {
-        showPage('weekly', false);
+        showPage('overview', false);
     }
 
     function showWeeklyDetail(batchId) {
@@ -821,7 +782,7 @@
         document.getElementById('userBackBtn').onclick = showWeeklyList;
         document.getElementById('userBackBtn').innerText = '← 返回发放记录';
         if (location.hash !== '#weekly-detail=' + batchId) location.hash = 'weekly-detail=' + batchId;
-        if (window.initAdminSidebar) initAdminSidebar('points-weekly', '登录身份: 积分管理员');
+        if (window.initAdminSidebar) initAdminSidebar('points-overview', '登录身份: 积分管理员');
 
         const typeLabel = batch.type === 'system' ? '系统周结算' : '手动发放';
         let poolSnap = '';
@@ -834,7 +795,6 @@
             '<div class="flex justify-between gap-4"><span class="text-slate-500">计划发放</span><b>' + batch.planned.toLocaleString() + '</b></div>' +
             '<div class="flex justify-between gap-4"><span class="text-slate-500">实发积分</span><b class="text-blue-600">' + batch.actual.toLocaleString() + '</b></div>' +
             '<div class="flex justify-between gap-4"><span class="text-slate-500">影子分摊</span><b class="text-amber-600">' + (batch.shadow ? batch.shadow.toLocaleString() : '—') + '</b></div>' +
-            '<div class="flex justify-between gap-4"><span class="text-slate-500">尾差</span><b>' + (batch.tail ? batch.tail.toLocaleString() : '—') + '</b></div>' +
             '<div class="flex justify-between gap-4"><span class="text-slate-500">真实 / 影子用户</span><b>' + batch.realUserCount + ' / ' + batch.shadowUserCount + '</b></div>' +
             '<div class="flex justify-between gap-4"><span class="text-slate-500">审批单</span><b>' + (batch.approvalId || '—') + '</b></div></div></div>';
 
@@ -924,7 +884,6 @@
 
     const PAGE_MAP = {
         overview: { id: 'page-overview', title: '积分发放总览', sidebar: 'points-overview' },
-        weekly: { id: 'page-weekly', title: '每周发放记录', sidebar: 'points-weekly' },
         config: { id: 'page-config', title: '每周积分总池设置', sidebar: 'points-config' },
         bonus: { id: 'page-bonus', title: '积分加成配置', sidebar: 'points-bonus' },
         users: { id: 'page-users', title: '用户积分查询', sidebar: 'points-users' },
@@ -933,7 +892,7 @@
         approval: { id: 'page-approval', title: '积分审核', sidebar: 'points-approval' }
     };
 
-    const ALL_PAGE_IDS = ['page-overview', 'page-weekly', 'page-weekly-detail', 'page-config', 'page-bonus', 'page-users', 'page-user-detail', 'page-manual', 'page-logs', 'page-approval'];
+    const ALL_PAGE_IDS = ['page-overview', 'page-weekly-detail', 'page-config', 'page-bonus', 'page-users', 'page-user-detail', 'page-manual', 'page-logs', 'page-approval'];
 
     function showPage(key, updateHash) {
         ALL_PAGE_IDS.forEach(function (id) {
@@ -955,7 +914,7 @@
         currentPtsUid = uid;
         const user = POINTS_USERS.find(function (u) { return u.uid === uid; });
         if (!user) return;
-        ['page-overview', 'page-weekly', 'page-weekly-detail', 'page-config', 'page-bonus', 'page-users', 'page-manual', 'page-logs', 'page-approval'].forEach(function (id) {
+        ['page-overview', 'page-weekly-detail', 'page-config', 'page-bonus', 'page-users', 'page-manual', 'page-logs', 'page-approval'].forEach(function (id) {
             document.getElementById(id).classList.add('hidden');
         });
         document.getElementById('page-user-detail').classList.remove('hidden');
@@ -1477,10 +1436,15 @@
             moduleApprovalBackList('points-approval-root', false);
             return;
         }
-        const routes = { overview: 'overview', weekly: 'weekly', config: 'config', bonus: 'bonus', users: 'users', manual: 'manual', logs: 'logs' };
-        if (routes[hash]) showPage(routes[hash], false);
-        else showPage('config', false);
-        const keyMap = { overview: 'points-overview', weekly: 'points-weekly', config: 'points-config', bonus: 'points-bonus', users: 'points-users', manual: 'points-manual', logs: 'points-logs', approval: 'points-approval', 'bonus-approval': 'points-approval' };
+        const routes = { overview: 'overview', config: 'config', bonus: 'bonus', users: 'users', manual: 'manual', logs: 'logs' };
+        if (hash === 'weekly') {
+            showPage('overview', false);
+        } else if (routes[hash]) {
+            showPage(routes[hash], false);
+        } else {
+            showPage('config', false);
+        }
+        const keyMap = { overview: 'points-overview', weekly: 'points-overview', config: 'points-config', bonus: 'points-bonus', users: 'points-users', manual: 'points-manual', logs: 'points-logs', approval: 'points-approval', 'bonus-approval': 'points-approval' };
         initAdminSidebar(keyMap[hash] || 'points-config', '登录身份: 积分管理员');
     }
     window.addEventListener('hashchange', applyPointsHash);
