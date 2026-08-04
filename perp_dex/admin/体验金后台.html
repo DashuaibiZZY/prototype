@@ -125,11 +125,19 @@
 
     <!-- 数据查询&回收 - 列表 -->
     <div id="page-users" class="hidden space-y-6">
-      <div>
-        <h2 class="text-lg font-bold text-slate-700">数据查询&回收</h2>
-        <p class="text-sm text-slate-400 mt-1">全站体验金发放与使用数据总览，支持按用户查询持卡情况、查看卡券使用记录，或执行风控强制回收。</p>
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-700">数据查询&回收</h2>
+          <p class="text-sm text-slate-400 mt-1">全站体验金发放与使用数据总览，支持按用户查询持卡情况、查看卡券使用记录，或执行风控强制回收。</p>
+        </div>
+        <select id="trialOverviewPeriod" onchange="renderTrialOverview()" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white outline-none">
+          <option value="all">全部</option>
+          <option value="7d">近 7 天</option>
+          <option value="30d">近 30 天</option>
+        </select>
       </div>
-      <div id="trialOverviewStatsGrid" class="grid grid-cols-5 gap-4"></div>
+      <div id="trialOverviewStatsGrid" class="grid grid-cols-4 gap-4"></div>
+      <div id="trialOverviewRecycleRow" class="grid grid-cols-2 gap-4"></div>
       <section class="card p-5">
         <div class="grid grid-cols-5 gap-4 items-end">
           <div>
@@ -422,16 +430,24 @@
   const GROUP_PAGE_SIZE = 5;
 
   const TRIAL_OVERVIEW_STATS = {
-    totalIssued: 1285600,
-    issuedUserCount: 8426,
-    totalLossDeduct: 186420,
-    totalFeeDeduct: 52880,
-    inUseBalance: 312400,
-    availableBalance: 458200,
-    totalRecycled: 94200,
-    activeHolderCount: 2156,
-    totalCouponCount: 12480,
-    inUseCouponCount: 1892
+    all: {
+      totalIssued: 1285600, issuedUserCount: 8426, totalLossDeduct: 186420, totalFeeDeduct: 52880,
+      inUseBalance: 312400, availableBalance: 458200, activeHolderCount: 2156,
+      riskRecycle: 18600,
+      autoRecycle: { expired: 28400, invalid: 12800, lossLimit: 35200, feeLimit: 9800 }
+    },
+    '7d': {
+      totalIssued: 86400, issuedUserCount: 428, totalLossDeduct: 12480, totalFeeDeduct: 3620,
+      inUseBalance: 312400, availableBalance: 458200, activeHolderCount: 2156,
+      riskRecycle: 2400,
+      autoRecycle: { expired: 3200, invalid: 1800, lossLimit: 4100, feeLimit: 1100 }
+    },
+    '30d': {
+      totalIssued: 312800, issuedUserCount: 1682, totalLossDeduct: 48200, totalFeeDeduct: 14280,
+      inUseBalance: 312400, availableBalance: 458200, activeHolderCount: 2156,
+      riskRecycle: 6800,
+      autoRecycle: { expired: 11200, invalid: 5400, lossLimit: 15800, feeLimit: 4200 }
+    }
   };
 
   const TRIAL_USERS = [
@@ -492,22 +508,49 @@
   }
 
   function renderTrialOverview() {
-    const s = TRIAL_OVERVIEW_STATS;
+    const period = document.getElementById('trialOverviewPeriod').value;
+    const s = TRIAL_OVERVIEW_STATS[period] || TRIAL_OVERVIEW_STATS.all;
+    const periodIssuedLabel = period === 'all' ? '累计发放体验金' : '发放体验金';
+    const periodUserLabel = period === 'all' ? '累计发放用户数' : '发放用户数';
+    const periodLossLabel = period === 'all' ? '累计亏损抵扣金额' : '亏损抵扣金额';
+    const periodFeeLabel = period === 'all' ? '累计费用抵扣金额' : '费用抵扣金额';
+    const periodSub = period === 'all' ? '历史累计' : (period === '7d' ? '近 7 天' : '近 30 天');
     const fmt = function (n) { return n.toLocaleString() + ' USDT'; };
     document.getElementById('trialOverviewStatsGrid').innerHTML = [
-      { label: '累计发放体验金', value: fmt(s.totalIssued), sub: '历史发放面额合计', color: 'text-slate-800' },
-      { label: '累计发放用户数', value: s.issuedUserCount.toLocaleString(), sub: '曾获得过体验金的去重用户' },
-      { label: '累计亏损抵扣金额', value: fmt(s.totalLossDeduct), sub: '平仓亏损抵扣合计', color: 'text-amber-600' },
-      { label: '累计费用抵扣金额', value: fmt(s.totalFeeDeduct), sub: '手续费/资金费抵扣合计', color: 'text-amber-600' },
-      { label: '使用中体验金', value: fmt(s.inUseBalance), sub: '已激活且持仓占用中', color: 'text-blue-600' },
-      { label: '可用体验金', value: fmt(s.availableBalance), sub: '未激活或可用余额合计', color: 'text-emerald-600' },
-      { label: '累计回收体验金', value: fmt(s.totalRecycled), sub: '到期/上限/划转/风控回收合计', color: 'text-red-600' },
-      { label: '当前持卡用户数', value: s.activeHolderCount.toLocaleString(), sub: '仍有剩余或使用中卡券的用户' },
-      { label: '累计发放卡券张数', value: s.totalCouponCount.toLocaleString(), sub: '历史发放卡券总数' },
-      { label: '使用中卡券张数', value: s.inUseCouponCount.toLocaleString(), sub: '状态为使用中的卡券', color: 'text-blue-600' }
+      { label: periodIssuedLabel, value: fmt(s.totalIssued), sub: periodSub + '发放面额合计', color: 'text-slate-800' },
+      { label: periodUserLabel, value: s.issuedUserCount.toLocaleString(), sub: periodSub + '去重用户' },
+      { label: periodLossLabel, value: fmt(s.totalLossDeduct), sub: periodSub + '平仓亏损抵扣', color: 'text-amber-600' },
+      { label: periodFeeLabel, value: fmt(s.totalFeeDeduct), sub: periodSub + '手续费/资金费抵扣', color: 'text-amber-600' },
+      { label: '使用中体验金', value: fmt(s.inUseBalance), sub: '当前已激活且持仓占用中', color: 'text-blue-600' },
+      { label: '可用体验金', value: fmt(s.availableBalance), sub: '当前未激活或可用余额', color: 'text-emerald-600' },
+      { label: '当前持卡用户数', value: s.activeHolderCount.toLocaleString(), sub: '当前仍有剩余或使用中卡券' }
     ].map(function (c) {
       return '<div class="card p-5"><p class="text-[10px] font-bold text-slate-500 uppercase">' + c.label + '</p><p class="text-xl font-black mt-2 ' + (c.color || 'text-slate-800') + '">' + c.value + '</p><p class="text-[10px] text-slate-400 mt-1">' + c.sub + '</p></div>';
     }).join('');
+    const ar = s.autoRecycle;
+    const autoTotal = ar.expired + ar.invalid + ar.lossLimit + ar.feeLimit;
+    const autoRows = [
+      { name: '已过期回收', val: ar.expired },
+      { name: '已失效回收', val: ar.invalid },
+      { name: '亏损上限回收', val: ar.lossLimit },
+      { name: '费用上限回收', val: ar.feeLimit }
+    ];
+    document.getElementById('trialOverviewRecycleRow').innerHTML =
+      '<div class="card p-5">' +
+        '<p class="text-[10px] font-bold text-slate-500 uppercase">自动回收明细</p>' +
+        '<p class="text-xs text-slate-400 mt-1">' + periodSub + ' · 到期/上限等系统回收（不含风控）</p>' +
+        '<div class="mt-4 space-y-2.5 text-sm">' +
+        autoRows.map(function (r) {
+          return '<div class="flex justify-between items-center"><span class="text-slate-600">' + r.name + '</span><span class="font-bold text-slate-800">' + r.val.toLocaleString() + ' <span class="text-slate-400 text-xs">USDT</span></span></div>';
+        }).join('') +
+        '<div class="flex justify-between items-center pt-2 border-t border-slate-100"><span class="font-bold text-slate-700">合计</span><span class="font-black text-red-600">' + autoTotal.toLocaleString() + ' <span class="text-xs">USDT</span></span></div>' +
+        '</div></div>' +
+      '<div class="card p-5 border-2 border-red-200 bg-red-50/40">' +
+        '<p class="text-[10px] font-bold text-red-600 uppercase">风控回收金额</p>' +
+        '<p class="text-xs text-red-400/90 mt-1">' + periodSub + ' · 人工风控强制回收</p>' +
+        '<p class="text-3xl font-black text-red-600 mt-4">' + s.riskRecycle.toLocaleString() + ' <span class="text-base font-bold">USDT</span></p>' +
+        '<p class="text-[10px] text-red-500/80 mt-2">独立于自动回收，拥有最高执行优先级</p>' +
+      '</div>';
   }
 
   function showPage(pageKey, updateHash) {
