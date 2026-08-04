@@ -19,7 +19,7 @@
                 { key: 'trial-config', label: '卡组配置', href: '体验金后台.html#config' },
                 { key: 'trial-issue', label: '批量发放', href: '体验金后台.html#issue' },
                 { key: 'trial-approval', label: '发放审批', href: '体验金后台.html#approval' },
-                { key: 'trial-users', label: '用户查询与回收', href: '体验金后台.html#users' },
+                { key: 'trial-users', label: '数据查询&回收', href: '体验金后台.html#users' },
                 { key: 'trial-logs', label: '操作记录', href: '体验金后台.html#logs' }
             ]
         },

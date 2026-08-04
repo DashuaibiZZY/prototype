@@ -123,12 +123,13 @@
       </div>
     </div>
 
-    <!-- 用户查询与回收 - 列表 -->
+    <!-- 数据查询&回收 - 列表 -->
     <div id="page-users" class="hidden space-y-6">
       <div>
-        <h2 class="text-lg font-bold text-slate-700">用户查询与风控回收</h2>
-        <p class="text-sm text-slate-400 mt-1">查询体验金发放与用户持卡情况，支持进入详情查看卡券使用记录，或执行强制回收。</p>
+        <h2 class="text-lg font-bold text-slate-700">数据查询&回收</h2>
+        <p class="text-sm text-slate-400 mt-1">全站体验金发放与使用数据总览，支持按用户查询持卡情况、查看卡券使用记录，或执行风控强制回收。</p>
       </div>
+      <div id="trialOverviewStatsGrid" class="grid grid-cols-5 gap-4"></div>
       <section class="card p-5">
         <div class="grid grid-cols-5 gap-4 items-end">
           <div>
@@ -420,6 +421,19 @@
   let groupSearchPage = 1;
   const GROUP_PAGE_SIZE = 5;
 
+  const TRIAL_OVERVIEW_STATS = {
+    totalIssued: 1285600,
+    issuedUserCount: 8426,
+    totalLossDeduct: 186420,
+    totalFeeDeduct: 52880,
+    inUseBalance: 312400,
+    availableBalance: 458200,
+    totalRecycled: 94200,
+    activeHolderCount: 2156,
+    totalCouponCount: 12480,
+    inUseCouponCount: 1892
+  };
+
   const TRIAL_USERS = [
     { uid: '100234', wallet: '0xd5a2b8c91f3e4d567890abcdef1234567890ab8f3c', totalIssued: 350, remaining: 200, couponStatus: 'used', lossUsed: 15, lossLimit: 50, feeUsed: 5, feeLimit: 10, riskTag: '套利嫌疑', riskWarn: true, activity: '社区 KOL 合作激励', issuedAt: '2026-07-18 14:30' },
     { uid: '100891', wallet: '0x8f3c2a1b9e7d6543210fedcba9876543210fedcba', totalIssued: 500, remaining: 500, couponStatus: 'available', lossUsed: 0, lossLimit: 50, feeUsed: 0, feeLimit: 25, riskTag: '正常', riskWarn: false, activity: '新用户注册礼包', issuedAt: '2026-07-20 09:15' },
@@ -465,7 +479,7 @@
   const PAGE_MAP = {
     config: { id: 'page-config', title: '卡组配置', sidebar: 'trial-config' },
     issue: { id: 'page-issue', title: '批量发放体验金', sidebar: 'trial-issue' },
-    users: { id: 'page-users', title: '用户查询与风控回收', sidebar: 'trial-users' },
+    users: { id: 'page-users', title: '数据查询&回收', sidebar: 'trial-users' },
     logs: { id: 'page-logs', title: '操作记录', sidebar: 'trial-logs' },
     approval: { id: 'page-approval', title: '体验金发放审批', sidebar: 'trial-approval' }
   };
@@ -477,6 +491,25 @@
     el.classList.toggle('flex', checkbox.checked);
   }
 
+  function renderTrialOverview() {
+    const s = TRIAL_OVERVIEW_STATS;
+    const fmt = function (n) { return n.toLocaleString() + ' USDT'; };
+    document.getElementById('trialOverviewStatsGrid').innerHTML = [
+      { label: '累计发放体验金', value: fmt(s.totalIssued), sub: '历史发放面额合计', color: 'text-slate-800' },
+      { label: '累计发放用户数', value: s.issuedUserCount.toLocaleString(), sub: '曾获得过体验金的去重用户' },
+      { label: '累计亏损抵扣金额', value: fmt(s.totalLossDeduct), sub: '平仓亏损抵扣合计', color: 'text-amber-600' },
+      { label: '累计费用抵扣金额', value: fmt(s.totalFeeDeduct), sub: '手续费/资金费抵扣合计', color: 'text-amber-600' },
+      { label: '使用中体验金', value: fmt(s.inUseBalance), sub: '已激活且持仓占用中', color: 'text-blue-600' },
+      { label: '可用体验金', value: fmt(s.availableBalance), sub: '未激活或可用余额合计', color: 'text-emerald-600' },
+      { label: '累计回收体验金', value: fmt(s.totalRecycled), sub: '到期/上限/划转/风控回收合计', color: 'text-red-600' },
+      { label: '当前持卡用户数', value: s.activeHolderCount.toLocaleString(), sub: '仍有剩余或使用中卡券的用户' },
+      { label: '累计发放卡券张数', value: s.totalCouponCount.toLocaleString(), sub: '历史发放卡券总数' },
+      { label: '使用中卡券张数', value: s.inUseCouponCount.toLocaleString(), sub: '状态为使用中的卡券', color: 'text-blue-600' }
+    ].map(function (c) {
+      return '<div class="card p-5"><p class="text-[10px] font-bold text-slate-500 uppercase">' + c.label + '</p><p class="text-xl font-black mt-2 ' + (c.color || 'text-slate-800') + '">' + c.value + '</p><p class="text-[10px] text-slate-400 mt-1">' + c.sub + '</p></div>';
+    }).join('');
+  }
+
   function showPage(pageKey, updateHash) {
     ['page-config', 'page-issue', 'page-users', 'page-user-detail', 'page-logs', 'page-approval'].forEach(function (id) {
       document.getElementById(id).classList.add('hidden');
@@ -486,6 +519,7 @@
     document.getElementById(meta.id).classList.remove('hidden');
     document.getElementById('page-title').innerText = meta.title;
     document.getElementById('riskBackBtn').classList.add('hidden');
+    if (pageKey === 'users') renderTrialOverview();
     if (updateHash !== false && location.hash !== '#' + pageKey) location.hash = pageKey;
     if (window.initAdminSidebar) initAdminSidebar(meta.sidebar, '登录身份: 体验金管理员');
   }

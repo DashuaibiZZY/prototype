@@ -563,7 +563,7 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 | 卡组配置 | 卡组参数列表与新建/编辑 | `#config` |
 | 批量发放 | 手动录入 / Excel 导入发放 | `#issue` |
 | 发放审批 | 体验金批量发放四级审批 | `#approval` |
-| 用户查询与回收 | 用户列表 + 卡券详情 + 风控回收 | `#users` |
+| 数据查询&回收 | 数据总览 + 用户列表 + 卡券详情 + 风控回收 | `#users` |
 | 操作记录 | 发放与回收审计日志 | `#logs` |
 
 **原型主文件**：`perp_dex/admin/体验金后台.html`  
@@ -696,13 +696,30 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 
 ---
 
-## 9.3 用户查询与风控回收
+## 9.3 数据查询&回收
 
 **原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/体验金后台.html#users](https://dashuaibizzy.github.io/prototype/perp_dex/admin/体验金后台.html#users)
 
 页面截图：[**后台 · 用户持卡列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/admin-users-list.png)
 
-查询体验金发放与用户持卡情况，支持进入详情查看卡券使用记录，或执行强制回收。风控回收独立于到期、划转、比例上限等自动化回收逻辑，拥有最高执行优先级。
+全站体验金发放与使用数据总览，支持按用户查询持卡情况、进入详情查看卡券使用记录，或执行风控强制回收。风控回收独立于到期、划转、比例上限等自动化回收逻辑，拥有最高执行优先级。
+
+### 数据总览
+
+页面顶部展示全站累计指标（卡片网格），便于运营与风控快速把握体验金存量与消耗情况：
+
+| 指标 | 说明 |
+|---|---|
+| 累计发放体验金 | 历史发放面额合计（USDT） |
+| 累计发放用户数 | 曾获得过体验金的去重用户数 |
+| 累计亏损抵扣金额 | 全站平仓亏损抵扣合计（USDT） |
+| 累计费用抵扣金额 | 全站手续费/资金费抵扣合计（USDT） |
+| 使用中体验金 | 已激活且持仓占用中的体验金余额（USDT） |
+| 可用体验金 | 未激活或仍可使用状态的余额合计（USDT） |
+| 累计回收体验金 | 到期、划转、抵扣上限、风控等回收合计（USDT） |
+| 当前持卡用户数 | 仍有剩余体验金或使用中卡券的去重用户数 |
+| 累计发放卡券张数 | 历史发放卡券总数 |
+| 使用中卡券张数 | 当前状态为「使用中」的卡券张数 |
 
 ### 用户列表筛选
 
