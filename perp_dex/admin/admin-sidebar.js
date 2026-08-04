@@ -47,6 +47,8 @@
         {
             title: '积分',
             items: [
+                { key: 'points-overview', label: '积分发放总览', href: '积分后台.html#overview' },
+                { key: 'points-weekly', label: '每周发放记录', href: '积分后台.html#weekly' },
                 { key: 'points-config', label: '每周积分总池设置', href: '积分后台.html#config' },
                 { key: 'points-bonus', label: '积分加成配置', href: '积分后台.html#bonus' },
                 { key: 'points-users', label: '用户积分查询', href: '积分后台.html#users' },
