@@ -203,33 +203,23 @@
         </div>
 
         <!-- 积分发放总览 -->
-        <div id="page-overview" class="hidden space-y-6">
-            <div class="flex flex-wrap items-end justify-between gap-4">
-                <div>
-                    <h2 class="text-lg font-bold text-slate-700">积分发放总览</h2>
-                    <p class="text-sm text-slate-400 mt-1">全站积分发放统计与每周发放记录，区分真实用户与排行榜影子用户分摊。</p>
+        <div id="page-overview" class="hidden space-y-4">
+            <section class="card p-3 space-y-2">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wide">数据总览</h3>
+                    <select id="overviewPeriod" onchange="renderPointsOverview()" class="border border-slate-200 rounded px-2 py-1 text-xs bg-white outline-none">
+                        <option value="all">全部</option>
+                        <option value="30d">近 30 天</option>
+                        <option value="90d">近 90 天</option>
+                    </select>
                 </div>
-                <select id="overviewPeriod" onchange="renderPointsOverview()" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white outline-none">
-                    <option value="all">全部</option>
-                    <option value="30d">近 30 天</option>
-                    <option value="90d">近 90 天</option>
-                </select>
-            </div>
-            <div id="overviewStatsGrid" class="grid grid-cols-3 gap-4"></div>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="card p-5">
-                    <h3 class="text-sm font-bold text-slate-700 mb-4">发放来源构成</h3>
-                    <div id="overviewSourceBreakdown" class="space-y-3 text-sm"></div>
-                </div>
-                <div class="card p-5">
-                    <h3 class="text-sm font-bold text-slate-700 mb-4">最近一周结算</h3>
-                    <div id="overviewLastWeek" class="space-y-2 text-sm"></div>
-                </div>
-            </div>
+                <div id="overviewStatsGrid" class="grid grid-cols-5 gap-2"></div>
+                <div id="overviewExtraRow" class="pt-2 border-t border-slate-100 space-y-1.5 text-xs text-slate-600"></div>
+            </section>
 
-            <div class="pt-2">
-                <h3 class="text-base font-bold text-slate-800 mb-1">每周发放记录</h3>
-                <p class="text-xs text-slate-400 mb-4">系统周结算与手动发放批次，点击「查看详情」进入发放明细（明细页支持下载 CSV）。</p>
+            <div>
+                <h3 class="text-sm font-bold text-slate-800">每周发放记录</h3>
+                <p class="text-xs text-slate-400 mt-0.5">点击「查看详情」进入发放明细（明细页支持下载 CSV）</p>
             </div>
             <section class="card p-5">
                 <div class="grid grid-cols-5 gap-4 items-end">
@@ -689,28 +679,31 @@
     function renderPointsOverview() {
         const period = document.getElementById('overviewPeriod').value;
         const s = OVERVIEW_STATS[period] || OVERVIEW_STATS.all;
+        const periodSub = period === 'all' ? '历史' : (period === '30d' ? '近30天' : '近90天');
         document.getElementById('overviewStatsGrid').innerHTML = [
-            { label: '累计发放总积分', value: s.total.toLocaleString(), sub: '含系统周结算、手动发放、新人任务', color: 'text-slate-800' },
-            { label: '真实用户获得', value: s.real.toLocaleString(), sub: '计入账户', color: 'text-blue-600' },
-            { label: '影子用户分摊', value: s.shadow.toLocaleString(), sub: '稀释量，不入账', color: 'text-amber-600' },
-            { label: '获得积分用户（真实）', value: s.realUsers.toLocaleString(), sub: '去重人数' },
-            { label: '影子用户参与人数', value: s.shadowUsers.toLocaleString(), sub: '排行榜配置' }
+            { label: '发放总积分', value: s.total.toLocaleString(), color: 'text-slate-800' },
+            { label: '真实用户', value: s.real.toLocaleString(), color: 'text-blue-600' },
+            { label: '影子分摊', value: s.shadow.toLocaleString(), color: 'text-amber-600' },
+            { label: '真实用户人数', value: s.realUsers.toLocaleString(), color: 'text-slate-700' },
+            { label: '影子用户人数', value: s.shadowUsers.toLocaleString(), color: 'text-slate-600' }
         ].map(function (c) {
-            return '<div class="card p-5"><p class="text-[10px] font-bold text-slate-500 uppercase">' + c.label + '</p><p class="text-2xl font-black mt-2 ' + (c.color || 'text-slate-800') + '">' + c.value + '</p><p class="text-[10px] text-slate-400 mt-1">' + c.sub + '</p></div>';
+            return '<div class="min-w-0 px-1"><p class="text-[9px] font-bold text-slate-500 uppercase truncate">' + c.label + '</p><p class="text-sm font-black ' + (c.color || 'text-slate-800') + ' truncate">' + c.value + '</p></div>';
         }).join('');
         const srcTotal = s.system + s.manual + s.newbie;
-        document.getElementById('overviewSourceBreakdown').innerHTML = [
-            { name: '系统周结算', val: s.system, pct: (s.system / srcTotal * 100).toFixed(1) },
-            { name: '手动发放', val: s.manual, pct: (s.manual / srcTotal * 100).toFixed(1) },
-            { name: '新人任务', val: s.newbie, pct: (s.newbie / srcTotal * 100).toFixed(1) }
-        ].map(function (r) {
-            return '<div class="flex justify-between items-center"><span class="text-slate-600">' + r.name + '</span><span class="font-bold">' + r.val.toLocaleString() + ' <span class="text-slate-400 text-xs">(' + r.pct + '%)</span></span></div>';
-        }).join('');
-        document.getElementById('overviewLastWeek').innerHTML =
-            '<div class="flex justify-between"><span class="text-slate-500">计划总池</span><span class="font-bold">' + s.planned.toLocaleString() + '</span></div>' +
-            '<div class="flex justify-between"><span class="text-slate-500">实发（真实用户）</span><span class="font-bold text-blue-600">' + s.actual.toLocaleString() + '</span></div>' +
-            '<div class="flex justify-between"><span class="text-slate-500">影子分摊</span><span class="font-bold text-amber-600">' + s.shadow.toLocaleString() + '</span></div>' +
-            '<div class="flex justify-between"><span class="text-slate-500">影子分摊占比</span><span class="font-bold">' + s.shadowPct + '%</span></div>';
+        document.getElementById('overviewExtraRow').innerHTML =
+            '<div class="flex flex-wrap items-center gap-x-4 gap-y-1">' +
+            '<span class="font-bold text-slate-500">' + periodSub + ' 来源</span>' +
+            '<span>系统周结算 <b class="text-slate-800">' + s.system.toLocaleString() + '</b> <span class="text-slate-400">(' + (s.system / srcTotal * 100).toFixed(1) + '%)</span></span>' +
+            '<span>手动发放 <b class="text-slate-800">' + s.manual.toLocaleString() + '</b> <span class="text-slate-400">(' + (s.manual / srcTotal * 100).toFixed(1) + '%)</span></span>' +
+            '<span>新人任务 <b class="text-slate-800">' + s.newbie.toLocaleString() + '</b> <span class="text-slate-400">(' + (s.newbie / srcTotal * 100).toFixed(1) + '%)</span></span>' +
+            '</div>' +
+            '<div class="flex flex-wrap items-center gap-x-4 gap-y-1">' +
+            '<span class="font-bold text-slate-500">最近一周</span>' +
+            '<span>计划总池 <b class="text-slate-800">' + s.planned.toLocaleString() + '</b></span>' +
+            '<span>实发 <b class="text-blue-600">' + s.actual.toLocaleString() + '</b></span>' +
+            '<span>影子分摊 <b class="text-amber-600">' + s.shadow.toLocaleString() + '</b></span>' +
+            '<span>占比 <b class="text-slate-800">' + s.shadowPct + '%</b></span>' +
+            '</div>';
     }
 
     function downloadCsv(filename, rows) {
