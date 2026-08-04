@@ -127,14 +127,21 @@
     }
 
     function loadPermissionStore() {
+        var def = getDefaultStore();
         try {
-            const raw = localStorage.getItem(STORE_KEY);
-            if (!raw) return getDefaultStore();
-            const data = JSON.parse(raw);
-            if (!data.roles || !data.users) return getDefaultStore();
+            var raw = localStorage.getItem(STORE_KEY);
+            if (!raw) return def;
+            var data = JSON.parse(raw);
+            if (!Array.isArray(data.roles) || data.roles.length === 0) return def;
+            if (!Array.isArray(data.users)) data.users = def.users;
+            def.roles.forEach(function (br) {
+                if (!data.roles.some(function (r) { return r.id === br.id; })) {
+                    data.roles.push(br);
+                }
+            });
             return data;
         } catch (e) {
-            return getDefaultStore();
+            return def;
         }
     }
 

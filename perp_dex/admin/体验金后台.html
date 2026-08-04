@@ -46,9 +46,8 @@
       <h1 id="page-title" class="text-xl font-bold text-slate-800">卡组配置</h1>
     </div>
     <div class="flex items-center gap-4">
-      <div id="admin-header-tools" class="flex items-center gap-2"></div>
-      <span id="admin-user-name" class="text-sm text-slate-500">体验金管理员</span>
-      <div id="admin-user-avatar" class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">体验</div>
+      <span class="text-sm text-slate-500">Trial_Admin</span>
+      <div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">TA</div>
     </div>
   </header>
 
@@ -197,7 +196,7 @@
           <p id="detailWallet" class="text-sm font-mono font-bold text-slate-800 mt-1"></p>
           <p class="text-xs text-slate-400 mt-2">累计发放 <span id="detailTotalIssued" class="font-bold text-slate-700"></span> · 剩余 <span id="detailRemaining" class="font-bold text-blue-600"></span></p>
         </div>
-        <button id="detailRecycleAllBtn" onclick="recycleUserAll()" class="hidden bg-red-50 text-red-600 px-5 py-2.5 rounded-lg text-sm font-bold border border-red-200 hover:bg-red-100">回收该用户全部可用卡券</button>
+        <button onclick="recycleUserAll()" class="bg-red-50 text-red-600 px-5 py-2.5 rounded-lg text-sm font-bold border border-red-200 hover:bg-red-100">回收该用户全部可用卡券</button>
       </div>
       <div class="card overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 font-bold text-slate-700">卡券列表与使用记录</div>
@@ -495,7 +494,7 @@
   const PAGE_MAP = {
     config: { id: 'page-config', title: '卡组配置', sidebar: 'trial-config' },
     issue: { id: 'page-issue', title: '批量发放体验金', sidebar: 'trial-issue' },
-    users: { id: 'page-users', title: '数据查询', sidebar: 'trial-users' },
+    users: { id: 'page-users', title: '数据查询&回收', sidebar: 'trial-users' },
     logs: { id: 'page-logs', title: '操作记录', sidebar: 'trial-logs' },
     approval: { id: 'page-approval', title: '体验金发放审批', sidebar: 'trial-approval' }
   };
@@ -505,30 +504,6 @@
     if (!el) return;
     el.classList.toggle('hidden', !checkbox.checked);
     el.classList.toggle('flex', checkbox.checked);
-  }
-
-  function canTrialRecycle() {
-    return typeof window.hasAdminPerm === 'function' && window.hasAdminPerm('trial.recycle');
-  }
-
-  function getTrialUsersPageTitle() {
-    return canTrialRecycle() ? '数据查询&回收' : '数据查询';
-  }
-
-  function applyTrialPermissionUi() {
-    const showRecycle = canTrialRecycle();
-    document.getElementById('detailRecycleAllBtn').classList.toggle('hidden', !showRecycle);
-    if (PAGE_MAP.users) PAGE_MAP.users.title = getTrialUsersPageTitle();
-    const onUsers = !document.getElementById('page-users').classList.contains('hidden');
-    const onDetail = !document.getElementById('page-user-detail').classList.contains('hidden');
-    if (onUsers || onDetail) {
-      document.getElementById('page-title').innerText = onDetail ? '用户卡券详情' : getTrialUsersPageTitle();
-    }
-    if (onUsers) {
-      renderTrialOverview();
-      renderTrialUserTable(TRIAL_USERS);
-    }
-    if (onDetail && currentDetailUid) renderUserCoupons(currentDetailUid);
   }
 
   function renderTrialOverview() {
@@ -563,14 +538,12 @@
       '<span>费用上限 <b class="text-slate-800">' + ar.feeLimit.toLocaleString() + '</b></span>' +
       '<span>合计 <b class="text-red-600">' + autoTotal.toLocaleString() + ' U</b></span>' +
       '</div>';
-    let recycleHtml = autoHtml;
-    if (canTrialRecycle()) {
-      recycleHtml += '<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs mt-1.5 pt-1.5 border-t border-slate-50">' +
+    let recycleHtml = autoHtml +
+      '<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs mt-1.5 pt-1.5 border-t border-slate-50">' +
         '<span class="font-bold text-red-600">风控回收</span>' +
         '<span class="text-[10px] text-red-400">' + periodSub + ' · 人工强制</span>' +
         '<span class="text-base font-black text-red-600">' + s.riskRecycle.toLocaleString() + ' U</span>' +
         '</div>';
-    }
     document.getElementById('trialOverviewRecycleRow').innerHTML = recycleHtml;
   }
 
@@ -583,13 +556,9 @@
     document.getElementById(meta.id).classList.remove('hidden');
     document.getElementById('page-title').innerText = meta.title;
     document.getElementById('riskBackBtn').classList.add('hidden');
-    if (pageKey === 'users') {
-      PAGE_MAP.users.title = getTrialUsersPageTitle();
-      renderTrialOverview();
-      applyTrialPermissionUi();
-    }
+    if (pageKey === 'users') renderTrialOverview();
     if (updateHash !== false && location.hash !== '#' + pageKey) location.hash = pageKey;
-    if (window.initAdminSidebar) initAdminSidebar(meta.sidebar, '登录身份: ' + getAdminRoleLabel());
+    if (window.initAdminSidebar) initAdminSidebar(meta.sidebar, '登录身份: 体验金管理员');
   }
 
   function showRiskList() {
@@ -665,19 +634,17 @@
   }
 
   function renderTrialUserTable(list) {
-    const allowRecycle = canTrialRecycle();
     document.getElementById('trialUserTableBody').innerHTML = list.map(function (u) {
-      const canRecycle = allowRecycle && u.remaining > 0;
+      const canRecycle = u.remaining > 0;
       const tagCls = u.riskWarn ? 'risk-tag-warn' : 'risk-tag-normal';
       return '<tr class="hover:bg-slate-50"><td class="px-4 py-3"><div class="font-bold">' + u.uid + '</div><div class="text-[10px] text-slate-400 font-mono">' + shortWallet(u.wallet) + '</div></td><td class="px-3 py-3 text-right font-medium">' + u.totalIssued + ' U</td><td class="px-3 py-3 text-right font-bold text-blue-600">' + u.remaining + ' U</td><td class="px-3 py-3 text-center"><span class="status-tag status-' + u.couponStatus + '">' + statusText(u.couponStatus) + '</span></td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(u.lossUsed, u.lossLimit) + '</td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(u.feeUsed, u.feeLimit) + '</td><td class="px-3 py-3"><span class="' + tagCls + '">' + u.riskTag + '</span></td><td class="px-3 py-3">' + u.activity + '</td><td class="px-3 py-3 text-slate-500">' + u.issuedAt + '</td><td class="px-4 py-3 text-right space-x-2"><button onclick="showUserDetail(\'' + u.uid + '\')" class="text-blue-600 font-bold">查看详情</button>' + (canRecycle ? '<button onclick="recycleUserFromList(\'' + u.uid + '\')" class="text-red-600 font-bold">回收</button>' : '') + '</td></tr>';
     }).join('');
   }
 
   function renderUserCoupons(uid) {
-    const allowRecycle = canTrialRecycle();
     const coupons = USER_COUPONS[uid] || [];
     document.getElementById('userCouponTableBody').innerHTML = coupons.map(function (c) {
-      const canRecycle = allowRecycle && (c.status === 'available' || c.status === 'used');
+      const canRecycle = c.status === 'available' || c.status === 'used';
       return '<tr class="hover:bg-slate-50"><td class="px-4 py-3 font-mono font-bold">' + c.id + '</td><td class="px-3 py-3">' + c.total + ' U</td><td class="px-3 py-3 font-bold">' + c.balance + ' U</td><td class="px-3 py-3"><span class="status-tag status-' + c.status + '">' + statusText(c.status) + '</span></td><td class="px-3 py-3">' + c.group + '</td><td class="px-3 py-3">' + c.activity + '</td><td class="px-3 py-3 text-slate-500">' + c.issuedAt + '</td><td class="px-3 py-3 text-xs text-slate-500">' + c.activateDeadline + ' / ' + c.openDeadline + '</td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(c.lossUsed, c.lossLimit) + '</td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(c.feeUsed, c.feeLimit) + '</td><td class="px-4 py-3 text-right">' + (canRecycle ? '<button onclick="recycleSingleCoupon(\'' + c.id + '\')" class="text-red-600 font-bold">回收</button>' : '-') + '</td></tr>';
     }).join('');
     let usageRows = [];
@@ -894,9 +861,7 @@
 <script src="admin-permissions.js"></script>
 <script src="admin-sidebar.js"></script>
 <script>
-  initAdminRoleSwitcher();
-  initAdminSidebar('trial-config', '登录身份: ' + getAdminRoleLabel());
-  window.addEventListener('admin-role-change', applyTrialPermissionUi);
+  initAdminSidebar('trial-config', '登录身份: 体验金管理员');
   function applyTrialHash() {
     const hash = (location.hash || '').replace('#', '') || 'config';
     if (hash.indexOf('approval-detail=') === 0) {
@@ -918,7 +883,7 @@
     if (routes[hash]) routes[hash]();
     else showPage('config', false);
     const keyMap = { config: 'trial-config', issue: 'trial-issue', users: 'trial-users', logs: 'trial-logs', approval: 'trial-approval' };
-    if (keyMap[hash]) initAdminSidebar(keyMap[hash], '登录身份: ' + getAdminRoleLabel());
+    if (keyMap[hash]) initAdminSidebar(keyMap[hash], '登录身份: 体验金管理员');
   }
   window.addEventListener('hashchange', applyTrialHash);
   applyTrialHash();
