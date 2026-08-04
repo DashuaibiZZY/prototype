@@ -46,117 +46,126 @@
                 <p class="text-sm text-slate-400 mt-1">配置每周积分总池、六维度子池占比及个人等级加成系数。系统每周一 00:00 (UTC+8) 自动结算发放。</p>
             </div>
 
-            <div class="card p-6">
-                <h3 class="font-bold text-slate-800 mb-4">每周积分总池</h3>
-                <div class="grid grid-cols-3 gap-4 items-end">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">本周总池（积分）</label>
-                        <input id="weeklyPoolInput" type="number" value="1000000" class="w-full border border-slate-200 rounded-lg p-3 text-sm font-bold outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">生效周期</label>
-                        <input type="text" value="2026-W30 (07/21 - 07/27)" readonly class="w-full border border-slate-100 bg-slate-50 rounded-lg p-3 text-sm text-slate-500">
-                    </div>
-                    <button onclick="savePoolConfig()" class="bg-blue-600 text-white py-3 rounded-lg text-sm font-bold hover:bg-blue-700">保存总池配置</button>
-                </div>
-            </div>
-
-            <div id="dim-pool-config-card" class="card p-6">
-                <div class="flex items-start justify-between gap-4 mb-4">
-                    <div>
-                        <h3 class="font-bold text-slate-800">六维度子池分配（可配置占比）</h3>
-                        <p class="text-xs text-slate-400 mt-1">各维度占比可调整，保存时须校验合计恰好等于 100%。</p>
-                    </div>
-                    <button onclick="saveDimPoolConfig()" class="shrink-0 bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-blue-700">保存子池配置</button>
+            <div id="pool-config-card" class="card p-6 space-y-6">
+                <div>
+                    <h3 class="font-bold text-slate-800">每周积分总池与瓜分规则</h3>
+                    <p class="text-xs text-slate-400 mt-1">总池、六维度子池占比及有效持仓最小时长一并配置，提交后进入审批（市场运营交叉审核 → 风控审核，无需老板审批）。</p>
                 </div>
 
-                <div class="mb-4 p-4 border border-blue-100 bg-blue-50/60 rounded-lg">
-                    <div class="flex flex-wrap items-end gap-3">
+                <div id="pool-weekly-section" class="border-b border-slate-100 pb-6">
+                    <h4 class="text-sm font-bold text-slate-700 mb-4">每周积分总池</h4>
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 uppercase mb-2">有效持仓最小时长</label>
-                            <div class="flex items-center gap-2">
-                                <input id="minHoldingDuration" type="number" value="1" min="1" step="1" class="w-24 border border-slate-200 rounded-lg p-2.5 text-sm font-bold outline-none bg-white">
-                                <select id="minHoldingUnit" class="border border-slate-200 rounded-lg p-2.5 text-sm bg-white outline-none">
-                                    <option value="hour" selected>小时</option>
-                                    <option value="minute">分钟</option>
-                                </select>
-                            </div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">本周总池（积分）</label>
+                            <input id="weeklyPoolInput" type="number" value="1000000" class="w-full border border-slate-200 rounded-lg p-3 text-sm font-bold outline-none">
                         </div>
-                        <p class="text-[11px] text-slate-500 max-w-xl">仅统计持仓时长超过该阈值的仓位。有效持仓原始数据 = 当前持仓（时长&gt;阈值）持仓金额 + 当周历史已平仓持仓（时长&gt;阈值）持仓金额。</p>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">生效周期</label>
+                            <input id="poolEffectivePeriod" type="text" value="2026-W30 (07/21 - 07/27)" readonly class="w-full border border-slate-100 bg-slate-50 rounded-lg p-3 text-sm text-slate-500">
+                        </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-4 text-sm">
-                    <div class="p-4 bg-slate-50 rounded-lg">
-                        <div class="flex justify-between items-center mb-2 gap-2">
-                            <span class="font-bold">交易积分</span>
-                            <div class="flex items-center gap-1 shrink-0">
-                                <input id="dimPctTrade" type="number" value="60" min="0" max="100" step="1" oninput="updateDimPctUI()" class="w-14 border border-slate-200 rounded px-2 py-1 text-right text-blue-600 font-black outline-none bg-white">
-                                <span class="text-blue-600 font-black">%</span>
+                <div id="dim-pool-config-card">
+                    <h4 class="text-sm font-bold text-slate-700 mb-1">六维度子池分配（可配置占比）</h4>
+                    <p class="text-xs text-slate-400 mb-4">各维度占比可调整，提交时须校验合计恰好等于 100%。</p>
+
+                    <div class="mb-4 p-4 border border-blue-100 bg-blue-50/60 rounded-lg">
+                        <div class="flex flex-wrap items-end gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 uppercase mb-2">有效持仓最小时长</label>
+                                <div class="flex items-center gap-2">
+                                    <input id="minHoldingDuration" type="number" value="1" min="1" step="1" class="w-24 border border-slate-200 rounded-lg p-2.5 text-sm font-bold outline-none bg-white">
+                                    <select id="minHoldingUnit" class="border border-slate-200 rounded-lg p-2.5 text-sm bg-white outline-none">
+                                        <option value="hour" selected>小时</option>
+                                        <option value="minute">分钟</option>
+                                    </select>
+                                </div>
                             </div>
+                            <p class="text-[11px] text-slate-500 max-w-xl">仅统计持仓时长超过该阈值的仓位。有效持仓原始数据 = 当前持仓（时长&gt;阈值）持仓金额 + 当周历史已平仓持仓（时长&gt;阈值）持仓金额。</p>
                         </div>
-                        <div class="dim-bar"><span id="dimBarTrade" style="width:60%"></span></div>
-                        <p class="text-[10px] text-slate-400 mt-2">原始数据：个人本周净手续费</p>
                     </div>
-                    <div class="p-4 bg-slate-50 rounded-lg">
-                        <div class="flex justify-between items-center mb-2 gap-2">
-                            <span class="font-bold">有效持仓积分</span>
-                            <div class="flex items-center gap-1 shrink-0">
-                                <input id="dimPctPosition" type="number" value="15" min="0" max="100" step="1" oninput="updateDimPctUI()" class="w-14 border border-slate-200 rounded px-2 py-1 text-right text-blue-600 font-black outline-none bg-white">
-                                <span class="text-blue-600 font-black">%</span>
+
+                    <div class="grid grid-cols-3 gap-4 text-sm">
+                        <div class="p-4 bg-slate-50 rounded-lg">
+                            <div class="flex justify-between items-center mb-2 gap-2">
+                                <span class="font-bold">交易积分</span>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <input id="dimPctTrade" type="number" value="60" min="0" max="100" step="1" oninput="updateDimPctUI()" class="w-14 border border-slate-200 rounded px-2 py-1 text-right text-blue-600 font-black outline-none bg-white">
+                                    <span class="text-blue-600 font-black">%</span>
+                                </div>
                             </div>
+                            <div class="dim-bar"><span id="dimBarTrade" style="width:60%"></span></div>
+                            <p class="text-[10px] text-slate-400 mt-2">原始数据：个人本周净手续费</p>
                         </div>
-                        <div class="dim-bar"><span id="dimBarPosition" style="width:15%"></span></div>
-                        <p class="text-[10px] text-slate-400 mt-2">原始数据：有效持仓金额（当前+当周历史平仓，均须&gt;最小时长）</p>
+                        <div class="p-4 bg-slate-50 rounded-lg">
+                            <div class="flex justify-between items-center mb-2 gap-2">
+                                <span class="font-bold">有效持仓积分</span>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <input id="dimPctPosition" type="number" value="15" min="0" max="100" step="1" oninput="updateDimPctUI()" class="w-14 border border-slate-200 rounded px-2 py-1 text-right text-blue-600 font-black outline-none bg-white">
+                                    <span class="text-blue-600 font-black">%</span>
+                                </div>
+                            </div>
+                            <div class="dim-bar"><span id="dimBarPosition" style="width:15%"></span></div>
+                            <p class="text-[10px] text-slate-400 mt-2">原始数据：有效持仓金额（当前+当周历史平仓，均须&gt;最小时长）</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg">
+                            <div class="flex justify-between items-center mb-2 gap-2">
+                                <span class="font-bold">持仓亏损激励</span>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <input id="dimPctLoss" type="number" value="8" min="0" max="100" step="1" oninput="updateDimPctUI()" class="w-14 border border-slate-200 rounded px-2 py-1 text-right text-blue-600 font-black outline-none bg-white">
+                                    <span class="text-blue-600 font-black">%</span>
+                                </div>
+                            </div>
+                            <div class="dim-bar"><span id="dimBarLoss" style="width:8%"></span></div>
+                            <p class="text-[10px] text-slate-400 mt-2">原始数据：已实现净亏损（绝对值）</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg">
+                            <div class="flex justify-between items-center mb-2 gap-2">
+                                <span class="font-bold">持仓盈利额外</span>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <input id="dimPctProfit" type="number" value="2" min="0" max="100" step="1" oninput="updateDimPctUI()" class="w-14 border border-slate-200 rounded px-2 py-1 text-right text-blue-600 font-black outline-none bg-white">
+                                    <span class="text-blue-600 font-black">%</span>
+                                </div>
+                            </div>
+                            <div class="dim-bar"><span id="dimBarProfit" style="width:2%"></span></div>
+                            <p class="text-[10px] text-slate-400 mt-2">原始数据：已实现净盈利</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg">
+                            <div class="flex justify-between items-center mb-2 gap-2">
+                                <span class="font-bold">平均资沉积分</span>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <input id="dimPctBalance" type="number" value="5" min="0" max="100" step="1" oninput="updateDimPctUI()" class="w-14 border border-slate-200 rounded px-2 py-1 text-right text-blue-600 font-black outline-none bg-white">
+                                    <span class="text-blue-600 font-black">%</span>
+                                </div>
+                            </div>
+                            <div class="dim-bar"><span id="dimBarBalance" style="width:5%"></span></div>
+                            <p class="text-[10px] text-slate-400 mt-2">原始数据：当周平均账户余额</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg">
+                            <div class="flex justify-between items-center mb-2 gap-2">
+                                <span class="font-bold">邀请贡献积分</span>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <input id="dimPctInvite" type="number" value="10" min="0" max="100" step="1" oninput="updateDimPctUI()" class="w-14 border border-slate-200 rounded px-2 py-1 text-right text-blue-600 font-black outline-none bg-white">
+                                    <span class="text-blue-600 font-black">%</span>
+                                </div>
+                            </div>
+                            <div class="dim-bar"><span id="dimBarInvite" style="width:10%"></span></div>
+                            <p class="text-[10px] text-slate-400 mt-2">原始数据：一级好友净手续费总和</p>
+                        </div>
                     </div>
-                    <div class="p-4 bg-slate-50 rounded-lg">
-                        <div class="flex justify-between items-center mb-2 gap-2">
-                            <span class="font-bold">持仓亏损激励</span>
-                            <div class="flex items-center gap-1 shrink-0">
-                                <input id="dimPctLoss" type="number" value="8" min="0" max="100" step="1" oninput="updateDimPctUI()" class="w-14 border border-slate-200 rounded px-2 py-1 text-right text-blue-600 font-black outline-none bg-white">
-                                <span class="text-blue-600 font-black">%</span>
-                            </div>
-                        </div>
-                        <div class="dim-bar"><span id="dimBarLoss" style="width:8%"></span></div>
-                        <p class="text-[10px] text-slate-400 mt-2">原始数据：已实现净亏损（绝对值）</p>
-                    </div>
-                    <div class="p-4 bg-slate-50 rounded-lg">
-                        <div class="flex justify-between items-center mb-2 gap-2">
-                            <span class="font-bold">持仓盈利额外</span>
-                            <div class="flex items-center gap-1 shrink-0">
-                                <input id="dimPctProfit" type="number" value="2" min="0" max="100" step="1" oninput="updateDimPctUI()" class="w-14 border border-slate-200 rounded px-2 py-1 text-right text-blue-600 font-black outline-none bg-white">
-                                <span class="text-blue-600 font-black">%</span>
-                            </div>
-                        </div>
-                        <div class="dim-bar"><span id="dimBarProfit" style="width:2%"></span></div>
-                        <p class="text-[10px] text-slate-400 mt-2">原始数据：已实现净盈利</p>
-                    </div>
-                    <div class="p-4 bg-slate-50 rounded-lg">
-                        <div class="flex justify-between items-center mb-2 gap-2">
-                            <span class="font-bold">平均资沉积分</span>
-                            <div class="flex items-center gap-1 shrink-0">
-                                <input id="dimPctBalance" type="number" value="5" min="0" max="100" step="1" oninput="updateDimPctUI()" class="w-14 border border-slate-200 rounded px-2 py-1 text-right text-blue-600 font-black outline-none bg-white">
-                                <span class="text-blue-600 font-black">%</span>
-                            </div>
-                        </div>
-                        <div class="dim-bar"><span id="dimBarBalance" style="width:5%"></span></div>
-                        <p class="text-[10px] text-slate-400 mt-2">原始数据：当周平均账户余额</p>
-                    </div>
-                    <div class="p-4 bg-slate-50 rounded-lg">
-                        <div class="flex justify-between items-center mb-2 gap-2">
-                            <span class="font-bold">邀请贡献积分</span>
-                            <div class="flex items-center gap-1 shrink-0">
-                                <input id="dimPctInvite" type="number" value="10" min="0" max="100" step="1" oninput="updateDimPctUI()" class="w-14 border border-slate-200 rounded px-2 py-1 text-right text-blue-600 font-black outline-none bg-white">
-                                <span class="text-blue-600 font-black">%</span>
-                            </div>
-                        </div>
-                        <div class="dim-bar"><span id="dimBarInvite" style="width:10%"></span></div>
-                        <p class="text-[10px] text-slate-400 mt-2">原始数据：一级好友净手续费总和</p>
+                    <div class="flex items-center justify-between mt-4">
+                        <p class="text-xs text-slate-400">计算公式：维度得分 = (个人原始数据 × 等级加成) ÷ 全站加权总和 × 该维度子池；结果取整截断，不进位。</p>
+                        <p id="dimPctSumLabel" class="text-sm font-bold text-green-600 shrink-0 ml-4">合计：100%</p>
                     </div>
                 </div>
-                <div class="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
-                    <p class="text-xs text-slate-400">计算公式：维度得分 = (个人原始数据 × 等级加成) ÷ 全站加权总和 × 该维度子池；结果取整截断，不进位。</p>
-                    <p id="dimPctSumLabel" class="text-sm font-bold text-green-600 shrink-0 ml-4">合计：100%</p>
+
+                <div class="pt-4 border-t border-slate-100 space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">申请备注</label>
+                        <textarea id="poolConfigRemark" rows="2" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none" placeholder="请填写变更原因及审批依据"></textarea>
+                    </div>
+                    <button onclick="openPoolConfigConfirmModal()" class="w-full bg-slate-900 text-white py-3.5 rounded-lg text-sm font-bold hover:bg-slate-800">提交审批申请</button>
                 </div>
             </div>
 
@@ -400,6 +409,38 @@
     </div>
 </div>
 
+<!-- 积分总池配置确认 -->
+<div id="modal-pool-config-confirm" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-[640px] max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="px-6 py-5 border-b shrink-0">
+            <h3 class="text-lg font-bold">确认提交积分总池配置</h3>
+            <p class="text-xs text-slate-400 mt-1">请核对变更前后对比，确认后进入审批流程</p>
+        </div>
+        <div class="p-6 overflow-y-auto flex-1 space-y-4 text-sm">
+            <div class="bg-slate-50 rounded-lg p-4 space-y-2">
+                <div class="flex justify-between"><span class="text-slate-500">生效周期</span><span id="poolConfirmPeriod" class="font-bold">—</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">变更项数</span><span id="poolConfirmChangeCount" class="font-black text-blue-600">—</span></div>
+            </div>
+            <div class="border border-slate-200 rounded-lg overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50 border-b"><tr>
+                        <th class="px-4 py-2 text-xs font-bold text-slate-500 text-left">配置项</th>
+                        <th class="px-4 py-2 text-xs font-bold text-slate-500 text-left">变更前</th>
+                        <th class="px-4 py-2 text-xs font-bold text-slate-500 text-left">变更后</th>
+                    </tr></thead>
+                    <tbody id="poolConfirmDiffBody" class="divide-y"></tbody>
+                </table>
+            </div>
+            <p id="poolConfirmNoChange" class="hidden text-xs text-amber-600 font-bold">未检测到配置变更</p>
+            <div id="poolConfigApprovalFlow"></div>
+        </div>
+        <div class="p-5 bg-slate-50 flex gap-3 shrink-0">
+            <button onclick="closePoolConfigConfirmModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button onclick="submitPoolConfigApproval()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">确认提交审批</button>
+        </div>
+    </div>
+</div>
+
 <!-- 积分加成异常确认 -->
 <div id="modal-bonus-confirm" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-[640px] max-h-[90vh] overflow-hidden flex flex-col">
@@ -614,36 +655,169 @@
             : 'text-sm font-bold text-red-600 shrink-0 ml-4';
     }
 
-    function savePoolConfig() {
-        const val = document.getElementById('weeklyPoolInput').value;
-        POINTS_LOGS.unshift({ time: new Date().toISOString().slice(0, 16).replace('T', ' '), operator: 'Points_Admin', type: '规则配置', user: '-', detail: '每周积分总池更新为 ' + Number(val).toLocaleString(), points: '-', remark: '后台配置变更' });
-        renderPointsLogs(POINTS_LOGS);
-        alert('总池配置已保存，已写入操作记录');
+    const POOL_CONFIG_STORAGE_KEY = 'forx_points_pool_saved_config';
+    const DIM_LABELS = ['交易积分', '有效持仓积分', '持仓亏损激励', '持仓盈利额外', '平均资沉积分', '邀请贡献积分'];
+    const DIM_KEYS = ['trade', 'position', 'loss', 'profit', 'balance', 'invite'];
+
+    let savedPoolConfig = loadSavedPoolConfig();
+
+    function defaultPoolConfig() {
+        return {
+            weeklyPool: 1000000,
+            dimPct: { trade: 60, position: 15, loss: 8, profit: 2, balance: 5, invite: 10 },
+            minHolding: { duration: 1, unit: 'hour' }
+        };
     }
 
-    function saveDimPoolConfig() {
+    function loadSavedPoolConfig() {
+        try {
+            const raw = localStorage.getItem(POOL_CONFIG_STORAGE_KEY);
+            if (raw) return JSON.parse(raw);
+        } catch (e) { /* ignore */ }
+        return defaultPoolConfig();
+    }
+
+    function formatMinHolding(cfg) {
+        const unit = cfg.unit === 'minute' ? '分钟' : '小时';
+        return cfg.duration + ' ' + unit;
+    }
+
+    function formatDimPctSummary(dimPct) {
+        return DIM_KEYS.map(function (k) { return dimPct[k]; }).join('/');
+    }
+
+    function applyPoolConfigToForm(cfg) {
+        document.getElementById('weeklyPoolInput').value = cfg.weeklyPool;
+        document.getElementById('minHoldingDuration').value = cfg.minHolding.duration;
+        document.getElementById('minHoldingUnit').value = cfg.minHolding.unit;
+        DIM_PCT_IDS.forEach(function (id, i) {
+            document.getElementById(id).value = cfg.dimPct[DIM_KEYS[i]];
+        });
+        updateDimPctUI();
+    }
+
+    window.applySavedPoolConfig = function (cfg) {
+        savedPoolConfig = cfg;
+        applyPoolConfigToForm(cfg);
+    };
+
+    function readCurrentPoolConfigFromForm() {
+        const dimPct = {};
+        DIM_KEYS.forEach(function (k, i) {
+            dimPct[k] = Number(document.getElementById(DIM_PCT_IDS[i]).value || 0);
+        });
+        return {
+            weeklyPool: Number(document.getElementById('weeklyPoolInput').value || 0),
+            dimPct: dimPct,
+            minHolding: {
+                duration: Number(document.getElementById('minHoldingDuration').value || 1),
+                unit: document.getElementById('minHoldingUnit').value
+            }
+        };
+    }
+
+    function buildPoolConfigChanges(before, after) {
+        const changes = [];
+        if (before.weeklyPool !== after.weeklyPool) {
+            changes.push({
+                field: '本周总池（积分）',
+                before: Number(before.weeklyPool).toLocaleString(),
+                after: Number(after.weeklyPool).toLocaleString()
+            });
+        }
+        DIM_KEYS.forEach(function (k, i) {
+            if (before.dimPct[k] !== after.dimPct[k]) {
+                changes.push({
+                    field: DIM_LABELS[i] + '占比',
+                    before: before.dimPct[k] + '%',
+                    after: after.dimPct[k] + '%'
+                });
+            }
+        });
+        const bHold = formatMinHolding(before.minHolding);
+        const aHold = formatMinHolding(after.minHolding);
+        if (bHold !== aHold) {
+            changes.push({ field: '有效持仓最小时长', before: bHold, after: aHold });
+        }
+        return changes;
+    }
+
+    function openPoolConfigConfirmModal() {
         const sum = getDimPctSum();
         if (sum !== 100) {
-            alert('六维度占比合计须恰好等于 100%，当前为 ' + sum + '%。请调整后再保存。');
+            alert('六维度占比合计须恰好等于 100%，当前为 ' + sum + '%。请调整后再提交。');
             return;
         }
-        const duration = document.getElementById('minHoldingDuration').value;
-        const unit = document.getElementById('minHoldingUnit').value === 'minute' ? '分钟' : '小时';
-        const pctDetail = DIM_PCT_IDS.map(id => Number(document.getElementById(id).value)).join('/');
-        POINTS_LOGS.unshift({
-            time: new Date().toISOString().slice(0, 16).replace('T', ' '),
-            operator: 'Points_Admin',
-            type: '规则配置',
-            user: '-',
-            detail: '子池占比更新为 ' + pctDetail + '%；有效持仓最小时长 ' + duration + unit,
-            points: '-',
-            remark: '后台配置变更'
-        });
-        renderPointsLogs(POINTS_LOGS);
-        alert('子池配置已保存，已写入操作记录');
+        const weeklyPool = Number(document.getElementById('weeklyPoolInput').value || 0);
+        if (!weeklyPool || weeklyPool <= 0 || !Number.isInteger(weeklyPool)) {
+            alert('本周总池须为正整数');
+            return;
+        }
+        const remark = document.getElementById('poolConfigRemark').value.trim();
+        if (!remark) {
+            alert('请填写申请备注');
+            return;
+        }
+        const after = readCurrentPoolConfigFromForm();
+        const before = savedPoolConfig;
+        const changes = buildPoolConfigChanges(before, after);
+        if (!changes.length) {
+            alert('配置未发生变更，无需提交审批');
+            return;
+        }
+        document.getElementById('poolConfirmPeriod').textContent = document.getElementById('poolEffectivePeriod').value;
+        document.getElementById('poolConfirmChangeCount').textContent = changes.length + ' 项';
+        document.getElementById('poolConfirmDiffBody').innerHTML = changes.map(function (c) {
+            return '<tr class="hover:bg-slate-50"><td class="px-4 py-2 font-bold text-slate-700">' + c.field + '</td><td class="px-4 py-2 text-slate-500">' + c.before + '</td><td class="px-4 py-2 font-bold text-blue-600">' + c.after + '</td></tr>';
+        }).join('');
+        document.getElementById('poolConfirmNoChange').classList.add('hidden');
+        document.getElementById('poolConfigApprovalFlow').innerHTML = renderApprovalFlow('draft', true, 'cross_risk');
+        document.getElementById('modal-pool-config-confirm').classList.remove('hidden');
+        window._pendingPoolConfigPayload = {
+            effectivePeriod: document.getElementById('poolEffectivePeriod').value,
+            before: before,
+            after: after,
+            changes: changes
+        };
     }
 
-    updateDimPctUI();
+    function closePoolConfigConfirmModal() {
+        document.getElementById('modal-pool-config-confirm').classList.add('hidden');
+        window._pendingPoolConfigPayload = null;
+    }
+
+    function submitPoolConfigApproval() {
+        const payload = window._pendingPoolConfigPayload;
+        if (!payload || !payload.changes.length) return;
+        const remark = document.getElementById('poolConfigRemark').value.trim();
+        const summary = '总池 ' + Number(payload.after.weeklyPool).toLocaleString() + ' · 占比 ' + formatDimPctSummary(payload.after.dimPct);
+        const app = submitApprovalApplication({
+            type: 'points_pool_config',
+            title: '积分总池配置',
+            applicant: 'Points_Admin',
+            summary: summary,
+            remark: remark,
+            payload: payload,
+            onSubmit: function (created) {
+                POINTS_LOGS.unshift({
+                    time: created.createdAt,
+                    operator: 'Points_Admin',
+                    type: '规则配置',
+                    user: '-',
+                    detail: '积分总池配置 · 待审批 ' + created.id,
+                    points: '-',
+                    remark: remark + '（审批中）'
+                });
+                renderPointsLogs(POINTS_LOGS);
+            }
+        });
+        closePoolConfigConfirmModal();
+        applyPoolConfigToForm(savedPoolConfig);
+        document.getElementById('poolConfigRemark').value = '';
+        alert('积分总池配置已提交审批，等待市场运营交叉审核 → 风控审核（无需老板审批）');
+    }
+
+    applyPoolConfigToForm(savedPoolConfig);
 
     let manualInputMode = 'lines';
 
@@ -860,7 +1034,7 @@
     mountActivityPicker('points-activity-picker', { prefix: 'points-act', defaultMode: 'custom', defaultCustomName: '' });
     mountActivityPicker('bonus-activity-picker', { prefix: 'bonus-act', defaultMode: 'custom', defaultCustomName: '' });
     initModuleApproval({
-        types: ['points_manual', 'points_bonus_config'],
+        types: ['points_manual', 'points_bonus_config', 'points_pool_config'],
         rootId: 'points-approval-root',
         title: '积分审核',
         showExportList: false,
