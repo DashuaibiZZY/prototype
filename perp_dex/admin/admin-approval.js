@@ -4,7 +4,7 @@
 (function () {
     const STORAGE_KEY = 'forx_approval_applications';
     const ROLE_KEY = 'forx_approval_view_role';
-    const SEED_VERSION = '2026-07-27-v3';
+    const SEED_VERSION = '2026-08-04-v1';
     const SEED_VERSION_KEY = 'forx_approval_seed_v';
 
     const STEPS = [
@@ -14,11 +14,35 @@
         { key: 'boss', label: '老板审批', role: '老板' }
     ];
 
+    const TYPE_FLOW_PROFILE = {
+        points_pool_config: 'cross_risk'
+    };
+
+    const FLOW_PROFILES = {
+        full: {
+            key: 'full',
+            steps: STEPS,
+            afterRisk: 'pending_boss',
+            larkOnRisk: true
+        },
+        cross_risk: {
+            key: 'cross_risk',
+            steps: [
+                { key: 'apply', label: '积分管理员提交', role: '积分管理员' },
+                { key: 'cross', label: '市场运营交叉审核', role: '市场运营' },
+                { key: 'risk', label: '风控审核', role: '风控' }
+            ],
+            afterRisk: 'approved',
+            larkOnRisk: false
+        }
+    };
+
     const TYPE_LABELS = {
         trial_issue: '体验金发放',
         points_manual: '积分手动发放',
         fee_config: '用户费率配置',
-        points_bonus_config: '积分加成配置'
+        points_bonus_config: '积分加成配置',
+        points_pool_config: '积分总池配置'
     };
 
     const ROLE_LABELS = {
@@ -27,13 +51,23 @@
         boss: '老板'
     };
 
-    function stepIndex(status) {
+    function getFlowProfile(appOrKey) {
+        if (typeof appOrKey === 'string') return FLOW_PROFILES[appOrKey] || FLOW_PROFILES.full;
+        if (appOrKey && appOrKey.flowProfile) return FLOW_PROFILES[appOrKey.flowProfile] || FLOW_PROFILES.full;
+        if (appOrKey && appOrKey.type && TYPE_FLOW_PROFILE[appOrKey.type]) {
+            return FLOW_PROFILES[TYPE_FLOW_PROFILE[appOrKey.type]] || FLOW_PROFILES.full;
+        }
+        return FLOW_PROFILES.full;
+    }
+
+    function stepIndex(status, profile) {
+        const steps = (profile && profile.steps) || STEPS;
         const map = {
             draft: 0,
             pending_cross: 1,
             pending_risk: 2,
             pending_boss: 3,
-            approved: 4,
+            approved: steps.length,
             rejected: -1
         };
         return map[status] !== undefined ? map[status] : 0;
@@ -356,6 +390,40 @@
                 ]
             },
             {
+                id: 'APR20260728040',
+                type: 'points_pool_config',
+                title: '积分总池配置',
+                applicant: 'Points_Admin',
+                status: 'pending_risk',
+                flowProfile: 'cross_risk',
+                createdAt: '2026-07-28 09:30',
+                remark: '暑期活动加大交易维度权重',
+                summary: '总池 1,200,000 · 交易 70% / 有效持仓 10%',
+                payload: {
+                    effectivePeriod: '2026-W30 (07/21 - 07/27)',
+                    before: {
+                        weeklyPool: 1000000,
+                        dimPct: { trade: 60, position: 15, loss: 8, profit: 2, balance: 5, invite: 10 },
+                        minHolding: { duration: 1, unit: 'hour' }
+                    },
+                    after: {
+                        weeklyPool: 1200000,
+                        dimPct: { trade: 70, position: 10, loss: 8, profit: 2, balance: 5, invite: 5 },
+                        minHolding: { duration: 1, unit: 'hour' }
+                    },
+                    changes: [
+                        { field: '本周总池（积分）', before: '1,000,000', after: '1,200,000' },
+                        { field: '交易积分占比', before: '60%', after: '70%' },
+                        { field: '有效持仓积分占比', before: '15%', after: '10%' },
+                        { field: '邀请贡献积分占比', before: '10%', after: '5%' }
+                    ]
+                },
+                timeline: [
+                    { at: '2026-07-28 09:30', actor: 'Points_Admin', action: '提交申请', note: '暑期活动加大交易维度权重' },
+                    { at: '2026-07-28 10:15', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '已与活动方案对齐' }
+                ]
+            },
+            {
                 id: 'APR20260727031',
                 type: 'points_bonus_config',
                 title: '积分加成配置',
@@ -417,25 +485,30 @@
         localStorage.setItem(SEED_VERSION_KEY, SEED_VERSION);
     }
 
-    function renderApprovalFlow(status, compact) {
-        const current = stepIndex(status);
+    function renderApprovalFlow(status, compact, appOrProfile) {
+        const profile = getFlowProfile(appOrProfile);
+        const steps = profile.steps;
+        const current = stepIndex(status, profile);
         const rejected = status === 'rejected';
         let html = '<div class="approval-flow' + (compact ? ' compact' : '') + '">';
-        STEPS.forEach(function (step, i) {
+        steps.forEach(function (step, i) {
             let cls = 'step';
             if (rejected && i === Math.max(0, current - 1)) cls += ' rejected';
             else if (i < current) cls += ' done';
             else if (i === current && status !== 'approved') cls += ' active';
             else if (status === 'approved') cls += ' done';
             html += '<div class="' + cls + '"><div class="dot">' + (i < current || status === 'approved' ? '✓' : (i + 1)) + '</div><div class="label">' + step.label + '</div></div>';
-            if (i < STEPS.length - 1) html += '<div class="line' + (i < current || status === 'approved' ? ' done' : '') + '"></div>';
+            if (i < steps.length - 1) html += '<div class="line' + (i < current || status === 'approved' ? ' done' : '') + '"></div>';
         });
         html += '</div>';
         if (status === 'approved') html += '<p class="approval-note ok">✓ 审批已通过，操作已生效</p>';
         else if (status === 'rejected') html += '<p class="approval-note err">✕ 审批已驳回，请修改后重新提交</p>';
         else if (status === 'pending_cross') html += '<p class="approval-note wait">等待另一位市场运营交叉审核…</p>';
-        else if (status === 'pending_risk') html += '<p class="approval-note wait">交叉审核已通过，等待风控审核…</p>';
-        else if (status === 'pending_boss') html += '<p class="approval-note wait">风控已通过，等待老板审批（后台或 Lark）…</p>';
+        else if (status === 'pending_risk') {
+            html += profile.afterRisk === 'approved'
+                ? '<p class="approval-note wait">交叉审核已通过，等待风控审核（无需老板审批）…</p>'
+                : '<p class="approval-note wait">交叉审核已通过，等待风控审核…</p>';
+        } else if (status === 'pending_boss') html += '<p class="approval-note wait">风控已通过，等待老板审批（后台或 Lark）…</p>';
         return html;
     }
 
@@ -559,10 +632,12 @@
         return (p.activityName || '—') + '（自定义）';
     }
 
-    window.renderApprovalFlow = function (status, compact) {
+    window.renderApprovalFlow = function (status, compact, appOrProfile) {
         injectStyles();
-        return renderApprovalFlow(status || 'draft', compact);
+        return renderApprovalFlow(status || 'draft', compact, appOrProfile);
     };
+
+    window.getApprovalFlowProfile = getFlowProfile;
 
     window.renderLarkApprovalCard = function (app) {
         injectStyles();
@@ -616,6 +691,7 @@
             summary: opts.summary || '',
             applicant: opts.applicant || '市场运营',
             status: 'pending_cross',
+            flowProfile: opts.flowProfile || TYPE_FLOW_PROFILE[opts.type] || 'full',
             createdAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
             remark: opts.remark || '',
             payload: opts.payload || {},
@@ -641,6 +717,7 @@
             boss: '老板审批通过'
         };
         return updateApp(id, function (app) {
+            const profile = getFlowProfile(app);
             app.timeline.push({
                 at: new Date().toISOString().slice(0, 16).replace('T', ' '),
                 actor: actorMap[role] || role,
@@ -649,8 +726,18 @@
             });
             if (role === 'cross' && app.status === 'pending_cross') app.status = 'pending_risk';
             else if (role === 'risk' && app.status === 'pending_risk') {
-                app.status = 'pending_boss';
-                pushLarkApproval(app);
+                if (profile.afterRisk === 'approved') {
+                    app.status = 'approved';
+                    if (app.type === 'points_pool_config' && app.payload && app.payload.after) {
+                        try {
+                            localStorage.setItem('forx_points_pool_saved_config', JSON.stringify(app.payload.after));
+                        } catch (e) { /* ignore */ }
+                        if (typeof window.applySavedPoolConfig === 'function') window.applySavedPoolConfig(app.payload.after);
+                    }
+                } else {
+                    app.status = 'pending_boss';
+                    if (profile.larkOnRisk) pushLarkApproval(app);
+                }
             } else if (role === 'boss' && app.status === 'pending_boss') {
                 app.status = 'approved';
                 if (app.lark) app.lark.status = 'approved';
@@ -724,6 +811,12 @@
             rows.push(['uid', 'natural_bonus', 'new_bonus', 'anomaly']);
             p.items.forEach(function (r) {
                 rows.push([r.uid, r.naturalBonus, r.newBonus, r.anomaly ? 'yes' : 'no']);
+            });
+        } else if (app.type === 'points_pool_config' && p.changes) {
+            rows.push([]);
+            rows.push(['配置项', '变更前', '变更后']);
+            p.changes.forEach(function (c) {
+                rows.push([c.field, c.before, c.after]);
             });
         } else if (app.type === 'fee_config') {
             Object.keys(p).forEach(function (k) {
