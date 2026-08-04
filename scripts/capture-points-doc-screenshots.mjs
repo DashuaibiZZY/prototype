@@ -11,9 +11,9 @@ const CHROME = '/usr/local/bin/google-chrome';
 const shots = [
   // Admin
   { file: 'admin-config-pool.png', url: 'file://' + path.join(ROOT, 'perp_dex/admin/积分后台.html'), hash: 'config', selector: '#weeklyPoolInput', viewport: { w: 1440, h: 900 }, parentCard: true },
-  { file: 'admin-config-dimensions.png', url: 'file://' + path.join(ROOT, 'perp_dex/admin/积分后台.html'), hash: 'config', selector: '#page-config > .card:nth-of-type(2)', viewport: { w: 1440, h: 900 } },
-  { file: 'admin-config-level-bonus.png', url: 'file://' + path.join(ROOT, 'perp_dex/admin/积分后台.html'), hash: 'config', selector: '#page-config > .card:nth-of-type(3)', viewport: { w: 1440, h: 900 } },
-  { file: 'admin-config-newbie-tasks.png', url: 'file://' + path.join(ROOT, 'perp_dex/admin/积分后台.html'), hash: 'config', selector: '#page-config > .card:nth-of-type(4)', viewport: { w: 1440, h: 900 } },
+  { file: 'admin-config-dimensions.png', url: 'file://' + path.join(ROOT, 'perp_dex/admin/积分后台.html'), hash: 'config', selector: '#dim-pool-config-card', viewport: { w: 1440, h: 900 } },
+  { file: 'admin-config-level-bonus.png', url: 'file://' + path.join(ROOT, 'perp_dex/admin/积分后台.html'), hash: 'config', selector: '#page-config > .card:nth-of-type(4)', viewport: { w: 1440, h: 900 } },
+  { file: 'admin-config-newbie-tasks.png', url: 'file://' + path.join(ROOT, 'perp_dex/admin/积分后台.html'), hash: 'config', selector: '#page-config > .card:nth-of-type(5)', viewport: { w: 1440, h: 900 } },
   { file: 'admin-bonus-config.png', url: 'file://' + path.join(ROOT, 'perp_dex/admin/积分后台.html'), hash: 'bonus', selector: '#page-bonus .card', viewport: { w: 1440, h: 900 } },
   { file: 'admin-users-list.png', url: 'file://' + path.join(ROOT, 'perp_dex/admin/积分后台.html'), hash: 'users', selector: '#page-users', viewport: { w: 1440, h: 900 }, clipHeight: 520 },
   { file: 'admin-user-detail.png', url: 'file://' + path.join(ROOT, 'perp_dex/admin/积分后台.html'), hash: 'users', before: "showPointsUserDetail('200112')", selector: '#page-user-detail', viewport: { w: 1440, h: 900 }, clipHeight: 520 },
