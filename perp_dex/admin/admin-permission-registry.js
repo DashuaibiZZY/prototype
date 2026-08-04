@@ -2,18 +2,14 @@
  * 后台权限注册表 — 菜单与敏感动作的唯一来源（前后端对齐用）
  */
 (function () {
+    /** 仅管理员角色默认拥有，不出现在权限配置矩阵 */
+    const ADMIN_ONLY_PERM_IDS = [
+        'menu.sys.admin',
+        'sys.role.manage',
+        'sys.user.manage'
+    ];
+
     const GROUPS = [
-        {
-            id: 'sys',
-            label: '系统设置',
-            menus: [
-                { id: 'menu.sys.admin', label: '权限与用户配置', hint: '角色矩阵、后台用户管理' }
-            ],
-            actions: [
-                { id: 'sys.role.manage', label: '管理角色与权限矩阵', sensitive: true },
-                { id: 'sys.user.manage', label: '新增/编辑后台用户', sensitive: true }
-            ]
-        },
         {
             id: 'agent',
             label: '代理中心',
@@ -107,8 +103,15 @@
     }
 
     function getAllPermIds() {
+        return flattenPerms().map(function (p) { return p.id; }).concat(ADMIN_ONLY_PERM_IDS);
+    }
+
+    function getConfigurablePermIds() {
         return flattenPerms().map(function (p) { return p.id; });
     }
+
+    window.ADMIN_ONLY_PERM_IDS = ADMIN_ONLY_PERM_IDS;
+    window.getConfigurableAdminPermIds = getConfigurablePermIds;
 
     function getSensitiveActions() {
         const list = [];
