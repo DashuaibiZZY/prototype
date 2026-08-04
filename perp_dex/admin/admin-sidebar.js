@@ -5,6 +5,12 @@
 (function () {
     const MODULES = [
         {
+            title: '系统',
+            items: [
+                { key: 'sys-admin', label: '权限与用户', href: '权限配置后台.html#roles', perm: 'menu.sys.admin' }
+            ]
+        },
+        {
             title: '代理中心',
             items: [
                 { key: 'agent-mgmt', label: '一级代理管理', href: '代理中心后台.html#agent', perm: 'menu.agent.mgmt' },
