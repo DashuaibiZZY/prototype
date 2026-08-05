@@ -6,7 +6,7 @@
         {
             title: '系统',
             items: [
-                { key: 'sys-admin', label: '权限与用户', href: '权限配置后台.html#roles' }
+                { key: 'sys-admin', label: '权限与用户', href: '权限配置后台.html#staff' }
             ]
         },
         {
