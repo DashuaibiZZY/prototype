@@ -15,8 +15,7 @@
     ];
 
     const TYPE_FLOW_PROFILE = {
-        points_pool_config: 'cross_risk',
-        points_program_switch: 'cross_risk'
+        points_pool_config: 'cross_risk'
     };
 
     const FLOW_PROFILES = {
@@ -736,12 +735,6 @@
                         } catch (e) { /* ignore */ }
                         if (typeof window.applySavedPoolConfig === 'function') window.applySavedPoolConfig(app.payload.after);
                     }
-                    if (app.type === 'points_program_switch' && app.payload && typeof app.payload.afterEnabled === 'boolean') {
-                        if (typeof window.setPointsProgramEnabled === 'function') {
-                            window.setPointsProgramEnabled(app.payload.afterEnabled);
-                        }
-                        if (typeof window.clearPointsProgramPending === 'function') window.clearPointsProgramPending();
-                    }
                 } else {
                     app.status = 'pending_boss';
                     if (profile.larkOnRisk) pushLarkApproval(app);
@@ -749,6 +742,12 @@
             } else if (role === 'boss' && app.status === 'pending_boss') {
                 app.status = 'approved';
                 if (app.lark) app.lark.status = 'approved';
+                if (app.type === 'points_program_switch' && app.payload && typeof app.payload.afterEnabled === 'boolean') {
+                    if (typeof window.setPointsProgramEnabled === 'function') {
+                        window.setPointsProgramEnabled(app.payload.afterEnabled);
+                    }
+                    if (typeof window.clearPointsProgramPending === 'function') window.clearPointsProgramPending();
+                }
             }
         });
     };
