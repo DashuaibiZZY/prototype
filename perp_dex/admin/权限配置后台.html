@@ -10,14 +10,16 @@
     body { font-family: 'Inter', sans-serif; background: #f8fafc; }
     .sidebar-item-active { background: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
     .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
-    .role-item-active { background: #eff6ff; border-color: #3b82f6; }
-    .perm-check { display: flex; align-items: flex-start; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: pointer; }
-    .perm-check:hover { background: #f8fafc; }
-    .perm-check input { margin-top: 2px; }
+    .user-item-active { background: #eff6ff; border-color: #3b82f6; }
     .tab-active { background: #0f172a; color: #fff; }
     .status-on { background: #ecfdf5; color: #059669; }
     .status-off { background: #f1f5f9; color: #64748b; }
     .status-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+    .rw-opt { display: inline-flex; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; }
+    .rw-opt label { padding: 4px 10px; cursor: pointer; font-size: 11px; font-weight: 600; color: #64748b; }
+    .rw-opt input { display: none; }
+    .rw-opt label:has(input:checked) { background: #0f172a; color: #fff; }
+    .group-item-active { background: #fffbeb; border-color: #f59e0b; }
   </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -27,43 +29,29 @@
 <main class="flex-1 flex flex-col overflow-hidden">
   <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
     <div>
-      <h1 id="page-title" class="text-xl font-bold text-slate-800">角色与权限</h1>
-      <p class="text-xs text-slate-400 mt-0.5">配置角色权限矩阵与后台用户（单用户单角色）</p>
+      <h1 id="page-title" class="text-xl font-bold text-slate-800">后台人员</h1>
+      <p id="page-subtitle" class="text-xs text-slate-400 mt-0.5">直接管理人员；无角色概念，用业务部门备注标识</p>
     </div>
     <div class="flex items-center gap-4">
-      <span class="text-sm text-slate-500">管理员</span>
+      <span class="text-sm text-slate-500">产品总监</span>
       <div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">管理</div>
     </div>
   </header>
 
   <div class="flex-1 overflow-y-auto p-8 space-y-4">
-    <div class="flex gap-2">
-      <button id="tab-btn-roles" type="button" onclick="showPermTab('roles')" class="tab-active px-4 py-2 rounded-lg text-sm font-bold">角色管理</button>
-      <button id="tab-btn-users" type="button" onclick="showPermTab('users')" class="px-4 py-2 rounded-lg text-sm font-bold border border-slate-200 text-slate-600">后台用户</button>
+    <div class="flex gap-2 flex-wrap">
+      <button id="tab-btn-staff" type="button" onclick="showPermTab('staff')" class="tab-active px-4 py-2 rounded-lg text-sm font-bold">后台人员</button>
+      <button id="tab-btn-pages" type="button" onclick="showPermTab('pages')" class="px-4 py-2 rounded-lg text-sm font-bold border border-slate-200 text-slate-600">页面权限</button>
+      <button id="tab-btn-groups" type="button" onclick="showPermTab('groups')" class="px-4 py-2 rounded-lg text-sm font-bold border border-slate-200 text-slate-600">敏感操作组</button>
       <div class="flex-1"></div>
-      <button type="button" id="btn-reset-store" onclick="confirmResetStore()" class="text-xs font-bold text-slate-500 border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-50">恢复默认配置</button>
+      <button type="button" onclick="confirmResetStore()" class="text-xs font-bold text-slate-500 border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-50">恢复默认配置</button>
     </div>
 
-    <div id="page-roles" class="flex gap-4 min-h-[560px]">
-      <div class="card w-72 shrink-0 flex flex-col">
-        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
-          <span class="font-bold text-slate-700">角色列表</span>
-          <button type="button" id="btn-add-role" onclick="openAddRoleModal()" class="text-xs font-bold text-blue-600 hover:underline">+ 自定义</button>
-        </div>
-        <div id="roleList" class="p-2 space-y-1 flex-1 overflow-y-auto min-h-[200px]"></div>
-        <div class="p-3 border-t border-slate-100 text-[10px] text-slate-400">内置角色不可删除；左侧选中角色后右侧配置权限范围</div>
-      </div>
-      <div class="card flex-1 flex flex-col min-w-0">
-        <div id="matrixHeader" class="p-4 border-b border-slate-100"></div>
-        <div id="matrixBody" class="flex-1 overflow-y-auto p-4 space-y-4 min-h-[320px]"></div>
-        <div id="matrixFooter" class="p-4 border-t border-slate-100 flex justify-end gap-2"></div>
-      </div>
-    </div>
-
-    <div id="page-users" class="hidden space-y-4">
+    <!-- 后台人员 -->
+    <div id="page-staff" class="space-y-4">
       <div class="flex justify-between items-center">
-        <p class="text-sm text-slate-500">每个用户仅绑定 <b>一个</b> 角色；登录后菜单与敏感操作由该角色权限矩阵决定（见文档说明）。</p>
-        <button type="button" id="btn-add-user" onclick="openAddUserModal()" class="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-bold">+ 新增后台用户</button>
+        <p class="text-sm text-slate-500">新增后台人员并填写 <b>业务部门备注</b>（自由文本，不参与权限计算）。</p>
+        <button type="button" onclick="openUserModal()" class="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-bold">+ 新增后台人员</button>
       </div>
       <div class="card overflow-hidden">
         <table class="w-full text-left text-sm">
@@ -71,40 +59,49 @@
             <tr>
               <th class="px-4 py-3 text-xs font-bold text-slate-500">姓名</th>
               <th class="px-3 py-3 text-xs font-bold text-slate-500">登录账号</th>
-              <th class="px-3 py-3 text-xs font-bold text-slate-500">角色</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500">业务部门备注</th>
               <th class="px-3 py-3 text-xs font-bold text-slate-500">状态</th>
               <th class="px-3 py-3 text-xs font-bold text-slate-500">最近登录</th>
               <th class="px-4 py-3 text-xs font-bold text-slate-500 text-right">操作</th>
             </tr>
           </thead>
-          <tbody id="userTableBody" class="divide-y divide-slate-50"></tbody>
+          <tbody id="staffTableBody" class="divide-y divide-slate-50"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- 页面权限 -->
+    <div id="page-pages" class="hidden flex gap-4 min-h-[560px]">
+      <div class="card w-72 shrink-0 flex flex-col">
+        <div class="p-4 border-b border-slate-100 font-bold text-slate-700">选择人员</div>
+        <div id="pagesUserList" class="p-2 space-y-1 flex-1 overflow-y-auto"></div>
+        <div class="p-3 border-t border-slate-100 text-[10px] text-slate-400">读=可看不可提交；写=可发起配置/申请；审批/回收走敏感组</div>
+      </div>
+      <div class="card flex-1 flex flex-col min-w-0">
+        <div id="pagesHeader" class="p-4 border-b border-slate-100"></div>
+        <div id="pagesBody" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+        <div id="pagesFooter" class="p-4 border-t border-slate-100 flex justify-end gap-2"></div>
+      </div>
+    </div>
+
+    <!-- 敏感操作组 -->
+    <div id="page-groups" class="hidden flex gap-4 min-h-[560px]">
+      <div class="card w-80 shrink-0 flex flex-col">
+        <div class="p-4 border-b border-slate-100 font-bold text-slate-700">预置敏感组</div>
+        <div id="groupList" class="p-2 space-y-1 flex-1 overflow-y-auto"></div>
+        <div class="p-3 border-t border-slate-100 text-[10px] text-slate-400">审批待办从组内随机派单；回收仅回收组成员可操作</div>
+      </div>
+      <div class="card flex-1 flex flex-col min-w-0">
+        <div id="groupHeader" class="p-4 border-b border-slate-100"></div>
+        <div id="groupBody" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
       </div>
     </div>
   </div>
 </main>
 
-<div id="modal-add-role" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+<div id="modal-user" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
   <div class="card w-full max-w-md p-6 space-y-4">
-    <h3 class="text-lg font-bold text-slate-800">新增自定义角色</h3>
-    <div>
-      <label class="block text-xs font-bold text-slate-500 mb-2">角色名称</label>
-      <input id="newRoleName" type="text" placeholder="如：外包审核" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
-    </div>
-    <div>
-      <label class="block text-xs font-bold text-slate-500 mb-2">说明</label>
-      <input id="newRoleDesc" type="text" placeholder="可选" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
-    </div>
-    <div class="flex gap-2 pt-2">
-      <button type="button" onclick="closeModal('modal-add-role')" class="flex-1 py-2.5 border border-slate-200 rounded-lg font-bold text-slate-600">取消</button>
-      <button type="button" onclick="submitAddRole()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg font-bold">创建</button>
-    </div>
-  </div>
-</div>
-
-<div id="modal-add-user" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-  <div class="card w-full max-w-md p-6 space-y-4">
-    <h3 id="userModalTitle" class="text-lg font-bold text-slate-800">新增后台用户</h3>
+    <h3 id="userModalTitle" class="text-lg font-bold text-slate-800">新增后台人员</h3>
     <input type="hidden" id="editUserId">
     <div>
       <label class="block text-xs font-bold text-slate-500 mb-2">姓名</label>
@@ -115,11 +112,18 @@
       <input id="userFormAccount" type="email" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
     </div>
     <div>
-      <label class="block text-xs font-bold text-slate-500 mb-2">角色（单选）</label>
-      <select id="userFormRole" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none"></select>
+      <label class="block text-xs font-bold text-slate-500 mb-2">业务部门备注</label>
+      <input id="userFormDepartment" type="text" placeholder="如：市场部、风控一组" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
+    </div>
+    <div>
+      <label class="block text-xs font-bold text-slate-500 mb-2">状态</label>
+      <select id="userFormStatus" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none">
+        <option value="active">启用</option>
+        <option value="inactive">停用</option>
+      </select>
     </div>
     <div class="flex gap-2 pt-2">
-      <button type="button" onclick="closeModal('modal-add-user')" class="flex-1 py-2.5 border border-slate-200 rounded-lg font-bold text-slate-600">取消</button>
+      <button type="button" onclick="closeModal('modal-user')" class="flex-1 py-2.5 border border-slate-200 rounded-lg font-bold text-slate-600">取消</button>
       <button type="button" onclick="submitUserForm()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg font-bold">保存</button>
     </div>
   </div>
@@ -130,8 +134,10 @@
 <script src="admin-permissions.js"></script>
 <script src="admin-sidebar.js"></script>
 <script>
-  var selectedRoleId = 'admin';
-  var editingPerms = [];
+  var selectedUserId = 'u_admin';
+  var selectedGroupId = 'approve.cross';
+  var editingPagePerms = {};
+  var editingAgentCap = null;
 
   function openModal(id) {
     var el = document.getElementById(id);
@@ -144,246 +150,65 @@
     el.classList.remove('flex');
   }
 
+  var TAB_META = {
+    staff: { title: '后台人员', sub: '直接管理人员；无角色概念，用业务部门备注标识' },
+    pages: { title: '页面权限', sub: '为每人配置各 Tab 的无 / 读 / 写' },
+    groups: { title: '敏感操作组', sub: '维护审批池与回收组人员；待办从组内随机派单' }
+  };
+
   function showPermTab(tab) {
-    document.getElementById('page-roles').classList.toggle('hidden', tab !== 'roles');
-    document.getElementById('page-users').classList.toggle('hidden', tab !== 'users');
-    document.getElementById('tab-btn-roles').className = tab === 'roles' ? 'tab-active px-4 py-2 rounded-lg text-sm font-bold' : 'px-4 py-2 rounded-lg text-sm font-bold border border-slate-200 text-slate-600';
-    document.getElementById('tab-btn-users').className = tab === 'users' ? 'tab-active px-4 py-2 rounded-lg text-sm font-bold' : 'px-4 py-2 rounded-lg text-sm font-bold border border-slate-200 text-slate-600';
-    document.getElementById('page-title').textContent = tab === 'roles' ? '角色与权限' : '后台用户';
-    if (tab === 'users') renderUserTable();
-    else refreshRolesPanel();
+    ['staff', 'pages', 'groups'].forEach(function (t) {
+      document.getElementById('page-' + t).classList.toggle('hidden', tab !== t);
+      document.getElementById('tab-btn-' + t).className = tab === t
+        ? 'tab-active px-4 py-2 rounded-lg text-sm font-bold'
+        : 'px-4 py-2 rounded-lg text-sm font-bold border border-slate-200 text-slate-600';
+    });
+    document.getElementById('page-title').textContent = TAB_META[tab].title;
+    document.getElementById('page-subtitle').textContent = TAB_META[tab].sub;
+    if (tab === 'staff') renderStaffTable();
+    if (tab === 'pages') refreshPagesPanel();
+    if (tab === 'groups') refreshGroupsPanel();
     if (location.hash !== '#' + tab) location.hash = tab;
   }
 
-  function roleUsesWildcard(role) {
-    return role.perms && role.perms.indexOf('*') !== -1;
-  }
-
-  function permIsOn(permId) {
-    return editingPerms.indexOf(permId) !== -1;
-  }
-
-  function renderRoleList() {
+  function renderStaffTable() {
     var store = loadPermissionStore();
-    if (!store.roles.length) {
-      document.getElementById('roleList').innerHTML = '<p class="p-4 text-center text-slate-400 text-xs">无角色数据，请点击「恢复默认配置」</p>';
-      return;
-    }
-    document.getElementById('roleList').innerHTML = store.roles.map(function (r) {
-      var active = r.id === selectedRoleId ? 'role-item-active border-2' : 'border border-transparent';
-      var tag = r.builtin ? '<span class="text-[9px] text-slate-400">内置</span>' : '<span class="text-[9px] text-blue-500">自定义</span>';
-      var count = roleUsesWildcard(r) ? '全部' : (r.perms ? r.perms.length : 0);
-      return '<button type="button" onclick="selectRole(\'' + r.id + '\')" class="w-full text-left p-3 rounded-lg border ' + active + ' hover:bg-slate-50">' +
-        '<div class="flex justify-between items-center"><span class="font-bold text-slate-800">' + r.name + '</span>' + tag + '</div>' +
-        '<p class="text-[10px] text-slate-400 mt-1 line-clamp-2">' + (r.description || '') + '</p>' +
-        '<p class="text-[10px] text-slate-500 mt-1">已配置 ' + count + ' 项权限</p>' +
-        '</button>';
-    }).join('');
-  }
-
-  function selectRole(roleId) {
-    selectedRoleId = roleId;
-    var store = loadPermissionStore();
-    var role = store.roles.find(function (r) { return r.id === roleId; });
-    if (!role) return;
-    if (roleUsesWildcard(role)) {
-      editingPerms = (typeof getConfigurableAdminPermIds === 'function' ? getConfigurableAdminPermIds() : getAllAdminPermIds()).slice();
-    } else {
-      editingPerms = (role.perms || []).slice();
-    }
-    renderRoleList();
-    renderMatrix(role);
-  }
-
-  function refreshRolesPanel() {
-    renderRoleList();
-    var store = loadPermissionStore();
-    if (!store.roles.length) {
-      document.getElementById('matrixHeader').innerHTML = '';
-      document.getElementById('matrixBody').innerHTML = '<p class="text-slate-400 text-sm p-4">暂无角色，请恢复默认配置</p>';
-      document.getElementById('matrixFooter').innerHTML = '';
-      return;
-    }
-    var role = store.roles.find(function (r) { return r.id === selectedRoleId; });
-    if (!role) {
-      selectedRoleId = store.roles[0].id;
-      role = store.roles[0];
-    }
-    selectRole(role.id);
-  }
-
-  function togglePerm(permId, checked) {
-    if (checked) {
-      if (editingPerms.indexOf(permId) === -1) editingPerms.push(permId);
-    } else {
-      editingPerms = editingPerms.filter(function (p) { return p !== permId; });
-    }
-    var store = loadPermissionStore();
-    var role = store.roles.find(function (r) { return r.id === selectedRoleId; });
-    renderMatrix(role);
-  }
-
-  function toggleGroup(groupId, checked) {
-    var g = ADMIN_PERM_GROUPS.find(function (x) { return x.id === groupId; });
-    if (!g) return;
-    var ids = g.menus.map(function (m) { return m.id; }).concat(g.actions.map(function (a) { return a.id; }));
-    ids.forEach(function (id) {
-      if (checked) {
-        if (editingPerms.indexOf(id) === -1) editingPerms.push(id);
-      } else {
-        editingPerms = editingPerms.filter(function (p) { return p !== id; });
-      }
-    });
-    var store = loadPermissionStore();
-    var role = store.roles.find(function (r) { return r.id === selectedRoleId; });
-    renderMatrix(role);
-  }
-
-  function renderMatrix(role) {
-    if (!role) return;
-    var allIds = typeof getConfigurableAdminPermIds === 'function' ? getConfigurableAdminPermIds() : getAllAdminPermIds();
-    var wildcard = editingPerms.length >= allIds.length;
-    document.getElementById('matrixHeader').innerHTML =
-      '<div class="flex flex-wrap items-start justify-between gap-3">' +
-        '<div><h2 class="text-base font-bold text-slate-800">' + role.name + ' · 权限范围</h2>' +
-        '<p class="text-xs text-slate-400 mt-1">' + (role.description || '') + '</p></div>' +
-        (wildcard ? '<span class="status-tag bg-violet-100 text-violet-700">全部权限</span>' : '<span class="text-xs text-slate-400">已选 ' + editingPerms.length + ' / ' + allIds.length + ' 项</span>') +
-      '</div>';
-
-    var body = '';
-    ADMIN_PERM_GROUPS.forEach(function (g) {
-      var ids = g.menus.map(function (m) { return m.id; }).concat(g.actions.map(function (a) { return a.id; }));
-      var allOn = ids.every(function (id) { return permIsOn(id); });
-      body += '<div class="border border-slate-100 rounded-lg overflow-hidden">';
-      body += '<div class="bg-slate-50 px-4 py-2.5 flex items-center justify-between">';
-      body += '<span class="font-bold text-slate-700 text-sm">' + g.label + '</span>';
-      body += '<button type="button" onclick="toggleGroup(\'' + g.id + '\',' + (!allOn) + ')" class="text-xs font-bold text-blue-600">' + (allOn ? '取消全选' : '全选本模块') + '</button>';
-      body += '</div><div class="p-3 grid grid-cols-2 gap-1">';
-      g.menus.forEach(function (m) {
-        var on = permIsOn(m.id);
-        body += '<label class="perm-check"><input type="checkbox" ' + (on ? 'checked' : '') + ' onchange="togglePerm(\'' + m.id + '\',this.checked)"><span><span class="font-medium text-slate-700">' + m.label + '</span><span class="block text-[10px] text-slate-400">菜单可见</span></span></label>';
-      });
-      g.actions.forEach(function (a) {
-        var on = permIsOn(a.id);
-        body += '<label class="perm-check' + (a.sensitive ? ' bg-amber-50/50' : '') + '"><input type="checkbox" ' + (on ? 'checked' : '') + ' onchange="togglePerm(\'' + a.id + '\',this.checked)"><span><span class="font-medium ' + (a.sensitive ? 'text-amber-700' : 'text-slate-700') + '">' + a.label + '</span><span class="block text-[10px] text-slate-400">' + (a.sensitive ? '敏感操作' : '动作') + '</span></span></label>';
-      });
-      body += '</div></div>';
-    });
-
-    var sensitive = getAdminSensitiveActions();
-    body += '<div class="border-2 border-amber-200 bg-amber-50/40 rounded-lg p-4">';
-    body += '<h3 class="text-sm font-bold text-amber-800 mb-2">敏感操作汇总</h3>';
-    body += '<div class="flex flex-wrap gap-2">';
-    sensitive.forEach(function (a) {
-      var on = permIsOn(a.id);
-      body += '<span class="px-2 py-1 rounded text-[10px] font-bold ' + (on ? 'bg-amber-200 text-amber-900' : 'bg-white text-slate-400 border border-slate-200') + '">' + a.label + '</span>';
-    });
-    body += '</div></div>';
-
-    document.getElementById('matrixBody').innerHTML = body;
-
-    var footer = '<button type="button" onclick="selectRole(\'' + role.id + '\')" class="px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">重置</button>';
-    footer += '<button type="button" onclick="saveRoleMatrix()" class="px-6 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">保存角色权限</button>';
-    if (!role.builtin) {
-      footer += '<button type="button" onclick="deleteCustomRole(\'' + role.id + '\')" class="px-4 py-2 text-red-600 text-sm font-bold">删除角色</button>';
-    }
-    document.getElementById('matrixFooter').innerHTML = footer;
-  }
-
-  function saveRoleMatrix() {
-    var store = loadPermissionStore();
-    var role = store.roles.find(function (r) { return r.id === selectedRoleId; });
-    if (!role) return;
-    var allIds = typeof getConfigurableAdminPermIds === 'function' ? getConfigurableAdminPermIds() : getAllAdminPermIds();
-    if (editingPerms.length >= allIds.length) {
-      role.perms = ['*'];
-      editingPerms = allIds.slice();
-    } else {
-      role.perms = editingPerms.slice();
-    }
-    savePermissionStore(store);
-    renderRoleList();
-    renderMatrix(role);
-    alert('已保存「' + role.name + '」的权限配置');
-  }
-
-  function openAddRoleModal() {
-    document.getElementById('newRoleName').value = '';
-    document.getElementById('newRoleDesc').value = '';
-    openModal('modal-add-role');
-  }
-
-  function submitAddRole() {
-    var name = document.getElementById('newRoleName').value.trim();
-    if (!name) { alert('请输入角色名称'); return; }
-    var store = loadPermissionStore();
-    var id = 'custom_' + Date.now();
-    store.roles.push({
-      id: id,
-      name: name,
-      builtin: false,
-      description: document.getElementById('newRoleDesc').value.trim(),
-      perms: []
-    });
-    savePermissionStore(store);
-    closeModal('modal-add-role');
-    selectRole(id);
-  }
-
-  function deleteCustomRole(roleId) {
-    if (!confirm('确认删除该自定义角色？')) return;
-    var store = loadPermissionStore();
-    store.roles = store.roles.filter(function (r) { return r.id !== roleId; });
-    store.users.forEach(function (u) {
-      if (u.roleId === roleId) u.roleId = 'test';
-    });
-    savePermissionStore(store);
-    selectRole('admin');
-  }
-
-  function renderUserTable() {
-    var store = loadPermissionStore();
-    document.getElementById('userTableBody').innerHTML = store.users.map(function (u) {
-      var role = store.roles.find(function (r) { return r.id === u.roleId; });
+    document.getElementById('staffTableBody').innerHTML = store.users.map(function (u) {
       var st = u.status === 'active' ? '<span class="status-tag status-on">启用</span>' : '<span class="status-tag status-off">停用</span>';
-      var actions = '<button type="button" onclick="openEditUser(\'' + u.id + '\')" class="text-blue-600 font-bold">编辑</button>';
-      if (u.id !== 'u_admin') actions += ' <button type="button" onclick="deleteUser(\'' + u.id + '\')" class="text-red-600 font-bold">删除</button>';
-      return '<tr class="hover:bg-slate-50"><td class="px-4 py-3 font-bold">' + u.name + '</td><td class="px-3 py-3 font-mono text-xs">' + u.account + '</td><td class="px-3 py-3">' + (role ? role.name : u.roleId) + '</td><td class="px-3 py-3">' + st + '</td><td class="px-3 py-3 text-slate-500">' + (u.lastLogin || '—') + '</td><td class="px-4 py-3 text-right">' + actions + '</td></tr>';
+      var actions = '<button type="button" onclick="openUserModal(\'' + u.id + '\')" class="text-blue-600 font-bold">编辑</button>';
+      actions += ' <button type="button" onclick="gotoPagesFor(\'' + u.id + '\')" class="text-slate-600 font-bold">页面权限</button>';
+      if (!u.protected) actions += ' <button type="button" onclick="deleteUser(\'' + u.id + '\')" class="text-red-600 font-bold">删除</button>';
+      return '<tr class="hover:bg-slate-50"><td class="px-4 py-3 font-bold">' + u.name + '</td><td class="px-3 py-3 font-mono text-xs">' + u.account + '</td><td class="px-3 py-3 text-slate-600">' + (u.department || '—') + '</td><td class="px-3 py-3">' + st + '</td><td class="px-3 py-3 text-slate-500">' + (u.lastLogin || '—') + '</td><td class="px-4 py-3 text-right">' + actions + '</td></tr>';
     }).join('');
   }
 
-  function fillRoleSelect(selectId, selected) {
+  function openUserModal(userId) {
     var store = loadPermissionStore();
-    document.getElementById(selectId).innerHTML = store.roles.map(function (r) {
-      return '<option value="' + r.id + '"' + (r.id === selected ? ' selected' : '') + '>' + r.name + '</option>';
-    }).join('');
-  }
-
-  function openAddUserModal() {
-    document.getElementById('userModalTitle').textContent = '新增后台用户';
-    document.getElementById('editUserId').value = '';
-    document.getElementById('userFormName').value = '';
-    document.getElementById('userFormAccount').value = '';
-    fillRoleSelect('userFormRole', 'ops');
-    openModal('modal-add-user');
-  }
-
-  function openEditUser(userId) {
-    var store = loadPermissionStore();
-    var u = store.users.find(function (x) { return x.id === userId; });
-    if (!u) return;
-    document.getElementById('userModalTitle').textContent = '编辑后台用户';
-    document.getElementById('editUserId').value = u.id;
-    document.getElementById('userFormName').value = u.name;
-    document.getElementById('userFormAccount').value = u.account;
-    fillRoleSelect('userFormRole', u.roleId);
-    openModal('modal-add-user');
+    if (userId) {
+      var u = store.users.find(function (x) { return x.id === userId; });
+      if (!u) return;
+      document.getElementById('userModalTitle').textContent = '编辑后台人员';
+      document.getElementById('editUserId').value = u.id;
+      document.getElementById('userFormName').value = u.name;
+      document.getElementById('userFormAccount').value = u.account;
+      document.getElementById('userFormDepartment').value = u.department || '';
+      document.getElementById('userFormStatus').value = u.status || 'active';
+    } else {
+      document.getElementById('userModalTitle').textContent = '新增后台人员';
+      document.getElementById('editUserId').value = '';
+      document.getElementById('userFormName').value = '';
+      document.getElementById('userFormAccount').value = '';
+      document.getElementById('userFormDepartment').value = '';
+      document.getElementById('userFormStatus').value = 'active';
+    }
+    openModal('modal-user');
   }
 
   function submitUserForm() {
     var name = document.getElementById('userFormName').value.trim();
     var account = document.getElementById('userFormAccount').value.trim();
-    var roleId = document.getElementById('userFormRole').value;
+    var department = document.getElementById('userFormDepartment').value.trim();
+    var status = document.getElementById('userFormStatus').value;
     if (!name || !account) { alert('请填写姓名与账号'); return; }
     var store = loadPermissionStore();
     var editId = document.getElementById('editUserId').value;
@@ -392,56 +217,239 @@
       if (u) {
         u.name = name;
         u.account = account;
-        u.roleId = roleId;
+        u.department = department;
+        u.status = status;
       }
     } else {
+      var perms = {};
+      ADMIN_PAGES.forEach(function (p) { perms[p.id] = 'none'; });
       store.users.push({
         id: 'u_' + Date.now(),
         name: name,
         account: account,
-        roleId: roleId,
-        status: 'active',
-        lastLogin: '—'
+        department: department,
+        status: status,
+        lastLogin: '—',
+        pagePerms: perms,
+        agentMaxRebate: null
       });
     }
     savePermissionStore(store);
-    closeModal('modal-add-user');
-    renderUserTable();
+    closeModal('modal-user');
+    renderStaffTable();
   }
 
   function deleteUser(userId) {
-    if (!confirm('确认删除该用户？')) return;
+    if (!confirm('确认删除该人员？将从敏感组中一并移除。')) return;
     var store = loadPermissionStore();
     store.users = store.users.filter(function (u) { return u.id !== userId; });
+    store.groups.forEach(function (g) {
+      g.memberIds = (g.memberIds || []).filter(function (id) { return id !== userId; });
+    });
     savePermissionStore(store);
-    renderUserTable();
+    renderStaffTable();
+  }
+
+  function gotoPagesFor(userId) {
+    selectedUserId = userId;
+    showPermTab('pages');
+  }
+
+  function renderPagesUserList() {
+    var store = loadPermissionStore();
+    document.getElementById('pagesUserList').innerHTML = store.users.map(function (u) {
+      var active = u.id === selectedUserId ? 'user-item-active border-2' : 'border border-transparent';
+      return '<button type="button" onclick="selectPagesUser(\'' + u.id + '\')" class="w-full text-left p-3 rounded-lg border ' + active + ' hover:bg-slate-50">' +
+        '<div class="font-bold text-slate-800">' + u.name + '</div>' +
+        '<p class="text-[10px] text-slate-400 mt-1">' + (u.department || '未填备注') + '</p></button>';
+    }).join('');
+  }
+
+  function refreshPagesPanel() {
+    renderPagesUserList();
+    var store = loadPermissionStore();
+    var user = store.users.find(function (u) { return u.id === selectedUserId; }) || store.users[0];
+    if (!user) return;
+    if (user.id !== selectedUserId) selectPagesUser(user.id);
+    else renderPagesMatrix(user);
+  }
+
+  function selectPagesUser(userId) {
+    selectedUserId = userId;
+    var store = loadPermissionStore();
+    var user = store.users.find(function (u) { return u.id === userId; });
+    if (!user) return;
+    editingPagePerms = Object.assign({}, user.pagePerms || {});
+    editingAgentCap = user.agentMaxRebate;
+    renderPagesUserList();
+    renderPagesMatrix(user);
+  }
+
+  function setPagePerm(pageId, level) {
+    editingPagePerms[pageId] = level;
+    if (pageId === 'agent.mgmt' && level !== 'write') editingAgentCap = null;
+    var store = loadPermissionStore();
+    var user = store.users.find(function (u) { return u.id === selectedUserId; });
+    renderPagesMatrix(user);
+  }
+
+  function renderPagesMatrix(user) {
+    if (!user) return;
+    var writeCount = 0, readCount = 0;
+    ADMIN_PAGES.forEach(function (p) {
+      var l = editingPagePerms[p.id] || 'none';
+      if (l === 'write') writeCount++;
+      if (l === 'read') readCount++;
+    });
+    document.getElementById('pagesHeader').innerHTML =
+      '<div><h2 class="text-base font-bold text-slate-800">' + user.name + ' · 页面权限</h2>' +
+      '<p class="text-xs text-slate-400 mt-1">' + (user.department || '无部门备注') + ' · 写 ' + writeCount + ' · 读 ' + readCount + '</p></div>';
+
+    var byMod = getAdminPagesByModule();
+    var body = '';
+    Object.keys(byMod).forEach(function (mod) {
+      body += '<div class="border border-slate-100 rounded-lg overflow-hidden">';
+      body += '<div class="bg-slate-50 px-4 py-2 font-bold text-slate-700 text-sm">' + mod + '</div>';
+      body += '<div class="divide-y divide-slate-50">';
+      byMod[mod].forEach(function (p) {
+        var level = editingPagePerms[p.id] || 'none';
+        body += '<div class="px-4 py-3 flex flex-wrap items-center justify-between gap-3">';
+        body += '<div><div class="font-medium text-slate-800">' + p.label + '</div><div class="text-[10px] text-slate-400">' + p.writeHint + '</div></div>';
+        body += '<div class="rw-opt">';
+        ['none', 'read', 'write'].forEach(function (lv) {
+          var labels = { none: '无', read: '读', write: '写' };
+          body += '<label><input type="radio" name="perm-' + p.id + '" ' + (level === lv ? 'checked' : '') + ' onchange="setPagePerm(\'' + p.id + '\',\'' + lv + '\')">' + labels[lv] + '</label>';
+        });
+        body += '</div></div>';
+      });
+      body += '</div></div>';
+    });
+
+    if ((editingPagePerms['agent.mgmt'] || 'none') === 'write') {
+      body += '<div class="border-2 border-blue-200 bg-blue-50/40 rounded-lg p-4">';
+      body += '<label class="block text-sm font-bold text-blue-900 mb-2">一级代理返佣比例上限（%）</label>';
+      body += '<input type="number" min="1" max="100" value="' + (editingAgentCap != null ? editingAgentCap : '') + '" onchange="editingAgentCap=parseInt(this.value,10)" class="w-32 border border-blue-200 rounded-lg px-3 py-2 text-sm" placeholder="如 70">';
+      body += '<p class="text-[10px] text-blue-700 mt-2">授予「一级代理管理·写」时必填；绑定代理时不得超过此比例。</p></div>';
+    }
+
+    document.getElementById('pagesBody').innerHTML = body;
+    document.getElementById('pagesFooter').innerHTML =
+      '<button type="button" onclick="selectPagesUser(\'' + user.id + '\')" class="px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">重置</button>' +
+      '<button type="button" onclick="savePagePerms()" class="px-6 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">保存页面权限</button>';
+  }
+
+  function savePagePerms() {
+    if ((editingPagePerms['agent.mgmt'] || 'none') === 'write' && (!editingAgentCap || editingAgentCap < 1)) {
+      alert('请填写一级代理返佣比例上限'); return;
+    }
+    var store = loadPermissionStore();
+    var user = store.users.find(function (u) { return u.id === selectedUserId; });
+    if (!user) return;
+    user.pagePerms = Object.assign({}, editingPagePerms);
+    user.agentMaxRebate = (editingPagePerms['agent.mgmt'] === 'write') ? editingAgentCap : null;
+    savePermissionStore(store);
+    alert('已保存「' + user.name + '」的页面权限');
+    renderPagesMatrix(user);
+  }
+
+  function refreshGroupsPanel() {
+    var store = loadPermissionStore();
+    document.getElementById('groupList').innerHTML = ADMIN_SENSITIVE_GROUPS.map(function (g) {
+      var def = store.groups.find(function (x) { return x.id === g.id; });
+      var n = def && def.memberIds ? def.memberIds.length : 0;
+      var active = g.id === selectedGroupId ? 'group-item-active border-2' : 'border border-transparent';
+      return '<button type="button" onclick="selectGroup(\'' + g.id + '\')" class="w-full text-left p-3 rounded-lg border ' + active + ' hover:bg-slate-50">' +
+        '<div class="font-bold text-amber-900 text-sm">' + g.label + '</div>' +
+        '<p class="text-[10px] text-slate-500 mt-1">' + n + ' 人</p></button>';
+    }).join('');
+    renderGroupDetail();
+  }
+
+  function selectGroup(groupId) {
+    selectedGroupId = groupId;
+    refreshGroupsPanel();
+  }
+
+  function renderGroupDetail() {
+    var meta = ADMIN_SENSITIVE_GROUPS.find(function (g) { return g.id === selectedGroupId; });
+    var store = loadPermissionStore();
+    var grp = store.groups.find(function (g) { return g.id === selectedGroupId; });
+    if (!meta || !grp) return;
+    document.getElementById('groupHeader').innerHTML =
+      '<h2 class="text-base font-bold text-amber-900">' + meta.label + '</h2>' +
+      '<p class="text-xs text-slate-500 mt-1">' + meta.description + '</p>';
+
+    var members = (grp.memberIds || []).map(function (uid) {
+      return store.users.find(function (u) { return u.id === uid; });
+    }).filter(Boolean);
+
+    var body = '<div class="space-y-2">';
+    if (!members.length) body += '<p class="text-slate-400 text-sm">暂无成员</p>';
+    members.forEach(function (u) {
+      body += '<div class="flex items-center justify-between border border-slate-100 rounded-lg px-4 py-3">' +
+        '<div><span class="font-bold text-slate-800">' + u.name + '</span> <span class="text-slate-400 text-[10px]">' + (u.department || '') + '</span></div>' +
+        '<button type="button" onclick="removeGroupMember(\'' + u.id + '\')" class="text-red-600 font-bold text-xs">移除</button></div>';
+    });
+    body += '</div>';
+
+    var candidates = store.users.filter(function (u) {
+      return u.status === 'active' && (grp.memberIds || []).indexOf(u.id) === -1;
+    });
+    body += '<div class="border-t border-slate-100 pt-4 mt-4"><label class="block text-xs font-bold text-slate-500 mb-2">添加成员</label>';
+    body += '<div class="flex gap-2"><select id="addMemberSelect" class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">';
+    body += '<option value="">选择人员</option>';
+    candidates.forEach(function (u) {
+      body += '<option value="' + u.id + '">' + u.name + '（' + (u.department || u.account) + '）</option>';
+    });
+    body += '</select><button type="button" onclick="addGroupMember()" class="px-4 py-2 bg-amber-600 text-white rounded-lg font-bold text-sm">添加</button></div></div>';
+
+    document.getElementById('groupBody').innerHTML = body;
+  }
+
+  function addGroupMember() {
+    var sel = document.getElementById('addMemberSelect');
+    var uid = sel && sel.value;
+    if (!uid) { alert('请选择人员'); return; }
+    var store = loadPermissionStore();
+    var grp = store.groups.find(function (g) { return g.id === selectedGroupId; });
+    if (!grp.memberIds) grp.memberIds = [];
+    if (grp.memberIds.indexOf(uid) === -1) grp.memberIds.push(uid);
+    savePermissionStore(store);
+    refreshGroupsPanel();
+  }
+
+  function removeGroupMember(userId) {
+    var store = loadPermissionStore();
+    var grp = store.groups.find(function (g) { return g.id === selectedGroupId; });
+    grp.memberIds = (grp.memberIds || []).filter(function (id) { return id !== userId; });
+    savePermissionStore(store);
+    refreshGroupsPanel();
   }
 
   function confirmResetStore() {
-    if (!confirm('恢复为默认角色与用户配置？自定义角色将丢失。')) return;
+    if (!confirm('恢复为默认人员、页面权限与敏感组？')) return;
     resetPermissionStore();
-    selectedRoleId = 'admin';
-    refreshRolesPanel();
-    renderUserTable();
+    selectedUserId = 'u_admin';
+    selectedGroupId = 'approve.cross';
+    showPermTab('staff');
     alert('已恢复默认配置');
   }
 
   function boot() {
-    initAdminSidebar('sys-admin', '权限配置 · 数据存于 localStorage');
-    var hash = (location.hash || '').replace('#', '') || 'roles';
-    if (hash === 'users') showPermTab('users');
-    else showPermTab('roles');
+    initAdminSidebar('sys-admin', '权限模型 v3 · 人员+读/写+敏感组');
+    var hash = (location.hash || '').replace('#', '') || 'staff';
+    if (hash === 'pages' || hash === 'groups' || hash === 'staff') showPermTab(hash);
+    else showPermTab('staff');
   }
 
   window.addEventListener('hashchange', function () {
-    var hash = (location.hash || '').replace('#', '') || 'roles';
-    if (hash === 'users') showPermTab('users');
-    else showPermTab('roles');
+    var hash = (location.hash || '').replace('#', '') || 'staff';
+    if (hash === 'pages' || hash === 'groups' || hash === 'staff') showPermTab(hash);
   });
 
   window.addEventListener('admin-perm-store-change', function () {
-    if (!document.getElementById('page-users').classList.contains('hidden')) renderUserTable();
-    else refreshRolesPanel();
+    var hash = (location.hash || '').replace('#', '') || 'staff';
+    showPermTab(hash);
   });
 
   boot();
