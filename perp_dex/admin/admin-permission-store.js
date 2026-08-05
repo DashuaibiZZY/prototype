@@ -1,11 +1,17 @@
 /**
- * 权限配置持久化 v3.1
+ * 权限配置持久化 v3.2
  */
 (function () {
-    const STORE_KEY = 'forx_admin_permission_store_v3_1';
+    const STORE_KEY = 'forx_admin_permission_store_v3_2';
 
     function allPageIds() {
         return (window.ADMIN_PAGES || []).map(function (p) { return p.id; });
+    }
+
+    function fullWritePerms() {
+        var w = {};
+        allPageIds().forEach(function (id) { w[id] = 'write'; });
+        return w;
     }
 
     function pageMap(levels) {
@@ -16,28 +22,42 @@
         return m;
     }
 
-    function defaultUsers() {
-        var w = {};
-        allPageIds().forEach(function (id) { w[id] = 'write'; });
+    function permToChecks(level) {
+        if (level === 'write') return { read: true, write: true };
+        if (level === 'read') return { read: true, write: false };
+        return { read: false, write: false };
+    }
 
+    function checksToPerm(read, write) {
+        if (write) return 'write';
+        if (read) return 'read';
+        return 'none';
+    }
+
+    function defaultUsers() {
         return [
             {
                 id: 'u_admin',
+                operatorId: 'admin-01',
                 name: '产品总监',
                 account: 'product.director@forx.com',
                 department: '产品部',
+                identity: 'super_admin',
                 status: 'active',
+                gaBound: true,
                 lastLogin: '2026-07-20 09:00',
-                pagePerms: w,
-                agentMaxRebate: 100,
-                protected: true
+                pagePerms: fullWritePerms(),
+                agentMaxRebate: 100
             },
             {
                 id: 'u_ops',
+                operatorId: 'admin-02',
                 name: '运营小王',
                 account: 'ops.wang@forx.com',
                 department: '运营部',
+                identity: 'operator',
                 status: 'active',
+                gaBound: true,
                 lastLogin: '2026-07-19 18:22',
                 pagePerms: pageMap({
                     'trial.config': 'write', 'trial.issue': 'write', 'trial.users': 'read', 'trial.approval': 'read', 'trial.logs': 'read',
@@ -50,10 +70,13 @@
             },
             {
                 id: 'u_market',
+                operatorId: 'admin-03',
                 name: '市场小李',
                 account: 'market.li@forx.com',
                 department: '市场部',
+                identity: 'operator',
                 status: 'active',
+                gaBound: true,
                 lastLogin: '2026-07-20 08:15',
                 pagePerms: pageMap({
                     'trial.approval': 'read', 'fee.approval': 'read', 'points.approval': 'read'
@@ -61,10 +84,13 @@
             },
             {
                 id: 'u_risk',
+                operatorId: 'admin-04',
                 name: '风控老陈',
                 account: 'risk.chen@forx.com',
                 department: '风控部',
+                identity: 'operator',
                 status: 'active',
+                gaBound: true,
                 lastLogin: '2026-07-20 10:05',
                 pagePerms: pageMap({
                     'freeze.settings': 'write', 'freeze.log': 'read',
@@ -75,10 +101,13 @@
             },
             {
                 id: 'u_ceo',
+                operatorId: 'admin-05',
                 name: '老板',
                 account: 'ceo@forx.com',
                 department: '管理层',
+                identity: 'operator',
                 status: 'active',
+                gaBound: false,
                 lastLogin: '2026-07-18 14:00',
                 pagePerms: pageMap({
                     'trial.approval': 'read', 'fee.approval': 'read', 'points.approval': 'read'
@@ -103,17 +132,24 @@
     }
 
     function mergeGroups(data) {
-        var def = defaultGroups();
-        def.forEach(function (dg) {
+        defaultGroups().forEach(function (dg) {
             if (!data.groups.some(function (g) { return g.id === dg.id; })) {
-                data.groups.push(dg);
+                data.groups.push(JSON.parse(JSON.stringify(dg)));
             }
         });
         return data;
     }
 
+    function migrateUser(u) {
+        if (!u.operatorId) u.operatorId = 'admin-' + String(Math.floor(Math.random() * 900) + 100);
+        if (!u.identity) u.identity = u.protected ? 'super_admin' : 'operator';
+        if (u.gaBound === undefined) u.gaBound = false;
+        delete u.protected;
+        return u;
+    }
+
     function getDefaultStore() {
-        return { users: defaultUsers(), groups: defaultGroups(), updatedAt: new Date().toISOString() };
+        return { users: defaultUsers(), groups: defaultGroups(), nextOperatorSeq: 6, updatedAt: new Date().toISOString() };
     }
 
     function loadPermissionStore() {
@@ -124,7 +160,9 @@
             var data = JSON.parse(raw);
             if (!Array.isArray(data.users) || !data.users.length) return def;
             if (!Array.isArray(data.groups)) data.groups = def.groups;
+            if (!data.nextOperatorSeq) data.nextOperatorSeq = def.nextOperatorSeq;
             mergeGroups(data);
+            data.users = data.users.map(migrateUser);
             return data;
         } catch (e) {
             return def;
@@ -141,6 +179,10 @@
         savePermissionStore(getDefaultStore());
     }
 
+    function isSuperAdmin(user) {
+        return user && user.identity === 'super_admin';
+    }
+
     function userInGroup(store, userId, groupId) {
         var g = (store.groups || []).find(function (x) { return x.id === groupId; });
         return g && (g.memberIds || []).indexOf(userId) !== -1;
@@ -155,10 +197,45 @@
         if (!join && i !== -1) g.memberIds.splice(i, 1);
     }
 
+    function removeUserFromAllGroups(store, userId) {
+        (store.groups || []).forEach(function (g) {
+            g.memberIds = (g.memberIds || []).filter(function (id) { return id !== userId; });
+        });
+    }
+
+    function setUserStatus(store, userId, status) {
+        var u = store.users.find(function (x) { return x.id === userId; });
+        if (!u) return;
+        if (isSuperAdmin(u) && status === 'inactive') return false;
+        u.status = status;
+        if (status === 'inactive') removeUserFromAllGroups(store, userId);
+        return true;
+    }
+
+    function allocOperatorId(store) {
+        var seq = store.nextOperatorSeq || 1;
+        store.nextOperatorSeq = seq + 1;
+        return 'admin-' + String(seq).padStart(2, '0');
+    }
+
+    function generatePassword() {
+        var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#';
+        var pwd = '';
+        for (var i = 0; i < 12; i++) pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+        return pwd;
+    }
+
     window.loadPermissionStore = loadPermissionStore;
     window.savePermissionStore = savePermissionStore;
     window.getDefaultPermissionStore = getDefaultStore;
     window.resetPermissionStore = resetPermissionStore;
     window.userInGroup = userInGroup;
     window.setUserInGroup = setUserInGroup;
+    window.setUserStatus = setUserStatus;
+    window.isSuperAdmin = isSuperAdmin;
+    window.permToChecks = permToChecks;
+    window.checksToPerm = checksToPerm;
+    window.allocOperatorId = allocOperatorId;
+    window.generatePassword = generatePassword;
+    window.removeUserFromAllGroups = removeUserFromAllGroups;
 })();
