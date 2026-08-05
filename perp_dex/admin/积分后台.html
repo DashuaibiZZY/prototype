@@ -43,7 +43,25 @@
         <div id="page-config" class="space-y-6">
             <div>
                 <h2 class="text-lg font-bold text-slate-700">每周积分总池设置</h2>
-                <p class="text-sm text-slate-400 mt-1">配置每周积分总池、六维度子池占比及个人等级加成系数。系统每周一 00:00 (UTC+8) 自动结算发放。</p>
+                <p class="text-sm text-slate-400 mt-1">配置 ForX 积分计划开关、每周积分总池、六维度子池占比及个人等级加成系数。系统每周一 00:00 (UTC+8) 自动结算发放。</p>
+            </div>
+
+            <div id="points-program-card" class="card p-6">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div class="space-y-1 min-w-0 flex-1">
+                        <h3 class="font-bold text-slate-800">ForX 积分计划总开关</h3>
+                        <p class="text-xs text-slate-500">控制每周积分总池自动瓜分（机制3）。变更在<strong>结算周边界</strong>生效；前端积分页同步展示状态。</p>
+                        <p id="pointsProgramEffectHint" class="text-xs text-blue-700 font-medium mt-2"></p>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <span id="pointsProgramStatusBadge" class="status-tag status-on">发放中</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input id="pointsProgramToggle" type="checkbox" class="sr-only peer" checked onchange="onPointsProgramToggleChange(this)">
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                            <span id="pointsProgramToggleLabel" class="ml-2 text-sm font-bold text-slate-700">开启</span>
+                        </label>
+                    </div>
+                </div>
             </div>
 
             <div id="pool-config-card" class="card p-6 space-y-6">
@@ -518,6 +536,24 @@
     </div>
 </div>
 
+<!-- 积分计划总开关确认 -->
+<div id="modal-points-program-confirm" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-[520px] max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="px-6 py-5 border-b shrink-0">
+            <h3 id="pointsProgramConfirmTitle" class="text-lg font-bold">确认变更积分计划</h3>
+            <p class="text-xs text-slate-400 mt-1">变更在结算周边界生效，前端积分页将同步更新</p>
+        </div>
+        <div class="p-6 overflow-y-auto flex-1 space-y-4 text-sm">
+            <div id="pointsProgramConfirmBody" class="rounded-lg border border-slate-200 bg-slate-50 p-4 text-slate-700 leading-relaxed"></div>
+            <ul id="pointsProgramConfirmList" class="list-disc pl-5 space-y-2 text-slate-600 text-xs"></ul>
+        </div>
+        <div class="p-5 bg-slate-50 flex gap-3 shrink-0">
+            <button type="button" onclick="cancelPointsProgramToggle()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button type="button" id="btn-points-program-confirm" onclick="confirmPointsProgramToggle()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">确认</button>
+        </div>
+    </div>
+</div>
+
 <!-- 积分总池配置确认 -->
 <div id="modal-pool-config-confirm" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-[640px] max-h-[90vh] overflow-hidden flex flex-col">
@@ -583,6 +619,7 @@
     </div>
 </div>
 
+<script src="../shared/points-program.js"></script>
 <script src="admin-approval.js"></script>
 <script src="admin-activity-picker.js"></script>
 <script src="admin-approval-ui.js"></script>
@@ -1183,6 +1220,74 @@
     }
 
     applyPoolConfigToForm(savedPoolConfig);
+
+    var pendingPointsProgramEnabled = null;
+
+    function renderPointsProgramAdminUI() {
+        var status = getPointsProgramStatus();
+        var enabled = status.enabled !== false;
+        var toggle = document.getElementById('pointsProgramToggle');
+        if (toggle) toggle.checked = enabled;
+        var badge = document.getElementById('pointsProgramStatusBadge');
+        var label = document.getElementById('pointsProgramToggleLabel');
+        var hint = document.getElementById('pointsProgramEffectHint');
+        if (badge) {
+            badge.textContent = enabled ? '发放中' : '已暂停';
+            badge.className = enabled ? 'inline-block px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700' : 'inline-block px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800';
+        }
+        if (label) label.textContent = enabled ? '开启' : '关闭';
+        if (hint) hint.textContent = formatProgramEffectHint(enabled);
+    }
+
+    window.onPointsProgramToggleChange = function (input) {
+        pendingPointsProgramEnabled = input.checked;
+        input.checked = !input.checked;
+        openPointsProgramConfirmModal(pendingPointsProgramEnabled);
+    };
+
+    function openPointsProgramConfirmModal(nextEnabled) {
+        var title = document.getElementById('pointsProgramConfirmTitle');
+        var body = document.getElementById('pointsProgramConfirmBody');
+        var list = document.getElementById('pointsProgramConfirmList');
+        if (nextEnabled) {
+            title.textContent = '确认开启 ForX 积分计划';
+            body.textContent = '开启后，前端积分页将恢复正常展示。';
+            list.innerHTML = '<li>本周<strong>不进行</strong>周结算瓜分</li><li>自下个结算周（周一 00:00 UTC+8）起，恢复每周积分发放</li>';
+        } else {
+            title.textContent = '确认关闭 ForX 积分计划';
+            body.textContent = '关闭后，前端积分页将展示暂停提示。';
+            list.innerHTML = '<li>本周周结算<strong>仍按既有规则正常执行</strong></li><li>自下个结算周（周一 00:00 UTC+8）起，暂停每周积分发放</li><li>用户已获得的积分不受影响</li>';
+        }
+        document.getElementById('modal-points-program-confirm').classList.remove('hidden');
+    }
+
+    window.cancelPointsProgramToggle = function () {
+        pendingPointsProgramEnabled = null;
+        document.getElementById('modal-points-program-confirm').classList.add('hidden');
+        renderPointsProgramAdminUI();
+    };
+
+    window.confirmPointsProgramToggle = function () {
+        if (pendingPointsProgramEnabled === null) return;
+        var nextEnabled = pendingPointsProgramEnabled;
+        setPointsProgramEnabled(nextEnabled);
+        pendingPointsProgramEnabled = null;
+        document.getElementById('modal-points-program-confirm').classList.add('hidden');
+        renderPointsProgramAdminUI();
+        POINTS_LOGS.unshift({
+            time: new Date().toISOString().slice(0, 16).replace('T', ' '),
+            operator: 'Points_Admin',
+            type: '规则配置',
+            user: '-',
+            detail: nextEnabled ? 'ForX 积分计划 · 开启（下周起恢复周结算）' : 'ForX 积分计划 · 关闭（下周起暂停周结算）',
+            points: '-',
+            remark: formatProgramEffectHint(nextEnabled)
+        });
+        renderPointsLogs(POINTS_LOGS);
+        alert('积分计划总开关已更新');
+    };
+
+    renderPointsProgramAdminUI();
 
     let manualInputMode = 'lines';
 

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ForX APP - 積分中心</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../shared/points-program.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
@@ -39,6 +40,8 @@
 
         <!-- 2. 可滾動內容區 -->
         <div class="flex-1 overflow-y-auto no-scrollbar bg-slate-50">
+
+            <div id="points-program-banner-host" class="px-5 pt-3"></div>
 
             <!-- 核心積分看板 -->
             <section class="px-5 pt-4">
@@ -151,13 +154,13 @@
                 </div>
 
                 <!-- 2. 每周瓜分池 (現在排在第二位) -->
-                <div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm space-y-4">
+                <div id="app-weekly-pool-card" class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm space-y-4">
                     <div class="flex justify-between items-start">
                         <div>
                             <h5 class="text-sm font-black text-gray-900">每周瓜分 1,000,000 积分</h5>
                             <p class="text-[11px] text-gray-400 mt-1">每周一根据以下行为指标自动分发：</p>
                         </div>
-                        <span class="bg-green-100 text-green-600 text-[9px] font-black px-1.5 py-0.5 rounded-sm uppercase">Automation</span>
+                        <span data-points-weekly-badge data-enabled-label="Automation" data-enabled-class="bg-green-100 text-green-600 text-[9px] font-black px-1.5 py-0.5 rounded-sm uppercase" class="bg-green-100 text-green-600 text-[9px] font-black px-1.5 py-0.5 rounded-sm uppercase">Automation</span>
                     </div>
                     <div class="flex flex-wrap gap-2">
                         <span class="text-[9px] font-bold bg-slate-100 px-2 py-1 rounded text-slate-500 uppercase">交易</span>
@@ -349,6 +352,18 @@
             if (stamp) stamp.classList.remove('hidden'); // 显示印章
         }
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        applyPointsProgramUI({ bannerHostId: 'points-program-banner-host', compactBanner: true, weeklyCardSelectors: ['#app-weekly-pool-card'] });
+        window.addEventListener('forx-points-program-change', function () {
+            applyPointsProgramUI({ bannerHostId: 'points-program-banner-host', compactBanner: true, weeklyCardSelectors: ['#app-weekly-pool-card'] });
+        });
+        window.addEventListener('storage', function (e) {
+            if (e.key === 'forx_points_program_status') {
+                applyPointsProgramUI({ bannerHostId: 'points-program-banner-host', compactBanner: true, weeklyCardSelectors: ['#app-weekly-pool-card'] });
+            }
+        });
+    });
 </script>
 
 </body>

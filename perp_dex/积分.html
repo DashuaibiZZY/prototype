@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ForX Points - 积分中心</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="shared/points-program.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #111827; }
@@ -163,6 +164,8 @@
 <main class="flex-1 overflow-y-auto">
     <div class="max-w-[1100px] mx-auto p-8 space-y-10">
 
+        <div id="points-program-banner-host"></div>
+
         <!-- 2. 标题与空投宣言 -->
         <div class="text-center space-y-3 py-6">
             <h1 class="text-4xl font-black tracking-tighter uppercase italic point-glow">ForX Points Center</h1>
@@ -226,11 +229,11 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- 每周瓜分 -->
-                <div class="task-card p-6 flex flex-col justify-between">
+                <div id="web-weekly-pool-card" class="task-card p-6 flex flex-col justify-between">
                     <div class="space-y-4">
                         <div class="flex justify-between items-start">
                             <h3 class="text-sm font-black uppercase">每周自动瓜分 1,000,000 积分池</h3>
-                            <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-sm font-bold text-[9px]">循环发放</span>
+                            <span data-points-weekly-badge data-enabled-label="循环发放" data-enabled-class="bg-green-100 text-green-700 px-2 py-0.5 rounded-sm font-bold text-[9px]" class="bg-green-100 text-green-700 px-2 py-0.5 rounded-sm font-bold text-[9px]">循环发放</span>
                         </div>
                         <p class="text-gray-400 font-medium leading-relaxed">
                             系统将根据以下行为指标，每周一自动结算分发：
@@ -482,6 +485,17 @@
             actionBtn.style.display = 'none'; // 隐藏操作按钮
         }
     }
+    document.addEventListener('DOMContentLoaded', function () {
+        applyPointsProgramUI({ bannerHostId: 'points-program-banner-host', weeklyCardSelectors: ['#web-weekly-pool-card'] });
+        window.addEventListener('forx-points-program-change', function () {
+            applyPointsProgramUI({ bannerHostId: 'points-program-banner-host', weeklyCardSelectors: ['#web-weekly-pool-card'] });
+        });
+        window.addEventListener('storage', function (e) {
+            if (e.key === 'forx_points_program_status') {
+                applyPointsProgramUI({ bannerHostId: 'points-program-banner-host', weeklyCardSelectors: ['#web-weekly-pool-card'] });
+            }
+        });
+    });
 </script>
 
 </body>
