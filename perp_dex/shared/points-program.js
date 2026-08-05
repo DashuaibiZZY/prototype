@@ -4,12 +4,32 @@
  */
 (function (global) {
     var STORAGE_KEY = 'forx_points_program_status';
+    var PENDING_KEY = 'forx_points_program_pending';
 
     function defaultStatus() {
         return {
             enabled: true,
             updatedAt: null
         };
+    }
+
+    function getPointsProgramPending() {
+        try {
+            var raw = global.localStorage && global.localStorage.getItem(PENDING_KEY);
+            if (raw) return JSON.parse(raw);
+        } catch (e) { /* ignore */ }
+        return null;
+    }
+
+    function setPointsProgramPending(data) {
+        if (!global.localStorage) return;
+        if (data) global.localStorage.setItem(PENDING_KEY, JSON.stringify(data));
+        else global.localStorage.removeItem(PENDING_KEY);
+    }
+
+    function clearPointsProgramPending() {
+        setPointsProgramPending(null);
+        if (typeof global.renderPointsProgramAdminUI === 'function') global.renderPointsProgramAdminUI();
     }
 
     function loadStatus() {
@@ -97,8 +117,11 @@
     }
 
     global.getPointsProgramStatus = getPointsProgramStatus;
+    global.getPointsProgramPending = getPointsProgramPending;
     global.isPointsProgramEnabled = isPointsProgramEnabled;
     global.setPointsProgramEnabled = setPointsProgramEnabled;
+    global.clearPointsProgramPending = clearPointsProgramPending;
+    global.setPointsProgramPending = setPointsProgramPending;
     global.formatProgramEffectHint = formatProgramEffectHint;
     global.renderPausedBannerHtml = renderPausedBannerHtml;
     global.applyPointsProgramUI = applyPointsProgramUI;

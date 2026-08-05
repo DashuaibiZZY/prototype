@@ -15,7 +15,8 @@
     ];
 
     const TYPE_FLOW_PROFILE = {
-        points_pool_config: 'cross_risk'
+        points_pool_config: 'cross_risk',
+        points_program_switch: 'cross_risk'
     };
 
     const FLOW_PROFILES = {
@@ -42,7 +43,8 @@
         points_manual: '积分手动发放',
         fee_config: '用户费率配置',
         points_bonus_config: '积分加成配置',
-        points_pool_config: '积分总池配置'
+        points_pool_config: '积分总池配置',
+        points_program_switch: '积分计划总开关'
     };
 
     const ROLE_LABELS = {
@@ -734,6 +736,12 @@
                         } catch (e) { /* ignore */ }
                         if (typeof window.applySavedPoolConfig === 'function') window.applySavedPoolConfig(app.payload.after);
                     }
+                    if (app.type === 'points_program_switch' && app.payload && typeof app.payload.afterEnabled === 'boolean') {
+                        if (typeof window.setPointsProgramEnabled === 'function') {
+                            window.setPointsProgramEnabled(app.payload.afterEnabled);
+                        }
+                        if (typeof window.clearPointsProgramPending === 'function') window.clearPointsProgramPending();
+                    }
                 } else {
                     app.status = 'pending_boss';
                     if (profile.larkOnRisk) pushLarkApproval(app);
@@ -750,6 +758,9 @@
         return updateApp(id, function (app) {
             if (app.lark) app.lark.status = 'rejected';
             app.status = 'rejected';
+            if (app.type === 'points_program_switch' && typeof window.clearPointsProgramPending === 'function') {
+                window.clearPointsProgramPending();
+            }
             app.timeline.push({
                 at: new Date().toISOString().slice(0, 16).replace('T', ' '),
                 actor: actorMap[role] || role,
@@ -818,6 +829,10 @@
             p.changes.forEach(function (c) {
                 rows.push([c.field, c.before, c.after]);
             });
+        } else if (app.type === 'points_program_switch') {
+            rows.push([]);
+            rows.push(['配置项', '变更前', '变更后']);
+            rows.push(['积分计划总开关', p.beforeEnabled ? '开启' : '关闭', p.afterEnabled ? '开启' : '关闭']);
         } else if (app.type === 'fee_config') {
             Object.keys(p).forEach(function (k) {
                 if (k !== 'recipients') rows.push([k, Array.isArray(p[k]) ? p[k].join('; ') : p[k]]);
