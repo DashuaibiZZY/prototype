@@ -14,18 +14,25 @@
     .status-on { background: #ecfdf5; color: #059669; }
     .status-off { background: #f1f5f9; color: #64748b; }
     .status-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
-    .modal-nav-item { display: block; width: 100%; text-align: left; padding: 8px 12px; border-radius: 6px; font-size: 11px; color: #cbd5e1; }
-    .modal-nav-item:hover { background: #1e293b; color: #fff; }
-    .modal-nav-item.active { background: #1e293b; color: #fff; border-left: 3px solid #3b82f6; }
-    .modal-nav-module { font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; padding: 8px 12px 4px; letter-spacing: .05em; }
-    .rw-btn { padding: 4px 12px; font-size: 11px; font-weight: 600; border: 1px solid #e2e8f0; color: #64748b; background: #fff; }
-    .rw-btn:first-child { border-radius: 6px 0 0 6px; }
-    .rw-btn:last-child { border-radius: 0 6px 6px 0; }
-    .rw-btn + .rw-btn { border-left: none; }
-    .rw-btn.sel-none { background: #f1f5f9; color: #475569; }
-    .rw-btn.sel-read { background: #dbeafe; color: #1d4ed8; border-color: #93c5fd; }
-    .rw-btn.sel-write { background: #0f172a; color: #fff; border-color: #0f172a; }
-    .perm-row:target { background: #eff6ff; }
+    .info-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .info-table td { border: 1px solid #e2e8f0; padding: 10px 14px; }
+    .info-table .lbl { width: 100px; background: #f8fafc; color: #64748b; font-weight: 600; white-space: nowrap; }
+    .info-table .val { color: #0f172a; font-weight: 500; }
+    .perm-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .perm-table th, .perm-table td { border: 1px solid #e2e8f0; padding: 8px 12px; text-align: left; }
+    .perm-table th { background: #f8fafc; color: #64748b; font-weight: 700; font-size: 11px; }
+    .perm-table .col-check { width: 72px; text-align: center; }
+    .perm-table tbody tr:hover { background: #fafafa; }
+    .section-title { font-size: 13px; font-weight: 700; color: #334155; margin: 16px 0 8px; }
+    .group-panel { border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-bottom: 8px; }
+    .group-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #fffbeb; cursor: pointer; user-select: none; }
+    .group-panel-head:hover { background: #fef3c7; }
+    .group-panel-body { display: none; padding: 16px; border-top: 1px solid #fde68a; background: #fff; }
+    .group-panel.open .group-panel-body { display: block; }
+    .member-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+    .member-grid label { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; font-size: 12px; }
+    .member-grid label:hover { background: #f8fafc; }
+    .member-grid label.disabled { opacity: .45; cursor: not-allowed; }
   </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -36,7 +43,7 @@
   <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
     <div>
       <h1 id="page-title" class="text-xl font-bold text-slate-800">后台人员</h1>
-      <p id="page-subtitle" class="text-xs text-slate-400 mt-0.5">编辑人员时配置全部页面读/写与敏感操作组</p>
+      <p id="page-subtitle" class="text-xs text-slate-400 mt-0.5">管理人员账号与页面读/写；敏感操作组在独立 Tab 配置</p>
     </div>
     <div class="flex items-center gap-4">
       <span class="text-sm text-slate-500">产品总监</span>
@@ -45,7 +52,7 @@
   </header>
 
   <div class="flex-1 overflow-y-auto p-8 space-y-4">
-    <div class="flex gap-2 flex-wrap">
+    <div class="flex gap-2 flex-wrap items-center">
       <button id="tab-btn-staff" type="button" onclick="showPermTab('staff')" class="tab-active px-4 py-2 rounded-lg text-sm font-bold">后台人员</button>
       <button id="tab-btn-groups" type="button" onclick="showPermTab('groups')" class="px-4 py-2 rounded-lg text-sm font-bold border border-slate-200 text-slate-600">敏感操作组</button>
       <div class="flex-1"></div>
@@ -53,19 +60,23 @@
     </div>
 
     <div id="page-staff" class="space-y-4">
-      <div class="flex justify-between items-center">
-        <p class="text-sm text-slate-500">点击 <b>编辑</b> 打开侧栏式弹窗，一次性配置页面读/写 + 敏感组。</p>
-        <button type="button" onclick="openUserModal()" class="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-bold">+ 新增后台人员</button>
+      <div class="flex justify-between items-center flex-wrap gap-2">
+        <p class="text-sm text-slate-500">支持新增 <b>超级管理员</b> 与 <b>普通操作人员</b>；人员仅可停用不可删除。新增后展示初始密码，首次登录须绑定 GA。</p>
+        <div class="flex gap-2">
+          <button type="button" onclick="openCreateModal('operator')" class="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-bold">+ 普通操作人员</button>
+          <button type="button" onclick="openCreateModal('super_admin')" class="bg-violet-700 text-white px-4 py-2.5 rounded-lg text-sm font-bold">+ 超级管理员</button>
+        </div>
       </div>
       <div class="card overflow-hidden">
         <table class="w-full text-left text-sm">
           <thead class="bg-slate-50 border-b">
             <tr>
-              <th class="px-4 py-3 text-xs font-bold text-slate-500">姓名</th>
+              <th class="px-4 py-3 text-xs font-bold text-slate-500">操作者 ID</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500">姓名</th>
               <th class="px-3 py-3 text-xs font-bold text-slate-500">登录账号</th>
               <th class="px-3 py-3 text-xs font-bold text-slate-500">业务部门备注</th>
-              <th class="px-3 py-3 text-xs font-bold text-slate-500">页面写</th>
-              <th class="px-3 py-3 text-xs font-bold text-slate-500">敏感组</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500">系统身份</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500">GA</th>
               <th class="px-3 py-3 text-xs font-bold text-slate-500">状态</th>
               <th class="px-4 py-3 text-xs font-bold text-slate-500 text-right">操作</th>
             </tr>
@@ -76,54 +87,96 @@
     </div>
 
     <div id="page-groups" class="hidden space-y-4">
-      <p class="text-sm text-slate-500">各模块 <b>独立</b> 审批池；待办进入节点后从对应组 <b>纯随机</b> 派单。人员归属请在编辑人员弹窗中勾选，此处为只读总览。</p>
-      <div id="groupsOverview" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
+      <p class="text-sm text-slate-500">展开各组勾选成员（仅 <b>启用</b> 人员可选）。停用人员会自动从全部敏感组剔除。审批待办从组内 <b>纯随机</b> 派单。</p>
+      <div id="groupsEditor"></div>
     </div>
   </div>
 </main>
 
-<!-- 编辑人员 · 侧栏弹窗 -->
-<div id="modal-user" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-  <div class="card w-full max-w-5xl h-[88vh] flex flex-col overflow-hidden">
+<!-- 编辑人员 -->
+<div id="modal-edit" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+  <div class="card w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden">
     <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
-      <div>
-        <h3 id="userModalTitle" class="text-lg font-bold text-slate-800">编辑后台人员</h3>
-        <p class="text-xs text-slate-400 mt-0.5">左侧跳转模块 · 右侧配置全部页面读/写与敏感组</p>
+      <h3 id="editModalTitle" class="text-lg font-bold text-slate-800">编辑人员</h3>
+      <button type="button" onclick="closeModal('modal-edit')" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
+    </div>
+    <div class="flex-1 overflow-y-auto p-6 space-y-4">
+      <table class="info-table">
+        <tbody>
+          <tr>
+            <td class="lbl">姓名</td>
+            <td class="val"><input id="editName" type="text" class="w-full outline-none bg-transparent"></td>
+            <td class="lbl">操作者 ID</td>
+            <td class="val"><span id="editOperatorId" class="font-mono text-slate-600"></span></td>
+          </tr>
+          <tr>
+            <td class="lbl">登录账号</td>
+            <td class="val"><input id="editAccount" type="email" class="w-full outline-none bg-transparent"></td>
+            <td class="lbl">业务部门备注</td>
+            <td class="val"><input id="editDepartment" type="text" placeholder="如：市场部" class="w-full outline-none bg-transparent"></td>
+          </tr>
+          <tr>
+            <td class="lbl">账号状态</td>
+            <td class="val" id="editStatusText"></td>
+            <td class="lbl">系统身份</td>
+            <td class="val" id="editIdentityText"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div id="superAdminBanner" class="hidden rounded-lg border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+        <b>超级管理员</b> 固定拥有全部后台页面 <b>读 + 写</b> 权限，无需单独勾选。
       </div>
-      <button type="button" onclick="closeModal('modal-user')" class="text-slate-400 hover:text-slate-600 text-xl leading-none">&times;</button>
-    </div>
-    <input type="hidden" id="editUserId">
-    <div class="flex flex-1 min-h-0">
-      <nav id="modalSideNav" class="w-52 bg-slate-900 shrink-0 overflow-y-auto py-3"></nav>
-      <div class="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50">
-        <section class="card p-4 space-y-3">
-          <h4 class="font-bold text-slate-800 text-sm">基本信息</h4>
-          <div class="grid grid-cols-2 gap-3">
-            <div><label class="text-xs font-bold text-slate-500">姓名</label><input id="userFormName" type="text" class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none"></div>
-            <div><label class="text-xs font-bold text-slate-500">登录账号</label><input id="userFormAccount" type="email" class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none"></div>
-            <div><label class="text-xs font-bold text-slate-500">业务部门备注</label><input id="userFormDepartment" type="text" placeholder="如：市场部" class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none"></div>
-            <div><label class="text-xs font-bold text-slate-500">状态</label><select id="userFormStatus" class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white outline-none"><option value="active">启用</option><option value="inactive">停用</option></select></div>
-          </div>
-        </section>
-        <section>
-          <h4 class="font-bold text-slate-800 text-sm mb-3">页面权限（无 / 读 / 写）</h4>
-          <div id="modalPagePerms" class="space-y-3"></div>
-        </section>
-        <section id="agentCapSection" class="hidden card p-4 border-2 border-blue-200 bg-blue-50/40">
-          <label class="block text-sm font-bold text-blue-900 mb-2">一级代理返佣比例上限（%）</label>
-          <input id="userFormAgentCap" type="number" min="1" max="100" class="w-32 border border-blue-200 rounded-lg px-3 py-2 text-sm">
-          <p class="text-[10px] text-blue-700 mt-2">「一级代理管理」为写时必填。</p>
-        </section>
-        <section>
-          <h4 class="font-bold text-slate-800 text-sm mb-3">敏感操作组（按模块独立）</h4>
-          <div id="modalGroupPerms" class="space-y-3"></div>
-        </section>
+
+      <div id="pagePermSection">
+        <div class="section-title">后台页面</div>
+        <div id="pagePermTables"></div>
+        <div id="agentCapBlock" class="hidden mt-4 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
+          <label class="text-sm font-bold text-blue-900">一级代理返佣比例上限（%）</label>
+          <input id="editAgentCap" type="number" min="1" max="100" class="mt-2 w-32 border border-blue-200 rounded-lg px-3 py-2 text-sm block">
+          <p class="text-[11px] text-blue-700 mt-1">勾选「一级代理管理 · 写」时必填。</p>
+        </div>
       </div>
     </div>
-    <div class="px-6 py-4 border-t border-slate-100 flex justify-end gap-2 shrink-0 bg-white">
-      <button type="button" onclick="closeModal('modal-user')" class="px-4 py-2.5 border border-slate-200 rounded-lg font-bold text-slate-600">取消</button>
-      <button type="button" onclick="submitUserForm()" class="px-6 py-2.5 bg-slate-900 text-white rounded-lg font-bold">保存</button>
+    <div class="px-6 py-4 border-t border-slate-100 flex justify-end gap-2 shrink-0">
+      <button type="button" onclick="closeModal('modal-edit')" class="px-4 py-2.5 border border-slate-200 rounded-lg font-bold text-slate-600">取消</button>
+      <button type="button" onclick="saveEditUser()" class="px-6 py-2.5 bg-slate-900 text-white rounded-lg font-bold">保存</button>
     </div>
+  </div>
+</div>
+
+<!-- 新增人员 -->
+<div id="modal-create" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+  <div class="card w-full max-w-md p-6 space-y-4">
+    <h3 id="createModalTitle" class="text-lg font-bold text-slate-800">新增普通操作人员</h3>
+    <div>
+      <label class="block text-xs font-bold text-slate-500 mb-2">姓名</label>
+      <input id="createName" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
+    </div>
+    <div>
+      <label class="block text-xs font-bold text-slate-500 mb-2">登录账号（邮箱）</label>
+      <input id="createAccount" type="email" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
+    </div>
+    <div>
+      <label class="block text-xs font-bold text-slate-500 mb-2">业务部门备注</label>
+      <input id="createDepartment" type="text" placeholder="如：运营部" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
+    </div>
+    <p class="text-[11px] text-slate-500">创建后将生成初始密码；<b>首次登录须绑定 Google Authenticator（GA）</b>。</p>
+    <div class="flex gap-2 pt-2">
+      <button type="button" onclick="closeModal('modal-create')" class="flex-1 py-2.5 border border-slate-200 rounded-lg font-bold text-slate-600">取消</button>
+      <button type="button" onclick="submitCreateUser()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg font-bold">创建</button>
+    </div>
+  </div>
+</div>
+
+<!-- 初始凭证 -->
+<div id="modal-credentials" class="fixed inset-0 z-[110] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+  <div class="card w-full max-w-lg p-6 space-y-4">
+    <h3 class="text-lg font-bold text-emerald-800">账号已创建 · 请妥善保存凭证</h3>
+    <p class="text-sm text-slate-600">以下信息仅展示一次。请将登录账号与初始密码交给对应同事；<b>首次登录必须绑定 GA</b>。</p>
+    <div class="rounded-lg border border-emerald-200 bg-emerald-50/50 p-4 font-mono text-sm space-y-2" id="credentialsText"></div>
+    <button type="button" onclick="copyCredentials()" class="w-full py-2.5 bg-emerald-700 text-white rounded-lg font-bold text-sm">一键复制全部信息</button>
+    <button type="button" onclick="closeModal('modal-credentials')" class="w-full py-2.5 border border-slate-200 rounded-lg font-bold text-slate-600">我已保存，关闭</button>
   </div>
 </div>
 
@@ -132,7 +185,10 @@
 <script src="admin-permissions.js"></script>
 <script src="admin-sidebar.js"></script>
 <script>
-  var editDraft = { pagePerms: {}, groupIds: {}, agentMaxRebate: null };
+  var editingUserId = null;
+  var createIdentity = 'operator';
+  var editDraftChecks = {};
+  var lastCredentials = '';
 
   function openModal(id) {
     document.getElementById(id).classList.remove('hidden');
@@ -143,204 +199,251 @@
     document.getElementById(id).classList.remove('flex');
   }
 
+  function identityLabel(id) {
+    return id === 'super_admin' ? '超级管理员' : '普通操作人员';
+  }
+
   function showPermTab(tab) {
     document.getElementById('page-staff').classList.toggle('hidden', tab !== 'staff');
     document.getElementById('page-groups').classList.toggle('hidden', tab !== 'groups');
     document.getElementById('tab-btn-staff').className = tab === 'staff' ? 'tab-active px-4 py-2 rounded-lg text-sm font-bold' : 'px-4 py-2 rounded-lg text-sm font-bold border border-slate-200 text-slate-600';
     document.getElementById('tab-btn-groups').className = tab === 'groups' ? 'tab-active px-4 py-2 rounded-lg text-sm font-bold' : 'px-4 py-2 rounded-lg text-sm font-bold border border-slate-200 text-slate-600';
     document.getElementById('page-title').textContent = tab === 'staff' ? '后台人员' : '敏感操作组';
-    document.getElementById('page-subtitle').textContent = tab === 'staff' ? '编辑人员时配置全部页面读/写与敏感操作组' : '各模块独立审批池 · 纯随机派单';
     if (tab === 'staff') renderStaffTable();
-    if (tab === 'groups') renderGroupsOverview();
+    if (tab === 'groups') renderGroupsEditor();
     if (location.hash !== '#' + tab) location.hash = tab;
-  }
-
-  function countWritePerms(perms) {
-    var n = 0;
-    Object.keys(perms || {}).forEach(function (k) { if (perms[k] === 'write') n++; });
-    return n;
-  }
-
-  function countUserGroups(store, userId) {
-    return (store.groups || []).filter(function (g) { return (g.memberIds || []).indexOf(userId) !== -1; }).length;
   }
 
   function renderStaffTable() {
     var store = loadPermissionStore();
     document.getElementById('staffTableBody').innerHTML = store.users.map(function (u) {
       var st = u.status === 'active' ? '<span class="status-tag status-on">启用</span>' : '<span class="status-tag status-off">停用</span>';
-      var actions = '<button type="button" onclick="openUserModal(\'' + u.id + '\')" class="text-blue-600 font-bold">编辑</button>';
-      if (!u.protected) actions += ' <button type="button" onclick="deleteUser(\'' + u.id + '\')" class="text-red-600 font-bold">删除</button>';
-      return '<tr class="hover:bg-slate-50"><td class="px-4 py-3 font-bold">' + u.name + '</td><td class="px-3 py-3 font-mono text-xs">' + u.account + '</td><td class="px-3 py-3">' + (u.department || '—') + '</td><td class="px-3 py-3">' + countWritePerms(u.pagePerms) + ' 项</td><td class="px-3 py-3">' + countUserGroups(store, u.id) + ' 组</td><td class="px-3 py-3">' + st + '</td><td class="px-4 py-3 text-right">' + actions + '</td></tr>';
+      var ga = u.gaBound ? '<span class="text-emerald-600 font-bold">已绑定</span>' : '<span class="text-amber-600 font-bold">待绑定</span>';
+      var idTag = isSuperAdmin(u) ? '<span class="text-violet-700 font-bold">超级管理员</span>' : '<span class="text-slate-600">普通操作人员</span>';
+      var actions = '<button type="button" onclick="openEditModal(\'' + u.id + '\')" class="text-blue-600 font-bold">编辑</button>';
+      if (u.status === 'active' && !isSuperAdmin(u)) {
+        actions += ' <button type="button" onclick="toggleUserStatus(\'' + u.id + '\',\'inactive\')" class="text-amber-600 font-bold">停用</button>';
+      } else if (u.status === 'inactive') {
+        actions += ' <button type="button" onclick="toggleUserStatus(\'' + u.id + '\',\'active\')" class="text-emerald-600 font-bold">启用</button>';
+      }
+      return '<tr class="hover:bg-slate-50">' +
+        '<td class="px-4 py-3 font-mono text-xs">' + u.operatorId + '</td>' +
+        '<td class="px-3 py-3 font-bold">' + u.name + '</td>' +
+        '<td class="px-3 py-3 font-mono text-xs">' + u.account + '</td>' +
+        '<td class="px-3 py-3">' + (u.department || '—') + '</td>' +
+        '<td class="px-3 py-3">' + idTag + '</td>' +
+        '<td class="px-3 py-3">' + ga + '</td>' +
+        '<td class="px-3 py-3">' + st + '</td>' +
+        '<td class="px-4 py-3 text-right">' + actions + '</td></tr>';
     }).join('');
   }
 
-  function renderGroupsOverview() {
-    var store = loadPermissionStore();
-    var byMod = getAdminGroupsByModule();
+  function buildPermTablesHtml(disableAll, checksMap) {
+    var byMod = getAdminPagesByModule();
     var html = '';
     Object.keys(byMod).forEach(function (mod) {
-      html += '<div class="card p-4"><h3 class="font-bold text-slate-800 mb-3">' + mod + '</h3><div class="space-y-3">';
-      byMod[mod].forEach(function (meta) {
-        var g = store.groups.find(function (x) { return x.id === meta.id; }) || { memberIds: [] };
-        var members = (g.memberIds || []).map(function (uid) {
-          var u = store.users.find(function (x) { return x.id === uid; });
-          return u ? u.name : uid;
-        });
-        html += '<div class="border border-amber-100 bg-amber-50/30 rounded-lg p-3"><div class="font-bold text-amber-900 text-sm">' + meta.label + '</div><p class="text-[10px] text-slate-500 mt-1">' + meta.description + '</p><div class="flex flex-wrap gap-1 mt-2">' +
-          (members.length ? members.map(function (n) { return '<span class="px-2 py-0.5 bg-amber-200 text-amber-900 rounded text-[10px] font-bold">' + n + '</span>'; }).join('') : '<span class="text-slate-400 text-[10px]">暂无成员</span>') +
-          '</div></div>';
-      });
-      html += '</div></div>';
-    });
-    document.getElementById('groupsOverview').innerHTML = html;
-  }
-
-  function buildModalSideNav() {
-    var byMod = getAdminPagesByModule();
-    var html = '<div class="px-3 pb-2 text-white font-black italic text-sm">页面导航</div>';
-    Object.keys(byMod).forEach(function (mod) {
-      html += '<div class="modal-nav-module">' + mod + '</div>';
+      html += '<div class="section-title">' + mod + '</div>';
+      html += '<table class="perm-table mb-4"><thead><tr><th>页面 / Tab</th><th class="col-check">读</th><th class="col-check">写</th></tr></thead><tbody>';
       byMod[mod].forEach(function (p) {
-        html += '<a href="#perm-' + p.id + '" class="modal-nav-item" onclick="highlightNav(this)">' + p.label + '</a>';
+        var c = checksMap[p.id] || { read: false, write: false };
+        if (disableAll) { c = { read: true, write: true }; }
+        html += '<tr><td>' + p.label + '<div class="text-[10px] text-slate-400 font-normal">' + p.writeHint + '</div></td>' +
+          '<td class="col-check"><input type="checkbox" data-page="' + p.id + '" data-kind="read" ' + (c.read ? 'checked' : '') + (disableAll ? ' disabled' : '') + ' onchange="onPermCheck(\'' + p.id + '\',\'read\',this.checked)"></td>' +
+          '<td class="col-check"><input type="checkbox" data-page="' + p.id + '" data-kind="write" ' + (c.write ? 'checked' : '') + (disableAll ? ' disabled' : '') + ' onchange="onPermCheck(\'' + p.id + '\',\'write\',this.checked)"></td></tr>';
       });
+      html += '</tbody></table>';
     });
-    html += '<div class="modal-nav-module mt-2">敏感组</div><a href="#section-groups" class="modal-nav-item" onclick="highlightNav(this)">敏感操作组</a>';
-    document.getElementById('modalSideNav').innerHTML = html;
+    return html;
   }
 
-  function highlightNav(el) {
-    document.querySelectorAll('.modal-nav-item').forEach(function (n) { n.classList.remove('active'); });
-    if (el) el.classList.add('active');
+  function onPermCheck(pageId, kind, checked) {
+    if (!editDraftChecks[pageId]) editDraftChecks[pageId] = { read: false, write: false };
+    editDraftChecks[pageId][kind] = checked;
+    if (kind === 'write' && checked) editDraftChecks[pageId].read = true;
+    if (kind === 'read' && !checked) editDraftChecks[pageId].write = false;
+    renderEditPermUI();
   }
 
-  function rwButtons(pageId, level) {
-    var opts = [{ v: 'none', l: '无' }, { v: 'read', l: '读' }, { v: 'write', l: '写' }];
-    return opts.map(function (o) {
-      var cls = 'rw-btn' + (level === o.v ? ' sel-' + o.v : '');
-      return '<button type="button" class="' + cls + '" onclick="setDraftPagePerm(\'' + pageId + '\',\'' + o.v + '\')">' + o.l + '</button>';
-    }).join('');
-  }
-
-  function setDraftPagePerm(pageId, level) {
-    editDraft.pagePerms[pageId] = level;
-    if (pageId === 'agent.mgmt' && level !== 'write') editDraft.agentMaxRebate = null;
-    renderModalPermEditors();
-  }
-
-  function setDraftGroup(groupId, checked) {
-    editDraft.groupIds[groupId] = checked;
-    renderModalPermEditors();
-  }
-
-  function renderModalPermEditors() {
-    var byMod = getAdminPagesByModule();
-    var pageHtml = '';
-    Object.keys(byMod).forEach(function (mod) {
-      pageHtml += '<div class="card overflow-hidden"><div class="bg-slate-100 px-4 py-2 font-bold text-slate-700 text-xs">' + mod + '</div><div class="divide-y divide-slate-50">';
-      byMod[mod].forEach(function (p) {
-        var level = editDraft.pagePerms[p.id] || 'none';
-        pageHtml += '<div id="perm-' + p.id + '" class="perm-row px-4 py-3 flex flex-wrap items-center justify-between gap-2 scroll-mt-4"><div><span class="font-medium text-slate-800">' + p.label + '</span><span class="block text-[10px] text-slate-400">' + p.writeHint + '</span></div><div class="flex">' + rwButtons(p.id, level) + '</div></div>';
-      });
-      pageHtml += '</div></div>';
-    });
-    document.getElementById('modalPagePerms').innerHTML = pageHtml;
-
-    var showCap = (editDraft.pagePerms['agent.mgmt'] || 'none') === 'write';
-    document.getElementById('agentCapSection').classList.toggle('hidden', !showCap);
-    if (showCap) document.getElementById('userFormAgentCap').value = editDraft.agentMaxRebate != null ? editDraft.agentMaxRebate : '';
-
-    var grpByMod = getAdminGroupsByModule();
-    var grpHtml = '';
-    Object.keys(grpByMod).forEach(function (mod) {
-      grpHtml += '<div class="card p-3"><div class="font-bold text-xs text-slate-600 mb-2">' + mod + '</div><div class="space-y-2">';
-      grpByMod[mod].forEach(function (g) {
-        var on = !!editDraft.groupIds[g.id];
-        grpHtml += '<label class="flex items-start gap-2 p-2 rounded-lg hover:bg-slate-50 cursor-pointer"><input type="checkbox" ' + (on ? 'checked' : '') + ' onchange="setDraftGroup(\'' + g.id + '\',this.checked)"><span><span class="font-medium text-amber-900">' + g.label + '</span><span class="block text-[10px] text-slate-400">' + g.description + '</span></span></label>';
-      });
-      grpHtml += '</div></div>';
-    });
-    document.getElementById('modalGroupPerms').innerHTML = grpHtml;
-  }
-
-  function openUserModal(userId) {
-    buildModalSideNav();
+  function renderEditPermUI() {
     var store = loadPermissionStore();
-    editDraft = { pagePerms: {}, groupIds: {}, agentMaxRebate: null };
-
-    if (userId) {
-      var u = store.users.find(function (x) { return x.id === userId; });
-      if (!u) return;
-      document.getElementById('userModalTitle').textContent = '编辑 · ' + u.name;
-      document.getElementById('editUserId').value = u.id;
-      document.getElementById('userFormName').value = u.name;
-      document.getElementById('userFormAccount').value = u.account;
-      document.getElementById('userFormDepartment').value = u.department || '';
-      document.getElementById('userFormStatus').value = u.status || 'active';
+    var u = store.users.find(function (x) { return x.id === editingUserId; });
+    if (!u) return;
+    var superA = isSuperAdmin(u);
+    document.getElementById('superAdminBanner').classList.toggle('hidden', !superA);
+    document.getElementById('pagePermSection').classList.toggle('opacity-50', superA);
+    var checksMap = {};
+    if (superA) {
+      ADMIN_PAGES.forEach(function (p) { checksMap[p.id] = { read: true, write: true }; });
+    } else {
       ADMIN_PAGES.forEach(function (p) {
-        editDraft.pagePerms[p.id] = (u.pagePerms && u.pagePerms[p.id]) || 'none';
+        var level = editDraftChecks[p.id] ? checksToPerm(editDraftChecks[p.id].read, editDraftChecks[p.id].write) : (u.pagePerms[p.id] || 'none');
+        checksMap[p.id] = permToChecks(level);
+        editDraftChecks[p.id] = checksMap[p.id];
       });
-      editDraft.agentMaxRebate = u.agentMaxRebate;
-      ADMIN_SENSITIVE_GROUPS.forEach(function (g) {
-        editDraft.groupIds[g.id] = userInGroup(store, u.id, g.id);
-      });
-    } else {
-      document.getElementById('userModalTitle').textContent = '新增后台人员';
-      document.getElementById('editUserId').value = '';
-      document.getElementById('userFormName').value = '';
-      document.getElementById('userFormAccount').value = '';
-      document.getElementById('userFormDepartment').value = '';
-      document.getElementById('userFormStatus').value = 'active';
-      ADMIN_PAGES.forEach(function (p) { editDraft.pagePerms[p.id] = 'none'; });
-      ADMIN_SENSITIVE_GROUPS.forEach(function (g) { editDraft.groupIds[g.id] = false; });
     }
-    renderModalPermEditors();
-    openModal('modal-user');
+    document.getElementById('pagePermTables').innerHTML = buildPermTablesHtml(superA, checksMap);
+    var writeAgent = !superA && editDraftChecks['agent.mgmt'] && editDraftChecks['agent.mgmt'].write;
+    document.getElementById('agentCapBlock').classList.toggle('hidden', !writeAgent);
   }
 
-  function submitUserForm() {
-    var name = document.getElementById('userFormName').value.trim();
-    var account = document.getElementById('userFormAccount').value.trim();
-    if (!name || !account) { alert('请填写姓名与账号'); return; }
-    if ((editDraft.pagePerms['agent.mgmt'] || 'none') === 'write') {
-      var cap = parseInt(document.getElementById('userFormAgentCap').value, 10);
-      if (!cap || cap < 1) { alert('请填写一级代理返佣比例上限'); return; }
-      editDraft.agentMaxRebate = cap;
-    }
+  function openEditModal(userId) {
+    editingUserId = userId;
+    editDraftChecks = {};
     var store = loadPermissionStore();
-    var editId = document.getElementById('editUserId').value;
-    var user;
-    if (editId) {
-      user = store.users.find(function (x) { return x.id === editId; });
-    } else {
-      user = { id: 'u_' + Date.now(), lastLogin: '—', protected: false };
-      store.users.push(user);
-    }
-    user.name = name;
-    user.account = account;
-    user.department = document.getElementById('userFormDepartment').value.trim();
-    user.status = document.getElementById('userFormStatus').value;
-    user.pagePerms = Object.assign({}, editDraft.pagePerms);
-    user.agentMaxRebate = editDraft.agentMaxRebate;
-
-    ADMIN_SENSITIVE_GROUPS.forEach(function (g) {
-      setUserInGroup(store, user.id, g.id, !!editDraft.groupIds[g.id]);
+    var u = store.users.find(function (x) { return x.id === userId; });
+    if (!u) return;
+    document.getElementById('editModalTitle').textContent = '编辑 · ' + u.name;
+    document.getElementById('editName').value = u.name;
+    document.getElementById('editAccount').value = u.account;
+    document.getElementById('editDepartment').value = u.department || '';
+    document.getElementById('editOperatorId').textContent = u.operatorId;
+    document.getElementById('editStatusText').innerHTML = u.status === 'active' ? '<span class="status-tag status-on">启用</span>' : '<span class="status-tag status-off">停用</span>';
+    document.getElementById('editIdentityText').innerHTML = isSuperAdmin(u)
+      ? '<span class="text-violet-700 font-bold">超级管理员</span>'
+      : '<span class="text-slate-700">普通操作人员</span>';
+    document.getElementById('editAgentCap').value = u.agentMaxRebate != null ? u.agentMaxRebate : '';
+    ADMIN_PAGES.forEach(function (p) {
+      editDraftChecks[p.id] = permToChecks(u.pagePerms[p.id] || 'none');
     });
+    renderEditPermUI();
+    openModal('modal-edit');
+  }
 
+  function saveEditUser() {
+    var store = loadPermissionStore();
+    var u = store.users.find(function (x) { return x.id === editingUserId; });
+    if (!u) return;
+    u.name = document.getElementById('editName').value.trim();
+    u.account = document.getElementById('editAccount').value.trim();
+    u.department = document.getElementById('editDepartment').value.trim();
+    if (!u.name || !u.account) { alert('请填写姓名与登录账号'); return; }
+    if (!isSuperAdmin(u)) {
+      var perms = {};
+      ADMIN_PAGES.forEach(function (p) {
+        var c = editDraftChecks[p.id] || { read: false, write: false };
+        perms[p.id] = checksToPerm(c.read, c.write);
+      });
+      u.pagePerms = perms;
+      if (editDraftChecks['agent.mgmt'] && editDraftChecks['agent.mgmt'].write) {
+        var cap = parseInt(document.getElementById('editAgentCap').value, 10);
+        if (!cap || cap < 1) { alert('请填写一级代理返佣比例上限'); return; }
+        u.agentMaxRebate = cap;
+      } else {
+        u.agentMaxRebate = null;
+      }
+    }
     savePermissionStore(store);
-    closeModal('modal-user');
+    closeModal('modal-edit');
     renderStaffTable();
   }
 
-  function deleteUser(userId) {
-    if (!confirm('确认删除？')) return;
+  function openCreateModal(identity) {
+    createIdentity = identity;
+    document.getElementById('createModalTitle').textContent = identity === 'super_admin' ? '新增超级管理员' : '新增普通操作人员';
+    document.getElementById('createName').value = '';
+    document.getElementById('createAccount').value = '';
+    document.getElementById('createDepartment').value = '';
+    openModal('modal-create');
+  }
+
+  function submitCreateUser() {
+    var name = document.getElementById('createName').value.trim();
+    var account = document.getElementById('createAccount').value.trim();
+    var department = document.getElementById('createDepartment').value.trim();
+    if (!name || !account) { alert('请填写姓名与登录账号'); return; }
     var store = loadPermissionStore();
-    store.users = store.users.filter(function (u) { return u.id !== userId; });
-    store.groups.forEach(function (g) {
-      g.memberIds = (g.memberIds || []).filter(function (id) { return id !== userId; });
-    });
+    if (store.users.some(function (u) { return u.account === account; })) { alert('该登录账号已存在'); return; }
+    var pwd = generatePassword();
+    var perms = {};
+    if (createIdentity === 'super_admin') {
+      perms = (function () { var w = {}; ADMIN_PAGES.forEach(function (p) { w[p.id] = 'write'; }); return w; })();
+    } else {
+      ADMIN_PAGES.forEach(function (p) { perms[p.id] = 'none'; });
+    }
+    var user = {
+      id: 'u_' + Date.now(),
+      operatorId: allocOperatorId(store),
+      name: name,
+      account: account,
+      department: department,
+      identity: createIdentity,
+      status: 'active',
+      gaBound: false,
+      lastLogin: '—',
+      pagePerms: perms,
+      agentMaxRebate: createIdentity === 'super_admin' ? 100 : null,
+      initialPassword: pwd
+    };
+    store.users.push(user);
+    savePermissionStore(store);
+    closeModal('modal-create');
+    showCredentials(user, pwd);
+    renderStaffTable();
+  }
+
+  function showCredentials(user, pwd) {
+    lastCredentials = '操作者 ID：' + user.operatorId + '\n姓名：' + user.name + '\n登录账号：' + user.account + '\n初始密码：' + pwd + '\n系统身份：' + identityLabel(user.identity) + '\n\n首次登录须绑定 Google Authenticator（GA）。';
+    document.getElementById('credentialsText').innerHTML =
+      '<div><span class="text-slate-500">操作者 ID</span><br>' + user.operatorId + '</div>' +
+      '<div><span class="text-slate-500">登录账号</span><br>' + user.account + '</div>' +
+      '<div><span class="text-slate-500">初始密码</span><br><b class="text-emerald-800">' + pwd + '</b></div>' +
+      '<div><span class="text-slate-500">系统身份</span><br>' + identityLabel(user.identity) + '</div>';
+    openModal('modal-credentials');
+  }
+
+  function copyCredentials() {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(lastCredentials).then(function () { alert('已复制到剪贴板'); });
+    } else {
+      prompt('请手动复制：', lastCredentials);
+    }
+  }
+
+  function toggleUserStatus(userId, status) {
+    var msg = status === 'inactive' ? '确认停用该人员？将从全部敏感操作组移除，且不可删除账号。' : '确认重新启用该人员？';
+    if (!confirm(msg)) return;
+    var store = loadPermissionStore();
+    if (!setUserStatus(store, userId, status)) {
+      alert('超级管理员不可停用');
+      return;
+    }
     savePermissionStore(store);
     renderStaffTable();
+    if (!document.getElementById('page-groups').classList.contains('hidden')) renderGroupsEditor();
+  }
+
+  function renderGroupsEditor() {
+    var store = loadPermissionStore();
+    var activeUsers = store.users.filter(function (u) { return u.status === 'active'; });
+    var html = '';
+    ADMIN_SENSITIVE_GROUPS.forEach(function (meta) {
+      var g = store.groups.find(function (x) { return x.id === meta.id; }) || { memberIds: [] };
+      var n = (g.memberIds || []).length;
+      html += '<div class="group-panel" id="panel-' + meta.id + '">';
+      html += '<div class="group-panel-head" onclick="toggleGroupPanel(\'' + meta.id + '\')">';
+      html += '<div><div class="font-bold text-amber-900">' + meta.label + '</div><p class="text-[11px] text-slate-500 mt-0.5">' + meta.description + '</p></div>';
+      html += '<div class="text-right shrink-0 ml-4"><span class="text-xs font-bold text-amber-800">' + n + ' 人</span><span class="block text-[10px] text-slate-400">点击展开编辑</span></div></div>';
+      html += '<div class="group-panel-body"><div class="member-grid">';
+      activeUsers.forEach(function (u) {
+        var on = (g.memberIds || []).indexOf(u.id) !== -1;
+        html += '<label><input type="checkbox" ' + (on ? 'checked' : '') + ' onchange="toggleGroupMember(\'' + meta.id + '\',\'' + u.id + '\',this.checked)"> ' +
+          u.name + ' <span class="text-slate-400">(' + u.operatorId + ')</span></label>';
+      });
+      if (!activeUsers.length) html += '<p class="text-slate-400 text-sm">无启用人员</p>';
+      html += '</div></div></div>';
+    });
+    document.getElementById('groupsEditor').innerHTML = html;
+  }
+
+  function toggleGroupPanel(groupId) {
+    document.getElementById('panel-' + groupId).classList.toggle('open');
+  }
+
+  function toggleGroupMember(groupId, userId, join) {
+    var store = loadPermissionStore();
+    setUserInGroup(store, userId, groupId, join);
+    savePermissionStore(store);
+    renderGroupsEditor();
   }
 
   function confirmResetStore() {
@@ -351,7 +454,7 @@
   }
 
   function boot() {
-    initAdminSidebar('sys-admin', '权限 v3.1 · 按模块独立审批组');
+    initAdminSidebar('sys-admin', '权限 v3.2 · 表格式读/写勾选');
     var hash = (location.hash || '').replace('#', '') || 'staff';
     showPermTab(hash === 'groups' ? 'groups' : 'staff');
   }
