@@ -81,7 +81,7 @@
 
 **状态扭转规则**：
 
-![Image](https://internal-api-drive-stream-sg.larksuite.com/space/api/box/stream/download/authcode/?code=YTM1ZmU2ZDQ2ZmZlYjkyNzgxZmZiYzJjMjc0NzRjZWJfOWEyY2JjYTUwNDZlY2M2NTRjOGNjODVmOGZhMjk0ZTFfSUQ6NzY1MjY4ODIxOTI4ODcwMjY4NV8xNzg1MTQzODk4OjE3ODUyMzAyOThfVjM)
+https://dashuaibizzy.github.io/prototype/perp_dex/流程图/状态扭转.svg
 
 - **可使用 → 已使用**：用户在卡券有效期内点击激活，体验金注入合约账户，开仓有效期开始倒计时。
 
@@ -218,7 +218,7 @@ https://dashuaibizzy\.github\.io/prototype/perp\_dex/%E6%B5%81%E7%A8%8B%E5%9B%BE
 
 ### 6\.2 回收执行流程 \+ 边界处理
 
-![Image](https://internal-api-drive-stream-sg.larksuite.com/space/api/box/stream/download/authcode/?code=ZTQ3MTc4NDVjZjI3ZWE3NjYyOWM5ZmRjODlhNTdkMTVfZjI0MjJjMmUxOGI5ZGNmNjNkNDY0ZWI0NWM5ZWY3NmNfSUQ6NzY1MjY4ODMzMjQ0MjM0MTA4NV8xNzg1MTQzODk4OjE3ODUyMzAyOThfVjM)
+https://dashuaibizzy.github.io/prototype/perp_dex/流程图/回收执行流程.svg
 
 **关键说明**：
 
