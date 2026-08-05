@@ -50,7 +50,7 @@
                 <div class="flex flex-wrap items-start justify-between gap-4">
                     <div class="space-y-1 min-w-0 flex-1">
                         <h3 class="font-bold text-slate-800">ForX 积分计划总开关</h3>
-                        <p class="text-xs text-slate-500">控制每周积分总池自动瓜分（机制3）。变更须 <b>市场运营交叉审核 → 风控审核</b>（无老板节点）；风控通过后按结算周边界生效，前端积分页同步更新。</p>
+                        <p class="text-xs text-slate-500">控制每周积分总池自动瓜分（机制3）。变更须 <b>交叉审核 → 风控审核 → 老板审批</b>（风控通过后同步 Lark）；老板通过后按结算周边界生效。</p>
                         <p id="pointsProgramEffectHint" class="text-xs text-blue-700 font-medium mt-2"></p>
                     </div>
                     <div class="flex items-center gap-3 shrink-0">
@@ -541,7 +541,7 @@
     <div class="bg-white rounded-2xl shadow-2xl w-[520px] max-h-[90vh] overflow-hidden flex flex-col">
         <div class="px-6 py-5 border-b shrink-0">
             <h3 id="pointsProgramConfirmTitle" class="text-lg font-bold">确认提交积分计划变更</h3>
-            <p class="text-xs text-slate-400 mt-1">确认后进入审批：市场运营交叉审核 → 风控审核（无需老板审批）</p>
+            <p class="text-xs text-slate-400 mt-1">确认后进入审批：市场运营交叉审核 → 风控审核 → 老板审批</p>
         </div>
         <div class="p-6 overflow-y-auto flex-1 space-y-4 text-sm">
             <div id="pointsProgramConfirmBody" class="rounded-lg border border-slate-200 bg-slate-50 p-4 text-slate-700 leading-relaxed"></div>
@@ -1252,7 +1252,7 @@
         if (label) label.textContent = enabled ? '开启' : '关闭';
         if (hint) {
             hint.textContent = pending
-                ? '变更已提交审批，风控通过后生效。目标状态：' + (pending.afterEnabled ? '开启' : '关闭')
+                ? '变更已提交审批，老板通过后生效。目标状态：' + (pending.afterEnabled ? '开启' : '关闭')
                 : formatProgramEffectHint(enabled);
         }
     }
@@ -1277,15 +1277,15 @@
         var current = getPointsProgramStatus().enabled !== false;
         if (nextEnabled) {
             title.textContent = '确认提交：开启 ForX 积分计划';
-            body.textContent = '风控通过后，前端积分页将恢复正常展示。';
+            body.textContent = '老板审批通过后，前端积分页将恢复正常展示。';
             list.innerHTML = '<li>本周<strong>不进行</strong>周结算瓜分</li><li>自下个结算周（周一 00:00 UTC+8）起，恢复每周积分发放</li>';
         } else {
             title.textContent = '确认提交：关闭 ForX 积分计划';
-            body.textContent = '风控通过后，前端积分页将展示暂停提示。';
+            body.textContent = '老板审批通过后，前端积分页将展示暂停提示。';
             list.innerHTML = '<li>本周周结算<strong>仍按既有规则正常执行</strong></li><li>自下个结算周（周一 00:00 UTC+8）起，暂停每周积分发放</li><li>用户已获得的积分不受影响</li>';
         }
         document.getElementById('pointsProgramRemark').value = '';
-        document.getElementById('pointsProgramApprovalFlow').innerHTML = renderApprovalFlow('draft', true, { type: 'points_program_switch' });
+        document.getElementById('pointsProgramApprovalFlow').innerHTML = renderApprovalFlow('draft', true, 'full');
         window._pendingProgramSwitch = { beforeEnabled: current, afterEnabled: nextEnabled };
         document.getElementById('modal-points-program-confirm').classList.remove('hidden');
     }
@@ -1341,7 +1341,7 @@
         window._pendingProgramSwitch = null;
         document.getElementById('modal-points-program-confirm').classList.add('hidden');
         renderPointsProgramAdminUI();
-        alert('积分计划总开关已提交审批，等待市场运营交叉审核 → 风控审核（无需老板审批）');
+        alert('积分计划总开关已提交审批，等待市场运营交叉审核 → 风控审核 → 老板审批');
     };
 
     renderPointsProgramAdminUI();
