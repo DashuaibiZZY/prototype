@@ -99,6 +99,18 @@
         return cfg.duration + (cfg.unit === 'minute' ? ' 分钟' : ' 小时');
     }
 
+    function renderProgramSwitchDetailSection(app) {
+        if (app.type !== 'points_program_switch') return '';
+        var p = app.payload || {};
+        var before = p.beforeEnabled ? '开启' : '关闭';
+        var after = p.afterEnabled ? '开启' : '关闭';
+        return '<div class="col-span-2"><div class="border border-slate-200 rounded-lg px-4 py-2 text-sm">' +
+            '<div class="flex justify-between items-center py-2.5 border-b border-slate-100"><span class="text-slate-600">积分计划总开关</span>' +
+            '<span><span class="text-slate-400">' + before + '</span> <span class="text-slate-300 mx-1">→</span> <span class="text-blue-600 font-bold">' + after + '</span></span></div>' +
+            '<div class="flex justify-between items-center py-2.5"><span class="text-slate-600">结算边界说明</span><span class="text-slate-700 text-xs text-right max-w-xs">' + (p.effectHint || '—') + '</span></div>' +
+            '</div></div>';
+    }
+
     function renderPoolConfigDetailSection(app) {
         if (app.type !== 'points_pool_config') return '';
         const p = app.payload || {};
@@ -355,14 +367,16 @@
         else if (app.status === 'pending_risk' && role !== 'risk') readonlyHint = '等待风控审核';
         else if (app.status === 'pending_boss' && role !== 'boss') readonlyHint = '等待老板审批（可在 Lark 完成）';
 
-        const isPoolConfig = app.type === 'points_pool_config';
-        const exportDetailBtn = opts.showExportDetail && !isPoolConfig
+        const isSimpleConfig = app.type === 'points_pool_config' || app.type === 'points_program_switch';
+        const exportDetailBtn = opts.showExportDetail && !isSimpleConfig
             ? '<button type="button" onclick="exportApprovalDetailCsv(getApprovalAppById(\'' + app.id + '\'))" class="text-xs font-bold text-blue-600 hover:underline">导出原数据</button>'
             : '';
-        const dataSectionTitle = isPoolConfig ? '配置内容' : '申请原数据';
-        const dataSectionBody = isPoolConfig
+        const dataSectionTitle = isSimpleConfig ? '配置内容' : '申请原数据';
+        const dataSectionBody = app.type === 'points_pool_config'
             ? '<div class="text-sm">' + renderPoolConfigDetailSection(app) + '</div>'
-            : '<div class="grid grid-cols-2 gap-3 text-sm">' + renderPayloadMeta(app, opts) + renderRecipientSection(rootId, app) + '</div>';
+            : app.type === 'points_program_switch'
+                ? '<div class="text-sm">' + renderProgramSwitchDetailSection(app) + '</div>'
+                : '<div class="grid grid-cols-2 gap-3 text-sm">' + renderPayloadMeta(app, opts) + renderRecipientSection(rootId, app) + '</div>';
         const typeBadge = state.types.length > 1
             ? '<span class="inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">' + getApprovalTypeLabel(app.type) + '</span>'
             : '';
