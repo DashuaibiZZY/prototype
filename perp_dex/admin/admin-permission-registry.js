@@ -1,12 +1,12 @@
 /**
- * ForX Admin 页面清单与敏感操作组（权限模型 v3）
+ * ForX Admin 页面清单与敏感操作组（权限模型 v3.1 — 按模块拆分审批组）
  */
 (function () {
     const ADMIN_PAGES = [
         { id: 'sys.admin', module: '系统', label: '权限与用户', writeHint: '维护人员、页面权限与敏感组' },
         { id: 'agent.mgmt', module: '代理中心', label: '一级代理管理', writeHint: '绑定/调整一级代理', needsAgentCap: true },
         { id: 'agent.operator', module: '代理中心', label: '运营权限配置', writeHint: '配置运营账号返佣上限' },
-        { id: 'agent.settlement', module: '代理中心', label: '佣金对账与发放', writeHint: '对账确认与佣金发放' },
+        { id: 'agent.settlement', module: '代理中心', label: '佣金对账与发放', writeHint: '对账与发放（返佣大版本后续更新）' },
         { id: 'trial.config', module: '体验金', label: '卡组配置', writeHint: '新建/编辑卡组' },
         { id: 'trial.issue', module: '体验金', label: '批量发放', writeHint: '提交体验金发放审批' },
         { id: 'trial.approval', module: '体验金', label: '发放审批', writeHint: '只读查看；审批走敏感组' },
@@ -27,31 +27,22 @@
         { id: 'points.logs', module: '积分', label: '操作记录', writeHint: '审计只读' }
     ];
 
+    /** 每个模块独立审批池，互不共用 */
     const SENSITIVE_GROUPS = [
-        {
-            id: 'approve.cross',
-            label: '市场运营交叉审核组',
-            description: '体验金/积分/费率「待交叉审核」待办从此组随机派单；组内被派单者可审批通过/驳回。'
-        },
-        {
-            id: 'approve.risk',
-            label: '风控审核组',
-            description: '三模块「待风控审核」待办随机派单；组内被派单者可审批通过/驳回。'
-        },
-        {
-            id: 'approve.boss',
-            label: 'BOSS 审核组',
-            description: '三模块「待老板审批」待办随机派单；可与 Lark 联动。'
-        },
-        {
-            id: 'trial.recycle',
-            label: '体验金强制回收组',
-            description: '仅组内人员可操作用户列表/详情/总览中的体验金强制回收。'
-        }
+        { id: 'trial.approve.cross', module: '体验金', type: 'approve', label: '体验金 · 交叉审核组', description: '体验金发放审批「待交叉审核」待办从此组纯随机派单。' },
+        { id: 'trial.approve.risk', module: '体验金', type: 'approve', label: '体验金 · 风控审核组', description: '体验金「待风控审核」待办纯随机派单。' },
+        { id: 'trial.approve.boss', module: '体验金', type: 'approve', label: '体验金 · BOSS 审核组', description: '体验金「待老板审批」待办纯随机派单。' },
+        { id: 'trial.recycle', module: '体验金', type: 'recycle', label: '体验金 · 强制回收组', description: '仅组内人员可执行体验金强制回收。' },
+        { id: 'points.approve.cross', module: '积分', type: 'approve', label: '积分 · 交叉审核组', description: '积分相关审批「待交叉审核」纯随机派单。' },
+        { id: 'points.approve.risk', module: '积分', type: 'approve', label: '积分 · 风控审核组', description: '积分「待风控审核」纯随机派单。' },
+        { id: 'points.approve.boss', module: '积分', type: 'approve', label: '积分 · BOSS 审核组', description: '积分「待老板审批」纯随机派单（总池配置无此节点）。' },
+        { id: 'fee.approve.cross', module: '费率', type: 'approve', label: '费率 · 交叉审核组', description: '费率配置审批「待交叉审核」纯随机派单。' },
+        { id: 'fee.approve.risk', module: '费率', type: 'approve', label: '费率 · 风控审核组', description: '费率「待风控审核」纯随机派单。' },
+        { id: 'fee.approve.boss', module: '费率', type: 'approve', label: '费率 · BOSS 审核组', description: '费率「待老板审批」纯随机派单。' }
     ];
 
     function getPagesByModule() {
-        const map = {};
+        var map = {};
         ADMIN_PAGES.forEach(function (p) {
             if (!map[p.module]) map[p.module] = [];
             map[p.module].push(p);
@@ -59,7 +50,17 @@
         return map;
     }
 
+    function getGroupsByModule() {
+        var map = {};
+        SENSITIVE_GROUPS.forEach(function (g) {
+            if (!map[g.module]) map[g.module] = [];
+            map[g.module].push(g);
+        });
+        return map;
+    }
+
     window.ADMIN_PAGES = ADMIN_PAGES;
     window.ADMIN_SENSITIVE_GROUPS = SENSITIVE_GROUPS;
     window.getAdminPagesByModule = getPagesByModule;
+    window.getAdminGroupsByModule = getGroupsByModule;
 })();
