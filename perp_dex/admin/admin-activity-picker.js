@@ -1,5 +1,5 @@
 /**
- * 活动信息选择器：关联平台活动 / 自定义活动名称
+ * 活动信息选择器：关联平台活动 / 自定义活动名称（含奖励名称多语言）
  */
 (function () {
     const PLATFORM_ACTIVITIES = [
@@ -10,6 +10,13 @@
         { id: 'ACT202605005', name: '现货交易挑战赛' }
     ];
 
+    const REWARD_LANGS = [
+        { key: 'zh-CN', label: '简体中文' },
+        { key: 'zh-TW', label: '繁体中文' },
+        { key: 'en', label: '英文' },
+        { key: 'ja', label: '日本语' }
+    ];
+
     function injectPickerStyles() {
         if (document.getElementById('activity-picker-styles')) return;
         const style = document.createElement('style');
@@ -17,9 +24,19 @@
         style.textContent = [
             '.act-mode-tab{padding:5px 12px;font-size:11px;font-weight:700;border-radius:6px;cursor:pointer;border:1px solid #e2e8f0;background:#fff;color:#64748b}',
             '.act-mode-tab.active{background:#0f172a;color:#fff;border-color:#0f172a}',
-            '.act-picker-box{padding:12px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc}'
+            '.act-picker-box{padding:12px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc}',
+            '.act-lang-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}',
+            '.act-lang-field label{display:block;font-size:10px;font-weight:700;color:#64748b;margin-bottom:4px}',
+            '.act-lang-field input{width:100%;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:12px;outline:none;background:#fff}'
         ].join('');
         document.head.appendChild(style);
+    }
+
+    function buildCustomLangFields(prefix) {
+        return REWARD_LANGS.map(function (lang) {
+            return '<div class="act-lang-field"><label>' + lang.label + ' · 奖励名称</label>' +
+                '<input id="' + prefix + '-reward-' + lang.key + '" type="text" placeholder="用户端奖励记录展示名称"></div>';
+        }).join('');
     }
 
     window.getPlatformActivities = function () {
@@ -48,19 +65,25 @@
             '</div>' +
             '<div id="' + prefix + '-platform-panel"' + (defaultMode === 'custom' ? ' class="hidden"' : '') + '>' +
             '<select id="' + prefix + '-platform-select" class="w-full border border-slate-200 rounded-lg p-3 text-sm bg-white outline-none">' + optsHtml + '</select>' +
-            '<p class="text-[10px] text-slate-400 mt-1">来自活动上架服务，选中后对应平台活动发奖记录。</p>' +
+            '<p class="text-[10px] text-slate-400 mt-1">来自活动上架服务；奖励名称取活动多语言配置，写入用户端「奖励记录」。</p>' +
             '</div>' +
             '<div id="' + prefix + '-custom-panel"' + (defaultMode === 'platform' ? ' class="hidden"' : '') + '>' +
-            '<input id="' + prefix + '-custom-input" type="text" placeholder="例如：线下 KOL 合作补发" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">' +
-            '<p class="text-[10px] text-slate-400 mt-1">非平台活动场景，仅写入流水备注。</p>' +
+            '<p class="text-[10px] font-bold text-slate-500 uppercase mb-2">奖励名称（多语言，必填）</p>' +
+            '<div class="act-lang-grid">' + buildCustomLangFields(prefix) + '</div>' +
+            '<p class="text-[10px] text-slate-400 mt-2">自定义发放场景须配置四种语言，用户端「奖励记录」按当前语言展示对应奖励名称。</p>' +
             '</div></div>';
 
         if (options.defaultActivityId) {
             const sel = document.getElementById(prefix + '-platform-select');
             if (sel) sel.value = options.defaultActivityId;
         }
-        if (options.defaultCustomName) {
-            const inp = document.getElementById(prefix + '-custom-input');
+        if (options.defaultRewardNames) {
+            REWARD_LANGS.forEach(function (lang) {
+                const inp = document.getElementById(prefix + '-reward-' + lang.key);
+                if (inp && options.defaultRewardNames[lang.key]) inp.value = options.defaultRewardNames[lang.key];
+            });
+        } else if (options.defaultCustomName) {
+            const inp = document.getElementById(prefix + '-reward-zh-CN');
             if (inp) inp.value = options.defaultCustomName;
         }
     };
@@ -73,6 +96,15 @@
         document.getElementById(prefix + '-custom-panel').classList.toggle('hidden', mode !== 'custom');
     };
 
+    function readRewardNames(prefix) {
+        const names = {};
+        REWARD_LANGS.forEach(function (lang) {
+            const inp = document.getElementById(prefix + '-reward-' + lang.key);
+            names[lang.key] = inp ? inp.value.trim() : '';
+        });
+        return names;
+    }
+
     window.getActivityPickerValue = function (prefix) {
         const platformPanel = document.getElementById(prefix + '-platform-panel');
         const isPlatform = platformPanel && !platformPanel.classList.contains('hidden');
@@ -81,23 +113,34 @@
             const id = sel ? sel.value : '';
             if (!id) return { valid: false, message: '请选择平台活动' };
             const act = PLATFORM_ACTIVITIES.find(function (a) { return a.id === id; });
+            const baseName = act ? act.name : id;
             return {
                 valid: true,
                 activityMode: 'platform',
                 activityId: id,
-                activityName: act ? act.name : id,
-                displayLabel: id + ' · ' + (act ? act.name : '')
+                activityName: baseName,
+                rewardNames: {
+                    'zh-CN': baseName,
+                    'zh-TW': baseName,
+                    'en': baseName,
+                    'ja': baseName
+                },
+                displayLabel: id + ' · ' + baseName
             };
         }
-        const inp = document.getElementById(prefix + '-custom-input');
-        const name = inp ? inp.value.trim() : '';
-        if (!name) return { valid: false, message: '请填写自定义活动名称' };
+        const rewardNames = readRewardNames(prefix);
+        const missing = REWARD_LANGS.filter(function (lang) { return !rewardNames[lang.key]; });
+        if (missing.length) {
+            return { valid: false, message: '请填写全部语言的奖励名称（' + missing.map(function (l) { return l.label; }).join('、') + '）' };
+        }
+        const zhName = rewardNames['zh-CN'];
         return {
             valid: true,
             activityMode: 'custom',
             activityId: null,
-            activityName: name,
-            displayLabel: name + '（自定义）'
+            activityName: zhName,
+            rewardNames: rewardNames,
+            displayLabel: zhName + '（自定义）'
         };
     };
 })();
