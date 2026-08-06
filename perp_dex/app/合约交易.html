@@ -1,0 +1,2457 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX Perp Trading</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; gap: 24px; flex-wrap: wrap; }
+
+        .proto-controls { display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+        .proto-btn { background: #111827; color: #fff; padding: 10px 16px; border-radius: 999px; font-size: 11px; font-weight: 800; box-shadow: 0 10px 25px -10px rgba(0,0,0,.35); white-space: nowrap; }
+        .proto-btn.alt { background: #fff; color: #111827; border: 1px solid #e5e7eb; }
+        .proto-btn.warn { background: #ea580c; }
+
+        .countdown-box { background: #fff; border: 1px solid #fed7aa; border-radius: 6px; padding: 8px 10px; min-width: 44px; text-align: center; }
+        .countdown-num { font-size: 16px; font-weight: 900; color: #111827; font-variant-numeric: tabular-nums; }
+        .countdown-label { font-size: 9px; color: #9ca3af; font-weight: 700; margin-top: 2px; }
+        .countdown-compact .countdown-box { padding: 2px 3px; min-width: 0; width: 24px; border-radius: 4px; }
+        .countdown-compact .countdown-num { font-size: 9px; line-height: 1.1; }
+        .countdown-compact .countdown-label { font-size: 6px; margin-top: 1px; line-height: 1; }
+        .countdown-compact .countdown-sep { font-size: 8px; line-height: 1; flex-shrink: 0; }
+
+        .trade-panel { min-width: 0; overflow: hidden; }
+        .trade-field { min-width: 0; width: 100%; overflow: hidden; }
+        .trade-field input { min-width: 0; }
+        .picker-chip { display: inline-flex; align-items: center; gap: 1px; font-size: 9px; font-weight: 700; color: #6b7280; padding-left: 6px; margin-left: 4px; border-left: 1px solid #e5e7eb; white-space: nowrap; flex-shrink: 0; background: none; border-top: none; border-right: none; border-bottom: none; cursor: pointer; }
+        .picker-chip-wide { max-width: none; min-width: 36px; }
+        .tpsl-inline-picker { display: flex; align-items: center; font-size: 8px; font-weight: 700; color: #6b7280; cursor: pointer; min-width: 0; }
+        .tpsl-inline-picker:active { opacity: 0.7; }
+        #trade-panel .input-box { min-height: 40px; box-sizing: border-box; }
+        #trade-panel .input-box.field-tall { padding-top: 16px; display: flex; align-items: flex-end; }
+        #trade-panel .input-box.field-row { display: flex; align-items: center; padding-top: 8px; padding-bottom: 8px; }
+        .sheet-option-rich { padding: 14px 20px; cursor: pointer; border-bottom: 1px solid #f3f4f6; }
+        .sheet-option-rich:active { background: #f9fafb; }
+
+        .pair-row:active { background: #f9fafb; }
+        .pair-tab { color: #9ca3af; font-weight: 700; font-size: 12px; padding-bottom: 10px; position: relative; cursor: pointer; white-space: nowrap; flex-shrink: 0; background: none; border: none; }
+        .pair-tab.active { color: #111827; font-weight: 900; }
+        .pair-tab.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: #111827; border-radius: 1px; }
+        .pair-sheet-panel { height: 82%; min-height: 82%; }
+
+        .phone-shell { width: 375px; height: 812px; background: #000; border-radius: 50px; padding: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative; border: 4px solid #333; }
+        .screen { width: 100%; height: 100%; background: #fff; border-radius: 38px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+
+        .dashed-underline { border-bottom: 1px dashed #d1d5db; }
+        .ob-layout-btn { width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; color: #9ca3af; }
+        .ob-layout-btn.active { color: #111827; background: #f3f4f6; }
+        .input-box { background-color: #f3f4f6; border-radius: 4px; padding: 6px 8px; }
+
+        .slider-container { position: relative; height: 20px; display: flex; align-items: center; }
+        .slider-line { height: 2px; background: #e5e7eb; width: 100%; position: relative; }
+        .slider-dot { width: 6px; height: 6px; background: #d1d5db; border-radius: 50%; position: absolute; top: -2px; }
+
+        .tab-active { color: #000; font-weight: 800; position: relative; border-bottom: 2px solid #000; }
+
+        .app-sheet { animation: slideUp .22s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .app-modal { animation: popIn .18s ease-out; }
+        @keyframes popIn { from { transform: scale(.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .mode-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; text-align: center; font-size: 11px; font-weight: 700; color: #9ca3af; cursor: pointer; }
+        .mode-card.active { border-color: #111827; background: #f9fafb; color: #111827; }
+
+        input[type=range] { -webkit-appearance: none; width: 100%; height: 4px; background: #e5e7eb; border-radius: 999px; outline: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #111827; cursor: pointer; }
+        input[type=range].accent-green::-webkit-slider-thumb { background: #22c55e; }
+        input[type=range].accent-red::-webkit-slider-thumb { background: #ef4444; }
+
+        .tab-secondary { color: #9ca3af; font-weight: 700; font-size: 12px; transition: all 0.2s; }
+        .tab-secondary.active { color: #000; font-weight: 900; }
+        .order-card { background: white; border-bottom: 1px solid #f3f4f6; padding: 16px 20px; transition: background 0.2s; }
+        .order-card:active { background: #f9fafb; }
+        .filter-btn { display: flex; align-items: center; background: #f3f4f6; border-radius: 4px; padding: 4px 8px; font-size: 10px; font-weight: 800; color: #6b7280; }
+        .sheet-option { padding: 16px 20px; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .sheet-option:active { background: #f9fafb; }
+        .sheet-option.selected { color: #111827; }
+        .bottom-sheet { position: absolute; bottom: 0; width: 100%; background: white; border-top-left-radius: 24px; border-top-right-radius: 24px; z-index: 110; transform: translateY(100%); transition: transform 0.3s ease-out; }
+        .bottom-sheet.active { transform: translateY(0); }
+        .filter-option-btn { border: 1px solid #f3f4f6; border-radius: 8px; padding: 10px; text-align: center; font-weight: 800; font-size: 11px; color: #6b7280; }
+        .filter-option-btn.active { border-color: #000; color: #000; background-color: #f9fafb; }
+        .more-menu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px 8px; padding: 16px 14px 8px; }
+        .more-menu-tile { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 2px; cursor: pointer; border-radius: 10px; min-width: 0; }
+        .more-menu-tile:active { background: #f9fafb; }
+        .more-menu-icon { width: 40px; height: 40px; border-radius: 12px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #374151; }
+        .more-menu-label { font-size: 9px; font-weight: 700; color: #374151; text-align: center; line-height: 1.25; word-break: keep-all; }
+        .ob-row { position: relative; display: flex; justify-content: space-between; align-items: center; min-height: 18px; padding: 0 1px; overflow: hidden; }
+        .ob-depth-bar { position: absolute; top: 1px; bottom: 1px; right: 0; z-index: 0; border-radius: 2px; transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1); }
+        .ob-depth-bar.sell { background: rgba(239, 68, 68, 0.14); }
+        .ob-depth-bar.buy { background: rgba(34, 197, 94, 0.14); }
+        .ob-row-text { position: relative; z-index: 1; }
+        @keyframes depthGlow { 0%, 100% { opacity: 0.72; } 50% { opacity: 1; } }
+        .ob-depth-bar { animation: depthGlow 2.4s ease-in-out infinite; }
+
+        .close-price-combo { display: flex; align-items: stretch; gap: 8px; }
+        .close-price-input { flex: 1; min-width: 0; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 12px; font-size: 12px; font-weight: 700; outline: none; background: #fff; font-family: ui-monospace, monospace; }
+        .close-price-input:disabled { background: #f9fafb; color: #9ca3af; text-align: center; }
+        .close-price-type-btn { display: flex; align-items: center; gap: 4px; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 12px; font-size: 11px; font-weight: 800; color: #374151; background: #fff; flex-shrink: 0; min-width: 72px; justify-content: center; }
+        .qty-slider-wrap { position: relative; height: 22px; display: flex; align-items: center; padding: 0 2px; }
+        .qty-slider-wrap input[type=range] { position: absolute; left: 0; right: 0; width: 100%; z-index: 2; background: transparent; height: 22px; margin: 0; -webkit-appearance: none; appearance: none; }
+        .qty-slider-wrap input[type=range]::-webkit-slider-runnable-track { background: transparent; height: 2px; }
+        .qty-slider-wrap input[type=range]::-moz-range-track { background: transparent; height: 2px; border: none; }
+        .qty-slider-wrap .slider-line { width: 100%; pointer-events: none; }
+        .pos-tag-long { background: #dcfce7; color: #16a34a; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; }
+        .pos-tag-short { background: #fee2e2; color: #dc2626; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; }
+        .pos-tag-lev { background: #f3f4f6; color: #6b7280; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; }
+        .tpsl-type-toggle { display: flex; background: #f3f4f6; border-radius: 6px; padding: 2px; }
+        .tpsl-type-toggle button { flex: 1; padding: 4px 0; font-size: 9px; font-weight: 800; border-radius: 4px; color: #9ca3af; }
+        .tpsl-type-toggle button.active { background: #fff; color: #111827; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+        .tpsl-estimate { font-size: 9px; font-weight: 700; line-height: 1.4; }
+        .tpsl-estimate.hidden { display: none; }
+        .tpsl-estimate.positive { color: #16a34a; }
+        .tpsl-estimate.negative { color: #dc2626; }
+        .tpsl-conflict-hint { font-size: 9px; color: #b45309; font-weight: 600; line-height: 1.5; padding: 6px 8px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="proto-controls">
+    <button id="btn-toggle-premarket" class="proto-btn warn" onclick="togglePremarketMode()">切换：待开盘</button>
+    <button id="btn-toggle-guest" class="proto-btn alt" onclick="toggleGuestMode()">未登录状态</button>
+</div>
+
+<div class="phone-shell" id="phone-shell">
+    <div class="screen" id="app-screen">
+
+        <!-- 1. 頂部導航欄 -->
+        <header class="pt-12 pb-2 px-4 flex justify-between items-center border-b border-gray-50 shrink-0">
+            <div class="flex items-center space-x-2">
+                <div id="pair-trigger" onclick="openSheet('pair-sheet')" class="flex items-center space-x-1 cursor-pointer active:opacity-70">
+                    <span id="header-pair-name" class="font-black text-lg">BTCUSDT</span>
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                </div>
+                <div id="header-change-badge" class="bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded-sm font-bold">+2.45%</div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="行情详情.html" class="active:opacity-60">
+                    <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                </a>
+                <button type="button" onclick="updateMoreMenuFavoriteUI(); openSheet('more-menu-sheet')" class="active:opacity-60">
+                    <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto no-scrollbar relative">
+            <!-- 2. 中間交易區域 (盤口 + 面板) -->
+            <div class="flex px-4 py-3 space-x-4 min-w-0 overflow-hidden">
+
+                <!-- 2.1 左側盤口深度 -->
+                <div class="w-[45%] flex flex-col relative min-h-[320px]">
+                    <div class="text-[10px] mb-3">
+                        <span id="funding-rate-trigger" onclick="openSheet('funding-sheet')" class="text-gray-400 dashed-underline cursor-pointer active:opacity-70">資金費率 / <span id="funding-rate-value">08:42:15</span></span>
+                    </div>
+
+                    <!-- 正常盤口內容 -->
+                    <div id="ob-normal-content" class="flex flex-col flex-1">
+                    <div class="flex justify-between text-[10px] text-gray-400 mb-2 font-bold uppercase">
+                        <span>價格(USDT)</span>
+                        <span id="ob-qty-unit-label">數量(BTC)</span>
+                    </div>
+                    <div id="ob-sell-list" class="flex flex-col space-y-1 text-[11px] font-bold flex-1 min-h-0 overflow-hidden"></div>
+                    <div id="ob-mid-price-bar" class="py-2 flex flex-col items-center shrink-0">
+                        <span id="ob-last-price" class="text-green-500 text-sm font-black">72305.9</span>
+                        <span id="ob-mark-price" class="text-gray-400 text-[10px] dashed-underline">72311.9</span>
+                    </div>
+                    <div id="ob-buy-list" class="flex flex-col space-y-1 text-[11px] font-bold flex-1 min-h-0 overflow-hidden"></div>
+                    <div class="mt-3 flex justify-between items-center shrink-0">
+                        <div class="flex items-center gap-1.5" id="ob-layout-btns">
+                            <button type="button" class="ob-layout-btn active" data-ob-layout="split" title="買賣各半" onclick="setObLayoutMode('split')">
+                                <svg width="16" height="16" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="1" width="12" height="5.5" rx="1" fill="#ef4444" opacity=".85"/><rect x="1" y="7.5" width="12" height="5.5" rx="1" fill="#22c55e" opacity=".85"/></svg>
+                            </button>
+                            <button type="button" class="ob-layout-btn" data-ob-layout="buy" title="僅買單" onclick="setObLayoutMode('buy')">
+                                <svg width="16" height="16" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="1" width="12" height="12" rx="1" fill="#22c55e" opacity=".85"/></svg>
+                            </button>
+                            <button type="button" class="ob-layout-btn" data-ob-layout="sell" title="僅賣單" onclick="setObLayoutMode('sell')">
+                                <svg width="16" height="16" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="1" width="12" height="12" rx="1" fill="#ef4444" opacity=".85"/></svg>
+                            </button>
+                        </div>
+                        <div id="ob-precision-trigger" onclick="openSheet('precision-sheet')" class="bg-gray-100 px-2 py-0.5 rounded text-[10px] font-bold flex items-center cursor-pointer active:bg-gray-200">
+                            <span id="ob-precision-label">0.1</span> <svg class="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                        </div>
+                    </div>
+                    </div>
+
+                    <!-- 待開盤：覆蓋盤口區域 -->
+                    <div id="premarket-ob-panel" class="hidden absolute inset-0 top-6 flex flex-col items-center justify-center bg-white z-10 px-1 text-center overflow-hidden">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-100 to-orange-50 border border-orange-100 flex items-center justify-center mb-2">
+                            <span class="text-sm font-black text-orange-500">P</span>
+                        </div>
+                        <div class="flex items-center space-x-1 mb-1">
+                            <span class="px-1 py-0.5 bg-orange-50 text-orange-600 text-[7px] font-black rounded-sm uppercase">新幣上線</span>
+                        </div>
+                        <p class="text-[9px] font-black text-gray-900 mb-0.5 leading-tight">PEPE / USDT</p>
+                        <p class="text-[7px] text-gray-400 mb-2 leading-snug px-1">即將開啟交易</p>
+                        <p class="text-[8px] font-bold text-gray-500 mb-1.5">距離交易開啟</p>
+                        <div class="countdown-compact flex items-center justify-center gap-0.5 w-full max-w-[130px]">
+                            <div class="countdown-box"><div id="cd-days" class="countdown-num">02</div><div class="countdown-label">天</div></div>
+                            <span class="countdown-sep text-gray-300 font-black">:</span>
+                            <div class="countdown-box"><div id="cd-hours" class="countdown-num">14</div><div class="countdown-label">時</div></div>
+                            <span class="countdown-sep text-gray-300 font-black">:</span>
+                            <div class="countdown-box"><div id="cd-mins" class="countdown-num">35</div><div class="countdown-label">分</div></div>
+                            <span class="countdown-sep text-gray-300 font-black">:</span>
+                            <div class="countdown-box"><div id="cd-secs" class="countdown-num">22</div><div class="countdown-label">秒</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2.2 右側交易功能面板 -->
+                <div id="trade-panel" class="flex-1 flex flex-col space-y-2 trade-panel min-w-0">
+                    <!-- 全倉 / 多空槓桿 -->
+                    <div class="flex space-x-1">
+                        <button id="btn-margin" onclick="openSheet('margin-sheet')" class="flex-1 bg-gray-100 py-1.5 rounded text-[11px] font-bold">全倉</button>
+                        <button onclick="openSheet('leverage-sheet')" class="flex-1 bg-gray-100 py-1.5 rounded text-[10px] font-bold flex items-center justify-center gap-1">
+                            <span id="display-long-lev" class="text-green-500">20x</span>
+                            <span class="text-gray-300">/</span>
+                            <span id="display-short-lev" class="text-red-500">10x</span>
+                        </button>
+                    </div>
+
+                    <!-- 開/平倉切換 -->
+                    <div class="bg-gray-100 p-0.5 rounded flex">
+                        <button id="btn-open" onclick="switchPositionSide('open')" class="flex-1 bg-white shadow-sm rounded py-1 text-[11px] font-bold">開倉</button>
+                        <button id="btn-close" onclick="switchPositionSide('close')" class="flex-1 py-1 text-[11px] font-bold text-gray-400">平倉</button>
+                    </div>
+
+                    <!-- 訂單類型 -->
+                    <div class="input-box flex justify-between items-center cursor-pointer active:bg-gray-200" onclick="openSheet('order-type-sheet')">
+                        <div class="flex items-center space-x-1">
+                            <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+                            <span id="order-type-label" class="text-[11px] font-bold">限價委託</span>
+                        </div>
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                    </div>
+
+                    <!-- 價格輸入 -->
+                    <div id="price-input-container" class="flex items-center space-x-1">
+                        <div class="flex-1 input-box relative pt-4 cursor-pointer" id="price-field-wrap" onclick="handlePriceFieldClick()">
+                            <span class="absolute top-1 left-2 text-[8px] text-gray-400 font-bold uppercase">價格</span>
+                            <input id="price-input" type="text" value="72305.9" class="bg-transparent text-[11px] font-bold w-full outline-none" oninput="updateTPSLEstimates()">
+                            <div id="price-bbo-display" class="hidden bg-transparent text-[11px] font-bold w-full flex items-center justify-between">
+                                <span id="price-bbo-label">对手价 1</span>
+                                <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                            </div>
+                        </div>
+                        <button id="btn-bbo" onclick="toggleBestPriceMode()" class="bg-gray-100 px-2 py-2.5 rounded text-[10px] font-bold shrink-0">最优价</button>
+                    </div>
+
+                    <!-- 止盈止損下單區 -->
+                    <div id="tpsl-order-container" class="hidden space-y-2 min-w-0 overflow-hidden">
+                        <div class="tpsl-inline-picker min-w-0" onclick="openPickerSheet('tpsl-mode')">
+                            <span id="tpsl-mode-value">单向</span>
+                            <svg class="w-2.5 h-2.5 ml-0.5 text-gray-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                        </div>
+                        <div id="tpsl-triggers-container" class="space-y-2"></div>
+                        <div id="tpsl-conflict-hint" class="tpsl-conflict-hint hidden"></div>
+                    </div>
+
+                    <!-- 數量輸入 -->
+                    <div class="input-box field-tall relative flex min-w-0 pb-1.5">
+                        <span class="absolute top-1 left-2 text-[8px] text-gray-400 font-bold uppercase">數量</span>
+                        <input id="qty-input" type="text" placeholder="0.00" class="bg-transparent text-[11px] font-bold flex-1 min-w-0 outline-none pb-0.5" oninput="updateTPSLEstimates()">
+                        <button type="button" id="qty-unit-trigger" onclick="openSheet('unit-sheet')" class="picker-chip picker-chip-wide shrink-0 whitespace-nowrap">
+                            <span id="qty-unit-label">BTC</span>
+                            <svg class="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                        </button>
+                    </div>
+
+                    <!-- 滾動條百分比 -->
+                    <div class="slider-container px-1">
+                        <div class="slider-line">
+                            <div class="slider-dot" style="left: 0%"></div>
+                            <div class="slider-dot" style="left: 25%"></div>
+                            <div class="slider-dot" style="left: 50%"></div>
+                            <div class="slider-dot" style="left: 75%"></div>
+                            <div class="slider-dot" style="left: 100%"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between text-[10px]">
+                        <span class="text-gray-400">可用</span>
+                        <div class="flex items-center space-x-1">
+                            <span id="available-balance" class="font-bold text-gray-900">12,450.00 USDT</span>
+                            <div id="deposit-plus-btn" class="bg-gray-100 w-3 h-3 flex items-center justify-center rounded-full text-[8px] cursor-pointer">+</div>
+                        </div>
+                    </div>
+
+                    <!-- 跟隨止盈止損（限價/市價 · 開倉） -->
+                    <div id="attach-tpsl-section" class="min-w-0 overflow-hidden">
+                        <div class="flex items-center space-x-1">
+                            <input type="checkbox" id="check-tpsl" onchange="toggleAttachTPSL()" class="w-3 h-3 rounded-sm accent-black shrink-0">
+                            <span class="text-[11px] font-bold text-gray-500 dashed-underline">止盈/止損</span>
+                        </div>
+                        <div id="attach-tpsl-inputs" class="hidden mt-2 space-y-2 min-w-0">
+                            <div class="space-y-0.5">
+                                <div class="text-[8px] text-gray-400 font-bold">止盈</div>
+                                <div class="input-box field-row trade-field flex items-center min-w-0">
+                                    <input id="attach-tp-price" class="bg-transparent text-[11px] font-bold flex-1 min-w-0 outline-none" placeholder="價格" oninput="updateTPSLEstimates()">
+                                    <button type="button" class="picker-chip" onclick="event.stopPropagation(); openPickerSheet('trigger-type', 'attach-tp')">
+                                        <span id="attach-tp-trigger-label">最新价格</span>
+                                        <svg class="w-2.5 h-2.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                                    </button>
+                                </div>
+                                <div id="attach-tp-estimate" class="tpsl-estimate hidden"></div>
+                            </div>
+                            <div class="space-y-0.5">
+                                <div class="text-[8px] text-gray-400 font-bold">止損</div>
+                                <div class="input-box field-row trade-field flex items-center min-w-0">
+                                    <input id="attach-sl-price" class="bg-transparent text-[11px] font-bold flex-1 min-w-0 outline-none" placeholder="價格" oninput="updateTPSLEstimates()">
+                                    <button type="button" class="picker-chip" onclick="event.stopPropagation(); openPickerSheet('trigger-type', 'attach-sl')">
+                                        <span id="attach-sl-trigger-label">最新价格</span>
+                                        <svg class="w-2.5 h-2.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                                    </button>
+                                </div>
+                                <div id="attach-sl-estimate" class="tpsl-estimate hidden"></div>
+                            </div>
+                            <div id="attach-tpsl-conflict-hint" class="tpsl-conflict-hint hidden"></div>
+                        </div>
+                    </div>
+
+                    <!-- 開倉區 -->
+                    <div id="open-order-section" class="space-y-2">
+                        <div class="space-y-0.5">
+                            <div class="flex justify-between text-[10px] text-gray-400"><span>最大可開</span><span id="stat-max-open-long" class="font-bold text-gray-900">50,000 USDT</span></div>
+                            <div class="flex justify-between text-[10px] text-gray-400"><span>強平價格</span><span id="stat-liq-long" class="font-bold text-gray-900">65,241.2</span></div>
+                        </div>
+                        <button id="btn-open-long" onclick="openOrderConfirm('long')" class="w-full bg-green-500 text-white py-2 rounded text-xs font-black">買入 / 做多</button>
+
+                        <div class="space-y-0.5 pt-1">
+                            <div class="flex justify-between text-[10px] text-gray-400"><span>最大可開</span><span id="stat-max-open-short" class="font-bold text-gray-900">50,000 USDT</span></div>
+                            <div class="flex justify-between text-[10px] text-gray-400"><span>強平價格</span><span id="stat-liq-short" class="font-bold text-gray-900">78,120.5</span></div>
+                        </div>
+                        <button id="btn-open-short" onclick="openOrderConfirm('short')" class="w-full bg-red-500 text-white py-2 rounded text-xs font-black">賣出 / 做空</button>
+                    </div>
+
+                    <!-- 平倉區 -->
+                    <div id="close-order-section" class="hidden space-y-2">
+                        <div class="space-y-0.5">
+                            <div class="flex justify-between text-[10px] text-gray-400"><span>可平多</span><span id="stat-close-long-qty" class="font-bold text-gray-900">0.050 BTC</span></div>
+                        </div>
+                        <button id="btn-close-long" onclick="openOrderConfirm('close-long')" class="w-full bg-red-500 text-white py-2 rounded text-xs font-black">平多</button>
+                        <div class="space-y-0.5 pt-1">
+                            <div class="flex justify-between text-[10px] text-gray-400"><span>可平空</span><span id="stat-close-short-qty" class="font-bold text-gray-900">0.000 BTC</span></div>
+                        </div>
+                        <button id="btn-close-short" onclick="openOrderConfirm('close-short')" class="w-full bg-green-500 text-white py-2 rounded text-xs font-black opacity-40" disabled>平空</button>
+                    </div>
+
+                    <!-- 未登錄：單一交易按鈕 -->
+                    <div id="guest-trade-section" class="hidden">
+                        <button onclick="alert('請先登錄')" class="w-full bg-gray-900 text-white py-2.5 rounded text-xs font-black">登錄後交易</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 倉位管理區域 -->
+            <div class="mt-4 border-t-4 border-gray-50">
+                <div class="flex justify-between items-center px-4 py-3">
+                    <div class="flex space-x-6">
+                        <button id="tab-positions" onclick="switchPositionTab('positions')" class="tab-active text-[13px] pb-1">當前持倉(1)</button>
+                        <button id="tab-orders" onclick="switchPositionTab('orders')" class="text-gray-400 font-bold text-[13px] pb-1">當前委託(3)</button>
+                    </div>
+                    <a href="交易流水頁面.html"><svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg></a>
+                </div>
+
+                <!-- 當前持倉 -->
+                <div id="positions-panel">
+                    <div class="flex justify-between items-center px-4 mb-4">
+                        <span class="text-[11px] font-bold text-gray-500"><input type="checkbox" class="w-3 h-3 accent-black"> 隱藏其他合約</span>
+                        <button id="btn-close-all" onclick="openModal('close-all-modal')" class="bg-gray-100 px-3 py-1.5 rounded text-[11px] font-bold">一鍵平倉</button>
+                    </div>
+                    <div class="px-4 pb-20">
+                        <div id="positions-card" class="border border-gray-100 rounded-lg p-4 space-y-4 shadow-sm">
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-center space-x-2">
+                                    <div class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">多</div>
+                                    <span class="font-black text-[13px]">BTCUSDT</span>
+                                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">20X</span>
+                                </div>
+                                <button type="button" onclick="openSharePnl()" class="p-1 hover:bg-gray-100 rounded-full transition-colors shrink-0" title="分享收益">
+                                    <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                                </button>
+                            </div>
+                            <div class="flex justify-between items-end">
+                                <div class="space-y-1">
+                                    <p class="text-[10px] text-gray-400 font-bold uppercase dashed-underline inline-block cursor-pointer active:opacity-70" onclick="openRealizedPnlSheet(REALIZED_PNL_BREAKDOWN.pos)">未實現盈虧(USDT)</p>
+                                    <p id="pos-pnl" class="text-lg font-black text-green-500">+125.42</p>
+                                </div>
+                                <div class="text-right space-y-1">
+                                    <p class="text-[10px] text-gray-400 font-bold dashed-underline inline-block">投資回報率</p>
+                                    <p id="pos-roi" class="text-sm font-black text-green-500">+12.35%</p>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 py-2 border-t border-gray-50">
+                                <div class="space-y-1">
+                                    <p class="text-gray-400 text-[10px] font-bold">持倉數量</p>
+                                    <p id="pos-qty" class="text-[11px] font-black">0.050 BTC</p>
+                                </div>
+                                <div class="space-y-1">
+                                    <p class="text-gray-400 text-[10px] font-bold">保證金</p>
+                                    <p id="pos-margin" class="text-[11px] font-black">1,240.00</p>
+                                </div>
+                                <div class="space-y-1 text-right">
+                                    <p class="text-gray-400 text-[10px] font-bold">強平價格</p>
+                                    <p id="pos-liq" class="text-[11px] font-black text-orange-500">65,241.2</p>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2 pt-2">
+                                <button onclick="openSheet('leverage-sheet')" class="flex-1 bg-gray-100 py-2 rounded text-[11px] font-bold">槓桿</button>
+                                <button onclick="openPositionTPSLSheet()" class="flex-1 bg-gray-100 py-2 rounded text-[11px] font-bold">止盈止損</button>
+                                <button onclick="openClosePositionSheet()" class="flex-1 bg-gray-100 py-2 rounded text-[11px] font-bold">平倉</button>
+                            </div>
+                        </div>
+                        <div id="positions-empty" class="hidden py-16 text-center">
+                            <p class="text-[11px] font-bold text-gray-300">暫無持倉</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 當前委託 -->
+                <div id="orders-panel" class="hidden">
+                    <div id="order-secondary-tabs" class="flex items-center justify-between px-4 py-2">
+                        <div class="flex space-x-6">
+                            <button onclick="switchOrderSecondary('basic')" id="s-basic" class="tab-secondary active text-[14px]">基礎單 (1)</button>
+                            <button onclick="switchOrderSecondary('tpsl')" id="s-tpsl" class="tab-secondary text-[14px]">止盈止損單 (2)</button>
+                        </div>
+                    </div>
+                    <div id="order-filter-bar" class="px-4 py-2 flex justify-between items-center border-b border-gray-50">
+                        <div class="flex items-center flex-1 overflow-x-auto no-scrollbar space-x-2" id="order-filter-group">
+                            <button onclick="openOrderFilterModal('contract')" class="filter-btn shrink-0">合約 <svg class="w-2 h-2 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M5 7l5 5 5-5z"/></svg></button>
+                            <button onclick="openOrderFilterModal('orderType')" class="filter-btn shrink-0">訂單類型 <svg class="w-2 h-2 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M5 7l5 5 5-5z"/></svg></button>
+                        </div>
+                        <button id="btn-all-cancel" onclick="openCancelFlow()" class="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-sm uppercase ml-2 shrink-0">全部取消</button>
+                    </div>
+                    <div id="order-list-container" class="pb-20">
+                        <!-- JS 動態注入 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部導航欄 -->
+        <nav class="absolute bottom-0 w-full bg-white border-t border-gray-100 px-4 pt-2 pb-8 flex justify-between items-center shrink-0 z-10">
+            <a href="首页.html"><div class="flex flex-col items-center space-y-1 px-3 text-gray-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span class="text-[10px] font-bold">首頁</span></div></a>
+            <a href="行情.html"><div class="flex flex-col items-center space-y-1 px-3 text-gray-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg><span class="text-[10px] font-bold">行情</span></div></a>
+            <a href="合约交易.html"><div class="flex flex-col items-center space-y-1 px-3 text-black"><div class="bg-black rounded-lg p-1.5 -mt-6 shadow-lg shadow-black/20 text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg></div><span class="text-[10px] pt-1 font-bold">永續合約</span></div></a>
+            <a href="奖励.html"><div class="flex flex-col items-center space-y-1 px-3 text-gray-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12z"></path></svg><span class="text-[10px]">獎勵</span></div></a>
+            <a href="资产.html"><div class="flex flex-col items-center space-y-1 px-3 text-gray-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg><span class="text-[10px]">资产</span></div></a>
+        </nav>
+
+        <!-- ===== 底部弹层：订单类型 ===== -->
+        <div id="order-type-sheet" class="hidden absolute inset-0 z-50 flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('order-type-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet">
+                <div class="py-4 px-5 border-b border-gray-50">
+                    <h3 class="text-[13px] font-black text-gray-900">訂單類型</h3>
+                </div>
+                <div class="divide-y divide-gray-50">
+                    <div class="px-5 py-4 active:bg-gray-50 cursor-pointer" onclick="selectOrderMode('limit')"><span class="text-[13px] font-bold">限價委託</span></div>
+                    <div class="px-5 py-4 active:bg-gray-50 cursor-pointer" onclick="selectOrderMode('market')"><span class="text-[13px] font-bold">市價委託</span></div>
+                    <div class="px-5 py-4 active:bg-gray-50 cursor-pointer" onclick="selectOrderMode('profit-loss')"><span class="text-[13px] font-bold">止盈止損</span></div>
+                </div>
+                <div class="p-4"><button onclick="closeSheet('order-type-sheet')" class="w-full py-3 text-[13px] font-bold text-gray-400 bg-gray-50 rounded-xl">取消</button></div>
+            </div>
+        </div>
+
+        <!-- ===== 底部弹层：杠杆调整 ===== -->
+        <div id="leverage-sheet" class="hidden absolute inset-0 z-50 flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('leverage-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet max-h-[85%] overflow-y-auto">
+                <div class="py-4 px-5 border-b border-gray-50 flex justify-between items-center">
+                    <h3 class="text-[13px] font-black">調整槓桿</h3>
+                    <button onclick="closeSheet('leverage-sheet')" class="text-gray-400 text-lg leading-none">✕</button>
+                </div>
+                <div class="p-5 space-y-5">
+                    <!-- 做多 -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-[12px] font-bold text-gray-700">做多槓桿</span>
+                            <span class="text-[10px] text-gray-400">當前 <span id="long-lev-preview" class="text-green-500 font-bold">20x</span></span>
+                        </div>
+                        <div class="flex items-center border border-gray-200 rounded-lg mb-3">
+                            <button onclick="adjustLeverage('long', -1)" class="w-10 h-10 text-xl text-gray-400">−</button>
+                            <div class="flex-1 text-center font-black text-green-500 text-lg"><span id="long-lev-input">20</span>x</div>
+                            <button onclick="adjustLeverage('long', 1)" class="w-10 h-10 text-xl text-gray-400">+</button>
+                        </div>
+                        <input type="range" id="long-lev-slider" class="accent-green w-full mb-2" min="1" max="150" value="20" oninput="syncLeverageSlider('long', this.value)">
+                        <p class="text-[9px] text-gray-400 bg-green-50 p-2 rounded border border-green-100">調整後最大可開 <b class="text-green-600">50,000 USDT</b></p>
+                    </div>
+                    <div class="border-t border-gray-100"></div>
+                    <!-- 做空 -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-[12px] font-bold text-gray-700">做空槓桿</span>
+                            <span class="text-[10px] text-gray-400">當前 <span id="short-lev-preview" class="text-red-500 font-bold">10x</span></span>
+                        </div>
+                        <div class="flex items-center border border-gray-200 rounded-lg mb-3">
+                            <button onclick="adjustLeverage('short', -1)" class="w-10 h-10 text-xl text-gray-400">−</button>
+                            <div class="flex-1 text-center font-black text-red-500 text-lg"><span id="short-lev-input">10</span>x</div>
+                            <button onclick="adjustLeverage('short', 1)" class="w-10 h-10 text-xl text-gray-400">+</button>
+                        </div>
+                        <input type="range" id="short-lev-slider" class="accent-red w-full mb-2" min="1" max="150" value="10" oninput="syncLeverageSlider('short', this.value)">
+                        <p class="text-[9px] text-gray-400 bg-red-50 p-2 rounded border border-red-100">調整後最大可開 <b class="text-red-600">50,000 USDT</b></p>
+                    </div>
+                    <button onclick="confirmLeverage()" class="w-full bg-black text-white py-3 rounded-xl text-[13px] font-black">確認</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 底部弹层：保证金模式 ===== -->
+        <div id="margin-sheet" class="hidden absolute inset-0 z-50 flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('margin-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet">
+                <div class="py-4 px-5 border-b border-gray-50 flex justify-between items-center">
+                    <h3 class="text-[13px] font-black">保證金模式</h3>
+                    <button onclick="closeSheet('margin-sheet')" class="text-gray-400 text-lg leading-none">✕</button>
+                </div>
+                <div class="p-5 space-y-4">
+                    <div class="flex gap-2">
+                        <div id="margin-cross" class="mode-card active flex-1" onclick="selectMarginMode('cross')">全倉</div>
+                        <div id="margin-isolated" class="mode-card flex-1" onclick="selectMarginMode('isolated')">逐倉</div>
+                    </div>
+                    <div class="text-[10px] text-gray-400 space-y-3 leading-relaxed">
+                        <p>* 調整保證金模式僅對當前合約生效。</p>
+                        <p>全倉：保證金資產相同的全倉倉位共享該資產的全倉保證金。強平時可能損失全部保證金及該資產下所有全倉倉位。</p>
+                        <p>逐倉：一定數量保證金分配到倉位上。保證金虧損低於維持保證金時，倉位將被強平。</p>
+                    </div>
+                    <button onclick="confirmMarginMode()" class="w-full bg-black text-white py-3 rounded-xl text-[13px] font-black">確認</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 居中弹窗：下单确认 ===== -->
+        <div id="order-confirm-modal" class="hidden absolute inset-0 z-[60] flex items-center justify-center rounded-[38px] overflow-hidden px-6">
+            <div class="absolute inset-0 bg-black/40" onclick="closeModal('order-confirm-modal')"></div>
+            <div class="relative w-full bg-white rounded-2xl shadow-2xl app-modal overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-50 flex justify-between items-center">
+                    <h3 id="confirm-title" class="text-[13px] font-black">BTCUSDT 開多</h3>
+                    <button onclick="closeModal('order-confirm-modal')" class="text-gray-400 text-lg">✕</button>
+                </div>
+                <div class="p-5 space-y-3 text-[11px]">
+                    <div class="flex justify-between font-bold"><span class="text-gray-400">價格</span><span id="confirm-price" class="text-gray-900">72,305.9 USDT</span></div>
+                    <div class="flex justify-between font-bold"><span class="text-gray-400">數量</span><span id="confirm-amount" class="text-gray-900">800 USDT</span></div>
+                    <div class="flex justify-between font-bold"><span class="text-gray-400">保證金</span><span id="confirm-margin" class="text-gray-900">40.00 USDT</span></div>
+                    <div class="flex justify-between font-bold"><span class="text-gray-400">預估強平價</span><span id="confirm-liq" class="text-gray-900">65,241.2</span></div>
+                    <div class="flex justify-between font-bold pt-2 border-t border-gray-50"><span class="text-gray-400">止盈/止損</span><span id="confirm-tpsl" class="text-gray-400">--</span></div>
+                    <label class="flex items-start space-x-2 pt-1">
+                        <input type="checkbox" class="w-3.5 h-3.5 mt-0.5 accent-black">
+                        <span class="text-[10px] text-gray-400 leading-relaxed">不再為<span id="confirm-type-text">限價單</span>提示二次確認</span>
+                    </label>
+                    <button id="confirm-action-btn" onclick="executeOrder()" class="w-full bg-green-500 text-white py-3 rounded-xl text-[12px] font-black">確認</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 居中弹窗：一键平仓 ===== -->
+        <div id="close-all-modal" class="hidden absolute inset-0 z-[60] flex items-center justify-center rounded-[38px] overflow-hidden px-6">
+            <div class="absolute inset-0 bg-black/40" onclick="closeModal('close-all-modal')"></div>
+            <div class="relative w-full bg-white rounded-2xl shadow-2xl app-modal overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-50 flex justify-between items-center">
+                    <h3 class="text-[13px] font-black">一鍵平倉確認</h3>
+                    <button onclick="closeModal('close-all-modal')" class="text-gray-400 text-lg">✕</button>
+                </div>
+                <div class="p-5 space-y-4">
+                    <p class="text-[12px] font-bold text-gray-900">確定要平掉所有持倉嗎？</p>
+                    <p class="text-[11px] text-gray-400 leading-relaxed">此操作將按市價立即平掉您所有當前合約的持倉，可能導致較大滑點。</p>
+                    <div class="flex space-x-3 pt-1">
+                        <button onclick="closeModal('close-all-modal')" class="flex-1 border border-gray-200 py-3 rounded-xl text-[12px] font-bold text-gray-400">取消</button>
+                        <button onclick="executeCloseAll()" class="flex-1 bg-orange-500 text-white py-3 rounded-xl text-[12px] font-black">確認平倉</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 底部弹层：持仓止盈止损设置 ===== -->
+        <div id="position-tpsl-sheet" class="hidden absolute inset-0 z-[55] flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('position-tpsl-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet max-h-[90%] overflow-y-auto">
+                <div class="py-4 px-5 border-b border-gray-50 flex justify-between items-start gap-3 sticky top-0 bg-white z-10">
+                    <div class="min-w-0">
+                        <h3 class="text-[13px] font-black text-gray-900">止盈止損設置</h3>
+                        <div class="flex flex-wrap items-center gap-1 mt-2">
+                            <span id="pos-tpsl-pair-tag" class="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-bold">BNBUSDT</span>
+                            <span class="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold">逐倉</span>
+                            <span id="pos-tpsl-lev-tag" class="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold">20X</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <button type="button" onclick="simulatePositionTPSLState(true)" class="text-[9px] text-gray-300 underline">模擬已設置</button>
+                        <button type="button" onclick="closeSheet('position-tpsl-sheet')" class="text-gray-400 text-lg leading-none">✕</button>
+                    </div>
+                </div>
+                <div class="p-5 space-y-5 pb-8">
+                    <div class="grid grid-cols-3 gap-3 text-center border-b border-gray-50 pb-4">
+                        <div class="space-y-1">
+                            <p class="text-[9px] text-gray-400 font-bold">開倉均價</p>
+                            <p id="pos-tpsl-open-price" class="text-[12px] font-black text-gray-900">579.61</p>
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-[9px] text-gray-400 font-bold">當前標記價</p>
+                            <p id="pos-tpsl-mark-price" class="text-[12px] font-black text-blue-600">579.773</p>
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-[9px] text-gray-400 font-bold">持倉數量</p>
+                            <p id="pos-tpsl-qty" class="text-[12px] font-black text-gray-900">1245.80 USDT</p>
+                        </div>
+                    </div>
+
+                    <div id="pos-tp-container" class="space-y-3">
+                        <div id="pos-tp-view-setup" class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <label class="text-[11px] font-black text-gray-500 flex items-center"><span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>止盈</label>
+                                <div class="tpsl-type-toggle">
+                                    <button type="button" id="pos-tp-btn-market" class="active" onclick="switchPositionTPSLType('tp', 'market')">市價</button>
+                                    <button type="button" id="pos-tp-btn-limit" onclick="switchPositionTPSLType('tp', 'limit')">限價</button>
+                                </div>
+                            </div>
+                            <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
+                                <input type="number" placeholder="止盈觸發價格" class="flex-1 px-3 py-2.5 text-[12px] font-bold outline-none font-mono min-w-0">
+                                <button type="button" onclick="openPickerSheet('trigger-type', 'pos-tp')" class="picker-chip shrink-0 border-l border-gray-100 px-3 py-2.5">
+                                    <span id="pos-tp-trigger-label">最新价格</span>
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                                </button>
+                            </div>
+                            <div id="pos-tp-limit-input" class="hidden">
+                                <input type="number" placeholder="限價成交價格" class="w-full border border-green-100 bg-green-50/40 px-3 py-2.5 text-[12px] font-bold rounded-lg outline-none">
+                            </div>
+                            <div id="pos-tp-estimate" class="flex justify-between text-[10px] px-1">
+                                <span class="text-gray-400 font-bold">預估收益</span>
+                                <span class="text-green-500 font-black font-mono">+0.00 USDT</span>
+                            </div>
+                        </div>
+                        <div id="pos-tp-view-active" class="hidden bg-green-50/40 border border-green-100 p-3 rounded-lg">
+                            <div class="flex justify-between items-start gap-2">
+                                <div class="space-y-1 min-w-0">
+                                    <p class="text-[12px] font-black text-gray-900">觸發: 620.00 (標記)</p>
+                                    <p class="text-[10px] text-gray-500 font-bold">市價單 · <span class="text-green-600">預估收益: +39.23 USDT</span></p>
+                                </div>
+                                <div class="flex gap-2 shrink-0">
+                                    <button type="button" onclick="editPositionTPSL('tp')" class="p-1.5 bg-white border border-gray-200 rounded-md"><svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+                                    <button type="button" onclick="cancelPositionTPSL('tp')" class="p-1.5 bg-white border border-gray-200 rounded-md"><svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="pos-sl-container" class="space-y-3">
+                        <div id="pos-sl-view-setup" class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <label class="text-[11px] font-black text-gray-500 flex items-center"><span class="w-1.5 h-1.5 bg-red-500 rounded-full mr-1.5"></span>止損</label>
+                                <div class="tpsl-type-toggle">
+                                    <button type="button" id="pos-sl-btn-market" class="active" onclick="switchPositionTPSLType('sl', 'market')">市價</button>
+                                    <button type="button" id="pos-sl-btn-limit" onclick="switchPositionTPSLType('sl', 'limit')">限價</button>
+                                </div>
+                            </div>
+                            <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
+                                <input type="number" placeholder="止損觸發價格" class="flex-1 px-3 py-2.5 text-[12px] font-bold outline-none font-mono min-w-0">
+                                <button type="button" onclick="openPickerSheet('trigger-type', 'pos-sl')" class="picker-chip shrink-0 border-l border-gray-100 px-3 py-2.5">
+                                    <span id="pos-sl-trigger-label">最新价格</span>
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                                </button>
+                            </div>
+                            <div id="pos-sl-limit-input" class="hidden">
+                                <input type="number" placeholder="限價成交價格" class="w-full border border-red-100 bg-red-50/40 px-3 py-2.5 text-[12px] font-bold rounded-lg outline-none">
+                            </div>
+                            <div id="pos-sl-estimate" class="flex justify-between text-[10px] px-1">
+                                <span class="text-gray-400 font-bold">預估收益</span>
+                                <span class="text-red-500 font-black font-mono">-0.00 USDT</span>
+                            </div>
+                        </div>
+                        <div id="pos-sl-view-active" class="hidden bg-red-50/40 border border-red-100 p-3 rounded-lg">
+                            <div class="flex justify-between items-start gap-2">
+                                <div class="space-y-1 min-w-0">
+                                    <p class="text-[12px] font-black text-gray-900">觸發: 560.00 (標記)</p>
+                                    <p class="text-[10px] text-gray-500 font-bold">限價單 ($555.00) · <span class="text-red-600">預估收益: -19.23 USDT</span></p>
+                                </div>
+                                <div class="flex gap-2 shrink-0">
+                                    <button type="button" onclick="editPositionTPSL('sl')" class="p-1.5 bg-white border border-gray-200 rounded-md"><svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+                                    <button type="button" onclick="cancelPositionTPSL('sl')" class="p-1.5 bg-white border border-gray-200 rounded-md"><svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 pt-2 border-t border-gray-50">
+                        <div class="flex justify-between items-end">
+                            <label class="text-[11px] font-black text-gray-500">數量</label>
+                            <p class="text-[10px] font-bold text-gray-400">倉位數量 <span id="pos-tpsl-qty-hint" class="text-gray-900 font-mono">1245.80 USDT</span></p>
+                        </div>
+                        <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
+                            <input id="pos-tpsl-qty-input" type="number" value="1245.80" class="flex-1 px-3 py-2.5 text-[12px] font-bold outline-none font-mono min-w-0">
+                            <span class="px-3 text-[10px] font-black text-gray-400 border-l border-gray-100 bg-gray-50">USDT</span>
+                        </div>
+                        <div class="qty-slider-wrap">
+                            <input type="range" id="pos-tpsl-qty-slider" min="0" max="100" step="25" value="100" oninput="syncPositionTPSLQtySlider(this.value)">
+                            <div class="slider-line">
+                                <div class="slider-dot" style="left: 0%"></div>
+                                <div class="slider-dot" style="left: 25%"></div>
+                                <div class="slider-dot" style="left: 50%"></div>
+                                <div class="slider-dot" style="left: 75%"></div>
+                                <div class="slider-dot" style="left: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="openPositionTPSLConfirm()" class="w-full bg-black text-white py-3.5 rounded-xl text-[12px] font-black">確認設置</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 居中弹窗：持仓止盈止损确认 ===== -->
+        <div id="position-tpsl-confirm-modal" class="hidden absolute inset-0 z-[65] flex items-center justify-center rounded-[38px] overflow-hidden px-6">
+            <div class="absolute inset-0 bg-black/40" onclick="closeModal('position-tpsl-confirm-modal')"></div>
+            <div class="relative w-full bg-white rounded-2xl shadow-2xl app-modal overflow-hidden max-h-[85%] overflow-y-auto">
+                <div class="px-5 py-4 border-b border-gray-50 flex justify-between items-center bg-gray-50">
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-[13px] font-black">止盈止損確認</h3>
+                        <span id="pos-tpsl-confirm-side" class="text-[9px] bg-green-500 text-white px-1.5 py-0.5 rounded font-black">多單</span>
+                    </div>
+                    <button type="button" onclick="closeModal('position-tpsl-confirm-modal')" class="text-gray-400 text-lg">✕</button>
+                </div>
+                <div class="p-5 space-y-4">
+                    <div class="grid grid-cols-2 gap-4 pb-3 border-b border-gray-50 text-[11px]">
+                        <div class="space-y-1">
+                            <p class="text-[9px] text-gray-400 font-bold">合約</p>
+                            <p id="pos-tpsl-confirm-pair" class="font-black text-gray-900">BNBUSDT 永續</p>
+                        </div>
+                        <div class="space-y-1 text-right">
+                            <p class="text-[9px] text-gray-400 font-bold">開倉價格</p>
+                            <p id="pos-tpsl-confirm-open" class="font-black text-gray-900 font-mono">579.61 <span class="text-gray-400 font-medium">USDT</span></p>
+                        </div>
+                    </div>
+                    <div class="space-y-2 bg-green-50/40 p-3 rounded-lg border border-green-100">
+                        <p class="text-[10px] font-black text-green-600 flex items-center"><span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>止盈</p>
+                        <div class="space-y-1.5 text-[11px]">
+                            <div class="flex justify-between"><span class="text-gray-400 font-bold">觸發價格</span><span class="font-black font-mono">620.00 <span class="text-gray-400">(標記)</span></span></div>
+                            <div class="flex justify-between"><span class="text-gray-400 font-bold">委託價格</span><span class="font-black">市價</span></div>
+                            <div class="flex justify-between pt-1 border-t border-green-100"><span class="text-gray-400 font-bold">預估收益</span><span class="text-green-600 font-black font-mono">+39.23 USDT</span></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2 bg-red-50/40 p-3 rounded-lg border border-red-100">
+                        <p class="text-[10px] font-black text-red-600 flex items-center"><span class="w-1.5 h-1.5 bg-red-500 rounded-full mr-1.5"></span>止損</p>
+                        <div class="space-y-1.5 text-[11px]">
+                            <div class="flex justify-between"><span class="text-gray-400 font-bold">觸發價格</span><span class="font-black font-mono">560.00 <span class="text-gray-400">(標記)</span></span></div>
+                            <div class="flex justify-between"><span class="text-gray-400 font-bold">委託價格</span><span class="font-black font-mono">555.00</span></div>
+                            <div class="flex justify-between pt-1 border-t border-red-100"><span class="text-gray-400 font-bold">預估收益</span><span class="text-red-600 font-black font-mono">-19.23 USDT</span></div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center py-1 text-[11px]">
+                        <span class="text-gray-400 font-bold">下單數量</span>
+                        <span id="pos-tpsl-confirm-qty" class="font-black font-mono">1245.80 <span class="text-gray-400">USDT</span></span>
+                    </div>
+                    <label class="flex items-start gap-2">
+                        <input type="checkbox" class="w-3.5 h-3.5 mt-0.5 accent-black">
+                        <span class="text-[10px] text-gray-400 leading-relaxed">不再為止盈止損訂單提示二次確認</span>
+                    </label>
+                    <div class="flex gap-3 pt-1">
+                        <button type="button" onclick="closeModal('position-tpsl-confirm-modal')" class="flex-1 border border-gray-200 py-3 rounded-xl text-[12px] font-bold text-gray-400">取消</button>
+                        <button type="button" onclick="executePositionTPSL()" class="flex-[1.4] bg-black text-white py-3 rounded-xl text-[12px] font-black">確認提交</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 底部弹层：平仓设置 ===== -->
+        <div id="close-position-sheet" class="hidden absolute inset-0 z-[55] flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('close-position-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet max-h-[90%] overflow-y-auto">
+                <div class="py-4 px-5 border-b border-gray-50 flex justify-between items-center sticky top-0 bg-white z-10">
+                    <h3 class="text-[13px] font-black text-gray-900">平倉</h3>
+                    <div class="flex items-center gap-1.5 text-[10px] font-black min-w-0">
+                        <span id="close-pos-pair" class="text-gray-900 truncate">BNBUSDT</span>
+                        <span id="close-pos-side-tag" class="pos-tag-long shrink-0">做多</span>
+                        <span id="close-pos-lev-tag" class="pos-tag-lev shrink-0">20x</span>
+                    </div>
+                </div>
+                <div class="p-5 space-y-5 pb-8">
+                    <div class="space-y-3 text-[11px] font-bold">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-500">開倉價格 (USDT)</span>
+                            <span id="close-pos-open-price" class="text-gray-900 font-mono">579.61</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-500">標記價格 (USDT)</span>
+                            <span id="close-pos-mark-price" class="text-gray-900 font-mono">579.773</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <p class="text-[11px] font-black text-gray-900">價格</p>
+                        <div class="close-price-combo">
+                            <input id="close-price-input" type="text" value="市價" disabled class="close-price-input">
+                            <button type="button" onclick="openPickerSheet('close-price-type')" class="close-price-type-btn">
+                                <span id="close-price-type-label">市價</span>
+                                <svg class="w-3 h-3 text-gray-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <p class="text-[11px] font-black text-gray-900">數量</p>
+                        <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
+                            <input id="close-pos-qty-input" type="text" value="100% (≈5.80)" class="flex-1 px-3 py-2.5 text-[12px] font-bold outline-none min-w-0" oninput="syncCloseQtyFromInput()">
+                            <span class="px-3 text-[10px] font-black text-gray-400 border-l border-gray-100 bg-gray-50">USDT</span>
+                        </div>
+                        <div class="qty-slider-wrap">
+                            <input type="range" id="close-pos-qty-slider" min="0" max="100" step="25" value="100" oninput="syncCloseQtySlider(this.value)">
+                            <div class="slider-line">
+                                <div class="slider-dot" style="left: 0%"></div>
+                                <div class="slider-dot" style="left: 25%"></div>
+                                <div class="slider-dot" style="left: 50%"></div>
+                                <div class="slider-dot" style="left: 75%"></div>
+                                <div class="slider-dot" style="left: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 text-[11px] font-bold border-t border-gray-50 pt-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-500">倉位數量</span>
+                            <span id="close-pos-total-qty" class="text-gray-900 font-mono">1245.80 USDT</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-500">預計盈虧</span>
+                            <span id="close-pos-est-pnl" class="text-gray-900 font-mono">0.00 USDT</span>
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="confirmClosePosition()" class="w-full bg-black text-white py-3.5 rounded-xl text-[12px] font-black">確認</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 底部弹层：货币单位 ===== -->
+        <div id="unit-sheet" class="hidden absolute inset-0 z-50 flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('unit-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet">
+                <div class="py-4 px-5 border-b border-gray-50">
+                    <h3 class="text-[13px] font-black text-gray-900">货币单位</h3>
+                </div>
+                <div class="divide-y divide-gray-50">
+                    <div class="sheet-option" data-unit="BTC" onclick="selectQtyUnit('BTC')">BTC</div>
+                    <div class="sheet-option" data-unit="USDT" onclick="selectQtyUnit('USDT')">USDT</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 底部弹层：盘口精度 ===== -->
+        <div id="precision-sheet" class="hidden absolute inset-0 z-50 flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('precision-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet">
+                <div class="divide-y divide-gray-50 pt-2">
+                    <div class="sheet-option" onclick="selectObPrecision('0.1')">0.1</div>
+                    <div class="sheet-option" onclick="selectObPrecision('1')">1</div>
+                    <div class="sheet-option" onclick="selectObPrecision('10')">10</div>
+                    <div class="sheet-option" onclick="selectObPrecision('100')">100</div>
+                    <div class="sheet-option" onclick="selectObPrecision('1000')">1000</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 底部弹层：已实现盈亏拆解 ===== -->
+        <div id="realized-pnl-sheet" class="hidden absolute inset-0 z-50 flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('realized-pnl-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet">
+                <div class="py-4 px-5 border-b border-gray-50">
+                    <h3 class="text-[13px] font-black text-gray-900">已實現盈虧明細</h3>
+                </div>
+                <div id="realized-pnl-sheet-body" class="px-5 py-4 space-y-3 text-[12px]"></div>
+                <div class="p-4"><button onclick="closeSheet('realized-pnl-sheet')" class="w-full py-3 text-[13px] font-bold text-gray-400 bg-gray-50 rounded-xl">關閉</button></div>
+            </div>
+        </div>
+
+        <!-- ===== 分享盈亏海报 ===== -->
+        <div id="modal-share-pnl" class="hidden absolute inset-0 z-[150] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 rounded-[38px]">
+            <div class="bg-white w-full rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+                <div id="pnl-poster" class="bg-white p-6 space-y-6 relative">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-6 h-6 bg-black rounded flex items-center justify-center text-white font-black text-xs italic">F</div>
+                        <span class="font-black text-base tracking-tighter">ForX</span>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <div class="space-y-1">
+                            <h3 class="text-xl font-black text-gray-900">BTCUSDT</h3>
+                            <p class="text-[10px] font-black text-green-500 uppercase italic">開多 (Buy/Long)</p>
+                        </div>
+                        <div class="w-12 h-12 bg-yellow-50 rounded-full flex items-center justify-center"><span class="text-2xl">💰</span></div>
+                    </div>
+                    <div class="py-2 text-center">
+                        <p class="text-5xl font-black text-green-500 tracking-tighter">+12.35%</p>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase mt-2 tracking-widest text-green-500/50">Return on Equity</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4 space-y-3">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <p class="text-[9px] text-gray-400 font-bold uppercase">開倉均價</p>
+                                <p class="text-[13px] font-black text-gray-900 font-mono">65,100.5</p>
+                            </div>
+                            <div class="space-y-1 text-right">
+                                <p class="text-[9px] text-gray-400 font-bold uppercase">標記價格</p>
+                                <p class="text-[13px] font-black text-gray-900 font-mono">65,432.1</p>
+                            </div>
+                        </div>
+                        <div class="pt-3 border-t border-gray-200 flex justify-between items-center text-[9px] font-medium text-gray-400">
+                            <span>11/06/2026 21:35</span>
+                            <span class="text-blue-600 font-bold">forx.finance</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between gap-4 pt-2 border-t border-gray-100">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-[9px] text-gray-400 font-bold uppercase tracking-wider">我的邀請碼</p>
+                            <p class="text-lg font-black text-gray-900 font-mono tracking-wider mt-0.5">E6DL28G</p>
+                            <p class="text-[8px] text-gray-400 mt-1 truncate">掃碼註冊，一起交易</p>
+                        </div>
+                        <div class="w-16 h-16 bg-white border border-gray-200 rounded-lg p-1 shrink-0 flex items-center justify-center shadow-sm">
+                            <svg class="w-full h-full text-gray-800" viewBox="0 0 48 48" fill="currentColor"><rect x="2" y="2" width="14" height="14" rx="1"/><rect x="6" y="6" width="6" height="6" fill="#fff"/><rect x="34" y="2" width="14" height="14" rx="1"/><rect x="38" y="6" width="6" height="6" fill="#fff"/><rect x="2" y="34" width="14" height="14" rx="1"/><rect x="6" y="38" width="6" height="6" fill="#fff"/><rect x="20" y="2" width="4" height="4"/><rect x="26" y="2" width="4" height="4"/><rect x="32" y="20" width="4" height="4"/><rect x="38" y="32" width="4" height="4"/></svg>
+                        </div>
+                    </div>
+                    <div class="text-center pt-1">
+                        <p class="font-black text-sm tracking-tighter">ForX</p>
+                        <p class="text-[9px] text-gray-400 font-bold uppercase tracking-tight">鏈上交易加密貨幣、黃金和股票</p>
+                    </div>
+                </div>
+                <div class="p-4 bg-gray-50 flex space-x-3 border-t border-gray-100">
+                    <button type="button" onclick="closeSharePnl()" class="flex-1 py-3 border border-gray-200 bg-white rounded-xl font-black text-xs text-gray-400 uppercase">取消</button>
+                    <button type="button" onclick="alert('海報已保存至相冊')" class="flex-1 py-3 bg-black text-white rounded-xl font-black text-xs shadow-lg uppercase active:scale-95 transition-all">分享海報</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 底部弹层：资金费率 ===== -->
+        <div id="funding-sheet" class="hidden absolute inset-0 z-50 flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('funding-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet">
+                <div class="py-4 px-5 border-b border-gray-50">
+                    <h3 class="text-[13px] font-black text-gray-900">資金費率</h3>
+                </div>
+                <div class="px-5 py-4 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[12px] text-gray-500 font-bold">即時資金費率</span>
+                        <span class="text-[14px] font-black text-green-500 font-mono">+0.0050%</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[12px] text-gray-500 font-bold">結算週期</span>
+                        <span class="text-[14px] font-black text-gray-900">8h</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[12px] text-gray-500 font-bold">下次結算倒計時</span>
+                        <span id="funding-sheet-countdown" class="text-[14px] font-black text-blue-600 font-mono">01:26:27</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[12px] text-gray-500 font-bold">年化利率</span>
+                        <span class="text-[14px] font-black text-green-500 font-mono">+10.95%</span>
+                    </div>
+                    <p class="text-[10px] text-gray-400 leading-relaxed pt-2 border-t border-gray-50">
+                        做多仓位和做空仓位在下个资金费率时间点须交换的资金费率。费率为正，做多仓位支付做空仓位。费率为负，做空仓位支付做多仓位。
+                    </p>
+                    <button onclick="closeSheet('funding-sheet'); window.location.href='交易流水頁面.html'" class="w-full py-3 bg-gray-900 text-white rounded-xl text-[12px] font-black mt-2">查看资金费率历史</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 底部弹层：最优价选择 ===== -->
+        <div id="best-price-sheet" class="hidden absolute inset-0 z-50 flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('best-price-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet max-h-[80%] overflow-y-auto">
+                <div class="py-4 px-5 border-b border-gray-50">
+                    <h3 class="text-[13px] font-black text-gray-900">最优价</h3>
+                    <p class="text-[10px] text-gray-400 leading-relaxed mt-2">最优价用于快速设置与最优价选项匹配的限价单价格。下单时使用最优价选项，系统会自动选择匹配的市场报价来执行订单。</p>
+                </div>
+                <div class="divide-y divide-gray-50" id="best-price-options">
+                    <div class="sheet-option flex justify-between items-center" data-value="对手价 1" onclick="selectBestPriceOption('对手价 1')"><span>对手价 1</span><span class="bp-check text-blue-600 hidden">✓</span></div>
+                    <div class="sheet-option flex justify-between items-center" data-value="对手价 5" onclick="selectBestPriceOption('对手价 5')"><span>对手价 5</span><span class="bp-check text-blue-600 hidden">✓</span></div>
+                    <div class="sheet-option flex justify-between items-center" data-value="同向价 1" onclick="selectBestPriceOption('同向价 1')"><span>同向价 1</span><span class="bp-check text-blue-600 hidden">✓</span></div>
+                    <div class="sheet-option flex justify-between items-center" data-value="同向价 5" onclick="selectBestPriceOption('同向价 5')"><span>同向价 5</span><span class="bp-check text-blue-600 hidden">✓</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 底部弹层：交易对选择 ===== -->
+        <div id="pair-sheet" class="hidden absolute inset-0 z-50 flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('pair-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet pair-sheet-panel flex flex-col">
+                <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 shrink-0"></div>
+                <div class="py-3 px-5 shrink-0">
+                    <h3 class="text-[15px] font-black text-gray-900 mb-3">選擇合約</h3>
+                    <div class="relative mb-3">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2.5"/></svg>
+                        <input type="text" placeholder="查詢" class="w-full bg-gray-100 rounded-xl py-2.5 pl-10 pr-4 text-xs outline-none">
+                    </div>
+                    <div class="flex space-x-5 overflow-x-auto no-scrollbar border-b border-gray-100" id="pair-category-tabs">
+                        <button type="button" class="pair-tab" data-cat="fav" onclick="switchPairCategory('fav')">收藏</button>
+                        <button type="button" class="pair-tab active" data-cat="all" onclick="switchPairCategory('all')">全部</button>
+                        <button type="button" class="pair-tab" data-cat="new" onclick="switchPairCategory('new')">新幣上線</button>
+                        <button type="button" class="pair-tab" data-cat="hot" onclick="switchPairCategory('hot')">熱門</button>
+                    </div>
+                </div>
+                <div class="px-5 py-2 grid grid-cols-3 text-[9px] text-gray-400 font-bold shrink-0">
+                    <span>合約</span><span class="text-right">價格</span><span class="text-right">24H 漲跌幅</span>
+                </div>
+                <div class="flex-1 overflow-y-auto no-scrollbar divide-y divide-gray-50 min-h-0" id="pair-list"></div>
+            </div>
+        </div>
+
+        <!-- ===== 底部弹层：更多功能 ===== -->
+        <div id="more-menu-sheet" class="hidden absolute inset-0 z-50 flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('more-menu-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet max-h-[78%] overflow-y-auto no-scrollbar">
+                <div class="py-4 px-5 border-b border-gray-50">
+                    <h3 class="text-[13px] font-black text-gray-900">更多功能</h3>
+                </div>
+                <div class="more-menu-grid">
+                    <div class="more-menu-tile" onclick="goMoreMenu('settings')">
+                        <div class="more-menu-icon">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        </div>
+                        <span class="more-menu-label">偏好设置</span>
+                    </div>
+                    <div class="more-menu-tile" onclick="goMoreMenu('deposit')">
+                        <div class="more-menu-icon">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        </div>
+                        <span class="more-menu-label">充值</span>
+                    </div>
+                    <div class="more-menu-tile" onclick="goMoreMenu('funding')">
+                        <div class="more-menu-icon">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <span class="more-menu-label">资金费率</span>
+                    </div>
+                    <div class="more-menu-tile" onclick="goMoreMenu('vip-fee')">
+                        <div class="more-menu-icon">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                        </div>
+                        <span class="more-menu-label">费率</span>
+                    </div>
+                    <div class="more-menu-tile" onclick="goMoreMenu('pair-info')">
+                        <div class="more-menu-icon">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <span class="more-menu-label">交易对信息</span>
+                    </div>
+                    <div class="more-menu-tile" onclick="goMoreMenu('risk-limits')">
+                        <div class="more-menu-icon">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        </div>
+                        <span class="more-menu-label">風險限額</span>
+                    </div>
+                    <div class="more-menu-tile" onclick="togglePairFavorite()">
+                        <div class="more-menu-icon">
+                            <svg id="more-menu-fav-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                        </div>
+                        <span id="more-menu-fav-label" class="more-menu-label">添加自选</span>
+                    </div>
+                </div>
+                <div class="p-4"><button onclick="closeSheet('more-menu-sheet')" class="w-full py-3 text-[13px] font-bold text-gray-400 bg-gray-50 rounded-xl">取消</button></div>
+            </div>
+        </div>
+
+        <!-- ===== 底部弹层：通用选择器 ===== -->
+        <div id="picker-sheet" class="hidden absolute inset-0 z-[70] flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('picker-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet max-h-[78%] overflow-y-auto no-scrollbar">
+                <div id="picker-sheet-body"></div>
+            </div>
+        </div>
+
+        <!-- ===== 筛选弹窗（当前委托） ===== -->
+        <div id="order-filter-overlay" class="hidden absolute inset-0 z-[100] bg-black/60 backdrop-blur-sm transition-opacity duration-300 opacity-0 rounded-[38px] overflow-hidden">
+            <div onclick="closeOrderFilterModal()" class="absolute inset-0"></div>
+            <div id="order-filter-sheet" class="bottom-sheet flex flex-col max-h-[85%]">
+                <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 shrink-0"></div>
+                <div id="order-filter-content" class="p-6 overflow-y-auto no-scrollbar"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    let currentSide = 'open';
+    let currentOrderMode = 'limit';
+    let currentTPSLMode = '单向';
+    const triggerTypeMap = { 'attach-tp': 'latest', 'attach-sl': 'latest', tp: 'latest', sl: 'latest', 'pos-tp': 'latest', 'pos-sl': 'latest' };
+    const orderDelegateMap = { 'tp-order': 'market', 'sl-order': 'market' };
+    let pickerContext = { type: '', key: '' };
+    let currentMarginMode = 'cross';
+    let longLeverage = 20;
+    let shortLeverage = 10;
+    let pendingOrderDirection = 'long';
+    let isPriceSelectMode = false;
+    let currentBestPriceOption = '对手价 1';
+    let currentQtyUnit = 'BTC';
+    let currentObPrecision = '0.1';
+    let currentPositionTab = 'positions';
+    let currentOrderSecondary = 'basic';
+    let selectedCancelType = '';
+    let fundingSecondsLeft = 1 * 3600 + 26 * 60 + 27;
+    let isPremarketMode = false;
+    let isGuestMode = false;
+    let klineCountdownRemaining = 2 * 86400 + 14 * 3600 + 35 * 60 + 22;
+    let currentPair = 'BTCUSDT';
+    let currentPairCategory = 'all';
+    const favoritePairs = new Set(['BTCUSDT', 'BNBUSDT']);
+
+    const loggedInSnapshot = {
+        balance: '12,450.00 USDT',
+        maxOpenLong: '50,000 USDT',
+        maxOpenShort: '50,000 USDT',
+        liqLong: '65,241.2',
+        liqShort: '78,120.5',
+        closeLongQty: '0.050 BTC',
+        closeShortQty: '0.000 BTC',
+        posPnl: '+125.42',
+        posRoi: '+12.35%',
+        posQty: '0.050 BTC',
+        posMargin: '1,240.00',
+        posLiq: '65,241.2'
+    };
+
+    const positionState = {
+        pair: 'BNBUSDT',
+        side: 'long',
+        leverage: 20,
+        marginMode: '逐倉',
+        openPrice: '579.61',
+        markPrice: '579.773',
+        totalQtyUsdt: 1245.80,
+        baseQtyApprox: 5.80
+    };
+
+    let closePriceType = 'market';
+    let closeQtyPercent = 100;
+
+    const priceMap = {
+        '对手价 1': '72305.1',
+        '对手价 5': '72301.1',
+        '同向价 1': '72314.2',
+        '同向价 5': '72310.1'
+    };
+
+    const orderTypeLabels = { limit: '限價委託', market: '市價委託', 'profit-loss': '止盈止損' };
+
+    const REALIZED_PNL_BREAKDOWN = {
+        pos: { total: -45.20, closePnl: -38.10, funding: 2.15, fee: -9.25 },
+        hist: { total: -579.30, closePnl: -554.02, funding: 11.35, fee: -36.64 }
+    };
+    let obLayoutMode = 'split';
+
+    function formatSignedUsdt(n) {
+        return (n >= 0 ? '+' : '') + n.toFixed(2) + ' USDT';
+    }
+
+    function pnlColorClass(n) {
+        return n >= 0 ? 'text-green-500' : 'text-red-500';
+    }
+
+    function renderRealizedPnlSheetRows(data) {
+        const detailRows = [
+            ['平倉盈虧', data.closePnl],
+            ['資金費用', data.funding],
+            ['交易手續費', data.fee]
+        ];
+        const detailsHtml = detailRows.map(function (row) {
+            return '<div class="flex justify-between items-center"><span class="text-gray-500 font-bold">' + row[0] + '</span><span class="font-black ' + pnlColorClass(row[1]) + '">' + formatSignedUsdt(row[1]) + '</span></div>';
+        }).join('');
+        return '<div class="pb-3 mb-3 border-b border-gray-100"><div class="flex justify-between items-center"><span class="text-gray-900 font-black text-[13px]">已實現盈虧</span><span class="font-black text-[13px] ' + pnlColorClass(data.total) + '">' + formatSignedUsdt(data.total) + '</span></div></div><div class="space-y-3">' + detailsHtml + '</div>';
+    }
+
+    function openRealizedPnlSheet(data) {
+        const body = document.getElementById('realized-pnl-sheet-body');
+        if (body) body.innerHTML = renderRealizedPnlSheetRows(data);
+        openSheet('realized-pnl-sheet');
+    }
+
+    function openSharePnl() {
+        document.getElementById('modal-share-pnl').classList.remove('hidden');
+    }
+    function closeSharePnl() {
+        document.getElementById('modal-share-pnl').classList.add('hidden');
+    }
+
+    function setObLayoutMode(mode) {
+        obLayoutMode = mode;
+        document.querySelectorAll('#ob-layout-btns .ob-layout-btn').forEach(function (btn) {
+            btn.classList.toggle('active', btn.getAttribute('data-ob-layout') === mode);
+        });
+        applyObLayoutMode();
+        renderOrderBookDepth();
+    }
+
+    function applyObLayoutMode() {
+        const sellEl = document.getElementById('ob-sell-list');
+        const buyEl = document.getElementById('ob-buy-list');
+        const midBar = document.getElementById('ob-mid-price-bar');
+        if (!sellEl || !buyEl) return;
+        if (obLayoutMode === 'split') {
+            sellEl.classList.remove('hidden');
+            buyEl.classList.remove('hidden');
+            sellEl.classList.add('flex-1');
+            buyEl.classList.add('flex-1');
+            sellEl.classList.remove('justify-between');
+            buyEl.classList.remove('justify-between');
+        } else if (obLayoutMode === 'buy') {
+            sellEl.classList.add('hidden');
+            buyEl.classList.remove('hidden');
+            buyEl.classList.add('flex-1');
+            buyEl.classList.add('justify-between');
+            sellEl.classList.remove('justify-between');
+        } else {
+            buyEl.classList.add('hidden');
+            sellEl.classList.remove('hidden');
+            sellEl.classList.add('flex-1');
+            sellEl.classList.add('justify-between');
+            buyEl.classList.remove('justify-between');
+        }
+        if (midBar) midBar.classList.toggle('hidden', obLayoutMode !== 'split');
+    }
+
+    let obSellRows = [
+        { price: 72314.2, qty: 4.38 }, { price: 72314.1, qty: 4.08 }, { price: 72313.1, qty: 3.08 },
+        { price: 72312.1, qty: 2.38 }, { price: 72311.1, qty: 2.08 }, { price: 72310.1, qty: 1.18 },
+        { price: 72308.1, qty: 1.08 }, { price: 72307.1, qty: 0.18 }
+    ];
+    let obBuyRows = [
+        { price: 72305.1, qty: 0.08 }, { price: 72304.1, qty: 0.38 }, { price: 72303.1, qty: 1.08 },
+        { price: 72302.1, qty: 1.18 }, { price: 72301.1, qty: 1.38 }, { price: 72300.1, qty: 2.18 },
+        { price: 72299.1, qty: 3.18 }, { price: 72298.1, qty: 3.38 }
+    ];
+
+    function formatObQty(qty) {
+        return qty >= 10 ? qty.toFixed(2) : qty.toFixed(2);
+    }
+
+    function buildDepthPercents(rows, side) {
+        const accumulateOrder = side === 'sell' ? [...rows].reverse() : rows;
+        let cumulative = 0;
+        const cumByPrice = new Map();
+        accumulateOrder.forEach(row => {
+            cumulative += row.qty;
+            cumByPrice.set(row.price, cumulative);
+        });
+        const maxCum = cumulative || 1;
+        return rows.map(row => ({
+            ...row,
+            cumulative: cumByPrice.get(row.price),
+            percent: (cumByPrice.get(row.price) / maxCum) * 100
+        }));
+    }
+
+    function renderObSide(containerId, rows, side) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const priceClass = side === 'sell' ? 'text-red-500' : 'text-green-500';
+        const depthRows = buildDepthPercents(rows, side);
+        container.innerHTML = depthRows.map((row, idx) => `
+            <div class="ob-row">
+                <div class="ob-depth-bar ${side}" style="width:${row.percent.toFixed(1)}%; animation-delay:${idx * 0.12}s"></div>
+                <span class="ob-row-text ${priceClass}">${row.price.toFixed(1)}</span>
+                <span class="ob-row-text text-black">${formatObQty(row.qty)}</span>
+            </div>
+        `).join('');
+    }
+
+    function getObRowsForMode(rows, side) {
+        const targetCount = obLayoutMode === 'split' ? 8 : 16;
+        if (rows.length >= targetCount) return rows.slice(0, targetCount);
+        const expanded = rows.slice();
+        const basePrice = side === 'sell' ? (rows[0]?.price || 72314.2) : (rows[rows.length - 1]?.price || 72298.1);
+        while (expanded.length < targetCount) {
+            const idx = expanded.length + 1;
+            expanded.push({
+                price: side === 'sell' ? basePrice + idx * 1.1 : basePrice - idx * 1.1,
+                qty: Math.random() * 2.5 + 0.15
+            });
+        }
+        return expanded;
+    }
+
+    function renderOrderBookDepth() {
+        if (isPremarketMode) return;
+        renderObSide('ob-sell-list', getObRowsForMode(obSellRows, 'sell'), 'sell');
+        renderObSide('ob-buy-list', getObRowsForMode(obBuyRows, 'buy'), 'buy');
+    }
+
+    function tickOrderBookDepth() {
+        if (isPremarketMode) return;
+        const nudge = (row) => {
+            row.qty = Math.max(0.05, row.qty + (Math.random() - 0.42) * 0.45);
+        };
+        obSellRows.forEach(nudge);
+        obBuyRows.forEach(nudge);
+        renderOrderBookDepth();
+    }
+
+    const pairListData = [
+        { pair: 'BTCUSDT', leverage: '100x', price: '65,432.10', change: '-1.76%', changeClass: 'text-red-500', cats: ['all', 'hot', 'fav'] },
+        { pair: 'ETHUSDT', leverage: '100x', price: '2,432.10', change: '-3.76%', changeClass: 'text-red-500', cats: ['all', 'hot'] },
+        { pair: 'BNBUSDT', leverage: '75x', price: '723.50', change: '+2.45%', changeClass: 'text-green-500', cats: ['all', 'hot', 'fav'] },
+        { pair: 'SOLUSDT', leverage: '50x', price: '198.20', change: '+5.12%', changeClass: 'text-green-500', cats: ['all', 'hot'] },
+        { pair: 'PEPEUSDT', leverage: '50x', price: '--', change: '--', changeClass: 'text-gray-400', premarket: true, cats: ['all', 'new'] }
+    ];
+
+    const mockOrderData = {
+        basic: `
+            <div class="order-card">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-black text-[13px]">BNBUSDT</span>
+                        <span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span>
+                    </div>
+                    <button onclick="alert('已撤銷該委託')" class="bg-gray-100 text-gray-900 text-[10px] font-black px-3 py-1 rounded-sm">撤單</button>
+                </div>
+                <div class="flex items-center space-x-2 mb-4 text-[10px] font-black uppercase">
+                    <span class="text-green-500 italic">限價 / 開多</span>
+                    <span class="text-gray-300 font-medium">2026-06-11 18:58:25</span>
+                </div>
+                <div class="grid grid-cols-2 gap-y-2 text-[11px]">
+                    <div class="flex flex-col"><span class="text-gray-400 font-bold uppercase text-[9px]">成交數量 / 數量 (USDT)</span><span class="font-black">0.00 / 5.00</span></div>
+                    <div class="flex flex-col text-right"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black font-mono">500.00</span></div>
+                </div>
+            </div>
+        `,
+        tpsl: `
+            <div class="order-card">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-black text-[13px]">BNBUSDT</span>
+                        <span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span>
+                    </div>
+                    <button onclick="alert('已撤銷該委託')" class="bg-gray-100 text-gray-900 text-[10px] font-black px-3 py-1 rounded-sm">撤單</button>
+                </div>
+                <div class="flex items-center space-x-2 mb-4 text-[10px] font-black uppercase">
+                    <span class="text-red-500 italic">止盈止損單 / 平多</span>
+                    <span class="text-gray-300 font-medium">2026-06-11 18:59:34</span>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">數量 (USDT)</span><span class="font-black">5.00</span></div>
+                    <div class="flex justify-between text-[11px] items-center"><span class="text-gray-400 font-bold uppercase text-[9px]">止盈/止損觸發價</span><div class="flex items-center space-x-1 font-black font-mono"><span>700.00 / 500.00</span><svg class="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"/></svg></div></div>
+                    <div class="flex justify-between text-[11px] items-center"><span class="text-gray-400 font-bold uppercase text-[9px]">止盈/止損單價格</span><div class="flex items-center space-x-1 font-black"><span>市價 / 市價</span><svg class="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"/></svg></div></div>
+                </div>
+            </div>
+        `
+    };
+
+    function openSheet(id) { document.getElementById(id)?.classList.remove('hidden'); }
+    function closeSheet(id) { document.getElementById(id)?.classList.add('hidden'); }
+    function openModal(id) { document.getElementById(id)?.classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); }
+
+    function updateMoreMenuFavoriteUI() {
+        const isFav = favoritePairs.has(currentPair);
+        const label = document.getElementById('more-menu-fav-label');
+        const icon = document.getElementById('more-menu-fav-icon');
+        if (label) label.textContent = isFav ? '取消自选' : '添加自选';
+        if (icon) {
+            icon.setAttribute('fill', isFav ? 'currentColor' : 'none');
+            icon.classList.toggle('text-yellow-500', isFav);
+            icon.classList.toggle('text-gray-700', !isFav);
+        }
+    }
+
+    function togglePairFavorite() {
+        if (favoritePairs.has(currentPair)) {
+            favoritePairs.delete(currentPair);
+            showProtoToast('已取消自选');
+        } else {
+            favoritePairs.add(currentPair);
+            showProtoToast('已添加自选');
+        }
+        updateMoreMenuFavoriteUI();
+        if (currentPairCategory === 'fav') renderPairList();
+    }
+
+    function showProtoToast(msg) {
+        let toast = document.getElementById('proto-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'proto-toast';
+            toast.className = 'hidden absolute left-1/2 -translate-x-1/2 top-24 z-[120] bg-gray-900/95 text-white text-[11px] font-bold px-4 py-2 rounded-full shadow-lg';
+            document.getElementById('app-screen')?.appendChild(toast);
+        }
+        toast.textContent = msg;
+        toast.classList.remove('hidden');
+        clearTimeout(showProtoToast._timer);
+        showProtoToast._timer = setTimeout(() => toast.classList.add('hidden'), 1600);
+    }
+
+    function goMoreMenu(action) {
+        closeSheet('more-menu-sheet');
+        const pairQuery = `?pair=${encodeURIComponent(currentPair)}`;
+        if (action === 'settings') {
+            window.location.href = '合约偏好设置.html';
+        } else if (action === 'deposit') {
+            window.location.href = '充值.html';
+        } else if (action === 'funding') {
+            window.location.href = `行情详情.html?tab=funding&pair=${encodeURIComponent(currentPair)}`;
+        } else if (action === 'pair-info') {
+            window.location.href = `交易对信息.html${pairQuery}`;
+        } else if (action === 'risk-limits') {
+            window.location.href = `风险限额.html${pairQuery}`;
+        } else if (action === 'vip-fee') {
+            window.location.href = 'VIP费率等级.html';
+        }
+    }
+
+    function updateOpenStatsDisplay() {
+        const s = loggedInSnapshot;
+        if (isGuestMode || isPremarketMode) {
+            setGuestText('stat-max-open-long', '--');
+            setGuestText('stat-max-open-short', '--');
+            setGuestText('stat-liq-long', '--');
+            setGuestText('stat-liq-short', '--');
+        } else {
+            setGuestText('stat-max-open-long', s.maxOpenLong);
+            setGuestText('stat-max-open-short', s.maxOpenShort);
+            setGuestText('stat-liq-long', s.liqLong);
+            setGuestText('stat-liq-short', s.liqShort);
+        }
+    }
+
+    function formatCountdown(totalSeconds) {
+        const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+        const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+        const s = String(totalSeconds % 60).padStart(2, '0');
+        return `${h}:${m}:${s}`;
+    }
+
+    function updateFundingCountdown() {
+        if (fundingSecondsLeft <= 0) fundingSecondsLeft = 8 * 3600;
+        const sheetEl = document.getElementById('funding-sheet-countdown');
+        if (sheetEl) sheetEl.innerText = formatCountdown(fundingSecondsLeft);
+        fundingSecondsLeft--;
+    }
+
+    function toggleBestPriceMode() {
+        if (currentOrderMode === 'market') return;
+
+        if (!isPriceSelectMode) {
+            isPriceSelectMode = true;
+            currentBestPriceOption = '对手价 1';
+            document.getElementById('price-input').classList.add('hidden');
+            document.getElementById('price-bbo-display').classList.remove('hidden');
+            document.getElementById('price-bbo-label').innerText = currentBestPriceOption;
+            document.getElementById('btn-bbo').classList.add('bg-gray-900', 'text-white');
+            document.getElementById('btn-bbo').classList.remove('bg-gray-100');
+            updateBestPriceChecks();
+        } else {
+            const input = document.getElementById('price-input');
+            input.value = priceMap[currentBestPriceOption] || input.value;
+            resetBestPriceMode();
+        }
+    }
+
+    function handlePriceFieldClick() {
+        if (isPriceSelectMode) openSheet('best-price-sheet');
+    }
+
+    function selectBestPriceOption(value) {
+        currentBestPriceOption = value;
+        document.getElementById('price-bbo-label').innerText = value;
+        updateBestPriceChecks();
+        closeSheet('best-price-sheet');
+    }
+
+    function updateBestPriceChecks() {
+        document.querySelectorAll('#best-price-options .sheet-option').forEach(el => {
+            const check = el.querySelector('.bp-check');
+            if (check) check.classList.toggle('hidden', el.dataset.value !== currentBestPriceOption);
+        });
+    }
+
+    function resetBestPriceMode() {
+        if (!isPriceSelectMode) return;
+        isPriceSelectMode = false;
+        document.getElementById('price-bbo-display').classList.add('hidden');
+        document.getElementById('price-input').classList.remove('hidden');
+        const btn = document.getElementById('btn-bbo');
+        btn.classList.remove('bg-gray-900', 'text-white');
+        btn.classList.add('bg-gray-100');
+    }
+
+    function updateQtyUnitDisplay() {
+        const label = document.getElementById('qty-unit-label');
+        if (label) label.textContent = currentQtyUnit;
+    }
+
+    function selectQtyUnit(unit) {
+        currentQtyUnit = unit;
+        updateQtyUnitDisplay();
+        closeSheet('unit-sheet');
+        updateTPSLEstimates();
+    }
+
+    function getTriggerTypeLabel(value) {
+        return value === 'mark' ? '标记价格' : '最新价格';
+    }
+
+    function renderPickerHeader(title) {
+        return `<div class="py-4 px-5 border-b border-gray-50"><h3 class="text-[13px] font-black text-gray-900">${title}</h3></div>`;
+    }
+
+    function renderRichPickerOption(value, title, desc, selected) {
+        const safeDesc = desc ? `<div class="text-[10px] text-gray-400 mt-1 leading-snug">${desc}</div>` : '';
+        return `
+            <div class="sheet-option-rich ${selected ? 'bg-gray-50' : ''}" onclick="selectPickerOption('${value}')">
+                <div class="text-[13px] font-bold text-gray-900">${title}</div>
+                ${safeDesc}
+            </div>`;
+    }
+
+    function openPickerSheet(type, key) {
+        pickerContext = { type, key: key || '' };
+        const body = document.getElementById('picker-sheet-body');
+        if (!body) return;
+        let html = '';
+
+        if (type === 'trigger-type') {
+            const current = triggerTypeMap[key] || 'latest';
+            html += renderPickerHeader('触发价格类型');
+            html += renderRichPickerOption('latest', '最新价格', '该合约最新成交价格', current === 'latest');
+            html += renderRichPickerOption('mark', '标记价格', '合约的预估公允价值，用于强制平仓计算。', current === 'mark');
+        } else if (type === 'tpsl-mode') {
+            html += renderPickerHeader('委托模式');
+            html += renderRichPickerOption('单向', '单向', '预设触发价与委托价，市价达触发价后按委托价下单。', currentTPSLMode === '单向');
+            html += renderRichPickerOption('双向', '双向', '预设止盈/止损触发价与委托价；一侧触发成交后，另一侧自动失效。', currentTPSLMode === '双向');
+        } else if (type === 'order-delegate') {
+            const current = orderDelegateMap[key] || 'market';
+            html += renderPickerHeader('订单委托类型');
+            html += renderRichPickerOption('market', '市价委托', '', current === 'market');
+            html += renderRichPickerOption('limit', '限价委托', '', current === 'limit');
+        } else if (type === 'close-price-type') {
+            html += renderPickerHeader('價格類型');
+            html += renderRichPickerOption('market', '市價', '按市場最優價格立即平倉', closePriceType === 'market');
+            html += renderRichPickerOption('limit', '限價', '按指定價格掛單平倉', closePriceType === 'limit');
+        }
+
+        body.innerHTML = html + '<div class="p-4"><button onclick="closeSheet(\'picker-sheet\')" class="w-full py-3 text-[13px] font-bold text-gray-400 bg-gray-50 rounded-xl">取消</button></div>';
+        openSheet('picker-sheet');
+    }
+
+    function selectPickerOption(value) {
+        const { type, key } = pickerContext;
+        if (type === 'trigger-type') {
+            triggerTypeMap[key] = value;
+            const labelId = key.startsWith('attach-') ? `${key}-trigger-label` : `${key}-trigger-label`;
+            const labelEl = document.getElementById(labelId);
+            if (labelEl) labelEl.textContent = getTriggerTypeLabel(value);
+        } else if (type === 'tpsl-mode') {
+            setTPSLMode(value);
+        } else if (type === 'order-delegate') {
+            const priceInputId = key.replace('-order', '-price');
+            setOrderType(key, value === 'market' ? '市价' : '限价', priceInputId);
+        } else if (type === 'close-price-type') {
+            setClosePriceType(value);
+        }
+        closeSheet('picker-sheet');
+    }
+
+    function setClosePriceType(type) {
+        closePriceType = type;
+        const label = document.getElementById('close-price-type-label');
+        const input = document.getElementById('close-price-input');
+        if (label) label.textContent = type === 'market' ? '市價' : '限價';
+        if (!input) return;
+        if (type === 'market') {
+            input.disabled = true;
+            input.type = 'text';
+            input.value = '市價';
+            input.placeholder = '';
+        } else {
+            input.disabled = false;
+            input.type = 'number';
+            input.value = '';
+            input.placeholder = '請輸入價格';
+        }
+    }
+
+    function openPositionTPSLSheet() {
+        document.getElementById('pos-tpsl-pair-tag').textContent = positionState.pair;
+        document.getElementById('pos-tpsl-lev-tag').textContent = positionState.leverage + 'X';
+        document.getElementById('pos-tpsl-open-price').textContent = positionState.openPrice;
+        document.getElementById('pos-tpsl-mark-price').textContent = positionState.markPrice;
+        const qtyText = positionState.totalQtyUsdt.toFixed(2) + ' USDT';
+        document.getElementById('pos-tpsl-qty').textContent = qtyText;
+        document.getElementById('pos-tpsl-qty-hint').textContent = qtyText;
+        document.getElementById('pos-tpsl-qty-input').value = positionState.totalQtyUsdt.toFixed(2);
+        document.getElementById('pos-tpsl-qty-slider').value = 100;
+        document.getElementById('pos-tp-trigger-label').textContent = getTriggerTypeLabel(triggerTypeMap['pos-tp']);
+        document.getElementById('pos-sl-trigger-label').textContent = getTriggerTypeLabel(triggerTypeMap['pos-sl']);
+        switchPositionTPSLType('tp', 'market');
+        switchPositionTPSLType('sl', 'market');
+        simulatePositionTPSLState(false);
+        openSheet('position-tpsl-sheet');
+    }
+
+    function simulatePositionTPSLState(hasOrders) {
+        ['tp', 'sl'].forEach(mode => {
+            document.getElementById(`pos-${mode}-view-setup`)?.classList.toggle('hidden', hasOrders);
+            document.getElementById(`pos-${mode}-view-active`)?.classList.toggle('hidden', !hasOrders);
+        });
+    }
+
+    function switchPositionTPSLType(mode, type) {
+        const isLimit = type === 'limit';
+        document.getElementById(`pos-${mode}-limit-input`)?.classList.toggle('hidden', !isLimit);
+        const btnMarket = document.getElementById(`pos-${mode}-btn-market`);
+        const btnLimit = document.getElementById(`pos-${mode}-btn-limit`);
+        if (btnMarket && btnLimit) {
+            btnMarket.classList.toggle('active', !isLimit);
+            btnLimit.classList.toggle('active', isLimit);
+        }
+    }
+
+    function editPositionTPSL(mode) {
+        document.getElementById(`pos-${mode}-view-active`)?.classList.add('hidden');
+        document.getElementById(`pos-${mode}-view-setup`)?.classList.remove('hidden');
+    }
+
+    function cancelPositionTPSL(mode) {
+        document.getElementById(`pos-${mode}-view-active`)?.classList.add('hidden');
+        document.getElementById(`pos-${mode}-view-setup`)?.classList.remove('hidden');
+    }
+
+    function syncPositionTPSLQtySlider(val) {
+        const pct = parseInt(val, 10) / 100;
+        const qty = (positionState.totalQtyUsdt * pct).toFixed(2);
+        const input = document.getElementById('pos-tpsl-qty-input');
+        if (input) input.value = qty;
+    }
+
+    function openPositionTPSLConfirm() {
+        closeSheet('position-tpsl-sheet');
+        const sideEl = document.getElementById('pos-tpsl-confirm-side');
+        if (sideEl) {
+            sideEl.textContent = positionState.side === 'long' ? '多單' : '空單';
+            sideEl.className = positionState.side === 'long'
+                ? 'text-[9px] bg-green-500 text-white px-1.5 py-0.5 rounded font-black'
+                : 'text-[9px] bg-red-500 text-white px-1.5 py-0.5 rounded font-black';
+        }
+        document.getElementById('pos-tpsl-confirm-pair').textContent = positionState.pair + ' 永續';
+        document.getElementById('pos-tpsl-confirm-open').innerHTML = positionState.openPrice + ' <span class="text-gray-400 font-medium">USDT</span>';
+        const qtyVal = document.getElementById('pos-tpsl-qty-input')?.value || positionState.totalQtyUsdt.toFixed(2);
+        document.getElementById('pos-tpsl-confirm-qty').innerHTML = qtyVal + ' <span class="text-gray-400">USDT</span>';
+        openModal('position-tpsl-confirm-modal');
+    }
+
+    function executePositionTPSL() {
+        closeModal('position-tpsl-confirm-modal');
+    }
+
+    function openClosePositionSheet() {
+        const isLong = positionState.side === 'long';
+        document.getElementById('close-pos-pair').textContent = positionState.pair;
+        const sideTag = document.getElementById('close-pos-side-tag');
+        if (sideTag) {
+            sideTag.textContent = isLong ? '做多' : '做空';
+            sideTag.className = isLong ? 'pos-tag-long shrink-0' : 'pos-tag-short shrink-0';
+        }
+        document.getElementById('close-pos-lev-tag').textContent = positionState.leverage + 'x';
+        document.getElementById('close-pos-open-price').textContent = positionState.openPrice;
+        document.getElementById('close-pos-mark-price').textContent = positionState.markPrice;
+        document.getElementById('close-pos-total-qty').textContent = positionState.totalQtyUsdt.toFixed(2) + ' USDT';
+        document.getElementById('close-pos-est-pnl').textContent = '0.00 USDT';
+        closePriceType = 'market';
+        closeQtyPercent = 100;
+        setClosePriceType('market');
+        const slider = document.getElementById('close-pos-qty-slider');
+        if (slider) slider.value = 100;
+        syncCloseQtySlider(100);
+        openSheet('close-position-sheet');
+    }
+
+    function formatCloseQtyDisplay(percent) {
+        const base = (positionState.baseQtyApprox * percent / 100).toFixed(2);
+        return `${percent}% (≈${base})`;
+    }
+
+    function syncCloseQtySlider(val) {
+        closeQtyPercent = parseInt(val, 10);
+        const input = document.getElementById('close-pos-qty-input');
+        if (input) input.value = formatCloseQtyDisplay(closeQtyPercent);
+    }
+
+    function syncCloseQtyFromInput() {
+        const input = document.getElementById('close-pos-qty-input');
+        if (!input) return;
+        const match = input.value.match(/(\d+)%/);
+        if (match) {
+            closeQtyPercent = parseInt(match[1], 10);
+            const slider = document.getElementById('close-pos-qty-slider');
+            if (slider) slider.value = closeQtyPercent;
+        }
+    }
+
+    function confirmClosePosition() {
+        closeSheet('close-position-sheet');
+        pendingOrderDirection = positionState.side === 'long' ? 'close-long' : 'close-short';
+        openOrderConfirm(pendingOrderDirection);
+    }
+
+    function selectObPrecision(val) {
+        currentObPrecision = val;
+        document.getElementById('ob-precision-label').innerText = val;
+        closeSheet('precision-sheet');
+    }
+
+    function switchPositionTab(tab) {
+        currentPositionTab = tab;
+        const tabPos = document.getElementById('tab-positions');
+        const tabOrd = document.getElementById('tab-orders');
+        const posPanel = document.getElementById('positions-panel');
+        const ordPanel = document.getElementById('orders-panel');
+
+        if (tab === 'positions') {
+            tabPos.className = 'tab-active text-[13px] pb-1';
+            tabOrd.className = 'text-gray-400 font-bold text-[13px] pb-1';
+            posPanel.classList.remove('hidden');
+            ordPanel.classList.add('hidden');
+        } else {
+            tabOrd.className = 'tab-active text-[13px] pb-1';
+            tabPos.className = 'text-gray-400 font-bold text-[13px] pb-1';
+            ordPanel.classList.remove('hidden');
+            posPanel.classList.add('hidden');
+            renderOrderList();
+        }
+    }
+
+    function switchOrderSecondary(sub) {
+        currentOrderSecondary = sub;
+        document.getElementById('s-basic').classList.toggle('active', sub === 'basic');
+        document.getElementById('s-tpsl').classList.toggle('active', sub === 'tpsl');
+        renderOrderList();
+    }
+
+    function renderOrderList() {
+        const container = document.getElementById('order-list-container');
+        if (!container) return;
+        if (isGuestMode) {
+            container.innerHTML = '<div class="py-16 text-center"><p class="text-[11px] font-bold text-gray-300">暫無委託</p></div>';
+            return;
+        }
+        container.innerHTML = mockOrderData[currentOrderSecondary] || '';
+    }
+
+    function updatePositionTabLabels() {
+        const posCount = isGuestMode ? 0 : 1;
+        const ordCount = isGuestMode ? 0 : 3;
+        const tabPos = document.getElementById('tab-positions');
+        const tabOrd = document.getElementById('tab-orders');
+        const sBasic = document.getElementById('s-basic');
+        const sTpsl = document.getElementById('s-tpsl');
+        if (tabPos) tabPos.textContent = `當前持倉(${posCount})`;
+        if (tabOrd) tabOrd.textContent = `當前委託(${ordCount})`;
+        if (sBasic) sBasic.textContent = `基礎單 (${isGuestMode ? 0 : 1})`;
+        if (sTpsl) sTpsl.textContent = `止盈止損單 (${isGuestMode ? 0 : 2})`;
+    }
+
+    function openOrderFilterModal(type) {
+        const overlay = document.getElementById('order-filter-overlay');
+        const sheet = document.getElementById('order-filter-sheet');
+        const content = document.getElementById('order-filter-content');
+        overlay.classList.remove('hidden');
+        content.innerHTML = getOrderFilterTemplate(type);
+        setTimeout(() => { overlay.classList.add('opacity-100'); sheet.classList.add('active'); }, 10);
+    }
+
+    function closeOrderFilterModal() {
+        const overlay = document.getElementById('order-filter-overlay');
+        const sheet = document.getElementById('order-filter-sheet');
+        sheet.classList.remove('active');
+        overlay.classList.remove('opacity-100');
+        setTimeout(() => overlay.classList.add('hidden'), 300);
+    }
+
+    function getOrderFilterTemplate(type) {
+        if (type === 'contract') {
+            return `
+                <div class="relative mb-6">
+                    <input type="text" placeholder="搜索幣對" class="w-full bg-gray-100 rounded-xl py-3 pl-10 pr-4 text-xs outline-none focus:ring-1 focus:ring-black">
+                    <svg class="w-4 h-4 absolute left-3 top-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2.5"/></svg>
+                </div>
+                <p class="text-[10px] font-black text-gray-400 uppercase mb-3">當前合約</p>
+                <div class="inline-block bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-black text-xs mb-6 uppercase">BTCUSDT</div>
+                <div class="space-y-1">
+                    <div class="flex justify-between items-center py-3 border-b border-gray-50 font-black text-xs">
+                        <span>全部</span><svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="3"/></svg>
+                    </div>
+                    ${['BTCUSDT','BNBUSDT','ETHUSDT'].map(c => `<div class="py-3 font-bold text-gray-500 text-xs" onclick="closeOrderFilterModal()">${c}</div>`).join('')}
+                </div>
+            `;
+        }
+        if (type === 'orderType') {
+            return `
+                <h3 class="text-center font-black text-sm mb-8 uppercase tracking-widest">訂單類型</h3>
+                <div class="grid grid-cols-2 gap-3 pb-10">
+                    <div class="filter-option-btn active" onclick="closeOrderFilterModal()">全部</div>
+                    <div class="filter-option-btn" onclick="closeOrderFilterModal()">限價單</div>
+                    <div class="filter-option-btn" onclick="closeOrderFilterModal()">市價單</div>
+                    <div class="filter-option-btn" onclick="closeOrderFilterModal()">強平委託</div>
+                </div>
+            `;
+        }
+        if (type === 'cancel-type-select') {
+            return `
+                <div class="space-y-4 pb-8">
+                    <div class="py-3 border-b border-gray-50 font-black text-sm cursor-pointer" onclick="selectCancelType('all')">全部</div>
+                    <div class="py-3 border-b border-gray-50 font-bold text-gray-500 text-sm cursor-pointer" onclick="selectCancelType('limit')">限价</div>
+                    <div class="py-3 border-b border-gray-50 font-bold text-gray-500 text-sm cursor-pointer" onclick="selectCancelType('tpsl')">止盈止损</div>
+                </div>
+            `;
+        }
+        if (type === 'cancel-confirm') {
+            return `
+                <div class="flex flex-col items-center py-8">
+                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6">
+                        <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-black mb-2">取消全部订单</h3>
+                    <p class="text-sm text-gray-500 mb-8">确认撤销所有委托单么？</p>
+                    <div class="flex space-x-4 w-full px-6">
+                        <button onclick="closeOrderFilterModal()" class="flex-1 py-3 border border-gray-200 rounded-xl font-black text-xs text-gray-500 uppercase">取消</button>
+                        <button onclick="executeCancelAll()" class="flex-1 py-3 bg-red-500 text-white rounded-xl font-black text-xs uppercase shadow-lg">确认</button>
+                    </div>
+                </div>
+            `;
+        }
+        return '';
+    }
+
+    function openCancelFlow() {
+        selectedCancelType = '';
+        openOrderFilterModal('cancel-type-select');
+    }
+
+    function selectCancelType(type) {
+        selectedCancelType = type;
+        document.getElementById('order-filter-content').innerHTML = getOrderFilterTemplate('cancel-confirm');
+    }
+
+    function executeCancelAll() {
+        alert('已撤销所有' + (selectedCancelType === 'all' ? '' : selectedCancelType) + '订单');
+        closeOrderFilterModal();
+    }
+
+    function switchPositionSide(side) {
+        currentSide = side;
+        const btnOpen = document.getElementById('btn-open');
+        const btnClose = document.getElementById('btn-close');
+        const openSection = document.getElementById('open-order-section');
+        const closeSection = document.getElementById('close-order-section');
+        const attachTpsl = document.getElementById('attach-tpsl-section');
+        if (side === 'open') {
+            btnOpen.className = 'flex-1 bg-white shadow-sm rounded py-1 text-[11px] font-bold';
+            btnClose.className = 'flex-1 py-1 text-[11px] font-bold text-gray-400';
+            openSection.classList.remove('hidden');
+            closeSection.classList.add('hidden');
+            if (currentOrderMode === 'limit' || currentOrderMode === 'market') {
+                attachTpsl.classList.remove('hidden');
+            }
+        } else {
+            btnClose.className = 'flex-1 bg-white shadow-sm rounded py-1 text-[11px] font-bold';
+            btnOpen.className = 'flex-1 py-1 text-[11px] font-bold text-gray-400';
+            openSection.classList.add('hidden');
+            closeSection.classList.remove('hidden');
+            attachTpsl.classList.add('hidden');
+            const cb = document.getElementById('check-tpsl');
+            if (cb) { cb.checked = false; toggleAttachTPSL(); }
+        }
+        if (currentOrderMode === 'profit-loss') renderTPSLTriggers();
+        updateTradeButtonsVisibility();
+    }
+
+    function selectOrderMode(mode) {
+        currentOrderMode = mode;
+        document.getElementById('order-type-label').innerText = orderTypeLabels[mode];
+        closeSheet('order-type-sheet');
+        applyOrderModeUI();
+    }
+
+    function applyOrderModeUI() {
+        const priceContainer = document.getElementById('price-input-container');
+        const tpslContainer = document.getElementById('tpsl-order-container');
+        const attachTpsl = document.getElementById('attach-tpsl-section');
+        const priceInput = document.getElementById('price-input');
+        const btnBbo = document.getElementById('btn-bbo');
+
+        if (currentOrderMode === 'limit') {
+            resetBestPriceMode();
+            priceContainer.classList.remove('hidden');
+            tpslContainer.classList.add('hidden');
+            if (currentSide === 'open') attachTpsl.classList.remove('hidden');
+            priceInput.disabled = false;
+            priceInput.value = '72305.9';
+            priceInput.classList.remove('text-center', 'text-gray-400', 'hidden');
+            btnBbo.classList.remove('hidden');
+        } else if (currentOrderMode === 'market') {
+            resetBestPriceMode();
+            priceContainer.classList.remove('hidden');
+            tpslContainer.classList.add('hidden');
+            if (currentSide === 'open') attachTpsl.classList.remove('hidden');
+            priceInput.disabled = true;
+            priceInput.value = '市價';
+            priceInput.classList.add('text-center', 'text-gray-400');
+            btnBbo.classList.add('hidden');
+        } else {
+            resetBestPriceMode();
+            priceContainer.classList.add('hidden');
+            tpslContainer.classList.remove('hidden');
+            attachTpsl.classList.add('hidden');
+            priceInput.disabled = false;
+            priceInput.value = '72305.9';
+            btnBbo.classList.remove('hidden');
+            renderTPSLTriggers();
+        }
+    }
+
+    function toggleAttachTPSL() {
+        const checkbox = document.getElementById('check-tpsl');
+        const container = document.getElementById('attach-tpsl-inputs');
+        if (!checkbox || !container) return;
+        container.classList.toggle('hidden', !checkbox.checked);
+        if (checkbox.checked) updateTPSLEstimates();
+    }
+
+    function renderPairList() {
+        const list = document.getElementById('pair-list');
+        if (!list) return;
+        const items = pairListData.filter(item => {
+            if (currentPairCategory === 'fav') return favoritePairs.has(item.pair);
+            return item.cats.includes(currentPairCategory);
+        });
+        list.innerHTML = items.map(item => `
+            <div class="pair-row px-5 py-3 grid grid-cols-3 items-center cursor-pointer" onclick="selectPair('${item.pair}', ${!!item.premarket})">
+                <div class="flex items-center space-x-1.5 min-w-0">
+                    <svg class="w-3 h-3 shrink-0 ${favoritePairs.has(item.pair) ? 'text-yellow-400' : 'text-gray-300'}" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/></svg>
+                    <span class="font-black text-[12px] truncate">${item.pair}</span>
+                    <span class="text-[8px] bg-gray-100 px-1 rounded shrink-0">${item.leverage}</span>
+                </div>
+                <div class="text-right text-[11px] font-bold font-mono">${item.price}</div>
+                <div class="text-right text-[11px] font-bold ${item.changeClass}">${item.change}</div>
+            </div>
+        `).join('');
+    }
+
+    function switchPairCategory(cat) {
+        currentPairCategory = cat;
+        document.querySelectorAll('#pair-category-tabs .pair-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.cat === cat);
+        });
+        renderPairList();
+    }
+
+    function selectPair(pair, premarket) {
+        currentPair = pair;
+        document.getElementById('header-pair-name').innerText = pair;
+        updateMoreMenuFavoriteUI();
+        closeSheet('pair-sheet');
+        if (premarket) {
+            if (!isPremarketMode) togglePremarketMode();
+        } else if (isPremarketMode) {
+            togglePremarketMode();
+        }
+    }
+
+    function padCountdown(n) { return String(Math.max(0, n)).padStart(2, '0'); }
+
+    function renderKlineCountdown() {
+        const days = Math.floor(klineCountdownRemaining / 86400);
+        const hours = Math.floor((klineCountdownRemaining % 86400) / 3600);
+        const mins = Math.floor((klineCountdownRemaining % 3600) / 60);
+        const secs = klineCountdownRemaining % 60;
+        const map = { 'cd-days': days, 'cd-hours': hours, 'cd-mins': mins, 'cd-secs': secs };
+        Object.entries(map).forEach(([id, val]) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = padCountdown(val);
+        });
+    }
+
+    function applyPremarketUI() {
+        const premarketPanel = document.getElementById('premarket-ob-panel');
+        const obNormal = document.getElementById('ob-normal-content');
+        const changeBadge = document.getElementById('header-change-badge');
+        const fundingValue = document.getElementById('funding-rate-value');
+        const pairName = document.getElementById('header-pair-name');
+        const btn = document.getElementById('btn-toggle-premarket');
+
+        if (isPremarketMode) {
+            premarketPanel?.classList.remove('hidden');
+            obNormal?.classList.add('hidden');
+            if (changeBadge) { changeBadge.textContent = '--'; changeBadge.className = 'bg-gray-200 text-gray-500 text-[10px] px-1.5 py-0.5 rounded-sm font-bold'; }
+            if (fundingValue) fundingValue.textContent = '--';
+            if (pairName) pairName.textContent = 'PEPEUSDT';
+            currentPair = 'PEPEUSDT';
+            if (btn) btn.textContent = '切换：正常交易';
+            renderKlineCountdown();
+            updateOpenStatsDisplay();
+            renderOrderBookDepth();
+        } else {
+            premarketPanel?.classList.add('hidden');
+            obNormal?.classList.remove('hidden');
+            if (changeBadge) { changeBadge.textContent = '+2.45%'; changeBadge.className = 'bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded-sm font-bold'; }
+            if (fundingValue) fundingValue.textContent = '08:42:15';
+            if (pairName) pairName.textContent = currentPair === 'PEPEUSDT' ? 'BTCUSDT' : currentPair;
+            currentPair = pairName?.textContent || 'BTCUSDT';
+            if (btn) btn.textContent = '切换：待开盘';
+            updateOpenStatsDisplay();
+        }
+    }
+
+    function togglePremarketMode() {
+        isPremarketMode = !isPremarketMode;
+        applyPremarketUI();
+    }
+
+    function setGuestText(id, value) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+    }
+
+    function updateTradeButtonsVisibility() {
+        const guestTrade = document.getElementById('guest-trade-section');
+        const openSection = document.getElementById('open-order-section');
+        const closeSection = document.getElementById('close-order-section');
+        if (isGuestMode) {
+            openSection?.classList.add('hidden');
+            closeSection?.classList.add('hidden');
+            guestTrade?.classList.remove('hidden');
+        } else {
+            guestTrade?.classList.add('hidden');
+            if (currentSide === 'open') {
+                openSection?.classList.remove('hidden');
+                closeSection?.classList.add('hidden');
+            } else {
+                openSection?.classList.add('hidden');
+                closeSection?.classList.remove('hidden');
+            }
+        }
+    }
+
+    function applyGuestUI() {
+        const btn = document.getElementById('btn-toggle-guest');
+        const plusBtn = document.getElementById('deposit-plus-btn');
+        const closeAllBtn = document.getElementById('btn-close-all');
+        const positionsCard = document.getElementById('positions-card');
+        const positionsEmpty = document.getElementById('positions-empty');
+        const positionsToolbar = document.querySelector('#positions-panel > .flex.justify-between');
+        const s = loggedInSnapshot;
+
+        if (btn) btn.textContent = isGuestMode ? '返回已登录' : '未登录状态';
+        plusBtn?.classList.toggle('hidden', isGuestMode);
+        closeAllBtn?.classList.toggle('hidden', isGuestMode);
+        positionsToolbar?.classList.toggle('hidden', isGuestMode);
+        positionsCard?.classList.toggle('hidden', isGuestMode);
+        positionsEmpty?.classList.toggle('hidden', !isGuestMode);
+        document.getElementById('order-secondary-tabs')?.classList.toggle('hidden', isGuestMode);
+        document.getElementById('order-filter-bar')?.classList.toggle('hidden', isGuestMode);
+        updatePositionTabLabels();
+
+        if (isGuestMode) {
+            setGuestText('available-balance', '--');
+            setGuestText('stat-close-long-qty', '--');
+            setGuestText('stat-close-short-qty', '--');
+            updateOpenStatsDisplay();
+            if (currentPositionTab === 'orders') renderOrderList();
+        } else {
+            setGuestText('available-balance', s.balance);
+            setGuestText('stat-close-long-qty', s.closeLongQty);
+            setGuestText('stat-close-short-qty', s.closeShortQty);
+            updateOpenStatsDisplay();
+            setGuestText('pos-pnl', s.posPnl);
+            setGuestText('pos-roi', s.posRoi);
+            setGuestText('pos-qty', s.posQty);
+            setGuestText('pos-margin', s.posMargin);
+            setGuestText('pos-liq', s.posLiq);
+            const posPnl = document.getElementById('pos-pnl');
+            const posRoi = document.getElementById('pos-roi');
+            if (posPnl) posPnl.className = 'text-lg font-black text-green-500';
+            if (posRoi) posRoi.className = 'text-sm font-black text-green-500';
+            if (currentPositionTab === 'orders') renderOrderList();
+        }
+        updateTradeButtonsVisibility();
+    }
+
+    function toggleGuestMode() {
+        isGuestMode = !isGuestMode;
+        applyGuestUI();
+    }
+
+    function tickPremarketCountdown() {
+        if (!isPremarketMode || klineCountdownRemaining <= 0) return;
+        klineCountdownRemaining--;
+        renderKlineCountdown();
+    }
+
+    function setTPSLMode(mode) {
+        currentTPSLMode = mode;
+        const modeEl = document.getElementById('tpsl-mode-value');
+        if (modeEl) modeEl.innerText = mode;
+        renderTPSLTriggers();
+    }
+
+    const MARK_PRICE = 72305.9;
+
+    function parseInputNum(val) {
+        if (val === null || val === undefined) return NaN;
+        const raw = String(val).replace(/,/g, '').trim();
+        if (!raw || raw === '市價' || raw === '市价') return NaN;
+        const n = parseFloat(raw);
+        return Number.isFinite(n) && n > 0 ? n : NaN;
+    }
+
+    function getMarkPrice() {
+        return MARK_PRICE;
+    }
+
+    function getLastTradePrice() {
+        const el = document.getElementById('ob-last-price');
+        if (!el) return getMarkPrice();
+        const val = parseInputNum(el.textContent);
+        return Number.isFinite(val) ? val : getMarkPrice();
+    }
+
+    function getOrderRefPrice() {
+        const priceInput = document.getElementById('price-input');
+        if (!priceInput || priceInput.classList.contains('hidden')) return getLastTradePrice();
+        const val = parseInputNum(priceInput.value);
+        return Number.isFinite(val) ? val : getLastTradePrice();
+    }
+
+    function getDelegateRefPrice(role) {
+        const orderTypeId = role + '-order';
+        const delegateType = orderDelegateMap[orderTypeId] || 'market';
+        const priceEl = document.getElementById(role + '-price');
+        if (delegateType === 'limit') {
+            const limitPrice = parseInputNum(priceEl?.value);
+            if (Number.isFinite(limitPrice)) return limitPrice;
+        }
+        return getOrderRefPrice();
+    }
+
+    function getQtyUsdt() {
+        const qty = parseInputNum(document.getElementById('qty-input')?.value);
+        if (!Number.isFinite(qty)) return NaN;
+        if (currentQtyUnit === 'BTC') return qty * getOrderRefPrice();
+        return qty;
+    }
+
+    function getLegDisplayDirection(role, triggerPrice, refPrice) {
+        if (role === 'tp') return triggerPrice > refPrice ? 'long' : 'short';
+        return triggerPrice < refPrice ? 'long' : 'short';
+    }
+
+    function calcLegEstPnl(role, triggerPrice, refPrice, qtyUsdt) {
+        const dir = getLegDisplayDirection(role, triggerPrice, refPrice);
+        if (dir === 'long') return qtyUsdt * (triggerPrice - refPrice) / refPrice;
+        return qtyUsdt * (refPrice - triggerPrice) / refPrice;
+    }
+
+    function inferBracketSide(tpTrigger, slTrigger, refPrice) {
+        const hasTp = Number.isFinite(tpTrigger);
+        const hasSl = Number.isFinite(slTrigger);
+        if (!hasTp && !hasSl) return null;
+        if (hasTp && hasSl) {
+            if (tpTrigger > refPrice && slTrigger < refPrice) return 'long';
+            if (tpTrigger < refPrice && slTrigger > refPrice) return 'short';
+            return 'conflict';
+        }
+        if (hasTp) return tpTrigger > refPrice ? 'long' : 'short';
+        return slTrigger < refPrice ? 'long' : 'short';
+    }
+
+    function formatEstPnlText(role, triggerPrice, refPrice, qtyUsdt, positionSide) {
+        if (!Number.isFinite(qtyUsdt) || !Number.isFinite(triggerPrice) || !Number.isFinite(refPrice)) return null;
+        if (!positionSide || positionSide === 'conflict') return null;
+        const legDir = getLegDisplayDirection(role, triggerPrice, refPrice);
+        if (legDir !== positionSide) return null;
+        const pnl = calcLegEstPnl(role, triggerPrice, refPrice, qtyUsdt);
+        const side = positionSide === 'long' ? '做多' : '做空';
+        const kind = role === 'tp' ? '止盈' : '止損';
+        const sign = pnl >= 0 ? '+' : '';
+        return `${side}${kind}預估收益 ${sign}${pnl.toFixed(2)} USDT`;
+    }
+
+    function setEstimateEl(el, text) {
+        if (!el) return;
+        if (!text) {
+            el.textContent = '';
+            el.classList.add('hidden');
+            el.classList.remove('positive', 'negative');
+            return;
+        }
+        el.classList.remove('hidden');
+        el.textContent = text;
+        el.classList.remove('positive', 'negative');
+        if (text.includes('+')) el.classList.add('positive');
+        else el.classList.add('negative');
+    }
+
+    function showTPSLConflictHint(el, tpTrigger, slTrigger, refPrice) {
+        if (!el) return;
+        const bothAbove = tpTrigger > refPrice && slTrigger > refPrice;
+        const cmp = bothAbove ? '高於' : '低於';
+        el.classList.remove('hidden');
+        el.textContent = `止盈止損價不能同時${cmp}委託價`;
+    }
+
+    function hideTPSLConflictHint(el) {
+        if (!el) return;
+        el.classList.add('hidden');
+        el.textContent = '';
+    }
+
+    function updateEstimateContext(tpTriggerEl, slTriggerEl, tpEstEl, slEstEl, hintEl, refPrice) {
+        const tpTrigger = parseInputNum(tpTriggerEl?.value);
+        const slTrigger = parseInputNum(slTriggerEl?.value);
+        const qtyUsdt = getQtyUsdt();
+        const bracket = inferBracketSide(tpTrigger, slTrigger, refPrice);
+
+        if (hintEl) {
+            if (bracket === 'conflict') showTPSLConflictHint(hintEl, tpTrigger, slTrigger, refPrice);
+            else hideTPSLConflictHint(hintEl);
+        }
+
+        setEstimateEl(tpEstEl, formatEstPnlText('tp', tpTrigger, refPrice, qtyUsdt, bracket));
+        setEstimateEl(slEstEl, formatEstPnlText('sl', slTrigger, refPrice, qtyUsdt, bracket));
+    }
+
+    function updateTPSLEstimates() {
+        const orderRef = getOrderRefPrice();
+        updateEstimateContext(
+            document.getElementById('tp-trigger'),
+            document.getElementById('sl-trigger'),
+            document.getElementById('tp-estimate'),
+            document.getElementById('sl-estimate'),
+            document.getElementById('tpsl-conflict-hint'),
+            orderRef
+        );
+        updateEstimateContext(
+            document.getElementById('attach-tp-price'),
+            document.getElementById('attach-sl-price'),
+            document.getElementById('attach-tp-estimate'),
+            document.getElementById('attach-sl-estimate'),
+            document.getElementById('attach-tpsl-conflict-hint'),
+            orderRef
+        );
+    }
+
+    function bindTPSLEstimateListeners() {
+        ['tp', 'sl'].forEach(role => {
+            ['trigger', 'price'].forEach(field => {
+                const el = document.getElementById(role + '-' + field);
+                if (el && !el.dataset.estBound) {
+                    el.dataset.estBound = '1';
+                    el.addEventListener('input', updateTPSLEstimates);
+                }
+            });
+        });
+        updateTPSLEstimates();
+    }
+
+    function getOrderRoleFromTypeId(orderTypeId) {
+        return orderTypeId.startsWith('sl') ? 'sl' : 'tp';
+    }
+
+    function getTPSLOrderTypeLabel(orderRole, priceType) {
+        const isMarket = priceType === '市价';
+        const isClose = currentSide === 'close';
+        const isBidirect = currentTPSLMode === '双向';
+        if (!isClose) return isMarket ? '市價委託' : '限價委託';
+        if (isBidirect) {
+            const prefix = orderRole === 'sl' ? '止損' : '止盈';
+            return isMarket ? `${prefix}市價` : `${prefix}限價`;
+        }
+        return isMarket ? '平倉市價' : '平倉限價';
+    }
+
+    function renderTPSLTriggers() {
+        const container = document.getElementById('tpsl-triggers-container');
+        if (!container) return;
+        const isClose = currentSide === 'close';
+        const isBidirect = currentTPSLMode === '双向';
+        let html = '';
+
+        const renderRow = (label, placeholder, role) => {
+            const orderTypeId = role + '-order';
+            const orderPriceId = role + '-price';
+            const triggerKey = role;
+            const delegateType = orderDelegateMap[orderTypeId] || 'market';
+            const defaultLabel = getTPSLOrderTypeLabel(role, delegateType === 'market' ? '市价' : '限价');
+            const triggerLabel = getTriggerTypeLabel(triggerTypeMap[triggerKey] || 'latest');
+            return `
+            <div class="space-y-1 min-w-0 overflow-hidden">
+                <div class="text-[8px] text-gray-400 font-bold">${label}</div>
+                <div class="input-box field-row trade-field flex items-center min-w-0">
+                    <input class="bg-transparent text-[11px] font-bold flex-1 min-w-0 outline-none" placeholder="${placeholder}" id="${role}-trigger" oninput="updateTPSLEstimates()">
+                    <button type="button" class="picker-chip" onclick="event.stopPropagation(); openPickerSheet('trigger-type', '${triggerKey}')">
+                        <span id="${role}-trigger-label">${triggerLabel}</span>
+                        <svg class="w-2.5 h-2.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                    </button>
+                </div>
+                <div class="tpsl-inline-picker min-w-0" onclick="openPickerSheet('order-delegate', '${orderTypeId}')">
+                    <span id="${orderTypeId}-label" class="truncate">${defaultLabel}</span>
+                    <svg class="w-2.5 h-2.5 ml-0.5 text-gray-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                </div>
+                <div class="input-box field-row trade-field min-w-0">
+                    <input id="${orderPriceId}" class="bg-transparent text-[11px] font-bold w-full min-w-0 outline-none ${delegateType === 'market' ? 'text-center text-gray-400' : ''}" value="${delegateType === 'market' ? '市价' : ''}" placeholder="${delegateType === 'limit' ? '委託價' : ''}" ${delegateType === 'market' ? 'disabled' : ''}>
+                </div>
+                <div id="${role}-estimate" class="tpsl-estimate hidden"></div>
+            </div>`;
+        };
+
+        if (isClose) {
+            if (isBidirect) {
+                html += renderRow('止盈', '止盈觸發價', 'tp');
+                html += renderRow('止損', '止損觸發價', 'sl');
+            } else {
+                html += renderRow('觸發價格', '觸發價', 'tp');
+            }
+        } else {
+            if (isBidirect) {
+                html += renderRow('觸發價格', '觸發價', 'tp');
+                html += renderRow('觸發價格', '觸發價', 'sl');
+            } else {
+                html += renderRow('觸發價格', '觸發價', 'tp');
+            }
+        }
+        container.innerHTML = html;
+        bindTPSLEstimateListeners();
+    }
+
+    function setOrderType(orderTypeId, type, priceInputId) {
+        const role = getOrderRoleFromTypeId(orderTypeId);
+        orderDelegateMap[orderTypeId] = type === '市价' ? 'market' : 'limit';
+        const label = document.getElementById(orderTypeId + '-label');
+        const priceInput = document.getElementById(priceInputId);
+        if (label) label.innerText = getTPSLOrderTypeLabel(role, type);
+        if (priceInput) {
+            if (type === '市价') {
+                priceInput.disabled = true;
+                priceInput.value = '市价';
+                priceInput.placeholder = '';
+                priceInput.classList.add('text-center', 'text-gray-400');
+            } else {
+                priceInput.disabled = false;
+                priceInput.value = '';
+                priceInput.placeholder = '委託價';
+                priceInput.classList.remove('text-center', 'text-gray-400');
+            }
+        }
+        updateTPSLEstimates();
+    }
+
+    function adjustLeverage(side, delta) {
+        const key = side === 'long' ? 'longLeverage' : 'shortLeverage';
+        const val = Math.min(150, Math.max(1, (side === 'long' ? longLeverage : shortLeverage) + delta));
+        if (side === 'long') longLeverage = val; else shortLeverage = val;
+        syncLeverageDisplay(side);
+    }
+
+    function syncLeverageSlider(side, val) {
+        const n = parseInt(val, 10);
+        if (side === 'long') longLeverage = n; else shortLeverage = n;
+        syncLeverageDisplay(side);
+    }
+
+    function syncLeverageDisplay(side) {
+        if (side === 'long') {
+            document.getElementById('long-lev-input').innerText = longLeverage;
+            document.getElementById('long-lev-preview').innerText = longLeverage + 'x';
+            document.getElementById('long-lev-slider').value = longLeverage;
+        } else {
+            document.getElementById('short-lev-input').innerText = shortLeverage;
+            document.getElementById('short-lev-preview').innerText = shortLeverage + 'x';
+            document.getElementById('short-lev-slider').value = shortLeverage;
+        }
+    }
+
+    function confirmLeverage() {
+        document.getElementById('display-long-lev').innerText = longLeverage + 'x';
+        document.getElementById('display-short-lev').innerText = shortLeverage + 'x';
+        closeSheet('leverage-sheet');
+    }
+
+    function selectMarginMode(mode) {
+        currentMarginMode = mode;
+        document.getElementById('margin-cross').classList.toggle('active', mode === 'cross');
+        document.getElementById('margin-isolated').classList.toggle('active', mode === 'isolated');
+    }
+
+    function confirmMarginMode() {
+        document.getElementById('btn-margin').innerText = currentMarginMode === 'cross' ? '全倉' : '逐倉';
+        closeSheet('margin-sheet');
+    }
+
+    function openOrderConfirm(direction) {
+        pendingOrderDirection = direction;
+        const title = document.getElementById('confirm-title');
+        const priceEl = document.getElementById('confirm-price');
+        const typeText = document.getElementById('confirm-type-text');
+        const actionBtn = document.getElementById('confirm-action-btn');
+        const qty = document.getElementById('qty-input').value || '800 USDT';
+        const isMarket = currentOrderMode === 'market';
+        const isTpsl = currentOrderMode === 'profit-loss';
+
+        document.getElementById('confirm-amount').innerText = qty;
+        document.getElementById('confirm-margin').innerText = '40.00 USDT';
+        document.getElementById('confirm-liq').innerText = direction.includes('short') || direction === 'short' ? '78,120.5' : '65,241.2';
+        document.getElementById('confirm-tpsl').innerText = '--';
+
+        if (direction === 'long') {
+            title.innerText = 'BTCUSDT 開多';
+            title.className = 'text-[13px] font-black text-green-500';
+            actionBtn.className = 'w-full bg-green-500 text-white py-3 rounded-xl text-[12px] font-black';
+            priceEl.innerText = isMarket ? '市價' : (isTpsl ? '止盈止損' : '72,305.9 USDT');
+            typeText.innerText = isTpsl ? '止盈止損單' : (isMarket ? '市價單' : '限價單');
+        } else if (direction === 'short') {
+            title.innerText = 'BTCUSDT 開空';
+            title.className = 'text-[13px] font-black text-red-500';
+            actionBtn.className = 'w-full bg-red-500 text-white py-3 rounded-xl text-[12px] font-black';
+            priceEl.innerText = isMarket ? '市價' : (isTpsl ? '止盈止損' : '72,305.9 USDT');
+            typeText.innerText = isTpsl ? '止盈止損單' : (isMarket ? '市價單' : '限價單');
+        } else {
+            title.innerText = direction === 'close-long' ? 'BTCUSDT 平多' : 'BTCUSDT 平空';
+            title.className = 'text-[13px] font-black text-orange-500';
+            actionBtn.className = 'w-full bg-orange-500 text-white py-3 rounded-xl text-[12px] font-black';
+            priceEl.innerText = isMarket || currentSide === 'close' ? '市價' : '72,305.9 USDT';
+            typeText.innerText = isMarket ? '市價單' : '限價單';
+        }
+        openModal('order-confirm-modal');
+    }
+
+    function executeOrder() {
+        closeModal('order-confirm-modal');
+    }
+
+    function executeCloseAll() {
+        closeModal('close-all-modal');
+    }
+
+    updateFundingCountdown();
+    setInterval(updateFundingCountdown, 1000);
+    setInterval(tickPremarketCountdown, 1000);
+    updateQtyUnitDisplay();
+    updateMoreMenuFavoriteUI();
+    applyObLayoutMode();
+    renderOrderBookDepth();
+    setInterval(tickOrderBookDepth, 900);
+    renderOrderList();
+    renderPairList();
+    updateBestPriceChecks();
+</script>
+</body>
+</html>

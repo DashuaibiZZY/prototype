@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ForX 后台管理 - 合约体验金系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+    .sidebar-item-active { background-color: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background: #ccc; transition: .4s; border-radius: 20px; }
+    .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background: #fff; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background: #3b82f6; }
+    input:checked + .slider:before { transform: translateX(20px); }
+    .status-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+    .status-available { background: #e6f7ff; color: #1890ff; }
+    .status-used { background: #f6ffed; color: #52c41a; }
+    .status-expired { background: #f5f5f5; color: #999; }
+    .status-recycled { background: #fff2f0; color: #ff4d4f; }
+    .status-pending { background: #fff7e6; color: #d46b08; }
+    .group-option { border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; cursor: pointer; transition: all .15s; }
+    .group-option:hover { border-color: #93c5fd; }
+    .group-option.selected { border-color: #3b82f6; background: #eff6ff; }
+    .group-option .g-name { font-weight: 700; font-size: 12px; color: #1e293b; }
+    .group-option .g-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 8px; margin-top: 6px; font-size: 10px; }
+    .group-option .g-grid span { color: #94a3b8; }
+    .group-option .g-grid b { color: #334155; font-weight: 600; }
+    .risk-tag-normal { background: #f1f5f9; color: #64748b; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+    .risk-tag-warn { background: #fff7ed; color: #ea580c; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+    .log-tag-issue { background: #eff6ff; color: #2563eb; }
+    .log-tag-recycle { background: #fef2f2; color: #dc2626; }
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden text-[12px]">
+
+<aside id="admin-sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0"></aside>
+
+<main class="flex-1 flex flex-col overflow-hidden">
+  <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+    <div class="flex items-center gap-3">
+      <button id="riskBackBtn" onclick="showRiskList()" class="hidden text-slate-500 hover:text-slate-800 font-bold text-sm">← 返回用户列表</button>
+      <h1 id="page-title" class="text-xl font-bold text-slate-800">卡组配置</h1>
+    </div>
+    <div class="flex items-center gap-4">
+      <span class="text-sm text-slate-500">Trial_Admin</span>
+      <div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">TA</div>
+    </div>
+  </header>
+
+  <div class="flex-1 overflow-y-auto p-8">
+
+    <!-- 卡组配置 -->
+    <div id="page-config" class="space-y-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-bold text-slate-700">卡组参数列表</h2>
+          <p class="text-sm text-slate-400">设置合约体验金的生命周期与风险抵扣规则，发放时关联使用。</p>
+        </div>
+        <button onclick="openModal('modal-new-config')" class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-lg hover:bg-blue-700">+ 新建卡组配置</button>
+      </div>
+      <section class="card p-5">
+        <div class="grid grid-cols-4 gap-4 items-end">
+          <div class="col-span-2">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">卡组名称</label>
+            <input id="configFilterName" type="text" placeholder="模糊匹配卡组名称" oninput="renderConfigTable()" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
+          </div>
+          <div class="flex gap-2 col-span-2">
+            <button onclick="renderConfigTable()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold">查询</button>
+            <button onclick="resetConfigFilter()" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">重置</button>
+          </div>
+        </div>
+      </section>
+      <div class="card overflow-hidden">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50 border-b border-slate-200">
+          <tr>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">卡组名称</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">卡券有效期</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">开仓有效期</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">亏损抵扣上限</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">费用抵扣上限</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-right">操作</th>
+          </tr>
+          </thead>
+          <tbody id="configTableBody" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 批量发放 -->
+    <div id="page-issue" class="hidden space-y-6">
+      <div class="card p-8 max-w-5xl">
+        <h2 class="text-lg font-bold text-slate-700 mb-6 border-b border-slate-100 pb-4">执行合约体验金发放</h2>
+        <div class="space-y-6">
+          <div class="flex gap-2 bg-slate-100 p-1 rounded-lg w-fit">
+            <button onclick="switchIssueTab('manual')" id="tab-manual" class="px-6 py-2 text-sm font-bold bg-white rounded-md shadow-sm">方式1：手动录入</button>
+            <button onclick="switchIssueTab('excel')" id="tab-excel" class="px-6 py-2 text-sm font-bold text-slate-500 rounded-md">方式2：Excel 导入</button>
+          </div>
+          <div id="issue-manual" class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase mb-2">钱包地址,金额（每行一个，英文逗号分隔）</label>
+              <textarea id="issueManualInput" placeholder="0x123...abc,100&#10;0x456...def,250" class="w-full h-40 border border-slate-200 rounded-lg p-3 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
+          </div>
+          <div id="issue-excel" class="hidden py-16 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center">
+            <p class="text-sm text-slate-500 font-bold mb-2">拖拽 Excel 文件至此或点击上传</p>
+            <span class="text-[10px] text-slate-400">需包含列：wallet_address, amount</span>
+            <button class="mt-4 bg-slate-100 px-4 py-2 rounded text-xs font-bold text-slate-600">选择文件</button>
+          </div>
+          <div class="rounded-lg border border-blue-100 bg-blue-50 p-3 text-[11px] text-blue-900 leading-relaxed">
+            <b>奖励记录关联：</b>选择「自定义活动名称」后须配置四种语言奖励名称；发放到账后写入用户端「奖励记录」（奖励类型：体验金）。
+          </div>
+          <div id="issue-activity-picker" class="pt-2"></div>
+          <div class="pt-4 border-t border-slate-100">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">第二步：关联已配置的卡组参数</label>
+            <input id="groupSearchInput" type="text" placeholder="搜索卡组名称…" oninput="groupSearchPage=1;renderCardGroupSelector()" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none mb-2">
+            <div id="cardGroupSelector" class="space-y-1.5"></div>
+            <div id="groupPagination" class="flex items-center justify-between mt-2 text-[11px] text-slate-500"></div>
+          </div>
+          <button onclick="openIssueApprovalModal()" class="w-full bg-slate-900 text-white py-3.5 rounded-lg font-bold hover:bg-slate-800 shadow-xl">提交审批申请</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 数据查询&回收 - 列表 -->
+    <div id="page-users" class="hidden space-y-4">
+      <section class="card p-3 space-y-2">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wide">数据总览</h3>
+          <select id="trialOverviewPeriod" onchange="renderTrialOverview()" class="border border-slate-200 rounded px-2 py-1 text-xs bg-white outline-none">
+            <option value="all">全部</option>
+            <option value="7d">近 7 天</option>
+            <option value="30d">近 30 天</option>
+          </select>
+        </div>
+        <div id="trialOverviewStatsGrid" class="grid grid-cols-7 gap-2"></div>
+        <div id="trialOverviewRecycleRow" class="pt-2 border-t border-slate-100"></div>
+      </section>
+      <section class="card p-5">
+        <div class="grid grid-cols-5 gap-4 items-end">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID</label>
+            <input id="userFilterUid" type="text" placeholder="输入 UID" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">钱包地址</label>
+            <input id="userFilterWallet" type="text" placeholder="0x..." class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">活动名称</label>
+            <input id="userFilterActivity" type="text" placeholder="模糊匹配" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">持卡状态</label>
+            <select id="userFilterStatus" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none bg-white">
+              <option value="all">全部</option>
+              <option value="has_balance">有剩余体验金</option>
+              <option value="in_use">有使用中卡券</option>
+            </select>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="applyUserFilters()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold">查询</button>
+            <button onclick="resetUserFilters()" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">重置</button>
+          </div>
+        </div>
+      </section>
+      <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left min-w-[1100px] text-sm">
+            <thead class="bg-slate-50 border-b border-slate-200">
+            <tr>
+              <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">UID / 钱包</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">累计发放</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">剩余体验金</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-center">状态</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">亏损抵扣</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">费用抵扣</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">风控标签</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">活动</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">发放时间</th>
+              <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">操作</th>
+            </tr>
+            </thead>
+            <tbody id="trialUserTableBody" class="divide-y divide-slate-50"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 用户卡券详情 -->
+    <div id="page-user-detail" class="hidden space-y-6">
+      <div class="card p-5 flex items-center justify-between">
+        <div>
+          <p class="text-xs text-slate-400">UID <span id="detailUid" class="font-bold text-slate-700"></span></p>
+          <p id="detailWallet" class="text-sm font-mono font-bold text-slate-800 mt-1"></p>
+          <p class="text-xs text-slate-400 mt-2">累计发放 <span id="detailTotalIssued" class="font-bold text-slate-700"></span> · 剩余 <span id="detailRemaining" class="font-bold text-blue-600"></span></p>
+        </div>
+        <button onclick="recycleUserAll()" class="bg-red-50 text-red-600 px-5 py-2.5 rounded-lg text-sm font-bold border border-red-200 hover:bg-red-100">回收该用户全部可用卡券</button>
+      </div>
+      <div class="card overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 font-bold text-slate-700">卡券列表与使用记录</div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left min-w-[1000px] text-sm">
+            <thead class="bg-slate-50 border-b border-slate-200">
+            <tr>
+              <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">卡券ID</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">面额</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">剩余</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">状态</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">所属卡组</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">发放活动</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">发放时间</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">激活/开仓截止</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">亏损抵扣</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">费用抵扣</th>
+              <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">操作</th>
+            </tr>
+            </thead>
+            <tbody id="userCouponTableBody" class="divide-y divide-slate-50"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 font-bold text-slate-700">卡券使用流水</div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 border-b border-slate-200">
+            <tr>
+              <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">时间</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">卡券ID</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">类型</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">金额变动</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">关联订单/仓位</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">备注</th>
+            </tr>
+            </thead>
+            <tbody id="couponUsageTableBody" class="divide-y divide-slate-50"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作记录 -->
+    <div id="page-logs" class="hidden space-y-6">
+      <div>
+        <h2 class="text-lg font-bold text-slate-700">体验金操作记录</h2>
+        <p class="text-sm text-slate-400 mt-1">记录体验金发放与风控回收操作，支持审计追溯。</p>
+      </div>
+      <section class="card p-5">
+        <div class="grid grid-cols-5 gap-4 items-end">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID / 钱包</label>
+            <input id="logFilterUser" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">操作人</label>
+            <input id="logFilterOperator" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">操作类型</label>
+            <select id="logFilterType" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none bg-white">
+              <option value="all">全部</option>
+              <option value="发放">发放体验金</option>
+              <option value="回收">回收体验金</option>
+            </select>
+          </div>
+          <div class="col-span-2 flex gap-2">
+            <button onclick="applyLogFilters()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold">查询</button>
+            <button onclick="resetLogFilters()" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">重置</button>
+          </div>
+        </div>
+      </section>
+      <div class="card overflow-hidden">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50 border-b border-slate-200">
+          <tr>
+            <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">操作时间</th>
+            <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">操作人</th>
+            <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">操作类型</th>
+            <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">目标用户</th>
+            <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">变更详情</th>
+            <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">金额</th>
+            <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">备注</th>
+          </tr>
+          </thead>
+          <tbody id="trialLogTableBody" class="divide-y divide-slate-50"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 发放审批 -->
+    <div id="page-approval" class="hidden">
+      <div id="trial-approval-root"></div>
+    </div>
+  </div>
+</main>
+
+<!-- 新建卡组 -->
+<div id="modal-new-config" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-[600px] overflow-hidden">
+    <div class="px-8 py-6 border-b flex justify-between items-center">
+      <h3 class="text-lg font-bold text-slate-800">新建卡组配置</h3>
+      <button onclick="closeModal('modal-new-config')" class="text-slate-400 text-2xl">&times;</button>
+    </div>
+    <div class="p-8 space-y-6">
+      <div>
+        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">卡组配置名称</label>
+        <input type="text" placeholder="例如：新人 100U 活动组" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
+      </div>
+      <div class="grid grid-cols-2 gap-6">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-2">卡券有效期 (天)</label>
+          <input type="number" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-2">开仓有效期 (天)</label>
+          <input type="number" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
+        </div>
+      </div>
+      <div class="p-4 bg-slate-50 rounded-xl space-y-3">
+        <div class="flex justify-between items-center">
+          <label class="text-sm font-bold text-slate-700">亏损抵扣上限</label>
+          <label class="switch"><input type="checkbox" checked onchange="toggleConfigInput(this, 'cfg-loss-limit')"><span class="slider"></span></label>
+        </div>
+        <div id="cfg-loss-limit" class="flex items-center gap-3">
+          <span class="text-xs text-slate-500 whitespace-nowrap">累计亏损达面额的</span>
+          <div class="relative w-24"><input type="number" value="20" class="w-full border border-slate-200 rounded-lg p-2 text-sm pr-6 outline-none"><span class="absolute right-2 top-2 text-xs text-slate-400">%</span></div>
+          <span class="text-xs text-slate-500">时强制回收</span>
+        </div>
+      </div>
+      <div class="p-4 bg-slate-50 rounded-xl space-y-3">
+        <div class="flex justify-between items-center">
+          <label class="text-sm font-bold text-slate-700">费用抵扣上限</label>
+          <label class="switch"><input type="checkbox" onchange="toggleConfigInput(this, 'cfg-fee-limit')"><span class="slider"></span></label>
+        </div>
+        <div id="cfg-fee-limit" class="hidden flex items-center gap-3">
+          <span class="text-xs text-slate-500 whitespace-nowrap">累计手续费/资金费达面额的</span>
+          <div class="relative w-24"><input type="number" value="10" class="w-full border border-slate-200 rounded-lg p-2 text-sm pr-6 outline-none"><span class="absolute right-2 top-2 text-xs text-slate-400">%</span></div>
+          <span class="text-xs text-slate-500">时强制回收</span>
+        </div>
+      </div>
+    </div>
+    <div class="p-6 bg-slate-50 flex justify-end gap-3">
+      <button onclick="closeModal('modal-new-config')" class="px-6 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-500">取消</button>
+      <button onclick="alert('配置保存成功'); closeModal('modal-new-config')" class="px-6 py-2 bg-blue-600 rounded-lg text-sm font-bold text-white">确认保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 发放审批 -->
+<div id="modal-issue-approval" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-[520px] overflow-hidden">
+    <div class="px-6 py-5 border-b"><h3 class="text-lg font-bold">提交体验金发放审批</h3></div>
+    <div class="p-6 space-y-4 text-sm">
+      <div class="bg-slate-50 rounded-lg p-4 space-y-2">
+        <div class="flex justify-between"><span class="text-slate-500">发放人数</span><span class="font-black">120 人</span></div>
+        <div class="flex justify-between"><span class="text-slate-500">发放总额</span><span class="font-black text-blue-600">12,540 USDT</span></div>
+        <div class="flex justify-between"><span class="text-slate-500">关联卡组</span><span id="approvalGroupName" class="font-bold"></span></div>
+        <div class="flex justify-between"><span class="text-slate-500">活动信息</span><span id="approvalActivityName" class="font-bold"></span></div>
+      </div>
+      <div id="issueApprovalFlow"></div>
+      <div>
+        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">申请备注（必填）</label>
+        <textarea id="issueApprovalRemark" rows="2" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none" placeholder="请说明发放背景及目标用户"></textarea>
+      </div>
+    </div>
+    <div class="p-5 bg-slate-50 flex gap-3">
+      <button onclick="closeModal('modal-issue-approval')" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+      <button onclick="submitIssueApproval()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">确认提交</button>
+    </div>
+  </div>
+</div>
+
+<!-- 发放确认（保留预览） -->
+<div id="modal-confirm" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-[480px] overflow-hidden">
+    <div class="p-8 text-center">
+      <h3 class="text-xl font-bold mb-2">确认批量发放？</h3>
+      <div class="bg-slate-50 rounded-xl p-6 text-left space-y-3 text-sm mt-6">
+        <div class="flex justify-between"><span class="text-slate-500">总名单人数</span><span class="font-black">120 人</span></div>
+        <div class="flex justify-between items-center pb-2 border-b"><span class="text-slate-500">总计发放额度</span><span class="text-blue-600 font-black text-xl">12,540 USDT</span></div>
+        <p id="confirmGroupName" class="text-[10px] text-slate-400 font-bold uppercase"></p>
+      </div>
+    </div>
+    <div class="p-6 bg-slate-50 flex gap-3">
+      <button onclick="closeModal('modal-confirm')" class="flex-1 py-3 bg-white border border-slate-200 rounded-lg text-sm font-bold">返回修改</button>
+      <button onclick="submitIssue()" class="flex-1 py-3 bg-slate-900 text-white rounded-lg text-sm font-bold">确认执行</button>
+    </div>
+  </div>
+</div>
+
+<!-- 回收确认 -->
+<div id="modal-recycle-confirm" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-[480px] overflow-hidden">
+    <div class="p-8">
+      <h3 class="text-xl font-bold mb-2 text-center">确认强制回收？</h3>
+      <p id="recycleConfirmText" class="text-sm text-slate-500 text-center mb-4"></p>
+      <div class="bg-red-50 rounded-xl p-4 text-xs text-red-600">
+        <p class="font-bold">此操作不可逆。若体验金被持仓占用，可能直接影响用户仓位。</p>
+      </div>
+      <div class="mt-4">
+        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">操作备注（必填）</label>
+        <textarea id="recycleRemark" rows="2" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none" placeholder="请填写回收原因"></textarea>
+      </div>
+    </div>
+    <div class="p-6 bg-slate-50 flex gap-3">
+      <button onclick="closeModal('modal-recycle-confirm')" class="flex-1 py-3 bg-white border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+      <button id="recycleConfirmBtn" class="flex-1 py-3 bg-red-600 text-white rounded-lg text-sm font-bold">确认回收</button>
+    </div>
+  </div>
+</div>
+
+<script src="admin-approval.js"></script>
+<script src="admin-activity-picker.js"></script>
+<script src="admin-approval-ui.js"></script>
+<script>
+  const CARD_GROUPS = [
+    { id: 'g1', name: '标准新人礼包组', couponValidDays: 7, openValidDays: 30, lossEnabled: true, lossPct: 20, feeEnabled: false, feePct: 0 },
+    { id: 'g2', name: 'KOL大额专属组', couponValidDays: 14, openValidDays: 60, lossEnabled: true, lossPct: 30, feeEnabled: true, feePct: 15 },
+    { id: 'g3', name: '交易大赛奖励组', couponValidDays: 10, openValidDays: 45, lossEnabled: true, lossPct: 25, feeEnabled: false, feePct: 0 },
+    { id: 'g4', name: '社区活动体验组', couponValidDays: 5, openValidDays: 21, lossEnabled: true, lossPct: 15, feeEnabled: true, feePct: 10 },
+    { id: 'g5', name: 'VIP 专属体验组', couponValidDays: 30, openValidDays: 90, lossEnabled: true, lossPct: 35, feeEnabled: true, feePct: 20 },
+    { id: 'g6', name: '限时拉新活动组', couponValidDays: 3, openValidDays: 14, lossEnabled: false, lossPct: 0, feeEnabled: false, feePct: 0 },
+    { id: 'g7', name: '机构合作体验组', couponValidDays: 21, openValidDays: 60, lossEnabled: true, lossPct: 40, feeEnabled: true, feePct: 25 }
+  ];
+  let selectedGroupId = 'g1';
+  let groupSearchPage = 1;
+  const GROUP_PAGE_SIZE = 5;
+
+  const TRIAL_OVERVIEW_STATS = {
+    all: {
+      totalIssued: 1285600, issuedUserCount: 8426, totalLossDeduct: 186420, totalFeeDeduct: 52880,
+      inUseBalance: 312400, availableBalance: 458200, activeHolderCount: 2156,
+      riskRecycle: 18600,
+      autoRecycle: { expired: 28400, invalid: 12800, lossLimit: 35200, feeLimit: 9800 }
+    },
+    '7d': {
+      totalIssued: 86400, issuedUserCount: 428, totalLossDeduct: 12480, totalFeeDeduct: 3620,
+      inUseBalance: 312400, availableBalance: 458200, activeHolderCount: 2156,
+      riskRecycle: 2400,
+      autoRecycle: { expired: 3200, invalid: 1800, lossLimit: 4100, feeLimit: 1100 }
+    },
+    '30d': {
+      totalIssued: 312800, issuedUserCount: 1682, totalLossDeduct: 48200, totalFeeDeduct: 14280,
+      inUseBalance: 312400, availableBalance: 458200, activeHolderCount: 2156,
+      riskRecycle: 6800,
+      autoRecycle: { expired: 11200, invalid: 5400, lossLimit: 15800, feeLimit: 4200 }
+    }
+  };
+
+  const TRIAL_USERS = [
+    { uid: '100234', wallet: '0xd5a2b8c91f3e4d567890abcdef1234567890ab8f3c', totalIssued: 350, remaining: 200, couponStatus: 'used', lossUsed: 15, lossLimit: 50, feeUsed: 5, feeLimit: 10, riskTag: '套利嫌疑', riskWarn: true, activity: '社区 KOL 合作激励', issuedAt: '2026-07-18 14:30' },
+    { uid: '100891', wallet: '0x8f3c2a1b9e7d6543210fedcba9876543210fedcba', totalIssued: 500, remaining: 500, couponStatus: 'available', lossUsed: 0, lossLimit: 50, feeUsed: 0, feeLimit: 25, riskTag: '正常', riskWarn: false, activity: '新用户注册礼包', issuedAt: '2026-07-20 09:15' },
+    { uid: '101205', wallet: '0x1a2b3c4d5e6f7890abcdef1234567890abcdef12', totalIssued: 150, remaining: 0, couponStatus: 'expired', lossUsed: 0, lossLimit: 30, feeUsed: 0, feeLimit: 15, riskTag: '正常', riskWarn: false, activity: '交易大赛奖励', issuedAt: '2026-06-28 16:00' }
+  ];
+
+  const USER_COUPONS = {
+    '100234': [
+      { id: 'CPN001', total: 100, balance: 80, status: 'used', group: '标准新人礼包组', activity: '社区 KOL 合作激励', issuedAt: '2026-07-10 10:00', activateDeadline: '2026-07-17', openDeadline: '2026-08-09', lossUsed: 15, lossLimit: 20, feeUsed: 5, feeLimit: 10 },
+      { id: 'CPN002', total: 50, balance: 50, status: 'available', group: '标准新人礼包组', activity: '社区 KOL 合作激励', issuedAt: '2026-07-18 14:30', activateDeadline: '2026-07-25', openDeadline: '2026-08-17', lossUsed: 0, lossLimit: 10, feeUsed: 0, feeLimit: 5 },
+      { id: 'CPN003', total: 200, balance: 70, status: 'used', group: 'KOL大额专属组', activity: 'KOL 专属活动', issuedAt: '2026-07-05 11:20', activateDeadline: '2026-07-19', openDeadline: '2026-09-03', lossUsed: 45, lossLimit: 60, feeUsed: 12, feeLimit: 30 }
+    ],
+    '100891': [
+      { id: 'CPN010', total: 250, balance: 250, status: 'available', group: '标准新人礼包组', activity: '新用户注册礼包', issuedAt: '2026-07-20 09:15', activateDeadline: '2026-07-27', openDeadline: '2026-08-19', lossUsed: 0, lossLimit: 50, feeUsed: 0, feeLimit: 25 },
+      { id: 'CPN011', total: 250, balance: 250, status: 'available', group: '标准新人礼包组', activity: '新用户注册礼包', issuedAt: '2026-07-20 09:15', activateDeadline: '2026-07-27', openDeadline: '2026-08-19', lossUsed: 0, lossLimit: 50, feeUsed: 0, feeLimit: 25 }
+    ],
+    '101205': [
+      { id: 'CPN020', total: 150, balance: 0, status: 'expired', group: '标准新人礼包组', activity: '交易大赛奖励', issuedAt: '2026-06-01 12:00', activateDeadline: '2026-06-08', openDeadline: '2026-07-01', lossUsed: 0, lossLimit: 30, feeUsed: 0, feeLimit: 15 }
+    ]
+  };
+
+  const COUPON_USAGE = {
+    'CPN001': [
+      { time: '2026-07-12 08:22', type: '激活', amount: '-', order: '-', note: '用户激活卡券' },
+      { time: '2026-07-12 09:05', type: '开仓抵扣', amount: '-20 USDT', order: 'ORD-88231', note: 'BTC 永续开仓保证金抵扣' },
+      { time: '2026-07-15 14:30', type: '亏损抵扣', amount: '-15 USDT', order: 'POS-44102', note: '平仓亏损抵扣' }
+    ],
+    'CPN003': [
+      { time: '2026-07-06 10:00', type: '激活', amount: '-', order: '-', note: '用户激活卡券' },
+      { time: '2026-07-08 16:20', type: '手续费抵扣', amount: '-12 USDT', order: 'ORD-90112', note: 'Taker 手续费抵扣' }
+    ]
+  };
+
+  let TRIAL_LOGS = [
+    { time: '2026-07-20 09:15', operator: 'Trial_Admin', type: '发放', user: '100891 / 0x8f3c...dcba', detail: '新用户注册礼包 · CPN010（250 USDT）', amount: '250 USDT', remark: '审批单 #APR2026072001' },
+    { time: '2026-07-18 14:30', operator: 'Trial_Admin', type: '发放', user: '100234 / 0xd5a2...8f3c', detail: '社区 KOL 合作激励 · CPN002（50 USDT）', amount: '50 USDT', remark: '审批单 #APR2026071802' },
+    { time: '2026-07-16 11:02', operator: 'Risk_Ops', type: '回收', user: '100567 / 0xabc1...ef23', detail: '回收 CPN088（剩余 120 USDT）', amount: '120 USDT', remark: '异常套利风控回收' }
+  ];
+
+  let currentDetailUid = null;
+  let pendingRecycleFn = null;
+
+  const PAGE_MAP = {
+    config: { id: 'page-config', title: '卡组配置', sidebar: 'trial-config' },
+    issue: { id: 'page-issue', title: '批量发放体验金', sidebar: 'trial-issue' },
+    users: { id: 'page-users', title: '数据查询&回收', sidebar: 'trial-users' },
+    logs: { id: 'page-logs', title: '操作记录', sidebar: 'trial-logs' },
+    approval: { id: 'page-approval', title: '体验金发放审批', sidebar: 'trial-approval' }
+  };
+
+  function toggleConfigInput(checkbox, targetId) {
+    const el = document.getElementById(targetId);
+    if (!el) return;
+    el.classList.toggle('hidden', !checkbox.checked);
+    el.classList.toggle('flex', checkbox.checked);
+  }
+
+  function renderTrialOverview() {
+    const period = document.getElementById('trialOverviewPeriod').value;
+    const s = TRIAL_OVERVIEW_STATS[period] || TRIAL_OVERVIEW_STATS.all;
+    const periodIssuedLabel = period === 'all' ? '累计发放' : '发放体验金';
+    const periodUserLabel = period === 'all' ? '发放用户' : '发放用户';
+    const periodLossLabel = period === 'all' ? '累计亏损抵扣' : '亏损抵扣';
+    const periodFeeLabel = period === 'all' ? '累计费用抵扣' : '费用抵扣';
+    const periodSub = period === 'all' ? '历史' : (period === '7d' ? '近7天' : '近30天');
+    const fmtU = function (n) { return n.toLocaleString() + ' U';
+    };
+    document.getElementById('trialOverviewStatsGrid').innerHTML = [
+      { label: periodIssuedLabel, value: fmtU(s.totalIssued), color: 'text-slate-800' },
+      { label: periodUserLabel, value: s.issuedUserCount.toLocaleString(), color: 'text-slate-700' },
+      { label: periodLossLabel, value: fmtU(s.totalLossDeduct), color: 'text-amber-600' },
+      { label: periodFeeLabel, value: fmtU(s.totalFeeDeduct), color: 'text-amber-600' },
+      { label: '使用中', value: fmtU(s.inUseBalance), color: 'text-blue-600' },
+      { label: '可用', value: fmtU(s.availableBalance), color: 'text-emerald-600' },
+      { label: '持卡用户', value: s.activeHolderCount.toLocaleString(), color: 'text-slate-700' }
+    ].map(function (c) {
+      return '<div class="min-w-0 px-1"><p class="text-[9px] font-bold text-slate-500 uppercase truncate">' + c.label + '</p><p class="text-sm font-black ' + (c.color || 'text-slate-800') + ' truncate" title="' + c.value + '">' + c.value + '</p></div>';
+    }).join('');
+    const ar = s.autoRecycle;
+    const autoTotal = ar.expired + ar.invalid + ar.lossLimit + ar.feeLimit;
+    const autoHtml = '<div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600">' +
+      '<span class="font-bold text-slate-500">自动回收</span>' +
+      '<span class="text-[10px] text-slate-400">' + periodSub + '</span>' +
+      '<span>已过期 <b class="text-slate-800">' + ar.expired.toLocaleString() + '</b></span>' +
+      '<span>已失效 <b class="text-slate-800">' + ar.invalid.toLocaleString() + '</b></span>' +
+      '<span>亏损上限 <b class="text-slate-800">' + ar.lossLimit.toLocaleString() + '</b></span>' +
+      '<span>费用上限 <b class="text-slate-800">' + ar.feeLimit.toLocaleString() + '</b></span>' +
+      '<span>合计 <b class="text-red-600">' + autoTotal.toLocaleString() + ' U</b></span>' +
+      '</div>';
+    let recycleHtml = autoHtml +
+      '<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs mt-1.5 pt-1.5 border-t border-slate-50">' +
+        '<span class="font-bold text-red-600">风控回收</span>' +
+        '<span class="text-[10px] text-red-400">' + periodSub + ' · 人工强制</span>' +
+        '<span class="text-base font-black text-red-600">' + s.riskRecycle.toLocaleString() + ' U</span>' +
+        '</div>';
+    document.getElementById('trialOverviewRecycleRow').innerHTML = recycleHtml;
+  }
+
+  function showPage(pageKey, updateHash) {
+    ['page-config', 'page-issue', 'page-users', 'page-user-detail', 'page-logs', 'page-approval'].forEach(function (id) {
+      document.getElementById(id).classList.add('hidden');
+    });
+    const meta = PAGE_MAP[pageKey];
+    if (!meta) return;
+    document.getElementById(meta.id).classList.remove('hidden');
+    document.getElementById('page-title').innerText = meta.title;
+    document.getElementById('riskBackBtn').classList.add('hidden');
+    if (pageKey === 'users') renderTrialOverview();
+    if (updateHash !== false && location.hash !== '#' + pageKey) location.hash = pageKey;
+    if (window.initAdminSidebar) initAdminSidebar(meta.sidebar, '登录身份: 体验金管理员');
+  }
+
+  function showRiskList() {
+    showPage('users', false);
+  }
+
+  function showUserDetail(uid) {
+    currentDetailUid = uid;
+    const user = TRIAL_USERS.find(function (u) { return u.uid === uid; });
+    if (!user) return;
+    ['page-config', 'page-issue', 'page-users', 'page-logs'].forEach(function (id) {
+      document.getElementById(id).classList.add('hidden');
+    });
+    document.getElementById('page-user-detail').classList.remove('hidden');
+    document.getElementById('page-title').innerText = '用户卡券详情';
+    document.getElementById('riskBackBtn').classList.remove('hidden');
+    document.getElementById('detailUid').innerText = user.uid;
+    document.getElementById('detailWallet').innerText = user.wallet;
+    document.getElementById('detailTotalIssued').innerText = user.totalIssued + ' USDT';
+    document.getElementById('detailRemaining').innerText = user.remaining + ' USDT';
+    renderUserCoupons(uid);
+  }
+
+  function formatDeduct(used, limit) {
+    return used + '（已用）/' + limit + '（上限）';
+  }
+
+  function renderConfigTable() {
+    const q = (document.getElementById('configFilterName').value || '').trim().toLowerCase();
+    const list = CARD_GROUPS.filter(function (g) { return !q || g.name.toLowerCase().indexOf(q) !== -1; });
+    document.getElementById('configTableBody').innerHTML = list.length ? list.map(function (g) {
+      return '<tr class="hover:bg-slate-50"><td class="px-6 py-4 font-bold">' + g.name + '</td><td class="px-6 py-4">' + g.couponValidDays + ' 天</td><td class="px-6 py-4">' + g.openValidDays + ' 天</td><td class="px-6 py-4 text-green-600 font-bold">' + (g.lossEnabled ? '开启 (' + g.lossPct + '%)' : '关闭') + '</td><td class="px-6 py-4">' + (g.feeEnabled ? '开启 (' + g.feePct + '%)' : '关闭') + '</td><td class="px-6 py-4 text-right"><button class="text-blue-600 font-bold">编辑</button></td></tr>';
+    }).join('') : '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">无匹配卡组</td></tr>';
+  }
+
+  function resetConfigFilter() {
+    document.getElementById('configFilterName').value = '';
+    renderConfigTable();
+  }
+
+  function renderCardGroupSelector() {
+    const q = (document.getElementById('groupSearchInput').value || '').trim().toLowerCase();
+    const filtered = CARD_GROUPS.filter(function (g) { return !q || g.name.toLowerCase().indexOf(q) !== -1; });
+    const totalPages = Math.max(1, Math.ceil(filtered.length / GROUP_PAGE_SIZE));
+    if (groupSearchPage > totalPages) groupSearchPage = totalPages;
+    const start = (groupSearchPage - 1) * GROUP_PAGE_SIZE;
+    const pageItems = filtered.slice(start, start + GROUP_PAGE_SIZE);
+    document.getElementById('cardGroupSelector').innerHTML = pageItems.map(function (g) {
+      const sel = g.id === selectedGroupId ? ' selected' : '';
+      const loss = g.lossEnabled ? '开启 ' + g.lossPct + '%' : '关闭';
+      const fee = g.feeEnabled ? '开启 ' + g.feePct + '%' : '关闭';
+      return '<div class="group-option' + sel + '" onclick="selectCardGroup(\'' + g.id + '\')"><div class="g-name">' + g.name + '</div><div class="g-grid"><div><span>卡券有效期 </span><b>' + g.couponValidDays + '天</b></div><div><span>开仓有效期 </span><b>' + g.openValidDays + '天</b></div><div><span>亏损抵扣 </span><b>' + loss + '</b></div><div><span>费用抵扣 </span><b>' + fee + '</b></div></div></div>';
+    }).join('') || '<p class="text-center text-slate-400 py-4 text-xs">无匹配卡组</p>';
+    document.getElementById('groupPagination').innerHTML = '<span>共 ' + filtered.length + ' 个 · 第 ' + groupSearchPage + '/' + totalPages + ' 页</span><div class="flex gap-1"><button onclick="changeGroupPage(-1)" class="px-2 py-1 border rounded' + (groupSearchPage <= 1 ? ' opacity-40' : '') + '" ' + (groupSearchPage <= 1 ? 'disabled' : '') + '>上一页</button><button onclick="changeGroupPage(1)" class="px-2 py-1 border rounded' + (groupSearchPage >= totalPages ? ' opacity-40' : '') + '" ' + (groupSearchPage >= totalPages ? 'disabled' : '') + '>下一页</button></div>';
+  }
+
+  function changeGroupPage(delta) {
+    groupSearchPage += delta;
+    renderCardGroupSelector();
+  }
+
+  function selectCardGroup(id) {
+    selectedGroupId = id;
+    renderCardGroupSelector();
+  }
+
+  function shortWallet(w) {
+    return w.length > 14 ? w.slice(0, 6) + '...' + w.slice(-4) : w;
+  }
+
+  function statusText(s) {
+    return { available: '可用', used: '使用中', expired: '已过期', recycled: '已失效', pending: '待激活' }[s] || s;
+  }
+
+  function renderTrialUserTable(list) {
+    document.getElementById('trialUserTableBody').innerHTML = list.map(function (u) {
+      const canRecycle = u.remaining > 0;
+      const tagCls = u.riskWarn ? 'risk-tag-warn' : 'risk-tag-normal';
+      return '<tr class="hover:bg-slate-50"><td class="px-4 py-3"><div class="font-bold">' + u.uid + '</div><div class="text-[10px] text-slate-400 font-mono">' + shortWallet(u.wallet) + '</div></td><td class="px-3 py-3 text-right font-medium">' + u.totalIssued + ' U</td><td class="px-3 py-3 text-right font-bold text-blue-600">' + u.remaining + ' U</td><td class="px-3 py-3 text-center"><span class="status-tag status-' + u.couponStatus + '">' + statusText(u.couponStatus) + '</span></td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(u.lossUsed, u.lossLimit) + '</td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(u.feeUsed, u.feeLimit) + '</td><td class="px-3 py-3"><span class="' + tagCls + '">' + u.riskTag + '</span></td><td class="px-3 py-3">' + u.activity + '</td><td class="px-3 py-3 text-slate-500">' + u.issuedAt + '</td><td class="px-4 py-3 text-right space-x-2"><button onclick="showUserDetail(\'' + u.uid + '\')" class="text-blue-600 font-bold">查看详情</button>' + (canRecycle ? '<button onclick="recycleUserFromList(\'' + u.uid + '\')" class="text-red-600 font-bold">回收</button>' : '') + '</td></tr>';
+    }).join('');
+  }
+
+  function renderUserCoupons(uid) {
+    const coupons = USER_COUPONS[uid] || [];
+    document.getElementById('userCouponTableBody').innerHTML = coupons.map(function (c) {
+      const canRecycle = c.status === 'available' || c.status === 'used';
+      return '<tr class="hover:bg-slate-50"><td class="px-4 py-3 font-mono font-bold">' + c.id + '</td><td class="px-3 py-3">' + c.total + ' U</td><td class="px-3 py-3 font-bold">' + c.balance + ' U</td><td class="px-3 py-3"><span class="status-tag status-' + c.status + '">' + statusText(c.status) + '</span></td><td class="px-3 py-3">' + c.group + '</td><td class="px-3 py-3">' + c.activity + '</td><td class="px-3 py-3 text-slate-500">' + c.issuedAt + '</td><td class="px-3 py-3 text-xs text-slate-500">' + c.activateDeadline + ' / ' + c.openDeadline + '</td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(c.lossUsed, c.lossLimit) + '</td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(c.feeUsed, c.feeLimit) + '</td><td class="px-4 py-3 text-right">' + (canRecycle ? '<button onclick="recycleSingleCoupon(\'' + c.id + '\')" class="text-red-600 font-bold">回收</button>' : '-') + '</td></tr>';
+    }).join('');
+    let usageRows = [];
+    coupons.forEach(function (c) {
+      (COUPON_USAGE[c.id] || []).forEach(function (row) {
+        usageRows.push({ time: row.time, couponId: c.id, type: row.type, amount: row.amount, order: row.order, note: row.note });
+      });
+    });
+    usageRows.sort(function (a, b) { return b.time.localeCompare(a.time); });
+    document.getElementById('couponUsageTableBody').innerHTML = usageRows.length ? usageRows.map(function (r) {
+      return '<tr><td class="px-4 py-3">' + r.time + '</td><td class="px-3 py-3 font-mono">' + r.couponId + '</td><td class="px-3 py-3">' + r.type + '</td><td class="px-3 py-3 font-bold">' + r.amount + '</td><td class="px-3 py-3 font-mono text-xs">' + r.order + '</td><td class="px-3 py-3 text-slate-500">' + r.note + '</td></tr>';
+    }).join('') : '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">暂无使用流水</td></tr>';
+  }
+
+  function applyUserFilters() {
+    const uid = document.getElementById('userFilterUid').value.trim();
+    const wallet = document.getElementById('userFilterWallet').value.trim().toLowerCase();
+    const activity = document.getElementById('userFilterActivity').value.trim();
+    const status = document.getElementById('userFilterStatus').value;
+    let list = TRIAL_USERS.filter(function (u) {
+      if (uid && u.uid.indexOf(uid) === -1) return false;
+      if (wallet && u.wallet.toLowerCase().indexOf(wallet) === -1) return false;
+      if (activity && u.activity.indexOf(activity) === -1) return false;
+      if (status === 'has_balance' && u.remaining <= 0) return false;
+      if (status === 'in_use' && u.couponStatus !== 'used') return false;
+      return true;
+    });
+    renderTrialUserTable(list);
+  }
+
+  function resetUserFilters() {
+    ['userFilterUid', 'userFilterWallet', 'userFilterActivity'].forEach(function (id) { document.getElementById(id).value = ''; });
+    document.getElementById('userFilterStatus').value = 'all';
+    renderTrialUserTable(TRIAL_USERS);
+  }
+
+  function renderTrialLogs(list) {
+    document.getElementById('trialLogTableBody').innerHTML = list.map(function (log) {
+      const tagCls = log.type === '发放' ? 'log-tag-issue' : 'log-tag-recycle';
+      return '<tr class="hover:bg-slate-50"><td class="px-4 py-3">' + log.time + '</td><td class="px-3 py-3">' + log.operator + '</td><td class="px-3 py-3"><span class="status-tag ' + tagCls + '">' + log.type + '</span></td><td class="px-3 py-3 font-mono text-xs">' + log.user + '</td><td class="px-3 py-3">' + log.detail + '</td><td class="px-3 py-3 text-right font-bold">' + log.amount + '</td><td class="px-4 py-3 text-slate-500">' + log.remark + '</td></tr>';
+    }).join('');
+  }
+
+  function applyLogFilters() {
+    const user = document.getElementById('logFilterUser').value.trim().toLowerCase();
+    const operator = document.getElementById('logFilterOperator').value.trim();
+    const type = document.getElementById('logFilterType').value;
+    let list = TRIAL_LOGS.filter(function (log) {
+      if (user && log.user.toLowerCase().indexOf(user) === -1) return false;
+      if (operator && log.operator.indexOf(operator) === -1) return false;
+      if (type !== 'all' && log.type !== type) return false;
+      return true;
+    });
+    renderTrialLogs(list);
+  }
+
+  function resetLogFilters() {
+    ['logFilterUser', 'logFilterOperator'].forEach(function (id) { document.getElementById(id).value = ''; });
+    document.getElementById('logFilterType').value = 'all';
+    renderTrialLogs(TRIAL_LOGS);
+  }
+
+  function openRecycleConfirm(text, callback) {
+    document.getElementById('recycleConfirmText').innerHTML = text;
+    document.getElementById('recycleRemark').value = '';
+    document.getElementById('modal-recycle-confirm').classList.remove('hidden');
+    const btn = document.getElementById('recycleConfirmBtn');
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+    newBtn.addEventListener('click', function () {
+      const remark = document.getElementById('recycleRemark').value.trim();
+      if (!remark) { alert('请填写操作备注'); return; }
+      closeModal('modal-recycle-confirm');
+      callback(remark);
+    });
+  }
+
+  function recycleUserFromList(uid) {
+    const user = TRIAL_USERS.find(function (u) { return u.uid === uid; });
+    openRecycleConfirm('确认回收用户 <b>' + uid + '</b> 全部可用卡券（剩余 ' + user.remaining + ' USDT）？', function (remark) {
+      TRIAL_LOGS.unshift({ time: new Date().toISOString().slice(0, 16).replace('T', ' '), operator: 'Trial_Admin', type: '回收', user: uid + ' / ' + shortWallet(user.wallet), detail: '回收全部可用卡券', amount: user.remaining + ' USDT', remark: remark });
+      user.remaining = 0; user.couponStatus = 'recycled';
+      (USER_COUPONS[uid] || []).forEach(function (c) { if (c.status === 'available' || c.status === 'used') { c.status = 'recycled'; c.balance = 0; } });
+      renderTrialUserTable(TRIAL_USERS);
+      renderTrialLogs(TRIAL_LOGS);
+      alert('回收成功，已写入操作记录');
+    });
+  }
+
+  function recycleUserAll() {
+    recycleUserFromList(currentDetailUid);
+    showUserDetail(currentDetailUid);
+  }
+
+  function recycleSingleCoupon(couponId) {
+    const coupons = USER_COUPONS[currentDetailUid] || [];
+    const c = coupons.find(function (x) { return x.id === couponId; });
+    openRecycleConfirm('确认回收卡券 <b>' + couponId + '</b>（剩余 ' + c.balance + ' USDT）？', function (remark) {
+      TRIAL_LOGS.unshift({ time: new Date().toISOString().slice(0, 16).replace('T', ' '), operator: 'Trial_Admin', type: '回收', user: currentDetailUid, detail: '回收 ' + couponId, amount: c.balance + ' USDT', remark: remark });
+      c.status = 'recycled'; c.balance = 0;
+      const user = TRIAL_USERS.find(function (u) { return u.uid === currentDetailUid; });
+      if (user) user.remaining = Math.max(0, user.remaining - c.balance);
+      renderUserCoupons(currentDetailUid);
+      renderTrialLogs(TRIAL_LOGS);
+      alert('回收成功');
+    });
+  }
+
+  function openIssueApprovalModal() {
+    const act = getActivityPickerValue('issue-act');
+    if (!act.valid) { alert(act.message); return; }
+    const g = CARD_GROUPS.find(function (x) { return x.id === selectedGroupId; });
+    document.getElementById('approvalGroupName').innerText = g ? g.name : '-';
+    document.getElementById('approvalActivityName').innerText = act.displayLabel;
+    document.getElementById('issueApprovalFlow').innerHTML = renderApprovalFlow('draft', true);
+    document.getElementById('issueApprovalRemark').value = '';
+    openModal('modal-issue-approval');
+  }
+
+  function getIssueRecipients() {
+    const isExcel = !document.getElementById('issue-excel').classList.contains('hidden');
+    if (isExcel) {
+      return [
+        { uid_or_wallet: '100891', amount: '250' },
+        { uid_or_wallet: '100234', amount: '100' },
+        { uid_or_wallet: '0x8f3c12ab45cd6789ef0123456789abcdefdcba', amount: '250' }
+      ];
+    }
+    const text = document.getElementById('issueManualInput').value.trim();
+    if (!text) {
+      return [
+        { uid_or_wallet: '100891', amount: '250' },
+        { uid_or_wallet: '100234', amount: '100' }
+      ];
+    }
+    return text.split('\n').filter(function (l) { return l.trim(); }).map(function (l) {
+      const p = l.split(',');
+      return { uid_or_wallet: (p[0] || '').trim(), amount: (p[1] || '').trim() };
+    });
+  }
+
+  function submitIssueApproval() {
+    const remark = document.getElementById('issueApprovalRemark').value.trim();
+    if (!remark) { alert('请填写申请备注'); return; }
+    const act = getActivityPickerValue('issue-act');
+    if (!act.valid) { alert(act.message); return; }
+    const g = CARD_GROUPS.find(function (x) { return x.id === selectedGroupId; });
+    const inputMode = document.getElementById('issue-excel').classList.contains('hidden') ? 'manual' : 'excel';
+    const recipients = getIssueRecipients();
+    let totalAmount = 0;
+    recipients.forEach(function (r) { totalAmount += parseFloat(r.amount) || 0; });
+    const totalStr = totalAmount.toLocaleString() + ' USDT';
+    submitApprovalApplication({
+      type: 'trial_issue',
+      title: '体验金批量发放',
+      applicant: 'Trial_Admin',
+      remark: remark,
+      summary: recipients.length + ' 人 · ' + totalStr + ' · ' + act.displayLabel,
+      payload: {
+        activityMode: act.activityMode,
+        activityId: act.activityId,
+        activityName: act.activityName,
+        cardGroup: g ? g.name : '-',
+        cardGroupId: selectedGroupId,
+        inputMode: inputMode,
+        recipientCount: recipients.length,
+        totalAmount: totalStr,
+        recipients: recipients
+      },
+      onSubmit: function (app) {
+        TRIAL_LOGS.unshift({ time: app.createdAt, operator: 'Trial_Admin', type: '发放', user: '批量 ' + recipients.length + ' 人', detail: act.displayLabel + ' · ' + (g ? g.name : '-') + ' · 待审批 ' + app.id, amount: totalStr, remark: remark + '（审批中）' });
+        renderTrialLogs(TRIAL_LOGS);
+      }
+    });
+    closeModal('modal-issue-approval');
+    alert('审批申请已提交，等待市场运营交叉审核 → 风控 → 老板审批');
+  }
+
+  function submitIssue() {
+    const g = CARD_GROUPS.find(function (x) { return x.id === selectedGroupId; });
+    const act = getActivityPickerValue('issue-act');
+    TRIAL_LOGS.unshift({ time: new Date().toISOString().slice(0, 16).replace('T', ' '), operator: 'Trial_Admin', type: '发放', user: '批量 120 人', detail: (act.valid ? act.displayLabel : '批量发放') + ' · ' + g.name, amount: '12,540 USDT', remark: '批量发放任务' });
+    closeModal('modal-confirm');
+    renderTrialLogs(TRIAL_LOGS);
+    alert('发放任务已提交，已写入操作记录');
+  }
+
+  function switchIssueTab(type) {
+    const manual = type === 'manual';
+    document.getElementById('tab-manual').className = manual ? 'px-6 py-2 text-sm font-bold bg-white rounded-md shadow-sm' : 'px-6 py-2 text-sm font-bold text-slate-500 rounded-md';
+    document.getElementById('tab-excel').className = manual ? 'px-6 py-2 text-sm font-bold text-slate-500 rounded-md' : 'px-6 py-2 text-sm font-bold bg-white rounded-md shadow-sm';
+    document.getElementById('issue-manual').classList.toggle('hidden', !manual);
+    document.getElementById('issue-excel').classList.toggle('hidden', manual);
+  }
+
+  function openModal(id) {
+    if (id === 'modal-confirm') {
+      const g = CARD_GROUPS.find(function (x) { return x.id === selectedGroupId; });
+      document.getElementById('confirmGroupName').innerText = '规则卡组：' + (g ? g.name : '-');
+    }
+    document.getElementById(id).classList.remove('hidden');
+  }
+  function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+  renderConfigTable();
+  renderCardGroupSelector();
+  renderTrialUserTable(TRIAL_USERS);
+  renderTrialLogs(TRIAL_LOGS);
+  mountActivityPicker('issue-activity-picker', { prefix: 'issue-act', defaultMode: 'custom', defaultRewardNames: { 'zh-CN': 'KOL 合作体验金', 'zh-TW': 'KOL 合作體驗金', 'en': 'KOL Trial Bonus', 'ja': 'KOL 体験金' } });
+  initModuleApproval({ type: 'trial_issue', rootId: 'trial-approval-root', title: '体验金发放审批', showExportList: false, showExportDetail: true });
+</script>
+<script src="admin-permission-registry.js"></script>
+<script src="admin-permission-store.js"></script>
+<script src="admin-permissions.js"></script>
+<script src="admin-sidebar.js"></script>
+<script>
+  initAdminSidebar('trial-config', '登录身份: 体验金管理员');
+  function applyTrialHash() {
+    const hash = (location.hash || '').replace('#', '') || 'config';
+    if (hash.indexOf('approval-detail=') === 0) {
+      showPage('approval', false);
+      moduleApprovalHandleHash('trial-approval-root', hash, 'approval', 'approval-detail');
+      return;
+    }
+    if (hash === 'approval') {
+      showPage('approval', false);
+      moduleApprovalBackList('trial-approval-root', false);
+      return;
+    }
+    const routes = {
+      config: function () { showPage('config', false); },
+      issue: function () { showPage('issue', false); },
+      users: function () { showPage('users', false); },
+      logs: function () { showPage('logs', false); }
+    };
+    if (routes[hash]) routes[hash]();
+    else showPage('config', false);
+    const keyMap = { config: 'trial-config', issue: 'trial-issue', users: 'trial-users', logs: 'trial-logs', approval: 'trial-approval' };
+    if (keyMap[hash]) initAdminSidebar(keyMap[hash], '登录身份: 体验金管理员');
+  }
+  window.addEventListener('hashchange', applyTrialHash);
+  applyTrialHash();
+</script>
+</body>
+</html>

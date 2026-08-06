@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nexus Admin | 激活码明细追踪</title>
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.3.4.3.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.1.0.7.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/echarts.min.5.4.3.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans flex min-h-screen overflow-hidden">
+<!-- 侧边栏导航 (复用首页) -->
+<aside class="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+<div class="p-6 flex items-center space-x-3 border-b border-gray-100">
+<div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white">
+<iconify-icon class="text-2xl" icon="mdi:shield-check"></iconify-icon>
+</div>
+<div>
+<h1 class="font-bold text-lg">Nexus Admin</h1>
+<p class="text-[10px] text-gray-400 uppercase tracking-widest">Whitelist System</p>
+</div>
+</div>
+<nav class="flex-grow py-4">
+<a class="flex items-center px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-50" href="admin_dashboard.html">
+<iconify-icon class="text-xl" icon="mdi:view-dashboard"></iconify-icon>
+<span>概览中心</span>
+</a>
+<a class="flex items-center px-6 py-3 space-x-3 text-blue-600 bg-blue-50 font-medium border-right-4 border-blue-600" href="admin_dashboard.html">
+<iconify-icon class="text-xl" icon="mdi:ticket-confirmation"></iconify-icon>
+<span>激活码管理</span>
+</a>
+<a class="flex items-center px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-50" href="#">
+<iconify-icon class="text-xl" icon="mdi:account-group"></iconify-icon>
+<span>内测用户列表</span>
+</a>
+</nav>
+</aside>
+<!-- 主体内容 -->
+<main class="flex-grow flex flex-col overflow-y-auto">
+<!-- 顶栏 -->
+<header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 flex-shrink-0 sticky top-0 z-10">
+<div class="flex items-center space-x-4">
+<a class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 text-gray-400" href="admin_dashboard.html">
+<iconify-icon class="text-xl" icon="mdi:arrow-left"></iconify-icon>
+</a>
+<h2 class="text-xl font-bold">激活记录明细</h2>
+<div class="px-3 py-1 bg-blue-100 text-blue-700 rounded text-xs font-mono font-bold">CODE: NEXUS666</div>
+</div>
+<div class="flex items-center space-x-4">
+<button class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-2">
+<iconify-icon icon="mdi:download-outline"></iconify-icon>
+<span>导出明细 CSV</span>
+</button>
+</div>
+</header>
+<div class="p-8 space-y-8">
+<!-- 激活码基础看板 -->
+<div class="grid grid-cols-3 gap-8">
+<div class="col-span-1 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+<h4 class="text-xs font-bold text-gray-400 uppercase">基本信息</h4>
+<div class="space-y-3">
+<div class="flex justify-between border-b border-gray-50 pb-2">
+<span class="text-sm text-gray-500">备注说明</span>
+<span class="text-sm font-medium">外部推广：KOL 专属</span>
+</div>
+<div class="flex justify-between border-b border-gray-50 pb-2">
+<span class="text-sm text-gray-500">创建人</span>
+<span class="text-sm font-medium">Admin_Nexus</span>
+</div>
+<div class="flex justify-between border-b border-gray-50 pb-2">
+<span class="text-sm text-gray-500">创建时间</span>
+<span class="text-sm font-medium">2026-04-10 12:30</span>
+</div>
+<div class="flex justify-between">
+<span class="text-sm text-gray-500">激活策略</span>
+<span class="text-sm font-medium">单码多次 (上限 50 次)</span>
+</div>
+</div>
+</div>
+<div class="col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+<div class="flex justify-between items-center mb-4">
+<h4 class="text-xs font-bold text-gray-400 uppercase">激活趋势分析 (近 7 日)</h4>
+<span class="text-[10px] text-gray-400 italic">更新于 2026-04-17 14:00</span>
+</div>
+<div class="h-40 w-full" id="usage-chart"></div>
+</div>
+</div>
+<!-- 用户激活列表 -->
+<div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+<div class="p-6 border-b border-gray-100">
+<h3 class="font-bold flex items-center space-x-2">
+<iconify-icon class="text-blue-500" icon="mdi:account-details-outline"></iconify-icon>
+<span>激活用户清单</span>
+</h3>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left text-sm">
+<thead class="bg-gray-50 text-gray-500 uppercase text-[11px] font-bold tracking-wider border-b border-gray-100">
+<tr>
+<th class="px-6 py-4">序号</th>
+<th class="px-6 py-4">用户钱包地址</th>
+<th class="px-6 py-4">激活时间</th>
+<th class="px-6 py-4">激活 IP</th>
+<th class="px-6 py-4">使用设备</th>
+<th class="px-6 py-4">状态</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-100">
+<script>
+                                const ips = ['192.168.1.1', '172.54.21.9', '45.12.88.2', '103.22.11.5', '19.20.21.22', '156.44.2.1', '8.8.8.8', '210.45.12.3', '120.33.22.1', '66.24.55.1'];
+                                const devices = ['Chrome / Windows', 'Safari / iPhone 15', 'Chrome / macOS', 'Brave / Android', 'Edge / Windows', 'Firefox / Linux', 'Chrome / Windows', 'Metamask App / iOS', 'Chrome / Android', 'Safari / iPad'];
+                                for (let i = 1; i <= 15; i++) {
+                                    const addr = '0x' + Math.random().toString(16).substr(2, 6) + '...' + Math.random().toString(16).substr(2, 4);
+                                    const hour = 14 - Math.floor(i / 2);
+                                    const min = Math.floor(Math.random() * 60);
+                                    document.write(`
+                                        <tr class="hover:bg-gray-50 transition-all">
+                                            <td class="px-6 py-4 text-gray-400 font-mono">${i.toString().padStart(2, '0')}</td>
+                                            <td class="px-6 py-4 font-mono font-medium">${addr.toUpperCase()}</td>
+                                            <td class="px-6 py-4 text-gray-600">2026-04-17 ${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}</td>
+                                            <td class="px-6 py-4 text-gray-500">${ips[i % 10]}</td>
+                                            <td class="px-6 py-4">
+                                                <div class="flex items-center space-x-2 text-gray-500">
+                                                    <iconify-icon icon="mdi:monitor" class="text-xs"></iconify-icon>
+                                                    <span class="text-[12px]">${devices[i % 10]}</span>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <span class="flex items-center text-green-600 text-[12px]">
+                                                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span> 激活成功
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    `);
+                                }
+                            </script>
+</tbody>
+</table>
+</div>
+<div class="p-6 text-center">
+<button class="text-sm text-blue-600 hover:underline">查看更多历史记录</button>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // 渲染激活趋势图
+        const usageChart = echarts.init(document.getElementById('usage-chart'));
+        const option = {
+            tooltip: { trigger: 'axis' },
+            grid: { top: 10, bottom: 20, left: 30, right: 10 },
+            xAxis: {
+                type: 'category',
+                data: ['04-11', '04-12', '04-13', '04-14', '04-15', '04-16', '今日'],
+                axisLine: { lineStyle: { color: '#f1f5f9' } },
+                axisLabel: { color: '#94a3b8', fontSize: 10 }
+            },
+            yAxis: {
+                type: 'value',
+                splitLine: { lineStyle: { color: '#f1f5f9' } },
+                axisLabel: { color: '#94a3b8', fontSize: 10 }
+            },
+            series: [{
+                data: [3, 12, 8, 25, 18, 42, 45],
+                type: 'line',
+                smooth: true,
+                symbol: 'none',
+                lineStyle: { color: '#2563eb', width: 3 },
+                areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: 'rgba(37, 99, 235, 0.2)' },
+                        { offset: 1, color: 'rgba(37, 99, 235, 0)' }
+                    ])
+                }
+            }]
+        };
+        usageChart.setOption(option);
+        window.onresize = usageChart.resize;
+    </script>
+</body>
+</html>

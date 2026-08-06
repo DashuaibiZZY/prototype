@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX 后台管理 - 积分系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .sidebar-item-active { background-color: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .status-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        .tag-system { background: #f0f5ff; color: #2f54eb; }
+        .tag-manual { background: #fff7e6; color: #d46b08; }
+        .tag-newbie { background: #f6ffed; color: #389e0d; }
+        .tag-config { background: #f9f0ff; color: #722ed1; }
+        .tag-custom-bonus { background: #fff0f6; color: #c41d7f; }
+        .tag-natural-bonus { background: #f6ffed; color: #389e0d; }
+        .dim-bar { height: 6px; border-radius: 3px; background: #e2e8f0; overflow: hidden; }
+        .dim-bar span { display: block; height: 100%; background: #3b82f6; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-[12px]">
+
+<aside id="admin-sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0"></aside>
+
+<main class="flex-1 flex flex-col overflow-hidden">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+        <div class="flex items-center gap-3">
+            <button id="userBackBtn" onclick="showPointsUsers()" class="hidden text-slate-500 hover:text-slate-800 font-bold text-sm">← 返回用户列表</button>
+            <h1 id="page-title" class="text-xl font-bold text-slate-800">每周积分总池设置</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="text-sm text-slate-500">管理员: Points_Admin</span>
+            <div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">PA</div>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8">
+
+        <!-- 每周积分总池设置 -->
+        <div id="page-config" class="space-y-6">
+            <div>
+                <h2 class="text-lg font-bold text-slate-700">每周积分总池设置</h2>
+                <p class="text-sm text-slate-400 mt-1">配置 ForX 积分计划开关、每周积分总池、六维度子池占比及个人等级加成系数。系统每周一 00:00 (UTC+8) 自动结算发放。</p>
+            </div>
+
+            <div id="points-program-card" class="card p-6">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div class="space-y-1 min-w-0 flex-1">
+                        <h3 class="font-bold text-slate-800">ForX 积分计划总开关</h3>
+                        <p class="text-xs text-slate-500">控制每周积分总池自动瓜分（机制3）。变更须 <b>交叉审核 → 风控审核 → 老板审批</b>（风控通过后同步 Lark）；老板通过后按结算周边界生效。</p>
+                        <p id="pointsProgramEffectHint" class="text-xs text-blue-700 font-medium mt-2"></p>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <span id="pointsProgramStatusBadge" class="status-tag status-on">发放中</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input id="pointsProgramToggle" type="checkbox" class="sr-only peer" checked onchange="onPointsProgramToggleChange(this)">
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                            <span id="pointsProgramToggleLabel" class="ml-2 text-sm font-bold text-slate-700">开启</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="pool-config-card" class="card p-6 space-y-6">
+                <div>
+                    <h3 class="font-bold text-slate-800">每周积分总池与瓜分规则</h3>
+                    <p class="text-xs text-slate-400 mt-1">总池、六维度子池占比及有效持仓最小时长一并配置；提交后进入审批（市场运营交叉审核 → 风控审核，<b>无需老板审批</b>）。</p>
+                </div>
+
+                <div id="pool-weekly-section" class="border-b border-slate-100 pb-6">
+                    <h4 class="text-sm font-bold text-slate-700 mb-4">每周积分总池</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">本周总池（积分）</label>
+                            <input id="weeklyPoolInput" type="number" value="1000000" class="w-full border border-slate-200 rounded-lg p-3 text-sm font-bold outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">生效周期</label>
+                            <input id="poolEffectivePeriod" type="text" value="2026-W30 (07/21 - 07/27)" readonly class="w-full border border-slate-100 bg-slate-50 rounded-lg p-3 text-sm text-slate-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="dim-pool-config-card">
+                    <h4 class="text-sm font-bold text-slate-700 mb-1">六维度子池分配（可配置占比）</h4>
+                    <p class="text-xs text-slate-400 mb-4">各维度占比可调整，提交时须校验合计恰好等于 100%。</p>
+
+                    <div class="mb-4 p-4 border border-blue-100 bg-blue-50/60 rounded-lg">
+                        <div class="flex flex-wrap items-end gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 uppercase mb-2">有效持仓最小时长</label>
+                                <div class="flex items-center gap-2">
+                                    <input id="minHoldingDuration" type="number" value="1" min="1" step="1" class="w-24 border border-slate-200 rounded-lg p-2.5 text-sm font-bold outline-none bg-white">
+                                    <select id="minHoldingUnit" class="border border-slate-200 rounded-lg p-2.5 text-sm bg-white outline-none">
+                                        <option value="hour" selected>小时</option>
+                                        <option value="minute">分钟</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <p class="text-[11px] text-slate-500 max-w-xl">仅统计持仓时长超过该阈值的仓位。有效持仓原始数据 = 当前持仓（时长&gt;阈值）持仓金额 + 当周历史已平仓持仓（时长&gt;阈值）持仓金额。</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4 text-sm">
+                        <div class="p-4 bg-slate-50 rounded-lg">
+                            <div class="flex justify-between items-center mb-2 gap-2">
+                                <span class="font-bold">交易积分</span>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <input id="dimPctTrade" type="number" value="60" min="0" max="100" step="1" oninput="updateDimPctUI()" class="w-14 border border-slate-200 rounded px-2 py-1 text-right text-blue-600 font-black outline-none bg-white">
+                                    <span class="text-blue-600 font-black">%</span>
+                                </div>
+                            </div>
+                            <div class="dim-bar"><span id="dimBarTrade" style="width:60%"></span></div>
+                            <p class="text-[10px] text-slate-400 mt-2">原始数据：个人本周净手续费</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg">
+                            <div class="flex justify-between items-center mb-2 gap-2">
+                                <span class="font-bold">有效持仓积分</span>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <input id="dimPctPosition" type="number" value="15" min="0" max="100" step="1" oninput="updateDimPctUI()" class="w-14 border border-slate-200 rounded px-2 py-1 text-right text-blue-600 font-black outline-none bg-white">
+                                    <span class="text-blue-600 font-black">%</span>
+                                </div>
+                            </div>
+                            <div class="dim-bar"><span id="dimBarPosition" style="width:15%"></span></div>
+                            <p class="text-[10px] text-slate-400 mt-2">原始数据：有效持仓金额（当前+当周历史平仓，均须&gt;最小时长）</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg">
+                            <div class="flex justify-between items-center mb-2 gap-2">
+                                <span class="font-bold">持仓亏损激励</span>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <input id="dimPctLoss" type="number" value="8" min="0" max="100" step="1" oninput="updateDimPctUI()" class="w-14 border border-slate-200 rounded px-2 py-1 text-right text-blue-600 font-black outline-none bg-white">
+                                    <span class="text-blue-600 font-black">%</span>
+                                </div>
+                            </div>
+                            <div class="dim-bar"><span id="dimBarLoss" style="width:8%"></span></div>
+                            <p class="text-[10px] text-slate-400 mt-2">原始数据：已实现净亏损（绝对值）</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg">
+                            <div class="flex justify-between items-center mb-2 gap-2">
+                                <span class="font-bold">持仓盈利额外</span>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <input id="dimPctProfit" type="number" value="2" min="0" max="100" step="1" oninput="updateDimPctUI()" class="w-14 border border-slate-200 rounded px-2 py-1 text-right text-blue-600 font-black outline-none bg-white">
+                                    <span class="text-blue-600 font-black">%</span>
+                                </div>
+                            </div>
+                            <div class="dim-bar"><span id="dimBarProfit" style="width:2%"></span></div>
+                            <p class="text-[10px] text-slate-400 mt-2">原始数据：已实现净盈利</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg">
+                            <div class="flex justify-between items-center mb-2 gap-2">
+                                <span class="font-bold">平均资沉积分</span>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <input id="dimPctBalance" type="number" value="5" min="0" max="100" step="1" oninput="updateDimPctUI()" class="w-14 border border-slate-200 rounded px-2 py-1 text-right text-blue-600 font-black outline-none bg-white">
+                                    <span class="text-blue-600 font-black">%</span>
+                                </div>
+                            </div>
+                            <div class="dim-bar"><span id="dimBarBalance" style="width:5%"></span></div>
+                            <p class="text-[10px] text-slate-400 mt-2">原始数据：当周平均账户余额</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg">
+                            <div class="flex justify-between items-center mb-2 gap-2">
+                                <span class="font-bold">邀请贡献积分</span>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <input id="dimPctInvite" type="number" value="10" min="0" max="100" step="1" oninput="updateDimPctUI()" class="w-14 border border-slate-200 rounded px-2 py-1 text-right text-blue-600 font-black outline-none bg-white">
+                                    <span class="text-blue-600 font-black">%</span>
+                                </div>
+                            </div>
+                            <div class="dim-bar"><span id="dimBarInvite" style="width:10%"></span></div>
+                            <p class="text-[10px] text-slate-400 mt-2">原始数据：一级好友净手续费总和</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-4">
+                        <p class="text-xs text-slate-400">计算公式：维度得分 = (个人原始数据 × 等级加成) ÷ 全站加权总和 × 该维度子池；结果取整截断，不进位。</p>
+                        <p id="dimPctSumLabel" class="text-sm font-bold text-green-600 shrink-0 ml-4">合计：100%</p>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">申请备注</label>
+                        <textarea id="poolConfigRemark" rows="2" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none" placeholder="请填写变更原因及审批依据"></textarea>
+                    </div>
+                    <button onclick="openPoolConfigConfirmModal()" class="w-full bg-slate-900 text-white py-3.5 rounded-lg text-sm font-bold hover:bg-slate-800">提交审批申请</button>
+                </div>
+            </div>
+
+            <div class="card p-6">
+                <h3 class="font-bold text-slate-800 mb-4">个人等级加成系数（机制2）</h3>
+                <p class="text-xs text-slate-400 mb-4">伞下周交易额 = 本人当周交易额 + 邀请树全体下级当周交易额。每周一 00:00 (UTC+8) 根据上周数据判定。</p>
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50 border-b"><tr><th class="px-4 py-3 text-left text-xs font-bold text-slate-500">等级</th><th class="px-4 py-3 text-left text-xs font-bold text-slate-500">伞下周交易额要求</th><th class="px-4 py-3 text-left text-xs font-bold text-slate-500">个人等级加成系数</th></tr></thead>
+                    <tbody class="divide-y">
+                    <tr><td class="px-4 py-3 font-bold">级别 1</td><td class="px-4 py-3">≥ $100M</td><td class="px-4 py-3 text-blue-600 font-black">1.1x</td></tr>
+                    <tr><td class="px-4 py-3 font-bold">级别 2</td><td class="px-4 py-3">≥ $200M</td><td class="px-4 py-3 text-blue-600 font-black">1.15x</td></tr>
+                    <tr><td class="px-4 py-3 font-bold">级别 3</td><td class="px-4 py-3">≥ $500M</td><td class="px-4 py-3 text-blue-600 font-black">1.2x</td></tr>
+                    <tr><td class="px-4 py-3 font-bold">级别 4</td><td class="px-4 py-3">≥ $1B</td><td class="px-4 py-3 text-blue-600 font-black">1.3x</td></tr>
+                    <tr><td class="px-4 py-3 font-bold">级别 5</td><td class="px-4 py-3">≥ $5B</td><td class="px-4 py-3 text-blue-600 font-black">1.5x</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card p-6">
+                <h3 class="font-bold text-slate-800 mb-4">新人任务自动发放（机制1 · 系统只读）</h3>
+                <p class="text-xs text-slate-400 mb-4">扫描频率：每日 00:00 (UTC)。完成后自动发放积分并标记任务完成。</p>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div class="p-4 border border-slate-200 rounded-lg">
+                        <p class="font-bold text-slate-800">任务 A：首次交易奖励</p>
+                        <p class="text-xs text-slate-500 mt-2">条件：净累计充值 ≥ 100 USDT 且永续合约至少一笔成交</p>
+                        <p class="text-xs mt-2">发放 <span class="font-black text-green-600">5 积分</span> · 活动：新人專屬交易任務</p>
+                    </div>
+                    <div class="p-4 border border-slate-200 rounded-lg">
+                        <p class="font-bold text-slate-800">任务 B：推广先锋奖励</p>
+                        <p class="text-xs text-slate-500 mt-2">条件：3 名好友完成「首次交易奖励」</p>
+                        <p class="text-xs mt-2">发放 <span class="font-black text-green-600">10 积分</span> · 活动：新人專屬推廣先鋒獎勵</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 积分发放总览 -->
+        <div id="page-overview" class="hidden space-y-4">
+            <section class="card p-3 space-y-2">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wide">数据总览</h3>
+                    <select id="overviewPeriod" onchange="renderPointsOverview()" class="border border-slate-200 rounded px-2 py-1 text-xs bg-white outline-none">
+                        <option value="all">全部</option>
+                        <option value="30d">近 30 天</option>
+                        <option value="90d">近 90 天</option>
+                    </select>
+                </div>
+                <div id="overviewStatsGrid" class="grid grid-cols-5 gap-2"></div>
+                <div id="overviewExtraRow" class="pt-2 border-t border-slate-100 space-y-1.5 text-xs text-slate-600"></div>
+            </section>
+
+            <div>
+                <h3 class="text-sm font-bold text-slate-800">每周发放记录</h3>
+                <p class="text-xs text-slate-400 mt-0.5">点击「查看详情」进入发放明细（明细页支持下载 CSV）</p>
+            </div>
+            <section class="card p-5">
+                <div class="grid grid-cols-5 gap-4 items-end">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">发放类型</label>
+                        <select id="weeklyFilterType" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none">
+                            <option value="all">全部</option>
+                            <option value="system">系统周结算</option>
+                            <option value="manual">手动发放</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">结算周 / 活动</label>
+                        <input id="weeklyFilterLabel" type="text" placeholder="如 W29 或活动名" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID / 钱包</label>
+                        <input id="weeklyFilterUser" type="text" placeholder="筛含该用户的批次" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
+                    </div>
+                    <div class="flex gap-2 col-span-2">
+                        <button onclick="applyWeeklyFilters()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold">查询</button>
+                        <button onclick="resetWeeklyFilters()" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">重置</button>
+                    </div>
+                </div>
+            </section>
+            <div class="card overflow-hidden">
+                <table class="w-full text-left text-sm min-w-[1000px]">
+                    <thead class="bg-slate-50 border-b">
+                        <tr>
+                            <th class="px-4 py-3 text-xs font-bold text-slate-500">发放时间</th>
+                            <th class="px-3 py-3 text-xs font-bold text-slate-500">类型</th>
+                            <th class="px-3 py-3 text-xs font-bold text-slate-500">结算周 / 活动</th>
+                            <th class="px-3 py-3 text-xs font-bold text-slate-500 text-right">计划发放</th>
+                            <th class="px-3 py-3 text-xs font-bold text-slate-500 text-right">实发积分</th>
+                            <th class="px-3 py-3 text-xs font-bold text-slate-500 text-right">影子分摊</th>
+                            <th class="px-3 py-3 text-xs font-bold text-slate-500 text-right">用户数</th>
+                            <th class="px-4 py-3 text-xs font-bold text-slate-500 text-right">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="weeklyBatchTableBody" class="divide-y divide-slate-50"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 每周发放详情 -->
+        <div id="page-weekly-detail" class="hidden space-y-6">
+            <div id="weeklyDetailSummary" class="card p-5"></div>
+            <section class="card p-5">
+                <div class="flex flex-wrap items-end justify-between gap-4 mb-4">
+                    <div class="grid grid-cols-3 gap-4 flex-1 max-w-2xl">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID / 钱包</label>
+                            <input id="weeklyDetailFilterUser" type="text" placeholder="筛选用户" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">用户类型</label>
+                            <select id="weeklyDetailFilterType" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none">
+                                <option value="all">全部</option>
+                                <option value="real">仅真实用户</option>
+                                <option value="shadow">仅影子用户</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-2 items-end">
+                            <button onclick="applyWeeklyDetailFilters()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold">查询</button>
+                            <button onclick="exportWeeklyDetailCsv()" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">下载 CSV</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm min-w-[1400px]">
+                        <thead class="bg-slate-50 border-b">
+                            <tr>
+                                <th class="px-3 py-2 text-xs font-bold text-slate-500">UID</th>
+                                <th class="px-3 py-2 text-xs font-bold text-slate-500">钱包</th>
+                                <th class="px-3 py-2 text-xs font-bold text-slate-500">类型</th>
+                                <th class="px-3 py-2 text-xs font-bold text-slate-500 text-center">加成</th>
+                                <th class="px-3 py-2 text-xs font-bold text-slate-500 text-right">本周合计</th>
+                                <th class="px-3 py-2 text-xs font-bold text-slate-500 text-right">交易(原/占比/分)</th>
+                                <th class="px-3 py-2 text-xs font-bold text-slate-500 text-right">持仓(原/占比/分)</th>
+                                <th class="px-3 py-2 text-xs font-bold text-slate-500 text-right">亏损(原/占比/分)</th>
+                                <th class="px-3 py-2 text-xs font-bold text-slate-500 text-right">盈利(原/占比/分)</th>
+                                <th class="px-3 py-2 text-xs font-bold text-slate-500 text-right">资沉(原/占比/分)</th>
+                                <th class="px-3 py-2 text-xs font-bold text-slate-500 text-right">邀请(原/占比/分)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="weeklyDetailTableBody" class="divide-y divide-slate-50 text-[11px]"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- 用户积分查询 -->
+        <div id="page-users" class="hidden space-y-6">
+            <div>
+                <h2 class="text-lg font-bold text-slate-700">用户积分查询</h2>
+                <p class="text-sm text-slate-400 mt-1">查询用户当前积分、等级加成系数及上周各维度得分，可进入查看完整发放流水。</p>
+            </div>
+            <section class="card p-5">
+                <div class="grid grid-cols-4 gap-4 items-end">
+                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID / 钱包地址</label><input id="ptsFilterUser" type="text" placeholder="输入 UID 或钱包地址" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none"></div>
+                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">等级加成</label>
+                        <select id="ptsFilterLevel" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none">
+                            <option value="all">全部</option><option value="1">级别 1+</option><option value="3">级别 3+</option>
+                        </select>
+                    </div>
+                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">加成类型</label>
+                        <select id="ptsFilterBonusType" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none">
+                            <option value="all">全部</option><option value="natural">自然等级</option><option value="custom">自定义配置</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="applyPtsUserFilters()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold">查询</button>
+                        <button onclick="resetPtsUserFilters()" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">重置</button>
+                    </div>
+                </div>
+            </section>
+            <div class="card overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left min-w-[1100px] text-sm">
+                        <thead class="bg-slate-50 border-b">
+                        <tr>
+                            <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">UID / 钱包</th>
+                            <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">当前积分</th>
+                            <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-center">等级加成</th>
+                            <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-center">积分加成</th>
+                            <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">伞下周交易额</th>
+                            <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">上周交易积分</th>
+                            <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">上周持仓积分</th>
+                            <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">上周邀请积分</th>
+                            <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">上周合计</th>
+                            <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody id="pointsUserTableBody" class="divide-y divide-slate-50"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 用户积分流水详情 -->
+        <div id="page-user-detail" class="hidden space-y-6">
+            <div class="card p-5">
+                <p class="text-xs text-slate-400">UID <span id="ptsDetailUid" class="font-bold text-slate-700"></span></p>
+                <p id="ptsDetailWallet" class="text-sm font-mono font-bold mt-1"></p>
+                <div class="flex gap-6 mt-3 text-sm flex-wrap">
+                    <span>当前积分 <b id="ptsDetailBalance" class="text-blue-600 text-lg"></b></span>
+                    <span>自然等级加成 <b id="ptsDetailNaturalBonus"></b></span>
+                    <span id="ptsDetailCustomBonusWrap" class="hidden">自定义加成 <b id="ptsDetailCustomBonus" class="text-purple-600"></b></span>
+                    <span>伞下周交易额 <b id="ptsDetailVolume"></b></span>
+                </div>
+            </div>
+            <div class="card overflow-hidden">
+                <div class="px-6 py-4 border-b font-bold text-slate-700">积分发放历史记录</div>
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 border-b">
+                    <tr>
+                        <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">时间</th>
+                        <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">来源</th>
+                        <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">活动 / 维度</th>
+                        <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">积分变动</th>
+                        <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">变更后余额</th>
+                        <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">备注</th>
+                    </tr>
+                    </thead>
+                    <tbody id="pointsHistoryTableBody" class="divide-y divide-slate-50"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 积分加成配置 -->
+        <div id="page-bonus" class="hidden space-y-6">
+            <div>
+                <h2 class="text-lg font-bold text-slate-700">积分加成配置</h2>
+                <p class="text-sm text-slate-400 mt-1">为单个或批量用户配置自定义积分加成系数。提交前将校验自然等级加成是否高于新设置，需市场运营确认后进入审批流程。</p>
+            </div>
+            <div class="card p-8 max-w-4xl">
+                <div class="flex gap-2 bg-slate-100 p-1 rounded-lg w-fit mb-6">
+                    <button onclick="switchBonusTab('single')" id="tab-bonus-single" class="px-5 py-2 text-sm font-bold bg-white rounded-md shadow-sm">单用户配置</button>
+                    <button onclick="switchBonusTab('batch')" id="tab-bonus-batch" class="px-5 py-2 text-sm font-bold text-slate-500 rounded-md">批量配置</button>
+                </div>
+                <div id="bonus-single-panel" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">UID 或钱包地址</label>
+                            <input id="bonusSingleUser" type="text" placeholder="200112 或 0x..." class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">新积分加成系数</label>
+                            <input id="bonusSingleMultiplier" type="number" step="0.05" min="1" max="3" value="1.5" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
+                        </div>
+                    </div>
+                </div>
+                <div id="bonus-batch-panel" class="hidden space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">UID 或钱包,加成系数（每行一个，英文逗号分隔）</label>
+                        <textarea id="bonusBatchInput" rows="6" placeholder="200112,1.5&#10;200445,1.8&#10;0xfeed...cdef,2.0" class="w-full border border-slate-200 rounded-lg p-3 text-sm font-mono outline-none"></textarea>
+                    </div>
+                </div>
+                <div class="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-3 text-[11px] text-blue-900 leading-relaxed">
+                    <b>奖励记录关联：</b>自定义发放须配置四种语言奖励名称，生效后写入用户端「奖励记录」（奖励类型：积分加成）。
+                </div>
+                <div class="mt-3" id="bonus-activity-picker"></div>
+                <div class="mt-4">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">申请备注（必填）</label>
+                    <textarea id="bonusRemarkInput" rows="2" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none" placeholder="请填写配置原因及审批依据"></textarea>
+                </div>
+                <button onclick="openBonusConfirmModal()" class="w-full mt-4 bg-slate-900 text-white py-3.5 rounded-lg font-bold hover:bg-slate-800">提交审批申请</button>
+            </div>
+        </div>
+
+        <!-- 手动发放积分 -->
+        <div id="page-manual" class="hidden space-y-6">
+            <div class="card p-8 max-w-4xl">
+                <h2 class="text-lg font-bold text-slate-700 mb-6 border-b pb-4">手动发放积分</h2>
+                <div class="flex gap-2 bg-slate-100 p-1 rounded-lg w-fit mb-4">
+                    <button onclick="switchManualTab('lines')" id="tab-manual-lines" class="px-5 py-2 text-sm font-bold bg-white rounded-md shadow-sm">多行录入</button>
+                    <button onclick="switchManualTab('file')" id="tab-manual-file" class="px-5 py-2 text-sm font-bold text-slate-500 rounded-md">文件上传</button>
+                </div>
+                <div id="manual-lines-panel" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">UID 或钱包,积分（每行一个，英文逗号分隔）</label>
+                        <textarea id="manualBatchInput" rows="6" placeholder="200445,50&#10;0xfeed...cdef,100" class="w-full border border-slate-200 rounded-lg p-3 text-sm font-mono outline-none"></textarea>
+                    </div>
+                </div>
+                <div id="manual-file-panel" class="hidden py-12 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center">
+                    <p class="text-sm text-slate-500 font-bold mb-1">拖拽 Excel / CSV 文件至此</p>
+                    <span class="text-[10px] text-slate-400">需包含列：uid_or_wallet, points</span>
+                    <button class="mt-3 bg-slate-100 px-4 py-2 rounded text-xs font-bold text-slate-600">选择文件</button>
+                    <p class="text-[10px] text-slate-400 mt-3">演示模式：上传后按示例名单解析（3 人 · 200 积分）</p>
+                </div>
+                <div class="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-3 text-[11px] text-blue-900 leading-relaxed">
+                    <b>奖励记录关联：</b>选择「自定义活动名称」后须配置四种语言的奖励名称；审批通过后将写入用户端活动中心「奖励记录」。
+                </div>
+                <div class="mt-3" id="points-activity-picker"></div>
+                <div class="mt-4">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">申请备注（必填）</label>
+                    <textarea id="manualRemarkInput" rows="2" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none" placeholder="请填写发放原因及审批依据"></textarea>
+                </div>
+                <button onclick="openPointsApprovalModal()" class="w-full mt-4 bg-slate-900 text-white py-3.5 rounded-lg font-bold hover:bg-slate-800">提交审批申请</button>
+            </div>
+        </div>
+
+        <!-- 操作记录 -->
+        <div id="page-logs" class="hidden space-y-6">
+            <div>
+                <h2 class="text-lg font-bold text-slate-700">积分操作记录</h2>
+                <p class="text-sm text-slate-400 mt-1">记录手动发放积分及规则配置变更。</p>
+            </div>
+            <section class="card p-5">
+                <div class="grid grid-cols-4 gap-4 items-end">
+                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID / 钱包</label><input id="ptsLogFilterUser" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none"></div>
+                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">操作人</label><input id="ptsLogFilterOperator" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none"></div>
+                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">操作类型</label>
+                        <select id="ptsLogFilterType" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none">
+                            <option value="all">全部</option><option value="手动发放">手动发放</option><option value="规则配置">规则配置</option>
+                        </select>
+                    </div>
+                    <button onclick="applyPtsLogFilters()" class="bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold">查询</button>
+                </div>
+            </section>
+            <div class="card overflow-hidden">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 border-b">
+                    <tr>
+                        <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">操作时间</th>
+                        <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">操作人</th>
+                        <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">操作类型</th>
+                        <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">目标用户</th>
+                        <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">变更详情</th>
+                        <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">积分</th>
+                        <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">备注</th>
+                    </tr>
+                    </thead>
+                    <tbody id="pointsLogTableBody" class="divide-y divide-slate-50"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 积分审核 -->
+        <div id="page-approval" class="hidden">
+            <div id="points-approval-root"></div>
+        </div>
+    </div>
+</main>
+
+<!-- 积分发放审批 -->
+<div id="modal-points-approval" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-[520px] overflow-hidden">
+        <div class="px-6 py-5 border-b"><h3 class="text-lg font-bold">提交积分发放审批</h3></div>
+        <div class="p-6 space-y-4 text-sm">
+            <div class="bg-slate-50 rounded-lg p-4 space-y-2">
+                <div class="flex justify-between"><span class="text-slate-500">发放人数</span><span id="ptsApprovalCount" class="font-black">—</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">发放总积分</span><span id="ptsApprovalTotal" class="font-black text-blue-600">—</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">活动信息</span><span id="ptsApprovalActivity" class="font-bold">—</span></div>
+            </div>
+            <div id="pointsApprovalFlow"></div>
+        </div>
+        <div class="p-5 bg-slate-50 flex gap-3">
+            <button onclick="closePtsApprovalModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button onclick="submitPointsApproval()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">确认提交</button>
+        </div>
+    </div>
+</div>
+
+<!-- 积分计划总开关确认 -->
+<div id="modal-points-program-confirm" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-[520px] max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="px-6 py-5 border-b shrink-0">
+            <h3 id="pointsProgramConfirmTitle" class="text-lg font-bold">确认提交积分计划变更</h3>
+            <p class="text-xs text-slate-400 mt-1">确认后进入审批：市场运营交叉审核 → 风控审核 → 老板审批</p>
+        </div>
+        <div class="p-6 overflow-y-auto flex-1 space-y-4 text-sm">
+            <div id="pointsProgramConfirmBody" class="rounded-lg border border-slate-200 bg-slate-50 p-4 text-slate-700 leading-relaxed"></div>
+            <ul id="pointsProgramConfirmList" class="list-disc pl-5 space-y-2 text-slate-600 text-xs"></ul>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">申请备注</label>
+                <textarea id="pointsProgramRemark" rows="2" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none" placeholder="请说明开启/关闭原因"></textarea>
+            </div>
+            <div id="pointsProgramApprovalFlow"></div>
+        </div>
+        <div class="p-5 bg-slate-50 flex gap-3 shrink-0">
+            <button type="button" onclick="cancelPointsProgramToggle()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button type="button" id="btn-points-program-confirm" onclick="confirmPointsProgramToggle()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">确认提交审批</button>
+        </div>
+    </div>
+</div>
+
+<!-- 积分总池配置确认 -->
+<div id="modal-pool-config-confirm" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-[640px] max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="px-6 py-5 border-b shrink-0">
+            <h3 class="text-lg font-bold">确认提交积分总池配置</h3>
+            <p class="text-xs text-slate-400 mt-1">请核对变更前后对比，确认后进入审批流程</p>
+        </div>
+        <div class="p-6 overflow-y-auto flex-1 space-y-4 text-sm">
+            <div class="bg-slate-50 rounded-lg p-4 space-y-2">
+                <div class="flex justify-between"><span class="text-slate-500">生效周期</span><span id="poolConfirmPeriod" class="font-bold">—</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">变更项数</span><span id="poolConfirmChangeCount" class="font-black text-blue-600">—</span></div>
+            </div>
+            <div class="border border-slate-200 rounded-lg overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50 border-b"><tr>
+                        <th class="px-4 py-2 text-xs font-bold text-slate-500 text-left">配置项</th>
+                        <th class="px-4 py-2 text-xs font-bold text-slate-500 text-left">变更前</th>
+                        <th class="px-4 py-2 text-xs font-bold text-slate-500 text-left">变更后</th>
+                    </tr></thead>
+                    <tbody id="poolConfirmDiffBody" class="divide-y"></tbody>
+                </table>
+            </div>
+            <p id="poolConfirmNoChange" class="hidden text-xs text-amber-600 font-bold">未检测到配置变更</p>
+            <div id="poolConfigApprovalFlow"></div>
+        </div>
+        <div class="p-5 bg-slate-50 flex gap-3 shrink-0">
+            <button onclick="closePoolConfigConfirmModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button onclick="submitPoolConfigApproval()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">确认提交审批</button>
+        </div>
+    </div>
+</div>
+
+<!-- 积分加成异常确认 -->
+<div id="modal-bonus-confirm" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-[640px] max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="px-6 py-5 border-b shrink-0"><h3 class="text-lg font-bold">确认提交积分加成配置</h3><p class="text-xs text-slate-400 mt-1">以下用户自然等级加成高于新设置，请市场运营确认后继续</p></div>
+        <div class="p-6 overflow-y-auto flex-1 space-y-4 text-sm">
+            <div class="bg-slate-50 rounded-lg p-4 space-y-2">
+                <div class="flex justify-between"><span class="text-slate-500">配置人数</span><span id="bonusConfirmCount" class="font-black">—</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">加成系数</span><span id="bonusConfirmMultiplier" class="font-black text-blue-600">—</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">活动信息</span><span id="bonusConfirmActivity" class="font-bold">—</span></div>
+            </div>
+            <div id="bonusAnomalySection" class="hidden">
+                <p class="text-xs font-bold text-amber-600 mb-2">异常情况（自然加成 &gt; 新设置加成）</p>
+                <div class="border border-amber-200 rounded-lg overflow-hidden">
+                    <table class="w-full text-sm">
+                        <thead class="bg-amber-50 border-b"><tr>
+                            <th class="px-4 py-2 text-xs font-bold text-slate-500">UID</th>
+                            <th class="px-4 py-2 text-xs font-bold text-slate-500">当前积分加成</th>
+                            <th class="px-4 py-2 text-xs font-bold text-slate-500">新更新积分加成</th>
+                        </tr></thead>
+                        <tbody id="bonusAnomalyTableBody" class="divide-y divide-amber-100"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="bonusNoAnomalyHint" class="hidden text-xs text-green-600 font-bold">✓ 无异常情况，可直接提交审批</div>
+            <div id="bonusApprovalFlow"></div>
+        </div>
+        <div class="p-5 bg-slate-50 flex gap-3 shrink-0">
+            <button onclick="closeBonusConfirmModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button onclick="submitBonusApproval()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">确认提交审批</button>
+        </div>
+    </div>
+</div>
+
+<script src="../shared/points-program.js"></script>
+<script src="admin-approval.js"></script>
+<script src="admin-activity-picker.js"></script>
+<script src="admin-approval-ui.js"></script>
+<script>
+    const NATURAL_BONUS_BY_LEVEL = { 0: 1.0, 1: 1.1, 2: 1.15, 3: 1.2, 4: 1.3, 5: 1.5 };
+
+    const DIM_META = [
+        { key: 'trade', label: '交易', pctKey: 'trade' },
+        { key: 'position', label: '持仓', pctKey: 'position' },
+        { key: 'loss', label: '亏损', pctKey: 'loss' },
+        { key: 'profit', label: '盈利', pctKey: 'profit' },
+        { key: 'balance', label: '资沉', pctKey: 'balance' },
+        { key: 'invite', label: '邀请', pctKey: 'invite' }
+    ];
+
+    const OVERVIEW_STATS = {
+        all: { total: 28542000, real: 24156800, shadow: 3284200, realUsers: 18452, shadowUsers: 4256, system: 24890000, manual: 2850000, newbie: 380000, planned: 1000000, actual: 982156, shadowPct: 32.8 },
+        '30d': { total: 4208000, real: 3581200, shadow: 486800, realUsers: 8920, shadowUsers: 4256, system: 3600000, manual: 450000, newbie: 58000, planned: 1000000, actual: 982156, shadowPct: 32.8 },
+        '90d': { total: 11250000, real: 9584000, shadow: 1366000, realUsers: 14230, shadowUsers: 4256, system: 10200000, manual: 850000, newbie: 120000, planned: 1000000, actual: 982156, shadowPct: 32.8 }
+    };
+
+    function makeDim(raw, pct, points) {
+        return { raw: raw, pct: pct, points: points };
+    }
+
+    const WEEKLY_BATCHES = [
+        {
+            id: 'WK2026-W29',
+            type: 'system',
+            time: '2026-07-21 00:05',
+            label: '2026-W29 (07/14 - 07/20)',
+            planned: 1000000,
+            actual: 982156,
+            shadow: 328420,
+            userCount: 12480,
+            realUserCount: 8234,
+            shadowUserCount: 4256,
+            approvalId: null,
+            poolPct: { trade: 60, position: 15, loss: 8, profit: 2, balance: 5, invite: 10 },
+            minHolding: '1 小时',
+            recipients: [
+                { uid: '200112', wallet: '0xa1b2...abcd', userType: 'real', multiplier: '1.2x', total: 5830, dims: { trade: makeDim('$12.4K', '60%', 4200), position: makeDim('$2.1M', '15%', 980), loss: makeDim('$840', '8%', 320), profit: makeDim('$120', '2%', 80), balance: makeDim('$8.2K', '5%', 150), invite: makeDim('$3.1K', '10%', 650) } },
+                { uid: 'SHADOW_001', wallet: '0xshadow...001', userType: 'shadow', multiplier: '1.0x', total: 1240, dims: { trade: makeDim('$50.0M', '60%', 890), position: makeDim('$0', '15%', 0), loss: makeDim('$0', '8%', 0), profit: makeDim('$0', '2%', 0), balance: makeDim('$0', '5%', 0), invite: makeDim('$0', '10%', 350) } },
+                { uid: '200445', wallet: '0xfeed...cdef', userType: 'real', multiplier: '1.1x', total: 250, dims: { trade: makeDim('$420', '60%', 180), position: makeDim('$85K', '15%', 42), loss: makeDim('$28', '8%', 12), profit: makeDim('$5', '2%', 5), balance: makeDim('$1.2K', '5%', 8), invite: makeDim('$180', '10%', 28) } }
+            ]
+        },
+        {
+            id: 'WK2026-W28',
+            type: 'system',
+            time: '2026-07-14 00:05',
+            label: '2026-W28 (07/07 - 07/13)',
+            planned: 1000000,
+            actual: 978890,
+            shadow: 325100,
+            userCount: 12100,
+            realUserCount: 8100,
+            shadowUserCount: 4200,
+            approvalId: null,
+            poolPct: { trade: 60, position: 15, loss: 8, profit: 2, balance: 5, invite: 10 },
+            minHolding: '1 小时',
+            recipients: [
+                { uid: '200112', wallet: '0xa1b2...abcd', userType: 'real', multiplier: '1.2x', total: 6120, dims: { trade: makeDim('$13.1K', '60%', 4500), position: makeDim('$2.3M', '15%', 1020), loss: makeDim('$720', '8%', 280), profit: makeDim('$90', '2%', 60), balance: makeDim('$8.0K', '5%', 140), invite: makeDim('$3.4K', '10%', 720) } }
+            ]
+        },
+        {
+            id: 'MAN20260710',
+            type: 'manual',
+            time: '2026-07-10 16:20',
+            label: '运营补偿活动',
+            planned: 200,
+            actual: 200,
+            shadow: 0,
+            userCount: 3,
+            realUserCount: 3,
+            shadowUserCount: 0,
+            approvalId: 'APR20260710008',
+            recipients: [
+                { uid: '200445', wallet: '0xfeed...cdef', userType: 'real', multiplier: '—', total: 50, manual: true },
+                { uid: '200112', wallet: '0xa1b2...abcd', userType: 'real', multiplier: '—', total: 100, manual: true },
+                { uid: '200891', wallet: '0x1234...5678', userType: 'real', multiplier: '—', total: 50, manual: true }
+            ]
+        }
+    ];
+
+    let filteredWeeklyBatches = WEEKLY_BATCHES.slice();
+    let currentWeeklyBatchId = null;
+    let filteredWeeklyDetailRows = [];
+
+    function formatDimCell(d) {
+        if (!d) return '—';
+        return d.raw + ' · ' + d.pct + ' · ' + d.points;
+    }
+
+    function renderPointsOverview() {
+        const period = document.getElementById('overviewPeriod').value;
+        const s = OVERVIEW_STATS[period] || OVERVIEW_STATS.all;
+        const periodSub = period === 'all' ? '历史' : (period === '30d' ? '近30天' : '近90天');
+        document.getElementById('overviewStatsGrid').innerHTML = [
+            { label: '发放总积分', value: s.total.toLocaleString(), color: 'text-slate-800' },
+            { label: '真实用户', value: s.real.toLocaleString(), color: 'text-blue-600' },
+            { label: '影子分摊', value: s.shadow.toLocaleString(), color: 'text-amber-600' },
+            { label: '真实用户人数', value: s.realUsers.toLocaleString(), color: 'text-slate-700' },
+            { label: '影子用户人数', value: s.shadowUsers.toLocaleString(), color: 'text-slate-600' }
+        ].map(function (c) {
+            return '<div class="min-w-0 px-1"><p class="text-[9px] font-bold text-slate-500 uppercase truncate">' + c.label + '</p><p class="text-sm font-black ' + (c.color || 'text-slate-800') + ' truncate">' + c.value + '</p></div>';
+        }).join('');
+        const srcTotal = s.system + s.manual + s.newbie;
+        document.getElementById('overviewExtraRow').innerHTML =
+            '<div class="flex flex-wrap items-center gap-x-4 gap-y-1">' +
+            '<span class="font-bold text-slate-500">' + periodSub + ' 来源</span>' +
+            '<span>系统周结算 <b class="text-slate-800">' + s.system.toLocaleString() + '</b> <span class="text-slate-400">(' + (s.system / srcTotal * 100).toFixed(1) + '%)</span></span>' +
+            '<span>手动发放 <b class="text-slate-800">' + s.manual.toLocaleString() + '</b> <span class="text-slate-400">(' + (s.manual / srcTotal * 100).toFixed(1) + '%)</span></span>' +
+            '<span>新人任务 <b class="text-slate-800">' + s.newbie.toLocaleString() + '</b> <span class="text-slate-400">(' + (s.newbie / srcTotal * 100).toFixed(1) + '%)</span></span>' +
+            '</div>' +
+            '<div class="flex flex-wrap items-center gap-x-4 gap-y-1">' +
+            '<span class="font-bold text-slate-500">最近一周</span>' +
+            '<span>计划总池 <b class="text-slate-800">' + s.planned.toLocaleString() + '</b></span>' +
+            '<span>实发 <b class="text-blue-600">' + s.actual.toLocaleString() + '</b></span>' +
+            '<span>影子分摊 <b class="text-amber-600">' + s.shadow.toLocaleString() + '</b></span>' +
+            '<span>占比 <b class="text-slate-800">' + s.shadowPct + '%</b></span>' +
+            '</div>';
+    }
+
+    function downloadCsv(filename, rows) {
+        const bom = '\uFEFF';
+        const csv = bom + rows.map(function (row) {
+            return row.map(function (cell) {
+                const s = String(cell == null ? '' : cell);
+                return s.indexOf(',') !== -1 || s.indexOf('"') !== -1 ? '"' + s.replace(/"/g, '""') + '"' : s;
+            }).join(',');
+        }).join('\n');
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+
+    function renderWeeklyBatchTable(list) {
+        document.getElementById('weeklyBatchTableBody').innerHTML = list.map(function (b) {
+            const typeTag = b.type === 'system' ? '<span class="status-tag tag-system">系统周结算</span>' : '<span class="status-tag tag-manual">手动发放</span>';
+            const shadow = b.type === 'system' ? b.shadow.toLocaleString() : '—';
+            const users = b.realUserCount + ' / ' + b.shadowUserCount;
+            return '<tr class="hover:bg-slate-50"><td class="px-4 py-3">' + b.time + '</td><td class="px-3 py-3">' + typeTag + '</td><td class="px-3 py-3 font-bold">' + b.label + '</td>' +
+                '<td class="px-3 py-3 text-right">' + b.planned.toLocaleString() + '</td><td class="px-3 py-3 text-right font-bold text-blue-600">' + b.actual.toLocaleString() + '</td>' +
+                '<td class="px-3 py-3 text-right text-amber-600">' + shadow + '</td>' +
+                '<td class="px-3 py-3 text-right text-xs">' + users + '</td>' +
+                '<td class="px-4 py-3 text-right"><button onclick="showWeeklyDetail(\'' + b.id + '\')" class="text-blue-600 font-bold hover:underline">查看详情</button></td></tr>';
+        }).join('');
+    }
+
+    function applyWeeklyFilters() {
+        const type = document.getElementById('weeklyFilterType').value;
+        const label = document.getElementById('weeklyFilterLabel').value.trim().toLowerCase();
+        const userQ = document.getElementById('weeklyFilterUser').value.trim().toLowerCase();
+        filteredWeeklyBatches = WEEKLY_BATCHES.filter(function (b) {
+            if (type !== 'all' && b.type !== type) return false;
+            if (label && b.label.toLowerCase().indexOf(label) === -1) return false;
+            if (userQ) {
+                const hit = b.recipients.some(function (r) {
+                    return r.uid.toLowerCase().indexOf(userQ) !== -1 || r.wallet.toLowerCase().indexOf(userQ) !== -1;
+                });
+                if (!hit) return false;
+            }
+            return true;
+        });
+        renderWeeklyBatchTable(filteredWeeklyBatches);
+    }
+
+    function resetWeeklyFilters() {
+        document.getElementById('weeklyFilterType').value = 'all';
+        document.getElementById('weeklyFilterLabel').value = '';
+        document.getElementById('weeklyFilterUser').value = '';
+        filteredWeeklyBatches = WEEKLY_BATCHES.slice();
+        renderWeeklyBatchTable(filteredWeeklyBatches);
+    }
+
+    function showWeeklyList() {
+        showPage('overview', false);
+    }
+
+    function showWeeklyDetail(batchId) {
+        const batch = WEEKLY_BATCHES.find(function (b) { return b.id === batchId; });
+        if (!batch) return;
+        currentWeeklyBatchId = batchId;
+        ALL_PAGE_IDS.forEach(function (id) { document.getElementById(id).classList.add('hidden'); });
+        document.getElementById('page-weekly-detail').classList.remove('hidden');
+        document.getElementById('page-title').innerText = '发放详情 · ' + batch.label;
+        document.getElementById('userBackBtn').classList.remove('hidden');
+        document.getElementById('userBackBtn').onclick = showWeeklyList;
+        document.getElementById('userBackBtn').innerText = '← 返回发放记录';
+        if (location.hash !== '#weekly-detail=' + batchId) location.hash = 'weekly-detail=' + batchId;
+        if (window.initAdminSidebar) initAdminSidebar('points-overview', '登录身份: 积分管理员');
+
+        const typeLabel = batch.type === 'system' ? '系统周结算' : '手动发放';
+        let poolSnap = '';
+        if (batch.poolPct) {
+            poolSnap = '<p class="text-xs text-slate-500 mt-2">子池占比 ' + batch.poolPct.trade + '/' + batch.poolPct.position + '/' + batch.poolPct.loss + '/' + batch.poolPct.profit + '/' + batch.poolPct.balance + '/' + batch.poolPct.invite + ' · 有效持仓最小时长 ' + batch.minHolding + '</p>';
+        }
+        document.getElementById('weeklyDetailSummary').innerHTML =
+            '<div class="flex flex-wrap justify-between gap-4"><div><p class="text-xs text-slate-400">' + batch.id + ' · ' + typeLabel + ' · ' + batch.time + '</p><p class="text-lg font-black mt-1">' + batch.label + '</p>' + poolSnap + '</div>' +
+            '<div class="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">' +
+            '<div class="flex justify-between gap-4"><span class="text-slate-500">计划发放</span><b>' + batch.planned.toLocaleString() + '</b></div>' +
+            '<div class="flex justify-between gap-4"><span class="text-slate-500">实发积分</span><b class="text-blue-600">' + batch.actual.toLocaleString() + '</b></div>' +
+            '<div class="flex justify-between gap-4"><span class="text-slate-500">影子分摊</span><b class="text-amber-600">' + (batch.shadow ? batch.shadow.toLocaleString() : '—') + '</b></div>' +
+            '<div class="flex justify-between gap-4"><span class="text-slate-500">真实 / 影子用户</span><b>' + batch.realUserCount + ' / ' + batch.shadowUserCount + '</b></div>' +
+            '<div class="flex justify-between gap-4"><span class="text-slate-500">审批单</span><b>' + (batch.approvalId || '—') + '</b></div></div></div>';
+
+        document.getElementById('weeklyDetailFilterUser').value = '';
+        document.getElementById('weeklyDetailFilterType').value = 'all';
+        filteredWeeklyDetailRows = batch.recipients.slice();
+        renderWeeklyDetailTable(batch);
+    }
+
+    function renderWeeklyDetailTable(batch) {
+        const isManual = batch.type === 'manual';
+        document.getElementById('weeklyDetailTableBody').innerHTML = filteredWeeklyDetailRows.map(function (r) {
+            const typeTag = r.userType === 'shadow' ? '<span class="status-tag tag-config">影子</span>' : '<span class="text-slate-500">真实</span>';
+            if (isManual || r.manual) {
+                return '<tr class="hover:bg-slate-50"><td class="px-3 py-2 font-mono font-bold">' + r.uid + '</td><td class="px-3 py-2 font-mono">' + r.wallet + '</td><td class="px-3 py-2">' + typeTag + '</td><td class="px-3 py-2 text-center">—</td><td class="px-3 py-2 text-right font-bold text-green-600">+' + r.total + '</td><td colspan="6" class="px-3 py-2 text-slate-400">手动发放，无六维拆分</td></tr>';
+            }
+            return '<tr class="hover:bg-slate-50' + (r.userType === 'shadow' ? ' bg-amber-50/40' : '') + '"><td class="px-3 py-2 font-mono font-bold">' + r.uid + '</td><td class="px-3 py-2 font-mono">' + r.wallet + '</td><td class="px-3 py-2">' + typeTag + '</td><td class="px-3 py-2 text-center font-bold">' + r.multiplier + '</td><td class="px-3 py-2 text-right font-bold">' + r.total + '</td>' +
+                DIM_META.map(function (m) { return '<td class="px-3 py-2 text-right text-slate-600">' + formatDimCell(r.dims[m.key]) + '</td>'; }).join('') + '</tr>';
+        }).join('');
+    }
+
+    function applyWeeklyDetailFilters() {
+        const batch = WEEKLY_BATCHES.find(function (b) { return b.id === currentWeeklyBatchId; });
+        if (!batch) return;
+        const userQ = document.getElementById('weeklyDetailFilterUser').value.trim().toLowerCase();
+        const type = document.getElementById('weeklyDetailFilterType').value;
+        filteredWeeklyDetailRows = batch.recipients.filter(function (r) {
+            if (type !== 'all' && r.userType !== type) return false;
+            if (userQ && r.uid.toLowerCase().indexOf(userQ) === -1 && r.wallet.toLowerCase().indexOf(userQ) === -1) return false;
+            return true;
+        });
+        renderWeeklyDetailTable(batch);
+    }
+
+    function exportWeeklyDetailCsv() {
+        const batch = WEEKLY_BATCHES.find(function (b) { return b.id === currentWeeklyBatchId; });
+        if (!batch) return;
+        const header = ['UID', '钱包', '用户类型', '积分加成', '本周所得积分', '交易原始', '交易占比', '交易积分', '持仓原始', '持仓占比', '持仓积分', '亏损原始', '亏损占比', '亏损积分', '盈利原始', '盈利占比', '盈利积分', '资沉原始', '资沉占比', '资沉积分', '邀请原始', '邀请占比', '邀请积分'];
+        const rows = [header];
+        filteredWeeklyDetailRows.forEach(function (r) {
+            if (r.manual) {
+                rows.push([r.uid, r.wallet, r.userType, '—', r.total]);
+                return;
+            }
+            const row = [r.uid, r.wallet, r.userType, r.multiplier, r.total];
+            DIM_META.forEach(function (m) {
+                const d = r.dims[m.key];
+                row.push(d ? d.raw : '', d ? d.pct : '', d ? d.points : '');
+            });
+            rows.push(row);
+        });
+        downloadCsv('weekly_detail_' + batch.id + '.csv', rows);
+    }
+
+    let POINTS_USERS = [
+        { uid: '200112', wallet: '0xa1b2c3d4e5f6789012345678901234567890abcd', balance: 12850, level: 3, multiplier: '1.2x', naturalMultiplier: 1.2, customBonus: null, bonusType: 'natural', umbrellaVolume: '$620M', lastWeek: { trade: 4200, position: 980, invite: 650, total: 5830 } },
+        { uid: '200445', wallet: '0xfeedface1234567890abcdef1234567890abcdef', balance: 320, level: 1, multiplier: '1.5x', naturalMultiplier: 1.1, customBonus: 1.5, bonusType: 'custom', umbrellaVolume: '$128M', lastWeek: { trade: 180, position: 42, invite: 28, total: 250 } },
+        { uid: '200891', wallet: '0x1234567890abcdef1234567890abcdef12345678', balance: 45, level: 0, multiplier: '1.0x', naturalMultiplier: 1.0, customBonus: null, bonusType: 'natural', umbrellaVolume: '$12M', lastWeek: { trade: 0, position: 0, invite: 0, total: 15 } }
+    ];
+
+    const POINTS_HISTORY = {
+        '200112': [
+            { time: '2026-07-21 00:05', source: '系统周结算', sourceTag: 'tag-system', activity: '2026-W29 周结算', delta: '+5,830', balance: 12850, note: '等级加成 1.2x，截断取整', dimensions: { trade: 4200, position: 980, loss: 320, profit: 80, balance: 150, invite: 650 } },
+            { time: '2026-07-14 00:05', source: '系统周结算', sourceTag: 'tag-system', activity: '2026-W28 周结算', delta: '+6,120', balance: 7020, note: '等级加成 1.2x', dimensions: { trade: 4500, position: 1020, loss: 280, profit: 60, balance: 140, invite: 720 } },
+            { time: '2026-06-02 00:01', source: '新人任务', sourceTag: 'tag-newbie', activity: '新人專屬交易任務', delta: '+5', balance: 5, note: '任务 A 自动完成' }
+        ],
+        '200445': [
+            { time: '2026-07-21 00:05', source: '系统周结算', sourceTag: 'tag-system', activity: '2026-W29 周结算', delta: '+250', balance: 320, note: '等级加成 1.1x', dimensions: { trade: 180, position: 42, loss: 12, profit: 5, balance: 8, invite: 28 } },
+            { time: '2026-07-10 15:30', source: '手动发放', sourceTag: 'tag-manual', activity: '运营补偿活动', delta: '+50', balance: 70, note: '客诉补偿' },
+            { time: '2026-07-05 00:01', source: '新人任务', sourceTag: 'tag-newbie', activity: '新人專屬推廣先鋒獎勵', delta: '+10', balance: 20, note: '任务 B 自动完成' },
+            { time: '2026-07-01 00:01', source: '新人任务', sourceTag: 'tag-newbie', activity: '新人專屬交易任務', delta: '+5', balance: 10, note: '任务 A 自动完成' }
+        ],
+        '200891': [
+            { time: '2026-07-21 00:05', source: '系统周结算', sourceTag: 'tag-system', activity: '2026-W29 周结算', delta: '+15', balance: 45, note: '等级加成 1.0x', dimensions: { trade: 0, position: 0, loss: 0, profit: 0, balance: 5, invite: 15 } },
+            { time: '2026-07-18 00:01', source: '新人任务', sourceTag: 'tag-newbie', activity: '新人專屬交易任務', delta: '+5', balance: 30, note: '任务 A 自动完成' }
+        ]
+    };
+
+    let POINTS_LOGS = [
+        { time: '2026-07-22 10:30', operator: 'Points_Admin', type: '规则配置', user: '-', detail: '每周积分总池 800,000 → 1,000,000', points: '-', remark: 'Q3 活动加码' },
+        { time: '2026-07-10 15:30', operator: 'Points_Admin', type: '手动发放', user: '200445 / 0xfeed...cdef', detail: '运营补偿活动', points: '+50', remark: '客诉补偿，已审批' }
+    ];
+
+    let currentPtsUid = null;
+    let bonusInputMode = 'single';
+    let pendingBonusItems = [];
+
+    const PAGE_MAP = {
+        overview: { id: 'page-overview', title: '积分发放总览', sidebar: 'points-overview' },
+        config: { id: 'page-config', title: '每周积分总池设置', sidebar: 'points-config' },
+        bonus: { id: 'page-bonus', title: '积分加成配置', sidebar: 'points-bonus' },
+        users: { id: 'page-users', title: '用户积分查询', sidebar: 'points-users' },
+        manual: { id: 'page-manual', title: '手动发放积分', sidebar: 'points-manual' },
+        logs: { id: 'page-logs', title: '操作记录', sidebar: 'points-logs' },
+        approval: { id: 'page-approval', title: '积分审核', sidebar: 'points-approval' }
+    };
+
+    const ALL_PAGE_IDS = ['page-overview', 'page-weekly-detail', 'page-config', 'page-bonus', 'page-users', 'page-user-detail', 'page-manual', 'page-logs', 'page-approval'];
+
+    function showPage(key, updateHash) {
+        ALL_PAGE_IDS.forEach(function (id) {
+            document.getElementById(id).classList.add('hidden');
+        });
+        const meta = PAGE_MAP[key];
+        document.getElementById(meta.id).classList.remove('hidden');
+        document.getElementById('page-title').innerText = meta.title;
+        document.getElementById('userBackBtn').classList.add('hidden');
+        if (updateHash !== false && location.hash !== '#' + key) location.hash = key;
+        if (window.initAdminSidebar) initAdminSidebar(meta.sidebar, '登录身份: 积分管理员');
+    }
+
+    function showPointsUsers() {
+        showPage('users', false);
+    }
+
+    function showPointsUserDetail(uid) {
+        currentPtsUid = uid;
+        const user = POINTS_USERS.find(function (u) { return u.uid === uid; });
+        if (!user) return;
+        ['page-overview', 'page-weekly-detail', 'page-config', 'page-bonus', 'page-users', 'page-manual', 'page-logs', 'page-approval'].forEach(function (id) {
+            document.getElementById(id).classList.add('hidden');
+        });
+        document.getElementById('page-user-detail').classList.remove('hidden');
+        document.getElementById('page-title').innerText = '用户积分流水';
+        document.getElementById('userBackBtn').classList.remove('hidden');
+        document.getElementById('userBackBtn').onclick = showPointsUsers;
+        document.getElementById('userBackBtn').innerText = '← 返回用户列表';
+        document.getElementById('ptsDetailUid').innerText = user.uid;
+        document.getElementById('ptsDetailWallet').innerText = user.wallet;
+        document.getElementById('ptsDetailBalance').innerText = user.balance.toLocaleString();
+        document.getElementById('ptsDetailNaturalBonus').innerText = user.naturalMultiplier + 'x (级别 ' + (user.level || '无') + ')';
+        const customWrap = document.getElementById('ptsDetailCustomBonusWrap');
+        if (user.bonusType === 'custom' && user.customBonus) {
+            customWrap.classList.remove('hidden');
+            document.getElementById('ptsDetailCustomBonus').innerText = user.customBonus + 'x';
+        } else {
+            customWrap.classList.add('hidden');
+        }
+        document.getElementById('ptsDetailVolume').innerText = user.umbrellaVolume;
+        renderPointsHistory(uid);
+    }
+
+    function shortWallet(w) {
+        return w.length > 14 ? w.slice(0, 6) + '...' + w.slice(-4) : w;
+    }
+
+    function bonusTypeLabel(u) {
+        if (u.bonusType === 'custom') {
+            return '<span class="status-tag tag-custom-bonus">自定义 ' + u.customBonus + 'x</span>';
+        }
+        return '<span class="status-tag tag-natural-bonus">自然等级 ' + u.naturalMultiplier + 'x</span>';
+    }
+
+    function renderPointsUserTable(list) {
+        document.getElementById('pointsUserTableBody').innerHTML = list.map(function (u) {
+            return '<tr class="hover:bg-slate-50"><td class="px-4 py-3"><div class="font-bold">' + u.uid + '</div><div class="text-[10px] text-slate-400 font-mono">' + shortWallet(u.wallet) + '</div></td><td class="px-3 py-3 text-right font-black text-blue-600">' + u.balance.toLocaleString() + '</td><td class="px-3 py-3 text-center font-bold">' + u.multiplier + '</td><td class="px-3 py-3 text-center">' + bonusTypeLabel(u) + '</td><td class="px-3 py-3 text-right">' + u.umbrellaVolume + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.trade.toLocaleString() + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.position.toLocaleString() + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.invite.toLocaleString() + '</td><td class="px-3 py-3 text-right font-bold">' + u.lastWeek.total.toLocaleString() + '</td><td class="px-4 py-3 text-right"><button onclick="showPointsUserDetail(\'' + u.uid + '\')" class="text-blue-600 font-bold">查看流水</button></td></tr>';
+        }).join('');
+    }
+
+    function renderDimBreakdown(d) {
+        if (!d) return '';
+        return '<div class="mt-2 grid grid-cols-3 gap-1 text-[10px] bg-slate-50 rounded p-2"><span>交易 <b>' + d.trade + '</b></span><span>持仓 <b>' + d.position + '</b></span><span>亏损激励 <b>' + d.loss + '</b></span><span>盈利额外 <b>' + d.profit + '</b></span><span>资沉 <b>' + d.balance + '</b></span><span>邀请 <b>' + d.invite + '</b></span></div>';
+    }
+
+    function renderPointsHistory(uid) {
+        const rows = POINTS_HISTORY[uid] || [];
+        document.getElementById('pointsHistoryTableBody').innerHTML = rows.length ? rows.map(function (r) {
+            const dimHtml = r.source === '系统周结算' && r.dimensions ? renderDimBreakdown(r.dimensions) : '';
+            return '<tr class="hover:bg-slate-50 align-top"><td class="px-4 py-3">' + r.time + '</td><td class="px-3 py-3"><span class="status-tag ' + r.sourceTag + '">' + r.source + '</span></td><td class="px-3 py-3"><div>' + r.activity + dimHtml + '</div></td><td class="px-3 py-3 text-right font-bold text-green-600">' + r.delta + '</td><td class="px-3 py-3 text-right">' + r.balance.toLocaleString() + '</td><td class="px-4 py-3 text-slate-500">' + r.note + '</td></tr>';
+        }).join('') : '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">暂无流水记录</td></tr>';
+    }
+
+    function applyPtsUserFilters() {
+        const userQ = document.getElementById('ptsFilterUser').value.trim().toLowerCase();
+        const level = document.getElementById('ptsFilterLevel').value;
+        const bonusType = document.getElementById('ptsFilterBonusType').value;
+        let list = POINTS_USERS.filter(function (u) {
+            if (userQ && u.uid.indexOf(userQ) === -1 && u.wallet.toLowerCase().indexOf(userQ) === -1) return false;
+            if (level !== 'all' && u.level < parseInt(level, 10)) return false;
+            if (bonusType !== 'all' && u.bonusType !== bonusType) return false;
+            return true;
+        });
+        renderPointsUserTable(list);
+    }
+
+    function resetPtsUserFilters() {
+        document.getElementById('ptsFilterUser').value = '';
+        document.getElementById('ptsFilterLevel').value = 'all';
+        document.getElementById('ptsFilterBonusType').value = 'all';
+        renderPointsUserTable(POINTS_USERS);
+    }
+
+    function renderPointsLogs(list) {
+        document.getElementById('pointsLogTableBody').innerHTML = list.map(function (log) {
+            const tag = log.type === '手动发放' ? 'tag-manual' : 'tag-config';
+            return '<tr class="hover:bg-slate-50"><td class="px-4 py-3">' + log.time + '</td><td class="px-3 py-3">' + log.operator + '</td><td class="px-3 py-3"><span class="status-tag ' + tag + '">' + log.type + '</span></td><td class="px-3 py-3 font-mono text-xs">' + log.user + '</td><td class="px-3 py-3">' + log.detail + '</td><td class="px-3 py-3 text-right font-bold">' + log.points + '</td><td class="px-4 py-3 text-slate-500">' + log.remark + '</td></tr>';
+        }).join('');
+    }
+
+    function applyPtsLogFilters() {
+        const user = document.getElementById('ptsLogFilterUser').value.trim().toLowerCase();
+        const operator = document.getElementById('ptsLogFilterOperator').value.trim();
+        const type = document.getElementById('ptsLogFilterType').value;
+        let list = POINTS_LOGS.filter(function (log) {
+            if (user && log.user.toLowerCase().indexOf(user) === -1) return false;
+            if (operator && log.operator.indexOf(operator) === -1) return false;
+            if (type !== 'all' && log.type !== type) return false;
+            return true;
+        });
+        renderPointsLogs(list);
+    }
+
+    const DIM_PCT_IDS = ['dimPctTrade', 'dimPctPosition', 'dimPctLoss', 'dimPctProfit', 'dimPctBalance', 'dimPctInvite'];
+    const DIM_BAR_IDS = ['dimBarTrade', 'dimBarPosition', 'dimBarLoss', 'dimBarProfit', 'dimBarBalance', 'dimBarInvite'];
+
+    function getDimPctSum() {
+        return DIM_PCT_IDS.reduce((sum, id) => sum + Number(document.getElementById(id).value || 0), 0);
+    }
+
+    function updateDimPctUI() {
+        DIM_PCT_IDS.forEach((id, i) => {
+            const pct = Math.min(100, Math.max(0, Number(document.getElementById(id).value || 0)));
+            document.getElementById(DIM_BAR_IDS[i]).style.width = pct + '%';
+        });
+        const sum = getDimPctSum();
+        const label = document.getElementById('dimPctSumLabel');
+        label.textContent = '合计：' + sum + '%';
+        label.className = sum === 100
+            ? 'text-sm font-bold text-green-600 shrink-0 ml-4'
+            : 'text-sm font-bold text-red-600 shrink-0 ml-4';
+    }
+
+    const POOL_CONFIG_STORAGE_KEY = 'forx_points_pool_saved_config';
+    const DIM_LABELS = ['交易积分', '有效持仓积分', '持仓亏损激励', '持仓盈利额外', '平均资沉积分', '邀请贡献积分'];
+    const DIM_KEYS = ['trade', 'position', 'loss', 'profit', 'balance', 'invite'];
+
+    let savedPoolConfig = loadSavedPoolConfig();
+
+    function defaultPoolConfig() {
+        return {
+            weeklyPool: 1000000,
+            dimPct: { trade: 60, position: 15, loss: 8, profit: 2, balance: 5, invite: 10 },
+            minHolding: { duration: 1, unit: 'hour' }
+        };
+    }
+
+    function loadSavedPoolConfig() {
+        try {
+            const raw = localStorage.getItem(POOL_CONFIG_STORAGE_KEY);
+            if (raw) return JSON.parse(raw);
+        } catch (e) { /* ignore */ }
+        return defaultPoolConfig();
+    }
+
+    function formatMinHolding(cfg) {
+        const unit = cfg.unit === 'minute' ? '分钟' : '小时';
+        return cfg.duration + ' ' + unit;
+    }
+
+    function formatDimPctSummary(dimPct) {
+        return DIM_KEYS.map(function (k) { return dimPct[k]; }).join('/');
+    }
+
+    function applyPoolConfigToForm(cfg) {
+        document.getElementById('weeklyPoolInput').value = cfg.weeklyPool;
+        document.getElementById('minHoldingDuration').value = cfg.minHolding.duration;
+        document.getElementById('minHoldingUnit').value = cfg.minHolding.unit;
+        DIM_PCT_IDS.forEach(function (id, i) {
+            document.getElementById(id).value = cfg.dimPct[DIM_KEYS[i]];
+        });
+        updateDimPctUI();
+    }
+
+    window.applySavedPoolConfig = function (cfg) {
+        savedPoolConfig = cfg;
+        applyPoolConfigToForm(cfg);
+    };
+
+    function readCurrentPoolConfigFromForm() {
+        const dimPct = {};
+        DIM_KEYS.forEach(function (k, i) {
+            dimPct[k] = Number(document.getElementById(DIM_PCT_IDS[i]).value || 0);
+        });
+        return {
+            weeklyPool: Number(document.getElementById('weeklyPoolInput').value || 0),
+            dimPct: dimPct,
+            minHolding: {
+                duration: Number(document.getElementById('minHoldingDuration').value || 1),
+                unit: document.getElementById('minHoldingUnit').value
+            }
+        };
+    }
+
+    function buildPoolConfigChanges(before, after) {
+        const changes = [];
+        if (before.weeklyPool !== after.weeklyPool) {
+            changes.push({
+                field: '本周总池（积分）',
+                before: Number(before.weeklyPool).toLocaleString(),
+                after: Number(after.weeklyPool).toLocaleString()
+            });
+        }
+        DIM_KEYS.forEach(function (k, i) {
+            if (before.dimPct[k] !== after.dimPct[k]) {
+                changes.push({
+                    field: DIM_LABELS[i] + '占比',
+                    before: before.dimPct[k] + '%',
+                    after: after.dimPct[k] + '%'
+                });
+            }
+        });
+        const bHold = formatMinHolding(before.minHolding);
+        const aHold = formatMinHolding(after.minHolding);
+        if (bHold !== aHold) {
+            changes.push({ field: '有效持仓最小时长', before: bHold, after: aHold });
+        }
+        return changes;
+    }
+
+    function openPoolConfigConfirmModal() {
+        const sum = getDimPctSum();
+        if (sum !== 100) {
+            alert('六维度占比合计须恰好等于 100%，当前为 ' + sum + '%。请调整后再提交。');
+            return;
+        }
+        const weeklyPool = Number(document.getElementById('weeklyPoolInput').value || 0);
+        if (!weeklyPool || weeklyPool <= 0 || !Number.isInteger(weeklyPool)) {
+            alert('本周总池须为正整数');
+            return;
+        }
+        const remark = document.getElementById('poolConfigRemark').value.trim();
+        if (!remark) {
+            alert('请填写申请备注');
+            return;
+        }
+        const after = readCurrentPoolConfigFromForm();
+        const before = savedPoolConfig;
+        const changes = buildPoolConfigChanges(before, after);
+        if (!changes.length) {
+            alert('配置未发生变更，无需提交审批');
+            return;
+        }
+        document.getElementById('poolConfirmPeriod').textContent = document.getElementById('poolEffectivePeriod').value;
+        document.getElementById('poolConfirmChangeCount').textContent = changes.length + ' 项';
+        document.getElementById('poolConfirmDiffBody').innerHTML = changes.map(function (c) {
+            return '<tr class="hover:bg-slate-50"><td class="px-4 py-2 font-bold text-slate-700">' + c.field + '</td><td class="px-4 py-2 text-slate-500">' + c.before + '</td><td class="px-4 py-2 font-bold text-blue-600">' + c.after + '</td></tr>';
+        }).join('');
+        document.getElementById('poolConfirmNoChange').classList.add('hidden');
+        document.getElementById('poolConfigApprovalFlow').innerHTML = renderApprovalFlow('draft', true, 'cross_risk');
+        document.getElementById('modal-pool-config-confirm').classList.remove('hidden');
+        window._pendingPoolConfigPayload = {
+            effectivePeriod: document.getElementById('poolEffectivePeriod').value,
+            before: before,
+            after: after,
+            changes: changes
+        };
+    }
+
+    function closePoolConfigConfirmModal() {
+        document.getElementById('modal-pool-config-confirm').classList.add('hidden');
+        window._pendingPoolConfigPayload = null;
+    }
+
+    function submitPoolConfigApproval() {
+        const payload = window._pendingPoolConfigPayload;
+        if (!payload || !payload.changes.length) return;
+        const remark = document.getElementById('poolConfigRemark').value.trim();
+        const summary = '总池 ' + Number(payload.after.weeklyPool).toLocaleString() + ' · 占比 ' + formatDimPctSummary(payload.after.dimPct);
+        const app = submitApprovalApplication({
+            type: 'points_pool_config',
+            title: '积分总池配置',
+            applicant: 'Points_Admin',
+            summary: summary,
+            remark: remark,
+            payload: payload,
+            onSubmit: function (created) {
+                POINTS_LOGS.unshift({
+                    time: created.createdAt,
+                    operator: 'Points_Admin',
+                    type: '规则配置',
+                    user: '-',
+                    detail: '积分总池配置 · 待审批 ' + created.id,
+                    points: '-',
+                    remark: remark + '（审批中）'
+                });
+                renderPointsLogs(POINTS_LOGS);
+            }
+        });
+        closePoolConfigConfirmModal();
+        applyPoolConfigToForm(savedPoolConfig);
+        document.getElementById('poolConfigRemark').value = '';
+        alert('积分总池配置已提交审批，等待市场运营交叉审核 → 风控审核（无需老板审批）');
+    }
+
+    applyPoolConfigToForm(savedPoolConfig);
+
+    var pendingPointsProgramEnabled = null;
+
+    function renderPointsProgramAdminUI() {
+        var status = getPointsProgramStatus();
+        var enabled = status.enabled !== false;
+        var pending = typeof getPointsProgramPending === 'function' ? getPointsProgramPending() : null;
+        var toggle = document.getElementById('pointsProgramToggle');
+        if (toggle) {
+            toggle.checked = enabled;
+            toggle.disabled = !!pending;
+        }
+        var badge = document.getElementById('pointsProgramStatusBadge');
+        var label = document.getElementById('pointsProgramToggleLabel');
+        var hint = document.getElementById('pointsProgramEffectHint');
+        if (badge) {
+            if (pending) {
+                badge.textContent = '审批中 → ' + (pending.afterEnabled ? '开启' : '关闭');
+                badge.className = 'inline-block px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700';
+            } else {
+                badge.textContent = enabled ? '发放中' : '已暂停';
+                badge.className = enabled ? 'inline-block px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700' : 'inline-block px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800';
+            }
+        }
+        if (label) label.textContent = enabled ? '开启' : '关闭';
+        if (hint) {
+            hint.textContent = pending
+                ? '变更已提交审批，老板通过后生效。目标状态：' + (pending.afterEnabled ? '开启' : '关闭')
+                : formatProgramEffectHint(enabled);
+        }
+    }
+
+    window.renderPointsProgramAdminUI = renderPointsProgramAdminUI;
+
+    window.onPointsProgramToggleChange = function (input) {
+        if (typeof getPointsProgramPending === 'function' && getPointsProgramPending()) {
+            input.checked = !input.checked;
+            alert('已有积分计划开关变更在审批中，请等待处理完成');
+            return;
+        }
+        pendingPointsProgramEnabled = input.checked;
+        input.checked = !input.checked;
+        openPointsProgramConfirmModal(pendingPointsProgramEnabled);
+    };
+
+    function openPointsProgramConfirmModal(nextEnabled) {
+        var title = document.getElementById('pointsProgramConfirmTitle');
+        var body = document.getElementById('pointsProgramConfirmBody');
+        var list = document.getElementById('pointsProgramConfirmList');
+        var current = getPointsProgramStatus().enabled !== false;
+        if (nextEnabled) {
+            title.textContent = '确认提交：开启 ForX 积分计划';
+            body.textContent = '老板审批通过后，前端积分页将恢复正常展示。';
+            list.innerHTML = '<li>本周<strong>不进行</strong>周结算瓜分</li><li>自下个结算周（周一 00:00 UTC+8）起，恢复每周积分发放</li>';
+        } else {
+            title.textContent = '确认提交：关闭 ForX 积分计划';
+            body.textContent = '老板审批通过后，前端积分页将展示暂停提示。';
+            list.innerHTML = '<li>本周周结算<strong>仍按既有规则正常执行</strong></li><li>自下个结算周（周一 00:00 UTC+8）起，暂停每周积分发放</li><li>用户已获得的积分不受影响</li>';
+        }
+        document.getElementById('pointsProgramRemark').value = '';
+        document.getElementById('pointsProgramApprovalFlow').innerHTML = renderApprovalFlow('draft', true, 'full');
+        window._pendingProgramSwitch = { beforeEnabled: current, afterEnabled: nextEnabled };
+        document.getElementById('modal-points-program-confirm').classList.remove('hidden');
+    }
+
+    window.cancelPointsProgramToggle = function () {
+        pendingPointsProgramEnabled = null;
+        window._pendingProgramSwitch = null;
+        document.getElementById('modal-points-program-confirm').classList.add('hidden');
+        renderPointsProgramAdminUI();
+    };
+
+    window.confirmPointsProgramToggle = function () {
+        var payload = window._pendingProgramSwitch;
+        if (!payload) return;
+        if (typeof getPointsProgramPending === 'function' && getPointsProgramPending()) {
+            alert('已有积分计划开关变更在审批中');
+            return;
+        }
+        var remark = document.getElementById('pointsProgramRemark').value.trim();
+        if (!remark) { alert('请填写申请备注'); return; }
+        var nextEnabled = payload.afterEnabled;
+        if (typeof setPointsProgramPending === 'function') {
+            setPointsProgramPending({ afterEnabled: nextEnabled });
+        }
+        var effectHint = nextEnabled
+            ? '本周不进行周结算；自下个结算周起恢复发放。'
+            : '本周仍执行周结算；自下个结算周起暂停发放。';
+        submitApprovalApplication({
+            type: 'points_program_switch',
+            title: '积分计划总开关',
+            applicant: 'Points_Admin',
+            summary: (nextEnabled ? '开启' : '关闭') + ' ForX 积分计划',
+            remark: remark,
+            payload: {
+                beforeEnabled: payload.beforeEnabled,
+                afterEnabled: nextEnabled,
+                effectHint: effectHint
+            },
+            onSubmit: function (created) {
+                POINTS_LOGS.unshift({
+                    time: created.createdAt,
+                    operator: 'Points_Admin',
+                    type: '规则配置',
+                    user: '-',
+                    detail: '积分计划总开关 · 待审批 ' + created.id,
+                    points: '-',
+                    remark: remark + '（审批中）'
+                });
+                renderPointsLogs(POINTS_LOGS);
+            }
+        });
+        pendingPointsProgramEnabled = null;
+        window._pendingProgramSwitch = null;
+        document.getElementById('modal-points-program-confirm').classList.add('hidden');
+        renderPointsProgramAdminUI();
+        alert('积分计划总开关已提交审批，等待市场运营交叉审核 → 风控审核 → 老板审批');
+    };
+
+    renderPointsProgramAdminUI();
+
+    let manualInputMode = 'lines';
+
+    function switchManualTab(type) {
+        manualInputMode = type;
+        const lines = type === 'lines';
+        document.getElementById('tab-manual-lines').className = lines ? 'px-5 py-2 text-sm font-bold bg-white rounded-md shadow-sm' : 'px-5 py-2 text-sm font-bold text-slate-500 rounded-md';
+        document.getElementById('tab-manual-file').className = lines ? 'px-5 py-2 text-sm font-bold text-slate-500 rounded-md' : 'px-5 py-2 text-sm font-bold bg-white rounded-md shadow-sm';
+        document.getElementById('manual-lines-panel').classList.toggle('hidden', !lines);
+        document.getElementById('manual-file-panel').classList.toggle('hidden', lines);
+    }
+
+    function getManualRecipients() {
+        if (manualInputMode === 'file') {
+            return [
+                { uid_or_wallet: '200445', points: '50' },
+                { uid_or_wallet: '200112', points: '100' },
+                { uid_or_wallet: '200891', points: '50' }
+            ];
+        }
+        const text = document.getElementById('manualBatchInput').value.trim();
+        if (!text) {
+            return [
+                { uid_or_wallet: '200445', points: '50' },
+                { uid_or_wallet: '200112', points: '100' },
+                { uid_or_wallet: '200891', points: '50' }
+            ];
+        }
+        return text.split('\n').filter(function (l) { return l.trim(); }).map(function (l) {
+            const p = l.split(',');
+            return { uid_or_wallet: (p[0] || '').trim(), points: (p[1] || '').trim() };
+        });
+    }
+
+    function parseManualBatch() {
+        const recipients = getManualRecipients();
+        let total = 0;
+        recipients.forEach(function (r) { total += parseInt(r.points, 10) || 0; });
+        return { count: recipients.length, total: total, recipients: recipients };
+    }
+
+    function openPointsApprovalModal() {
+        const act = getActivityPickerValue('points-act');
+        const remark = document.getElementById('manualRemarkInput').value.trim();
+        if (!act.valid) { alert(act.message); return; }
+        if (!remark) { alert('请填写申请备注'); return; }
+        const batch = parseManualBatch();
+        document.getElementById('ptsApprovalCount').innerText = batch.count + ' 人';
+        document.getElementById('ptsApprovalTotal').innerText = batch.total.toLocaleString() + ' 积分';
+        document.getElementById('ptsApprovalActivity').innerText = act.displayLabel;
+        document.getElementById('pointsApprovalFlow').innerHTML = renderApprovalFlow('draft', true);
+        document.getElementById('modal-points-approval').classList.remove('hidden');
+    }
+
+    function closePtsApprovalModal() {
+        document.getElementById('modal-points-approval').classList.add('hidden');
+    }
+
+    function submitPointsApproval() {
+        const act = getActivityPickerValue('points-act');
+        const remark = document.getElementById('manualRemarkInput').value.trim();
+        if (!act.valid) { alert(act.message); return; }
+        const batch = parseManualBatch();
+        submitApprovalApplication({
+            type: 'points_manual',
+            title: '积分手动发放',
+            applicant: 'Points_Admin',
+            remark: remark,
+            summary: batch.count + ' 人 · ' + batch.total.toLocaleString() + ' 积分 · ' + act.displayLabel,
+            payload: {
+                activityMode: act.activityMode,
+                activityId: act.activityId,
+                activityName: act.activityName,
+                inputMode: manualInputMode,
+                recipientCount: batch.count,
+                totalPoints: batch.total,
+                recipients: batch.recipients
+            },
+            onSubmit: function (app) {
+                POINTS_LOGS.unshift({ time: app.createdAt, operator: 'Points_Admin', type: '手动发放', user: batch.count + ' 人', detail: act.displayLabel + ' · 待审批 ' + app.id, points: '+' + batch.total, remark: remark + '（审批中）' });
+                renderPointsLogs(POINTS_LOGS);
+            }
+        });
+        closePtsApprovalModal();
+        alert('审批申请已提交，等待市场运营交叉审核 → 风控 → 老板审批');
+        document.getElementById('manualBatchInput').value = '';
+        document.getElementById('manualRemarkInput').value = '';
+    }
+
+    function findPointsUser(key) {
+        const q = (key || '').trim().toLowerCase();
+        return POINTS_USERS.find(function (u) {
+            return u.uid === q || u.wallet.toLowerCase() === q || u.wallet.toLowerCase().indexOf(q) !== -1;
+        });
+    }
+
+    function getNaturalMultiplierForUser(userOrKey) {
+        const user = typeof userOrKey === 'object' ? userOrKey : findPointsUser(userOrKey);
+        if (!user) return 1.0;
+        return user.naturalMultiplier || NATURAL_BONUS_BY_LEVEL[user.level] || 1.0;
+    }
+
+    function switchBonusTab(mode) {
+        bonusInputMode = mode;
+        const single = mode === 'single';
+        document.getElementById('tab-bonus-single').className = single ? 'px-5 py-2 text-sm font-bold bg-white rounded-md shadow-sm' : 'px-5 py-2 text-sm font-bold text-slate-500 rounded-md';
+        document.getElementById('tab-bonus-batch').className = single ? 'px-5 py-2 text-sm font-bold text-slate-500 rounded-md' : 'px-5 py-2 text-sm font-bold bg-white rounded-md shadow-sm';
+        document.getElementById('bonus-single-panel').classList.toggle('hidden', !single);
+        document.getElementById('bonus-batch-panel').classList.toggle('hidden', single);
+    }
+
+    function parseBonusItems() {
+        if (bonusInputMode === 'single') {
+            const key = document.getElementById('bonusSingleUser').value.trim();
+            const mult = parseFloat(document.getElementById('bonusSingleMultiplier').value);
+            if (!key) return { error: '请填写 UID 或钱包地址' };
+            if (!mult || mult < 1) return { error: '请填写有效的加成系数' };
+            const user = findPointsUser(key);
+            const natural = getNaturalMultiplierForUser(user || { level: 0, naturalMultiplier: 1.0 });
+            return { items: [{ uid: user ? user.uid : key, key: key, naturalMultiplier: natural, newMultiplier: mult }] };
+        }
+        const text = document.getElementById('bonusBatchInput').value.trim();
+        if (!text) return { error: '请填写批量配置名单' };
+        const items = text.split('\n').filter(function (l) { return l.trim(); }).map(function (line) {
+            const p = line.split(',');
+            const key = (p[0] || '').trim();
+            const mult = parseFloat((p[1] || '').trim());
+            const user = findPointsUser(key);
+            return {
+                uid: user ? user.uid : key,
+                key: key,
+                naturalMultiplier: getNaturalMultiplierForUser(user || { level: 0, naturalMultiplier: 1.0 }),
+                newMultiplier: mult
+            };
+        });
+        if (items.some(function (i) { return !i.newMultiplier || i.newMultiplier < 1; })) {
+            return { error: '批量名单中存在无效的加成系数' };
+        }
+        return { items: items };
+    }
+
+    function openBonusConfirmModal() {
+        const act = getActivityPickerValue('bonus-act');
+        const remark = document.getElementById('bonusRemarkInput').value.trim();
+        if (!act.valid) { alert(act.message); return; }
+        if (!remark) { alert('请填写申请备注'); return; }
+        const parsed = parseBonusItems();
+        if (parsed.error) { alert(parsed.error); return; }
+        pendingBonusItems = parsed.items;
+        const anomalies = pendingBonusItems.filter(function (i) { return i.naturalMultiplier > i.newMultiplier; });
+        const multSet = pendingBonusItems.map(function (i) { return i.newMultiplier; });
+        const multLabel = multSet.length === 1 ? multSet[0] + 'x' : '多种';
+        document.getElementById('bonusConfirmCount').innerText = pendingBonusItems.length + ' 人';
+        document.getElementById('bonusConfirmMultiplier').innerText = multLabel;
+        document.getElementById('bonusConfirmActivity').innerText = act.displayLabel;
+        document.getElementById('bonusAnomalySection').classList.toggle('hidden', !anomalies.length);
+        document.getElementById('bonusNoAnomalyHint').classList.toggle('hidden', !!anomalies.length);
+        document.getElementById('bonusAnomalyTableBody').innerHTML = anomalies.map(function (a) {
+            return '<tr><td class="px-4 py-2 font-mono font-bold">' + a.uid + '</td><td class="px-4 py-2">' + a.naturalMultiplier + 'x</td><td class="px-4 py-2 font-bold text-amber-700">' + a.newMultiplier + 'x</td></tr>';
+        }).join('');
+        document.getElementById('bonusApprovalFlow').innerHTML = renderApprovalFlow('draft', true);
+        document.getElementById('modal-bonus-confirm').classList.remove('hidden');
+    }
+
+    function closeBonusConfirmModal() {
+        document.getElementById('modal-bonus-confirm').classList.add('hidden');
+    }
+
+    function submitBonusApproval() {
+        const act = getActivityPickerValue('bonus-act');
+        const remark = document.getElementById('bonusRemarkInput').value.trim();
+        if (!act.valid || !remark || !pendingBonusItems.length) return;
+        const anomalies = pendingBonusItems.filter(function (i) { return i.naturalMultiplier > i.newMultiplier; });
+        const payloadItems = pendingBonusItems.map(function (i) {
+            return {
+                uid: i.uid,
+                naturalBonus: i.naturalMultiplier + 'x',
+                newBonus: i.newMultiplier + 'x',
+                anomaly: i.naturalMultiplier > i.newMultiplier
+            };
+        });
+        const multSet = pendingBonusItems.map(function (i) { return i.newMultiplier; });
+        const bonusMultiplier = multSet.length === 1 ? multSet[0] : null;
+        submitApprovalApplication({
+            type: 'points_bonus_config',
+            title: '积分加成配置',
+            applicant: 'Points_Admin',
+            remark: remark,
+            summary: pendingBonusItems.length + ' 人 · ' + (bonusMultiplier ? bonusMultiplier + 'x' : '多种加成') + ' · ' + act.displayLabel,
+            payload: {
+                activityMode: act.activityMode,
+                activityId: act.activityId,
+                activityName: act.activityName,
+                bonusMultiplier: bonusMultiplier,
+                recipientCount: pendingBonusItems.length,
+                anomalyCount: anomalies.length,
+                items: payloadItems
+            },
+            onSubmit: function () {
+                POINTS_LOGS.unshift({ time: new Date().toISOString().slice(0, 16).replace('T', ' '), operator: 'Points_Admin', type: '规则配置', user: pendingBonusItems.length + ' 人', detail: '积分加成配置 · ' + act.displayLabel, points: '-', remark: remark + '（审批中）' });
+                renderPointsLogs(POINTS_LOGS);
+            }
+        });
+        closeBonusConfirmModal();
+        alert('积分加成配置已提交审批，等待市场运营交叉审核 → 风控 → 老板审批');
+        if (bonusInputMode === 'single') document.getElementById('bonusSingleUser').value = '';
+        else document.getElementById('bonusBatchInput').value = '';
+        document.getElementById('bonusRemarkInput').value = '';
+        pendingBonusItems = [];
+    }
+
+    renderPointsUserTable(POINTS_USERS);
+    renderPointsLogs(POINTS_LOGS);
+    renderPointsOverview();
+    renderWeeklyBatchTable(WEEKLY_BATCHES);
+    const REWARD_NAME_DEMOS = {
+        points: { 'zh-CN': '运营补偿积分', 'zh-TW': '運營補償積分', 'en': 'Ops Compensation Points', 'ja': '運営補償ポイント' },
+        bonus: { 'zh-CN': '高净值积分加成', 'zh-TW': '高淨值積分加成', 'en': 'High-Net-Worth Points Bonus', 'ja': '高純資産積分ボーナス' },
+        fee: { 'zh-CN': 'VIP 费率优惠', 'zh-TW': 'VIP 費率優惠', 'en': 'VIP Fee Discount', 'ja': 'VIP 手数料優遇' },
+        trial: { 'zh-CN': 'KOL 合作体验金', 'zh-TW': 'KOL 合作體驗金', 'en': 'KOL Trial Bonus', 'ja': 'KOL 体験金' }
+    };
+    mountActivityPicker('points-activity-picker', { prefix: 'points-act', defaultMode: 'custom', defaultRewardNames: REWARD_NAME_DEMOS.points });
+    mountActivityPicker('bonus-activity-picker', { prefix: 'bonus-act', defaultMode: 'custom', defaultRewardNames: REWARD_NAME_DEMOS.bonus });
+    initModuleApproval({
+        types: ['points_manual', 'points_bonus_config', 'points_pool_config', 'points_program_switch'],
+        rootId: 'points-approval-root',
+        title: '积分审核',
+        showExportList: false,
+        showExportDetail: true
+    });
+</script>
+<script src="admin-permission-registry.js"></script>
+<script src="admin-permission-store.js"></script>
+<script src="admin-permissions.js"></script>
+<script src="admin-sidebar.js"></script>
+<script>
+    function applyPointsHash() {
+        const hash = (location.hash || '').replace('#', '') || 'config';
+        if (hash.indexOf('weekly-detail=') === 0) {
+            showWeeklyDetail(hash.replace('weekly-detail=', ''));
+            return;
+        }
+        if (hash.indexOf('approval-detail=') === 0 || hash.indexOf('bonus-approval-detail=') === 0) {
+            showPage('approval', false);
+            const detailHash = hash.indexOf('bonus-approval-detail=') === 0
+                ? hash.replace('bonus-approval-detail=', 'approval-detail=')
+                : hash;
+            moduleApprovalHandleHash('points-approval-root', detailHash, 'approval', 'approval-detail');
+            return;
+        }
+        if (hash === 'approval' || hash === 'bonus-approval') {
+            showPage('approval', false);
+            moduleApprovalBackList('points-approval-root', false);
+            return;
+        }
+        const routes = { overview: 'overview', config: 'config', bonus: 'bonus', users: 'users', manual: 'manual', logs: 'logs' };
+        if (hash === 'weekly') {
+            showPage('overview', false);
+        } else if (routes[hash]) {
+            showPage(routes[hash], false);
+        } else {
+            showPage('config', false);
+        }
+        const keyMap = { overview: 'points-overview', weekly: 'points-overview', config: 'points-config', bonus: 'points-bonus', users: 'points-users', manual: 'points-manual', logs: 'points-logs', approval: 'points-approval', 'bonus-approval': 'points-approval' };
+        initAdminSidebar(keyMap[hash] || 'points-config', '登录身份: 积分管理员');
+    }
+    window.addEventListener('hashchange', applyPointsHash);
+    applyPointsHash();
+</script>
+</body>
+</html>

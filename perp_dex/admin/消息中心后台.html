@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ForX 消息中心后台管理原型</title>
+  <style>
+    :root {
+      --bg-primary:#070b13;
+      --bg-secondary:#0f172a;
+      --bg-card:#151e32;
+      --bg-card-hover:#1c2842;
+      --bg-input:#0b1120;
+      --border:#26324a;
+      --border-light:#3a4865;
+      --text-primary:#f8fafc;
+      --text-secondary:#a6b0c3;
+      --text-muted:#6d7890;
+      --blue:#3b82f6;
+      --cyan:#06b6d4;
+      --green:#10b981;
+      --orange:#f59e0b;
+      --red:#ef4444;
+      --purple:#8b5cf6;
+      --pink:#ec4899;
+      --shadow:0 16px 36px rgba(0,0,0,.42);
+      --radius:14px;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body {
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif;
+      min-height:100vh;
+      background:radial-gradient(circle at 80% 0%, rgba(6,182,212,.14), transparent 28%),
+                 radial-gradient(circle at 0% 100%, rgba(139,92,246,.14), transparent 30%),
+                 var(--bg-primary);
+      color:var(--text-primary);
+      overflow:hidden;
+    }
+    button,input,select,textarea { font:inherit; }
+    button { border:0; cursor:pointer; }
+    .admin-shell { display:flex; height:100vh; }
+    .sidebar {
+      width:256px; background:rgba(15,23,42,.86); border-right:1px solid var(--border);
+      padding:18px 14px; display:flex; flex-direction:column; gap:18px;
+    }
+    .brand { display:flex; align-items:center; gap:10px; padding:4px 8px 14px; border-bottom:1px solid var(--border); }
+    .brand-mark { width:36px; height:36px; border-radius:10px; display:grid; place-items:center; font-weight:800; background:linear-gradient(135deg,var(--cyan),var(--blue)); }
+    .brand-text strong { display:block; font-size:17px; letter-spacing:.2px; }
+    .brand-text span { display:block; margin-top:2px; font-size:12px; color:var(--text-muted); }
+    .nav { display:flex; flex-direction:column; gap:6px; }
+    .nav-item {
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:12px 12px; border-radius:10px; color:var(--text-secondary); background:transparent;
+      transition:.18s ease; width:100%; text-align:left;
+    }
+    .nav-item:hover { background:rgba(255,255,255,.05); color:var(--text-primary); }
+    .nav-item.active { background:rgba(6,182,212,.12); color:var(--cyan); border:1px solid rgba(6,182,212,.28); }
+    .nav-left { display:flex; align-items:center; gap:10px; }
+    .nav-ico { width:28px; height:28px; border-radius:8px; display:grid; place-items:center; background:rgba(255,255,255,.06); font-size:13px; }
+    .nav-badge { min-width:22px; height:20px; display:grid; place-items:center; padding:0 7px; border-radius:999px; font-size:11px; background:rgba(239,68,68,.18); color:#ff8585; }
+    .nav-section-label { margin:2px 0 4px 12px; font-size:12px; color:var(--text-muted); }
+    .nav-submenu { margin-left:18px; padding-left:12px; border-left:1px solid var(--border); display:flex; flex-direction:column; gap:6px; }
+    .nav-submenu .nav-item { padding:10px 10px; }
+    .nav-submenu .nav-ico { width:24px; height:24px; font-size:12px; }
+
+    .sidebar-foot { margin-top:auto; padding:12px; border:1px solid var(--border); border-radius:12px; background:rgba(255,255,255,.035); }
+    .sidebar-foot .label { font-size:12px; color:var(--text-muted); margin-bottom:6px; }
+    .sidebar-foot .value { font-size:13px; color:var(--text-secondary); line-height:1.5; }
+
+    .main { flex:1; display:flex; flex-direction:column; min-width:0; }
+    .topbar {
+      height:64px; display:flex; align-items:center; justify-content:space-between;
+      padding:0 24px; border-bottom:1px solid var(--border); background:rgba(7,11,19,.72); backdrop-filter:blur(14px);
+    }
+    .page-title { display:flex; flex-direction:column; gap:2px; }
+    .page-title strong { font-size:18px; }
+    .page-title span { color:var(--text-muted); font-size:12px; }
+    .top-actions { display:flex; align-items:center; gap:10px; }
+    .wallet-pill { display:flex; align-items:center; gap:8px; border:1px solid rgba(59,130,246,.28); background:rgba(59,130,246,.08); color:#93c5fd; padding:9px 12px; border-radius:10px; font-size:13px; }
+    .admin-avatar { width:36px; height:36px; border-radius:50%; display:grid; place-items:center; background:linear-gradient(135deg,var(--purple),var(--blue)); font-weight:700; }
+    .btn { height:36px; padding:0 14px; border-radius:9px; background:var(--bg-card); border:1px solid var(--border); color:var(--text-primary); display:inline-flex; align-items:center; justify-content:center; gap:8px; transition:.18s ease; white-space:nowrap; }
+    .btn:hover { border-color:var(--border-light); background:var(--bg-card-hover); }
+    .btn.primary { background:linear-gradient(135deg,var(--cyan),var(--blue)); border:0; color:white; }
+    .btn.green { background:rgba(16,185,129,.14); border:1px solid rgba(16,185,129,.32); color:#7df0c1; }
+    .btn.danger { background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.3); color:#ff8a8a; }
+    .btn.orange { background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.32); color:#ffd08a; }
+    .btn.small { height:30px; padding:0 10px; font-size:12px; border-radius:8px; }
+
+    .content { flex:1; overflow:auto; padding:20px 24px 28px; }
+    .view { display:none; animation:fade .22s ease; }
+    .view.active { display:block; }
+    @keyframes fade { from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:translateY(0)} }
+    .grid { display:grid; gap:16px; }
+    .grid-4 { grid-template-columns:repeat(4,minmax(0,1fr)); }
+    .grid-3 { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .grid-2 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .panel { background:rgba(21,30,50,.88); border:1px solid var(--border); border-radius:var(--radius); box-shadow:0 8px 18px rgba(0,0,0,.16); overflow:hidden; }
+    .panel-head { padding:16px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .panel-title { display:flex; flex-direction:column; gap:4px; }
+    .panel-title strong { font-size:16px; }
+    .panel-title span { font-size:12px; color:var(--text-muted); }
+    .panel-body { padding:16px 18px; }
+    .stat { padding:18px; border:1px solid var(--border); border-radius:14px; background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.02)); }
+    .stat .label { color:var(--text-muted); font-size:12px; margin-bottom:10px; }
+    .stat .value { font-size:28px; font-weight:760; letter-spacing:.2px; }
+    .stat .desc { margin-top:8px; font-size:12px; color:var(--text-secondary); }
+    .stat.blue .value { color:#7dd3fc; } .stat.green .value { color:#7df0c1; } .stat.orange .value { color:#ffd08a; } .stat.red .value { color:#ff8585; }
+
+    .toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+    .toolbar-left,.toolbar-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .field { display:flex; flex-direction:column; gap:7px; }
+    .field label { font-size:12px; color:var(--text-secondary); }
+    .input,.select,.textarea {
+      width:100%; color:var(--text-primary); background:var(--bg-input); border:1px solid var(--border); border-radius:10px; outline:none; transition:.18s ease;
+    }
+    .input,.select { height:38px; padding:0 12px; }
+    .textarea { min-height:108px; resize:vertical; padding:12px; line-height:1.55; }
+    .input:focus,.select:focus,.textarea:focus { border-color:var(--cyan); box-shadow:0 0 0 3px rgba(6,182,212,.1); }
+    .search { width:280px; }
+    .form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    .form-grid .full { grid-column:1/-1; }
+    .checkbox-row { display:flex; flex-wrap:wrap; gap:8px; }
+    .check-pill { display:flex; align-items:center; gap:7px; height:34px; padding:0 10px; border:1px solid var(--border); border-radius:999px; color:var(--text-secondary); background:var(--bg-input); font-size:13px; }
+    .check-pill input { accent-color:var(--cyan); }
+
+    table { width:100%; border-collapse:collapse; }
+    th,td { padding:13px 12px; text-align:left; border-bottom:1px solid var(--border); font-size:13px; vertical-align:middle; }
+    th { color:var(--text-muted); font-weight:600; background:rgba(255,255,255,.025); }
+    tr:hover td { background:rgba(255,255,255,.025); }
+    tr.selected td { background:rgba(6,182,212,.075); }
+    .mono { font-family:"SF Mono",Monaco,Consolas,monospace; }
+    .muted { color:var(--text-muted); }
+    .secondary { color:var(--text-secondary); }
+    .tag { display:inline-flex; align-items:center; height:22px; padding:0 8px; border-radius:999px; font-size:12px; border:1px solid transparent; white-space:nowrap; }
+    .tag.system { color:#93c5fd; background:rgba(59,130,246,.12); border-color:rgba(59,130,246,.24); }
+    .tag.asset { color:#7df0c1; background:rgba(16,185,129,.12); border-color:rgba(16,185,129,.24); }
+    .tag.contract { color:#ffd08a; background:rgba(245,158,11,.12); border-color:rgba(245,158,11,.24); }
+    .tag.security { color:#c4b5fd; background:rgba(139,92,246,.12); border-color:rgba(139,92,246,.24); }
+    .tag.activity { color:#f9a8d4; background:rgba(236,72,153,.12); border-color:rgba(236,72,153,.24); }
+    .tag.p0 { color:#ff8585; background:rgba(239,68,68,.14); border-color:rgba(239,68,68,.28); }
+    .tag.p1 { color:#ffd08a; background:rgba(245,158,11,.12); border-color:rgba(245,158,11,.24); }
+    .tag.ok { color:#7df0c1; background:rgba(16,185,129,.12); border-color:rgba(16,185,129,.24); }
+    .tag.gray { color:var(--text-secondary); background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.08); }
+    .tag.blue { color:#93c5fd; background:rgba(59,130,246,.12); border-color:rgba(59,130,246,.24); }
+
+    .tabs { display:flex; gap:8px; border-bottom:1px solid var(--border); padding:0 18px; }
+    .tab { padding:13px 4px; color:var(--text-secondary); background:transparent; border-bottom:2px solid transparent; }
+    .tab.active { color:var(--cyan); border-bottom-color:var(--cyan); }
+    .split { display:grid; grid-template-columns:minmax(0,1.1fr) 420px; gap:16px; }
+    .split.single { grid-template-columns:1fr; }
+
+    .preview-card { border:1px solid var(--border); border-radius:14px; background:var(--bg-input); overflow:hidden; position:sticky; top:8px; }
+    .preview-top { height:50px; display:flex; align-items:center; justify-content:space-between; padding:0 14px; border-bottom:1px solid var(--border); background:rgba(255,255,255,.035); }
+    .preview-body { padding:16px; }
+    .mobile-frame { width:310px; margin:0 auto; border:1px solid var(--border-light); border-radius:30px; padding:10px; background:#070b13; box-shadow:var(--shadow); }
+    .mobile-screen { border-radius:22px; overflow:hidden; background:#0a0e17; min-height:520px; }
+    .mobile-head { padding:14px 14px 10px; display:flex; align-items:center; justify-content:space-between; background:linear-gradient(180deg,#0f1524,#0a0e17); }
+    .mobile-title { font-weight:700; }
+    .mobile-message { margin:12px; border:1px solid var(--border); border-radius:14px; padding:14px; background:#151e32; }
+    .mobile-message h4 { font-size:14px; margin-bottom:8px; line-height:1.45; }
+    .mobile-message p { font-size:12px; color:var(--text-secondary); line-height:1.55; }
+    .web-preview { border:1px solid var(--border-light); border-radius:14px; overflow:hidden; background:#0a0e17; }
+    .web-preview-nav { height:46px; display:flex; align-items:center; justify-content:space-between; padding:0 14px; border-bottom:1px solid var(--border); background:#111827; }
+    .web-preview-card { margin:14px; border:1px solid var(--border); border-radius:12px; padding:14px; background:#151e32; }
+    .web-preview-card h4 { font-size:14px; margin-bottom:8px; }
+    .web-preview-card p { font-size:12px; color:var(--text-secondary); line-height:1.6; }
+
+    .timeline { display:flex; flex-direction:column; gap:12px; }
+    .timeline-item { display:flex; gap:12px; }
+    .timeline-dot { width:10px; height:10px; border-radius:50%; background:var(--cyan); margin-top:6px; box-shadow:0 0 0 4px rgba(6,182,212,.12); }
+    .timeline-card { flex:1; padding:12px; background:var(--bg-input); border:1px solid var(--border); border-radius:12px; }
+    .timeline-card strong { font-size:13px; }
+    .timeline-card p { margin-top:6px; color:var(--text-secondary); font-size:12px; line-height:1.45; }
+
+    .modal-backdrop { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.66); z-index:5000; padding:24px; }
+    .modal-backdrop.show { display:flex; }
+    .modal { width:min(760px,100%); background:var(--bg-card); border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow); overflow:hidden; }
+    .modal-head { padding:16px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+    .modal-head strong { font-size:17px; }
+    .modal-body { padding:18px; max-height:72vh; overflow:auto; }
+    .modal-foot { padding:14px 18px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px; }
+    .x { width:34px; height:34px; border-radius:9px; display:grid; place-items:center; color:var(--text-secondary); background:transparent; }
+    .x:hover { background:rgba(255,255,255,.06); color:var(--text-primary); }
+    .toast { position:fixed; right:24px; bottom:24px; min-width:260px; padding:14px 16px; border-radius:12px; background:var(--bg-card); border:1px solid var(--border); box-shadow:var(--shadow); display:none; align-items:center; gap:10px; z-index:6000; }
+    .toast.show { display:flex; animation:toastIn .22s ease; }
+    @keyframes toastIn { from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)} }
+    .toast-dot { width:10px; height:10px; border-radius:50%; background:var(--green); }
+    .empty { padding:46px 20px; text-align:center; color:var(--text-muted); }
+    .divider { height:1px; background:var(--border); margin:16px 0; }
+    .hint { padding:12px; border:1px dashed rgba(6,182,212,.35); border-radius:12px; color:var(--text-secondary); background:rgba(6,182,212,.06); font-size:13px; line-height:1.65; }
+    .toggle { width:42px; height:24px; border-radius:999px; background:rgba(255,255,255,.16); position:relative; display:inline-block; vertical-align:middle; cursor:pointer; }
+    .toggle::after { content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:white; transition:.18s ease; }
+    .toggle.on { background:rgba(16,185,129,.7); }
+    .toggle.on::after { left:21px; }
+    @media (max-width:1180px) {
+      body { overflow:auto; }
+      .admin-shell { min-height:100vh; height:auto; }
+      .sidebar { position:sticky; top:0; height:100vh; }
+      .grid-4 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .split { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">FX</div>
+        <div class="brand-text">
+          <strong>ForX Admin</strong>
+          <span>消息中心后台</span>
+        </div>
+      </div>
+      <div class="nav" id="sideNav">
+        <button class="nav-item active" data-view="dashboard"><span class="nav-left"><span class="nav-ico">消</span>消息中心</span></button>
+        <div class="nav-section-label">消息中心子菜单</div>
+        <div class="nav-submenu">
+          <button class="nav-item" data-view="customMessage"><span class="nav-left"><span class="nav-ico">发</span>自定义发消息</span><span class="nav-badge">3</span></button>
+          <button class="nav-item" data-view="eventDesign"><span class="nav-left"><span class="nav-ico">事</span>消息事件设计</span><span class="nav-badge">12</span></button>
+          <button class="nav-item" data-view="announcement"><span class="nav-left"><span class="nav-ico">告</span>公告发布</span><span class="nav-badge">4</span></button>
+          <button class="nav-item" data-view="templates"><span class="nav-left"><span class="nav-ico">模</span>消息模板</span></button>
+          <button class="nav-item" data-view="language"><span class="nav-left"><span class="nav-ico">语</span>多语言配置</span></button>
+          <button class="nav-item" data-view="history"><span class="nav-left"><span class="nav-ico">历</span>发送记录</span></button>
+          <button class="nav-item" data-view="audit"><span class="nav-left"><span class="nav-ico">审</span>操作日志</span></button>
+        </div>
+      </div>
+      <div class="sidebar-foot">
+        <div class="label">后台口径</div>
+        <div class="value">ForX 为 DEX 合约平台，仅支持合约、资产、钱包、安全、活动、系统类消息。</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="page-title">
+          <strong id="pageTitle">消息中心</strong>
+          <span id="pageSubTitle">管理用户消息、系统事件、公告发布与操作记录</span>
+        </div>
+        <div class="top-actions">
+          <button class="btn primary" onclick="quickCreate()">+ 新建</button>
+          <div class="wallet-pill">运营管理员 · Fitz</div>
+          <div class="admin-avatar">F</div>
+        </div>
+      </header>
+
+      <section class="content">
+        <section class="view active" id="view-dashboard">
+          <div class="grid grid-4" style="margin-bottom:16px;">
+            <div class="stat blue"><div class="label">今日触发消息</div><div class="value">18,426</div><div class="desc">较昨日 +12.4%</div></div>
+            <div class="stat green"><div class="label">公告曝光</div><div class="value">7,931</div><div class="desc">APP / Web 公告位合计</div></div>
+            <div class="stat orange"><div class="label">待发布内容</div><div class="value">6</div><div class="desc">自定义消息 3，公告 3</div></div>
+            <div class="stat red"><div class="label">P0 风险事件</div><div class="value">128</div><div class="desc">强平风险、钱包授权风险</div></div>
+          </div>
+
+          <div class="grid grid-2">
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title"><strong>消息分布</strong><span>按消息分类统计</span></div><button class="btn small">导出</button></div>
+              <div class="panel-body">
+                <table>
+                  <thead><tr><th>分类</th><th>今日发送</th><th>未读率</th><th>状态</th></tr></thead>
+                  <tbody>
+                    <tr><td><span class="tag system">系统</span></td><td>2,184</td><td>31.2%</td><td><span class="tag ok">正常</span></td></tr>
+                    <tr><td><span class="tag asset">资产</span></td><td>4,509</td><td>18.7%</td><td><span class="tag ok">正常</span></td></tr>
+                    <tr><td><span class="tag contract">合约</span></td><td>8,932</td><td>22.1%</td><td><span class="tag p1">高频</span></td></tr>
+                    <tr><td><span class="tag security">安全</span></td><td>1,063</td><td>40.8%</td><td><span class="tag p0">重点</span></td></tr>
+                    <tr><td><span class="tag activity">活动</span></td><td>1,738</td><td>45.5%</td><td><span class="tag ok">正常</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title"><strong>近期操作日志</strong><span>后台内容操作流转</span></div><button class="btn small" data-view-jump="audit">查看全部</button></div>
+              <div class="panel-body timeline">
+                <div class="timeline-item"><span class="timeline-dot"></span><div class="timeline-card"><strong>公告发布：系统维护公告</strong><p>运营发布至 APP / Web 公告位，生效时间 2026-06-20 02:00。</p></div></div>
+                <div class="timeline-item"><span class="timeline-dot" style="background:var(--orange);box-shadow:0 0 0 4px rgba(245,158,11,.12)"></span><div class="timeline-card"><strong>事件模板修改：强平风险提醒</strong><p>更新字段变量 currentMarginRate、liquidationPrice。</p></div></div>
+                <div class="timeline-item"><span class="timeline-dot" style="background:var(--green);box-shadow:0 0 0 4px rgba(16,185,129,.12)"></span><div class="timeline-card"><strong>自定义消息已发送</strong><p>向交易大赛报名用户发送活动奖励提醒。</p></div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="view-customMessage">
+          <div class="split single">
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title"><strong>自定义发消息</strong><span>运营手动创建消息，支持定向用户、分类、优先级、跳转承接</span></div><div><button class="btn" onclick="fillDemoMessage()">填充示例</button><button class="btn primary" onclick="submitCustomMessage()">立即发送</button></div></div>
+              <div class="tabs"><button class="tab active">基础信息</button></div>
+              <div class="panel-body">
+                <div class="form-grid">
+                  <div class="field"><label>消息标题</label><input id="msgTitle" class="input" value="BTC/USDT 永续合约规则调整" /></div>
+                  <div class="field"><label>消息分类</label><select id="msgCategory" class="select"><option>系统</option><option>资产</option><option selected>合约</option><option>安全</option><option>活动</option></select></div>
+                  <div class="field"><label>优先级</label><select id="msgPriority" class="select"><option>P0 紧急</option><option selected>P1 重要</option><option>P2 普通</option><option>P3 弱提醒</option></select></div>
+                  <div class="field"><label>业务跳转</label><select id="msgAction" class="select"><option selected>合约规则页</option><option>合约订单详情</option><option>合约持仓页</option><option>充值记录</option><option>提现记录</option><option>账户安全</option><option>活动详情</option><option>无跳转</option></select></div>
+                  <div class="field full"><label>消息摘要</label><input id="msgSummary" class="input" value="BTC/USDT 永续合约最高杠杆将调整为 100x，请提前关注仓位风险。" /></div>
+                  <div class="field full"><label>消息正文</label><textarea id="msgContent" class="textarea">尊敬的 ForX 用户：
+BTC/USDT 永续合约最高杠杆将于 2026-06-20 08:00 调整为 100x。请您提前关注当前仓位风险，合理控制杠杆与保证金。</textarea></div>
+                  <div class="field full">
+                    <label>多语言设置</label>
+                    <div class="language-card" data-scope="message">
+                      <div class="language-head">
+                        <div class="language-title"><strong>自动翻译</strong><span>源语言为简体中文，运营选择目标语言后调用第三方翻译 API 自动生成对应语言内容。</span></div>
+                        <div class="language-actions"><button class="btn small primary" type="button" onclick="autoTranslate('message')">自动翻译</button><button class="btn small" type="button" onclick="validateVariables('message')">变量校验</button></div>
+                      </div>
+                      <div class="language-grid">
+                        <div class="language-source"><div class="source-label">源语言</div><div class="source-value">简体中文 zh-CN</div></div>
+                        <div>
+                          <div class="checkbox-row">
+                            <label class="check-pill"><input type="checkbox" class="lang-target" data-scope="message" value="en" checked> English</label>
+                            <label class="check-pill"><input type="checkbox" class="lang-target" data-scope="message" value="zh-TW"> 繁體中文</label>
+                            <label class="check-pill"><input type="checkbox" class="lang-target" data-scope="message" value="ja" checked> 日本語</label>
+                            <label class="check-pill"><input type="checkbox" class="lang-target" data-scope="message" value="ko"> 한국어</label>
+                            <label class="check-pill"><input type="checkbox" class="lang-target" data-scope="message" value="vi"> Tiếng Việt</label>
+                            <label class="check-pill"><input type="checkbox" class="lang-target" data-scope="message" value="es"> Español</label>
+                          </div>
+                          <div class="mini-note" style="margin-top:8px;">发送时按用户当前语言展示对应版本；无对应语言时按 English &gt; 简体中文兜底。</div>
+                        </div>
+                      </div>
+                      <div class="translation-results" id="messageTranslationResults"></div>
+                    </div>
+                  </div>
+                  <div class="field"><label>发送对象</label><select class="select"><option selected>全部用户</option><option>指定 UID</option><option>指定钱包地址</option><option>参与活动用户</option><option>有当前持仓用户</option><option>最近 30 天活跃用户</option></select></div>
+                  <div class="field"><label>发送时间</label><select class="select"><option selected>立即发送</option><option>定时发送</option><option>保存草稿</option></select></div>
+                  <div class="field full"><label>发送端</label><div class="checkbox-row"><label class="check-pill"><input type="checkbox" checked> APP 消息中心</label><label class="check-pill"><input type="checkbox" checked> Web 消息中心</label><label class="check-pill"><input type="checkbox"> APP Push</label><label class="check-pill"><input type="checkbox"> 站内弹窗</label></div></div>
+                  <div class="field full"><label>风控限制</label><div class="checkbox-row"><label class="check-pill"><input type="checkbox" checked> 发送前二次确认</label><label class="check-pill"><input type="checkbox" checked> P0 消息二次确认</label><label class="check-pill"><input type="checkbox" checked> 记录操作日志</label></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="view-eventDesign">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title"><strong>消息事件设计</strong><span>配置系统自动触发消息：事件、条件、模板、变量、限频、启停</span></div><button class="btn primary" onclick="openEventModal()">+ 新增事件</button></div>
+            <div class="panel-body">
+              <div class="toolbar">
+                <div class="toolbar-left"><input class="input search" placeholder="搜索事件编码 / 名称" oninput="filterRows('eventTable', this.value)"><select class="select" style="width:150px"><option>全部分类</option><option>合约</option><option>资产</option><option>安全</option><option>活动</option><option>系统</option></select></div>
+                <div class="toolbar-right"><button class="btn small">批量启用</button><button class="btn small">批量停用</button></div>
+              </div>
+              <table id="eventTable">
+                <thead><tr><th>事件编码</th><th>事件名称</th><th>分类</th><th>触发条件</th><th>模板变量</th><th>限频</th><th>状态</th><th>操作</th></tr></thead>
+                <tbody>
+                  <tr class="selected"><td class="mono">CONTRACT_LIQUIDATION_RISK</td><td>强平风险提醒</td><td><span class="tag contract">合约</span></td><td>保证金率 ≤ 120%</td><td class="mono">pair, marginRate, liqPrice</td><td>同仓位 10分钟/次</td><td><span class="toggle on" onclick="toggleSwitch(this)"></span></td><td><button class="btn small" onclick="openEventModal('强平风险提醒')">编辑</button></td></tr>
+                  <tr><td class="mono">CONTRACT_MARGIN_LOW</td><td>保证金不足提醒</td><td><span class="tag contract">合约</span></td><td>保证金率低于预警线</td><td class="mono">pair, side, threshold</td><td>同仓位 30分钟/次</td><td><span class="toggle on" onclick="toggleSwitch(this)"></span></td><td><button class="btn small" onclick="openEventModal('保证金不足提醒')">编辑</button></td></tr>
+                  <tr><td class="mono">ASSET_WITHDRAW_FAIL</td><td>提现失败通知</td><td><span class="tag asset">资产</span></td><td>提现单状态 = 失败</td><td class="mono">coin, amount, reason</td><td>每笔订单一次</td><td><span class="toggle on" onclick="toggleSwitch(this)"></span></td><td><button class="btn small" onclick="openEventModal('提现失败通知')">编辑</button></td></tr>
+                  <tr><td class="mono">SECURITY_WALLET_AUTH_RISK</td><td>钱包授权风险提醒</td><td><span class="tag security">安全</span></td><td>授权合约不在白名单</td><td class="mono">address, contract, network</td><td>同合约 1小时/次</td><td><span class="toggle on" onclick="toggleSwitch(this)"></span></td><td><button class="btn small" onclick="openEventModal('钱包授权风险提醒')">编辑</button></td></tr>
+                  <tr><td class="mono">ACTIVITY_REWARD_ARRIVE</td><td>活动奖励到账</td><td><span class="tag activity">活动</span></td><td>奖励发放成功</td><td class="mono">activityName, amount</td><td>每笔奖励一次</td><td><span class="toggle on" onclick="toggleSwitch(this)"></span></td><td><button class="btn small" onclick="openEventModal('活动奖励到账')">编辑</button></td></tr>
+                  <tr><td class="mono">SYSTEM_MAINTENANCE</td><td>系统维护通知</td><td><span class="tag system">系统</span></td><td>后台手动发布维护计划</td><td class="mono">startTime, endTime</td><td>每次发布一次</td><td><span class="toggle" onclick="toggleSwitch(this)"></span></td><td><button class="btn small" onclick="openEventModal('系统维护通知')">编辑</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="view-announcement">
+          <div class="split single">
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title"><strong>公告发布</strong><span>发布至 APP / Web 公告板块，可配置置顶、展示周期、端类型和公告详情</span></div><div><button class="btn" onclick="fillAnnouncementDemo()">填充示例</button><button class="btn primary" onclick="publishAnnouncement()">发布公告</button></div></div>
+              <div class="panel-body">
+                <div class="form-grid">
+                  <div class="field"><label>公告标题</label><input id="annTitle" class="input" value="系统升级维护公告" /></div>
+                  <div class="field"><label>公告类型</label><select id="annType" class="select"><option selected>系统维护</option><option>合约规则调整</option><option>新合约上线</option><option>充提维护</option><option>手续费调整</option><option>活动公告</option></select></div>
+                  <div class="field"><label>公告优先级</label><select id="annPriority" class="select"><option selected>重要</option><option>普通</option><option>弱提示</option></select></div>
+                  <div class="field"><label>展示位置</label><select class="select"><option selected>APP + Web 公告板块</option><option>仅 APP 公告板块</option><option>仅 Web 公告板块</option><option>公告板块 + 首页顶部公告条</option></select></div>
+                  <div class="field"><label>生效时间</label><input class="input" value="2026-06-20 02:00" /></div>
+                  <div class="field"><label>失效时间</label><input class="input" value="2026-06-20 04:00" /></div>
+                  <div class="field full"><label>公告摘要</label><input id="annSummary" class="input" value="ForX 将进行系统升级维护，维护期间部分服务将暂时不可用。" /></div>
+                  <div class="field full"><label>公告正文</label><textarea id="annContent" class="textarea">尊敬的 ForX 用户：
+为了提升合约交易稳定性，ForX 将于 2026-06-20 02:00 - 04:00 进行系统升级维护。维护期间，合约下单、资产划转、充值提现可能短暂不可用。请您提前做好仓位与资产安排。</textarea></div>
+                  <div class="field full">
+                    <label>多语言设置</label>
+                    <div class="language-card" data-scope="announcement">
+                      <div class="language-head">
+                        <div class="language-title"><strong>公告多语言</strong><span>运营选择展示语言，系统自动翻译公告标题、摘要、正文，并在 APP / Web 公告板块按用户语言展示。</span></div>
+                        <div class="language-actions"><button class="btn small primary" type="button" onclick="autoTranslate('announcement')">自动翻译</button><button class="btn small" type="button" onclick="validateVariables('announcement')">变量校验</button></div>
+                      </div>
+                      <div class="language-grid">
+                        <div class="language-source"><div class="source-label">源语言</div><div class="source-value">简体中文 zh-CN</div></div>
+                        <div>
+                          <div class="checkbox-row">
+                            <label class="check-pill"><input type="checkbox" class="lang-target" data-scope="announcement" value="en" checked> English</label>
+                            <label class="check-pill"><input type="checkbox" class="lang-target" data-scope="announcement" value="zh-TW" checked> 繁體中文</label>
+                            <label class="check-pill"><input type="checkbox" class="lang-target" data-scope="announcement" value="ja" checked> 日本語</label>
+                            <label class="check-pill"><input type="checkbox" class="lang-target" data-scope="announcement" value="ko"> 한국어</label>
+                            <label class="check-pill"><input type="checkbox" class="lang-target" data-scope="announcement" value="vi"> Tiếng Việt</label>
+                            <label class="check-pill"><input type="checkbox" class="lang-target" data-scope="announcement" value="pt"> Português</label>
+                          </div>
+                          <div class="mini-note" style="margin-top:8px;">公告不计入个人未读数；不同语言版本随主公告一起发布、下架。</div>
+                        </div>
+                      </div>
+                      <div class="translation-results" id="announcementTranslationResults"></div>
+                    </div>
+                  </div>
+                  <div class="field full"><label>发布规则</label><div class="checkbox-row"><label class="check-pill"><input type="checkbox" checked> 置顶展示</label><label class="check-pill"><input type="checkbox" checked> 展示重要标签</label><label class="check-pill"><input type="checkbox"> 需要二次确认</label><label class="check-pill"><input type="checkbox" checked> 启用多语言</label></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel" style="margin-top:16px;">
+            <div class="panel-head"><div class="panel-title"><strong>公告列表</strong><span>展示当前已创建公告及状态</span></div><button class="btn small" onclick="showToast('公告列表已导出')">导出公告</button></div>
+            <div class="panel-body">
+              <table>
+                <thead><tr><th>公告标题</th><th>类型</th><th>展示端</th><th>语言</th><th>展示周期</th><th>状态</th><th>发布人</th><th>操作</th></tr></thead>
+                <tbody id="annTableBody">
+                  <tr><td>系统升级维护公告</td><td><span class="tag system">系统维护</span></td><td>APP + Web</td><td><span class="tag blue">4种语言</span></td><td>06-20 02:00 至 04:00</td><td><span class="tag ok">已发布</span></td><td>Fitz</td><td><button class="btn small" onclick="openAnnouncementModal('view', this)">查看</button><button class="btn small danger" onclick="takeDownAnnouncement(this)">下架</button></td></tr>
+                  <tr><td>BTC/USDT 永续合约规则调整</td><td><span class="tag contract">规则调整</span></td><td>APP + Web</td><td><span class="tag blue">3种语言</span></td><td>06-18 至 06-25</td><td><span class="tag ok">已发布</span></td><td>运营账号</td><td><button class="btn small" onclick="openAnnouncementModal('view', this)">查看</button><button class="btn small danger" onclick="takeDownAnnouncement(this)">下架</button></td></tr>
+                  <tr><td>ETH/USDT 永续合约上线</td><td><span class="tag contract">新合约上线</span></td><td>Web</td><td><span class="tag gray">未翻译</span></td><td>06-19 至 06-30</td><td><span class="tag gray">草稿</span></td><td>运营账号</td><td><button class="btn small" onclick="openAnnouncementModal('edit', this)">编辑</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="view-templates">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title"><strong>消息模板</strong><span>用于系统事件自动填充变量，减少人工发错风险</span></div><button class="btn primary" onclick="openTemplateModal()">+ 新建模板</button></div>
+            <div class="panel-body">
+              <table>
+                <thead><tr><th>模板名称</th><th>分类</th><th>变量</th><th>适用事件</th><th>支持语言</th><th>最近更新</th><th>状态</th></tr></thead>
+                <tbody id="templateTableBody">
+                  <tr><td>强平风险提醒模板</td><td><span class="tag contract">合约</span></td><td class="mono">{{pair}} {{liqPrice}}</td><td>强平风险提醒</td><td><span class="tag blue">5种语言</span></td><td>2026-06-18</td><td><span class="tag ok">启用</span></td></tr>
+                  <tr><td>提现失败通知模板</td><td><span class="tag asset">资产</span></td><td class="mono">{{coin}} {{amount}} {{reason}}</td><td>提现失败</td><td><span class="tag blue">4种语言</span></td><td>2026-06-17</td><td><span class="tag ok">启用</span></td></tr>
+                  <tr><td>钱包授权风险模板</td><td><span class="tag security">安全</span></td><td class="mono">{{address}} {{contract}}</td><td>钱包授权风险</td><td><span class="tag blue">3种语言</span></td><td>2026-06-16</td><td><span class="tag ok">启用</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+
+        <section class="view" id="view-language">
+          <div class="grid grid-2">
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title"><strong>多语言配置</strong><span>配置消息中心、公告、活动后台可选语言与默认兜底规则</span></div><button class="btn small primary" onclick="saveLanguageConfig()">保存配置</button></div>
+              <div class="panel-body">
+                <div class="form-grid">
+                  <div class="field"><label>源语言</label><select class="select"><option selected>简体中文 zh-CN</option></select></div>
+                  <div class="field"><label>兜底规则</label><select class="select"><option selected>用户语言 > English > 简体中文</option><option>用户语言 > 简体中文</option></select></div>
+                  <div class="field full"><label>支持语言</label><div class="checkbox-row"><label class="check-pill"><input type="checkbox" checked> English</label><label class="check-pill"><input type="checkbox" checked> 繁體中文</label><label class="check-pill"><input type="checkbox" checked> 日本語</label><label class="check-pill"><input type="checkbox" checked> 한국어</label><label class="check-pill"><input type="checkbox" checked> Tiếng Việt</label><label class="check-pill"><input type="checkbox"> Español</label><label class="check-pill"><input type="checkbox"> Português</label><label class="check-pill"><input type="checkbox"> Русский</label></div></div>
+                  <div class="field full"><label>第三方翻译 API</label><select class="select"><option selected>已接入：第三方自动翻译 API</option><option>备用服务：Translation API Backup</option></select></div>
+                  <div class="field full"><label>应用范围</label><div class="checkbox-row"><label class="check-pill"><input type="checkbox" checked> 自定义消息</label><label class="check-pill"><input type="checkbox" checked> 系统事件模板</label><label class="check-pill"><input type="checkbox" checked> 公告发布</label><label class="check-pill"><input type="checkbox" checked> 活动后台</label></div></div>
+                </div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title"><strong>翻译任务状态</strong><span>展示最近自动翻译任务结果</span></div><button class="btn small" onclick="showToast('翻译任务已刷新')">刷新</button></div>
+              <div class="panel-body">
+                <table>
+                  <thead><tr><th>内容</th><th>来源</th><th>语言</th><th>状态</th><th>时间</th></tr></thead>
+                  <tbody>
+                    <tr><td>系统升级维护公告</td><td>公告发布</td><td>EN / JA / 繁中</td><td><span class="tag ok">翻译成功</span></td><td>刚刚</td></tr>
+                    <tr><td>强平风险提醒模板</td><td>消息模板</td><td>EN / KO</td><td><span class="tag ok">变量校验通过</span></td><td>10分钟前</td></tr>
+                    <tr><td>夏季交易大赛</td><td>活动后台</td><td>VI / ES</td><td><span class="tag p1">待人工确认</span></td><td>1小时前</td></tr>
+                  </tbody>
+                </table>
+                <div class="language-card" style="margin-top:14px;"><div class="mini-note">活动后台同样复用该多语言能力：运营创建活动时选择语言，系统自动翻译活动名称、规则、奖励说明、按钮文案、活动公告和站内消息文案。</div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="view-history">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title"><strong>发送记录</strong><span>查询手动消息、事件消息、公告发布记录</span></div><button class="btn small">导出记录</button></div>
+            <div class="panel-body">
+              <div class="toolbar"><div class="toolbar-left"><input class="input search" placeholder="搜索标题 / UID / 钱包地址 / 事件编码"><select class="select" style="width:140px"><option>全部来源</option><option>自定义消息</option><option>事件触发</option><option>公告发布</option></select><select class="select" style="width:130px"><option>全部状态</option><option>成功</option><option>部分失败</option><option>已发布</option></select><button class="btn small" onclick="filterSendRecords()">筛选</button></div></div>
+              <table>
+                <thead><tr><th>内容</th><th>来源</th><th>目标用户</th><th>发送端</th><th>触达量</th><th>状态</th><th>发送时间</th></tr></thead>
+                <tbody>
+                  <tr><td>强平风险提醒</td><td>事件触发</td><td>当前持仓用户</td><td>APP / Web</td><td>128</td><td><span class="tag ok">成功</span></td><td>刚刚</td></tr>
+                  <tr><td>系统升级维护公告</td><td>公告发布</td><td>全部用户</td><td>APP / Web 公告位</td><td>7,931</td><td><span class="tag ok">已发布</span></td><td>1小时前</td></tr>
+                  <tr><td>交易大赛奖励到账</td><td>自定义消息</td><td>活动获奖用户</td><td>APP / Web</td><td>320</td><td><span class="tag p1">部分失败</span></td><td>昨天</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="view-audit">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title"><strong>操作日志</strong><span>记录消息、事件、公告的创建、修改、发布、撤回操作</span></div><button class="btn small" onclick="exportOperationLog()">导出日志</button></div>
+            <div class="panel-body">
+              <table>
+                <thead><tr><th>时间</th><th>操作对象</th><th>动作</th><th>操作人</th><th>结果</th><th>备注</th></tr></thead>
+                <tbody>
+                  <tr><td>2026-06-18 18:20</td><td>系统升级维护公告</td><td>发布</td><td>Fitz</td><td><span class="tag ok">成功</span></td><td>发布至 APP / Web 公告板块</td></tr>
+                  <tr><td>2026-06-18 17:42</td><td>强平风险提醒事件</td><td>编辑</td><td>运营账号</td><td><span class="tag ok">成功</span></td><td>调整限频策略</td></tr>
+                  <tr><td>2026-06-18 16:11</td><td>活动奖励消息</td><td>发送</td><td>运营账号</td><td><span class="tag ok">成功</span></td><td>目标用户包已确认并完成触达</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="eventModal">
+    <div class="modal">
+      <div class="modal-head"><strong id="eventModalTitle">编辑消息事件</strong><button class="x" onclick="closeModal('eventModal')">×</button></div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field"><label>事件编码</label><input class="input mono" value="CONTRACT_LIQUIDATION_RISK"></div>
+          <div class="field"><label>事件分类</label><select class="select"><option selected>合约</option><option>资产</option><option>安全</option><option>活动</option><option>系统</option></select></div>
+          <div class="field full"><label>触发条件</label><textarea class="textarea">当用户某合约仓位保证金率 ≤ 120%，且仓位状态为未平仓时触发。</textarea></div>
+          <div class="field full"><label>消息模板</label><textarea class="textarea">您的 {{pair}} 永续合约仓位当前保证金率为 {{marginRate}}，预估强平价为 {{liqPrice}}，请及时关注风险。</textarea></div>
+          <div class="field"><label>限频规则</label><input class="input" value="同一仓位 10 分钟内最多触发 1 次"></div>
+          <div class="field"><label>发送端</label><select class="select"><option selected>APP + Web 消息中心</option><option>APP + Web + Push</option></select></div>
+          <div class="field"><label>默认语言</label><select class="select"><option selected>简体中文 zh-CN</option><option>English en-US</option></select></div>
+          <div class="field full"><label>绑定多语言模板</label><div class="checkbox-row"><label class="check-pill"><input type="checkbox" checked> English</label><label class="check-pill"><input type="checkbox" checked> 繁體中文</label><label class="check-pill"><input type="checkbox" checked> 日本語</label><label class="check-pill"><input type="checkbox"> 한국어</label><label class="check-pill"><input type="checkbox"> Tiếng Việt</label></div><div class="mini-note" style="margin-top:8px;">事件触发时根据用户语言读取对应模板；若缺失则按 English &gt; 简体中文兜底。</div></div>
+        </div>
+      </div>
+      <div class="modal-foot"><button class="btn" onclick="closeModal('eventModal')">取消</button><button class="btn primary" onclick="saveEvent()">保存事件</button></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="announcementModal">
+    <div class="modal" style="width:min(720px,100%)">
+      <div class="modal-head"><strong id="announcementModalTitle">公告详情</strong><button class="x" onclick="closeModal('announcementModal')">×</button></div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field full"><label>公告标题</label><input id="modalAnnTitle" class="input" /></div>
+          <div class="field"><label>公告类型</label><input id="modalAnnType" class="input" /></div>
+          <div class="field"><label>展示端</label><input id="modalAnnDisplay" class="input" /></div>
+          <div class="field"><label>展示周期</label><input id="modalAnnPeriod" class="input" /></div>
+          <div class="field"><label>状态</label><input id="modalAnnStatus" class="input" /></div>
+          <div class="field"><label>发布人</label><input id="modalAnnPublisher" class="input" /></div>
+          <div class="field full"><label>语言版本</label><input id="modalAnnLanguages" class="input" value="简体中文 / English / 繁體中文 / 日本語" /></div>
+          <div class="field full"><label>公告正文</label><textarea id="modalAnnContent" class="textarea">公告正文将在这里展示，运营可在编辑模式下修改公告内容、展示周期和发布规则。</textarea></div>
+        </div>
+      </div>
+      <div class="modal-foot"><button class="btn" onclick="closeModal('announcementModal')">取消</button><button class="btn primary" id="saveAnnouncementBtn" onclick="saveAnnouncementModal()">保存公告</button></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="templateModal">
+    <div class="modal" style="width:min(720px,100%)">
+      <div class="modal-head"><strong>新建消息模板</strong><button class="x" onclick="closeModal('templateModal')">×</button></div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field"><label>模板名称</label><input id="tplName" class="input" value="保证金不足提醒模板" /></div>
+          <div class="field"><label>模板分类</label><select id="tplCategory" class="select"><option selected>合约</option><option>资产</option><option>安全</option><option>活动</option><option>系统</option></select></div>
+          <div class="field"><label>适用事件</label><input id="tplEvent" class="input" value="保证金不足提醒" /></div>
+          <div class="field"><label>模板变量</label><input id="tplVars" class="input mono" value="{{pair}} {{marginRate}} {{threshold}}" /></div>
+          <div class="field full"><label>模板正文</label><textarea id="tplContent" class="textarea">您的 {{pair}} 永续合约仓位当前保证金率为 {{marginRate}}，已低于预警阈值 {{threshold}}，请及时关注风险。</textarea></div>
+          <div class="field full"><label>多语言模板</label>
+            <div class="language-card" data-scope="template">
+              <div class="language-head"><div class="language-title"><strong>模板自动翻译</strong><span>自动翻译模板正文，并校验各语言版本的变量是否完整保留。</span></div><div class="language-actions"><button class="btn small primary" type="button" onclick="autoTranslate('template')">自动翻译</button><button class="btn small" type="button" onclick="validateVariables('template')">变量校验</button></div></div>
+              <div class="checkbox-row"><label class="check-pill"><input type="checkbox" class="lang-target" data-scope="template" value="en" checked> English</label><label class="check-pill"><input type="checkbox" class="lang-target" data-scope="template" value="zh-TW"> 繁體中文</label><label class="check-pill"><input type="checkbox" class="lang-target" data-scope="template" value="ja" checked> 日本語</label><label class="check-pill"><input type="checkbox" class="lang-target" data-scope="template" value="ko"> 한국어</label></div>
+              <div class="translation-results" id="templateTranslationResults"></div>
+              <div class="variable-check" style="margin-top:12px;"><span class="mini-note">变量保持规则：{{pair}}、{{marginRate}}、{{threshold}} 等模板变量不得被翻译或丢失。</span><span class="result" id="templateVariableResult">待校验</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot"><button class="btn" onclick="closeModal('templateModal')">取消</button><button class="btn primary" onclick="saveTemplate()">保存模板</button></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="confirmModal">
+    <div class="modal" style="width:min(520px,100%)">
+      <div class="modal-head"><strong id="confirmTitle">确认操作</strong><button class="x" onclick="closeModal('confirmModal')">×</button></div>
+      <div class="modal-body"><p id="confirmText" class="secondary" style="line-height:1.7">请确认当前操作。</p></div>
+      <div class="modal-foot"><button class="btn" onclick="closeModal('confirmModal')">取消</button><button class="btn primary" onclick="confirmOk()">确定</button></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"><span class="toast-dot"></span><span id="toastText">操作成功</span></div>
+
+<script>
+  const viewMeta = {
+    dashboard:['消息中心','管理用户消息、系统事件、公告发布与操作记录'],
+    customMessage:['自定义发消息','运营手动创建消息，支持定向发送与发送记录'],
+    eventDesign:['消息事件设计','配置自动触发事件、模板变量、发送条件与限频规则'],
+    announcement:['公告发布','发布 APP / Web 公告板块内容，支持置顶、定时、撤回、下架'],
+    templates:['消息模板','维护自动消息模板与变量字段'],
+    language:['多语言配置','配置翻译 API、目标语言、兜底语言与任务状态'],
+    history:['发送记录','查询消息、事件、公告的发送与触达状态'],
+    audit:['操作日志','记录后台操作、发布、修改、撤回与下架动作']
+  };
+  let pendingAction = null;
+
+  function switchView(view) {
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.toggle('active', item.dataset.view === view));
+    document.querySelectorAll('.view').forEach(item => item.classList.toggle('active', item.id === 'view-' + view));
+    const meta = viewMeta[view] || viewMeta.dashboard;
+    document.getElementById('pageTitle').textContent = meta[0];
+    document.getElementById('pageSubTitle').textContent = meta[1];
+  }
+  document.getElementById('sideNav').addEventListener('click', e => {
+    const btn = e.target.closest('.nav-item');
+    if (btn) switchView(btn.dataset.view);
+  });
+  document.querySelectorAll('[data-view-jump]').forEach(btn => btn.addEventListener('click', () => switchView(btn.dataset.viewJump)));
+
+  function showToast(text) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toastText').textContent = text;
+    toast.classList.add('show');
+    clearTimeout(window.__toastTimer);
+    window.__toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+  function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+  function openModal(id) { document.getElementById(id).classList.add('show'); }
+  function openEventModal(name){ document.getElementById('eventModalTitle').textContent = name ? '编辑事件：' + name : '新增消息事件'; openModal('eventModal'); }
+  function saveEvent(){ closeModal('eventModal'); showToast('事件配置已保存'); }
+  function toggleSwitch(el){ el.classList.toggle('on'); showToast(el.classList.contains('on') ? '事件已启用' : '事件已停用'); }
+
+  function filterRows(tableId, keyword) {
+    const q = keyword.trim().toLowerCase();
+    document.querySelectorAll('#' + tableId + ' tbody tr').forEach(row => {
+      row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  }
+
+  function fillDemoMessage(){
+    document.getElementById('msgTitle').value = '强平风险提醒';
+    document.getElementById('msgCategory').value = '合约';
+    document.getElementById('msgPriority').value = 'P0 紧急';
+    document.getElementById('msgAction').value = '合约持仓页';
+    document.getElementById('msgSummary').value = '您的 ETH/USDT 永续合约仓位即将触发强平，请尽快处理。';
+    document.getElementById('msgContent').value = '您的 ETH/USDT 永续合约仓位当前保证金率仅剩 8%，预估强平价为 3,680 USDT。请及时追加保证金或降低仓位。';
+    showToast('已填充强平风险消息示例');
+  }
+  function submitCustomMessage(){
+    pendingAction = () => showToast('自定义消息已发送，多语言版本已同步触达');
+    document.getElementById('confirmTitle').textContent = '发送自定义消息';
+    document.getElementById('confirmText').textContent = '确认立即发送当前自定义消息？系统将按发送端与目标用户设置直接触达用户，并记录操作日志。';
+    openModal('confirmModal');
+  }
+  function quickCreate(){
+    const active = document.querySelector('.nav-item.active')?.dataset.view;
+    if (active === 'announcement') fillAnnouncementDemo();
+    else if (active === 'eventDesign') openEventModal();
+    else switchView('customMessage');
+  }
+  function fillAnnouncementDemo(){
+    document.getElementById('annTitle').value = 'BTC/USDT 永续合约规则调整';
+    document.getElementById('annType').value = '合约规则调整';
+    document.getElementById('annPriority').value = '重要';
+    document.getElementById('annSummary').value = 'BTC/USDT 永续合约最高杠杆将调整为 100x，请提前关注仓位风险。';
+    document.getElementById('annContent').value = '尊敬的 ForX 用户：\nBTC/USDT 永续合约最高杠杆将于 2026-06-20 08:00 调整为 100x。请提前关注仓位风险，合理控制杠杆与保证金。';
+    showToast('已填充合约规则公告示例');
+  }
+  function publishAnnouncement(){
+    pendingAction = () => {
+      const tbody = document.getElementById('annTableBody');
+      const title = document.getElementById('annTitle').value || '未命名公告';
+      const type = document.getElementById('annType').value || '系统公告';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${escapeHtml(title)}</td><td><span class="tag system">${escapeHtml(type)}</span></td><td>APP + Web</td><td><span class="tag blue">多语言</span></td><td>立即生效</td><td><span class="tag ok">已发布</span></td><td>Fitz</td><td><button class="btn small" onclick="openAnnouncementModal('edit', this)">编辑</button></td>`;
+      tbody.prepend(tr);
+      showToast('公告已发布，多语言版本已同步展示');
+    };
+    document.getElementById('confirmTitle').textContent = '发布公告';
+    document.getElementById('confirmText').textContent = '确认立即发布当前公告？公告将展示在 APP 与 Web 消息中心公告板块，并记录操作日志。';
+    openModal('confirmModal');
+  }
+
+  function getRowData(btn){
+    const row = btn.closest('tr');
+    const cells = [...row.children];
+    return {
+      row,
+      title: cells[0]?.textContent.trim() || '',
+      type: cells[1]?.textContent.trim() || '',
+      display: cells[2]?.textContent.trim() || '',
+      period: cells[3]?.textContent.trim() || '',
+      status: cells[4]?.textContent.trim() || '',
+      publisher: cells[5]?.textContent.trim() || ''
+    };
+  }
+  let editingAnnouncementRow = null;
+  function openAnnouncementModal(mode, btn){
+    const data = getRowData(btn);
+    editingAnnouncementRow = mode === 'edit' ? data.row : null;
+    document.getElementById('announcementModalTitle').textContent = mode === 'edit' ? '编辑公告' : '查看公告';
+    document.getElementById('modalAnnTitle').value = data.title;
+    document.getElementById('modalAnnType').value = data.type;
+    document.getElementById('modalAnnDisplay').value = data.display;
+    document.getElementById('modalAnnPeriod').value = data.period;
+    document.getElementById('modalAnnStatus').value = data.status;
+    document.getElementById('modalAnnPublisher').value = data.publisher;
+    document.getElementById('modalAnnContent').value = data.title + '\n\n公告类型：' + data.type + '\n展示端：' + data.display + '\n展示周期：' + data.period + '\n\n该公告用于消息中心公告板块展示，不计入用户个人未读数。';
+    const readonly = mode !== 'edit';
+    ['modalAnnTitle','modalAnnType','modalAnnDisplay','modalAnnPeriod','modalAnnStatus','modalAnnPublisher','modalAnnLanguages','modalAnnContent'].forEach(id => {
+      const el = document.getElementById(id);
+      el.readOnly = readonly;
+      el.disabled = false;
+    });
+    document.getElementById('saveAnnouncementBtn').style.display = readonly ? 'none' : 'inline-flex';
+    openModal('announcementModal');
+  }
+  function saveAnnouncementModal(){
+    if (editingAnnouncementRow) {
+      editingAnnouncementRow.children[0].textContent = document.getElementById('modalAnnTitle').value || '未命名公告';
+      editingAnnouncementRow.children[2].textContent = document.getElementById('modalAnnDisplay').value || 'APP + Web';
+      editingAnnouncementRow.children[3].textContent = document.getElementById('modalAnnPeriod').value || '立即生效';
+    }
+    closeModal('announcementModal');
+    showToast('公告已保存');
+  }
+  function takeDownAnnouncement(btn){
+    const row = btn.closest('tr');
+    const statusCell = row.children[4];
+    statusCell.innerHTML = '<span class="tag gray">已下架</span>';
+    btn.remove();
+    showToast('公告已下架');
+  }
+  function openTemplateModal(){ openModal('templateModal'); }
+  function saveTemplate(){
+    const name = document.getElementById('tplName').value || '未命名模板';
+    const category = document.getElementById('tplCategory').value || '合约';
+    const vars = document.getElementById('tplVars').value || '-';
+    const eventName = document.getElementById('tplEvent').value || '-';
+    const cls = category === '合约' ? 'contract' : category === '资产' ? 'asset' : category === '安全' ? 'security' : category === '活动' ? 'activity' : 'system';
+    const tbody = document.getElementById('templateTableBody');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${escapeHtml(name)}</td><td><span class="tag ${cls}">${escapeHtml(category)}</span></td><td class="mono">${escapeHtml(vars)}</td><td>${escapeHtml(eventName)}</td><td><span class="tag blue">多语言</span></td><td>刚刚</td><td><span class="tag ok">启用</span></td>`;
+    tbody.prepend(tr);
+    closeModal('templateModal');
+    showToast('模板已创建');
+  }
+
+  function filterSendRecords(){ showToast('筛选条件已应用'); }
+  function exportOperationLog(){ showToast('操作日志已导出'); }
+
+
+
+  const languageLabels = {
+    en:'English', 'zh-TW':'繁體中文', ja:'日本語', ko:'한국어', vi:'Tiếng Việt', es:'Español', pt:'Português', ru:'Русский'
+  };
+  function getLangSources(scope) {
+    if (scope === 'announcement') return { title: document.getElementById('annTitle')?.value || '', summary: document.getElementById('annSummary')?.value || '', content: document.getElementById('annContent')?.value || '' };
+    if (scope === 'template') return { title: document.getElementById('tplName')?.value || '', summary: '模板正文', content: document.getElementById('tplContent')?.value || '' };
+    return { title: document.getElementById('msgTitle')?.value || '', summary: document.getElementById('msgSummary')?.value || '', content: document.getElementById('msgContent')?.value || '' };
+  }
+  function getSelectedLanguages(scope) {
+    return [...document.querySelectorAll('.lang-target[data-scope="' + scope + '"]:checked')].map(item => item.value);
+  }
+  function fakeTranslateText(text, lang) {
+    const prefix = { en:'[EN] ', 'zh-TW':'[繁中] ', ja:'[JA] ', ko:'[KO] ', vi:'[VI] ', es:'[ES] ', pt:'[PT] ', ru:'[RU] ' }[lang] || '[' + lang + '] ';
+    return prefix + text.replace(/简体中文/g, languageLabels[lang] || lang).replace(/尊敬的 ForX 用户/g, 'ForX User');
+  }
+  function autoTranslate(scope) {
+    const langs = getSelectedLanguages(scope);
+    if (!langs.length) { showToast('请至少选择一种目标语言'); return; }
+    const source = getLangSources(scope);
+    const box = document.getElementById(scope + 'TranslationResults');
+    if (!box) return;
+    const tabs = langs.map((lang, idx) => `<button class="translation-tab ${idx===0?'active':''}" type="button" onclick="switchLangPane('${scope}','${lang}')">${languageLabels[lang]}</button>`).join('');
+    const panes = langs.map((lang, idx) => `
+      <div class="translation-pane ${idx===0?'active':''}" data-lang="${lang}">
+        <div class="translation-row"><label>标题</label><input class="input" value="${escapeHtml(fakeTranslateText(source.title, lang))}"></div>
+        <div class="translation-row"><label>摘要</label><textarea class="textarea">${escapeHtml(fakeTranslateText(source.summary, lang))}</textarea></div>
+        <div class="translation-row"><label>正文</label><textarea class="textarea">${escapeHtml(fakeTranslateText(source.content, lang))}</textarea></div>
+        <div class="translation-status">● 第三方翻译 API 返回成功，运营可在发布前手动调整该语言版本。</div>
+      </div>
+    `).join('');
+    box.innerHTML = `<div class="translation-tabs">${tabs}</div>${panes}`;
+    box.classList.add('show');
+    showToast('已生成 ' + langs.length + ' 种语言翻译');
+    if (scope === 'template') validateVariables('template');
+  }
+  function switchLangPane(scope, lang) {
+    const box = document.getElementById(scope + 'TranslationResults');
+    if (!box) return;
+    box.querySelectorAll('.translation-tab').forEach(btn => btn.classList.toggle('active', btn.textContent === languageLabels[lang]));
+    box.querySelectorAll('.translation-pane').forEach(pane => pane.classList.toggle('active', pane.dataset.lang === lang));
+  }
+  function extractVars(text) {
+    return (text.match(/\{\{[^}]+\}\}/g) || []).sort();
+  }
+  function validateVariables(scope) {
+    const source = getLangSources(scope).content;
+    const vars = extractVars(source);
+    const box = document.getElementById(scope + 'TranslationResults');
+    let ok = true;
+    if (box && box.classList.contains('show')) {
+      box.querySelectorAll('.translation-pane').forEach(pane => {
+        const text = [...pane.querySelectorAll('input,textarea')].map(el => el.value).join('\n');
+        vars.forEach(v => { if (!text.includes(v)) ok = false; });
+      });
+    }
+    const result = document.getElementById(scope + 'VariableResult') || document.getElementById('templateVariableResult');
+    if (scope === 'template' && result) {
+      result.textContent = ok ? '变量校验通过' : '变量缺失，请检查翻译内容';
+      result.classList.toggle('error', !ok);
+    }
+    showToast(ok ? '变量校验通过' : '存在变量缺失，请检查翻译内容');
+  }
+  function saveLanguageConfig(){ showToast('多语言配置已保存'); }
+
+  function confirmOk(){
+    closeModal('confirmModal');
+    if (pendingAction) pendingAction();
+    pendingAction = null;
+  }
+  function escapeHtml(text){
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX Admin - 用户费率设置</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+        .sidebar-item-active { background: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+        .drawer-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 40; }
+        .drawer-panel { position: fixed; top: 0; right: 0; width: 520px; max-width: 100%; height: 100%; background: #fff; z-index: 50; box-shadow: -8px 0 24px rgba(0,0,0,.12); display: flex; flex-direction: column; }
+        .fee-mode-tab { padding: 6px 14px; font-size: 12px; font-weight: 700; border-radius: 6px; cursor: pointer; }
+        .fee-mode-tab.active { background: #fff; color: #0f172a; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+        .fee-mode-tab:not(.active) { color: #64748b; }
+        .vip-preset { border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; cursor: pointer; transition: all .15s; }
+        .vip-preset:hover { border-color: #93c5fd; }
+        .vip-preset.selected { border-color: #3b82f6; background: #eff6ff; }
+        .table-scroll { overflow-x: auto; }
+        .tier-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; background: #f1f5f9; color: #475569; }
+        .tier-badge.volume { background: #eff6ff; color: #2563eb; }
+        .tier-badge.custom { background: #f3e8ff; color: #7c3aed; }
+        .upload-box { border: 2px dashed #e2e8f0; border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; transition: all .15s; }
+        .upload-box:hover { border-color: #93c5fd; background: #f8fafc; }
+        .upload-box.has-file { border-color: #3b82f6; background: #eff6ff; border-style: solid; }
+        .upload-box input { display: none; }
+        .vip-ref-table { width: 100%; font-size: 10px; border-collapse: collapse; }
+        .vip-ref-table th, .vip-ref-table td { border: 1px solid #e2e8f0; padding: 6px 8px; text-align: left; }
+        .vip-ref-table th { background: #f8fafc; color: #64748b; font-weight: 700; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-[12px]">
+
+<aside id="admin-sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0"></aside>
+
+<main class="flex-1 flex flex-col overflow-hidden">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+        <div>
+            <h1 class="text-xl font-bold text-slate-800">用户费率设置</h1>
+            <p class="text-xs text-slate-400 mt-0.5">VIP 等级与自定义 Taker / Maker 费率，操作将记录审计日志</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="费率操作记录.html" class="text-xs font-bold text-blue-600 hover:underline">费率操作记录</a>
+            <span class="text-sm text-slate-500">Fee_Admin</span>
+            <div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">FA</div>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8 space-y-6" id="page-fee-settings">
+        <section class="card p-5">
+            <div class="grid grid-cols-4 gap-4 items-end">
+                <div class="col-span-2">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID / 钱包地址</label>
+                    <input id="filterUser" type="text" placeholder="输入 UID 或钱包地址" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">配置等级</label>
+                    <select id="filterLevel" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">全部</option>
+                        <option value="natural">自然升降</option>
+                        <option value="vip1">VIP 1</option>
+                        <option value="vip2">VIP 2</option>
+                        <option value="vip3">VIP 3</option>
+                        <option value="vip4">VIP 4</option>
+                        <option value="custom">自定义</option>
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="applyFilters()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-slate-800">查询</button>
+                    <button onclick="resetFilters()" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50">重置</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="card overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <span class="text-sm font-bold text-slate-700">用户列表 <span id="userCount" class="text-slate-400 font-medium"></span></span>
+                <span class="text-[10px] text-slate-400">交易量对应等级按近 14 日交易额自动计算</span>
+            </div>
+            <div class="table-scroll">
+                <table class="w-full text-left min-w-[1100px]">
+                    <thead class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase">
+                    <tr>
+                        <th class="px-4 py-3">UID / 钱包</th>
+                        <th class="px-3 py-3 text-center">配置等级</th>
+                        <th class="px-3 py-3 text-center">交易量对应等级</th>
+                        <th class="px-3 py-3 text-center">费率 (Taker / Maker)</th>
+                        <th class="px-3 py-3 text-center">有效期天数</th>
+                        <th class="px-3 py-3 text-right">近30日交易额</th>
+                        <th class="px-3 py-3 text-right">近30日手续费收入</th>
+                        <th class="px-3 py-3 text-right">近14日交易额</th>
+                        <th class="px-3 py-3 text-right">近14日手续费收入</th>
+                        <th class="px-4 py-3 text-right">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="userTableBody" class="divide-y divide-slate-50 text-[12px]"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <div id="page-fee-approval" class="hidden flex-1 overflow-y-auto p-8">
+        <div id="fee-approval-root"></div>
+    </div>
+</main>
+
+<div id="drawerOverlay" class="drawer-overlay hidden" onclick="closeDrawer()"></div>
+<div id="configDrawer" class="drawer-panel hidden">
+    <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between shrink-0">
+        <div>
+            <h2 class="text-base font-bold text-slate-800">费率配置</h2>
+            <p id="drawerUserMeta" class="text-xs text-slate-400 mt-1 font-mono"></p>
+            <p id="drawerVolumeTier" class="text-[11px] text-blue-600 font-bold mt-1"></p>
+        </div>
+        <button onclick="closeDrawer()" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 text-lg">&times;</button>
+    </div>
+    <div class="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+        <section class="card p-5">
+            <h3 class="text-sm font-bold text-slate-800 mb-2">VIP 费率参考表</h3>
+            <table class="vip-ref-table">
+                <thead>
+                <tr><th>等级</th><th>14 天交易量门槛</th><th>Maker</th><th>Taker</th></tr>
+                </thead>
+                <tbody id="vipRefTableBody"></tbody>
+            </table>
+        </section>
+
+        <section class="card p-5">
+            <h3 class="text-sm font-bold text-slate-800 mb-1">用户费率配置</h3>
+            <p class="text-[11px] text-slate-400 mb-4">手动配置仅支持 VIP 1–4 或自定义费率（VIP 0 由交易量自动判定）</p>
+            <div class="flex bg-slate-100 p-1 rounded-lg w-fit mb-4">
+                <button id="feeTabVip" onclick="switchFeeMode('vip')" class="fee-mode-tab active">VIP 等级</button>
+                <button id="feeTabCustom" onclick="switchFeeMode('custom')" class="fee-mode-tab">自定义费率</button>
+            </div>
+            <div id="feeVipPanel" class="grid grid-cols-2 gap-2"></div>
+            <div id="feeCustomPanel" class="hidden grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Taker (%)</label>
+                    <input id="customTaker" type="number" step="0.001" min="0" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Maker (%)</label>
+                    <input id="customMaker" type="number" step="0.001" min="0" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+            <div class="mt-4">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">有效期天数（可选）</label>
+                <input id="feeValidDays" type="number" min="1" placeholder="留空表示永久有效" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                <p class="text-[10px] text-slate-400 mt-1">填写后，自审批通过日起算，到期日当天 24:00:00（UTC+8）费率自动失效并恢复自然升降。</p>
+            </div>
+        </section>
+
+        <section class="card p-5">
+            <p class="text-[11px] text-blue-800 bg-blue-50 border border-blue-100 rounded-lg p-3 mb-3 leading-relaxed"><b>奖励记录关联：</b>自定义发放须配置四种语言奖励名称；费率生效后写入用户端活动中心「奖励记录」（奖励类型：费率优惠）。</p>
+            <div id="fee-activity-picker"></div>
+        </section>
+
+        <section class="card p-5 space-y-4">
+            <h3 class="text-sm font-bold text-slate-800">证明材料</h3>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">用户价值证明（其他交易所截图）<span class="text-red-500">*</span></label>
+                <label class="upload-box" id="proofUploadBox">
+                    <input type="file" id="proofFile" accept="image/*" onchange="onFileSelect('proof', this)">
+                    <div id="proofUploadText" class="text-[11px] text-slate-500">点击上传其他交易所交易量 / VIP 等级截图</div>
+                </label>
+            </div>
+        </section>
+
+        <section class="card p-5">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">操作备注（必填）</label>
+            <textarea id="configRemark" rows="3" placeholder="请填写变更原因..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+        </section>
+        <section class="card p-5">
+            <h3 class="text-sm font-bold text-slate-800 mb-3">审批流程</h3>
+            <div id="feeApprovalFlowPreview"></div>
+            <p class="text-[10px] text-slate-400 mt-2">提交后依次经市场运营交叉审核 → 风控 → 老板审批（支持 Lark 联动）后生效</p>
+        </section>
+    </div>
+    <div class="px-6 py-4 border-t border-slate-100 flex gap-3 shrink-0">
+        <button id="revokeFeeBtn" onclick="revokeConfig()" class="hidden py-3 px-4 border border-red-200 rounded-lg text-sm font-bold text-red-600 hover:bg-red-50">撤销费率设置</button>
+        <button onclick="closeDrawer()" class="flex-1 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50">取消</button>
+        <button onclick="saveConfig()" class="flex-1 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700">提交审批申请</button>
+    </div>
+</div>
+
+<div id="revokeModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/50">
+    <div class="bg-white w-[400px] rounded-xl p-6 shadow-2xl">
+        <h3 class="text-base font-bold text-slate-800 mb-2">确认撤销费率设置？</h3>
+        <p class="text-xs text-slate-500 leading-relaxed mb-4">撤销后用户将恢复 VIP 自然升降级，按近 14 日交易量匹配费率。</p>
+        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">操作备注（必填）</label>
+        <textarea id="revokeRemark" rows="3" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none mb-4"></textarea>
+        <div class="flex gap-3">
+            <button onclick="closeRevokeModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button onclick="confirmRevoke()" class="flex-1 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold">确认撤销</button>
+        </div>
+    </div>
+</div>
+
+<div id="confirmModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/50">
+    <div class="bg-white w-[440px] rounded-xl p-6 shadow-2xl">
+        <h3 class="text-base font-bold text-slate-800 mb-2">确认提交费率审批？</h3>
+        <p id="confirmSummary" class="text-xs text-slate-500 leading-relaxed mb-4"></p>
+        <div id="confirmApprovalFlow" class="mb-4"></div>
+        <div class="flex gap-3">
+            <button onclick="closeConfirmModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button onclick="confirmSave()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">确认提交</button>
+        </div>
+    </div>
+</div>
+<div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-lg text-sm font-bold shadow-xl z-[70] hidden"></div>
+
+<script>
+    const VIP_TIERS = [
+        { level: 0, name: 'VIP 0', threshold: '< $5M',       taker: 0.00045, maker: 0.00015 },
+        { level: 1, name: 'VIP 1', threshold: '≥ $5M',       taker: 0.00039, maker: 0.00013 },
+        { level: 2, name: 'VIP 2', threshold: '≥ $25M',      taker: 0.00034, maker: 0.00010 },
+        { level: 3, name: 'VIP 3', threshold: '≥ $100M',     taker: 0.00029, maker: 0.00006 },
+        { level: 4, name: 'VIP 4', threshold: '≥ $500M',     taker: 0.00026, maker: 0.00004 }
+    ];
+
+    const VIP_PRESETS = VIP_TIERS.filter(v => v.level >= 1);
+
+    const FEE_LOG_KEY = 'forx_fee_operation_logs';
+    const OPERATOR = 'Fee_Admin';
+
+    let users = [
+        { uid: '10028471', wallet: '0x7a3f...9c2e', vip: 2, feeMode: 'natural', adminOverride: false, taker: 0.00034, maker: 0.00010, validDays: null, volume30d: 8900000, feeIncome30d: 32800, volume14d: 4200000, feeIncome14d: 15400 },
+        { uid: '10031592', wallet: '0x2b91...4f8a', vip: 0, feeMode: 'custom', adminOverride: true, taker: 0.00020, maker: 0.00008, validDays: 30, volume30d: 1200000, feeIncome30d: 4200, volume14d: 580000, feeIncome14d: 2100 },
+        { uid: '10019833', wallet: '0xd5e2...1a7b', vip: 4, feeMode: 'vip', adminOverride: true, taker: 0.00026, maker: 0.00004, validDays: 180, volume30d: 125000000, feeIncome30d: 438000, volume14d: 680000000, feeIncome14d: 238000 },
+        { uid: '10042105', wallet: '0x9c44...6d31', vip: 1, feeMode: 'natural', adminOverride: false, taker: 0.00039, maker: 0.00013, validDays: null, volume30d: 5600000, feeIncome30d: 21000, volume14d: 8200000, feeIncome14d: 30500 },
+        { uid: '10005678', wallet: '0x1f88...e903', vip: 3, feeMode: 'natural', adminOverride: false, taker: 0.00029, maker: 0.00006, validDays: null, volume30d: 32000000, feeIncome30d: 115000, volume14d: 185000000, feeIncome14d: 66500 }
+    ];
+
+    let filteredUsers = [...users];
+    let currentUserId = null;
+    let draftConfig = null;
+    let uploadState = { proof: null, proofDataUrl: null };
+
+    function calcVolumeTier(volume14d) {
+        if (volume14d >= 500000000) return 4;
+        if (volume14d >= 100000000) return 3;
+        if (volume14d >= 25000000) return 2;
+        if (volume14d >= 5000000) return 1;
+        return 0;
+    }
+
+    function getTierByLevel(level) {
+        return VIP_TIERS.find(v => v.level === level) || VIP_TIERS[0];
+    }
+
+    function formatMoney(n) {
+        if (n >= 1000000000) return '$' + (n / 1000000000).toFixed(2) + 'B';
+        if (n >= 1000000) return '$' + (n / 1000000).toFixed(2) + 'M';
+        if (n >= 1000) return '$' + (n / 1000).toFixed(1) + 'K';
+        return '$' + n.toLocaleString('en-US');
+    }
+
+    function formatFeePct(rate) {
+        return (rate * 100).toFixed(3) + '%';
+    }
+
+    function formatFee(taker, maker) {
+        return `${formatFeePct(taker)} / ${formatFeePct(maker)}`;
+    }
+
+    function applyNaturalRates(user) {
+        const tier = getTierByLevel(calcVolumeTier(user.volume14d));
+        user.feeMode = 'natural';
+        user.vip = tier.level;
+        user.taker = tier.taker;
+        user.maker = tier.maker;
+        user.adminOverride = false;
+    }
+
+    function appendFeeLog(entry) {
+        const logs = JSON.parse(localStorage.getItem(FEE_LOG_KEY) || '[]');
+        logs.unshift({ id: Date.now(), operator: OPERATOR, time: new Date().toLocaleString('zh-CN', { hour12: false }), ...entry });
+        localStorage.setItem(FEE_LOG_KEY, JSON.stringify(logs.slice(0, 200)));
+    }
+
+    function configLevelLabel(u) {
+        if (!u.adminOverride) return '<span class="tier-badge" style="background:#ecfdf5;color:#059669">自然升降</span>';
+        if (u.feeMode === 'custom') return '<span class="tier-badge custom">自定义</span>';
+        return `<span class="tier-badge">VIP ${u.vip}</span>`;
+    }
+
+    function volumeTierLabel(volume14d) {
+        const level = calcVolumeTier(volume14d);
+        return `<span class="tier-badge volume">VIP ${level}</span>`;
+    }
+
+    function renderVipRefTable() {
+        document.getElementById('vipRefTableBody').innerHTML = VIP_TIERS.map(v => `
+            <tr>
+                <td class="font-bold">${v.name}</td>
+                <td>${v.threshold}</td>
+                <td>${formatFeePct(v.maker)}</td>
+                <td>${formatFeePct(v.taker)}</td>
+            </tr>
+        `).join('');
+    }
+
+    function renderUserTable() {
+        const tbody = document.getElementById('userTableBody');
+        document.getElementById('userCount').textContent = `(${filteredUsers.length})`;
+        if (!filteredUsers.length) {
+            tbody.innerHTML = '<tr><td colspan="10" class="px-6 py-12 text-center text-slate-400">未找到匹配用户</td></tr>';
+            return;
+        }
+        tbody.innerHTML = filteredUsers.map(u => `
+            <tr class="hover:bg-slate-50">
+                <td class="px-4 py-4">
+                    <div class="font-bold text-slate-800">UID ${u.uid}</div>
+                    <div class="text-[10px] text-slate-400 font-mono mt-0.5">${u.wallet}</div>
+                </td>
+                <td class="px-3 py-4 text-center">${configLevelLabel(u)}</td>
+                <td class="px-3 py-4 text-center">${volumeTierLabel(u.volume14d)}</td>
+                <td class="px-3 py-4 text-center font-mono text-[11px]">${formatFee(u.taker, u.maker)}</td>
+                <td class="px-3 py-4 text-center font-bold text-slate-600">${u.validDays != null ? u.validDays + ' 天' : '-'}</td>
+                <td class="px-3 py-4 text-right font-bold text-slate-700">${formatMoney(u.volume30d)}</td>
+                <td class="px-3 py-4 text-right font-bold text-blue-600">${formatMoney(u.feeIncome30d)}</td>
+                <td class="px-3 py-4 text-right font-bold text-slate-600">${formatMoney(u.volume14d)}</td>
+                <td class="px-3 py-4 text-right font-bold text-blue-500">${formatMoney(u.feeIncome14d)}</td>
+                <td class="px-4 py-4 text-right space-x-2 whitespace-nowrap">
+                    <button onclick="openDrawer('${u.uid}')" class="text-blue-600 font-bold hover:underline">配置费率</button>
+                    ${u.adminOverride ? `<button onclick="openRevokeModal('${u.uid}')" class="text-red-500 font-bold hover:underline ml-2">撤销</button>` : ''}
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function matchLevelFilter(u, levelFilter) {
+        if (levelFilter === 'all') return true;
+        if (levelFilter === 'natural') return !u.adminOverride;
+        if (levelFilter === 'custom') return u.adminOverride && u.feeMode === 'custom';
+        const vipLevel = parseInt(levelFilter.replace('vip', ''), 10);
+        return u.adminOverride && u.feeMode === 'vip' && u.vip === vipLevel;
+    }
+
+    function applyFilters() {
+        const userQ = document.getElementById('filterUser').value.trim().toLowerCase();
+        const levelFilter = document.getElementById('filterLevel').value;
+        filteredUsers = users.filter(u => {
+            if (userQ && !u.wallet.toLowerCase().includes(userQ) && !u.uid.includes(userQ)) return false;
+            if (!matchLevelFilter(u, levelFilter)) return false;
+            return true;
+        });
+        renderUserTable();
+    }
+
+    function resetFilters() {
+        document.getElementById('filterUser').value = '';
+        document.getElementById('filterLevel').value = 'all';
+        filteredUsers = [...users];
+        renderUserTable();
+    }
+
+    function renderVipPresets(selectedVip) {
+        document.getElementById('feeVipPanel').innerHTML = VIP_PRESETS.map(v => `
+            <div class="vip-preset ${v.level === selectedVip ? 'selected' : ''}" onclick="selectVip(${v.level})">
+                <div class="font-bold text-slate-800">${v.name}</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">${v.threshold}</div>
+                <div class="text-[10px] text-slate-500 mt-1">Taker ${formatFeePct(v.taker)} · Maker ${formatFeePct(v.maker)}</div>
+            </div>
+        `).join('');
+    }
+
+    function resetUploads() {
+        uploadState = { proof: null, proofDataUrl: null };
+        const input = document.getElementById('proofFile');
+        const box = document.getElementById('proofUploadBox');
+        const text = document.getElementById('proofUploadText');
+        if (input) input.value = '';
+        if (box) box.classList.remove('has-file');
+        if (text) {
+            text.textContent = '点击上传其他交易所交易量 / VIP 等级截图';
+            text.className = 'text-[11px] text-slate-500';
+        }
+    }
+
+    function onFileSelect(type, input) {
+        const file = input.files[0];
+        if (!file) return;
+        uploadState[type] = file.name;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            uploadState[type + 'DataUrl'] = e.target.result;
+        };
+        reader.readAsDataURL(file);
+        const box = document.getElementById(type + 'UploadBox');
+        const text = document.getElementById(type + 'UploadText');
+        box.classList.add('has-file');
+        text.textContent = '✓ ' + file.name;
+        text.className = 'text-[11px] text-blue-600 font-bold';
+    }
+
+    function openDrawer(uid) {
+        const user = users.find(u => u.uid === uid);
+        if (!user) return;
+        currentUserId = uid;
+        draftConfig = { vip: user.vip, feeMode: user.feeMode, taker: user.taker, maker: user.maker };
+        const volTier = calcVolumeTier(user.volume14d);
+        document.getElementById('drawerUserMeta').textContent = `UID ${user.uid} · ${user.wallet}`;
+        document.getElementById('drawerVolumeTier').textContent =
+            `近 14 日交易额 ${formatMoney(user.volume14d)} → 自动对应 ${getTierByLevel(volTier).name}`;
+        const mode = user.adminOverride ? user.feeMode : 'vip';
+        switchFeeMode(mode === 'custom' ? 'custom' : 'vip');
+        const selectVip = user.adminOverride && user.feeMode === 'vip' && user.vip >= 1 ? user.vip : 1;
+        if (user.adminOverride && user.feeMode === 'vip' && user.vip < 1) draftConfig.vip = 1;
+        renderVipPresets(user.adminOverride && user.feeMode === 'vip' ? selectVip : 1);
+        document.getElementById('customTaker').value = (user.taker * 100).toFixed(3);
+        document.getElementById('customMaker').value = (user.maker * 100).toFixed(3);
+        document.getElementById('revokeFeeBtn').classList.toggle('hidden', !user.adminOverride);
+        document.getElementById('configRemark').value = '';
+        document.getElementById('feeValidDays').value = '';
+        resetUploads();
+        if (!document.getElementById('fee-act-platform-select')) mountActivityPicker('fee-activity-picker', { prefix: 'fee-act', defaultMode: 'custom', defaultRewardNames: { 'zh-CN': 'VIP 费率优惠', 'zh-TW': 'VIP 費率優惠', 'en': 'VIP Fee Discount', 'ja': 'VIP 手数料優遇' } });
+        document.getElementById('feeApprovalFlowPreview').innerHTML = renderApprovalFlow('draft', true);
+        document.getElementById('drawerOverlay').classList.remove('hidden');
+        document.getElementById('configDrawer').classList.remove('hidden');
+    }
+
+    function closeDrawer() {
+        document.getElementById('drawerOverlay').classList.add('hidden');
+        document.getElementById('configDrawer').classList.add('hidden');
+        currentUserId = null;
+        draftConfig = null;
+        resetUploads();
+    }
+
+    function switchFeeMode(mode) {
+        if (!draftConfig) return;
+        draftConfig.feeMode = mode;
+        document.getElementById('feeTabVip').classList.toggle('active', mode === 'vip');
+        document.getElementById('feeTabCustom').classList.toggle('active', mode === 'custom');
+        document.getElementById('feeVipPanel').classList.toggle('hidden', mode !== 'vip');
+        document.getElementById('feeCustomPanel').classList.toggle('hidden', mode !== 'custom');
+    }
+
+    function selectVip(level) {
+        const preset = VIP_PRESETS.find(v => v.level === level);
+        if (!preset || !draftConfig) return;
+        draftConfig.vip = level;
+        draftConfig.taker = preset.taker;
+        draftConfig.maker = preset.maker;
+        renderVipPresets(level);
+    }
+
+    document.getElementById('customTaker').addEventListener('input', (e) => {
+        if (draftConfig) draftConfig.taker = parseFloat(e.target.value) / 100 || 0;
+    });
+    document.getElementById('customMaker').addEventListener('input', (e) => {
+        if (draftConfig) draftConfig.maker = parseFloat(e.target.value) / 100 || 0;
+    });
+
+    function saveConfig() {
+        const remark = document.getElementById('configRemark').value.trim();
+        if (!remark) { showToast('请填写操作备注'); return; }
+        if (!uploadState.proof) { showToast('请上传用户价值证明截图'); return; }
+        const act = getActivityPickerValue('fee-act');
+        if (!act.valid) { showToast(act.message); return; }
+
+        const configLabel = draftConfig.feeMode === 'vip'
+            ? 'VIP ' + draftConfig.vip
+            : '自定义 ' + formatFee(draftConfig.taker, draftConfig.maker);
+        const validDays = document.getElementById('feeValidDays').value.trim();
+        const validText = validDays ? validDays + ' 天（到期日 24:00:00（UTC+8）失效）' : '永久有效';
+
+        document.getElementById('confirmSummary').innerHTML =
+            `UID ${currentUserId}<br>配置等级：${configLabel}<br>活动：${act.displayLabel}<br>有效期：${validText}<br>价值证明：${uploadState.proof}<br>备注：${remark}`;
+        document.getElementById('confirmApprovalFlow').innerHTML = renderApprovalFlow('draft', true);
+        document.getElementById('confirmModal').classList.remove('hidden');
+        document.getElementById('confirmModal').classList.add('flex');
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirmModal').classList.add('hidden');
+        document.getElementById('confirmModal').classList.remove('flex');
+    }
+
+    function confirmSave() {
+        const user = users.find(u => u.uid === currentUserId);
+        const remark = document.getElementById('configRemark').value.trim();
+        const act = getActivityPickerValue('fee-act');
+        const validDaysRaw = document.getElementById('feeValidDays').value.trim();
+        const validDays = validDaysRaw ? parseInt(validDaysRaw, 10) : null;
+        if (user && draftConfig && act.valid) {
+            const configLabel = draftConfig.feeMode === 'vip'
+                ? 'VIP ' + draftConfig.vip + ' ' + formatFee(draftConfig.taker, draftConfig.maker)
+                : '自定义 ' + formatFee(draftConfig.taker, draftConfig.maker);
+            const feePayload = {
+                activityMode: act.activityMode,
+                activityId: act.activityId,
+                activityName: act.activityName,
+                uid: user.uid,
+                wallet: user.wallet,
+                feeMode: draftConfig.feeMode,
+                vipLevel: draftConfig.feeMode === 'vip' ? draftConfig.vip : null,
+                taker: formatFeePct(draftConfig.taker),
+                maker: formatFeePct(draftConfig.maker),
+                validDays: validDays,
+                attachments: [uploadState.proof].filter(Boolean),
+                attachmentPreviews: uploadState.proof ? { [uploadState.proof]: uploadState.proofDataUrl || '' } : {}
+            };
+            const summaryExtra = validDays ? ' · ' + validDays + ' 天有效' : '';
+            submitApprovalApplication({
+                type: 'fee_config',
+                title: '用户费率配置',
+                applicant: OPERATOR,
+                remark: remark,
+                summary: 'UID ' + user.uid + ' · ' + configLabel + summaryExtra,
+                payload: feePayload,
+                onSubmit: function (app) {
+                    appendFeeLog({
+                        uid: user.uid, wallet: user.wallet, action: '费率审批申请',
+                        detail: `申请 ${configLabel} · 待审批 ${app.id}`,
+                        remark: remark, attachments: uploadState.proof || '—'
+                    });
+                }
+            });
+        }
+        closeConfirmModal();
+        closeDrawer();
+        showToast('审批申请已提交，等待市场运营交叉审核 → 风控 → 老板审批');
+    }
+
+    let revokeUserId = null;
+    function openRevokeModal(uid) {
+        revokeUserId = uid;
+        document.getElementById('revokeRemark').value = '';
+        document.getElementById('revokeModal').classList.remove('hidden');
+        document.getElementById('revokeModal').classList.add('flex');
+    }
+    function closeRevokeModal() {
+        revokeUserId = null;
+        document.getElementById('revokeModal').classList.add('hidden');
+        document.getElementById('revokeModal').classList.remove('flex');
+    }
+    function revokeConfig() { if (currentUserId) openRevokeModal(currentUserId); }
+    function confirmRevoke() {
+        const remark = document.getElementById('revokeRemark').value.trim();
+        if (!remark) { showToast('请填写撤销备注'); return; }
+        const user = users.find(u => u.uid === revokeUserId);
+        if (user) {
+            const before = user.adminOverride ? (user.feeMode === 'custom' ? `自定义 ${formatFee(user.taker, user.maker)}` : `VIP ${user.vip} ${formatFee(user.taker, user.maker)}`) : '自然升降';
+            applyNaturalRates(user);
+            appendFeeLog({
+                uid: user.uid, wallet: user.wallet, action: '撤销费率设置',
+                detail: `${before} → 恢复自然升降 ${formatFee(user.taker, user.maker)}`,
+                remark, attachments: '—'
+            });
+        }
+        closeRevokeModal();
+        closeDrawer();
+        applyFilters();
+        showToast('已撤销运营费率配置，恢复自然升降级');
+    }
+
+    function showToast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.remove('hidden');
+        setTimeout(() => el.classList.add('hidden'), 2500);
+    }
+
+    renderVipRefTable();
+    renderUserTable();
+</script>
+<script src="admin-approval.js"></script>
+<script src="admin-activity-picker.js"></script>
+<script src="admin-approval-ui.js"></script>
+<script src="admin-permission-registry.js"></script>
+<script src="admin-permission-store.js"></script>
+<script src="admin-permissions.js"></script>
+<script src="admin-sidebar.js"></script>
+<script>
+    initModuleApproval({ type: 'fee_config', rootId: 'fee-approval-root', title: '用户费率审批', showExportList: false, showExportDetail: false, detailImagePreview: true });
+
+    function showFeePage(page) {
+        const isApproval = page === 'approval';
+        document.getElementById('page-fee-settings').classList.toggle('hidden', isApproval);
+        document.getElementById('page-fee-approval').classList.toggle('hidden', !isApproval);
+        initAdminSidebar(isApproval ? 'fee-approval' : 'fee-settings', '登录身份: 费率管理员');
+    }
+
+    function applyFeeHash() {
+        const hash = (location.hash || '').replace('#', '') || 'settings';
+        if (hash.indexOf('approval-detail=') === 0) {
+            showFeePage('approval');
+            moduleApprovalHandleHash('fee-approval-root', hash, 'approval', 'approval-detail');
+            return;
+        }
+        if (hash === 'approval') {
+            showFeePage('approval');
+            moduleApprovalBackList('fee-approval-root', false);
+            return;
+        }
+        showFeePage('settings');
+    }
+    window.addEventListener('hashchange', applyFeeHash);
+    applyFeeHash();
+</script>
+</body>
+</html>

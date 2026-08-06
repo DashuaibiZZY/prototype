@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>管理后台</title>
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.3.4.3.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.1.0.7.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/echarts.min.5.4.3.js"></script>
+<style>
+        .sidebar-active { background: #eff6ff; color: #1d4ed8; border-right: 4px solid #1d4ed8; }
+        .transition-all { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans flex min-h-screen overflow-hidden">
+<!-- 侧边栏导航 -->
+<aside class="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 z-20">
+<div class="p-6 flex items-center space-x-3 border-b border-gray-100">
+<div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white">
+<iconify-icon class="text-2xl" icon="mdi:shield-check"></iconify-icon>
+</div>
+<div>
+<h1 class="font-bold text-lg leading-tight">ForX Admin</h1>
+</div>
+</div>
+<nav class="flex-grow py-4">
+<div class="px-6 mb-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">核心模块</div>
+<a class="sidebar-active flex items-center px-6 py-3 space-x-3 font-medium" href="#">
+<iconify-icon class="text-xl" icon="mdi:view-dashboard"></iconify-icon>
+<span>激活码管理</span>
+</a>
+</nav>
+<div class="p-6 border-t border-gray-100">
+<div class="flex items-center space-x-3 mb-4">
+<img alt="Admin Avatar" class="w-10 h-10 rounded-full border" src="https://modao.cc/agent-py/media/generated_images/2026-04-17/3ddb2c82f916455e87636fe23933c1cf.jpg"/>
+<div>
+<div class="text-sm font-bold">Admin_Nexus</div>
+<div class="text-[10px] text-green-500 flex items-center">
+<span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1"></span> 在线
+                    </div>
+</div>
+</div>
+<button class="w-full py-2 bg-gray-100 text-gray-600 rounded text-sm hover:bg-red-50 hover:text-red-500 transition-all">退出登录</button>
+</div>
+</aside>
+<!-- 主体内容 -->
+<main class="flex-grow flex flex-col overflow-y-auto">
+<!-- 顶栏 -->
+<header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 flex-shrink-0 sticky top-0 z-10">
+<div class="flex items-center space-x-4">
+<h2 class="text-xl font-bold">系统概览</h2>
+<span class="text-sm text-gray-400">当前时间：2026年04月17日 星期五</span>
+</div>
+<div class="flex items-center space-x-6">
+<div class="relative">
+<iconify-icon class="text-2xl text-gray-400" icon="mdi:bell-outline"></iconify-icon>
+<span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full">3</span>
+</div>
+<button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 text-sm font-medium transition-all shadow-lg shadow-blue-200" onclick="openGenerateModal()">
+<iconify-icon icon="mdi:plus"></iconify-icon>
+<span>批量生成激活码</span>
+</button>
+</div>
+</header>
+<!-- 激活码列表 -->
+<div class="p-8">
+<div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+<div class="p-6 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
+<h3 class="font-bold flex items-center space-x-2">
+<span>激活码实时监控</span>
+<span class="bg-blue-100 text-blue-600 text-[10px] px-2 py-0.5 rounded-full">REALTIME</span>
+</h3>
+<div class="flex items-center space-x-3">
+<div class="relative">
+<iconify-icon class="absolute left-3 top-2.5 text-gray-400" icon="mdi:magnify"></iconify-icon>
+<input class="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all w-64" placeholder="搜索激活码/备注..." type="text"/>
+</div>
+<select class="border border-gray-200 rounded-lg py-2 px-3 text-sm text-gray-600 bg-white outline-none">
+<option>全部状态</option>
+<option>有效中</option>
+<option>已失效</option>
+<option>已用完</option>
+</select>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left text-sm">
+<thead class="bg-gray-50 text-gray-500 uppercase text-[11px] font-bold tracking-wider border-b border-gray-100">
+<tr>
+<th class="px-6 py-4">激活码 (String)</th>
+<th class="px-6 py-4">备注信息</th>
+<th class="px-6 py-4 text-center">使用进度 (已激活/上限)</th>
+<th class="px-6 py-4">状态</th>
+<th class="px-6 py-4">创建时间</th>
+<th class="px-6 py-4 text-right">操作</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-100">
+<!-- 数据行 1 -->
+<tr class="hover:bg-gray-50 transition-all">
+<td class="px-6 py-4 font-mono font-medium text-blue-600">NEXUS666</td>
+<td class="px-6 py-4 text-gray-500">外部推广：KOL 专属</td>
+<td class="px-6 py-4">
+<div class="flex flex-col space-y-1">
+<div class="flex justify-between text-[10px]">
+<span>45 / 50</span>
+<span>90%</span>
+</div>
+<div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+<div class="bg-blue-500 h-full w-[90%]"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold">有效中</span>
+</td>
+<td class="px-6 py-4 text-gray-400">2026-04-10 12:30</td>
+<td class="px-6 py-4 text-right space-x-2">
+<button class="text-blue-500 hover:underline" onclick="editLimit('NEXUS666', 50)">编辑</button>
+<a class="text-gray-500 hover:text-blue-600 transition-colors" href="admin_detail.html">
+<iconify-icon icon="mdi:eye-outline"></iconify-icon>
+</a>
+</td>
+</tr>
+<!-- 数据行 2 -->
+<tr class="hover:bg-gray-50 transition-all">
+<td class="px-6 py-4 font-mono font-medium text-blue-600">ALPHA2026</td>
+<td class="px-6 py-4 text-gray-500">社区首批测试</td>
+<td class="px-6 py-4">
+<div class="flex flex-col space-y-1">
+<div class="flex justify-between text-[10px]">
+<span>10 / 10</span>
+<span>100%</span>
+</div>
+<div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+<div class="bg-gray-400 h-full w-full"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-[10px] font-bold">已售罄</span>
+</td>
+<td class="px-6 py-4 text-gray-400">2026-04-12 09:15</td>
+<td class="px-6 py-4 text-right space-x-2">
+<button class="text-blue-500 hover:underline" onclick="editLimit('ALPHA2026', 10)">编辑</button>
+<a class="text-gray-500 hover:text-blue-600" href="admin_detail.html">
+<iconify-icon icon="mdi:eye-outline"></iconify-icon>
+</a>
+</td>
+</tr>
+<!-- 更多模拟数据行 -->
+<script>
+                                const codes = ['BETA_USER_01', 'NEXUS_VIP_02', 'LUCKY8888', 'W7X8_9Y2P', 'DEV_TEST_99', 'EARLY_BIRD', 'GROWTH_2026', 'PARTNER_X'];
+                                const notes = ['官网预约用户', '核心投资者', '官方推特活动', '内部测试代码', '开发者专用', '早期注册奖励', '裂变增长测试', '合作伙伴预留'];
+                                for (let i = 0; i < 8; i++) {
+                                    const max = 100 + i * 50;
+                                    const used = Math.floor(Math.random() * max);
+                                    const perc = Math.floor((used / max) * 100);
+                                    const status = i === 4 ? '<span class="px-2 py-1 bg-red-100 text-red-600 rounded-full text-[10px] font-bold">已禁用</span>' : '<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold">有效中</span>';
+                                    
+                                    document.write(`
+                                        <tr class="hover:bg-gray-50 transition-all">
+                                            <td class="px-6 py-4 font-mono font-medium text-blue-600">${codes[i]}</td>
+                                            <td class="px-6 py-4 text-gray-500">${notes[i]}</td>
+                                            <td class="px-6 py-4">
+                                                <div class="flex flex-col space-y-1">
+                                                    <div class="flex justify-between text-[10px]">
+                                                        <span>${used} / ${max}</span>
+                                                        <span>${perc}%</span>
+                                                    </div>
+                                                    <div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                                                        <div class="bg-blue-500 h-full" style="width: ${perc}%"></div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4">${status}</td>
+                                            <td class="px-6 py-4 text-gray-400">2026-04-17 10:00</td>
+                                            <td class="px-6 py-4 text-right space-x-2">
+                                                <button onclick="editLimit('${codes[i]}', ${max})" class="text-blue-500 hover:underline text-[13px]">调整</button>
+                                                <button onclick="toggleStatus(this)" class="text-red-400 hover:underline text-[13px]">${i === 4 ? '启用' : '禁用'}</button>
+                                                <a href="admin_detail.html" class="text-gray-400 hover:text-blue-600 transition-colors">
+                                                    <iconify-icon icon="mdi:eye-outline"></iconify-icon>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    `);
+                                }
+                            </script>
+</tbody>
+</table>
+</div>
+<div class="p-6 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400 bg-gray-50/50">
+<div>显示第 1 至 10 条，共 2,580 条激活码</div>
+<div class="flex space-x-1">
+<button class="w-8 h-8 rounded border bg-white flex items-center justify-center hover:bg-gray-50">1</button>
+<button class="w-8 h-8 rounded border bg-white flex items-center justify-center hover:bg-gray-50">2</button>
+<button class="w-8 h-8 rounded border bg-white flex items-center justify-center hover:bg-gray-50">3</button>
+<button class="w-8 h-8 border bg-white flex items-center justify-center hover:bg-gray-50">...</button>
+<button class="w-8 h-8 rounded border bg-white flex items-center justify-center hover:bg-gray-50">258</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- 批量生成模态框 -->
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center" id="modal-generate">
+<div class="bg-white w-[500px] rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+<div class="p-6 border-b border-gray-100 flex justify-between items-center">
+<h3 class="text-xl font-bold">批量生成激活码</h3>
+<button class="text-gray-400 hover:text-gray-600" onclick="closeGenerateModal()"><iconify-icon class="text-2xl" icon="mdi:close"></iconify-icon></button>
+</div>
+<div class="p-8 space-y-6">
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-2">
+<label class="text-xs font-bold text-gray-500 uppercase">生成数量</label>
+<input class="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:border-blue-500 transition-all" type="number" value="10"/>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-bold text-gray-500 uppercase">单码激活上限</label>
+<input class="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:border-blue-500 transition-all" type="number" value="1"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-bold text-gray-500 uppercase">备注 / 批次名</label>
+<input class="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:border-blue-500 transition-all" placeholder="例如：2026 Q2 社区活动奖励" type="text"/>
+</div>
+<div class="bg-blue-50 p-4 rounded-xl border border-blue-100 flex items-start space-x-3">
+<iconify-icon class="text-blue-500 mt-1" icon="mdi:information-outline"></iconify-icon>
+<p class="text-xs text-blue-600 leading-relaxed">系统将自动生成 8 位混合字母与数字的高强度随机码。生成后可直接在监控列表中查看或导出。</p>
+</div>
+<button class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200 flex items-center justify-center space-x-2 transition-all" id="gen-btn" onclick="simulateGenerate()">
+<span id="gen-btn-text">确认生成</span>
+</button>
+</div>
+</div>
+</div>
+<!-- 动态调整次数模态框 -->
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center" id="modal-edit">
+<div class="bg-white w-[400px] rounded-2xl shadow-2xl p-8 space-y-6">
+<h3 class="text-xl font-bold">调整激活上限</h3>
+<div class="space-y-4">
+<p class="text-sm text-gray-500">正在修改激活码：<span class="font-mono text-blue-600 font-bold" id="editing-code"></span></p>
+<div class="space-y-2">
+<label class="text-xs font-bold text-gray-500 uppercase">新的激活上限次数</label>
+<input class="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:border-blue-500 transition-all" id="new-limit" type="number"/>
+</div>
+<div class="flex space-x-3 mt-6">
+<button class="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200" onclick="closeEditModal()">取消</button>
+<button class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200" onclick="saveEdit()">保存修改</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+        function openGenerateModal() {
+            document.getElementById('modal-generate').classList.remove('hidden');
+        }
+        function closeGenerateModal() {
+            document.getElementById('modal-generate').classList.add('hidden');
+        }
+
+        function simulateGenerate() {
+            const btn = document.getElementById('gen-btn');
+            const txt = document.getElementById('gen-btn-text');
+            btn.disabled = true;
+            txt.innerHTML = '<iconify-icon icon="line-md:loading-twotone-loop" class="text-xl"></iconify-icon>正在生成数据...';
+            
+            setTimeout(() => {
+                closeGenerateModal();
+                alert('成功生成 10 个激活码！');
+                btn.disabled = false;
+                txt.innerText = '确认生成';
+            }, 1500);
+        }
+
+        function editLimit(code, current) {
+            document.getElementById('editing-code').innerText = code;
+            document.getElementById('new-limit').value = current;
+            document.getElementById('modal-edit').classList.remove('hidden');
+        }
+        function closeEditModal() {
+            document.getElementById('modal-edit').classList.add('hidden');
+        }
+        function saveEdit() {
+            alert('修改成功！');
+            closeEditModal();
+        }
+
+        function toggleStatus(btn) {
+            const statusCell = btn.closest('tr').querySelector('td:nth-child(4)');
+            if (btn.innerText === '禁用') {
+                btn.innerText = '启用';
+                btn.classList.replace('text-red-400', 'text-green-500');
+                statusCell.innerHTML = '<span class="px-2 py-1 bg-red-100 text-red-600 rounded-full text-[10px] font-bold">已禁用</span>';
+            } else {
+                btn.innerText = '禁用';
+                btn.classList.replace('text-green-500', 'text-red-400');
+                statusCell.innerHTML = '<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold">有效中</span>';
+            }
+        }
+    </script>
+</body>
+</html>

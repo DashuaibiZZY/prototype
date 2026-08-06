@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX APP - VIP费率等级</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .phone-shell { width: 375px; height: 812px; background: #000; border-radius: 50px; padding: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative; border: 4px solid #333; }
+        .screen { width: 100%; height: 100%; background: #fff; border-radius: 38px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .progress-track { height: 6px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+        .table-scroll { overflow-x: auto; }
+        .table-scroll::-webkit-scrollbar { height: 3px; }
+        .table-scroll::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 999px; }
+        .vip-table { min-width: 520px; width: 520px; border-collapse: collapse; table-layout: fixed; }
+        .vip-table th, .vip-table td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #f3f4f6; font-size: 11px; white-space: nowrap; }
+        .vip-table th { color: #9ca3af; font-weight: 800; background: #f9fafb; }
+        .vip-table td { color: #111827; font-weight: 650; }
+        .vip-table tr.current-row td { background: #fffbeb; color: #b45309; }
+        .vip-table tr.current-row td:first-child { box-shadow: inset 3px 0 0 #f59e0b; }
+        .faq-item.open .faq-arrow { transform: rotate(180deg); }
+        .faq-answer { display: none; }
+        .faq-item.open .faq-answer { display: block; }
+    </style>
+</head>
+<body>
+
+<div class="phone-shell">
+    <div class="screen flex flex-col bg-slate-50">
+
+        <header class="flex justify-between items-center px-5 pt-12 pb-3 shrink-0 bg-white border-b border-gray-50">
+            <button onclick="window.history.back()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            <h1 class="font-black text-[15px] tracking-tight">VIP 费率等级</h1>
+            <div class="w-6"></div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto no-scrollbar pb-8">
+
+            <!-- 当前 VIP 信息 -->
+            <section class="px-4 pt-4">
+                <div class="bg-white rounded-2xl p-4 border border-amber-100 shadow-sm">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wide">ForX 合约交易</p>
+                            <h2 class="text-[15px] font-black text-gray-900 mt-0.5">当前 VIP 等级</h2>
+                        </div>
+                        <span class="bg-amber-400 text-gray-900 text-[12px] font-black px-3 py-1 rounded-full shrink-0">VIP 2</span>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-gray-50">
+                        <p class="text-[9px] font-bold text-gray-400">当前 14 天交易量</p>
+                        <p class="text-[22px] font-black text-gray-900 tracking-tight mt-0.5">$38,500,000</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2.5 mt-3">
+                        <div class="bg-amber-50 rounded-xl px-3 py-2.5 border border-amber-100">
+                            <p class="text-[9px] font-bold text-gray-500">Maker 费率</p>
+                            <p class="text-[18px] font-black text-amber-600 mt-0.5">0.010%</p>
+                        </div>
+                        <div class="bg-amber-50 rounded-xl px-3 py-2.5 border border-amber-100">
+                            <p class="text-[9px] font-bold text-gray-500">Taker 费率</p>
+                            <p class="text-[18px] font-black text-amber-600 mt-0.5">0.034%</p>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-gray-50">
+                        <div class="flex justify-between items-center mb-1.5">
+                            <span class="text-[10px] font-bold text-gray-600">升级 VIP 3</span>
+                            <span class="text-[10px] font-bold text-amber-600">18%</span>
+                        </div>
+                        <div class="progress-track"><div class="progress-fill" style="width:18%"></div></div>
+                        <p class="text-[9px] text-gray-400 mt-1.5 leading-relaxed">距下一等级还差 <span class="text-gray-700 font-bold">$61,500,000</span>，达到 $100M 后升级</p>
+                    </div>
+                    <button onclick="location.href='合约交易.html'" class="w-full bg-gray-900 text-white text-[11px] font-black py-2.5 rounded-xl active:scale-[0.98]">去交易</button>
+                </div>
+            </section>
+
+            <!-- VIP 费率等级表 -->
+            <section class="px-4 pt-4" id="feeTableSection">
+                <div class="flex items-center justify-between mb-2 px-0.5">
+                    <h3 class="text-[13px] font-black text-gray-900">VIP 费率等级表</h3>
+                </div>
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <p class="text-[9px] font-bold text-gray-400 px-3.5 pt-3">ForX 合约交易 VIP 费率表</p>
+                    <div class="table-scroll px-3.5 pb-3 pt-2">
+                        <table class="vip-table" aria-label="VIP费率等级表">
+                            <colgroup><col style="width:72px"><col style="width:204px"><col style="width:112px"><col style="width:112px"></colgroup>
+                            <thead>
+                                <tr>
+                                    <th>VIP 等级</th>
+                                    <th>14 天交易量门槛（USD）</th>
+                                    <th>Maker 费率</th>
+                                    <th>Taker 费率</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>VIP 0</td><td>&lt; $5M</td><td>0.015%</td><td>0.045%</td></tr>
+                                <tr><td>VIP 1</td><td>≥ $5M 且 &lt; $25M</td><td>0.013%</td><td>0.039%</td></tr>
+                                <tr class="current-row"><td>VIP 2</td><td>≥ $25M 且 &lt; $100M</td><td>0.010%</td><td>0.034%</td></tr>
+                                <tr><td>VIP 3</td><td>≥ $100M 且 &lt; $500M</td><td>0.006%</td><td>0.029%</td></tr>
+                                <tr><td>VIP 4</td><td>≥ $500M</td><td>0.004%</td><td>0.026%</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIP 权益表 -->
+            <section class="px-4 pt-5">
+                <h3 class="text-[13px] font-black text-gray-900 mb-2 px-0.5">VIP 专属权益</h3>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="bg-white rounded-xl p-3.5 border border-gray-100 shadow-sm">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-base mb-2">📊</div>
+                        <h4 class="text-[11px] font-black text-gray-900">VIP 资讯研报</h4>
+                        <p class="text-[10px] text-gray-500 mt-1 leading-relaxed">更早洞察、更优决策</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-3.5 border border-gray-100 shadow-sm">
+                        <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-500 flex items-center justify-center text-base mb-2">🎁</div>
+                        <h4 class="text-[11px] font-black text-gray-900">VIP 礼物</h4>
+                        <p class="text-[10px] text-gray-500 mt-1 leading-relaxed">尊享欢迎礼、节日定制礼物以及专属实物周边</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-3.5 border border-gray-100 shadow-sm">
+                        <div class="w-8 h-8 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center text-base mb-2">🎫</div>
+                        <h4 class="text-[11px] font-black text-gray-900">VIP 会场</h4>
+                        <p class="text-[10px] text-gray-500 mt-1 leading-relaxed">享优先线下会场专席机会</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-3.5 border border-dashed border-gray-200 shadow-sm relative overflow-hidden">
+                        <span class="absolute top-2 right-2 text-[7px] font-black uppercase tracking-wide bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded">展示型</span>
+                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-500 flex items-center justify-center text-base mb-2">✦</div>
+                        <h4 class="text-[11px] font-black text-gray-900">VIP 星际徽章</h4>
+                        <p class="text-[10px] text-gray-500 mt-1 leading-relaxed">专属虚拟勋章与尊贵头衔，点亮链上名片</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 常见问题 -->
+            <section class="px-4 pt-5 pb-6" id="faqSection">
+                <h3 class="text-[13px] font-black text-gray-900 mb-2 px-0.5">常见问题</h3>
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
+                    <div class="faq-item open">
+                        <button type="button" class="faq-btn w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left" onclick="this.parentElement.classList.toggle('open')">
+                            <span class="text-[11px] font-black text-gray-900">VIP 等级如何计算？</span>
+                            <span class="faq-arrow text-gray-400 text-xs shrink-0 transition-transform">⌄</span>
+                        </button>
+                        <div class="faq-answer px-4 pb-3.5 text-[10px] text-gray-500 leading-relaxed">VIP 等级根据用户近 14 天合约交易量进行计算，达到对应等级门槛后，系统将自动匹配对应 VIP 等级。</div>
+                    </div>
+                    <div class="faq-item">
+                        <button type="button" class="faq-btn w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left" onclick="this.parentElement.classList.toggle('open')">
+                            <span class="text-[11px] font-black text-gray-900">VIP 等级多久更新一次？</span>
+                            <span class="faq-arrow text-gray-400 text-xs shrink-0 transition-transform">⌄</span>
+                        </button>
+                        <div class="faq-answer px-4 pb-3.5 text-[10px] text-gray-500 leading-relaxed">平台会定期更新用户 VIP 等级，具体更新时间以系统计算结果为准。</div>
+                    </div>
+                    <div class="faq-item">
+                        <button type="button" class="faq-btn w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left" onclick="this.parentElement.classList.toggle('open')">
+                            <span class="text-[11px] font-black text-gray-900">手续费什么时候生效？</span>
+                            <span class="faq-arrow text-gray-400 text-xs shrink-0 transition-transform">⌄</span>
+                        </button>
+                        <div class="faq-answer px-4 pb-3.5 text-[10px] text-gray-500 leading-relaxed">VIP 等级更新后，新产生的合约交易将按对应等级费率计算手续费。</div>
+                    </div>
+                    <div class="faq-item">
+                        <button type="button" class="faq-btn w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left" onclick="this.parentElement.classList.toggle('open')">
+                            <span class="text-[11px] font-black text-gray-900">交易量下降，等级会变化吗？</span>
+                            <span class="faq-arrow text-gray-400 text-xs shrink-0 transition-transform">⌄</span>
+                        </button>
+                        <div class="faq-answer px-4 pb-3.5 text-[10px] text-gray-500 leading-relaxed">VIP 等级会根据近 14 天合约交易量重新匹配，若不满足当前等级要求，系统将按平台规则调整至对应等级。</div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

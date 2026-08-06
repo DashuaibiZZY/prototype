@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX APP - 卡券中心</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+
+        .phone-shell { width: 375px; height: 812px; background: #000; border-radius: 50px; padding: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative; border: 4px solid #333; }
+        .screen { width: 100%; height: 100%; background: #fff; border-radius: 38px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+
+        /* 卡券票據感樣式 */
+        .coupon-app-card {
+            background: white;
+            border: 1px solid #f3f4f6;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        /* 側邊圓形切口 */
+        .coupon-app-card::before, .coupon-app-card::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: #f8fafc;
+            border-radius: 50%;
+            top: 75px;
+            z-index: 10;
+            border: 1px solid #f3f4f6;
+        }
+        .coupon-app-card::before { left: -8px; }
+        .coupon-app-card::after { right: -8px; }
+
+        .tab-active { color: #000; font-weight: 800; border-bottom: 2.5px solid #000; }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="phone-shell">
+    <div class="screen flex flex-col bg-slate-50">
+
+        <!-- 1. 頂部導航 -->
+        <header class="flex justify-between items-center px-6 pt-12 pb-4 shrink-0 bg-white">
+            <button onclick="window.history.back()" class="p-1 -ml-1">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            <h2 class="font-black text-[15px] uppercase tracking-tighter italic">卡券中心</h2>
+            <div class="w-6"></div>
+        </header>
+
+        <!-- 2. 總體情況概覽 (修正後的一行並列版) -->
+        <div class="px-5 py-4 bg-white border-b border-gray-100 shrink-0">
+            <!-- 加入 flex 和 space-x-3 讓子元素橫向排列並保有間距 -->
+            <div class="flex space-x-3">
+                <!-- 暫未使用 -->
+                <div class="flex-1 bg-black rounded-2xl p-4 text-white">
+                    <p class="text-[9px] font-black text-gray-500 uppercase mb-1">暫未使用</p>
+                    <div class="flex items-baseline space-x-1">
+                        <span id="count-unused" class="text-2xl font-black">2</span>
+                        <span class="text-[10px] font-bold text-gray-500 italic">張</span>
+                    </div>
+                </div>
+
+                <!-- 使用中 -->
+                <div class="flex-1 bg-gray-100 rounded-2xl p-4">
+                    <p class="text-[9px] font-black text-gray-400 uppercase mb-1">使用中</p>
+                    <div class="flex items-baseline space-x-1">
+                        <span id="count-used" class="text-2xl font-black">1</span>
+                        <span class="text-[10px] font-bold text-gray-400 italic">張</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. 狀態切換 Tab (4 個狀態) -->
+        <div class="flex space-x-6 px-5 bg-white border-b border-gray-50 overflow-x-auto no-scrollbar whitespace-nowrap shrink-0">
+            <button onclick="switchStatus('available')" id="tab-available" class="tab-active py-3 text-[12px]">可使用</button>
+            <button onclick="switchStatus('used')" id="tab-used" class="text-gray-400 py-3 text-[12px] font-bold">使用中</button>
+            <button onclick="switchStatus('expired')" id="tab-expired" class="text-gray-400 py-3 text-[12px] font-bold">已過期</button>
+            <button onclick="switchStatus('invalid')" id="tab-invalid" class="text-gray-400 py-3 text-[12px] font-bold">已失效</button>
+        </div>
+
+        <!-- 4. 滾動卡券列表 -->
+        <div class="flex-1 overflow-y-auto no-scrollbar px-5 py-4 space-y-4">
+
+            <!-- 視圖：可使用 -->
+            <div id="view-available" class="space-y-4 block fade-in">
+                <div class="coupon-app-card border-l-4 border-l-blue-600">
+                    <div class="p-5 flex justify-between items-start">
+                        <div>
+                            <p class="text-[10px] font-black text-gray-400 uppercase mb-1">永續合約體驗金</p>
+                            <h3 class="text-2xl font-black text-gray-900">50.00 <small class="text-xs text-gray-400 font-bold">USDT</small></h3>
+                        </div>
+                        <button class="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-[10px] font-black uppercase shadow-lg shadow-blue-200">開啟使用</button>
+                    </div>
+                    <div class="mx-5 border-t border-dashed border-gray-100 mt-1"></div>
+                    <div class="p-5 space-y-2">
+                        <div class="flex justify-between text-[10px] font-bold">
+                            <span class="text-gray-400">虧損抵扣上限</span>
+                            <span class="text-gray-900 font-black">20% (10.00 USDT)</span>
+                        </div>
+                        <div class="flex justify-between text-[10px] font-bold">
+                            <span class="text-gray-400">費用抵扣上限</span>
+                            <span class="text-gray-900 font-black">10% (5.00 USDT)</span>
+                        </div>
+                        <div class="pt-2 flex justify-between text-[10px] font-bold border-t border-gray-50">
+                            <span class="text-gray-400">激活截止時間</span>
+                            <span class="text-gray-600">2024-11-10 12:00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 即將過期的卡片示例 -->
+                <div class="coupon-app-card border-l-4 border-l-orange-500">
+                    <div class="p-5 flex justify-between items-start">
+                        <div>
+                            <p class="text-[10px] font-black text-gray-400 uppercase mb-1">永續合約體驗金</p>
+                            <h3 class="text-2xl font-black text-gray-900">50.00 <small class="text-xs text-gray-400 font-bold">USDT</small></h3>
+                        </div>
+                        <button class="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-[10px] font-black uppercase shadow-lg shadow-blue-200">開啟使用</button>
+                    </div>
+                    <div class="mx-5 border-t border-dashed border-gray-100 mt-1"></div>
+                    <div class="p-5 space-y-2">
+                        <div class="flex justify-between text-[10px] font-bold">
+                            <span class="text-gray-400">虧損抵扣上限</span>
+                            <span class="text-gray-900 font-black">20% (10.00 USDT)</span>
+                        </div>
+                        <div class="flex justify-between text-[10px] font-bold">
+                            <span class="text-gray-400">費用抵扣上限</span>
+                            <span class="text-gray-900 font-black">10% (5.00 USDT)</span>
+                        </div>
+                        <!-- 即將過期狀態 -->
+                        <div class="pt-2 flex justify-between items-center text-[10px] font-bold border-t border-gray-50">
+                            <span class="text-red-500 flex items-center">
+                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                                即將過期
+                            </span>
+                            <span class="text-red-500 font-black">2024-11-10 12:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 視圖：使用中 -->
+            <div id="view-used" class="hidden space-y-4 fade-in">
+                <div class="coupon-app-card border-l-4 border-l-green-500">
+                    <div class="p-5 flex justify-between items-start">
+                        <div>
+                            <p class="text-[10px] font-black text-gray-400 uppercase mb-1">永續合約體驗金</p>
+                            <h3 class="text-2xl font-black text-gray-900">100.00 <small class="text-xs text-gray-400 font-bold">USDT</small></h3>
+                            <span class="inline-block mt-1 px-1.5 py-0.5 bg-green-50 text-green-600 text-[9px] font-black rounded-sm uppercase">正在使用中</span>
+                        </div>
+                        <button class="bg-black text-white px-4 py-1.5 rounded-lg text-[10px] font-black uppercase">去交易</button>
+                    </div>
+                    <div class="mx-5 border-t border-dashed border-gray-100 mt-1"></div>
+                    <div class="p-5 space-y-2">
+                        <div class="flex justify-between text-[10px] font-bold">
+                            <span class="text-gray-400">虧損抵扣上限</span>
+                            <span class="text-gray-900 font-black">20% (20.00 USDT)</span>
+                        </div>
+                        <div class="flex justify-between text-[10px] font-bold">
+                            <span class="text-gray-400">費用抵扣上限</span>
+                            <span class="text-gray-900 font-black">15% (15.00 USDT)</span>
+                        </div>
+                        <div class="pt-2 flex justify-between text-[10px] font-bold border-t border-gray-50">
+                            <span class="text-gray-400">回收截止時間</span>
+                            <span class="text-gray-600">2024-11-15 18:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 視圖：已過期 -->
+            <div id="view-expired" class="hidden space-y-4 fade-in">
+                <div class="coupon-app-card opacity-60 grayscale border-l-4 border-l-gray-300">
+                    <div class="p-5 flex justify-between items-start">
+                        <div>
+                            <p class="text-[10px] font-black text-gray-400 uppercase mb-1">永續合約體驗金</p>
+                            <h3 class="text-2xl font-black text-gray-400">20.00 <small class="text-xs font-bold">USDT</small></h3>
+                        </div>
+                        <span class="text-[10px] font-black uppercase text-gray-400 border border-gray-200 px-2 py-1 rounded">已過期</span>
+                    </div>
+                    <div class="mx-5 border-t border-dashed border-gray-100 mt-1"></div>
+                    <div class="p-5 space-y-2">
+                        <div class="flex justify-between text-[10px] font-bold"><span class="text-gray-400">虧損抵扣上限</span><span>20%</span></div>
+                        <div class="flex justify-between text-[10px] font-bold"><span class="text-gray-400">費用抵扣上限</span><span>10%</span></div>
+                        <div class="pt-2 flex justify-between text-[10px] font-bold border-t border-gray-50">
+                            <span class="text-gray-400">激活截止時間</span><span>2024-10-20 00:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 視圖：已失效 -->
+            <div id="view-invalid" class="hidden space-y-4 fade-in">
+                <div class="coupon-app-card opacity-60 border-l-4 border-l-red-200">
+                    <div class="p-5 flex justify-between items-start">
+                        <div>
+                            <p class="text-[10px] font-black text-gray-400 uppercase mb-1">永續合約體驗金</p>
+                            <h3 class="text-2xl font-black text-gray-400">200.00 <small class="text-xs font-bold">USDT</small></h3>
+                        </div>
+                        <span class="text-[10px] font-black uppercase text-red-400 border border-red-100 px-2 py-1 rounded bg-red-50">已失效</span>
+                    </div>
+                    <div class="mx-5 border-t border-dashed border-gray-100 mt-1"></div>
+                    <div class="p-5 space-y-2">
+                        <div class="flex justify-between text-[10px] font-bold"><span class="text-gray-400">虧損抵扣上限</span><span>30%</span></div>
+                        <div class="flex justify-between text-[10px] font-bold"><span class="text-gray-400">費用抵扣上限</span><span>無上限</span></div>
+                        <div class="pt-2 flex justify-between text-[10px] font-bold border-t border-gray-50 text-gray-400">
+                            <span class="text-gray-400 uppercase">回收截止時間</span><span>2024-10-25 15:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 視圖：無數據 (空狀態) -->
+            <div id="view-empty" class="hidden flex-1 flex flex-col items-center justify-center px-10 text-center">
+                <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-10 h-10 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                </div>
+                <p class="text-sm font-black text-gray-900">暫無可用卡券</p>
+                <p class="text-xs text-gray-400 mt-2">參與平台活動，贏取更多合約體驗金獎勵</p>
+            </div>
+
+            <!-- 視圖：網路異常 -->
+            <div id="view-error" class="hidden flex-1 flex flex-col items-center justify-center px-10 text-center">
+                <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-10 h-10 text-red-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+                <p class="text-sm font-black text-gray-900">數據加載失敗</p>
+                <p class="text-xs text-gray-400 mt-2">請檢查您的網路連接或重試</p>
+                <button onclick="location.reload()" class="mt-6 px-8 py-2.5 bg-black text-white rounded-full text-[11px] font-black uppercase tracking-widest active:scale-95 transition-transform">
+                    重新加載
+                </button>
+            </div>
+        </div>
+
+        <!-- 5. 底部說明 -->
+        <div class="px-5 py-6 bg-white border-t border-gray-50 shrink-0 pb-10">
+            <button onclick="toggleRules(true)" class="w-full py-3 bg-gray-50 text-gray-500 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                查看卡券使用規則
+            </button>
+        </div>
+
+        <!-- 規則說明底部署板 -->
+        <div id="modal-rules" class="hidden absolute inset-0 z-[100]">
+            <!-- 遮罩 -->
+            <div onclick="toggleRules(false)" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+            <!-- 面板 -->
+            <div class="absolute bottom-0 w-full bg-white rounded-t-[32px] flex flex-col max-h-[80%] animate-in slide-in-from-bottom duration-300">
+                <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-2"></div>
+                <div class="px-8 py-4 overflow-y-auto no-scrollbar pb-12">
+                    <h3 class="text-lg font-black mb-6 italic uppercase tracking-tighter">卡券使用規則</h3>
+                    <div class="space-y-6 text-[12px] text-gray-600 leading-relaxed">
+                        <section>
+                            <h4 class="font-black text-black mb-2 uppercase">1. 什麼是合約體驗金？</h4>
+                            <p>合約體驗金僅可用於永續合約交易的保證金，不可直接提現或劃轉。體驗金具有獨立的面額與有效期。</p>
+                        </section>
+                        <section>
+                            <h4 class="font-black text-black mb-2 uppercase">2. 盈利提現規則</h4>
+                            <p>使用體驗金產生的交易盈利部分支持提現。但請注意，一旦您發起任何資產提現動作，帳戶內剩餘的所有未消耗體驗金將立即失效並被系統回收。</p>
+                        </section>
+                        <section>
+                            <h4 class="font-black text-black mb-2 uppercase">3. 抵扣與回收機制</h4>
+                            <p>每張體驗金均設有「虧損抵扣上限」與「費用抵扣上限」。當您的累計抵扣金額達到上限時，該張體驗金將自動失效。</p>
+                        </section>
+                        <section>
+                            <h4 class="font-black text-black mb-2 uppercase">4. 有效期說明</h4>
+                            <p>請務必在「激活截止時間」前點擊開啟使用。開啟後，請在「回收截止時間」前消耗完畢。逾期卡券將自動從帳戶中移除。</p>
+                        </section>
+                    </div>
+                    <button onclick="toggleRules(false)" class="w-full py-4 bg-black text-white rounded-2xl font-black uppercase mt-4">已閱讀並知曉</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="fixed bottom-10 right-10 space-y-3 flex flex-col">
+    <button onclick="demoState('available')" class="bg-blue-600 text-white px-4 py-2 rounded-full text-[10px] font-bold shadow-xl">正常數據</button>
+    <button onclick="demoState('empty')" class="bg-gray-800 text-white px-4 py-2 rounded-full text-[10px] font-bold shadow-xl">無數據狀態</button>
+    <button onclick="demoState('error')" class="bg-red-600 text-white px-4 py-2 rounded-full text-[10px] font-bold shadow-xl">網路異常</button>
+</div>
+
+<script>
+    function switchStatus(status) {
+        // 隱藏所有視圖
+        const views = ['available', 'used', 'expired', 'invalid'];
+        views.forEach(v => {
+            document.getElementById('view-' + v).classList.add('hidden');
+            const tab = document.getElementById('tab-' + v);
+            tab.className = "text-gray-400 py-3 text-[12px] font-bold";
+        });
+
+        // 顯示目標視圖
+        document.getElementById('view-' + status).classList.remove('hidden');
+        document.getElementById('tab-' + status).className = "tab-active py-3 text-[12px]";
+    }
+
+    // 切換規則彈窗
+    function toggleRules(show) {
+        const modal = document.getElementById('modal-rules');
+        modal.classList.toggle('hidden', !show);
+    }
+
+    // 演示切換狀態 (新增：空狀態與錯誤狀態)
+    function demoState(state) {
+        const allViews = ['available', 'used', 'expired', 'invalid', 'empty', 'error'];
+        allViews.forEach(v => {
+            const el = document.getElementById('view-' + v);
+            if(el) el.classList.add('hidden');
+        });
+
+        document.getElementById('view-' + state).classList.remove('hidden');
+
+        // 處理數字顯示
+        const unusedEl = document.getElementById('count-unused');
+        const usedEl = document.getElementById('count-used');
+
+        if (state === 'error') {
+            unusedEl.innerText = "--";
+            usedEl.innerText = "--";
+        } else {
+            unusedEl.innerText = "2"; // 恢復正常數據
+            usedEl.innerText = "1";
+        }
+    }
+</script>
+
+</body>
+</html>

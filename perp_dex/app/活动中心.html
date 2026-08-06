@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX APP - 活动中心</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f3f4f6; color: #111827; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .phone-shell { width: 375px; height: 812px; background: #000; border-radius: 50px; padding: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative; border: 4px solid #333; }
+        .screen { width: 100%; height: 100%; background: #fff; border-radius: 38px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+
+        .app-nav { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 44px 16px 12px; background: #fff; border-bottom: 1px solid #f3f4f6; z-index: 50; }
+        .app-nav-title { font-size: 15px; font-weight: 900; letter-spacing: -0.02em; }
+        .app-nav-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: none; background: none; cursor: pointer; color: #111827; }
+        .app-nav-btn:active { opacity: 0.6; }
+        .app-nav-reward { font-size: 11px; font-weight: 800; color: #111827; background: #f3f4f6; border: none; border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+        .app-nav-reward::before { content: '🎁 '; }
+
+        .app-view { display: none; flex: 1; flex-direction: column; min-height: 0; }
+        .app-view.active { display: flex; }
+        .app-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .app-scroll.has-fixed-cta { padding-bottom: 72px; }
+
+        .hero-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; }
+        .hero-stats .stat-item { padding: 10px 6px; border: 1px solid #f3f4f6; border-radius: 10px; text-align: center; background: #fafafa; }
+        .hero-stats .stat-value { font-size: 13px; font-weight: 900; margin-bottom: 2px; }
+        .hero-stats .stat-label { font-size: 9px; color: #9ca3af; font-weight: 600; }
+        .hero-sub-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 4px; }
+        .hero-subtitle { font-size: 10px; color: #6b7280; flex: 1; }
+        .my-activities-link { color: #111827; font-weight: 800; font-size: 11px; cursor: pointer; flex-shrink: 0; white-space: nowrap; }
+        .my-activities-link::after { content: ' ›'; }
+
+        .section-head { padding: 0 16px; margin-bottom: 10px; }
+        .all-campaigns-title { font-size: 14px; font-weight: 900; }
+        .page-head-sub { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+        .filter-row { padding: 0 16px 12px; }
+        .status-filter { display: inline-flex; gap: 4px; background: #f9fafb; padding: 3px; border-radius: 8px; border: 1px solid #f3f4f6; }
+        .status-item { padding: 6px 14px; font-size: 11px; font-weight: 800; color: #9ca3af; cursor: pointer; border-radius: 6px; }
+        .status-item.active { background: #fff; color: #111827; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+
+        .activity-cards-list { display: flex; flex-direction: column; gap: 12px; padding: 0 16px 20px; }
+        .activity-card { background: #fff; border: 1px solid #f3f4f6; border-radius: 14px; overflow: hidden; cursor: pointer; }
+        .activity-card:active { background: #fafafa; }
+        .activity-card-poster { height: 120px; background-size: cover; background-position: center; }
+        .poster-carnival { background-image: linear-gradient(135deg,#111827,#1f2937 40%,#f59e0b); }
+        .poster-contest { background-image: linear-gradient(135deg,#1e3a8a,#2563eb 60%,#60a5fa); }
+        .poster-newbie { background-image: linear-gradient(135deg,#065f46,#10b981); }
+        .poster-social { background-image: linear-gradient(135deg,#5b21b6,#8b5cf6); }
+        .poster-challenge { background-image: linear-gradient(135deg,#c2410c,#fb923c); }
+        .poster-default { background-image: linear-gradient(135deg,#374151,#6b7280); }
+        .activity-card-body { padding: 12px 14px 14px; }
+        .activity-header { display: flex; justify-content: flex-end; margin-bottom: 6px; }
+        .activity-status { font-size: 9px; font-weight: 800; padding: 3px 8px; border-radius: 4px; }
+        .activity-status.ongoing { background: #ecfdf5; color: #059669; }
+        .activity-status.ended { background: #f3f4f6; color: #9ca3af; }
+        .activity-title { font-size: 14px; font-weight: 900; margin-bottom: 4px; }
+        .activity-desc { font-size: 11px; color: #6b7280; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.45; }
+        .activity-stats { display: flex; gap: 16px; margin-bottom: 8px; }
+        .activity-stats .stat-label { font-size: 9px; color: #9ca3af; display: block; }
+        .activity-stats .stat-value { font-size: 12px; font-weight: 900; }
+        .activity-countdown { font-size: 10px; font-weight: 700; }
+        .activity-countdown .lbl { color: #9ca3af; font-weight: 600; }
+        .activity-view-btn { width: 100%; padding: 9px; background: #111827; color: #fff; border: none; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; margin-top: 10px; }
+
+        .detail-hero-card { padding: 16px; border-bottom: 1px solid #f3f4f6; }
+        .detail-hero-title { font-size: 18px; font-weight: 900; margin-bottom: 6px; line-height: 1.25; }
+        .detail-hero-desc { font-size: 11px; color: #6b7280; line-height: 1.55; }
+        .detail-stats-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 14px; }
+        .detail-stat-box { padding: 10px; background: #fafafa; border: 1px solid #f3f4f6; border-radius: 8px; }
+        .detail-stat-box .val { font-size: 13px; font-weight: 900; word-break: break-all; }
+        .detail-stat-box .val.highlight { color: #2563eb; }
+        .detail-stat-box .lbl { font-size: 9px; color: #9ca3af; margin-top: 3px; }
+        .ended-reward-btn { padding: 8px 14px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; margin-top: 12px; }
+        .my-progress-panel { margin-top: 12px; padding: 12px; background: #fafafa; border: 1px solid #f3f4f6; border-radius: 10px; }
+        .my-progress-label { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 800; color: #9ca3af; margin-bottom: 10px; }
+        .my-progress-label::before { content: ''; width: 3px; height: 12px; background: #2563eb; border-radius: 2px; }
+        .detail-progress-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .detail-progress-item { padding: 8px; background: #fff; border: 1px solid #f3f4f6; border-radius: 6px; text-align: center; }
+        .detail-progress-item .val { font-size: 12px; font-weight: 900; }
+        .detail-progress-item .val.highlight { color: #2563eb; }
+        .detail-progress-item .lbl { font-size: 8px; color: #9ca3af; margin-top: 3px; }
+
+        .pool-unlock-section { margin: 0 0 12px; padding: 14px; background: linear-gradient(135deg,#0f172a 0%,#1e293b 45%,#0f172a 100%); border-radius: 10px; position: relative; overflow: hidden; }
+        .pool-unlock-section::before { content: ''; position: absolute; top: -40%; right: -10%; width: 160px; height: 160px; background: radial-gradient(circle,rgba(251,191,36,.12) 0%,transparent 70%); pointer-events: none; }
+        .pool-unlock-top { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; position: relative; z-index: 1; }
+        .pool-unlock-title { font-size: 11px; font-weight: 800; color: #e2e8f0; line-height: 1.45; }
+        .pool-unlock-title .amount { color: #fbbf24; }
+        .pool-unlock-subline { font-size: 9px; color: #64748b; }
+        .pool-unlock-rail { position: relative; z-index: 1; margin-bottom: 10px; padding: 0 2px; }
+        .pool-unlock-track { position: relative; height: 6px; background: rgba(255,255,255,.08); border-radius: 3px; }
+        .pool-unlock-fill { height: 100%; background: linear-gradient(90deg,#2563eb,#fbbf24); border-radius: 3px; box-shadow: 0 0 10px rgba(251,191,36,.4); transition: width .5s ease; }
+        .pool-unlock-tiers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; position: relative; z-index: 1; }
+        .pool-unlock-tier { text-align: center; padding: 6px 2px 4px; position: relative; }
+        .pool-unlock-tier-dot { width: 8px; height: 8px; border-radius: 50%; background: #334155; border: 2px solid #475569; margin: 0 auto 6px; }
+        .pool-unlock-tier.unlocked .pool-unlock-tier-dot { background: #fbbf24; border-color: #fde68a; box-shadow: 0 0 6px rgba(251,191,36,.5); }
+        .pool-unlock-tier.active .pool-unlock-tier-dot { width: 10px; height: 10px; background: #fbbf24; border-color: #fff; }
+        .pool-unlock-tier-pool { font-size: 10px; font-weight: 900; color: #475569; line-height: 1.2; }
+        .pool-unlock-tier.unlocked .pool-unlock-tier-pool { color: #e2e8f0; }
+        .pool-unlock-tier.active .pool-unlock-tier-pool { color: #fbbf24; font-size: 11px; }
+        .pool-unlock-tier-vol { font-size: 7px; font-weight: 600; color: #64748b; margin-top: 2px; line-height: 1.2; }
+        .pool-unlock-tier.unlocked .pool-unlock-tier-vol { color: #94a3b8; }
+
+        .detail-section { margin: 0 16px 12px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; }
+        .detail-section-head { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #f3f4f6; }
+        .detail-section-head-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .detail-section-title { font-size: 13px; font-weight: 900; flex-shrink: 0; }
+        .detail-section-pool { font-size: 12px; font-weight: 900; color: #2563eb; text-align: right; white-space: nowrap; }
+        .detail-section-sub { font-size: 10px; color: #6b7280; margin-top: 6px; line-height: 1.45; }
+
+        .task-row { display: flex; gap: 10px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
+        .task-row:last-child { border-bottom: none; }
+        .task-num { width: 26px; height: 26px; border-radius: 6px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: #6b7280; flex-shrink: 0; }
+        .task-body { flex: 1; min-width: 0; }
+        .task-name { font-size: 12px; font-weight: 800; margin-bottom: 3px; }
+        .task-desc { font-size: 9px; color: #6b7280; margin-bottom: 6px; line-height: 1.4; }
+        .task-progress-track { height: 4px; background: #f3f4f6; border-radius: 2px; overflow: hidden; }
+        .task-progress-fill { height: 100%; background: #111827; }
+        .task-right { text-align: right; flex-shrink: 0; min-width: 72px; }
+        .task-reward-tag { font-size: 8px; font-weight: 800; padding: 2px 5px; border-radius: 3px; display: inline-block; margin-top: 4px; }
+        .task-reward-tag.single { background: #eff6ff; color: #2563eb; }
+        .task-reward-tag.pool { background: #fef3c7; color: #d97706; }
+        .task-reward-tag.both { background: #f3e8ff; color: #7c3aed; }
+        .task-pts { font-size: 10px; font-weight: 900; }
+        .task-pool-note { font-size: 9px; color: #6b7280; font-weight: 600; }
+        .task-btn-sm, .task-done-tag { padding: 5px 10px; border-radius: 6px; font-size: 9px; font-weight: 800; border: none; cursor: pointer; margin-top: 5px; }
+        .task-btn-sm { background: #111827; color: #fff; }
+        .task-done-tag { background: #ecfdf5; color: #059669; display: inline-block; }
+
+        .my-status-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px; background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 10px; margin-bottom: 12px; }
+        .my-status-strip .item .val { font-size: 12px; font-weight: 900; }
+        .my-status-strip .item .lbl { font-size: 8px; color: #9ca3af; margin-top: 2px; }
+        .my-status-strip .trade-row { grid-column: 1 / -1; }
+        .btn-trade-sm { width: 100%; padding: 9px; background: #111827; color: #fff; border: none; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; }
+
+        .rank-tabs { display: flex; border-bottom: 1px solid #f3f4f6; margin: 0 -14px 12px; padding: 0 14px; }
+        .rank-tab { flex: 1; text-align: center; padding: 9px 8px; font-size: 10px; font-weight: 800; color: #9ca3af; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+        .rank-tab.active { color: #111827; border-bottom-color: #111827; }
+        .contest-reward-tag { font-size: 8px; font-weight: 800; padding: 2px 5px; border-radius: 3px; display: inline-block; margin-top: 4px; }
+        .contest-reward-tag.proportional { background: #eff6ff; color: #2563eb; }
+        .contest-reward-tag.fixed-top3 { background: #fef3c7; color: #d97706; }
+
+        .rank-podium { display: flex; align-items: flex-end; justify-content: center; gap: 6px; padding: 16px 4px 0; background: linear-gradient(180deg,#fafafa 0%,#fff 100%); border-bottom: 1px solid #f3f4f6; margin: 0 -14px 12px; }
+        .podium-item { display: flex; flex-direction: column; align-items: center; width: 88px; }
+        .podium-user { text-align: center; margin-bottom: 6px; min-height: 58px; }
+        .podium-avatar { width: 32px; height: 32px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 14px; margin: 0 auto 4px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,.08); }
+        .podium-item.first .podium-avatar { width: 38px; height: 38px; border-color: #fbbf24; }
+        .podium-name { font-size: 9px; font-weight: 800; margin-bottom: 1px; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .podium-metric { font-size: 8px; color: #6b7280; margin-bottom: 1px; }
+        .podium-reward { font-size: 9px; font-weight: 900; color: #2563eb; }
+        .podium-stand { width: 100%; border-radius: 6px 6px 0 0; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; color: #fff; }
+        .podium-item.first .podium-stand { height: 56px; background: linear-gradient(180deg,#fcd34d,#f59e0b); }
+        .podium-item.second .podium-stand { height: 42px; background: linear-gradient(180deg,#e5e7eb,#9ca3af); }
+        .podium-item.third .podium-stand { height: 32px; background: linear-gradient(180deg,#fdba74,#ea580c); }
+
+        .rank-table-head, .rank-table-row { display: grid; grid-template-columns: 36px 1fr 72px 68px; padding: 8px 0; align-items: center; gap: 4px; }
+        .rank-table-head { font-size: 9px; font-weight: 800; color: #9ca3af; border-bottom: 1px solid #f3f4f6; }
+        .rank-table-row { font-size: 10px; border-bottom: 1px solid #f9fafb; }
+        .rank-est-reward { font-weight: 900; color: #2563eb; text-align: right; font-size: 9px; }
+        .rank-pagination { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 0 4px; flex-wrap: wrap; }
+        .rank-page-nav { padding: 6px 10px; border: 1px solid #e5e7eb; background: #fff; border-radius: 6px; font-size: 10px; font-weight: 800; color: #374151; cursor: pointer; }
+        .rank-page-nav:disabled { opacity: .4; cursor: not-allowed; }
+        .rank-page-input { width: 40px; height: 28px; border: 1px solid #e5e7eb; border-radius: 6px; text-align: center; font-size: 11px; font-weight: 800; color: #111827; }
+        .rank-page-jump { padding: 6px 10px; border: none; background: #111827; color: #fff; border-radius: 6px; font-size: 10px; font-weight: 800; cursor: pointer; }
+        .modal-pagination { display: flex; justify-content: center; gap: 5px; padding: 10px 0 4px; }
+        .rank-page-btn { min-width: 26px; height: 26px; border: 1px solid #e5e7eb; background: #fff; border-radius: 6px; font-size: 10px; font-weight: 800; cursor: pointer; color: #6b7280; }
+        .rank-page-btn.active { background: #111827; color: #fff; border-color: #111827; }
+        .rank-page-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+        .rules-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        .rules-list li { display: flex; gap: 8px; font-size: 10px; color: #4b5563; line-height: 1.5; }
+        .rules-list .num { width: 18px; height: 18px; border-radius: 4px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: #6b7280; flex-shrink: 0; }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: #9ca3af; }
+        .empty-icon { font-size: 28px; margin-bottom: 6px; }
+
+        .detail-fixed-cta { display: none; position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 16px 24px; background: rgba(255,255,255,.96); border-top: 1px solid #f3f4f6; z-index: 60; backdrop-filter: blur(8px); }
+        .detail-fixed-cta.show { display: block; }
+        .btn-register-fixed { width: 100%; padding: 13px; background: #111827; color: #fff; border: none; border-radius: 12px; font-size: 13px; font-weight: 900; cursor: pointer; }
+
+        .reward-flow-list { display: flex; flex-direction: column; gap: 0; }
+        .reward-flow-item { padding: 14px 16px; border-bottom: 1px solid #f3f4f6; background: #fff; }
+        .reward-flow-item:last-child { border-bottom: none; }
+        .reward-flow-name { font-size: 12px; font-weight: 800; margin-bottom: 8px; }
+        .reward-flow-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; font-size: 10px; }
+        .reward-flow-grid .lbl { color: #9ca3af; font-weight: 700; }
+        .reward-flow-grid .val { font-weight: 800; color: #111827; }
+        .reward-flow-grid .val.pending { color: #d97706; }
+        .reward-flow-grid .val.ok { color: #059669; }
+
+        .reward-search-row { padding: 8px 16px 12px; }
+        .reward-search-input { width: 100%; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 12px; font-weight: 600; color: #111827; background: #fff; outline: none; }
+        .reward-search-input::placeholder { color: #9ca3af; font-weight: 500; }
+        .reward-search-input:focus { border-color: #111827; }
+        .reward-empty-hint { text-align: center; padding: 32px 20px; color: #9ca3af; font-size: 11px; }
+
+        .sheet-overlay { display: none; position: absolute; inset: 0; background: rgba(0,0,0,.5); z-index: 100; border-radius: 38px; }
+        .sheet-overlay.active { display: block; }
+        .bottom-sheet { position: absolute; bottom: 0; left: 0; right: 0; background: #fff; border-radius: 20px 20px 0 0; z-index: 110; transform: translateY(100%); transition: transform .3s ease-out; max-height: 78%; display: flex; flex-direction: column; }
+        .bottom-sheet.active { transform: translateY(0); }
+        .sheet-handle { width: 36px; height: 4px; background: #e5e7eb; border-radius: 2px; margin: 10px auto 0; flex-shrink: 0; }
+        .sheet-body { padding: 12px 16px 24px; overflow-y: auto; flex: 1; }
+        .sheet-title { font-size: 15px; font-weight: 900; margin-bottom: 12px; }
+        .sheet-close-btn { margin-top: 12px; width: 100%; padding: 12px; background: #111827; color: #fff; border: none; border-radius: 10px; font-size: 12px; font-weight: 800; cursor: pointer; }
+        .reward-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+        .reward-table th { text-align: left; padding: 8px 6px; background: #f9fafb; color: #6b7280; font-weight: 800; border-bottom: 1px solid #e5e7eb; font-size: 9px; }
+        .reward-table td { padding: 10px 6px; border-bottom: 1px solid #f3f4f6; word-break: break-all; }
+
+        .toast { position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); background: #111827; color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 11px; font-weight: 800; z-index: 200; opacity: 0; transition: all .3s; white-space: nowrap; max-width: 90%; text-align: center; }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    </style>
+</head>
+<body>
+<div class="phone-shell">
+    <div class="screen" id="phoneScreen">
+        <!-- Home -->
+        <div class="app-view active" id="homeView">
+            <header class="app-nav">
+                <div class="w-8"></div>
+                <span class="app-nav-title">活动中心</span>
+                <div class="w-8"></div>
+            </header>
+            <div class="app-scroll no-scrollbar bg-slate-50">
+                <div class="px-4 pt-3 pb-1">
+                    <div class="hero-sub-row">
+                        <p class="hero-subtitle" id="heroSubtitle">参与活动，赢取丰厚奖励</p>
+                        <span class="my-activities-link" id="myActivitiesLink">我的活动</span>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat-item"><div class="stat-value" id="statValue1">270,000 USDT</div><div class="stat-label" id="statLabel1">总奖池</div></div>
+                        <div class="stat-item"><div class="stat-value" id="statValue2">5</div><div class="stat-label" id="statLabel2">进行中活动</div></div>
+                        <div class="stat-item"><div class="stat-value" id="statValue3">12.58K</div><div class="stat-label" id="statLabel3">参与人数</div></div>
+                    </div>
+                </div>
+                <div class="section-head"><h2 class="all-campaigns-title" id="allCampaignsTitle">全部活动</h2></div>
+                <div class="filter-row">
+                    <div class="status-filter" id="statusFilter">
+                        <div class="status-item active" data-status="ongoing" id="statusOngoing">进行中</div>
+                        <div class="status-item" data-status="ended" id="statusEnded">已结束</div>
+                    </div>
+                </div>
+                <div id="dynamicContent" class="activity-cards-list"></div>
+            </div>
+        </div>
+
+        <!-- Detail -->
+        <div class="app-view" id="detailView">
+            <header class="app-nav">
+                <button class="app-nav-btn" type="button" onclick="showView('home')" aria-label="返回">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <span class="app-nav-title" id="detailNavTitle">活动详情</span>
+                <div class="w-8"></div>
+            </header>
+            <div class="app-scroll no-scrollbar has-fixed-cta" id="detailScroll">
+                <div id="activityDetailContent"></div>
+            </div>
+            <div class="detail-fixed-cta" id="detailFixedCta">
+                <button class="btn-register-fixed" id="detailRegisterBtn" type="button">报名活动</button>
+            </div>
+        </div>
+
+        <!-- My Activities -->
+        <div class="app-view" id="myActivitiesView">
+            <header class="app-nav">
+                <button class="app-nav-btn" type="button" onclick="showView('home')" aria-label="返回">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <span class="app-nav-title">我的活动</span>
+                <button class="app-nav-reward" type="button" id="myRewardBtn">奖励记录</button>
+            </header>
+            <div class="app-scroll no-scrollbar bg-slate-50">
+                <div class="filter-row" style="padding-top:12px">
+                    <div class="status-filter" id="myActivityStatusFilter">
+                        <div class="status-item active" data-status="ongoing" id="myStatusOngoing">进行中</div>
+                        <div class="status-item" data-status="ended" id="myStatusEnded">已结束</div>
+                    </div>
+                </div>
+                <div id="myActivityCards" class="activity-cards-list"></div>
+            </div>
+        </div>
+
+        <!-- My Rewards -->
+        <div class="app-view" id="myRewardsView">
+            <header class="app-nav">
+                <button class="app-nav-btn" type="button" onclick="showView('myActivities')" aria-label="返回">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <span class="app-nav-title">奖励记录</span>
+                <div class="w-8"></div>
+            </header>
+            <div class="app-scroll no-scrollbar bg-slate-50">
+                <div class="reward-search-row">
+                    <input class="reward-search-input" id="rewardSearchInput" type="search" placeholder="搜索奖励名称">
+                </div>
+                <div id="myRewardsList" class="reward-flow-list"></div>
+            </div>
+        </div>
+
+        <div class="sheet-overlay" id="sheetOverlay" onclick="closeRewardSheet()" style="display:none!important"></div>
+        <div class="bottom-sheet" id="rewardSheet" style="display:none!important"></div>
+        <div class="toast" id="toast"></div>
+    </div>
+</div>
+
+<script>
+
+        const carouselData = [];
+
+        const activityCatalog = {
+            'forx-carnival-contest': {
+                id: 'forx-carnival-contest',
+                layout: 'combo',
+                rewardMode: 'pool',
+                poster: 'poster-carnival',
+                title: 'ForX嘉年华交易大赛',
+                desc: '完成限时任务并参与交易大赛，按交易额/盈利率占比瓜分奖池',
+                rewardPool: '100,000 USDT',
+                participants: '8,942',
+                period: '2026-05-20 至 2026-06-20',
+                countdown: '12D 03H 42M 68S',
+                status: 'ongoing',
+                taskPool: '20,000 USDT',
+                contestPool: '80,000 USDT',
+                contestRewardMode: 'proportional',
+                showProgress: true,
+                completedTasks: '2 / 4',
+                currentRank: '#1,240',
+                estContestReward: '2,500 USDT+',
+                totalTradeVolume: 156000000,
+                poolUnlockTiers: [
+                    { volume: 10000000, pool: 50000 },
+                    { volume: 50000000, pool: 100000 },
+                    { volume: 100000000, pool: 200000 },
+                    { volume: 500000000, pool: 300000 }
+                ],
+                tasks: [
+                    { template: 'deposit-100', progress: 100, done: true },
+                    { template: 'trade-100', progress: 100, done: true },
+                    { template: 'x-verify', progress: 0, done: false },
+                    { template: 'tg-join', progress: 0, done: false }
+                ]
+            },
+            'contract-contest': {
+                id: 'contract-contest',
+                layout: 'contest',
+                poster: 'poster-contest',
+                title: '合约交易争霸赛',
+                desc: '前三名固定奖励，第四名起按交易额和盈利率占比瓜分剩余奖池',
+                rewardPool: '100,000 USDT',
+                participants: '8,942',
+                period: '2026-05-20 至 2026-06-20',
+                countdown: '12D 03H 42M 68S',
+                status: 'ongoing',
+                contestPool: '100,000 USDT',
+                contestRewardMode: 'fixed-top3',
+                fixedTop3Rewards: [20000, 12000, 8000],
+                showProgress: false,
+                currentRank: '#36',
+                estContestReward: '1,280 USDT+',
+                totalTradeVolume: 156000000,
+                poolUnlockTiers: [
+                    { volume: 10000000, pool: 50000 },
+                    { volume: 50000000, pool: 100000 },
+                    { volume: 100000000, pool: 200000 },
+                    { volume: 500000000, pool: 300000 }
+                ]
+            },
+            'task-single-reward': {
+                id: 'task-single-reward',
+                layout: 'task',
+                rewardMode: 'single',
+                poster: 'poster-newbie',
+                title: '新人门槛礼',
+                desc: '新用户完成注册与交易门槛任务，领取单笔奖励',
+                rewardPool: '15,000 USDT',
+                participants: '3,218',
+                period: '2026-05-20 至 2026-06-20',
+                countdown: '18D 08H 15M 30S',
+                status: 'ongoing',
+                taskPool: '15,000 USDT',
+                showProgress: true,
+                completedTasks: '1 / 3',
+                tasks: [
+                    { template: 'new-register', reward: '10 USDT', progress: 100, done: true },
+                    { template: 'deposit-100', reward: '20 USDT', progress: 60, done: false, action: '去充值' },
+                    { template: 'trade-100', reward: '30 USDT', progress: 0, done: false, action: '去交易' }
+                ]
+            },
+            'task-pool-share': {
+                id: 'task-pool-share',
+                layout: 'task',
+                rewardMode: 'pool',
+                poster: 'poster-social',
+                title: '社群认证计划',
+                desc: '完成社交认证与关注任务，瓜分统一奖池',
+                rewardPool: '25,000 USDT',
+                participants: '5,672',
+                period: '2026-05-20 至 2026-06-20',
+                countdown: '10D 05H 22M 18S',
+                status: 'ongoing',
+                taskPool: '25,000 USDT',
+                showProgress: true,
+                completedTasks: '1 / 4',
+                tasks: [
+                    { template: 'x-verify', progress: 100, done: true },
+                    { template: 'x-follow', progress: 0, done: false, action: '去关注' },
+                    { template: 'tg-verify', progress: 0, done: false, action: '去认证' },
+                    { template: 'tg-join', progress: 0, done: false, action: '去加入' }
+                ]
+            },
+            'task-both-reward': {
+                id: 'task-both-reward',
+                layout: 'task',
+                rewardMode: 'both',
+                poster: 'poster-challenge',
+                title: '全能成长挑战',
+                desc: '完成任务获得固定奖励，同时参与总奖池瓜分',
+                rewardPool: '30,000 USDT',
+                participants: '2,104',
+                period: '2026-05-20 至 2026-06-20',
+                countdown: '14D 11H 40M 55S',
+                status: 'ongoing',
+                taskPool: '30,000 USDT',
+                showProgress: true,
+                completedTasks: '0 / 3',
+                tasks: [
+                    { template: 'deposit-and-trade', reward: '50 USDT', progress: 35, done: false, action: '去完成' },
+                    { template: 'deposit-100', reward: '15 USDT', progress: 0, done: false, action: '去充值' },
+                    { template: 'trade-100', reward: '25 USDT', progress: 0, done: false, action: '去交易' }
+                ]
+            },
+            'contract-contest-ended': {
+                id: 'contract-contest-ended',
+                layout: 'contest',
+                poster: 'poster-contest',
+                title: '春季合约交易赛',
+                desc: '已结束的合约交易大赛',
+                rewardPool: '50,000 USDT',
+                participants: '5,120',
+                period: '2026-03-01 至 2026-03-31',
+                date: '2026-03-01 至 2026-03-31',
+                status: 'ended',
+                contestPool: '50,000 USDT',
+                contestRewardMode: 'proportional',
+                showProgress: false
+            }
+        };
+
+        const activities = {
+            all: {
+                ongoing: [
+                    activityCatalog['forx-carnival-contest'],
+                    activityCatalog['contract-contest'],
+                    activityCatalog['task-single-reward'],
+                    activityCatalog['task-pool-share'],
+                    activityCatalog['task-both-reward']
+                ],
+                ended: [
+                    activityCatalog['contract-contest-ended']
+                ]
+            }
+        };
+
+        const activityRewards = {
+            'contract-contest-ended': {
+                name: '春季合约交易赛奖励',
+                rewardType: 'USDT',
+                amount: '86 USDT',
+                status: '已发放',
+                time: '2026-06-20 18:00:00'
+            }
+        };
+
+        const myJoinedActivities = [
+            activityCatalog['forx-carnival-contest'],
+            activityCatalog['contract-contest'],
+            activityCatalog['task-single-reward'],
+            activityCatalog['task-pool-share'],
+            activityCatalog['task-both-reward'],
+            activityCatalog['contract-contest-ended']
+        ];
+
+        const myRewards = [
+            { name: '新人注册 USDT 奖励', rewardType: 'USDT', amount: '10 USDT', status: '已发放', time: '2026-05-21 10:00:00', campaign: '新人门槛礼' },
+            { name: '合约交易争霸赛奖励', rewardType: 'USDT', amount: '1,280 USDT', status: '待发放', time: '—', campaign: '合约交易争霸赛' },
+            { name: '运营补偿积分', rewardType: '积分', amount: '+50 Pts', status: '已发放', time: '2026-07-10 15:30:00', campaign: '客诉补偿' },
+            { name: 'VIP 费率优惠', rewardType: '费率优惠', amount: 'Taker 0.020%', status: '已发放', time: '2026-07-18 09:16:00', campaign: '费率对标' },
+            { name: 'KOL 合作体验金', rewardType: '体验金', amount: '500 USDT', status: '已发放', time: '2026-07-20 09:15:00', campaign: 'KOL 合作' },
+            { name: '积分加成 1.5x', rewardType: '积分加成', amount: '1.5x', status: '已发放', time: '2026-07-12 11:20:00', campaign: '高净值激励' }
+        ];
+        let userParticipatedActivities = {};
+        let carnivalCurrentLeaderboardType = 'volume';
+        let carnivalCurrentPage = 1;
+        let currentStatus = 'ongoing';
+        let currentView = 'home';
+        let currentActivityId = null;
+        let myActivityFilter = 'ongoing';
+        let rewardSearchQuery = '';
+
+        const nicknames = ['AlphaTrader', 'CryptoFox', 'BlueWhale', 'MoonHunter', 'ChainKing',
+                          'LuckyBear', 'FutureMan', 'Web3Tiger', 'ForXStar', 'NightWhale',
+                          'TokenMaster', 'CoinHunter', 'BlockWolf', 'TradeNinja', 'HODLKing'];
+
+        function hasParticipatedById(activityId) {
+            return !!userParticipatedActivities[activityId];
+        }
+
+        function setParticipatedById(activityId) {
+            userParticipatedActivities[activityId] = { time: '2026-05-20 12:30:00' };
+        }
+
+        const ACTIVITY_RULES = [
+            '活动期间的交易数据以平台统计为准，异常交易不计入排名。',
+            '排行榜每 5 分钟更新一次，Top100 用户瓜分奖池。',
+            '用户需完成报名后方可参与数据统计与奖励结算。',
+            '奖励将在活动结束后统一核算并发放至账户。',
+            '平台保留对异常账户取消资格及奖励的最终解释权。'
+        ];
+
+        /* i18n stub for legacy refs */
+        const i18n = { zh: { toastDeposit: '已跳转充值页（原型演示）', toastGoTrade: '已跳转合约交易页（原型演示）', toastActivity: '进入活动详情（原型演示）', registerSuccess: '报名成功' }, en: {} };
+        const currentLang = 'zh';
+        function t(key) { return i18n.zh[key] || key; }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+
+        function renderCarousel() {}
+
+        function goToSlide() {}
+
+        const STATUS_LABEL = { ongoing: '进行中', ended: '已结束' };
+
+        function formatCardCountdown(activity) {
+            if (activity.status === 'ended') return activity.date || activity.period || '已结束';
+            return `<span class="activity-countdown"><span class="lbl">距离结束：</span>${activity.countdown}</span>`;
+        }
+
+        function renderActivityCard(activity) {
+            const posterClass = activity.poster || 'poster-default';
+            const timeHtml = formatCardCountdown(activity);
+            return `
+                <div class="activity-card" onclick="handleActivityCardClick('${activity.id}')">
+                    <div class="activity-card-poster ${posterClass}"></div>
+                    <div class="activity-card-body">
+                        <div class="activity-header">
+                            <span class="activity-status ${activity.status}">${STATUS_LABEL[activity.status] || activity.status}</span>
+                        </div>
+                        <h3 class="activity-title">${activity.title}</h3>
+                        <p class="activity-desc">${activity.desc}</p>
+                        <div class="activity-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">奖池</span>
+                                <span class="stat-value">${activity.rewardPool}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">参与人数</span>
+                                <span class="stat-value">${activity.participants}</span>
+                            </div>
+                        </div>
+                        <div class="activity-meta">
+                            ${timeHtml}
+                        </div>
+                        <button class="activity-view-btn" onclick="event.stopPropagation(); handleActivityCardClick('${activity.id}')">查看活动</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDynamicContent() {
+            const container = document.getElementById('dynamicContent');
+            const list = activities.all[currentStatus] || [];
+            if (!list.length) {
+                container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📋</div><p class="empty-text">暂无活动</p></div>`;
+                return;
+            }
+            container.innerHTML = list.map(renderActivityCard).join('');
+        }
+
+        
+        function showView(view, activityId) {
+            currentView = view === 'detail' ? 'activityDetail' : (view === 'myActivities' ? 'myActivities' : (view === 'myRewards' ? 'myRewards' : 'home'));
+            if (view === 'detail' && activityId) currentActivityId = activityId;
+            document.getElementById('homeView').classList.toggle('active', view === 'home');
+            document.getElementById('detailView').classList.toggle('active', view === 'detail');
+            document.getElementById('myActivitiesView').classList.toggle('active', view === 'myActivities');
+            document.getElementById('myRewardsView').classList.toggle('active', view === 'myRewards');
+            const scrollEl = document.querySelector('.app-view.active .app-scroll');
+            if (scrollEl) scrollEl.scrollTop = 0;
+            if (view === 'detail') {
+                renderActivityDetailPage();
+            } else if (view === 'myActivities') {
+                renderMyActivityCards(myActivityFilter);
+            } else if (view === 'myRewards') {
+                renderMyRewardsPage();
+            }
+        }
+
+        function handleActivityCardClick(activityId) {
+            showView('detail', activityId);
+        }
+
+        function registerForActivity(activityId) {
+            setParticipatedById(activityId);
+            showToast(t('registerSuccess'));
+            if (currentView === 'activityDetail' && currentActivityId === activityId) {
+                renderActivityDetailPage();
+            }
+        }
+
+        function showActivityDetail(activityId) {
+            showView('detail', activityId);
+        }
+
+        function goToMyActivity() {
+            showView('myActivities');
+        }
+
+        function formatPoolGrand(amount) {
+            return amount.toLocaleString('en-US', { maximumFractionDigits: 0 });
+        }
+
+        function renderProgressBlock(activity) {
+            const items = [];
+            if (activity.showProgress && activity.completedTasks) {
+                items.push(`<div class="detail-progress-item"><div class="val">${activity.completedTasks}</div><div class="lbl">已完成任务</div></div>`);
+            }
+            if (activity.layout !== 'task' && activity.currentRank) {
+                items.push(`<div class="detail-progress-item"><div class="val">${activity.currentRank}</div><div class="lbl">当前排名</div></div>`);
+            }
+            if (activity.layout !== 'task') {
+                const estReward = activity.estContestReward || getEstContestRewardLabel(activity);
+                items.push(`<div class="detail-progress-item"><div class="val highlight">${estReward}</div><div class="lbl">预估奖励</div></div>`);
+            }
+            if (!items.length) return '';
+            return `
+                <div class="my-progress-panel">
+                    <div class="my-progress-label">我的活动进度</div>
+                    <div class="detail-progress-row">${items.join('')}</div>
+                </div>`;
+        }
+
+        function getEstContestRewardLabel(activity) {
+            const userRank = parseInt(String(activity.currentRank || '0').replace(/[^\d]/g, ''), 10) || 0;
+            if (!userRank) return '—';
+            const leaderboard = buildLeaderboardData(activity);
+            const reward = leaderboard.find(item => item.rank === userRank)?.estReward || 0;
+            return reward > 0 ? formatUsdt(reward) : '—';
+        }
+
+        function formatVolume(amount) {
+            if (amount >= 1000000000) return (amount / 1000000000).toFixed(2) + 'B';
+            if (amount >= 1000000) return (amount / 1000000).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + 'M';
+            return amount.toLocaleString('en-US');
+        }
+
+        function getPoolUnlockState(activity) {
+            const tiers = activity.poolUnlockTiers || [];
+            const currentVolume = activity.totalTradeVolume || 0;
+            let unlockedPool = 0;
+            let unlockedCount = 0;
+            let nextTier = null;
+            const maxPool = tiers.length ? tiers[tiers.length - 1].pool : 0;
+
+            tiers.forEach(tier => {
+                const unlocked = currentVolume >= tier.volume;
+                if (unlocked) {
+                    unlockedPool = tier.pool;
+                    unlockedCount += 1;
+                } else if (!nextTier) {
+                    nextTier = tier;
+                }
+            });
+
+            const maxVolume = tiers.length ? tiers[tiers.length - 1].volume : 1;
+            const progressPct = Math.min((currentVolume / maxVolume) * 100, 100);
+            return { tiers, currentVolume, unlockedPool, unlockedCount, nextTier, progressPct, maxVolume, maxPool };
+        }
+
+        function formatVolumeShort(amount) {
+            if (amount >= 1000000) return (amount / 1000000).toFixed(0) + 'M';
+            if (amount >= 1000) return (amount / 1000).toFixed(0) + 'K';
+            return String(amount);
+        }
+
+        function formatPoolUsdt(amount) {
+            return formatPoolGrand(amount) + ' USDT';
+        }
+
+        function renderPoolUnlockSection(activity) {
+            const state = getPoolUnlockState(activity);
+            if (!state.tiers.length) return '';
+
+            return `
+                <div class="pool-unlock-section">
+                    <div class="pool-unlock-top">
+                        <div class="pool-unlock-title">当前交易额已解锁奖池 <span class="amount">${formatPoolUsdt(state.unlockedPool)}</span></div>
+                        <div class="pool-unlock-subline">当前总交易额 ${formatVolumeShort(state.currentVolume)}</div>
+                    </div>
+                    <div class="pool-unlock-rail">
+                        <div class="pool-unlock-track">
+                            <div class="pool-unlock-fill" style="width:${state.progressPct}%"></div>
+                        </div>
+                    </div>
+                    <div class="pool-unlock-tiers">
+                        ${state.tiers.map((tier, idx) => {
+                            const unlocked = state.currentVolume >= tier.volume;
+                            const isActive = unlocked && (idx === state.unlockedCount - 1);
+                            return `
+                                <div class="pool-unlock-tier ${unlocked ? 'unlocked' : ''} ${isActive ? 'active' : ''}">
+                                    <div class="pool-unlock-tier-dot"></div>
+                                    <div class="pool-unlock-tier-pool">${formatPoolGrand(tier.pool)}</div>
+                                    <div class="pool-unlock-tier-vol">${formatVolumeShort(tier.volume)}</div>
+                                </div>`;
+                        }).join('')}
+                    </div>
+                </div>`;
+        }
+
+        const TASK_REWARD_LABELS = {
+            single: '单任务奖励',
+            pool: '瓜分奖池',
+            both: '单任务奖励 + 瓜分奖池'
+        };
+
+        const TASK_REWARD_SUBS = {
+            single: '本活动采用单任务奖励模式：完成各任务即可获得对应奖励',
+            pool: '本活动采用瓜分奖池模式：完成任务参与奖池瓜分，任务本身无单独奖励',
+            both: '本活动采用单任务奖励 + 瓜分奖池模式：各任务有固定奖励，同时可参与奖池瓜分'
+        };
+
+        const TASK_TEMPLATES = {
+            'new-register': { name: '新注册用户', desc: '活动期间新注册 ForX 账户', action: '去注册' },
+            'deposit-100': { name: '充值 ≥ 100 USDT', desc: '累计充值达到 100 USDT 及以上', action: '去充值' },
+            'trade-100': { name: '交易额 ≥ 100 USDT', desc: '累计合约交易额达到 100 USDT 及以上', action: '去交易' },
+            'deposit-and-trade': { name: '充值 100 USDT，并交易额 ≥ 100 USDT', desc: '同时完成充值与交易额门槛', action: '去完成' },
+            'x-verify': { name: 'X 认证', desc: '完成 X 账号认证并绑定活动账户', action: '去认证' },
+            'x-follow': { name: 'X 关注', desc: '关注 ForX 官方 X 账号', action: '去关注' },
+            'tg-verify': { name: 'Telegram 认证', desc: '完成 Telegram 账号认证', action: '去认证' },
+            'tg-join': { name: '加入 Telegram 社群', desc: '加入 ForX 官方 Telegram 社群', action: '去加入' }
+        };
+
+        function resolveActivityTasks(activity) {
+            return (activity.tasks || []).map(task => {
+                const tpl = TASK_TEMPLATES[task.template] || {};
+                return { ...tpl, ...task };
+            });
+        }
+
+        function renderTaskRewardHtml(activity, task) {
+            const mode = activity.rewardMode || 'single';
+            if (mode === 'single') {
+                return `<div class="task-reward-line"><span class="task-pts">${task.reward || '—'}</span></div>`;
+            }
+            if (mode === 'pool') {
+                return `<div class="task-reward-line"><span class="task-pool-note">完成任务参与瓜分</span></div>`;
+            }
+            return `<div class="task-reward-line"><span class="task-pts">${task.reward || '—'}</span><span class="task-pool-note">另可参与奖池瓜分</span></div>`;
+        }
+
+        function renderTaskRow(activity, task, index) {
+            const actionBtn = task.done
+                ? '<span class="task-done-tag">已完成</span>'
+                : `<button class="task-btn-sm" onclick="showToast('原型演示：${task.action}')">${task.action || '去完成'}</button>`;
+            return `
+                <div class="task-row">
+                    <div class="task-num">${String(index + 1).padStart(2, '0')}</div>
+                    <div class="task-body">
+                        <div class="task-name">${task.name}</div>
+                        <div class="task-desc">${task.desc}</div>
+                        <div class="task-progress-track"><div class="task-progress-fill" style="width:${task.progress || 0}%"></div></div>
+                    </div>
+                    <div class="task-right">
+                        ${renderTaskRewardHtml(activity, task)}
+                        ${actionBtn}
+                    </div>
+                </div>`;
+        }
+
+        function renderHeroCard(activity) {
+            const joined = hasParticipatedById(activity.id);
+            const ended = activity.status === 'ended';
+
+            let actionBlock = '';
+            if (ended && activityRewards[activity.id]) {
+                actionBlock = `<div class="detail-action-block"><button class="ended-reward-btn" onclick="openActivityRewardModal('${activity.id}')">查看奖励</button></div>`;
+            } else if (joined) {
+                actionBlock = `
+                    <div class="detail-action-block joined-info-block">
+                        ${renderProgressBlock(activity)}
+                    </div>`;
+            }
+
+            return `
+                <div class="detail-hero-card">
+                    <p class="detail-hero-desc">${activity.desc}</p>
+                    <div class="detail-stats-row">
+                        <div class="detail-stat-box"><div class="val highlight">${activity.rewardPool}</div><div class="lbl">总奖池</div></div>
+                        <div class="detail-stat-box"><div class="val">${activity.participants}</div><div class="lbl">参与人数</div></div>
+                        <div class="detail-stat-box"><div class="val">${activity.period}</div><div class="lbl">活动时间</div></div>
+                        <div class="detail-stat-box"><div class="val">${ended ? '已结束' : activity.countdown}</div><div class="lbl">${ended ? '活动状态' : '剩余时间'}</div></div>
+                    </div>
+                    ${actionBlock}
+                </div>`;
+        }
+
+        function renderTaskSection(activity) {
+            if (activity.layout === 'contest') return '';
+            const pool = activity.taskPool || activity.rewardPool;
+            const mode = activity.rewardMode || 'single';
+            const tasks = resolveActivityTasks(activity);
+            const sectionTitle = activity.layout === 'combo' ? '限时任务奖励' : '任务奖励';
+
+            return `
+                <div class="detail-section">
+                    <div class="detail-section-head">
+                        <div class="detail-section-head-row">
+                            <div class="detail-section-title">${sectionTitle}</div>
+                            <div class="detail-section-pool">${pool}</div>
+                        </div>
+                        <div class="detail-section-sub">${TASK_REWARD_SUBS[mode]}</div>
+                        <div class="activity-reward-mode"><span class="task-reward-tag ${mode}">${TASK_REWARD_LABELS[mode]}</span></div>
+                    </div>
+                    ${tasks.map((task, i) => renderTaskRow(activity, task, i)).join('')}
+                </div>`;
+        }
+
+        function renderRankingSection(activity) {
+            if (activity.layout === 'task') return '';
+            const mode = activity.contestRewardMode || 'proportional';
+            const metricLabel = carnivalCurrentLeaderboardType === 'volume' ? '交易额' : '盈利率';
+            const userRank = parseInt((activity.currentRank || '#0').replace('#', '').replace(',', ''), 10) || 0;
+            const leaderboard = buildLeaderboardData(activity);
+            const userReward = userRank > 0 ? (leaderboard.find(item => item.rank === userRank)?.estReward || 0) : 0;
+
+            return `
+                <div class="detail-section">
+                    <div class="detail-section-head">
+                        <div class="detail-section-title">交易大赛排行榜</div>
+                        <div class="detail-section-sub">${CONTEST_REWARD_SUBS[mode]}</div>
+                        ${mode === 'fixed-top3' ? `<div class="detail-section-sub" style="margin-top:4px">前三名固定奖励：${(activity.fixedTop3Rewards || []).map(formatPoolUsdt).join(' / ')}</div>` : ''}
+                        <div class="contest-reward-mode"><span class="contest-reward-tag ${mode}">${CONTEST_REWARD_LABELS[mode]}</span></div>
+                    </div>
+                    ${renderPoolUnlockSection(activity)}
+                    ${hasParticipatedById(activity.id) ? `<div class="my-status-strip">
+                        <div class="item"><div class="val">${activity.currentRank || '#1,240'}</div><div class="lbl">当前排名</div></div>
+                        <div class="item"><div class="val">12,450 USDT</div><div class="lbl">我的交易量</div></div>
+                        <div class="item"><div class="val">8.5%</div><div class="lbl">我的盈利率</div></div>
+                        <div class="item"><div class="val">${activity.estContestReward || formatUsdt(userReward)}</div><div class="lbl">预估奖励</div></div>
+                        <div class="trade-row"><button class="btn-trade-sm" onclick="showToast(t('toastGoTrade'))">去交易</button></div>
+                    </div>` : ''}
+                    <div class="rank-tabs">
+                        <div class="rank-tab ${carnivalCurrentLeaderboardType === 'volume' ? 'active' : ''}" onclick="switchCarnivalLeaderboard('volume')">交易额排名</div>
+                        <div class="rank-tab ${carnivalCurrentLeaderboardType === 'profit' ? 'active' : ''}" onclick="switchCarnivalLeaderboard('profit')">盈利率排名</div>
+                    </div>
+                    <div class="rank-table-wrap">
+                        <div id="carnivalPodium"></div>
+                        <div class="rank-table-head">
+                            <div>排名</div>
+                            <div>用户</div>
+                            <div>${metricLabel}</div>
+                            <div style="text-align:right">预估奖励</div>
+                        </div>
+                        <div id="carnivalLeaderboardBody"></div>
+                        <div class="rank-pagination" id="carnivalPagination"></div>
+                    </div>
+                </div>`;
+        }
+
+        function renderRulesSection() {
+            return `
+                <div class="detail-section">
+                    <div class="detail-section-head" style="margin-bottom:12px;padding-bottom:0;border:none">
+                        <div class="detail-section-title">活动规则说明</div>
+                    </div>
+                    <ul class="rules-list">
+                        ${ACTIVITY_RULES.map((rule, i) => `<li><span class="num">${i + 1}</span><span>${rule}</span></li>`).join('')}
+                    </ul>
+                </div>`;
+        }
+
+        function renderActivityDetailPage() {
+            const activity = activityCatalog[currentActivityId];
+            const fixedCta = document.getElementById('detailFixedCta');
+            const registerBtn = document.getElementById('detailRegisterBtn');
+            if (!activity) {
+                document.getElementById('activityDetailContent').innerHTML = '<div class="empty-state"><p class="empty-text">活动不存在</p></div>';
+                fixedCta.classList.remove('show');
+                return;
+            }
+            document.getElementById('detailNavTitle').textContent = activity.title;
+            document.getElementById('activityDetailContent').innerHTML =
+                renderHeroCard(activity) +
+                renderTaskSection(activity) +
+                renderRankingSection(activity) +
+                renderRulesSection();
+            if (activity.layout !== 'task') renderCarnivalLeaderboard();
+            const showRegister = activity.status !== 'ended' && !hasParticipatedById(activity.id);
+            fixedCta.classList.toggle('show', showRegister);
+            registerBtn.onclick = () => registerForActivity(activity.id);
+        }
+
+        function switchCarnivalLeaderboard(type) {
+            carnivalCurrentLeaderboardType = type;
+            carnivalCurrentPage = 1;
+            renderActivityDetailPage();
+        }
+
+        const CONTEST_REWARD_LABELS = {
+            proportional: '按交易额/盈利率占比瓜分',
+            'fixed-top3': '前三固定 + 占比瓜分'
+        };
+
+        const CONTEST_REWARD_SUBS = {
+            proportional: 'Top100 用户按交易额或盈利率占比瓜分奖池',
+            'fixed-top3': '前三名获得固定奖励，第四名起按交易额或盈利率占比瓜分剩余奖池'
+        };
+
+        const PODIUM_MEDALS = { 1: '🥇', 2: '🥈', 3: '🥉' };
+        const PODIUM_ORDER = [2, 1, 3];
+
+        function parsePoolAmount(poolStr) {
+            return parseFloat(String(poolStr).replace(/[^\d.]/g, '')) || 0;
+        }
+
+        function formatUsdt(amount) {
+            return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' USDT';
+        }
+
+        function buildLeaderboardData(activity) {
+            const items = [];
+            for (let i = 0; i < 100; i++) {
+                const rawValue = carnivalCurrentLeaderboardType === 'volume'
+                    ? 2500000 - i * 24000
+                    : 128.5 - i * 1.25;
+                items.push({
+                    rank: i + 1,
+                    nickname: nicknames[i % nicknames.length] + (i > 19 ? Math.floor(i / 20) : ''),
+                    rawValue,
+                    value: carnivalCurrentLeaderboardType === 'volume'
+                        ? rawValue.toLocaleString() + ' USDT'
+                        : rawValue.toFixed(1) + '%'
+                });
+            }
+            return applyContestRewards(items, activity);
+        }
+
+        function applyContestRewards(items, activity) {
+            const unlockState = getPoolUnlockState(activity);
+            const pool = unlockState.unlockedPool > 0
+                ? unlockState.unlockedPool
+                : parsePoolAmount(activity.contestPool || activity.rewardPool);
+            const mode = activity.contestRewardMode || 'proportional';
+            const fixedTop3 = activity.fixedTop3Rewards || [20000, 12000, 8000];
+
+            if (mode === 'proportional') {
+                const total = items.reduce((sum, item) => sum + item.rawValue, 0);
+                items.forEach(item => {
+                    item.estReward = total > 0 ? pool * (item.rawValue / total) : 0;
+                });
+                return items;
+            }
+
+            const fixedTotal = fixedTop3.reduce((sum, val) => sum + val, 0);
+            const remainPool = Math.max(pool - fixedTotal, 0);
+            const restItems = items.slice(3);
+            const restTotal = restItems.reduce((sum, item) => sum + item.rawValue, 0);
+
+            items.forEach((item, idx) => {
+                if (idx < 3) {
+                    item.estReward = fixedTop3[idx] || 0;
+                } else {
+                    item.estReward = restTotal > 0 ? remainPool * (item.rawValue / restTotal) : 0;
+                }
+            });
+            return items;
+        }
+
+        function renderPodium(top3, metricLabel) {
+            const byRank = Object.fromEntries(top3.map(item => [item.rank, item]));
+            return `<div class="rank-podium">${PODIUM_ORDER.map(rank => {
+                const item = byRank[rank];
+                const cls = rank === 1 ? 'first' : rank === 2 ? 'second' : 'third';
+                return `
+                    <div class="podium-item ${cls}">
+                        <div class="podium-user">
+                            <div class="podium-avatar">${PODIUM_MEDALS[rank]}</div>
+                            <div class="podium-name">${item.nickname}</div>
+                            <div class="podium-metric">${metricLabel} ${item.value}</div>
+                            <div class="podium-reward">${formatUsdt(item.estReward)}</div>
+                        </div>
+                        <div class="podium-stand">${rank}</div>
+                    </div>`;
+            }).join('')}</div>`;
+        }
+
+        function renderCarnivalLeaderboard() {
+            const activity = activityCatalog[currentActivityId];
+            const podium = document.getElementById('carnivalPodium');
+            const tbody = document.getElementById('carnivalLeaderboardBody');
+            const pagination = document.getElementById('carnivalPagination');
+            if (!tbody || !activity) return;
+
+            const data = buildLeaderboardData(activity);
+            const metricLabel = carnivalCurrentLeaderboardType === 'volume' ? '交易额' : '盈利率';
+
+            if (podium) {
+                podium.innerHTML = renderPodium(data.slice(0, 3), metricLabel);
+            }
+
+            const tableData = data.slice(3);
+            const totalPages = Math.ceil(tableData.length / 10) || 1;
+            if (carnivalCurrentPage > totalPages) carnivalCurrentPage = totalPages;
+
+            const pageData = tableData.slice((carnivalCurrentPage - 1) * 10, carnivalCurrentPage * 10);
+            tbody.innerHTML = pageData.map(item => `
+                <div class="rank-table-row">
+                    <div>${item.rank}</div>
+                    <div>${item.nickname}</div>
+                    <div>${item.value}</div>
+                    <div class="rank-est-reward">${formatUsdt(item.estReward)}</div>
+                </div>`).join('');
+
+            pagination.innerHTML = `
+                <button class="rank-page-nav" onclick="changeCarnivalPage(${carnivalCurrentPage - 1})" ${carnivalCurrentPage === 1 ? 'disabled' : ''}>上一页</button>
+                <input class="rank-page-input" id="carnivalPageInput" type="number" min="1" max="${totalPages}" value="${carnivalCurrentPage}" onkeydown="if(event.key==='Enter')jumpCarnivalPage()">
+                <span style="font-size:10px;color:#9ca3af;font-weight:700">/ ${totalPages}</span>
+                <button class="rank-page-jump" onclick="jumpCarnivalPage()">跳转</button>
+                <button class="rank-page-nav" onclick="changeCarnivalPage(${carnivalCurrentPage + 1})" ${carnivalCurrentPage === totalPages ? 'disabled' : ''}>下一页</button>`;
+        }
+
+        function jumpCarnivalPage() {
+            const input = document.getElementById('carnivalPageInput');
+            if (!input) return;
+            const page = parseInt(input.value, 10);
+            if (!Number.isFinite(page)) return;
+            changeCarnivalPage(page);
+        }
+
+        function changeCarnivalPage(page) {
+            const activity = activityCatalog[currentActivityId];
+            if (!activity) return;
+            const totalPages = Math.ceil(97 / 10) || 1;
+            if (page < 1 || page > totalPages) return;
+            carnivalCurrentPage = page;
+            renderCarnivalLeaderboard();
+        }
+
+        function openActivityRewardModal(activityId) {
+            showView('myRewards');
+        }
+
+        function renderMyRewardsPage() {
+            const container = document.getElementById('myRewardsList');
+            if (!container) return;
+            const query = rewardSearchQuery.trim().toLowerCase();
+            const filtered = query
+                ? myRewards.filter(r => (r.name + r.campaign).toLowerCase().includes(query))
+                : myRewards;
+            if (!filtered.length) {
+                container.innerHTML = `<div class="reward-empty-hint">${query ? '未找到匹配的奖励记录' : '暂无奖励记录'}</div>`;
+                return;
+            }
+            container.innerHTML = filtered.map(r => {
+                const statusCls = r.status === '待发放' ? 'pending' : (r.status === '已发放' ? 'ok' : '');
+                return `
+                    <div class="reward-flow-item">
+                        <div class="reward-flow-name">${r.name}</div>
+                        <div class="reward-flow-grid">
+                            <div><span class="lbl">奖励类型</span><div class="val">${r.rewardType}</div></div>
+                            <div><span class="lbl">发放金额</span><div class="val">${r.amount}</div></div>
+                            <div><span class="lbl">发放状态</span><div class="val ${statusCls}">${r.status}</div></div>
+                            <div><span class="lbl">发放时间</span><div class="val">${r.time}</div></div>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        function goToMyRewards() {
+            showView('myRewards');
+        }
+
+        function renderMyActivityCards(filter) {
+            const container = document.getElementById('myActivityCards');
+            const filtered = myJoinedActivities.filter(a => a.status === filter);
+            if (!filtered.length) {
+                container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📋</div><p class="empty-text">该分类下暂无活动</p></div>`;
+                return;
+            }
+            container.innerHTML = filtered.map(renderActivityCard).join('');
+        }
+
+        document.getElementById('myActivitiesLink').addEventListener('click', goToMyActivity);
+        document.getElementById('myRewardBtn').addEventListener('click', goToMyRewards);
+        document.getElementById('rewardSearchInput').addEventListener('input', (e) => {
+            rewardSearchQuery = e.target.value;
+            renderMyRewardsPage();
+        });
+        document.querySelectorAll('#myActivityStatusFilter .status-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('#myActivityStatusFilter .status-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                myActivityFilter = item.dataset.status;
+                renderMyActivityCards(myActivityFilter);
+            });
+        });
+        document.querySelectorAll('#statusFilter .status-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('#statusFilter .status-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                currentStatus = item.dataset.status;
+                renderDynamicContent();
+            });
+        });
+
+        renderDynamicContent();
+    
+    </script>
+</body>
+</html>
