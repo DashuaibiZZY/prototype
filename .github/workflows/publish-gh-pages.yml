@@ -1,6 +1,7 @@
-# 原型站发布：使用 configure-pages + deploy-pages，避免 GitHub 内置
-# pages-build-deployment 在 deployment_queued 卡住（与 HTML 内容无关）。
-# Pages 设置需为 Source → GitHub Actions（本 workflow 首次运行时会由 configure-pages 配置）。
+# 原型站发布：configure-pages + deploy-pages。
+# Pages 必须为 GitHub Actions 源（非 Deploy from a branch），否则会与内置
+# pages-build-deployment 双跑并在 Actions 里卡住 deployment_queued。
+# 部署记录见 /deployments，不是 Settings → Environments 列表页。
 name: Deploy prototype to Pages
 
 on:
@@ -27,18 +28,22 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      # 避免 legacy 分支模式与内置 pages-build-deployment 和本 workflow 双跑抢锁
+      # 需仓库管理员权限；403 时请到 Settings → Pages 手动选 GitHub Actions
       - name: Force Pages workflow deployment source
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          curl -fsSL \
+          if curl -fsSL \
             -X PUT \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${GH_TOKEN}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/pages" \
-            -d '{"build_type":"workflow"}'
+            -d '{"build_type":"workflow"}'; then
+            echo "Pages build_type set to workflow"
+          else
+            echo "::warning::无法通过 API 切换 Pages 源（需管理员）。请到 Settings → Pages → Source 选 GitHub Actions，并取消 Actions 里正在跑的 pages-build-deployment。"
+          fi
 
       - name: Prepare site artifact
         run: |
