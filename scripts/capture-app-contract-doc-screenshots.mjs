@@ -119,6 +119,11 @@ const shots = [
     clipHeight: 520,
   },
   {
+    file: 'app-contract-modal-share-pnl.png',
+    before: 'openSharePnl()',
+    selector: '#modal-share-pnl > div',
+  },
+  {
     file: 'app-subpage-trade-prefs.png',
     url: 'file://' + path.join(ROOT, 'perp_dex/app/合约偏好设置.html'),
     selector: '.screen',

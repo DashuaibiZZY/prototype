@@ -23,6 +23,8 @@ const shots = [
     before: "openDrawer('10028471')",
     selector: '#configDrawer',
     viewport: { w: 1440, h: 900 },
+    clipHeight: 720,
+    postDelay: 900,
   },
   {
     file: 'admin-fee-approval-list.png',
@@ -115,7 +117,7 @@ for (const shot of shots) {
   await new Promise((r) => setTimeout(r, 800));
   if (shot.before) {
     await page.evaluate(shot.before);
-    await new Promise((r) => setTimeout(r, 600));
+    await new Promise((r) => setTimeout(r, shot.postDelay || 600));
   }
   let el = await page.$(shot.selector);
   if (!el && shot.selector.includes('\\')) {
