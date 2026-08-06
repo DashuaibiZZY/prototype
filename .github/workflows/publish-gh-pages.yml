@@ -1,6 +1,7 @@
-# 绕过 actions/deploy-pages 卡在 deployment_queued 的问题：
-# 将 main 推送到 gh-pages 分支，Pages 源改为「Deploy from a branch → gh-pages」
-name: Publish to gh-pages
+# 原型站发布：使用 configure-pages + deploy-pages，避免 GitHub 内置
+# pages-build-deployment 在 deployment_queued 卡住（与 HTML 内容无关）。
+# Pages 设置需为 Source → GitHub Actions（本 workflow 首次运行时会由 configure-pages 配置）。
+name: Deploy prototype to Pages
 
 on:
   push:
@@ -8,24 +9,46 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
-  group: publish-gh-pages
+  group: pages
   cancel-in-progress: true
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Push site to gh-pages branch
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare site artifact
+        run: |
+          mkdir -p _site
+          rsync -a \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '.idea' \
+            --exclude 'node_modules' \
+            ./ _site/
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
-          publish_branch: gh-pages
-          force_orphan: true
-          exclude_assets: |
-            .github
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
