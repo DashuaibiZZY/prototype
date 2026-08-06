@@ -30,9 +30,10 @@ const shots = [
     file: 'admin-issue-form.png',
     url: 'file://' + path.join(ROOT, 'perp_dex/admin/体验金后台.html'),
     hash: 'issue',
+    before: "(() => { const p = document.getElementById('issue-activity-picker'); if (p) p.scrollIntoView({ block: 'center' }); })()",
     selector: '#page-issue .card',
     viewport: { w: 1440, h: 900 },
-    clipHeight: 640,
+    clipHeight: 720,
   },
   {
     file: 'admin-modal-issue-approval.png',

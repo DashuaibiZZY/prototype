@@ -117,6 +117,24 @@
 - 上下半区之间以细分隔线区分，但外轮廓、圆角、背景渐变保持一致，形成**一体化活动卡片**。
 - 不要求在本卡片内展示活动规则长文案，详情在活动中心查看。
 
+## 2.5 活动中心 · 奖励记录（关联说明）
+
+用户从本页进入 **活动中心** 后，在 **我的活动** 页可进入 **奖励记录**，查看后台自定义发放（积分 / 费率 / 体验金 / 加成等）到账明细。
+
+页面截图：[**App · 我的活动**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E6%B4%BB%E5%8A%A8%E4%B8%AD%E5%BF%83-app/app-activity-my-activities.png)
+
+页面截图：[**App · 奖励记录列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E6%B4%BB%E5%8A%A8%E4%B8%AD%E5%BF%83-app/app-activity-rewards-list.png)
+
+| 字段 | 说明 |
+|---|---|
+| 奖励名称 | 关联平台活动取多语言名称；自定义发放取后台配置的四语言奖励名称 |
+| 奖励类型 | 积分 / 积分加成 / 费率优惠 / 体验金等 |
+| 发放金额 | 如 `+500 Pts`、`1.5x`、`VIP 费率优惠`、`+100 USDT` |
+| 发放状态 | 已发放 |
+| 发放时间 | 到账时间（UTC+8） |
+
+- App 端为独立全屏列表，支持按奖励名称搜索；Web 端为「我的活动」页右上角按钮打开的弹窗表格（字段一致）。
+
 ---
 
 # 3. 我的权益

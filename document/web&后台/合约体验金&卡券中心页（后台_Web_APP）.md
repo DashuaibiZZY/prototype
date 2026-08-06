@@ -637,7 +637,7 @@ https://dashuaibizzy.github.io/prototype/perp_dex/流程图/回收执行流程.s
 
 **原型**：[https://dashuaibizzy.github.io/prototype/perp_dex/admin/体验金后台.html#issue](https://dashuaibizzy.github.io/prototype/perp_dex/admin/体验金后台.html#issue)
 
-页面截图：[**后台 · 批量发放表单**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/admin-issue-form.png)
+页面截图：[**后台 · 批量发放表单（含活动选择器）**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/admin-issue-form.png)
 
 支持运营人员向特定用户名单发放差异化金额的体验金，须关联卡组规则与活动信息，并提交四级审批。
 
@@ -663,8 +663,8 @@ https://dashuaibizzy.github.io/prototype/perp_dex/流程图/回收执行流程.s
 
 | 模式 | 说明 |
 |---|---|
-| 平台活动 | 从平台活动列表中选择已有活动（展示活动 ID + 活动名称） |
-| 自定义活动名 | 手动输入本次活动名称 |
+| 关联平台活动 | 从平台活动列表中选择已有活动（活动 ID + 活动名称） |
+| 自定义活动名称 | 活动选择器切换后须填写简中 / 繁中 / 英文 / 日文四种奖励名称 |
 
 #### （2）关联卡组参数（必填）
 
@@ -1429,6 +1429,8 @@ https://dashuaibizzy.github.io/prototype/perp_dex/流程图/回收执行流程.s
 # 附录. 奖励记录（活动中心聚合）
 
 体验金批量发放审批通过、卡券到账后，须在用户端 **活动中心 → 我的活动 → 奖励记录** 写入一条记录。
+
+页面截图：[**App · 奖励记录列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E6%B4%BB%E5%8A%A8%E4%B8%AD%E5%BF%83-app/app-activity-rewards-list.png)
 
 | 奖励记录字段 | 规则 |
 |---|---|

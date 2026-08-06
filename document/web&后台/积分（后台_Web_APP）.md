@@ -294,7 +294,7 @@
 
 **原型**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/admin/积分后台\.html\#bonus](https://dashuaibizzy.github.io/prototype/perp_dex/admin/%E7%A7%AF%E5%88%86%E5%90%8E%E5%8F%B0.html#bonus)
 
-页面截图：[**后台 · 积分加成配置**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/admin-bonus-config.png)
+页面截图：[**后台 · 积分加成配置（含活动选择器）**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/admin-bonus-config.png)
 
 为单个或批量用户配置**自定义积分加成系数**，覆盖自然等级加成。提交前系统校验自然等级加成是否高于新设置值，存在异常时须市场运营确认后进入审批流程。
 
@@ -311,8 +311,15 @@
 |---|---|
 |UID 或钱包地址|单用户模式必填；支持 UID 或 EVM 钱包地址|
 |新积分加成系数|数值，步进 0\.05，范围 1\.0–3\.0，如 `1.5`、`2.0`|
-|活动关联|**必填**，二选一：平台活动（下拉选择活动 ID \+ 名称）或自定义活动名|
+|活动关联|**必填**。活动信息选择器二选一（见下表）；选择「自定义活动名称」时须填写简中 / 繁中 / 英文 / 日文四种奖励名称，审批通过后按用户语言写入流水与活动中心奖励记录。|
 |申请备注|**必填**，说明配置原因及审批依据|
+
+**活动信息选择器**
+
+| 模式 | 操作 |
+|---|---|
+| 关联平台活动 | 下拉选择平台已有活动（活动 ID + 名称） |
+| 自定义活动名称 | 展示四语言奖励名称输入框（简中 / 繁中 / 英文 / 日文），提交前校验四种语言均非空 |
 
 #### 异常校验
 
@@ -512,7 +519,7 @@ Hash：`#weekly-detail=WK2026-W29` 等。
 
 **原型**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/admin/积分后台\.html\#manual](https://dashuaibizzy.github.io/prototype/perp_dex/admin/%E7%A7%AF%E5%88%86%E5%90%8E%E5%8F%B0.html#manual)
 
-页面截图：[**后台 · 手动发放积分**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/admin-manual-grant.png)
+页面截图：[**后台 · 手动发放积分（含活动选择器）**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E7%A7%AF%E5%88%86/admin-manual-grant.png)
 
 用于活动奖励、空投、补偿等场景的批量积分增发，须关联活动并走四级审批。
 
@@ -528,8 +535,15 @@ Hash：`#weekly-detail=WK2026-W29` 等。
 |配置项|说明|
 |---|---|
 |发放名单|多行录入或文件解析后的 UID / 钱包 \+ 积分数|
-|活动关联|**必填**，二选一：平台活动或自定义活动名|
+|活动关联|**必填**。活动信息选择器二选一；「自定义活动名称」须填写简中 / 繁中 / 英文 / 日文四种奖励名称。|
 |申请备注|**必填**，说明发放原因及审批依据|
+
+**活动信息选择器**（与 §3\.2 积分加成配置共用组件）
+
+| 模式 | 操作 |
+|---|---|
+| 关联平台活动 | 下拉选择平台已有活动 |
+| 自定义活动名称 | 四语言奖励名称输入框，四种语言均必填 |
 
 #### 校验逻辑
 
@@ -1052,6 +1066,14 @@ Hash：`#weekly-detail=WK2026-W29` 等。
 # 附录 B. 奖励记录（活动中心聚合）
 
 手动发放积分、积分加成配置审批通过后，除写入积分流水外，须在用户端 **活动中心 → 我的活动 → 奖励记录** 生成一条记录。
+
+页面截图：[**Web · 我的活动 · 奖励记录入口**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E6%B4%BB%E5%8A%A8%E4%B8%AD%E5%BF%83-web/web-activity-my-entry.png)
+
+页面截图：[**Web · 奖励记录弹窗**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E6%B4%BB%E5%8A%A8%E4%B8%AD%E5%BF%83-web/web-activity-reward-modal.png)
+
+页面截图：[**App · 奖励记录列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/%E6%B4%BB%E5%8A%A8%E4%B8%AD%E5%BF%83-app/app-activity-rewards-list.png)
+
+列表字段：**奖励名称**、**奖励类型**、**发放金额**、**发放状态**、**发放时间**（Web 弹窗为表格；App 为卡片流 + 搜索）。
 
 ## B.1 手动发放积分
 
