@@ -409,7 +409,7 @@
                 <h2 class="page-head-title" id="myActivityTitle">我的活动</h2>
                 <p class="page-head-sub" id="myActivitySubtitle">查看我已参与的活动</p>
             </div>
-            <button class="my-reward-btn" id="myRewardBtn">我的奖励</button>
+            <button class="my-reward-btn" id="myRewardBtn">奖励记录</button>
         </div>
 
         <div class="filter-row">
@@ -424,7 +424,7 @@
 
     <div class="reward-detail-modal" id="rewardDetailModal">
         <div class="modal-detail-content wide">
-            <h3 class="modal-detail-title" id="detailModalTitle">我的奖励</h3>
+            <h3 class="modal-detail-title" id="detailModalTitle">奖励记录</h3>
             <div id="detailModalContent"></div>
             <button class="modal-detail-btn" id="closeDetailModal">知道了</button>
         </div>
@@ -597,9 +597,10 @@
         const activityRewards = {
             'contract-contest-ended': {
                 name: '春季合约交易赛奖励',
-                activityType: '交易大赛',
                 rewardType: 'USDT',
-                amount: '86 USDT'
+                amount: '86 USDT',
+                status: '已发放',
+                time: '2026-06-20 18:00:00'
             }
         };
 
@@ -613,12 +614,13 @@
         ];
 
         const myRewards = [
-            { name: '新用户注册奖励', campaign: '新人门槛礼', type: 'USDT', amount: '10 USDT' },
-            { name: '合约交易争霸赛奖励', campaign: '合约交易争霸赛', type: 'USDT', amount: '待发放' },
-            { name: '春季合约交易赛奖励', campaign: '春季合约交易赛', type: 'USDT', amount: '86 USDT' },
-            { name: '嘉年华任务奖励', campaign: 'ForX嘉年华交易大赛', type: 'USDT', amount: '待发放' },
-            { name: '嘉年华交易赛奖励', campaign: 'ForX嘉年华交易大赛', type: 'USDT', amount: '待发放' },
-            { name: '社群认证奖励', campaign: '社群认证计划', type: 'USDT', amount: '待发放' }
+            { name: '新人注册 USDT 奖励', rewardType: 'USDT', amount: '10 USDT', status: '已发放', time: '2026-05-21 10:00:00', source: 'activity', campaign: '新人门槛礼' },
+            { name: '合约交易争霸赛奖励', rewardType: 'USDT', amount: '1,280 USDT', status: '待发放', time: '—', source: 'activity', campaign: '合约交易争霸赛' },
+            { name: '运营补偿积分', rewardType: '积分', amount: '+50 Pts', status: '已发放', time: '2026-07-10 15:30:00', source: 'points_manual', campaign: '客诉补偿（自定义）' },
+            { name: 'VIP 费率优惠', rewardType: '费率优惠', amount: 'Taker 0.020% / Maker 0.008%', status: '已发放', time: '2026-07-18 09:16:00', source: 'fee_grant', campaign: '费率对标补差' },
+            { name: 'KOL 合作体验金', rewardType: '体验金', amount: '500 USDT', status: '已发放', time: '2026-07-20 09:15:00', source: 'trial_issue', campaign: '社区 KOL 合作' },
+            { name: '积分加成 1.5x', rewardType: '积分加成', amount: '1.5x', status: '已发放', time: '2026-07-12 11:20:00', source: 'points_bonus', campaign: '高净值用户激励' },
+            { name: '嘉年华任务奖励', rewardType: 'USDT', amount: '50 USDT', status: '待发放', time: '—', source: 'activity', campaign: 'ForX嘉年华交易大赛' }
         ];
         const REWARD_PAGE_SIZE = 4;
         let rewardModalPage = 1;
@@ -1246,9 +1248,9 @@
             document.getElementById('detailModalTitle').textContent = '活动奖励';
             document.getElementById('detailModalContent').innerHTML = `
                 <table class="reward-table">
-                    <thead><tr><th>奖励名称</th><th>活动类型</th><th>奖励类型</th><th>发放金额</th></tr></thead>
+                    <thead><tr><th>奖励名称</th><th>奖励类型</th><th>发放金额</th><th>发放状态</th><th>发放时间</th></tr></thead>
                     <tbody><tr>
-                        <td>${reward.name}</td><td>${reward.activityType}</td><td>${reward.rewardType}</td><td>${reward.amount}</td>
+                        <td>${reward.name}</td><td>${reward.rewardType}</td><td>${reward.amount}</td><td>${reward.status || '已发放'}</td><td>${reward.time || '—'}</td>
                     </tr></tbody>
                 </table>`;
             modal.classList.add('active');
@@ -1286,15 +1288,15 @@
             const pageData = myRewards.slice(start, start + REWARD_PAGE_SIZE);
             document.getElementById('detailModalContent').innerHTML = `
                 <table class="reward-table">
-                    <thead><tr><th>奖励名称</th><th>活动类型</th><th>奖励类型</th><th>发放金额</th></tr></thead>
-                    <tbody>${pageData.map(r => `<tr><td>${r.name}</td><td>${r.campaign}</td><td>${r.type}</td><td>${r.amount}</td></tr>`).join('')}</tbody>
+                    <thead><tr><th>奖励名称</th><th>奖励类型</th><th>发放金额</th><th>发放状态</th><th>发放时间</th></tr></thead>
+                    <tbody>${pageData.map(r => `<tr><td>${r.name}</td><td>${r.rewardType}</td><td>${r.amount}</td><td>${r.status}</td><td>${r.time}</td></tr>`).join('')}</tbody>
                 </table>
                 ${renderRewardModalPagination()}`;
         }
 
         function openMyRewardsModal() {
             rewardModalPage = 1;
-            document.getElementById('detailModalTitle').textContent = '我的奖励';
+            document.getElementById('detailModalTitle').textContent = '奖励记录';
             renderMyRewardsModalContent();
             document.getElementById('rewardDetailModal').classList.add('active');
         }

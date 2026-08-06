@@ -182,13 +182,14 @@
         .btn-register-fixed { width: 100%; padding: 13px; background: #111827; color: #fff; border: none; border-radius: 12px; font-size: 13px; font-weight: 900; cursor: pointer; }
 
         .reward-flow-list { display: flex; flex-direction: column; gap: 0; }
-        .reward-flow-item { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #f3f4f6; background: #fff; }
+        .reward-flow-item { padding: 14px 16px; border-bottom: 1px solid #f3f4f6; background: #fff; }
         .reward-flow-item:last-child { border-bottom: none; }
-        .reward-flow-main { flex: 1; min-width: 0; }
-        .reward-flow-name { font-size: 12px; font-weight: 800; margin-bottom: 3px; }
-        .reward-flow-meta { font-size: 10px; color: #9ca3af; line-height: 1.4; }
-        .reward-flow-amount { font-size: 13px; font-weight: 900; color: #2563eb; text-align: right; flex-shrink: 0; }
-        .reward-flow-amount.pending { color: #d97706; }
+        .reward-flow-name { font-size: 12px; font-weight: 800; margin-bottom: 8px; }
+        .reward-flow-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; font-size: 10px; }
+        .reward-flow-grid .lbl { color: #9ca3af; font-weight: 700; }
+        .reward-flow-grid .val { font-weight: 800; color: #111827; }
+        .reward-flow-grid .val.pending { color: #d97706; }
+        .reward-flow-grid .val.ok { color: #059669; }
 
         .reward-search-row { padding: 8px 16px 12px; }
         .reward-search-input { width: 100%; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 12px; font-weight: 600; color: #111827; background: #fff; outline: none; }
@@ -269,7 +270,7 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
                 </button>
                 <span class="app-nav-title">我的活动</span>
-                <button class="app-nav-reward" type="button" id="myRewardBtn">我的奖励</button>
+                <button class="app-nav-reward" type="button" id="myRewardBtn">奖励记录</button>
             </header>
             <div class="app-scroll no-scrollbar bg-slate-50">
                 <div class="filter-row" style="padding-top:12px">
@@ -288,12 +289,12 @@
                 <button class="app-nav-btn" type="button" onclick="showView('myActivities')" aria-label="返回">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
                 </button>
-                <span class="app-nav-title">我的奖励</span>
+                <span class="app-nav-title">奖励记录</span>
                 <div class="w-8"></div>
             </header>
             <div class="app-scroll no-scrollbar bg-slate-50">
                 <div class="reward-search-row">
-                    <input class="reward-search-input" id="rewardSearchInput" type="search" placeholder="搜索活动名">
+                    <input class="reward-search-input" id="rewardSearchInput" type="search" placeholder="搜索奖励名称">
                 </div>
                 <div id="myRewardsList" class="reward-flow-list"></div>
             </div>
@@ -467,9 +468,10 @@
         const activityRewards = {
             'contract-contest-ended': {
                 name: '春季合约交易赛奖励',
-                activityType: '交易大赛',
                 rewardType: 'USDT',
-                amount: '86 USDT'
+                amount: '86 USDT',
+                status: '已发放',
+                time: '2026-06-20 18:00:00'
             }
         };
 
@@ -483,12 +485,12 @@
         ];
 
         const myRewards = [
-            { name: '新用户注册奖励', campaign: '新人门槛礼', type: 'USDT', amount: '10 USDT' },
-            { name: '合约交易争霸赛奖励', campaign: '合约交易争霸赛', type: 'USDT', amount: '待发放' },
-            { name: '春季合约交易赛奖励', campaign: '春季合约交易赛', type: 'USDT', amount: '86 USDT' },
-            { name: '嘉年华任务奖励', campaign: 'ForX嘉年华交易大赛', type: 'USDT', amount: '待发放' },
-            { name: '嘉年华交易赛奖励', campaign: 'ForX嘉年华交易大赛', type: 'USDT', amount: '待发放' },
-            { name: '社群认证奖励', campaign: '社群认证计划', type: 'USDT', amount: '待发放' }
+            { name: '新人注册 USDT 奖励', rewardType: 'USDT', amount: '10 USDT', status: '已发放', time: '2026-05-21 10:00:00', campaign: '新人门槛礼' },
+            { name: '合约交易争霸赛奖励', rewardType: 'USDT', amount: '1,280 USDT', status: '待发放', time: '—', campaign: '合约交易争霸赛' },
+            { name: '运营补偿积分', rewardType: '积分', amount: '+50 Pts', status: '已发放', time: '2026-07-10 15:30:00', campaign: '客诉补偿' },
+            { name: 'VIP 费率优惠', rewardType: '费率优惠', amount: 'Taker 0.020%', status: '已发放', time: '2026-07-18 09:16:00', campaign: '费率对标' },
+            { name: 'KOL 合作体验金', rewardType: '体验金', amount: '500 USDT', status: '已发放', time: '2026-07-20 09:15:00', campaign: 'KOL 合作' },
+            { name: '积分加成 1.5x', rewardType: '积分加成', amount: '1.5x', status: '已发放', time: '2026-07-12 11:20:00', campaign: '高净值激励' }
         ];
         let userParticipatedActivities = {};
         let carnivalCurrentLeaderboardType = 'volume';
@@ -1062,21 +1064,23 @@
             if (!container) return;
             const query = rewardSearchQuery.trim().toLowerCase();
             const filtered = query
-                ? myRewards.filter(r => r.campaign.toLowerCase().includes(query))
+                ? myRewards.filter(r => (r.name + r.campaign).toLowerCase().includes(query))
                 : myRewards;
             if (!filtered.length) {
-                container.innerHTML = `<div class="reward-empty-hint">${query ? '未找到匹配的活动奖励' : '暂无奖励记录'}</div>`;
+                container.innerHTML = `<div class="reward-empty-hint">${query ? '未找到匹配的奖励记录' : '暂无奖励记录'}</div>`;
                 return;
             }
             container.innerHTML = filtered.map(r => {
-                const pending = r.amount.includes('待发放');
+                const statusCls = r.status === '待发放' ? 'pending' : (r.status === '已发放' ? 'ok' : '');
                 return `
                     <div class="reward-flow-item">
-                        <div class="reward-flow-main">
-                            <div class="reward-flow-name">${r.name}</div>
-                            <div class="reward-flow-meta">${r.campaign} · ${r.type}</div>
+                        <div class="reward-flow-name">${r.name}</div>
+                        <div class="reward-flow-grid">
+                            <div><span class="lbl">奖励类型</span><div class="val">${r.rewardType}</div></div>
+                            <div><span class="lbl">发放金额</span><div class="val">${r.amount}</div></div>
+                            <div><span class="lbl">发放状态</span><div class="val ${statusCls}">${r.status}</div></div>
+                            <div><span class="lbl">发放时间</span><div class="val">${r.time}</div></div>
                         </div>
-                        <div class="reward-flow-amount ${pending ? 'pending' : ''}">${r.amount}</div>
                     </div>`;
             }).join('');
         }
