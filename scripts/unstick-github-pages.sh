@@ -1,11 +1,21 @@
 #!/usr/bin/env bash
 # 清理卡住的 github-pages 环境部署锁（需本机 gh 已登录个人账号，非 GITHUB_TOKEN）
+#
+# 部署记录不在 Settings → Environments 列表里，而在：
+#   https://github.com/DashuaibiZZY/prototype/deployments
+# Actions 页是 workflow 运行日志，可在这里取消卡住的 pages-build-deployment。
 set -euo pipefail
 
 REPO="${1:-DashuaibiZZY/prototype}"
 ENVIRONMENT="github-pages"
 
 echo "Repository: $REPO"
+echo ""
+echo "部署记录页面: https://github.com/${REPO}/deployments"
+echo "Actions 运行: https://github.com/${REPO}/actions"
+echo "Pages 设置:   https://github.com/${REPO}/settings/pages"
+echo ""
+
 echo "Checking gh auth..."
 gh auth status
 
@@ -30,15 +40,10 @@ gh api --paginate "repos/$REPO/deployments?environment=$ENVIRONMENT" --jq '.[].i
 done
 
 echo ""
-echo "Re-apply Pages source as GitHub Actions (workflow deployment):"
+echo "Switch Pages to GitHub Actions (workflow) deployment source..."
 gh api --method PUT "repos/$REPO/pages" \
-  -f build_type=workflow || {
-  echo "If workflow mode fails, try legacy main branch:"
-  gh api --method PUT "repos/$REPO/pages" \
-    -f build_type=legacy \
-    -f 'source[branch]=main' \
-    -f 'source[path]=/'
-}
+  -f build_type=workflow
 
 echo ""
-echo "Done. Run workflow: gh workflow run 'Deploy prototype to Pages' --repo $REPO"
+echo "Done. In Actions, cancel any in-progress 'pages-build-deployment' runs,"
+echo "then run: gh workflow run 'Deploy prototype to Pages' --repo $REPO"
