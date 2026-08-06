@@ -436,7 +436,10 @@
                         <textarea id="bonusBatchInput" rows="6" placeholder="200112,1.5&#10;200445,1.8&#10;0xfeed...cdef,2.0" class="w-full border border-slate-200 rounded-lg p-3 text-sm font-mono outline-none"></textarea>
                     </div>
                 </div>
-                <div class="mt-4" id="bonus-activity-picker"></div>
+                <div class="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-3 text-[11px] text-blue-900 leading-relaxed">
+                    <b>奖励记录关联：</b>自定义发放须配置四种语言奖励名称，生效后写入用户端「奖励记录」（奖励类型：积分加成）。
+                </div>
+                <div class="mt-3" id="bonus-activity-picker"></div>
                 <div class="mt-4">
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-2">申请备注（必填）</label>
                     <textarea id="bonusRemarkInput" rows="2" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none" placeholder="请填写配置原因及审批依据"></textarea>
@@ -465,7 +468,10 @@
                     <button class="mt-3 bg-slate-100 px-4 py-2 rounded text-xs font-bold text-slate-600">选择文件</button>
                     <p class="text-[10px] text-slate-400 mt-3">演示模式：上传后按示例名单解析（3 人 · 200 积分）</p>
                 </div>
-                <div class="mt-4" id="points-activity-picker"></div>
+                <div class="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-3 text-[11px] text-blue-900 leading-relaxed">
+                    <b>奖励记录关联：</b>选择「自定义活动名称」后须配置四种语言的奖励名称；审批通过后将写入用户端活动中心「奖励记录」。
+                </div>
+                <div class="mt-3" id="points-activity-picker"></div>
                 <div class="mt-4">
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-2">申请备注（必填）</label>
                     <textarea id="manualRemarkInput" rows="2" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none" placeholder="请填写发放原因及审批依据"></textarea>
@@ -1560,8 +1566,14 @@
     renderPointsLogs(POINTS_LOGS);
     renderPointsOverview();
     renderWeeklyBatchTable(WEEKLY_BATCHES);
-    mountActivityPicker('points-activity-picker', { prefix: 'points-act', defaultMode: 'custom', defaultCustomName: '' });
-    mountActivityPicker('bonus-activity-picker', { prefix: 'bonus-act', defaultMode: 'custom', defaultCustomName: '' });
+    const REWARD_NAME_DEMOS = {
+        points: { 'zh-CN': '运营补偿积分', 'zh-TW': '運營補償積分', 'en': 'Ops Compensation Points', 'ja': '運営補償ポイント' },
+        bonus: { 'zh-CN': '高净值积分加成', 'zh-TW': '高淨值積分加成', 'en': 'High-Net-Worth Points Bonus', 'ja': '高純資産積分ボーナス' },
+        fee: { 'zh-CN': 'VIP 费率优惠', 'zh-TW': 'VIP 費率優惠', 'en': 'VIP Fee Discount', 'ja': 'VIP 手数料優遇' },
+        trial: { 'zh-CN': 'KOL 合作体验金', 'zh-TW': 'KOL 合作體驗金', 'en': 'KOL Trial Bonus', 'ja': 'KOL 体験金' }
+    };
+    mountActivityPicker('points-activity-picker', { prefix: 'points-act', defaultMode: 'custom', defaultRewardNames: REWARD_NAME_DEMOS.points });
+    mountActivityPicker('bonus-activity-picker', { prefix: 'bonus-act', defaultMode: 'custom', defaultRewardNames: REWARD_NAME_DEMOS.bonus });
     initModuleApproval({
         types: ['points_manual', 'points_bonus_config', 'points_pool_config', 'points_program_switch'],
         rootId: 'points-approval-root',
