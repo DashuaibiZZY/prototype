@@ -88,6 +88,8 @@
             } else {
                 rows.push(['附件', (p.attachments || []).join('、') || '—']);
             }
+        } else if (app.type === 'partner_l1_bind') {
+            rows.push(['钱包/UID', p.wallet], ['申请返佣比例', p.ratio + '%'], ['运营配置上限', p.opsCap + '%'], ['备注', p.note || '—'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
         }
         return rows.map(function (r) {
             return '<div class="p-3 bg-slate-50 rounded-lg"><p class="text-[10px] text-slate-400 font-bold">' + r[0] + '</p><p class="font-bold text-slate-800 mt-1 break-all">' + (r[1] || '—') + '</p></div>';

@@ -8,9 +8,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .sidebar-item-active { background-color: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
-        .tree-node { position: relative; }
-        .tree-children { margin-left: 1.5rem; padding-left: 1rem; border-left: 2px solid #e2e8f0; }
-        .tree-connector::before { content: ''; position: absolute; left: -1rem; top: 1.25rem; width: 1rem; height: 2px; background: #e2e8f0; }
+        .tree-children { margin-left: 1.25rem; padding-left: 0.75rem; border-left: 2px solid #e2e8f0; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -19,7 +17,7 @@
 
 <main class="flex-1 flex flex-col overflow-hidden">
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
-        <h1 id="header-title" class="text-lg font-bold text-slate-800">一级合伙人管理</h1>
+        <h1 id="header-title" class="text-lg font-bold text-slate-800">合伙人管理</h1>
         <div class="flex items-center space-x-4">
             <span id="header-cap-badge" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold">权限上限: 80%</span>
             <div class="w-8 h-8 bg-slate-200 rounded-full"></div>
@@ -27,53 +25,46 @@
     </header>
 
     <div class="flex-1 overflow-y-auto p-8">
-        <!-- 一级合伙人列表 -->
+        <!-- 合伙人查询列表 -->
         <div id="page-agent-mgmt" class="space-y-6">
-            <div id="operator-scope-banner" class="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
-                <svg class="w-5 h-5 text-blue-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <div>
-                    <p class="text-blue-900 font-bold text-sm">市场运营数据范围</p>
-                    <p class="text-blue-700 text-[11px] mt-1 leading-relaxed">当前登录为市场运营身份，仅展示由您绑定或负责的一级合伙人；超级管理员可查看全站数据。搜索可定位您权限范围内的任意层级合伙人并进入返佣树。</p>
-                </div>
-            </div>
-
-            <section class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
-                <h2 class="text-sm font-bold mb-4 uppercase tracking-wider text-slate-400">新增一级合伙人渠道</h2>
-                <div class="grid grid-cols-4 gap-4">
-                    <input type="text" placeholder="钱包地址 / UID" class="border p-2 rounded outline-none focus:border-blue-500">
-                    <div class="relative">
-                        <input type="number" placeholder="返佣比例" class="border p-2 rounded w-full pr-8 outline-none">
-                        <span class="absolute right-3 top-2 text-slate-400">%</span>
+            <section class="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+                <div class="flex flex-wrap items-end gap-4">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">钱包 / UID / 备注</label>
+                        <input id="list-search-input" type="text" placeholder="支持任意层级合伙人查询" class="border p-2 rounded w-full outline-none focus:ring-1 focus:ring-blue-600" oninput="PartnerPortal.applyListSearch(this.value)">
                     </div>
-                    <input type="text" placeholder="备注(渠道名)" class="border p-2 rounded outline-none">
-                    <button class="bg-blue-600 text-white font-bold rounded hover:bg-blue-700">确认绑定合伙人</button>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">结算状态</label>
+                        <select id="list-status-select" class="border p-2 rounded bg-white outline-none" onchange="PartnerPortal.setListFilter(this.value)">
+                            <option value="all">全部</option>
+                            <option value="normal">正常</option>
+                            <option value="abnormal">异常 / 分支异常</option>
+                        </select>
+                    </div>
+                    <button onclick="PartnerPortal.openBindModal()" class="bg-blue-600 text-white px-5 py-2 rounded font-bold hover:bg-blue-700 shrink-0">+ 新增一级合伙人</button>
                 </div>
+                <p class="text-[10px] text-slate-400 mt-3">团队指标均为该用户<strong>向下整伞</strong>汇总；平台净利润 = 伞下净手续费 − 由伞下交易触发的<strong>全部返佣</strong>（含向上级级差）。异常仅暂停<strong>相关返佣分支</strong>，非整棵一级树。</p>
             </section>
 
             <section class="bg-white rounded-lg border border-slate-200 overflow-hidden">
-                <div class="p-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-3">
-                    <div class="flex items-center space-x-4 flex-wrap">
-                        <input type="text" placeholder="搜索合伙人钱包地址、UID 或备注" class="border p-2 rounded text-[11px] w-72 outline-none focus:ring-1 focus:ring-blue-600">
-                        <div class="flex bg-slate-100 p-1 rounded-md text-[10px] font-bold">
-                            <button class="px-4 py-1.5 bg-white shadow-sm rounded text-slate-900">全部正常 (28)</button>
-                            <button class="px-4 py-1.5 text-slate-400 hover:text-red-500 transition-colors">异常预警 (3)</button>
-                        </div>
-                    </div>
-                    <div class="text-[10px] text-slate-400 font-medium italic">数据每 5 分钟自动校验一次级差状态</div>
+                <div class="px-4 py-3 border-b border-slate-100 flex justify-between items-center">
+                    <span class="font-bold text-slate-600">查询结果</span>
+                    <span class="text-[10px] text-slate-400 italic">数据每 5 分钟校验级差</span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left min-w-[1100px]">
-                        <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase text-[10px]">
+                        <thead class="bg-slate-50 text-slate-500 font-bold border-b uppercase text-[10px]">
                         <tr>
-                            <th class="px-4 py-3">一级合伙人</th>
+                            <th class="px-4 py-3">合伙人</th>
+                            <th class="px-3 py-3 text-center">层级</th>
                             <th class="px-3 py-3 text-center">返佣比例</th>
                             <th class="px-3 py-3 text-center">结算状态</th>
                             <th class="px-3 py-3 text-right">异常暂停交易额</th>
-                            <th class="px-3 py-3 text-center">异常返佣线</th>
+                            <th class="px-3 py-3 text-center">异常线</th>
                             <th class="px-3 py-3 text-right">团队总交易额</th>
                             <th class="px-3 py-3 text-right">团队净入金</th>
                             <th class="px-3 py-3 text-center">用户规模</th>
-                            <th class="px-3 py-3 text-right">平台净利润</th>
+                            <th class="px-3 py-3 text-right" title="伞下净手续费 − 伞下触发的全部返佣">平台净利润</th>
                             <th class="px-3 py-3">配置运营</th>
                             <th class="px-4 py-3 text-right">操作</th>
                         </tr>
@@ -84,200 +75,149 @@
             </section>
         </div>
 
-        <!-- 合伙人详情（对齐用户端团队视角） -->
+        <!-- 合伙人详情 -->
         <div id="page-partner-detail" class="hidden space-y-6">
-            <div class="flex items-center gap-4">
-                <button onclick="showPartnerList()" class="p-2 bg-white border border-slate-200 rounded hover:bg-slate-50">
+            <div class="flex items-center gap-4 flex-wrap">
+                <button onclick="PartnerPortal.showList()" class="p-2 bg-white border border-slate-200 rounded hover:bg-slate-50">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
                 </button>
                 <div>
                     <h2 id="detail-partner-title" class="text-lg font-black text-slate-900">合伙人详情</h2>
                     <p id="detail-partner-sub" class="text-slate-400 text-[11px] mt-0.5"></p>
                 </div>
-                <div class="ml-auto flex gap-2">
-                    <button onclick="showRebateTree(currentPartnerId)" class="bg-slate-900 text-white px-4 py-2 rounded font-bold text-[11px] hover:bg-slate-800">返佣关系树</button>
-                    <button onclick="openModal('modal-modify-ratio')" class="bg-blue-600 text-white px-4 py-2 rounded font-bold text-[11px] hover:bg-blue-700">调整比例</button>
-                </div>
+                <button onclick="PartnerPortal.showTree(PartnerPortal.getCurrentUserId(), 'expand')" class="ml-auto bg-slate-900 text-white px-4 py-2 rounded font-bold text-[11px]">进入返佣树修改比例</button>
             </div>
 
             <div id="detail-abnormal-banner" class="hidden bg-amber-50 border-l-4 border-amber-500 p-4 rounded">
-                <p class="text-amber-900 font-black text-sm">结算状态：待修正返佣后计算</p>
-                <p class="text-amber-800 text-[11px] mt-2 leading-relaxed">该合伙人所在链路存在比例倒挂。异常期间交易额 <span id="detail-abnormal-vol" class="font-black underline"></span> 暂停计入级差佣金；共 <span id="detail-abnormal-lines" class="font-black underline"></span> 条返佣线受影响。修复比例后，下一结算日 00:00 将按新比例重算异常期间未结算交易并合并发放。</p>
+                <p class="text-amber-900 font-black text-sm">结算异常（返佣分支级暂停）</p>
+                <p class="text-amber-800 text-[11px] mt-2">异常暂停交易额 <span id="detail-abnormal-vol" class="font-black underline"></span> · 异常线 <span id="detail-abnormal-lines" class="font-black underline"></span> 条</p>
+                <p id="detail-abnormal-scope" class="text-amber-700 text-[10px] mt-2 italic"></p>
             </div>
+
+            <div id="detail-ancestors"></div>
 
             <div class="bg-white rounded-lg border border-slate-200 p-5">
                 <div class="flex flex-wrap gap-6 text-sm">
-                    <span>UID <b id="detail-uid" class="text-slate-800"></b></span>
+                    <span>UID <b id="detail-uid"></b></span>
                     <span>钱包 <b id="detail-wallet" class="font-mono"></b></span>
+                    <span>层级 <b id="detail-level"></b></span>
                     <span>返佣比例 <b id="detail-ratio" class="text-blue-600 text-lg"></b></span>
-                    <span>结算状态 <b id="detail-settle-status"></b></span>
+                    <span>结算 <b id="detail-settle-status"></b></span>
                     <span>配置运营 <b id="detail-operator"></b></span>
-                    <span>绑定时间 <b id="detail-bind-time"></b></span>
+                    <span>加入 <b id="detail-bind-time"></b></span>
                 </div>
             </div>
 
             <div class="grid grid-cols-4 gap-4">
-                <div class="bg-white p-5 rounded-lg border border-slate-200"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">团队总交易额</p><p id="detail-vol" class="text-2xl font-black"></p></div>
-                <div class="bg-white p-5 rounded-lg border border-slate-200"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">团队净入金</p><p id="detail-deposit" class="text-2xl font-black text-green-600"></p></div>
-                <div class="bg-white p-5 rounded-lg border border-slate-200"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">用户规模 (总/活)</p><p id="detail-users" class="text-2xl font-black"></p></div>
-                <div class="bg-white p-5 rounded-lg border border-slate-200"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">平台净利润 (Net)</p><p id="detail-net" class="text-2xl font-black text-blue-600"></p></div>
+                <div class="bg-white p-5 rounded-lg border"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">团队总交易额（向下伞）</p><p id="detail-vol" class="text-2xl font-black"></p></div>
+                <div class="bg-white p-5 rounded-lg border"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">团队净入金（向下伞）</p><p id="detail-deposit" class="text-2xl font-black text-green-600"></p></div>
+                <div class="bg-white p-5 rounded-lg border"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">用户规模（向下伞）</p><p id="detail-users" class="text-2xl font-black"></p></div>
+                <div class="bg-white p-5 rounded-lg border"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">平台净利润</p><p id="detail-net" class="text-2xl font-black text-blue-600"></p><p id="detail-net-hint" class="text-[9px] text-slate-400 mt-2 leading-snug"></p></div>
             </div>
 
-            <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
-                <div class="px-6 py-4 border-b font-bold text-slate-700">直属下级合伙人明细（只读）</div>
-                <table class="w-full text-left text-[11px]">
+            <div class="bg-white rounded-lg border overflow-hidden">
+                <div class="px-6 py-4 border-b font-bold text-slate-700">直属下级（只读）</div>
+                <table class="w-full text-[11px]">
                     <thead class="bg-slate-50 border-b text-[10px] uppercase text-slate-500">
-                    <tr>
-                        <th class="px-4 py-3">加入时间</th>
-                        <th class="px-3 py-3">下级合伙人</th>
-                        <th class="px-3 py-3 text-center">设置比例</th>
-                        <th class="px-3 py-3 text-center">级差</th>
-                        <th class="px-3 py-3 text-right">总交易额</th>
-                        <th class="px-3 py-3 text-right">净入金</th>
-                        <th class="px-3 py-3 text-center">用户规模</th>
-                        <th class="px-3 py-3 text-center">结算状态</th>
-                    </tr>
+                    <tr><th class="px-4 py-3">钱包</th><th class="px-3 py-3">备注</th><th class="px-3 py-3 text-center">比例</th><th class="px-3 py-3 text-center">状态</th></tr>
                     </thead>
-                    <tbody id="detail-sub-partners" class="divide-y divide-slate-50"></tbody>
-                </table>
-            </div>
-
-            <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
-                <div class="px-6 py-4 border-b font-bold text-slate-700">近期佣金结算记录</div>
-                <table class="w-full text-left text-[11px]">
-                    <thead class="bg-slate-50 border-b text-[10px] uppercase text-slate-500">
-                    <tr>
-                        <th class="px-4 py-3">结算日期</th>
-                        <th class="px-3 py-3 text-right">有效交易额</th>
-                        <th class="px-3 py-3 text-right">应结佣金</th>
-                        <th class="px-3 py-3 text-center">状态</th>
-                        <th class="px-4 py-3">备注</th>
-                    </tr>
-                    </thead>
-                    <tbody id="detail-settlement-rows" class="divide-y divide-slate-50"></tbody>
+                    <tbody id="detail-sub-partners" class="divide-y"></tbody>
                 </table>
             </div>
         </div>
 
         <!-- 返佣关系树 -->
-        <div id="page-rebate-tree" class="hidden space-y-6">
+        <div id="page-rebate-tree" class="hidden space-y-4">
             <div class="flex items-center gap-4 flex-wrap">
-                <button onclick="showPartnerDetail(currentPartnerId)" class="p-2 bg-white border border-slate-200 rounded hover:bg-slate-50">
+                <button onclick="PartnerPortal.showDetail(PartnerPortal.getCurrentUserId())" class="p-2 bg-white border rounded hover:bg-slate-50">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
                 </button>
                 <div>
-                    <h2 id="tree-title" class="text-lg font-black text-slate-900">返佣关系树</h2>
-                    <p id="tree-sub" class="text-slate-400 text-[11px] mt-0.5">展示自一级根节点向下的无限层级关系；可在权限范围内修改各节点返佣比例。</p>
+                    <h2 id="tree-title" class="text-lg font-black">返佣关系</h2>
+                    <p id="tree-sub" class="text-slate-400 text-[11px]"></p>
                 </div>
-                <input type="text" placeholder="在树内搜索地址或备注" class="ml-auto border p-2 rounded text-[11px] w-64 outline-none focus:ring-1 focus:ring-blue-600">
             </div>
-
-            <div id="tree-abnormal-hint" class="hidden bg-red-50 border border-red-100 rounded-lg p-4 text-[11px] text-red-800">
-                <b>异常链路标记：</b>标红节点存在「下级比例 &gt; 上级比例」。整条下游链结算状态为「待修正返佣后计算」，异常期间交易额不计入待结算佣金。
+            <div id="tree-ancestors"></div>
+            <div id="tree-abnormal-section"></div>
+            <div class="bg-white rounded-lg border border-slate-200 p-4">
+                <p class="text-[10px] text-slate-500 mb-3">在节点上修改比例后，于底部<strong>一并提交</strong>；下调会提示可能受影响的下级。</p>
+                <div id="rebate-tree-root"></div>
             </div>
+            <div id="tree-pending-bar" class="hidden"></div>
+        </div>
 
-            <div class="bg-white rounded-lg border border-slate-200 p-6" id="rebate-tree-root"></div>
+        <!-- 合伙人配置审批 -->
+        <div id="page-agent-approval" class="hidden flex-1 overflow-y-auto">
+            <div id="partner-approval-root"></div>
         </div>
 
         <!-- 佣金对账与发放 -->
         <div id="page-settlement" class="hidden space-y-6">
-            <div id="view-batch-list" class="space-y-6">
-                <div class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+            <section class="bg-white rounded-lg border p-4 shadow-sm">
+                <div class="flex flex-wrap gap-4 items-end">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">结算日期</label>
+                        <input id="settlement-filter-date" type="text" placeholder="2024-05-23" class="border p-2 rounded w-40 outline-none" oninput="PartnerPortal.filterSettlementBatches()">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">批次状态</label>
+                        <select id="settlement-filter-status" class="border p-2 rounded bg-white outline-none" onchange="PartnerPortal.filterSettlementBatches()">
+                            <option value="all">全部</option>
+                            <option value="等待对账">等待对账</option>
+                            <option value="已拒绝">已拒绝</option>
+                        </select>
+                    </div>
+                    <button onclick="PartnerPortal.filterSettlementBatches()" class="bg-slate-900 text-white px-4 py-2 rounded font-bold text-[11px]">查询</button>
+                </div>
+            </section>
+            <div id="view-batch-list">
+                <div class="bg-white rounded-lg border overflow-hidden shadow-sm">
                     <table class="w-full text-left">
-                        <thead class="bg-slate-50 text-slate-400 font-black border-b border-slate-100 uppercase text-[10px]">
+                        <thead class="bg-slate-50 text-slate-400 font-black border-b uppercase text-[10px]">
                         <tr>
                             <th class="px-6 py-4">结算日期</th>
-                            <th class="px-6 py-4 text-right">返佣总成交额 (USDT)</th>
+                            <th class="px-6 py-4 text-right">返佣总成交额</th>
                             <th class="px-6 py-4 text-right">待发放总佣金</th>
                             <th class="px-6 py-4 text-center">状态</th>
                             <th class="px-6 py-4 text-right">操作</th>
                         </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-50 text-[11px] font-medium">
-                        <tr class="hover:bg-slate-50">
-                            <td class="px-6 py-4 font-black">2024-05-23</td>
-                            <td class="px-6 py-4 text-right font-bold text-slate-600">$12,450,000</td>
-                            <td class="px-6 py-4 text-right font-black text-blue-600">$85,140.00</td>
-                            <td class="px-6 py-4 text-center"><span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full">等待对账</span></td>
-                            <td class="px-6 py-4 text-right"><button onclick="showReviewDetail(false)" class="bg-slate-900 text-white px-4 py-1.5 rounded font-black hover:bg-slate-800 uppercase">查看详情</button></td>
-                        </tr>
-                        <tr class="hover:bg-slate-50 bg-red-50/20">
-                            <td class="px-6 py-4 font-black text-red-700">2024-05-22</td>
-                            <td class="px-6 py-4 text-right font-bold text-slate-600">$10,200,000</td>
-                            <td class="px-6 py-4 text-right font-black text-red-600">$70,000.00</td>
-                            <td class="px-6 py-4 text-center"><span class="bg-red-100 text-red-700 px-3 py-1 rounded-full font-bold uppercase">已拒绝</span></td>
-                            <td class="px-6 py-4 text-right"><button onclick="showReviewDetail(true)" class="bg-red-600 text-white px-4 py-1.5 rounded font-black hover:bg-red-700 uppercase">查看原因</button></td>
-                        </tr>
-                        </tbody>
+                        <tbody id="settlement-batch-body" class="divide-y text-[11px]"></tbody>
                     </table>
                 </div>
             </div>
-
             <div id="view-review-detail" class="hidden space-y-6">
-                <div id="reject-banner" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded shadow-sm">
-                    <p class="text-red-700 font-black text-[13px]">该批次已被拒绝放款</p>
-                    <p class="text-red-600 font-medium mt-1">拒绝原因：账目无法对齐，返佣金额大于手续费总收入。</p>
+                <div id="reject-banner" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                    <p class="text-red-700 font-black">该批次已被拒绝放款</p>
                 </div>
                 <div class="flex justify-between items-center flex-wrap gap-3">
-                    <div class="flex items-center space-x-4">
-                        <button onclick="backToList()" class="p-2 bg-white border border-slate-200 rounded hover:bg-slate-50">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
-                        </button>
-                        <h2 class="text-lg font-black italic uppercase tracking-tight" id="detail-title">2024-05-23 结算批次明细</h2>
+                    <div class="flex items-center gap-4">
+                        <button onclick="PartnerPortal.backToSettlementList()" class="p-2 bg-white border rounded"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg></button>
+                        <h2 class="text-lg font-black" id="detail-title">结算批次明细</h2>
                     </div>
-                    <div class="flex space-x-3 flex-wrap">
-                        <button class="bg-white border-2 border-slate-900 text-slate-900 px-4 py-2 rounded font-black hover:bg-slate-50 shadow-sm text-[11px]">下载对账单 (.csv)</button>
-                        <button onclick="openModal('modal-reject')" class="bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded font-black hover:bg-red-100">拒绝放款</button>
-                        <button onclick="openModal('modal-approve')" class="bg-blue-600 text-white px-6 py-2 rounded font-black shadow-lg hover:bg-blue-700">审核通过并放款</button>
+                    <div class="flex gap-2 flex-wrap">
+                        <button class="bg-white border-2 border-slate-900 px-4 py-2 rounded font-black text-[11px]">下载对账单</button>
+                        <button onclick="openModal('modal-reject')" class="bg-red-50 text-red-600 border px-4 py-2 rounded font-bold">拒绝放款</button>
+                        <button onclick="openModal('modal-approve')" class="bg-blue-600 text-white px-6 py-2 rounded font-black">审核通过并放款</button>
                     </div>
                 </div>
-                <div class="grid grid-cols-4 gap-4">
-                    <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">本期返佣总成交额</p><p class="text-2xl font-black text-slate-900" id="sum-vol">$12,450,000.00</p></div>
-                    <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">系统计算应发</p><p class="text-2xl font-black text-slate-900" id="sum-expected">$85,140.00</p></div>
-                    <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">人工调整差额</p><p class="text-2xl font-black text-red-500">-$500.00</p></div>
-                    <div class="bg-slate-900 p-6 rounded-lg shadow-xl"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">最终实发总额</p><p class="text-2xl font-black text-blue-400">$84,640.00</p></div>
+                <div id="abnormal-banner" class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded text-[11px]">
+                    批次内异常记录为<strong>返佣分支</strong>暂停，非整棵一级树停结。
                 </div>
-                <div id="abnormal-banner" class="hidden bg-blue-50 border-l-4 border-blue-500 p-4 rounded shadow-sm">
-                    <div class="flex items-center justify-between flex-wrap gap-3">
-                        <div>
-                            <p class="text-blue-800 font-black text-[13px]">检测到该批次包含 <span class="underline decoration-2">1</span> 条异常合伙人记录</p>
-                            <p class="text-blue-600 font-medium mt-0.5 text-[11px]">下级配置比例超过上级。受影响合伙人佣金已标记「待修正返佣后计算」，异常期间交易额不计入待结算。</p>
-                        </div>
-                        <button class="bg-blue-600 text-white px-4 py-1.5 rounded font-black text-[10px] uppercase shadow-md hover:bg-blue-700">导出异常明细</button>
-                    </div>
-                </div>
-                <div class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
-                    <div class="p-4 border-b border-slate-100">
-                        <input type="text" placeholder="搜索合伙人钱包地址或备注" class="border p-2 rounded text-[11px] w-64 outline-none focus:ring-1 focus:ring-blue-600">
-                    </div>
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50 text-slate-400 font-black text-[10px] uppercase border-b border-slate-100">
+                <div class="bg-white rounded-lg border overflow-hidden">
+                    <table class="w-full text-left text-[11px]">
+                        <thead class="bg-slate-50 border-b uppercase text-[10px] text-slate-400">
                         <tr>
-                            <th class="px-6 py-4">合伙人信息</th>
-                            <th class="px-6 py-4 text-center">上级合伙人</th>
-                            <th class="px-6 py-4 text-right">期间成交额</th>
-                            <th class="px-6 py-4 text-right">系统原始佣金</th>
-                            <th class="px-6 py-4 text-center">人工调减 (USDT)</th>
-                            <th class="px-6 py-4 text-right">实发佣金金额</th>
+                            <th class="px-6 py-4">合伙人</th>
+                            <th class="px-6 py-4 text-center">上级</th>
+                            <th class="px-6 py-4 text-right">成交额</th>
+                            <th class="px-6 py-4 text-right">原始佣金</th>
+                            <th class="px-6 py-4 text-right">实发</th>
                         </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-50 text-[11px] font-bold">
-                        <tr class="hover:bg-slate-50/50">
-                            <td class="px-6 py-4"><span class="text-slate-900 block font-black">0xd593...2Dd2</span><span class="text-slate-400 font-normal">合伙人-小王</span></td>
-                            <td class="px-6 py-4 text-center text-slate-300 font-medium">-- (一级) --</td>
-                            <td class="px-6 py-4 text-right text-slate-500 font-medium">$1,000,000</td>
-                            <td class="px-6 py-4 text-right text-slate-900">$7,000.00</td>
-                            <td class="px-6 py-4 text-center"><button onclick="openAdjustModal('0xd593...2Dd2', '500.00')" class="px-3 py-1 border border-dashed border-blue-400 text-red-500 rounded font-black hover:bg-blue-50">-$500.00</button></td>
-                            <td class="px-6 py-4 text-right text-blue-600 font-black">$6,500.00</td>
-                        </tr>
-                        <tr class="bg-slate-50 text-slate-400 italic">
-                            <td class="px-6 py-4 opacity-60"><span class="text-slate-900 block font-black">0x88e1...4F42</span><span class="text-slate-400 font-normal">合伙人-John (异常)</span></td>
-                            <td class="px-6 py-4 text-center text-slate-400 opacity-60">0x3f...12a (二级)</td>
-                            <td class="px-6 py-4 text-right font-medium opacity-60">$250,000</td>
-                            <td class="px-6 py-4 text-right text-amber-600 font-bold">待修正返佣后计算</td>
-                            <td class="px-6 py-4 text-center opacity-40">--</td>
-                            <td class="px-6 py-4 text-right font-black opacity-60">$0.00</td>
-                        </tr>
+                        <tbody class="divide-y">
+                        <tr><td class="px-6 py-4 font-black">0xd593...2Dd2</td><td class="px-6 py-4 text-center">一级</td><td class="px-6 py-4 text-right">$1M</td><td class="px-6 py-4 text-right">$7,000</td><td class="px-6 py-4 text-right text-blue-600 font-black">$6,500</td></tr>
+                        <tr class="bg-amber-50/40"><td class="px-6 py-4 font-black">0xab12...99fe</td><td class="px-6 py-4 text-center">0x5c...882</td><td class="px-6 py-4 text-right">$200k</td><td class="px-6 py-4 text-right text-amber-700 font-bold">待修正返佣后计算</td><td class="px-6 py-4 text-right">$0</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -286,363 +226,111 @@
     </div>
 </main>
 
-<!-- 调整比例 -->
-<div id="modal-modify-ratio" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center">
-    <div class="bg-white w-[380px] rounded-lg shadow-2xl overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center"><h3 class="font-bold text-slate-800">调整返佣比例</h3><button onclick="closeModal('modal-modify-ratio')" class="text-slate-400">✕</button></div>
-        <div class="p-8 space-y-5">
-            <div><p class="text-[10px] text-slate-400 font-bold uppercase mb-1" id="ratio-modal-target-label">正在操作合伙人</p><p id="ratio-modal-target" class="text-[11px] font-mono font-bold text-slate-900 uppercase"></p></div>
-            <div class="flex items-center justify-between bg-slate-50 p-3 rounded border border-slate-100"><span class="text-[11px] text-slate-500">当前配置比例</span><span id="ratio-modal-current" class="text-lg font-black text-slate-900">70%</span></div>
-            <div><label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">设定新比例 (%)</label><div class="relative"><input id="input-target-ratio" type="number" class="w-full border-2 border-slate-200 rounded p-3 text-2xl font-black text-blue-600 outline-none focus:border-blue-600" placeholder="00"><span class="absolute right-4 top-4 text-slate-400 font-bold text-xl">%</span></div><p class="text-[10px] text-slate-400 mt-2 italic">* 修改将于次日 00:00 生效；下调可能触发链路异常保护。</p></div>
+<!-- 新增一级合伙人 -->
+<div id="modal-bind-partner" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-lg shadow-2xl overflow-hidden">
+        <div class="px-6 py-4 border-b flex justify-between items-center">
+            <h3 class="font-bold text-slate-800">新增一级合伙人</h3>
+            <button onclick="PartnerPortal.closeBindModal()" class="text-slate-400">✕</button>
         </div>
-        <div class="px-6 py-4 bg-slate-50 flex space-x-3">
-            <button onclick="closeModal('modal-modify-ratio')" class="flex-1 py-2 font-bold text-slate-500">取消</button>
-            <button onclick="handleRatioSubmit()" class="flex-1 bg-slate-900 text-white py-2 rounded font-bold hover:bg-slate-800 shadow-lg">确认修改</button>
+        <div class="p-6 space-y-4">
+            <p id="bind-cap-hint" class="text-[11px] text-blue-800 bg-blue-50 p-3 rounded border border-blue-100"></p>
+            <div><label class="text-[10px] font-bold text-slate-400 uppercase">钱包 / UID</label><input id="bind-wallet" type="text" class="w-full border rounded p-2 mt-1 outline-none"></div>
+            <div><label class="text-[10px] font-bold text-slate-400 uppercase">返佣比例 (%)</label><input id="bind-ratio" type="number" class="w-full border rounded p-2 mt-1 outline-none"></div>
+            <div><label class="text-[10px] font-bold text-slate-400 uppercase">备注</label><input id="bind-note" type="text" class="w-full border rounded p-2 mt-1 outline-none"></div>
+            <div><label class="text-[10px] font-bold text-slate-400 uppercase">申请备注（必填）</label><textarea id="bind-remark" rows="2" class="w-full border rounded p-2 mt-1 outline-none"></textarea></div>
         </div>
-    </div>
-</div>
-
-<div id="modal-confirm-adjust" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[120] flex items-center justify-center">
-    <div class="bg-white w-[400px] rounded-lg shadow-2xl overflow-hidden">
-        <div class="p-8">
-            <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-4"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></div>
-            <h3 class="text-lg font-bold text-slate-800 text-center mb-2">确认修改返佣比例？</h3>
-            <p class="text-slate-500 text-center text-[11px] leading-relaxed mb-6">下调可能导致其与直属下级之间产生<span class="text-red-600 font-bold">比例倒挂</span>，整条下游链将标记为「待修正返佣后计算」。</p>
-        </div>
-        <div class="px-6 py-4 bg-slate-50 flex space-x-3">
-            <button onclick="closeModal('modal-confirm-adjust')" class="flex-1 py-2 border border-slate-200 rounded font-bold text-slate-500">取消</button>
-            <button onclick="alert('比例调整指令已提交，T+1 生效'); closeModal('modal-confirm-adjust')" class="flex-1 py-2 bg-slate-900 text-white rounded font-bold">确认并变更</button>
+        <div class="px-6 py-4 bg-slate-50 flex gap-3">
+            <button onclick="PartnerPortal.closeBindModal()" class="flex-1 py-2 border rounded font-bold text-slate-500">取消</button>
+            <button onclick="PartnerPortal.submitBindPartner()" class="flex-1 py-2 bg-slate-900 text-white rounded font-bold">提交</button>
         </div>
     </div>
 </div>
 
-<div id="modal-approve" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center">
-    <div class="bg-white w-[420px] rounded-lg shadow-2xl p-8 text-center">
-        <h3 class="text-xl font-black text-slate-900 mb-2 italic">确认批量发放佣金？</h3>
-        <p class="text-[13px] text-slate-400 mb-8 px-4">点击确认后按对账金额执行发放，此操作无法撤回。</p>
-        <div class="flex space-x-3">
-            <button onclick="closeModal('modal-approve')" class="flex-1 py-3 border border-slate-200 rounded font-black text-slate-400 uppercase">取消</button>
-            <button onclick="alert('佣金已进入队列'); closeModal('modal-approve'); backToList();" class="flex-1 py-3 bg-blue-600 text-white rounded font-black uppercase">确定执行发放</button>
-        </div>
+<div id="modal-approve" class="hidden fixed inset-0 bg-slate-900/60 z-[100] flex items-center justify-center">
+    <div class="bg-white w-[400px] rounded-lg p-8 text-center shadow-2xl">
+        <h3 class="font-black text-lg mb-4">确认批量发放？</h3>
+        <div class="flex gap-3"><button onclick="closeModal('modal-approve')" class="flex-1 py-2 border rounded font-bold">取消</button>
+        <button onclick="alert('已提交发放'); closeModal('modal-approve'); PartnerPortal.backToSettlementList();" class="flex-1 py-2 bg-blue-600 text-white rounded font-bold">确定</button></div>
     </div>
 </div>
-
-<div id="modal-reject" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center">
-    <div class="bg-white w-[420px] rounded-lg shadow-2xl p-8">
-        <h3 class="text-xl font-black text-slate-900 mb-6 italic text-center">拒绝放款确认</h3>
-        <textarea class="w-full h-32 border border-slate-200 rounded p-3 text-sm outline-none" placeholder="输入拒绝理由..."></textarea>
-        <div class="flex space-x-3 mt-6">
-            <button onclick="closeModal('modal-reject')" class="flex-1 py-3 border border-slate-200 rounded font-black text-slate-400 uppercase">取消</button>
-            <button onclick="alert('该批次已标记为拒绝'); closeModal('modal-reject'); backToList();" class="flex-1 py-3 bg-red-600 text-white rounded font-black uppercase">确定拒绝</button>
-        </div>
-    </div>
-</div>
-
-<div id="modal-adjust" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center">
-    <div class="bg-white w-[380px] rounded-lg shadow-2xl overflow-hidden">
-        <div class="px-6 py-4 border-b bg-slate-50 font-black text-xs uppercase">调整佣金金额</div>
-        <div class="p-8 space-y-4">
-            <p id="adjust-target-addr" class="text-[11px] font-mono font-bold text-slate-900"></p>
-            <input id="adjust-input-val" type="number" class="w-full border-2 border-blue-500 rounded p-3 text-lg font-black text-red-500 outline-none" placeholder="0.00">
-        </div>
-        <div class="px-6 py-4 bg-gray-50 flex space-x-3">
-            <button onclick="closeModal('modal-adjust')" class="flex-1 py-2 border rounded font-black text-slate-400 text-[11px]">取消</button>
-            <button onclick="saveAdjustment()" class="flex-1 py-2 bg-slate-900 text-white rounded font-black text-[11px]">确认修改</button>
-        </div>
+<div id="modal-reject" class="hidden fixed inset-0 bg-slate-900/60 z-[100] flex items-center justify-center">
+    <div class="bg-white w-[400px] rounded-lg p-8 shadow-2xl">
+        <h3 class="font-black mb-4">拒绝放款</h3>
+        <textarea class="w-full border rounded p-3 h-24 outline-none" placeholder="拒绝原因"></textarea>
+        <div class="flex gap-3 mt-4"><button onclick="closeModal('modal-reject')" class="flex-1 py-2 border rounded font-bold">取消</button>
+        <button onclick="alert('已拒绝'); closeModal('modal-reject'); PartnerPortal.backToSettlementList();" class="flex-1 py-2 bg-red-600 text-white rounded font-bold">确定</button></div>
     </div>
 </div>
 
 <script>
-    const PARTNERS = [
-        {
-            id: 'p1', wallet: '0xd593...2Dd2', uid: '100882', note: 'KOL_Global', ratio: 70,
-            settleStatus: 'abnormal', abnormalVol: '$1,240,000', abnormalLines: 3,
-            vol: '$52.4M', deposit: '+$1.2M', usersTotal: 1420, usersActive: 420, net: '--',
-            operator: 'allen@forx.fi', bindTime: '2024-03-12',
-            subs: [
-                { time: '2024-05-12', wallet: '0x3f...12a', note: '渠道-小王', ratio: 60, gap: 10, vol: '$12.5M', deposit: '+$500k', users: '1,240 / 420', settle: '正常' },
-                { time: '2024-05-08', wallet: '0x5c...882', note: '异常下级', ratio: 75, gap: -5, vol: '$2.1M', deposit: '-$120k', users: '12 / 0', settle: '待修正返佣后计算', abnormal: true }
-            ],
-            settlements: [
-                { date: '2024-05-22', vol: '$4.2M', rebate: '$0.00', status: '补结算', note: '含异常修正重算 $3,200' },
-                { date: '2024-05-21', vol: '$0', rebate: '$0.00', status: '待修正返佣后计算', note: '链路异常暂停' },
-                { date: '2024-05-20', vol: '$3.8M', rebate: '$12,400.00', status: '已发放', note: '' }
-            ],
-            tree: {
-                wallet: '0xd593...2Dd2', note: 'KOL_Global (一级)', ratio: 70, level: 1, abnormal: false,
-                children: [
-                    {
-                        wallet: '0x3f...12a', note: '渠道-小王', ratio: 60, level: 2, abnormal: false,
-                        children: [
-                            { wallet: '0x88e1...4F42', note: '合伙人-John', ratio: 55, level: 3, abnormal: false, children: [] }
-                        ]
-                    },
-                    {
-                        wallet: '0x5c...882', note: '异常下级', ratio: 75, level: 2, abnormal: true,
-                        children: [
-                            { wallet: '0xab12...99fe', note: 'L3-小赵', ratio: 70, level: 3, abnormal: false, children: [] }
-                        ]
-                    }
-                ]
-            }
-        },
-        {
-            id: 'p2', wallet: '0xae21...9Bc1', uid: '100901', note: 'SEA_Channel', ratio: 65,
-            settleStatus: 'normal', abnormalVol: '--', abnormalLines: 0,
-            vol: '$18.2M', deposit: '+$620k', usersTotal: 680, usersActive: 210, net: '$84,200',
-            operator: 'allen@forx.fi', bindTime: '2024-04-01',
-            subs: [
-                { time: '2024-05-15', wallet: '0x7a...01b', note: '越南站', ratio: 50, gap: 15, vol: '$6.2M', deposit: '+$180k', users: '320 / 88', settle: '正常' }
-            ],
-            settlements: [
-                { date: '2024-05-20', vol: '$1.1M', rebate: '$4,820.00', status: '已发放', note: '' }
-            ],
-            tree: {
-                wallet: '0xae21...9Bc1', note: 'SEA_Channel (一级)', ratio: 65, level: 1, abnormal: false,
-                children: [
-                    { wallet: '0x7a...01b', note: '越南站', ratio: 50, level: 2, abnormal: false, children: [] }
-                ]
-            }
-        },
-        {
-            id: 'p3', wallet: '0xcc44...77d0', uid: '100955', note: 'EU_Partner', ratio: 60,
-            settleStatus: 'normal', abnormalVol: '--', abnormalLines: 0,
-            vol: '$8.5M', deposit: '+$210k', usersTotal: 240, usersActive: 56, net: '$32,100',
-            operator: 'sarah@forx.fi', bindTime: '2024-05-02',
-            subs: [],
-            settlements: [
-                { date: '2024-05-20', vol: '$420k', rebate: '$1,960.00', status: '已发放', note: '' }
-            ],
-            tree: {
-                wallet: '0xcc44...77d0', note: 'EU_Partner (一级)', ratio: 60, level: 1, abnormal: false, children: []
-            }
-        }
-    ];
-
-    let currentPartnerId = 'p1';
-    let ratioEditTarget = null;
-
-    const AGENT_PAGE_HASH = { 'page-agent-mgmt': 'agent', 'page-partner-detail': 'partner-detail', 'page-rebate-tree': 'rebate-tree', 'page-settlement': 'settlement' };
-    const AGENT_PAGE_TITLES = {
-        'page-agent-mgmt': '一级合伙人管理',
+    const PAGE_TITLES = {
+        'page-agent-mgmt': '合伙人管理',
         'page-partner-detail': '合伙人详情',
         'page-rebate-tree': '返佣关系树',
+        'page-agent-approval': '合伙人配置审批',
         'page-settlement': '佣金对账与发放'
     };
+    const PAGE_HASH = {
+        'page-agent-mgmt': 'agent',
+        'page-partner-detail': 'partner-detail',
+        'page-rebate-tree': 'rebate-tree',
+        'page-agent-approval': 'approval',
+        'page-settlement': 'settlement'
+    };
 
-    function hideAllPages() {
-        ['page-agent-mgmt', 'page-partner-detail', 'page-rebate-tree', 'page-settlement'].forEach(function (id) {
+    function hideAllPartnerPages() {
+        ['page-agent-mgmt', 'page-partner-detail', 'page-rebate-tree', 'page-agent-approval', 'page-settlement'].forEach(function (id) {
             document.getElementById(id).classList.add('hidden');
         });
     }
 
-    function showPage(pageId, updateHash) {
-        hideAllPages();
+    window.PartnerPortal_showPage = function (pageId) {
+        hideAllPartnerPages();
         document.getElementById(pageId).classList.remove('hidden');
-        const titleEl = document.getElementById('header-title');
-        if (titleEl && AGENT_PAGE_TITLES[pageId]) titleEl.innerText = AGENT_PAGE_TITLES[pageId];
         if (pageId === 'page-settlement') {
             document.getElementById('view-batch-list').classList.remove('hidden');
             document.getElementById('view-review-detail').classList.add('hidden');
         }
-        if (updateHash !== false && AGENT_PAGE_HASH[pageId]) {
-            const hash = AGENT_PAGE_HASH[pageId];
-            if (location.hash !== '#' + hash) location.hash = hash;
-        }
-    }
-
-    function getPartner(id) {
-        return PARTNERS.find(function (p) { return p.id === id; });
-    }
-
-    function renderPartnerList() {
-        const tbody = document.getElementById('partner-list-body');
-        tbody.innerHTML = PARTNERS.map(function (p) {
-            const statusBadge = p.settleStatus === 'abnormal'
-                ? '<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold text-[10px]">待修正返佣后计算</span>'
-                : '<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold text-[10px]">正常结算</span>';
-            const netDisplay = p.net === '--' ? '<span class="text-slate-400">--</span>' : '<span class="text-blue-600 font-black">' + p.net + '</span>';
-            const abnormalVol = p.abnormalVol === '--' ? '<span class="text-slate-300">--</span>' : '<span class="text-amber-700 font-bold">' + p.abnormalVol + '</span>';
-            const abnormalLines = p.abnormalLines ? '<span class="text-red-600 font-black">' + p.abnormalLines + ' 条</span>' : '<span class="text-slate-300">0</span>';
-            const warnIcon = p.settleStatus === 'abnormal'
-                ? '<span class="group relative"><svg class="w-4 h-4 text-red-500 cursor-help" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg><span class="hidden group-hover:block absolute bottom-full right-0 mb-2 w-52 p-2 bg-slate-800 text-white text-[10px] rounded z-50">下级比例超过该合伙人，链路结算已暂停</span></span>'
-                : '';
-            return '<tr class="hover:bg-slate-50' + (p.settleStatus === 'abnormal' ? ' bg-amber-50/30' : '') + '">' +
-                '<td class="px-4 py-3"><button onclick="showPartnerDetail(\'' + p.id + '\')" class="font-black text-slate-900 hover:text-blue-600 hover:underline">' + p.wallet + '</button><span class="block text-slate-400 text-[9px] uppercase">' + p.note + '</span></td>' +
-                '<td class="px-3 py-3 text-center font-black text-lg">' + p.ratio + '%</td>' +
-                '<td class="px-3 py-3 text-center">' + statusBadge + '</td>' +
-                '<td class="px-3 py-3 text-right">' + abnormalVol + '</td>' +
-                '<td class="px-3 py-3 text-center">' + abnormalLines + '</td>' +
-                '<td class="px-3 py-3 text-right font-bold text-slate-600">' + p.vol + '</td>' +
-                '<td class="px-3 py-3 text-right font-bold text-green-600">' + p.deposit + '</td>' +
-                '<td class="px-3 py-3 text-center font-black">' + p.usersTotal + ' <span class="text-slate-300 font-normal">/ ' + p.usersActive + '</span></td>' +
-                '<td class="px-3 py-3 text-right">' + netDisplay + '</td>' +
-                '<td class="px-3 py-3 text-slate-500">' + p.operator + '</td>' +
-                '<td class="px-4 py-3 text-right"><div class="flex items-center justify-end gap-2 flex-wrap">' + warnIcon +
-                '<button onclick="showPartnerDetail(\'' + p.id + '\')" class="text-slate-600 font-bold hover:underline">详情</button>' +
-                '<button onclick="showRebateTree(\'' + p.id + '\')" class="text-blue-600 font-bold hover:underline">返佣树</button>' +
-                '<button onclick="openRatioModalForPartner(\'' + p.id + '\')" class="text-blue-600 font-bold hover:underline">调整</button>' +
-                '</div></td></tr>';
-        }).join('');
-    }
-
-    function showPartnerList() {
-        currentPartnerId = null;
-        showPage('page-agent-mgmt');
-    }
-
-    function showPartnerDetail(id) {
-        const p = getPartner(id);
-        if (!p) return;
-        currentPartnerId = id;
-        showPage('page-partner-detail');
-        document.getElementById('detail-partner-title').textContent = p.note + ' · 合伙人详情';
-        document.getElementById('detail-partner-sub').textContent = p.wallet + ' · UID ' + p.uid + ' · 绑定 ' + p.bindTime;
-        document.getElementById('detail-uid').textContent = p.uid;
-        document.getElementById('detail-wallet').textContent = p.wallet;
-        document.getElementById('detail-ratio').textContent = p.ratio + '%';
-        document.getElementById('detail-operator').textContent = p.operator;
-        document.getElementById('detail-bind-time').textContent = p.bindTime;
-        document.getElementById('detail-vol').textContent = p.vol;
-        document.getElementById('detail-deposit').textContent = p.deposit;
-        document.getElementById('detail-users').textContent = p.usersTotal + ' / ' + p.usersActive;
-        document.getElementById('detail-net').textContent = p.net;
-        const statusEl = document.getElementById('detail-settle-status');
-        if (p.settleStatus === 'abnormal') {
-            statusEl.innerHTML = '<span class="text-amber-700 font-bold">待修正返佣后计算</span>';
-            document.getElementById('detail-abnormal-banner').classList.remove('hidden');
-            document.getElementById('detail-abnormal-vol').textContent = p.abnormalVol;
-            document.getElementById('detail-abnormal-lines').textContent = p.abnormalLines + ' 条';
-        } else {
-            statusEl.innerHTML = '<span class="text-green-600 font-bold">正常结算</span>';
-            document.getElementById('detail-abnormal-banner').classList.add('hidden');
-        }
-        document.getElementById('detail-sub-partners').innerHTML = p.subs.length
-            ? p.subs.map(function (s) {
-                return '<tr class="' + (s.abnormal ? 'bg-red-50/40' : '') + '">' +
-                    '<td class="px-4 py-2 text-slate-400">' + s.time + '</td>' +
-                    '<td class="px-3 py-2"><span class="font-black">' + s.wallet + '</span><span class="block text-[10px] text-slate-400">' + s.note + '</span></td>' +
-                    '<td class="px-3 py-2 text-center font-bold ' + (s.abnormal ? 'text-red-600' : '') + '">' + s.ratio + '%</td>' +
-                    '<td class="px-3 py-2 text-center"><span class="' + (s.gap < 0 ? 'bg-red-100 text-red-600' : 'bg-blue-50 text-blue-600') + ' px-2 py-0.5 rounded font-black">' + s.gap + '%</span></td>' +
-                    '<td class="px-3 py-2 text-right font-bold">' + s.vol + '</td>' +
-                    '<td class="px-3 py-2 text-right">' + s.deposit + '</td>' +
-                    '<td class="px-3 py-2 text-center">' + s.users + '</td>' +
-                    '<td class="px-3 py-2 text-center text-[10px] font-bold">' + (s.abnormal ? '<span class="text-amber-700">待修正返佣后计算</span>' : '<span class="text-green-600">正常</span>') + '</td></tr>';
-            }).join('')
-            : '<tr><td colspan="8" class="px-4 py-6 text-center text-slate-400">暂无直属下级合伙人</td></tr>';
-        document.getElementById('detail-settlement-rows').innerHTML = p.settlements.map(function (r) {
-            const statusClass = r.status === '已发放' ? 'text-green-600' : (r.status === '补结算' ? 'text-blue-600' : 'text-amber-600');
-            return '<tr><td class="px-4 py-2">' + r.date + '</td><td class="px-3 py-2 text-right">' + r.vol + '</td><td class="px-3 py-2 text-right font-bold">' + r.rebate + '</td><td class="px-3 py-2 text-center font-bold ' + statusClass + '">' + r.status + '</td><td class="px-4 py-2 text-slate-500">' + r.note + '</td></tr>';
-        }).join('');
-    }
-
-    function renderTreeNode(node) {
-        const abnormalCls = node.abnormal ? 'border-red-300 bg-red-50' : 'border-slate-200 bg-slate-50';
-        const ratioCls = node.abnormal ? 'text-red-600' : 'text-blue-600';
-        let html = '<div class="tree-node mb-3">';
-        html += '<div class="flex items-center gap-3 p-3 rounded-lg border ' + abnormalCls + '">';
-        html += '<span class="text-[10px] font-bold text-slate-400 uppercase">L' + node.level + '</span>';
-        html += '<div class="flex-1 min-w-0"><p class="font-black text-slate-900">' + node.wallet + '</p><p class="text-[10px] text-slate-500">' + node.note + '</p></div>';
-        html += '<span class="text-xl font-black ' + ratioCls + '">' + node.ratio + '%</span>';
-        html += '<button onclick="openRatioModalForNode(\'' + node.wallet + '\', ' + node.ratio + ')" class="text-blue-600 font-bold text-[11px] hover:underline shrink-0">修改比例</button>';
-        if (node.abnormal) html += '<span class="text-[10px] font-bold text-red-600 shrink-0">比例倒挂</span>';
-        html += '</div>';
-        if (node.children && node.children.length) {
-            html += '<div class="tree-children mt-2">';
-            node.children.forEach(function (c) { html += renderTreeNode(c); });
-            html += '</div>';
-        }
-        html += '</div>';
-        return html;
-    }
-
-    function showRebateTree(id) {
-        const p = getPartner(id);
-        if (!p) return;
-        currentPartnerId = id;
-        showPage('page-rebate-tree');
-        document.getElementById('tree-title').textContent = p.note + ' · 返佣关系树';
-        document.getElementById('tree-sub').textContent = '根节点 ' + p.wallet + ' · 当前返佣比例 ' + p.ratio + '%';
-        const hasAbnormal = p.settleStatus === 'abnormal';
-        document.getElementById('tree-abnormal-hint').classList.toggle('hidden', !hasAbnormal);
-        document.getElementById('rebate-tree-root').innerHTML = renderTreeNode(p.tree);
-    }
-
-    function openRatioModalForPartner(id) {
-        const p = getPartner(id);
-        if (!p) return;
-        ratioEditTarget = { wallet: p.wallet, ratio: p.ratio };
-        document.getElementById('ratio-modal-target-label').textContent = '正在操作一级合伙人';
-        document.getElementById('ratio-modal-target').textContent = p.wallet + ' (' + p.note + ')';
-        document.getElementById('ratio-modal-current').textContent = p.ratio + '%';
-        document.getElementById('input-target-ratio').value = '';
-        openModal('modal-modify-ratio');
-    }
-
-    function openRatioModalForNode(wallet, ratio) {
-        ratioEditTarget = { wallet: wallet, ratio: ratio };
-        document.getElementById('ratio-modal-target-label').textContent = '正在操作树内节点';
-        document.getElementById('ratio-modal-target').textContent = wallet;
-        document.getElementById('ratio-modal-current').textContent = ratio + '%';
-        document.getElementById('input-target-ratio').value = '';
-        openModal('modal-modify-ratio');
-    }
+        const t = document.getElementById('header-title');
+        if (t && PAGE_TITLES[pageId]) t.textContent = PAGE_TITLES[pageId];
+        const hash = PAGE_HASH[pageId];
+        if (hash && location.hash !== '#' + hash) location.hash = hash;
+    };
 
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-
-    function handleRatioSubmit() {
-        const targetValue = document.getElementById('input-target-ratio').value;
-        if (!targetValue || targetValue <= 0) { alert('请输入有效的比例数值'); return; }
-        if (ratioEditTarget && parseFloat(targetValue) < ratioEditTarget.ratio) {
-            closeModal('modal-modify-ratio');
-            openModal('modal-confirm-adjust');
-        } else {
-            alert('比例已成功调整至 ' + targetValue + '% (T+1 生效)');
-            closeModal('modal-modify-ratio');
-        }
-    }
-
-    function showReviewDetail(isRejected) {
-        document.getElementById('view-batch-list').classList.add('hidden');
-        document.getElementById('view-review-detail').classList.remove('hidden');
-        document.getElementById('reject-banner').classList.toggle('hidden', !isRejected);
-        document.getElementById('abnormal-banner').classList.toggle('hidden', isRejected);
-        document.getElementById('detail-title').innerText = isRejected ? '2024-05-22 结算详情 (已拒绝)' : '2024-05-23 结算详情';
-        document.getElementById('sum-vol').innerText = isRejected ? '$10,200,000.00' : '$12,450,000.00';
-        document.getElementById('sum-expected').innerText = isRejected ? '$70,000.00' : '$85,140.00';
-    }
-
-    function backToList() {
-        document.getElementById('view-review-detail').classList.add('hidden');
-        document.getElementById('view-batch-list').classList.remove('hidden');
-    }
-
-    function openAdjustModal(addr, val) {
-        document.getElementById('adjust-target-addr').innerText = addr;
-        document.getElementById('adjust-input-val').value = val;
-        openModal('modal-adjust');
-    }
-
-    function saveAdjustment() {
-        alert('修改成功，实发金额已重新计算。');
-        closeModal('modal-adjust');
-    }
-
-    renderPartnerList();
 </script>
 <script src="admin-permission-registry.js"></script>
 <script src="admin-permission-store.js"></script>
 <script src="admin-permissions.js"></script>
 <script src="admin-sidebar.js"></script>
+<script src="admin-approval.js"></script>
+<script src="admin-approval-ui.js"></script>
+<script src="admin-partner-portal.js"></script>
 <script>
-    initAdminSidebar('agent-mgmt', '登录身份: 市场运营 (Allen)');
+    initModuleApproval({ type: 'partner_l1_bind', rootId: 'partner-approval-root', title: '合伙人配置审批', showExportList: false, showExportDetail: false });
+
+    function showApprovalPage() {
+        PartnerPortal_showPage('page-agent-approval');
+        initAdminSidebar('agent-approval', '登录身份: 市场运营');
+        moduleApprovalBackList('partner-approval-root', false);
+    }
+
+    initAdminSidebar('agent-mgmt', '登录身份: 市场运营');
     initAdminHashRouter({
-        agent: function () { showPartnerList(); },
-        'partner-detail': function () { showPartnerDetail(currentPartnerId || 'p1'); },
-        'rebate-tree': function () { showRebateTree(currentPartnerId || 'p1'); },
-        settlement: function () { showPage('page-settlement', false); }
-    }, 'agent', { agent: 'agent-mgmt', 'partner-detail': 'agent-mgmt', 'rebate-tree': 'agent-mgmt', settlement: 'agent-settlement' });
+        agent: function () { PartnerPortal.showList(); initAdminSidebar('agent-mgmt'); },
+        'partner-detail': function () { PartnerPortal.showDetail(PartnerPortal.getCurrentUserId() || 'u1'); initAdminSidebar('agent-mgmt'); },
+        'rebate-tree': function () { PartnerPortal.showTree(PartnerPortal.getCurrentUserId() || 'u1', 'expand'); initAdminSidebar('agent-mgmt'); },
+        approval: function () { showApprovalPage(); },
+        settlement: function () { PartnerPortal_showPage('page-settlement'); initAdminSidebar('agent-settlement'); PartnerPortal.filterSettlementBatches(); }
+    }, 'agent', {
+        agent: 'agent-mgmt',
+        'partner-detail': 'agent-mgmt',
+        'rebate-tree': 'agent-mgmt',
+        approval: 'agent-approval',
+        settlement: 'agent-settlement'
+    });
 </script>
 </body>
 </html>

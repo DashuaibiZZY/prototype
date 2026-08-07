@@ -4,7 +4,8 @@
 (function () {
     const ADMIN_PAGES = [
         { id: 'sys.admin', module: '系统', label: '权限与用户', writeHint: '维护人员、页面权限与敏感组' },
-        { id: 'agent.mgmt', module: '合伙人中心', label: '一级合伙人管理', writeHint: '绑定/调整一级合伙人', needsAgentCap: true },
+        { id: 'agent.mgmt', module: '合伙人中心', label: '合伙人管理', writeHint: '绑定/调整合伙人', needsAgentCap: true },
+        { id: 'agent.approval', module: '合伙人中心', label: '合伙人配置审批', writeHint: '超上限绑定等审批（只读；审批走敏感组）' },
         { id: 'agent.settlement', module: '合伙人中心', label: '佣金对账与发放', writeHint: '对账与发放（返佣大版本后续更新）' },
         { id: 'trial.config', module: '体验金', label: '卡组配置', writeHint: '新建/编辑卡组' },
         { id: 'trial.issue', module: '体验金', label: '批量发放', writeHint: '提交体验金发放审批' },
