@@ -70,7 +70,7 @@
                     'leaderboard': 'write',
                     'fee.settings': 'write', 'fee.approval': 'read', 'fee.log': 'read',
                     'points.manual': 'write', 'points.config': 'write', 'points.bonus': 'write', 'points.approval': 'read', 'points.overview': 'read', 'points.logs': 'read',
-                    'agent.mgmt': 'write', 'agent.settlement': 'read'
+                    'agent.mgmt': 'write', 'agent.approval': 'read', 'agent.settlement': 'read'
                 }),
                 agentMaxRebate: 70
             },
@@ -130,7 +130,7 @@
                 gaBound: true,
                 lastLogin: '2026-07-17 11:20',
                 pagePerms: pageMap({
-                    'agent.settlement': 'write', 'fee.settings': 'read', 'fee.approval': 'read', 'fee.log': 'read'
+                    'agent.mgmt': 'write', 'agent.approval': 'read', 'agent.settlement': 'write', 'fee.settings': 'read', 'fee.approval': 'read', 'fee.log': 'read'
                 })
             },
             {

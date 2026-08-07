@@ -4,7 +4,7 @@
 (function () {
     const STORAGE_KEY = 'forx_approval_applications';
     const ROLE_KEY = 'forx_approval_view_role';
-    const SEED_VERSION = '2026-08-04-v1';
+    const SEED_VERSION = '2026-08-07-partner-v1';
     const SEED_VERSION_KEY = 'forx_approval_seed_v';
 
     const STEPS = [
@@ -15,7 +15,8 @@
     ];
 
     const TYPE_FLOW_PROFILE = {
-        points_pool_config: 'cross_risk'
+        points_pool_config: 'cross_risk',
+        partner_l1_bind: 'risk_boss'
     };
 
     const FLOW_PROFILES = {
@@ -34,6 +35,16 @@
             ],
             afterRisk: 'approved',
             larkOnRisk: false
+        },
+        risk_boss: {
+            key: 'risk_boss',
+            steps: [
+                { key: 'apply', label: '市场运营提交', role: '市场运营' },
+                { key: 'risk', label: '风控审核', role: '风控' },
+                { key: 'boss', label: '老板审批', role: '老板' }
+            ],
+            afterRisk: 'pending_boss',
+            larkOnRisk: true
         }
     };
 
@@ -43,7 +54,8 @@
         fee_config: '用户费率配置',
         points_bonus_config: '积分加成配置',
         points_pool_config: '积分总池配置',
-        points_program_switch: '积分计划总开关'
+        points_program_switch: '积分计划总开关',
+        partner_l1_bind: '一级合伙人绑定（超上限）'
     };
 
     const ROLE_LABELS = {
@@ -305,6 +317,27 @@
                 timeline: [
                     { at: '2026-07-22 09:00', actor: 'Points_Admin', action: '提交申请', note: '临时补发申请' },
                     { at: '2026-07-22 10:30', actor: 'Mkt_Cross', action: '驳回', note: '请关联平台活动后重新提交' }
+                ]
+            },
+            {
+                id: 'APR20260801031',
+                type: 'partner_l1_bind',
+                title: '一级合伙人绑定（超上限）',
+                applicant: 'Mkt_Allen',
+                status: 'pending_risk',
+                flowProfile: 'risk_boss',
+                createdAt: '2026-08-01 10:20',
+                remark: '头部 KOL 谈判比例 78%',
+                summary: '0xfa12...88ce · 78% · Global_KOL',
+                payload: {
+                    wallet: '0xfa12...88ce',
+                    ratio: 78,
+                    note: 'Global_KOL',
+                    opsCap: 80,
+                    exceedsCap: true
+                },
+                timeline: [
+                    { at: '2026-08-01 10:20', actor: 'Mkt_Allen', action: '提交申请', note: '头部 KOL 谈判比例 78%' }
                 ]
             },
             {
@@ -685,14 +718,16 @@
     window.submitApprovalApplication = function (opts) {
         opts = opts || {};
         seedIfEmpty();
+        const profileKey = opts.flowProfile || TYPE_FLOW_PROFILE[opts.type] || 'full';
+        const initialStatus = profileKey === 'risk_boss' ? 'pending_risk' : 'pending_cross';
         const app = {
             id: 'APR' + Date.now(),
             type: opts.type || 'other',
             title: opts.title || '审批申请',
             summary: opts.summary || '',
             applicant: opts.applicant || '市场运营',
-            status: 'pending_cross',
-            flowProfile: opts.flowProfile || TYPE_FLOW_PROFILE[opts.type] || 'full',
+            status: initialStatus,
+            flowProfile: profileKey,
             createdAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
             remark: opts.remark || '',
             payload: opts.payload || {},
@@ -836,6 +871,8 @@
             Object.keys(p).forEach(function (k) {
                 if (k !== 'recipients') rows.push([k, Array.isArray(p[k]) ? p[k].join('; ') : p[k]]);
             });
+        } else if (app.type === 'partner_l1_bind') {
+            rows.push(['wallet', p.wallet], ['ratio', p.ratio], ['note', p.note], ['opsCap', p.opsCap]);
         }
         downloadCsv(app.id + '_detail.csv', rows);
     };

@@ -12,7 +12,8 @@
         {
             title: '合伙人中心',
             items: [
-                { key: 'agent-mgmt', label: '一级合伙人管理', href: '代理中心后台.html#agent' },
+                { key: 'agent-mgmt', label: '合伙人管理', href: '代理中心后台.html#agent' },
+                { key: 'agent-approval', label: '合伙人配置审批', href: '代理中心后台.html#approval' },
                 { key: 'agent-settlement', label: '佣金对账与发放', href: '代理中心后台.html#settlement' }
             ]
         },
