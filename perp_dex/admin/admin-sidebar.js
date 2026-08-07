@@ -10,10 +10,9 @@
             ]
         },
         {
-            title: '代理中心',
+            title: '合伙人中心',
             items: [
-                { key: 'agent-mgmt', label: '一级代理管理', href: '代理中心后台.html#agent' },
-                { key: 'agent-operator', label: '运营权限配置', href: '代理中心后台.html#operator' },
+                { key: 'agent-mgmt', label: '一级合伙人管理', href: '代理中心后台.html#agent' },
                 { key: 'agent-settlement', label: '佣金对账与发放', href: '代理中心后台.html#settlement' }
             ]
         },
