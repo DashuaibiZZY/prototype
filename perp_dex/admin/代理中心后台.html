@@ -163,15 +163,12 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
                 </button>
                 <div>
-                    <h2 id="tree-title" class="text-lg font-black">返佣关系</h2>
-                    <p id="tree-sub" class="text-slate-400 text-[11px]"></p>
+                    <h2 id="tree-title" class="text-lg font-black">返佣关系树</h2>
                 </div>
             </div>
-            <div id="tree-mode-badge" class="text-[10px] font-bold uppercase tracking-wider text-slate-500"></div>
-            <div id="tree-data-version" class="text-[9px] text-slate-400"></div>
             <div id="tree-abnormal-section"></div>
             <div class="bg-white rounded-lg border border-slate-200 p-4">
-                <p class="text-[10px] text-slate-500 mb-3">上级链默认完整展示并可改比例；下级仅展示<strong>直接下级</strong>，点击节点左侧 <strong>+</strong> 再展开下一层。修改后于底部<strong>一并提交</strong>。</p>
+                <p class="text-[11px] text-slate-600 mb-3 bg-slate-50 border border-slate-100 rounded p-3"><strong>运营操作：</strong>上级链已固定展示；下级默认只显示直属合伙人，点 <strong>+</strong> 展开下一层。下级返佣比例须低于其直属上级；多条修改后点底部<strong>一并提交</strong>。</p>
                 <div id="rebate-tree-root"></div>
             </div>
             <div id="tree-pending-bar" class="hidden"></div>
@@ -247,8 +244,8 @@
                         </tr>
                         </thead>
                         <tbody class="divide-y">
-                        <tr><td class="px-6 py-4 font-black">0xd593...2Dd2</td><td class="px-6 py-4 text-center">一级</td><td class="px-6 py-4 text-right">$1M</td><td class="px-6 py-4 text-right">$7,000</td><td class="px-6 py-4 text-right text-blue-600 font-black">$6,500</td></tr>
-                        <tr class="bg-amber-50/40"><td class="px-6 py-4 font-black">0xab12...99fe</td><td class="px-6 py-4 text-center">0x5c...882</td><td class="px-6 py-4 text-right">$200k</td><td class="px-6 py-4 text-right text-amber-700 font-bold">待修正返佣后计算</td><td class="px-6 py-4 text-right">$0</td></tr>
+                        <tr><td class="px-6 py-4 font-black">0xAbn...L1</td><td class="px-6 py-4 text-center">一级</td><td class="px-6 py-4 text-right">$1M</td><td class="px-6 py-4 text-right">$6,800</td><td class="px-6 py-4 text-right text-blue-600 font-black">$6,500</td></tr>
+                        <tr class="bg-amber-50/40"><td class="px-6 py-4 font-black">0xAbn...L4</td><td class="px-6 py-4 text-center">0xAbn...L3</td><td class="px-6 py-4 text-right">$128k</td><td class="px-6 py-4 text-right text-amber-700 font-bold">待修正返佣后计算</td><td class="px-6 py-4 text-right">$0</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -350,7 +347,7 @@
 <script src="admin-sidebar.js"></script>
 <script src="admin-approval.js"></script>
 <script src="admin-approval-ui.js"></script>
-<script src="admin-partner-portal.js?v=partner-tree-v4"></script>
+<script src="admin-partner-portal.js?v=partner-demo-4"></script>
 <script>
     initModuleApproval({ type: 'partner_l1_bind', rootId: 'partner-approval-root', title: '合伙人配置审批', showExportList: false, showExportDetail: false });
 
@@ -363,12 +360,9 @@
     initAdminSidebar('agent-mgmt', '登录身份: 市场运营');
     initAdminHashRouter({
         agent: function () { PartnerPortal.showList(); initAdminSidebar('agent-mgmt'); },
-        'partner-detail': function () { PartnerPortal.showDetail(PartnerPortal.getCurrentUserId() || 'u1'); initAdminSidebar('agent-mgmt'); },
+        'partner-detail': function () { PartnerPortal.showDetail(PartnerPortal.getCurrentUserId() || 'p_n1'); initAdminSidebar('agent-mgmt'); },
         'rebate-tree': function () {
-            const full = (location.hash || '').replace('#', '');
-            const ab = full.match(/abnormal=([^&]+)/);
-            if (ab) PartnerPortal.showTreeFromAbnormal(ab[1]);
-            else PartnerPortal.showTree(PartnerPortal.getCurrentUserId() || 'u1', 'expand');
+            PartnerPortal.showTree(PartnerPortal.getCurrentUserId() || 'p_n1');
             initAdminSidebar('agent-mgmt');
         },
         approval: function () { showApprovalPage(); },
