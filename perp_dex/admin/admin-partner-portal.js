@@ -3,10 +3,22 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-4';
+    const DATA_VERSION = 'partner-demo-5';
 
     /** 仅列表展示的 4 个合伙人 */
     const LIST_IDS = ['p_n1', 'p_n3', 'p_a1', 'p_a4'];
+
+    function helperUser(id, wallet, uid, note, level, ratio, parentWallet, rootWallet, childIds) {
+        return {
+            id: id, wallet: wallet, uid: uid, note: note, level: level, ratio: ratio,
+            parentWallet: parentWallet, rootWallet: rootWallet, bindTime: '2024-04-10',
+            settleStatus: 'normal', abnormalVol: '--', abnormalLines: 0,
+            vol: '$1.2M', deposit: '+$35k', usersTotal: 80, usersActive: 22,
+            net: '$6,800', netHint: '', rebateTotal: '$420', rebateSelf: '$0.02k', rebateDirect: '$0.1k', rebateGap: '$0.3k',
+            activeSubPartners: (childIds || []).length, totalSubPartners: (childIds || []).length,
+            childIds: childIds || [], directClients: [], settlements: []
+        };
+    }
 
     const USERS = [
         {
@@ -16,30 +28,33 @@
             vol: '$18.2M', deposit: '+$620k', usersTotal: 680, usersActive: 210,
             net: '$84,200', netHint: '伞下净手续费 − 伞下触发的全部返佣',
             rebateTotal: '$6,200', rebateSelf: '$0.3k', rebateDirect: '$2.1k', rebateGap: '$3.9k',
-            activeSubPartners: 1, totalSubPartners: 1, childIds: ['h_n2'],
+            activeSubPartners: 2, totalSubPartners: 2, childIds: ['h_n2a', 'h_n2b'],
             directClients: [{ time: '2024-05-17', wallet: '0xde...55aa', vol: '$92,000', fee: '$92', rebate: '$64.40', status: '交易中' }],
             settlements: [{ date: '2024-05-20', vol: '$1.1M', rebate: '$4,820', status: '已发放', note: '' }]
         },
-        {
-            id: 'h_n2', wallet: '0xNorm...L2', uid: '100802', note: '华东渠道', level: 2, ratio: 55,
-            parentWallet: '0xNorm...L1', rootWallet: '0xNorm...L1', bindTime: '2024-03-15',
-            settleStatus: 'normal', abnormalVol: '--', abnormalLines: 0,
-            vol: '$8.6M', deposit: '+$280k', usersTotal: 420, usersActive: 120,
-            net: '$38,400', netHint: '', rebateTotal: '$3,100', rebateSelf: '$0.1k', rebateDirect: '$0.8k', rebateGap: '$2.2k',
-            activeSubPartners: 1, totalSubPartners: 1, childIds: ['p_n3'],
-            directClients: [], settlements: []
-        },
+        helperUser('h_n2a', '0xNorm...L2a', '100802', '华东渠道', 2, 55, '0xNorm...L1', '0xNorm...L1', ['p_n3', 'h_n3a']),
+        helperUser('h_n2b', '0xNorm...L2b', '100802b', '华南渠道', 2, 53, '0xNorm...L1', '0xNorm...L1', ['h_n3b', 'h_n3c']),
         {
             id: 'p_n3', wallet: '0xNorm...L3', uid: '100803', note: '正常结算·三级返佣', level: 3, ratio: 45,
-            parentWallet: '0xNorm...L2', rootWallet: '0xNorm...L1', bindTime: '2024-04-02',
+            parentWallet: '0xNorm...L2a', rootWallet: '0xNorm...L1', bindTime: '2024-04-02',
             settleStatus: 'normal', abnormalVol: '--', abnormalLines: 0,
             vol: '$4.8M', deposit: '+$180k', usersTotal: 320, usersActive: 88,
             net: '$22,100', netHint: '含向上级级差',
             rebateTotal: '$8,420', rebateSelf: '$0.1k', rebateDirect: '$0.8k', rebateGap: '$7.5k',
-            activeSubPartners: 0, totalSubPartners: 0, childIds: [],
+            activeSubPartners: 2, totalSubPartners: 2, childIds: ['h_n4a', 'h_n4b'],
             directClients: [{ time: '2024-05-21', wallet: '0xcc...88ab', vol: '$125,000', fee: '$125', rebate: '$56.25', status: '交易中' }],
             settlements: [{ date: '2024-05-20', vol: '$420k', rebate: '$1,960', status: '已发放', note: '' }]
         },
+        helperUser('h_n3a', '0xNorm...L3a', '100803a', '华东-苏皖', 3, 42, '0xNorm...L2a', '0xNorm...L1', ['h_n4c']),
+        helperUser('h_n3b', '0xNorm...L3b', '100803b', '华南-闽粤', 3, 40, '0xNorm...L2b', '0xNorm...L1', ['h_n4d']),
+        helperUser('h_n3c', '0xNorm...L3c', '100803c', '华南-桂琼', 3, 38, '0xNorm...L2b', '0xNorm...L1', []),
+        helperUser('h_n4a', '0xNorm...L4a', '100804a', '四级-A线', 4, 35, '0xNorm...L3', '0xNorm...L1', ['h_n5a']),
+        helperUser('h_n4b', '0xNorm...L4b', '100804b', '四级-B线', 4, 33, '0xNorm...L3', '0xNorm...L1', ['h_n5b']),
+        helperUser('h_n4c', '0xNorm...L4c', '100804c', '四级-C线', 4, 36, '0xNorm...L3a', '0xNorm...L1', []),
+        helperUser('h_n4d', '0xNorm...L4d', '100804d', '四级-D线', 4, 34, '0xNorm...L3b', '0xNorm...L1', ['h_n5c']),
+        helperUser('h_n5a', '0xNorm...L5a', '100805a', '五级-A1', 5, 28, '0xNorm...L4a', '0xNorm...L1', []),
+        helperUser('h_n5b', '0xNorm...L5b', '100805b', '五级-B1', 5, 27, '0xNorm...L4b', '0xNorm...L1', []),
+        helperUser('h_n5c', '0xNorm...L5c', '100805c', '五级-D1', 5, 26, '0xNorm...L4d', '0xNorm...L1', []),
         {
             id: 'p_a1', wallet: '0xAbn...L1', uid: '100811', note: '部分分支异常·一级返佣', level: 1, ratio: 68,
             parentWallet: null, rootWallet: '0xAbn...L1', operator: 'allen@forx.fi', bindTime: '2024-02-10',
@@ -54,15 +69,13 @@
                 { date: '2024-05-20', vol: '$3.8M', rebate: '$12,400', status: '已发放', note: '' }
             ]
         },
-        {
-            id: 'h_a2a', wallet: '0xAbn...L2a', uid: '100812', note: '正常分支', level: 2, ratio: 50,
-            parentWallet: '0xAbn...L1', rootWallet: '0xAbn...L1', bindTime: '2024-03-05',
-            settleStatus: 'normal', abnormalVol: '--', abnormalLines: 0,
-            vol: '$6.2M', deposit: '+$150k', usersTotal: 280, usersActive: 72,
-            net: '$28,500', netHint: '', rebateTotal: '$2,800', rebateSelf: '$0.1k', rebateDirect: '$0.6k', rebateGap: '$2.3k',
-            activeSubPartners: 0, totalSubPartners: 0, childIds: [],
-            directClients: [], settlements: [{ date: '2024-05-20', vol: '$800k', rebate: '$2,100', status: '已发放', note: '' }]
-        },
+        helperUser('h_a2a', '0xAbn...L2a', '100812', '正常分支', 2, 50, '0xAbn...L1', '0xAbn...L1', ['h_a2a1', 'h_a2a2']),
+        helperUser('h_a2a1', '0xAbn...L3a', '100812a', '正常分支-甲', 3, 46, '0xAbn...L2a', '0xAbn...L1', ['h_a4na']),
+        helperUser('h_a2a2', '0xAbn...L3b', '100812b', '正常分支-乙', 3, 44, '0xAbn...L2a', '0xAbn...L1', ['h_a4nb', 'h_a4nc']),
+        helperUser('h_a4na', '0xAbn...L4na', '100816a', '正常四级-甲', 4, 38, '0xAbn...L3a', '0xAbn...L1', []),
+        helperUser('h_a4nb', '0xAbn...L4nb', '100816b', '正常四级-乙', 4, 36, '0xAbn...L3b', '0xAbn...L1', ['h_a5nb']),
+        helperUser('h_a4nc', '0xAbn...L4nc', '100816c', '正常四级-丙', 4, 35, '0xAbn...L3b', '0xAbn...L1', []),
+        helperUser('h_a5nb', '0xAbn...L5nb', '100817b', '正常五级-乙', 5, 30, '0xAbn...L4nb', '0xAbn...L1', []),
         {
             id: 'h_a2b', wallet: '0xAbn...L2b', uid: '100813', note: '异常分支入口', level: 2, ratio: 52,
             parentWallet: '0xAbn...L1', rootWallet: '0xAbn...L1', bindTime: '2024-03-08',
@@ -578,15 +591,20 @@
     function closeBindModal() { document.getElementById('modal-bind-partner').classList.add('hidden'); }
 
     function submitBindPartner() {
-        const wallet = document.getElementById('bind-wallet').value.trim();
+        const walletInput = document.getElementById('bind-wallet').value.trim();
         const ratio = parseFloat(document.getElementById('bind-ratio').value);
         const note = document.getElementById('bind-note').value.trim();
         const remark = document.getElementById('bind-remark').value.trim();
-        if (!wallet || !ratio || !remark) { alert('请填写完整信息'); return; }
-        if (ratio > OPS_CAP && typeof submitApprovalApplication === 'function') {
+        if (!walletInput || !ratio || !remark) { alert('请填写完整信息'); return; }
+        const isUid = /^\d+$/.test(walletInput);
+        const uid = isUid ? walletInput : '';
+        const wallet = isUid ? '—' : walletInput;
+        const exceedsCap = ratio > OPS_CAP;
+        if (exceedsCap && typeof submitApprovalApplication === 'function') {
             submitApprovalApplication({
                 type: 'partner_l1_bind', title: '一级合伙人绑定', applicant: 'Mkt_Allen', remark: remark,
-                summary: wallet + ' · ' + ratio + '%', payload: { wallet: wallet, ratio: ratio, note: note, opsCap: OPS_CAP }
+                summary: (uid ? 'UID ' + uid + ' · ' : wallet + ' · ') + ratio + '%',
+                payload: { uid: uid || '—', wallet: wallet, ratio: ratio, note: note, opsCap: OPS_CAP, exceedsCap: exceedsCap }
             });
             alert('已提交审批');
         } else {
