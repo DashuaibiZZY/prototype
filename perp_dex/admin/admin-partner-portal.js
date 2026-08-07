@@ -130,6 +130,7 @@
     let treeAbnormalRecordId = null;
     let listFilterStatus = 'all';
     let listSearchQ = '';
+    let treeExpandedNodes = new Set();
     let pendingRatioChanges = [];
     let detailTableFilter = '';
 
@@ -233,7 +234,7 @@
         const displayRatio = pending ? pending.newRatio : u.ratio;
         const border = u.settleStatus === 'abnormal' ? 'border-red-300 bg-red-50/60' : 'border-slate-200 bg-white';
         const focusCls = opts.isFocus ? ' tree-focus-ring' : '';
-        const editable = treeMode === 'expand' && !opts.readonly;
+        const editable = !opts.readonly;
         let html = '<div class="flex items-center gap-3 p-3 rounded-lg border ' + border + focusCls + ' shadow-sm min-w-[280px]">';
         html += '<span class="text-[10px] font-bold text-slate-400">L' + u.level + '</span>';
         html += '<div class="flex-1 min-w-0"><p class="font-black font-mono text-[11px]">' + u.wallet + '</p><p class="text-[10px] text-slate-500">' + u.note + '</p></div>';
@@ -247,40 +248,60 @@
         return html;
     }
 
-    /** 场景一：中心展开 — 向上完整上级链（仅通向焦点路径）+ 焦点下全部后代（默认全展开） */
-    function renderExpandFocusTree(focusId) {
+    function renderExpandToggle(userId, expanded, childCount) {
+        return '<button type="button" class="tree-expand-btn" onclick="PartnerPortal.toggleTreeExpand(\'' + userId + '\')" title="展开 ' + childCount + ' 个直属下级" aria-label="展开下级">' + (expanded ? '−' : '+') + '</button>';
+    }
+
+    /** 返佣树：上级链固定全展示；下级仅直接下级，点击逐级展开 */
+    function renderRebateTree(focusId, opts) {
+        opts = opts || {};
         const focus = getUser(focusId);
         if (!focus) return '';
 
-        function renderFullDown(userId) {
-            const u = getUser(userId);
-            if (!u) return '';
-            let h = '<div class="tree-children mt-2">';
-            h += renderNodeCard(u, { isFocus: userId === focusId });
-            (u.childIds || []).forEach(function (cid) {
-                h += renderFullDown(cid);
+        if (opts.upchainRecord) {
+            return renderUpchainInTree(opts.upchainRecord, focus);
+        }
+
+        function renderLazyDown(parentId) {
+            const parent = getUser(parentId);
+            const childIds = parent.childIds || [];
+            if (!childIds.length) return '';
+            let h = '<div class="tree-children mt-2 space-y-2">';
+            childIds.forEach(function (cid) {
+                h += renderDownNode(cid);
             });
             h += '</div>';
             return h;
         }
 
-        function renderFromRoot(userId, depth) {
+        function renderDownNode(userId) {
+            const u = getUser(userId);
+            if (!u) return '';
+            const childIds = u.childIds || [];
+            const hasKids = childIds.length > 0;
+            const expanded = treeExpandedNodes.has(userId);
+            let h = '<div class="tree-node-down">';
+            h += '<div class="flex items-start gap-1">';
+            h += hasKids ? renderExpandToggle(userId, expanded, childIds.length) : '<span class="w-6 shrink-0"></span>';
+            h += '<div class="flex-1">' + renderNodeCard(u, { isFocus: userId === focusId }) + '</div>';
+            h += '</div>';
+            if (hasKids && expanded) h += renderLazyDown(userId);
+            h += '</div>';
+            return h;
+        }
+
+        function renderPathFromRoot(userId, depth) {
             const u = getUser(userId);
             if (!u) return '';
             const isFocus = userId === focusId;
             const wrapCls = depth > 0 ? 'tree-children mt-2' : '';
             let h = '<div class="' + wrapCls + '">';
-            h += renderNodeCard(u, { isFocus: isFocus, readonly: !isFocus && !isDescendantOf(focusId, userId) });
+            h += renderNodeCard(u, { isFocus: isFocus });
             if (isFocus) {
-                (u.childIds || []).forEach(function (cid) {
-                    h += renderFullDown(cid);
-                });
+                h += renderLazyDown(userId);
             } else {
                 const pathChild = childOnPathToFocus(u, focusId);
-                if (pathChild) {
-                    h += '<div class="text-[9px] text-slate-400 py-1">↓ 直属下级（通向焦点）</div>';
-                    h += renderFromRoot(pathChild, depth + 1);
-                }
+                if (pathChild) h += renderPathFromRoot(pathChild, depth + 1);
             }
             h += '</div>';
             return h;
@@ -288,14 +309,11 @@
 
         const ancestors = getAncestorChain(focus);
         const rootId = ancestors.length ? ancestors[0].id : focusId;
-        return '<div class="space-y-2">' + renderFromRoot(rootId, 0) + '</div>';
+        return '<div class="space-y-2">' + renderPathFromRoot(rootId, 0) + '</div>';
     }
 
-    /** 场景二：异常固定上级链 — 仅向上，不展开下级；多上级时分叉展示 */
-    function renderUpchainOnly(record) {
-        const child = getUserByWallet(record.childWallet);
-        if (!child) return '<p class="text-red-600">未找到节点 ' + record.childWallet + '</p>';
-
+    /** 异常诊断：同一返佣树内仅向上追溯，不展示下级（多上级分叉） */
+    function renderUpchainInTree(record, focus) {
         function chainToL1(startWallet) {
             const nodes = [];
             let w = startWallet;
@@ -312,7 +330,7 @@
             let h = '<div class="tree-children min-w-[280px]">';
             if (label) h += '<p class="text-[9px] font-bold text-slate-500 mb-2">' + label + '</p>';
             nodes.forEach(function (n, idx) {
-                h += '<div class="mb-2">' + renderNodeCard(n, { readonly: true }) + '</div>';
+                h += '<div class="mb-2">' + renderNodeCard(n) + '</div>';
                 if (idx < nodes.length - 1) h += '<div class="text-[9px] text-slate-400 py-0.5">↓</div>';
             });
             h += '<div class="text-[9px] text-red-500 font-bold py-1">↓ 异常下级</div>';
@@ -320,41 +338,51 @@
             return h;
         }
 
-        let html = '<div class="w-full">';
-        html += '<p class="text-[10px] text-red-700 font-bold mb-3">固定上级链视图（不展示下级）· 记录 ' + record.id + ' · ' + (record.label || record.type) + '</p>';
-        html += '<p class="text-[9px] text-slate-400 mb-4">数据版本 ' + DATA_VERSION + ' · 自列表传入地址对，不重算关系</p>';
+        let html = '<div class="w-full space-y-3">';
+        html += '<p class="text-[10px] text-red-700 font-bold">异常关系诊断 · ' + record.id + ' · ' + (record.label || record.type) + '（不展示该节点下级）</p>';
 
         if (record.type === 'multi_parent' && record.parentWallets) {
-            html += '<div class="flex flex-col items-start gap-3">';
             html += '<div class="tree-branch-split w-full">';
             record.parentWallets.forEach(function (pw) {
-                const chain = chainToL1(pw);
-                html += renderVerticalChain(chain, '上级分支 · ' + pw);
+                html += renderVerticalChain(chainToL1(pw), '上级分支 · ' + pw);
             });
             html += '</div>';
-            html += '<div class="w-full border-t border-dashed border-red-200 pt-3">';
-            html += renderNodeCard(child, { isFocus: true, readonly: true });
-            html += '<p class="text-[9px] text-slate-400 mt-1">最下层节点（不展开其下级）</p>';
-            html += '</div></div>';
+            html += '<div class="border-t border-dashed border-red-200 pt-3">' + renderNodeCard(focus, { isFocus: true }) + '</div>';
         } else {
             const chain = chainToL1(record.parentWallet);
-            html += '<div class="flex flex-col items-start gap-2">';
             chain.forEach(function (n, idx) {
-                html += '<div>' + renderNodeCard(n, { readonly: true }) + '</div>';
+                html += '<div>' + renderNodeCard(n) + '</div>';
                 if (idx < chain.length - 1) html += '<div class="text-[9px] text-slate-400">↓</div>';
             });
             html += '<div class="text-[9px] text-slate-400 py-1">↓ 异常下级</div>';
-            html += '<div>' + renderNodeCard(child, { isFocus: true, readonly: true }) + '</div>';
-            html += '<p class="text-[9px] text-slate-400">不展示该节点下级</p></div>';
+            html += '<div>' + renderNodeCard(focus, { isFocus: true }) + '</div>';
         }
         html += '</div>';
         return html;
     }
 
+    function refreshTree() {
+        const root = document.getElementById('rebate-tree-root');
+        if (!root || !treeFocusId) return;
+        if (treeMode === 'upchain' && treeAbnormalRecordId) {
+            const record = ABNORMAL_RECORDS.find(function (r) { return r.id === treeAbnormalRecordId; });
+            if (record) root.innerHTML = renderRebateTree(treeFocusId, { upchainRecord: record });
+        } else {
+            root.innerHTML = renderRebateTree(treeFocusId);
+        }
+    }
+
+    function toggleTreeExpand(userId) {
+        if (treeMode === 'upchain') return;
+        if (treeExpandedNodes.has(userId)) treeExpandedNodes.delete(userId);
+        else treeExpandedNodes.add(userId);
+        refreshTree();
+    }
+
     function renderPendingChangesBar() {
         const bar = document.getElementById('tree-pending-bar');
         if (!bar) return;
-        if (!pendingRatioChanges.length || treeMode !== 'expand') {
+        if (!pendingRatioChanges.length) {
             bar.classList.add('hidden');
             bar.innerHTML = '';
             return;
@@ -387,7 +415,7 @@
                 '<td class="py-2 font-mono font-bold">' + r.childWallet + '</td>' +
                 '<td class="py-2 font-mono">' + parents + '<span class="block text-[9px] text-red-500">' + detail + '</span></td>' +
                 '<td class="py-2 text-right font-bold">' + r.pausedVol + '</td>' +
-                '<td class="py-2 text-right"><button onclick="PartnerPortal.showTreeFromAbnormal(\'' + r.id + '\')" class="text-blue-600 font-bold hover:underline">固定上级链</button></td></tr>';
+                '<td class="py-2 text-right"><button onclick="PartnerPortal.showTreeFromAbnormal(\'' + r.id + '\')" class="text-blue-600 font-bold hover:underline">在返佣树查看</button></td></tr>';
         });
         html += '</tbody></table></div>';
         return html;
@@ -517,12 +545,13 @@
         treeFocusId = id;
         treeMode = mode || 'expand';
         treeAbnormalRecordId = null;
+        treeExpandedNodes = new Set();
         window.PartnerPortal_showPage('page-rebate-tree');
         document.getElementById('tree-title').textContent = u.note + ' · 返佣关系树';
-        document.getElementById('tree-sub').textContent = '中心展开：自焦点向上至一级 + 向下全部后代（与列表数据一致）';
-        document.getElementById('tree-mode-badge').textContent = '视图：中心展开';
+        document.getElementById('tree-sub').textContent = '上级链固定展示并可改比例；下级仅展示直接下级，点击 + 逐级展开';
+        document.getElementById('tree-mode-badge').textContent = '视图：返佣关系树';
         document.getElementById('tree-data-version').textContent = '数据版本 ' + DATA_VERSION + ' · 焦点 L' + u.level + ' · 直属下级 ' + (u.childIds || []).length + ' 人';
-        document.getElementById('rebate-tree-root').innerHTML = renderExpandFocusTree(id);
+        document.getElementById('rebate-tree-root').innerHTML = renderRebateTree(id);
         const abnSec = document.getElementById('tree-abnormal-section');
         if (abnSec) abnSec.innerHTML = renderAbnormalSection(u.rootWallet, true);
         renderPendingChangesBar();
@@ -533,19 +562,21 @@
         const record = ABNORMAL_RECORDS.find(function (r) { return r.id === recordId; });
         if (!record) return;
         const child = getUserByWallet(record.childWallet);
-        if (child) currentUserId = child.id;
-        treeFocusId = child ? child.id : null;
+        if (!child) return;
+        currentUserId = child.id;
+        treeFocusId = child.id;
         treeMode = 'upchain';
         treeAbnormalRecordId = recordId;
+        treeExpandedNodes = new Set();
         closeAbnormalModal();
         window.PartnerPortal_showPage('page-rebate-tree');
-        document.getElementById('tree-title').textContent = '异常固定上级链 · ' + record.childWallet;
-        document.getElementById('tree-sub').textContent = '自下级向上追溯至一级，不展示任何下级（唯一固定树视图）';
-        document.getElementById('tree-mode-badge').textContent = '视图：异常固定上级链';
-        document.getElementById('tree-data-version').textContent = '数据版本 ' + DATA_VERSION + ' · 记录 ' + recordId + ' · 下级 ' + record.childWallet;
-        document.getElementById('rebate-tree-root').innerHTML = renderUpchainOnly(record);
+        document.getElementById('tree-title').textContent = child.note + ' · 返佣关系树';
+        document.getElementById('tree-sub').textContent = '异常诊断：自记录下级向上追溯至一级，不展示其下级（同一返佣树页）';
+        document.getElementById('tree-mode-badge').textContent = '视图：异常关系诊断';
+        document.getElementById('tree-data-version').textContent = '数据版本 ' + DATA_VERSION + ' · 记录 ' + recordId;
+        document.getElementById('rebate-tree-root').innerHTML = renderRebateTree(child.id, { upchainRecord: record });
         const abnSec = document.getElementById('tree-abnormal-section');
-        if (abnSec) abnSec.innerHTML = '';
+        if (abnSec) abnSec.innerHTML = renderAbnormalSection(record.rootWallet, true);
         renderPendingChangesBar();
         location.hash = 'rebate-tree?abnormal=' + recordId;
     }
@@ -581,7 +612,7 @@
     function stageRatioChange(userId) {
         const u = getUser(userId);
         const input = document.getElementById('ratio-input-' + userId);
-        if (!u || !input || treeMode !== 'expand') return;
+        if (!u || !input) return;
         const newRatio = parseFloat(input.value);
         if (!newRatio || newRatio <= 0) return;
         const idx = pendingRatioChanges.findIndex(function (c) { return c.wallet === u.wallet; });
@@ -600,7 +631,7 @@
 
     function clearPendingChanges() {
         pendingRatioChanges = [];
-        if (treeFocusId && treeMode === 'expand') showTree(treeFocusId, 'expand');
+        refreshTree();
         renderPendingChangesBar();
     }
 
@@ -686,6 +717,7 @@
         showList: showList, showDetail: showDetail, showTree: showTree,
         showTreeFromAbnormal: showTreeFromAbnormal, openAbnormalModal: openAbnormalModal,
         closeAbnormalModal: closeAbnormalModal, switchDetailTab: switchDetailTab,
+        toggleTreeExpand: toggleTreeExpand, refreshTree: refreshTree,
         filterDetailTable: filterDetailTable, setListFilter: setListFilter,
         applyListSearch: applyListSearch, stageRatioChange: stageRatioChange,
         clearPendingChanges: clearPendingChanges, submitPendingChanges: submitPendingChanges,
