@@ -9,6 +9,10 @@
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .sidebar-item-active { background-color: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
         .tree-children { margin-left: 1.25rem; padding-left: 0.75rem; border-left: 2px solid #e2e8f0; }
+        .tree-upchain { display: flex; flex-direction: column-reverse; align-items: flex-start; gap: 0.5rem; }
+        .tree-branch-split { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; }
+        .tree-focus-ring { box-shadow: 0 0 0 2px #3b82f6; }
+        .detail-tab-active { color: #0f172a; border-bottom: 2px solid #0f172a; font-weight: 800; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -75,7 +79,7 @@
             </section>
         </div>
 
-        <!-- 合伙人详情 -->
+        <!-- 合伙人详情（对齐 Web 数据总览） -->
         <div id="page-partner-detail" class="hidden space-y-6">
             <div class="flex items-center gap-4 flex-wrap">
                 <button onclick="PartnerPortal.showList()" class="p-2 bg-white border border-slate-200 rounded hover:bg-slate-50">
@@ -85,7 +89,10 @@
                     <h2 id="detail-partner-title" class="text-lg font-black text-slate-900">合伙人详情</h2>
                     <p id="detail-partner-sub" class="text-slate-400 text-[11px] mt-0.5"></p>
                 </div>
-                <button onclick="PartnerPortal.showTree(PartnerPortal.getCurrentUserId(), 'expand')" class="ml-auto bg-slate-900 text-white px-4 py-2 rounded font-bold text-[11px]">进入返佣树修改比例</button>
+                <div class="ml-auto flex gap-2 flex-wrap">
+                    <button id="detail-abnormal-entry" onclick="PartnerPortal.openAbnormalModal()" class="hidden bg-amber-100 text-amber-900 border border-amber-300 px-4 py-2 rounded font-bold text-[11px] hover:bg-amber-200">查看异常返佣线</button>
+                    <button onclick="PartnerPortal.showTree(PartnerPortal.getCurrentUserId(), 'expand')" class="bg-slate-900 text-white px-4 py-2 rounded font-bold text-[11px]">返佣树 / 修改比例</button>
+                </div>
             </div>
 
             <div id="detail-abnormal-banner" class="hidden bg-amber-50 border-l-4 border-amber-500 p-4 rounded">
@@ -94,34 +101,55 @@
                 <p id="detail-abnormal-scope" class="text-amber-700 text-[10px] mt-2 italic"></p>
             </div>
 
-            <div id="detail-ancestors"></div>
+            <div class="grid grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-lg border shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">团队总交易额</p><p id="detail-vol" class="text-2xl font-black"></p></div>
+                <div class="bg-white p-5 rounded-lg border shadow-sm border-l-4 border-l-blue-600"><p class="text-[10px] font-bold text-blue-600 uppercase mb-1">总返佣收入 (本期预估)</p><p id="detail-rebate-total" class="text-2xl font-black"></p><div class="mt-2 grid grid-cols-3 gap-1 text-[9px] text-slate-400 font-bold"><span>自返佣 <b id="detail-rebate-self" class="text-slate-800"></b></span><span>直客 <b id="detail-rebate-direct" class="text-slate-800"></b></span><span class="text-blue-600">级差 <b id="detail-rebate-gap"></b></span></div></div>
+                <div class="bg-white p-5 rounded-lg border shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">团队净入金</p><p id="detail-deposit" class="text-2xl font-black text-green-600"></p></div>
+                <div class="bg-white p-5 rounded-lg border shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">活跃下级合伙人</p><p id="detail-active-subs" class="text-2xl font-black"></p></div>
+            </div>
 
-            <div class="bg-white rounded-lg border border-slate-200 p-5">
-                <div class="flex flex-wrap gap-6 text-sm">
-                    <span>UID <b id="detail-uid"></b></span>
-                    <span>钱包 <b id="detail-wallet" class="font-mono"></b></span>
-                    <span>层级 <b id="detail-level"></b></span>
-                    <span>返佣比例 <b id="detail-ratio" class="text-blue-600 text-lg"></b></span>
-                    <span>结算 <b id="detail-settle-status"></b></span>
-                    <span>配置运营 <b id="detail-operator"></b></span>
-                    <span>加入 <b id="detail-bind-time"></b></span>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white p-5 rounded-lg border"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">用户规模（向下伞）</p><p id="detail-users" class="text-xl font-black"></p></div>
+                <div class="bg-white p-5 rounded-lg border"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">平台净利润</p><p id="detail-net" class="text-xl font-black text-blue-600"></p><p id="detail-net-hint" class="text-[9px] text-slate-400 mt-2"></p></div>
+            </div>
+
+            <div class="bg-white rounded-lg border overflow-hidden shadow-sm">
+                <div class="p-4 border-b flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex gap-6">
+                        <button type="button" id="detail-tab-subs" onclick="PartnerPortal.switchDetailTab('subs')" class="detail-tab-active pb-1 text-[11px]">直属下级合伙人明细</button>
+                        <button type="button" id="detail-tab-clients" onclick="PartnerPortal.switchDetailTab('clients')" class="text-slate-400 font-bold pb-1 text-[11px]">自邀直客明细</button>
+                    </div>
+                    <input type="text" placeholder="搜索地址或备注..." class="border rounded px-3 py-1.5 text-[11px] w-48 outline-none" oninput="PartnerPortal.filterDetailTable(this.value)">
+                </div>
+                <div id="detail-table-subs" class="overflow-x-auto">
+                    <table class="w-full text-left text-[11px]">
+                        <thead class="bg-slate-50 border-b text-[10px] uppercase text-slate-500">
+                        <tr>
+                            <th class="px-4 py-3">加入时间</th><th class="px-3 py-3">下级合伙人</th><th class="px-3 py-3 text-center">设置比例</th><th class="px-3 py-3 text-center">级差</th><th class="px-3 py-3 text-right">贡献级差收入</th><th class="px-3 py-3 text-right">总交易额</th><th class="px-3 py-3 text-right">净入金</th><th class="px-3 py-3 text-center">用户规模</th><th class="px-3 py-3 text-center">结算状态</th>
+                        </tr>
+                        </thead>
+                        <tbody id="detail-sub-partners" class="divide-y"></tbody>
+                    </table>
+                </div>
+                <div id="detail-table-clients" class="overflow-x-auto hidden">
+                    <table class="w-full text-left text-[11px]">
+                        <thead class="bg-slate-50 border-b text-[10px] uppercase text-slate-500">
+                        <tr>
+                            <th class="px-4 py-3">注册时间</th><th class="px-3 py-3">直客钱包/UID</th><th class="px-3 py-3 text-right">累计交易额</th><th class="px-3 py-3 text-right">累计手续费</th><th class="px-3 py-3 text-right text-blue-600">贡献返佣</th><th class="px-3 py-3 text-center">状态</th>
+                        </tr>
+                        </thead>
+                        <tbody id="detail-direct-clients" class="divide-y"></tbody>
+                    </table>
                 </div>
             </div>
 
-            <div class="grid grid-cols-4 gap-4">
-                <div class="bg-white p-5 rounded-lg border"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">团队总交易额（向下伞）</p><p id="detail-vol" class="text-2xl font-black"></p></div>
-                <div class="bg-white p-5 rounded-lg border"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">团队净入金（向下伞）</p><p id="detail-deposit" class="text-2xl font-black text-green-600"></p></div>
-                <div class="bg-white p-5 rounded-lg border"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">用户规模（向下伞）</p><p id="detail-users" class="text-2xl font-black"></p></div>
-                <div class="bg-white p-5 rounded-lg border"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">平台净利润</p><p id="detail-net" class="text-2xl font-black text-blue-600"></p><p id="detail-net-hint" class="text-[9px] text-slate-400 mt-2 leading-snug"></p></div>
-            </div>
-
-            <div class="bg-white rounded-lg border overflow-hidden">
-                <div class="px-6 py-4 border-b font-bold text-slate-700">直属下级（只读）</div>
-                <table class="w-full text-[11px]">
+            <div class="bg-white rounded-lg border overflow-hidden shadow-sm">
+                <div class="px-6 py-4 border-b font-bold text-slate-700">佣金结算记录</div>
+                <table class="w-full text-left text-[11px]">
                     <thead class="bg-slate-50 border-b text-[10px] uppercase text-slate-500">
-                    <tr><th class="px-4 py-3">钱包</th><th class="px-3 py-3">备注</th><th class="px-3 py-3 text-center">比例</th><th class="px-3 py-3 text-center">状态</th></tr>
+                    <tr><th class="px-4 py-3">结算日期</th><th class="px-3 py-3 text-right">有效交易额</th><th class="px-3 py-3 text-right">应结佣金</th><th class="px-3 py-3 text-center">状态</th><th class="px-4 py-3">备注</th></tr>
                     </thead>
-                    <tbody id="detail-sub-partners" class="divide-y"></tbody>
+                    <tbody id="detail-settlement-rows" class="divide-y"></tbody>
                 </table>
             </div>
         </div>
@@ -137,7 +165,8 @@
                     <p id="tree-sub" class="text-slate-400 text-[11px]"></p>
                 </div>
             </div>
-            <div id="tree-ancestors"></div>
+            <div id="tree-mode-badge" class="text-[10px] font-bold uppercase tracking-wider text-slate-500"></div>
+            <div id="tree-data-version" class="text-[9px] text-slate-400"></div>
             <div id="tree-abnormal-section"></div>
             <div class="bg-white rounded-lg border border-slate-200 p-4">
                 <p class="text-[10px] text-slate-500 mb-3">在节点上修改比例后，于底部<strong>一并提交</strong>；下调会提示可能受影响的下级。</p>
@@ -227,6 +256,16 @@
 </main>
 
 <!-- 新增一级合伙人 -->
+<div id="modal-abnormal-list" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-2xl rounded-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <div class="px-6 py-4 border-b flex justify-between items-center shrink-0">
+            <h3 class="font-bold text-slate-800">异常返佣线查询</h3>
+            <button onclick="PartnerPortal.closeAbnormalModal()" class="text-slate-400">✕</button>
+        </div>
+        <div class="p-6 overflow-y-auto flex-1" id="modal-abnormal-list-body"></div>
+    </div>
+</div>
+
 <div id="modal-bind-partner" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-lg shadow-2xl overflow-hidden">
         <div class="px-6 py-4 border-b flex justify-between items-center">
@@ -295,7 +334,9 @@
         const t = document.getElementById('header-title');
         if (t && PAGE_TITLES[pageId]) t.textContent = PAGE_TITLES[pageId];
         const hash = PAGE_HASH[pageId];
-        if (hash && location.hash !== '#' + hash) location.hash = hash;
+        if (hash && pageId !== 'page-rebate-tree' && location.hash.replace('#', '').split('?')[0] !== hash) {
+            location.hash = hash;
+        }
     };
 
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
@@ -321,7 +362,13 @@
     initAdminHashRouter({
         agent: function () { PartnerPortal.showList(); initAdminSidebar('agent-mgmt'); },
         'partner-detail': function () { PartnerPortal.showDetail(PartnerPortal.getCurrentUserId() || 'u1'); initAdminSidebar('agent-mgmt'); },
-        'rebate-tree': function () { PartnerPortal.showTree(PartnerPortal.getCurrentUserId() || 'u1', 'expand'); initAdminSidebar('agent-mgmt'); },
+        'rebate-tree': function () {
+            const full = (location.hash || '').replace('#', '');
+            const ab = full.match(/abnormal=([^&]+)/);
+            if (ab) PartnerPortal.showTreeFromAbnormal(ab[1]);
+            else PartnerPortal.showTree(PartnerPortal.getCurrentUserId() || 'u1', 'expand');
+            initAdminSidebar('agent-mgmt');
+        },
         approval: function () { showApprovalPage(); },
         settlement: function () { PartnerPortal_showPage('page-settlement'); initAdminSidebar('agent-settlement'); PartnerPortal.filterSettlementBatches(); }
     }, 'agent', {
