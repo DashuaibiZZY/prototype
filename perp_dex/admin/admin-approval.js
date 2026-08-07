@@ -4,7 +4,7 @@
 (function () {
     const STORAGE_KEY = 'forx_approval_applications';
     const ROLE_KEY = 'forx_approval_view_role';
-    const SEED_VERSION = '2026-08-07-partner-v1';
+    const SEED_VERSION = '2026-08-07-partner-v2';
     const SEED_VERSION_KEY = 'forx_approval_seed_v';
 
     const STEPS = [
@@ -328,8 +328,9 @@
                 flowProfile: 'risk_boss',
                 createdAt: '2026-08-01 10:20',
                 remark: '头部 KOL 谈判比例 78%',
-                summary: '0xfa12...88ce · 78% · Global_KOL',
+                summary: 'UID 100920 · 0xfa12...88ce · 78%',
                 payload: {
+                    uid: '100920',
                     wallet: '0xfa12...88ce',
                     ratio: 78,
                     note: 'Global_KOL',

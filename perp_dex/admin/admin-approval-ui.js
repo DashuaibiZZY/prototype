@@ -31,6 +31,14 @@
         return rootId + '-recipients-' + String(appId).replace(/[^a-zA-Z0-9]/g, '_');
     }
 
+    function getAppSubjectUser(app) {
+        const p = app.payload || {};
+        if (app.type === 'fee_config' || app.type === 'partner_l1_bind') {
+            return { wallet: p.wallet || '—', uid: p.uid || '—' };
+        }
+        return { wallet: '—', uid: '—' };
+    }
+
     function getRecipientDataset(app) {
         const p = app.payload || {};
         if (app.type === 'points_bonus_config' && p.items && p.items.length) {
@@ -89,7 +97,7 @@
                 rows.push(['附件', (p.attachments || []).join('、') || '—']);
             }
         } else if (app.type === 'partner_l1_bind') {
-            rows.push(['钱包/UID', p.wallet], ['申请返佣比例', p.ratio + '%'], ['运营配置上限', p.opsCap + '%'], ['备注', p.note || '—'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
+            rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['申请返佣比例', p.ratio + '%'], ['运营配置上限', p.opsCap + '%'], ['备注', p.note || '—'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
         }
         return rows.map(function (r) {
             return '<div class="p-3 bg-slate-50 rounded-lg"><p class="text-[10px] text-slate-400 font-bold">' + r[0] + '</p><p class="font-bold text-slate-800 mt-1 break-all">' + (r[1] || '—') + '</p></div>';
@@ -239,6 +247,7 @@
         const showExportList = options.showExportList === true;
         const showExportDetail = options.showExportDetail === true;
         const detailImagePreview = options.detailImagePreview === true;
+        const singleUserConfig = options.singleUserConfig === true;
         const showTypeColumn = types.length > 1;
         const root = document.getElementById(rootId);
         if (!root || !types.length) return;
@@ -252,8 +261,15 @@
                 return '<option value="' + t + '">' + getApprovalTypeLabel(t) + '</option>';
             }).join('') + '</select></div>'
             : '';
-        const gridCols = showTypeColumn ? 'grid-cols-6' : 'grid-cols-5';
+        const gridCols = showTypeColumn ? 'grid-cols-6' : (singleUserConfig ? 'grid-cols-5' : 'grid-cols-5');
         const typeHeader = showTypeColumn ? '<th class="px-3 py-3 text-xs font-bold text-slate-500">类型</th>' : '';
+        const walletUidHeaders = singleUserConfig
+            ? '<th class="px-3 py-3 text-xs font-bold text-slate-500">钱包地址</th><th class="px-3 py-3 text-xs font-bold text-slate-500">UID</th>'
+            : '';
+        const activityHeader = singleUserConfig ? '' : '<th class="px-3 py-3 text-xs font-bold text-slate-500">活动</th>';
+        const activityFilter = singleUserConfig
+            ? '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID / 钱包地址</label><input id="' + rootId + '-filter-wallet-uid" type="text" placeholder="输入 UID 或钱包" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm" oninput="moduleApprovalRenderList(\'' + rootId + '\')"></div>'
+            : '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">活动名称</label><input id="' + rootId + '-filter-activity" type="text" placeholder="模糊匹配" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm" oninput="moduleApprovalRenderList(\'' + rootId + '\')"></div>';
 
         root.innerHTML =
             '<div id="' + rootId + '-list" class="space-y-6">' +
@@ -268,14 +284,16 @@
             '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">视图</label><select id="' + rootId + '-view-mode" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white" onchange="moduleApprovalRenderList(\'' + rootId + '\')"><option value="pending">待我审批</option><option value="all">全部审批</option></select></div>' +
             '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">状态</label><select id="' + rootId + '-filter-status" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white" onchange="moduleApprovalRenderList(\'' + rootId + '\')"><option value="all">全部</option><option value="pending_cross">待交叉审核</option><option value="pending_risk">待风控</option><option value="pending_boss">待老板</option><option value="approved">已通过</option><option value="rejected">已驳回</option></select></div>' +
             typeFilter +
-            '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">活动名称</label><input id="' + rootId + '-filter-activity" type="text" placeholder="模糊匹配" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm" oninput="moduleApprovalRenderList(\'' + rootId + '\')"></div>' +
+            activityFilter +
             '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">审批单号</label><input id="' + rootId + '-filter-id" type="text" placeholder="APR..." class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm" oninput="moduleApprovalRenderList(\'' + rootId + '\')"></div>' +
             '<div class="flex gap-2"><button type="button" onclick="moduleApprovalRenderList(\'' + rootId + '\')" class="flex-1 bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold">查询</button>' + exportBtn + '</div>' +
             '</div></section>' +
             '<div class="card overflow-hidden"><div class="px-6 py-4 border-b flex justify-between"><span class="text-sm font-bold text-slate-700">审批列表 <span id="' + rootId + '-count" class="text-slate-400"></span></span><span id="' + rootId + '-hint" class="text-[10px] text-amber-600 font-bold"></span></div>' +
             '<table class="w-full text-left text-sm"><thead class="bg-slate-50 border-b"><tr>' +
             '<th class="px-4 py-3 text-xs font-bold text-slate-500">审批单号</th>' + typeHeader +
-            '<th class="px-3 py-3 text-xs font-bold text-slate-500">申请人</th><th class="px-3 py-3 text-xs font-bold text-slate-500">申请时间</th><th class="px-3 py-3 text-xs font-bold text-slate-500">活动</th><th class="px-3 py-3 text-xs font-bold text-slate-500">摘要</th><th class="px-3 py-3 text-xs font-bold text-slate-500">状态</th><th class="px-4 py-3 text-xs font-bold text-slate-500 text-right">操作</th>' +
+            '<th class="px-3 py-3 text-xs font-bold text-slate-500">申请人</th><th class="px-3 py-3 text-xs font-bold text-slate-500">申请时间</th>' +
+            walletUidHeaders + activityHeader +
+            '<th class="px-3 py-3 text-xs font-bold text-slate-500">摘要</th><th class="px-3 py-3 text-xs font-bold text-slate-500">状态</th><th class="px-4 py-3 text-xs font-bold text-slate-500 text-right">操作</th>' +
             '</tr></thead><tbody id="' + rootId + '-tbody" class="divide-y divide-slate-50"></tbody></table>' +
             '<div id="' + rootId + '-empty" class="hidden py-16 text-center text-slate-400 text-sm">暂无审批记录</div></div></div>' +
             '<div id="' + rootId + '-detail" class="hidden space-y-6 max-w-5xl"></div>';
@@ -304,7 +322,10 @@
         const viewMode = document.getElementById(rootId + '-view-mode').value;
         const status = document.getElementById(rootId + '-filter-status').value;
         const idQ = (document.getElementById(rootId + '-filter-id').value || '').trim().toLowerCase();
-        const actQ = (document.getElementById(rootId + '-filter-activity').value || '').trim().toLowerCase();
+        const walletUidEl = document.getElementById(rootId + '-filter-wallet-uid');
+        const walletUidQ = walletUidEl ? (walletUidEl.value || '').trim().toLowerCase() : '';
+        const actEl = document.getElementById(rootId + '-filter-activity');
+        const actQ = actEl ? (actEl.value || '').trim().toLowerCase() : '';
         const typeEl = document.getElementById(rootId + '-filter-type');
         const typeQ = typeEl ? typeEl.value : 'all';
         let list = getAppsForState(state);
@@ -312,7 +333,14 @@
         if (status !== 'all') list = list.filter(function (a) { return a.status === status; });
         if (typeQ !== 'all') list = list.filter(function (a) { return a.type === typeQ; });
         if (idQ) list = list.filter(function (a) { return a.id.toLowerCase().indexOf(idQ) !== -1; });
-        if (actQ) list = list.filter(function (a) { return formatApprovalActivity(a.payload || {}).toLowerCase().indexOf(actQ) !== -1; });
+        if (walletUidQ) {
+            list = list.filter(function (a) {
+                const su = getAppSubjectUser(a);
+                return su.wallet.toLowerCase().indexOf(walletUidQ) !== -1 || String(su.uid).toLowerCase().indexOf(walletUidQ) !== -1;
+            });
+        } else if (actQ) {
+            list = list.filter(function (a) { return formatApprovalActivity(a.payload || {}).toLowerCase().indexOf(actQ) !== -1; });
+        }
         state.filtered = list;
 
         document.getElementById(rootId + '-count').textContent = '（' + list.length + ' 条）';
@@ -331,9 +359,14 @@
         tbody.innerHTML = list.map(function (app) {
             const actionable = canApproveApplication(app, role);
             const typeCell = showTypeColumn ? '<td class="px-3 py-3 text-xs font-bold text-slate-600">' + getApprovalTypeLabel(app.type) + '</td>' : '';
+            const su = getAppSubjectUser(app);
+            const walletUidCells = state.options.singleUserConfig
+                ? '<td class="px-3 py-3 font-mono text-[11px]">' + su.wallet + '</td><td class="px-3 py-3 font-bold">' + su.uid + '</td>'
+                : '';
+            const activityCell = state.options.singleUserConfig ? '' : '<td class="px-3 py-3 max-w-[140px] truncate" title="' + formatApprovalActivity(app.payload) + '">' + formatApprovalActivity(app.payload) + '</td>';
             return '<tr class="hover:bg-slate-50"><td class="px-4 py-3 font-mono text-[11px] font-bold">' + app.id + '</td>' + typeCell +
                 '<td class="px-3 py-3">' + app.applicant + '</td><td class="px-3 py-3 text-slate-500">' + app.createdAt + '</td>' +
-                '<td class="px-3 py-3 max-w-[140px] truncate" title="' + formatApprovalActivity(app.payload) + '">' + formatApprovalActivity(app.payload) + '</td>' +
+                walletUidCells + activityCell +
                 '<td class="px-3 py-3 max-w-[160px] truncate" title="' + (app.summary || '') + '">' + (app.summary || '—') + '</td>' +
                 '<td class="px-3 py-3"><span class="' + statusPillClass(app.status) + '">' + getApprovalStatusLabel(app.status) + '</span></td>' +
                 '<td class="px-4 py-3 text-right space-x-2"><button type="button" onclick="moduleApprovalOpenDetail(\'' + rootId + '\',\'' + app.id + '\')" class="text-blue-600 font-bold hover:underline">查看</button>' +
