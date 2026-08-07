@@ -1,121 +1,105 @@
 /**
- * 合伙人中心后台 — 统一数据源 v3（列表 / 详情 / 返佣树一致）
+ * 合伙人中心后台 — 4 条演示数据，列表 / 详情 / 返佣树一致
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-tree-v4';
+    const DATA_VERSION = 'partner-demo-4';
+
+    /** 仅列表展示的 4 个合伙人 */
+    const LIST_IDS = ['p_n1', 'p_n3', 'p_a1', 'p_a4'];
 
     const USERS = [
         {
-            id: 'u1', wallet: '0xd593...2Dd2', uid: '100882', note: 'KOL_Global', level: 1, ratio: 70,
-            parentWallet: null, rootWallet: '0xd593...2Dd2', operator: 'allen@forx.fi', bindTime: '2024-03-12',
-            settleStatus: 'branch_abnormal', abnormalVol: '$820,000', abnormalLines: 2,
-            vol: '$52.4M', deposit: '+$1.2M', usersTotal: 1420, usersActive: 420,
-            net: '$312,400', netHint: '伞下净手续费 − 伞下触发的全部返佣',
-            rebateTotal: '$12,840.50', rebateSelf: '$0.2k', rebateDirect: '$1.2k', rebateGap: '$11.6k',
-            activeSubPartners: 4, totalSubPartners: 4,
-            childIds: ['u2', 'u3', 'u9', 'u10'],
-            directClients: [
-                { time: '2024-05-20', wallet: '0x99...F4d2', vol: '$42,500', fee: '$42.50', rebate: '$29.75', status: '交易中' },
-                { time: '2024-05-18', wallet: '0x77...C3a1', vol: '$18,200', fee: '$18.20', rebate: '$12.74', status: '交易中' }
-            ],
-            settlements: [
-                { date: '2024-05-22', vol: '$4.2M', rebate: '$0.00', status: '补结算', note: '含异常修正 $3,200' },
-                { date: '2024-05-21', vol: '$0', rebate: '$0.00', status: '待修正返佣后计算', note: '分支异常' },
-                { date: '2024-05-20', vol: '$3.8M', rebate: '$12,400.00', status: '已发放', note: '' }
-            ]
-        },
-        {
-            id: 'u2', wallet: '0x3f...12a', uid: '100910', note: '渠道-小王', level: 2, ratio: 60,
-            parentWallet: '0xd593...2Dd2', rootWallet: '0xd593...2Dd2', bindTime: '2024-05-12',
+            id: 'p_n1', wallet: '0xNorm...L1', uid: '100801', note: '正常结算·一级返佣', level: 1, ratio: 70,
+            parentWallet: null, rootWallet: '0xNorm...L1', operator: 'allen@forx.fi', bindTime: '2024-03-01',
             settleStatus: 'normal', abnormalVol: '--', abnormalLines: 0,
-            vol: '$12.5M', deposit: '+$500k', usersTotal: 1240, usersActive: 420, net: '$48,200', netHint: '伞下净手续费 − 全部返佣',
-            rebateTotal: '$13,000', rebateSelf: '$0.2k', rebateDirect: '$1.2k', rebateGap: '$11.6k',
-            activeSubPartners: 1, totalSubPartners: 1, childIds: ['u4'],
-            directClients: [{ time: '2024-05-19', wallet: '0xaa...11fe', vol: '$8,400', fee: '$8.40', rebate: '$5.04', status: '交易中' }],
-            settlements: [{ date: '2024-05-20', vol: '$1.1M', rebate: '$4,200', status: '已发放', note: '' }]
-        },
-        {
-            id: 'u3', wallet: '0x5c...882', uid: '100915', note: '异常下级', level: 2, ratio: 75,
-            parentWallet: '0xd593...2Dd2', rootWallet: '0xd593...2Dd2', bindTime: '2024-05-08',
-            settleStatus: 'abnormal', abnormalVol: '$620,000', abnormalLines: 1,
-            vol: '$2.1M', deposit: '-$120k', usersTotal: 12, usersActive: 0, net: '--', netHint: '异常分支暂停',
-            rebateTotal: '--', rebateSelf: '--', rebateDirect: '--', rebateGap: '--',
-            activeSubPartners: 1, totalSubPartners: 1, childIds: ['u5'],
-            directClients: [], settlements: [{ date: '2024-05-21', vol: '$0', rebate: '$0', status: '待修正返佣后计算', note: '' }]
-        },
-        {
-            id: 'u4', wallet: '0x88e1...4F42', uid: '100920', note: '合伙人-John', level: 3, ratio: 55,
-            parentWallet: '0x3f...12a', rootWallet: '0xd593...2Dd2', bindTime: '2024-05-14',
-            settleStatus: 'normal', abnormalVol: '--', abnormalLines: 0,
-            vol: '$4.8M', deposit: '+$180k', usersTotal: 320, usersActive: 88, net: '$22,100', netHint: '含向上级级差',
-            rebateTotal: '$8,420', rebateSelf: '$0.1k', rebateDirect: '$0.8k', rebateGap: '$7.5k',
-            activeSubPartners: 0, totalSubPartners: 0, childIds: [],
-            directClients: [{ time: '2024-05-21', wallet: '0xcc...88ab', vol: '$125,000', fee: '$125', rebate: '$68.75', status: '交易中' }],
-            settlements: [{ date: '2024-05-20', vol: '$420k', rebate: '$1,960', status: '已发放', note: '' }]
-        },
-        {
-            id: 'u5', wallet: '0xab12...99fe', uid: '100925', note: 'L3-小赵', level: 3, ratio: 70,
-            parentWallet: '0x5c...882', rootWallet: '0xd593...2Dd2', bindTime: '2024-05-09',
-            settleStatus: 'abnormal', abnormalVol: '$200,000', abnormalLines: 1,
-            vol: '$0.9M', deposit: '+$12k', usersTotal: 8, usersActive: 0, net: '--', netHint: '异常分支',
-            rebateTotal: '--', rebateSelf: '--', rebateDirect: '--', rebateGap: '--',
-            activeSubPartners: 0, totalSubPartners: 0, childIds: [],
-            directClients: [], settlements: [{ date: '2024-05-21', vol: '$200k', rebate: '$0', status: '待修正返佣后计算', note: '比例倒挂' }]
-        },
-        {
-            id: 'u9', wallet: '0xAaa...111', uid: '100940', note: '分支-Aaa', level: 2, ratio: 55,
-            parentWallet: '0xd593...2Dd2', rootWallet: '0xd593...2Dd2', bindTime: '2024-04-20',
-            settleStatus: 'normal', abnormalVol: '--', abnormalLines: 0,
-            vol: '$3.2M', deposit: '+$90k', usersTotal: 180, usersActive: 42, net: '$15,800', netHint: '',
-            rebateTotal: '$4,200', rebateSelf: '$0.1k', rebateDirect: '$0.5k', rebateGap: '$3.6k',
-            activeSubPartners: 0, totalSubPartners: 0, childIds: [],
-            directClients: [], settlements: []
-        },
-        {
-            id: 'u10', wallet: '0xBbb...222', uid: '100941', note: '分支-Bbb', level: 2, ratio: 58,
-            parentWallet: '0xd593...2Dd2', rootWallet: '0xd593...2Dd2', bindTime: '2024-04-22',
-            settleStatus: 'normal', abnormalVol: '--', abnormalLines: 0,
-            vol: '$2.8M', deposit: '+$70k', usersTotal: 150, usersActive: 38, net: '$13,200', netHint: '',
-            rebateTotal: '$3,800', rebateSelf: '$0.1k', rebateDirect: '$0.4k', rebateGap: '$3.3k',
-            activeSubPartners: 0, totalSubPartners: 0, childIds: [],
-            directClients: [], settlements: []
-        },
-        {
-            id: 'u8', wallet: '0xAbc...multi', uid: '100950', note: '多上级异常用户', level: 3, ratio: 50,
-            parentWallet: '0xAaa...111', rootWallet: '0xd593...2Dd2', bindTime: '2024-05-05',
-            parentWalletsAbnormal: ['0xAaa...111', '0xBbb...222'],
-            settleStatus: 'abnormal', abnormalVol: '$340,000', abnormalLines: 2,
-            vol: '$1.1M', deposit: '+$45k', usersTotal: 24, usersActive: 3, net: '--', netHint: '多上级结构异常',
-            rebateTotal: '--', rebateSelf: '--', rebateDirect: '--', rebateGap: '--',
-            activeSubPartners: 0, totalSubPartners: 0, childIds: [],
-            directClients: [], settlements: []
-        },
-        {
-            id: 'u6', wallet: '0xae21...9Bc1', uid: '100901', note: 'SEA_Channel', level: 1, ratio: 65,
-            parentWallet: null, rootWallet: '0xae21...9Bc1', operator: 'allen@forx.fi', bindTime: '2024-04-01',
-            settleStatus: 'normal', abnormalVol: '--', abnormalLines: 0,
-            vol: '$18.2M', deposit: '+$620k', usersTotal: 680, usersActive: 210, net: '$84,200', netHint: '',
+            vol: '$18.2M', deposit: '+$620k', usersTotal: 680, usersActive: 210,
+            net: '$84,200', netHint: '伞下净手续费 − 伞下触发的全部返佣',
             rebateTotal: '$6,200', rebateSelf: '$0.3k', rebateDirect: '$2.1k', rebateGap: '$3.9k',
-            activeSubPartners: 1, totalSubPartners: 1, childIds: ['u7'],
-            directClients: [{ time: '2024-05-17', wallet: '0xde...55aa', vol: '$92,000', fee: '$92', rebate: '$59.80', status: '交易中' }],
+            activeSubPartners: 1, totalSubPartners: 1, childIds: ['h_n2'],
+            directClients: [{ time: '2024-05-17', wallet: '0xde...55aa', vol: '$92,000', fee: '$92', rebate: '$64.40', status: '交易中' }],
             settlements: [{ date: '2024-05-20', vol: '$1.1M', rebate: '$4,820', status: '已发放', note: '' }]
         },
         {
-            id: 'u7', wallet: '0x7a...01b', uid: '100930', note: '越南站', level: 2, ratio: 50,
-            parentWallet: '0xae21...9Bc1', rootWallet: '0xae21...9Bc1', bindTime: '2024-05-15',
+            id: 'h_n2', wallet: '0xNorm...L2', uid: '100802', note: '华东渠道', level: 2, ratio: 55,
+            parentWallet: '0xNorm...L1', rootWallet: '0xNorm...L1', bindTime: '2024-03-15',
             settleStatus: 'normal', abnormalVol: '--', abnormalLines: 0,
-            vol: '$6.2M', deposit: '+$180k', usersTotal: 320, usersActive: 88, net: '$31,500', netHint: '',
-            rebateTotal: '$5,100', rebateSelf: '$0.15k', rebateDirect: '$0.9k', rebateGap: '$4.0k',
-            activeSubPartners: 0, totalSubPartners: 0, childIds: [],
+            vol: '$8.6M', deposit: '+$280k', usersTotal: 420, usersActive: 120,
+            net: '$38,400', netHint: '', rebateTotal: '$3,100', rebateSelf: '$0.1k', rebateDirect: '$0.8k', rebateGap: '$2.2k',
+            activeSubPartners: 1, totalSubPartners: 1, childIds: ['p_n3'],
             directClients: [], settlements: []
+        },
+        {
+            id: 'p_n3', wallet: '0xNorm...L3', uid: '100803', note: '正常结算·三级返佣', level: 3, ratio: 45,
+            parentWallet: '0xNorm...L2', rootWallet: '0xNorm...L1', bindTime: '2024-04-02',
+            settleStatus: 'normal', abnormalVol: '--', abnormalLines: 0,
+            vol: '$4.8M', deposit: '+$180k', usersTotal: 320, usersActive: 88,
+            net: '$22,100', netHint: '含向上级级差',
+            rebateTotal: '$8,420', rebateSelf: '$0.1k', rebateDirect: '$0.8k', rebateGap: '$7.5k',
+            activeSubPartners: 0, totalSubPartners: 0, childIds: [],
+            directClients: [{ time: '2024-05-21', wallet: '0xcc...88ab', vol: '$125,000', fee: '$125', rebate: '$56.25', status: '交易中' }],
+            settlements: [{ date: '2024-05-20', vol: '$420k', rebate: '$1,960', status: '已发放', note: '' }]
+        },
+        {
+            id: 'p_a1', wallet: '0xAbn...L1', uid: '100811', note: '部分分支异常·一级返佣', level: 1, ratio: 68,
+            parentWallet: null, rootWallet: '0xAbn...L1', operator: 'allen@forx.fi', bindTime: '2024-02-10',
+            settleStatus: 'branch_abnormal', abnormalVol: '$128,000', abnormalLines: 1,
+            vol: '$52.4M', deposit: '+$1.2M', usersTotal: 1420, usersActive: 420,
+            net: '$312,400', netHint: '伞下净手续费 − 全部返佣',
+            rebateTotal: '$12,840', rebateSelf: '$0.2k', rebateDirect: '$1.2k', rebateGap: '$11.6k',
+            activeSubPartners: 2, totalSubPartners: 2, childIds: ['h_a2a', 'h_a2b'],
+            directClients: [{ time: '2024-05-18', wallet: '0x77...C3a1', vol: '$18,200', fee: '$18.20', rebate: '$12.37', status: '交易中' }],
+            settlements: [
+                { date: '2024-05-21', vol: '$0', rebate: '$0.00', status: '待修正返佣后计算', note: '异常分支' },
+                { date: '2024-05-20', vol: '$3.8M', rebate: '$12,400', status: '已发放', note: '' }
+            ]
+        },
+        {
+            id: 'h_a2a', wallet: '0xAbn...L2a', uid: '100812', note: '正常分支', level: 2, ratio: 50,
+            parentWallet: '0xAbn...L1', rootWallet: '0xAbn...L1', bindTime: '2024-03-05',
+            settleStatus: 'normal', abnormalVol: '--', abnormalLines: 0,
+            vol: '$6.2M', deposit: '+$150k', usersTotal: 280, usersActive: 72,
+            net: '$28,500', netHint: '', rebateTotal: '$2,800', rebateSelf: '$0.1k', rebateDirect: '$0.6k', rebateGap: '$2.3k',
+            activeSubPartners: 0, totalSubPartners: 0, childIds: [],
+            directClients: [], settlements: [{ date: '2024-05-20', vol: '$800k', rebate: '$2,100', status: '已发放', note: '' }]
+        },
+        {
+            id: 'h_a2b', wallet: '0xAbn...L2b', uid: '100813', note: '异常分支入口', level: 2, ratio: 52,
+            parentWallet: '0xAbn...L1', rootWallet: '0xAbn...L1', bindTime: '2024-03-08',
+            settleStatus: 'normal', abnormalVol: '--', abnormalLines: 0,
+            vol: '$4.1M', deposit: '+$95k', usersTotal: 180, usersActive: 48,
+            net: '$19,200', netHint: '', rebateTotal: '$2,100', rebateSelf: '$0.08k', rebateDirect: '$0.4k', rebateGap: '$1.6k',
+            activeSubPartners: 1, totalSubPartners: 1, childIds: ['h_a3'],
+            directClients: [], settlements: []
+        },
+        {
+            id: 'h_a3', wallet: '0xAbn...L3', uid: '100814', note: '华南区', level: 3, ratio: 55,
+            parentWallet: '0xAbn...L2b', rootWallet: '0xAbn...L1', bindTime: '2024-03-20',
+            settleStatus: 'normal', abnormalVol: '--', abnormalLines: 0,
+            vol: '$2.4M', deposit: '+$42k', usersTotal: 96, usersActive: 24,
+            net: '$11,800', netHint: '', rebateTotal: '$1,450', rebateSelf: '$0.05k', rebateDirect: '$0.2k', rebateGap: '$1.2k',
+            activeSubPartners: 1, totalSubPartners: 1, childIds: ['p_a4'],
+            directClients: [], settlements: []
+        },
+        {
+            id: 'p_a4', wallet: '0xAbn...L4', uid: '100815', note: '部分分支异常·四级返佣', level: 4, ratio: 62,
+            parentWallet: '0xAbn...L3', rootWallet: '0xAbn...L1', bindTime: '2024-04-01',
+            settleStatus: 'branch_abnormal', abnormalVol: '$128,000', abnormalLines: 1,
+            vol: '$1.6M', deposit: '+$28k', usersTotal: 48, usersActive: 12,
+            net: '--', netHint: '比例倒挂，分支暂停',
+            rebateTotal: '--', rebateSelf: '--', rebateDirect: '--', rebateGap: '--',
+            activeSubPartners: 0, totalSubPartners: 0, childIds: [],
+            directClients: [],
+            settlements: [{ date: '2024-05-21', vol: '$128k', rebate: '$0', status: '待修正返佣后计算', note: '比例倒挂' }]
         }
     ];
 
     const ABNORMAL_RECORDS = [
-        { id: 'ap1', type: 'ratio_mismatch', rootWallet: '0xd593...2Dd2', parentWallet: '0x5c...882', childWallet: '0xab12...99fe', parentRatio: 75, childRatio: 70, pausedVol: '$200,000', label: '比例倒挂' },
-        { id: 'ap2', type: 'ratio_mismatch', rootWallet: '0xd593...2Dd2', parentWallet: '0xd593...2Dd2', childWallet: '0x5c...882', parentRatio: 70, childRatio: 75, pausedVol: '$620,000', label: '比例倒挂' },
-        { id: 'ap3', type: 'multi_parent', rootWallet: '0xd593...2Dd2', childWallet: '0xAbc...multi', parentWallets: ['0xAaa...111', '0xBbb...222'], pausedVol: '$340,000', label: '多直接上级' }
+        {
+            id: 'ap1', rootWallet: '0xAbn...L1',
+            parentWallet: '0xAbn...L3', childWallet: '0xAbn...L4',
+            parentRatio: 55, childRatio: 62, pausedVol: '$128,000', childUserId: 'p_a4'
+        }
     ];
 
     const SETTLEMENT_BATCHES = [
@@ -125,12 +109,11 @@
     ];
 
     let currentUserId = null;
-    let treeMode = 'expand';
     let treeFocusId = null;
-    let treeAbnormalRecordId = null;
+    let treeExpandedNodes = new Set();
+    let treeHighlightId = null;
     let listFilterStatus = 'all';
     let listSearchQ = '';
-    let treeExpandedNodes = new Set();
     let pendingRatioChanges = [];
     let detailTableFilter = '';
 
@@ -150,9 +133,9 @@
     }
 
     function isDescendantOf(ancestorId, nodeId) {
+        if (nodeId === ancestorId) return true;
         const node = getUser(nodeId);
         if (!node) return false;
-        if (nodeId === ancestorId) return true;
         let w = node.parentWallet;
         while (w) {
             const p = getUserByWallet(w);
@@ -179,7 +162,7 @@
         const gap = parent.ratio - child.ratio;
         return {
             time: child.bindTime, wallet: child.wallet, note: child.note, ratio: child.ratio,
-            gap: gap, gapIncome: child.settleStatus === 'abnormal' ? '-- 暂停结算' : '$1,250.00',
+            gap: gap, gapIncome: child.settleStatus !== 'normal' ? '-- 暂停结算' : '$1,250.00',
             vol: child.vol, deposit: child.deposit,
             users: child.usersTotal + ' / ' + child.usersActive,
             settle: child.settleStatus, abnormal: child.settleStatus !== 'normal'
@@ -204,9 +187,11 @@
     function renderPartnerList() {
         const tbody = document.getElementById('partner-list-body');
         if (!tbody) return;
-        tbody.innerHTML = USERS.filter(matchesListFilter).map(function (u) {
+        tbody.innerHTML = LIST_IDS.map(function (id) {
+            const u = getUser(id);
+            if (!u || !matchesListFilter(u)) return '';
             const childCount = (u.childIds || []).length;
-            const netHtml = u.net === '--' ? '<span class="text-slate-400">--</span>' : '<span class="text-blue-600 font-black" title="' + (u.netHint || '') + '">' + u.net + '</span>';
+            const netHtml = u.net === '--' ? '<span class="text-slate-400">--</span>' : '<span class="text-blue-600 font-black">' + u.net + '</span>';
             const av = u.abnormalVol === '--' ? '<span class="text-slate-300">--</span>' : '<span class="text-amber-700 font-bold">' + u.abnormalVol + '</span>';
             const al = u.abnormalLines ? '<span class="text-red-600 font-black">' + u.abnormalLines + '</span>' : '<span class="text-slate-300">0</span>';
             return '<tr class="hover:bg-slate-50' + (u.settleStatus !== 'normal' ? ' bg-amber-50/20' : '') + '">' +
@@ -223,7 +208,7 @@
                 '<td class="px-3 py-3 text-slate-500">' + (u.level === 1 ? u.operator : '—') + '</td>' +
                 '<td class="px-4 py-3 text-right space-x-2">' +
                 '<button onclick="PartnerPortal.showDetail(\'' + u.id + '\')" class="text-slate-600 font-bold hover:underline">详情</button>' +
-                '<button onclick="PartnerPortal.showTree(\'' + u.id + '\', \'expand\')" class="text-blue-600 font-bold hover:underline">返佣树</button>' +
+                '<button onclick="PartnerPortal.showTree(\'' + u.id + '\')" class="text-blue-600 font-bold hover:underline">返佣树</button>' +
                 '</td></tr>';
         }).join('');
     }
@@ -232,44 +217,34 @@
         opts = opts || {};
         const pending = pendingRatioChanges.find(function (c) { return c.wallet === u.wallet; });
         const displayRatio = pending ? pending.newRatio : u.ratio;
-        const border = u.settleStatus === 'abnormal' ? 'border-red-300 bg-red-50/60' : 'border-slate-200 bg-white';
+        const isAbn = u.settleStatus !== 'normal';
+        const highlight = opts.highlight ? ' ring-2 ring-amber-400' : '';
+        const border = isAbn ? 'border-red-300 bg-red-50/60' : 'border-slate-200 bg-white';
         const focusCls = opts.isFocus ? ' tree-focus-ring' : '';
-        const editable = !opts.readonly;
-        let html = '<div class="flex items-center gap-3 p-3 rounded-lg border ' + border + focusCls + ' shadow-sm min-w-[280px]">';
+        let html = '<div id="tree-node-' + u.id + '" class="flex items-center gap-3 p-3 rounded-lg border ' + border + focusCls + highlight + ' shadow-sm min-w-[280px]">';
         html += '<span class="text-[10px] font-bold text-slate-400">L' + u.level + '</span>';
         html += '<div class="flex-1 min-w-0"><p class="font-black font-mono text-[11px]">' + u.wallet + '</p><p class="text-[10px] text-slate-500">' + u.note + '</p></div>';
-        if (editable) {
-            html += '<input type="number" id="ratio-input-' + u.id + '" value="' + displayRatio + '" class="w-14 border rounded px-1 py-1 text-center font-black text-blue-600 text-sm" onchange="PartnerPortal.stageRatioChange(\'' + u.id + '\')"><span class="text-slate-400 font-bold">%</span>';
-        } else {
-            html += '<span class="text-lg font-black text-blue-600">' + u.ratio + '%</span>';
-        }
-        if (opts.isFocus) html += '<span class="text-[9px] font-black text-blue-600 uppercase">焦点</span>';
+        html += '<input type="number" id="ratio-input-' + u.id + '" value="' + displayRatio + '" class="w-14 border rounded px-1 py-1 text-center font-black text-blue-600 text-sm" onchange="PartnerPortal.stageRatioChange(\'' + u.id + '\')"><span class="text-slate-400 font-bold">%</span>';
+        if (opts.isFocus) html += '<span class="text-[9px] font-black text-blue-600 uppercase">当前</span>';
         html += '</div>';
         return html;
     }
 
     function renderExpandToggle(userId, expanded, childCount) {
-        return '<button type="button" class="tree-expand-btn" onclick="PartnerPortal.toggleTreeExpand(\'' + userId + '\')" title="展开 ' + childCount + ' 个直属下级" aria-label="展开下级">' + (expanded ? '−' : '+') + '</button>';
+        return '<button type="button" class="tree-expand-btn" onclick="PartnerPortal.toggleTreeExpand(\'' + userId + '\')" title="' + childCount + ' 个直属下级" aria-label="展开下级">' + (expanded ? '−' : '+') + '</button>';
     }
 
-    /** 返佣树：上级链固定全展示；下级仅直接下级，点击逐级展开 */
-    function renderRebateTree(focusId, opts) {
-        opts = opts || {};
+    /** 上级链固定全展示；下级仅直接下级，点击 + 逐级展开 */
+    function renderRebateTree(focusId) {
         const focus = getUser(focusId);
         if (!focus) return '';
-
-        if (opts.upchainRecord) {
-            return renderUpchainInTree(opts.upchainRecord, focus);
-        }
 
         function renderLazyDown(parentId) {
             const parent = getUser(parentId);
             const childIds = parent.childIds || [];
             if (!childIds.length) return '';
             let h = '<div class="tree-children mt-2 space-y-2">';
-            childIds.forEach(function (cid) {
-                h += renderDownNode(cid);
-            });
+            childIds.forEach(function (cid) { h += renderDownNode(cid); });
             h += '</div>';
             return h;
         }
@@ -283,7 +258,10 @@
             let h = '<div class="tree-node-down">';
             h += '<div class="flex items-start gap-1">';
             h += hasKids ? renderExpandToggle(userId, expanded, childIds.length) : '<span class="w-6 shrink-0"></span>';
-            h += '<div class="flex-1">' + renderNodeCard(u, { isFocus: userId === focusId }) + '</div>';
+            h += '<div class="flex-1">' + renderNodeCard(u, {
+                isFocus: userId === focusId,
+                highlight: userId === treeHighlightId
+            }) + '</div>';
             h += '</div>';
             if (hasKids && expanded) h += renderLazyDown(userId);
             h += '</div>';
@@ -296,7 +274,10 @@
             const isFocus = userId === focusId;
             const wrapCls = depth > 0 ? 'tree-children mt-2' : '';
             let h = '<div class="' + wrapCls + '">';
-            h += renderNodeCard(u, { isFocus: isFocus });
+            h += renderNodeCard(u, {
+                isFocus: isFocus,
+                highlight: userId === treeHighlightId
+            });
             if (isFocus) {
                 h += renderLazyDown(userId);
             } else {
@@ -312,68 +293,17 @@
         return '<div class="space-y-2">' + renderPathFromRoot(rootId, 0) + '</div>';
     }
 
-    /** 异常诊断：同一返佣树内仅向上追溯，不展示下级（多上级分叉） */
-    function renderUpchainInTree(record, focus) {
-        function chainToL1(startWallet) {
-            const nodes = [];
-            let w = startWallet;
-            while (w) {
-                const n = getUserByWallet(w);
-                if (!n) break;
-                nodes.push(n);
-                w = n.parentWallet;
-            }
-            return nodes.reverse();
-        }
-
-        function renderVerticalChain(nodes, label) {
-            let h = '<div class="tree-children min-w-[280px]">';
-            if (label) h += '<p class="text-[9px] font-bold text-slate-500 mb-2">' + label + '</p>';
-            nodes.forEach(function (n, idx) {
-                h += '<div class="mb-2">' + renderNodeCard(n) + '</div>';
-                if (idx < nodes.length - 1) h += '<div class="text-[9px] text-slate-400 py-0.5">↓</div>';
-            });
-            h += '<div class="text-[9px] text-red-500 font-bold py-1">↓ 异常下级</div>';
-            h += '</div>';
-            return h;
-        }
-
-        let html = '<div class="w-full space-y-3">';
-        html += '<p class="text-[10px] text-red-700 font-bold">异常关系诊断 · ' + record.id + ' · ' + (record.label || record.type) + '（不展示该节点下级）</p>';
-
-        if (record.type === 'multi_parent' && record.parentWallets) {
-            html += '<div class="tree-branch-split w-full">';
-            record.parentWallets.forEach(function (pw) {
-                html += renderVerticalChain(chainToL1(pw), '上级分支 · ' + pw);
-            });
-            html += '</div>';
-            html += '<div class="border-t border-dashed border-red-200 pt-3">' + renderNodeCard(focus, { isFocus: true }) + '</div>';
-        } else {
-            const chain = chainToL1(record.parentWallet);
-            chain.forEach(function (n, idx) {
-                html += '<div>' + renderNodeCard(n) + '</div>';
-                if (idx < chain.length - 1) html += '<div class="text-[9px] text-slate-400">↓</div>';
-            });
-            html += '<div class="text-[9px] text-slate-400 py-1">↓ 异常下级</div>';
-            html += '<div>' + renderNodeCard(focus, { isFocus: true }) + '</div>';
-        }
-        html += '</div>';
-        return html;
-    }
-
     function refreshTree() {
         const root = document.getElementById('rebate-tree-root');
         if (!root || !treeFocusId) return;
-        if (treeMode === 'upchain' && treeAbnormalRecordId) {
-            const record = ABNORMAL_RECORDS.find(function (r) { return r.id === treeAbnormalRecordId; });
-            if (record) root.innerHTML = renderRebateTree(treeFocusId, { upchainRecord: record });
-        } else {
-            root.innerHTML = renderRebateTree(treeFocusId);
+        root.innerHTML = renderRebateTree(treeFocusId);
+        if (treeHighlightId) {
+            const el = document.getElementById('tree-node-' + treeHighlightId);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
 
     function toggleTreeExpand(userId) {
-        if (treeMode === 'upchain') return;
         if (treeExpandedNodes.has(userId)) treeExpandedNodes.delete(userId);
         else treeExpandedNodes.add(userId);
         refreshTree();
@@ -398,24 +328,20 @@
             '<button onclick="PartnerPortal.submitPendingChanges()" class="px-6 py-2 bg-blue-600 rounded font-black text-[11px]">一并提交</button></div></div>';
     }
 
-    function renderAbnormalSection(rootWallet, forTreePage) {
+    function renderAbnormalSection(rootWallet) {
         const records = ABNORMAL_RECORDS.filter(function (r) {
-            if (rootWallet && r.rootWallet !== rootWallet) return false;
-            return true;
+            return !rootWallet || r.rootWallet === rootWallet;
         });
         if (!records.length) return '';
         let html = '<div class="bg-red-50 border border-red-100 rounded-lg p-4 mb-4">' +
-            '<p class="text-red-900 font-black text-sm mb-2">异常返佣线</p>' +
+            '<p class="text-red-900 font-black text-sm mb-2">异常返佣线（比例倒挂）</p>' +
             '<table class="w-full text-[11px]"><thead class="text-[10px] uppercase text-red-400"><tr>' +
-            '<th class="pb-2">类型</th><th class="pb-2">下级</th><th class="pb-2">上级</th><th class="pb-2 text-right">暂停额</th><th class="pb-2 text-right">操作</th></tr></thead><tbody>';
+            '<th class="pb-2">下级</th><th class="pb-2">上级</th><th class="pb-2 text-right">暂停额</th><th class="pb-2 text-right">操作</th></tr></thead><tbody>';
         records.forEach(function (r) {
-            const parents = r.type === 'multi_parent' ? (r.parentWallets || []).join(', ') : r.parentWallet;
-            const detail = r.type === 'ratio_mismatch' ? r.parentRatio + '% &lt; ' + r.childRatio + '%' : '—';
-            html += '<tr class="border-t border-red-100"><td class="py-2">' + r.label + '</td>' +
-                '<td class="py-2 font-mono font-bold">' + r.childWallet + '</td>' +
-                '<td class="py-2 font-mono">' + parents + '<span class="block text-[9px] text-red-500">' + detail + '</span></td>' +
+            html += '<tr class="border-t border-red-100"><td class="py-2 font-mono font-bold">' + r.childWallet + '</td>' +
+                '<td class="py-2 font-mono">' + r.parentWallet + '<span class="block text-[9px] text-red-500">' + r.parentRatio + '% &lt; ' + r.childRatio + '%</span></td>' +
                 '<td class="py-2 text-right font-bold">' + r.pausedVol + '</td>' +
-                '<td class="py-2 text-right"><button onclick="PartnerPortal.showTreeFromAbnormal(\'' + r.id + '\')" class="text-blue-600 font-bold hover:underline">在返佣树查看</button></td></tr>';
+                '<td class="py-2 text-right"><button onclick="PartnerPortal.fixAbnormalRebate(\'' + r.id + '\')" class="bg-red-600 text-white px-3 py-1 rounded font-bold hover:bg-red-700">修正返佣</button></td></tr>';
         });
         html += '</tbody></table></div>';
         return html;
@@ -427,8 +353,8 @@
         currentUserId = id;
         detailTableFilter = '';
         window.PartnerPortal_showPage('page-partner-detail');
-        document.getElementById('detail-partner-title').textContent = u.note + ' · 数据总览';
-        document.getElementById('detail-partner-sub').textContent = u.wallet + ' · UID ' + u.uid + ' · L' + u.level + ' · ' + u.ratio + '% · ' + settleLabel(u.settleStatus).replace(/<[^>]+>/g, '');
+        document.getElementById('detail-partner-title').textContent = u.note;
+        document.getElementById('detail-partner-sub').textContent = u.wallet + ' · UID ' + u.uid + ' · L' + u.level + ' · ' + u.ratio + '%';
         document.getElementById('detail-vol').textContent = u.vol;
         document.getElementById('detail-deposit').textContent = u.deposit;
         document.getElementById('detail-users').textContent = u.usersTotal + ' / ' + u.usersActive;
@@ -442,17 +368,13 @@
 
         const banner = document.getElementById('detail-abnormal-banner');
         const abnEntry = document.getElementById('detail-abnormal-entry');
-        const userAbnormal = ABNORMAL_RECORDS.filter(function (r) {
-            return r.childWallet === u.wallet || r.parentWallet === u.wallet ||
-                (r.parentWallets && r.parentWallets.indexOf(u.wallet) >= 0) ||
-                r.rootWallet === u.rootWallet;
-        });
-        if (u.settleStatus !== 'normal' || userAbnormal.length) {
+        const rootRecords = ABNORMAL_RECORDS.filter(function (r) { return r.rootWallet === u.rootWallet; });
+        if (u.settleStatus !== 'normal' || rootRecords.length) {
             banner.classList.remove('hidden');
             document.getElementById('detail-abnormal-vol').textContent = u.abnormalVol;
             document.getElementById('detail-abnormal-lines').textContent = u.abnormalLines;
-            document.getElementById('detail-abnormal-scope').textContent = '仅相关返佣分支暂停结算；其他分支正常。';
-            abnEntry.classList.remove('hidden');
+            document.getElementById('detail-abnormal-scope').textContent = '仅异常分支暂停结算，其他分支正常。';
+            abnEntry.classList.toggle('hidden', !rootRecords.length);
         } else {
             banner.classList.add('hidden');
             abnEntry.classList.add('hidden');
@@ -538,53 +460,53 @@
         }
     }
 
-    function showTree(id, mode) {
+    function showTree(id) {
         const u = getUser(id);
         if (!u) return;
         currentUserId = id;
         treeFocusId = id;
-        treeMode = mode || 'expand';
-        treeAbnormalRecordId = null;
+        treeHighlightId = null;
         treeExpandedNodes = new Set();
         window.PartnerPortal_showPage('page-rebate-tree');
-        document.getElementById('tree-title').textContent = u.note + ' · 返佣关系树';
-        document.getElementById('tree-sub').textContent = '上级链固定展示并可改比例；下级仅展示直接下级，点击 + 逐级展开';
-        document.getElementById('tree-mode-badge').textContent = '视图：返佣关系树';
-        document.getElementById('tree-data-version').textContent = '数据版本 ' + DATA_VERSION + ' · 焦点 L' + u.level + ' · 直属下级 ' + (u.childIds || []).length + ' 人';
-        document.getElementById('rebate-tree-root').innerHTML = renderRebateTree(id);
+        document.getElementById('tree-title').textContent = u.note + ' · 返佣树';
         const abnSec = document.getElementById('tree-abnormal-section');
-        if (abnSec) abnSec.innerHTML = renderAbnormalSection(u.rootWallet, true);
+        if (abnSec) abnSec.innerHTML = renderAbnormalSection(u.rootWallet);
+        document.getElementById('rebate-tree-root').innerHTML = renderRebateTree(id);
         renderPendingChangesBar();
         if (location.hash.indexOf('rebate-tree') === -1) location.hash = 'rebate-tree';
     }
 
-    function showTreeFromAbnormal(recordId) {
+    function fixAbnormalRebate(recordId) {
         const record = ABNORMAL_RECORDS.find(function (r) { return r.id === recordId; });
         if (!record) return;
-        const child = getUserByWallet(record.childWallet);
+        const child = getUser(record.childUserId) || getUserByWallet(record.childWallet);
         if (!child) return;
+        closeAbnormalModal();
         currentUserId = child.id;
         treeFocusId = child.id;
-        treeMode = 'upchain';
-        treeAbnormalRecordId = recordId;
+        treeHighlightId = child.id;
         treeExpandedNodes = new Set();
-        closeAbnormalModal();
+        getAncestorChain(child).forEach(function (a) {
+            (a.childIds || []).forEach(function (cid) {
+                if (cid === child.id || isDescendantOf(cid, child.id)) treeExpandedNodes.add(a.id);
+            });
+        });
         window.PartnerPortal_showPage('page-rebate-tree');
-        document.getElementById('tree-title').textContent = child.note + ' · 返佣关系树';
-        document.getElementById('tree-sub').textContent = '异常诊断：自记录下级向上追溯至一级，不展示其下级（同一返佣树页）';
-        document.getElementById('tree-mode-badge').textContent = '视图：异常关系诊断';
-        document.getElementById('tree-data-version').textContent = '数据版本 ' + DATA_VERSION + ' · 记录 ' + recordId;
-        document.getElementById('rebate-tree-root').innerHTML = renderRebateTree(child.id, { upchainRecord: record });
+        document.getElementById('tree-title').textContent = child.note + ' · 修正返佣';
         const abnSec = document.getElementById('tree-abnormal-section');
-        if (abnSec) abnSec.innerHTML = renderAbnormalSection(record.rootWallet, true);
+        if (abnSec) abnSec.innerHTML = renderAbnormalSection(record.rootWallet);
+        document.getElementById('rebate-tree-root').innerHTML = renderRebateTree(child.id);
         renderPendingChangesBar();
-        location.hash = 'rebate-tree?abnormal=' + recordId;
+        location.hash = 'rebate-tree';
+        setTimeout(function () {
+            const el = document.getElementById('tree-node-' + child.id);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 80);
     }
 
     function openAbnormalModal() {
         const u = getUser(currentUserId);
-        const body = document.getElementById('modal-abnormal-list-body');
-        body.innerHTML = renderAbnormalSection(u ? u.rootWallet : null, false);
+        document.getElementById('modal-abnormal-list-body').innerHTML = renderAbnormalSection(u ? u.rootWallet : null);
         document.getElementById('modal-abnormal-list').classList.remove('hidden');
     }
 
@@ -624,7 +546,7 @@
                 const c = getUser(cid);
                 return c ? c.wallet + '(' + c.ratio + '%)' : '';
             }).filter(Boolean).join('、');
-            alert('下调提示：建议检查直属下级级差 — ' + names);
+            alert('下调提示：请确认直属下级级差 — ' + names);
         }
         renderPendingChangesBar();
     }
@@ -638,8 +560,8 @@
     function submitPendingChanges() {
         if (!pendingRatioChanges.length) return;
         if (pendingRatioChanges.some(function (c) { return c.newRatio < c.oldRatio; }) &&
-            !confirm('含下调比例，可能触发分支异常保护。确认一并提交？')) return;
-        alert('已提交 ' + pendingRatioChanges.length + ' 项（' + DATA_VERSION + '）');
+            !confirm('含下调比例，可能触发分支异常。确认一并提交？')) return;
+        alert('已提交 ' + pendingRatioChanges.length + ' 项比例修改');
         pendingRatioChanges = [];
         renderPendingChangesBar();
     }
@@ -706,16 +628,14 @@
 
     function applyHashTree() {
         const hash = (location.hash || '').replace('#', '');
-        if (hash.indexOf('rebate-tree') === 0) {
-            const m = hash.match(/abnormal=([^&]+)/);
-            if (m) showTreeFromAbnormal(m[1]);
-            else if (currentUserId || treeFocusId) showTree(currentUserId || treeFocusId || 'u1', 'expand');
+        if (hash.indexOf('rebate-tree') === 0 && (currentUserId || treeFocusId)) {
+            showTree(currentUserId || treeFocusId);
         }
     }
 
     window.PartnerPortal = {
         showList: showList, showDetail: showDetail, showTree: showTree,
-        showTreeFromAbnormal: showTreeFromAbnormal, openAbnormalModal: openAbnormalModal,
+        fixAbnormalRebate: fixAbnormalRebate, openAbnormalModal: openAbnormalModal,
         closeAbnormalModal: closeAbnormalModal, switchDetailTab: switchDetailTab,
         toggleTreeExpand: toggleTreeExpand, refreshTree: refreshTree,
         filterDetailTable: filterDetailTable, setListFilter: setListFilter,
