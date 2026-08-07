@@ -98,9 +98,10 @@
     function initHashRouter(routeMap, defaultHash, activeKeyMap) {
         function apply() {
             const hash = (location.hash || '').replace('#', '') || defaultHash;
-            if (routeMap[hash]) routeMap[hash]();
-            if (activeKeyMap && activeKeyMap[hash]) {
-                renderSidebar(activeKeyMap[hash]);
+            const baseHash = hash.split('?')[0];
+            if (routeMap[baseHash]) routeMap[baseHash]();
+            if (activeKeyMap && activeKeyMap[baseHash]) {
+                renderSidebar(activeKeyMap[baseHash]);
             }
         }
         window.addEventListener('hashchange', apply);
