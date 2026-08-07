@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-tree-v3';
+    const DATA_VERSION = 'partner-tree-v4';
 
     const USERS = [
         {
