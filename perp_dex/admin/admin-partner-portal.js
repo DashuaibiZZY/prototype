@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-9';
+    const DATA_VERSION = 'partner-demo-10';
 
     function chip(v, type) {
         if (!v || v === '—' || v === '--') return '<span class="text-slate-400">' + (v || '—') + '</span>';
@@ -170,23 +170,72 @@
         }
     ];
 
-    /** 可迁移的普通用户（非合伙人树内） */
-    const PLAIN_MIGRATE_USERS = [
-        { wallet: '0xde...55aa', uid: '100990', note: '华东引流直客', directClients: [
-            { wallet: '0x11...c1aa', uid: '100991' }, { wallet: '0x22...c2bb', uid: '100992' }, { wallet: '0x33...c3cc', uid: '100993' }
-        ]}
+    /** 迁移演示：可接收迁移的上级合伙人 */
+    const MIGRATE_TARGET_PARTNERS = [
+        { id: 'mt_l1', wallet: '0xTo...L1', uid: '200001', level: 1, ratio: 72, note: '演示·一级接收方', parentWallet: null, rootWallet: '0xTo...L1', childIds: ['mt_l2'] },
+        { id: 'mt_l2', wallet: '0xTo...L2', uid: '200002', level: 2, ratio: 56, note: '演示·二级接收方', parentWallet: '0xTo...L1', rootWallet: '0xTo...L1', childIds: [] }
     ];
+
+    function migAgent(id, wallet, uid, level, ratio, note, parentWallet, rootWallet, childIds, directClients) {
+        return {
+            id: id, wallet: wallet, uid: uid, level: level, ratio: ratio, note: note,
+            parentWallet: parentWallet, rootWallet: rootWallet,
+            childIds: childIds || [], directClients: directClients || []
+        };
+    }
+
+    /** 构建 5 层代理分支（L2–L5） */
+    function migBranch(prefix, tag, rootWallet, l2Ratio, l3Ratio, l4Ratio, l5Ratio, invertAtL4) {
+        const idP = 'mig_' + prefix;
+        const wP = '0xMig...' + tag;
+        const l2 = migAgent(idP + '_l2', wP + 'L2', '20' + tag + '02', 2, l2Ratio, tag + '·二级', rootWallet, rootWallet, [idP + '_l3']);
+        const l3 = migAgent(idP + '_l3', wP + 'L3', '20' + tag + '03', 3, l3Ratio, tag + '·三级', l2.wallet, rootWallet, [idP + '_l4']);
+        const l4RatioActual = invertAtL4 ? Math.max(l4Ratio, l3Ratio + 2) : l4Ratio;
+        const l4 = migAgent(idP + '_l4', wP + 'L4', '20' + tag + '04', 4, l4RatioActual, tag + '·四级' + (invertAtL4 ? '·倒挂' : ''), l3.wallet, rootWallet, [idP + '_l5']);
+        const l5 = migAgent(idP + '_l5', wP + 'L5', '20' + tag + '05', 5, l5Ratio, tag + '·五级', l4.wallet, rootWallet, [], [
+            { wallet: wP + 'C1', uid: '20' + tag + 'c1' }
+        ]);
+        return [l2, l3, l4, l5];
+    }
+
+  /** 3.1 普通用户（仅直客） */
+    const MIGRATE_PLAIN_USERS = [
+        {
+            wallet: '0xPlain...U1', uid: '200101', note: '演示·普通用户（仅直客）',
+            directClients: [
+                { wallet: '0xPlain...C1', uid: '200111' }, { wallet: '0xPlain...C2', uid: '200112' },
+                { wallet: '0xPlain...C3', uid: '200113' }, { wallet: '0xPlain...C4', uid: '200114' }
+            ]
+        }
+    ];
+
+    /** 3.2 正常代理：3 条 5 层链路 */
+    const MIGRATE_AGENT_OK_ROOT = migAgent('mig_ok_l1', '0xMig...Ok', '200201', 1, 58, '演示·正常代理（3×5层）', null, '0xMig...Ok', ['mig_a_l2', 'mig_b_l2', 'mig_c_l2'], [
+        { wallet: '0xMig...OkD1', uid: '200201d' }
+    ]);
+    const MIGRATE_AGENTS_OK = [MIGRATE_AGENT_OK_ROOT]
+        .concat(migBranch('a', 'OkA', '0xMig...Ok', 50, 42, 35, 28, false))
+        .concat(migBranch('b', 'OkB', '0xMig...Ok', 49, 41, 34, 27, false))
+        .concat(migBranch('c', 'OkC', '0xMig...Ok', 48, 40, 33, 26, false));
+
+    /** 3.3 倒挂代理：3 条 5 层，B 支 L4 比例高于 L3 */
+    const MIGRATE_AGENT_ABN_ROOT = migAgent('mig_abn_l1', '0xMig...Abn', '200301', 1, 62, '演示·含倒挂分支（3×5层）', null, '0xMig...Abn', ['mig_ab_a_l2', 'mig_ab_b_l2', 'mig_ab_c_l2']);
+    const MIGRATE_AGENTS_ABN = [MIGRATE_AGENT_ABN_ROOT]
+        .concat(migBranch('ab_a', 'AbnA', '0xMig...Abn', 52, 44, 36, 29, false))
+        .concat(migBranch('ab_b', 'AbnB', '0xMig...Abn', 51, 40, 34, 28, true))
+        .concat(migBranch('ab_c', 'AbnC', '0xMig...Abn', 50, 43, 35, 27, false));
+
+    const MIGRATE_AGENT_USERS = MIGRATE_AGENTS_OK.concat(MIGRATE_AGENTS_ABN);
 
     let currentSupplementEditId = null;
     let batchEditMode = 'detail';
-
     let currentUserId = null;
     let currentBatchDate = null;
     let batchEditRowIds = null;
     let settlementDetailTab = 'detail';
     let settlementDetailFilters = { partner: '', level: 'all', pendingFix: 'all', modified: 'all' };
     let supplementDetailFilters = { partner: '', originalDate: '' };
-    let migrateState = { scenario: 'user', subjectKey: '', targetParent: '', newRatio: '', preview: null, inversionErrors: [] };
+    let migrateState = { subjectKey: '', preview: null, inversionErrors: [] };
     let treeFocusId = null;
     let treeExpandedNodes = new Set();
     let treeHighlightId = null;
@@ -1236,19 +1285,62 @@
         });
     }
 
-    function findPlainMigrateUser(key) {
+    function matchWalletOrUid(key, wallet, uid) {
         const q = (key || '').trim().toLowerCase();
-        if (!q) return null;
-        return PLAIN_MIGRATE_USERS.find(function (p) {
-            return p.wallet.toLowerCase() === q || String(p.uid) === key.trim() ||
-                p.wallet.toLowerCase().indexOf(q) >= 0;
-        });
+        if (!q) return false;
+        const w = (wallet || '').toLowerCase();
+        return w === q || String(uid) === key.trim() ||
+            w.indexOf(q) >= 0 || q.indexOf(w.replace(/\.\.\./g, '')) >= 0;
     }
 
-    function collectPartnerSubtree(userId) {
+    function findMigrateTargetPartner(key) {
+        const q = (key || '').trim();
+        if (!q) return null;
+        return MIGRATE_TARGET_PARTNERS.find(function (p) { return matchWalletOrUid(q, p.wallet, p.uid); }) ||
+            USERS.find(function (u) { return matchWalletOrUid(q, u.wallet, u.uid); });
+    }
+
+    function findMigratePlainUser(key) {
+        const q = (key || '').trim();
+        if (!q) return null;
+        return MIGRATE_PLAIN_USERS.find(function (p) { return matchWalletOrUid(q, p.wallet, p.uid); });
+    }
+
+    function findMigrateAgentUser(key) {
+        const q = (key || '').trim();
+        if (!q) return null;
+        return MIGRATE_AGENT_USERS.find(function (u) { return matchWalletOrUid(q, u.wallet, u.uid); });
+    }
+
+    function getMigrateAgent(id) { return MIGRATE_AGENT_USERS.find(function (u) { return u.id === id; }); }
+    function getMigrateAgentByWallet(w) { return MIGRATE_AGENT_USERS.find(function (u) { return u.wallet === w; }); }
+
+    function isMigrateDescendantOf(ancestorId, nodeId) {
+        if (nodeId === ancestorId) return true;
+        const node = getMigrateAgent(nodeId);
+        if (!node) return false;
+        let w = node.parentWallet;
+        while (w) {
+            const p = getMigrateAgentByWallet(w);
+            if (!p) return false;
+            if (p.id === ancestorId) return true;
+            w = p.parentWallet;
+        }
+        return false;
+    }
+
+    function resolveMigrateSubject(key) {
+        const plain = findMigratePlainUser(key);
+        if (plain) return { type: 'plain', plainUser: plain, label: '普通用户' };
+        const agent = findMigrateAgentUser(key);
+        if (agent) return { type: 'partner', partnerUser: agent, label: '代理用户' };
+        return null;
+    }
+
+    function collectMigrateSubtree(userId) {
         const result = [];
         function walk(id) {
-            const u = getUser(id);
+            const u = getMigrateAgent(id);
             if (!u) return;
             result.push(u);
             (u.childIds || []).forEach(walk);
@@ -1257,38 +1349,78 @@
         return result;
     }
 
-    function collectDirectClientsForPartner(userId) {
+    function collectMigrateDirectClients(userId) {
         const clients = [];
-        collectPartnerSubtree(userId).forEach(function (u) {
-            (u.directClients || []).forEach(function (c) { clients.push({ owner: u.wallet, wallet: c.wallet, uid: c.uid || '' }); });
+        collectMigrateSubtree(userId).forEach(function (u) {
+            (u.directClients || []).forEach(function (c) {
+                clients.push({ owner: u.wallet, wallet: c.wallet, uid: c.uid || '' });
+            });
         });
         return clients;
     }
 
-    function checkSubtreeInversion(rootId, rootRatio, errors, parentLabel) {
-        const u = getUser(rootId);
+    function checkExistingTreeInversion(rootId, errors) {
+        const subtree = collectMigrateSubtree(rootId);
+        subtree.forEach(function (u) {
+            if (!u.parentWallet) return;
+            const parent = getMigrateAgentByWallet(u.parentWallet);
+            if (!parent) return;
+            if (u.ratio >= parent.ratio) {
+                errors.push('链路内倒挂：' + u.wallet + ' (' + u.ratio + '%) 不低于上级 ' + parent.wallet + ' (' + parent.ratio + '%)');
+            }
+        });
+    }
+
+    function checkMigrateSubtreeInversion(rootId, rootRatio, errors, parentLabel) {
+        const u = getMigrateAgent(rootId);
         if (!u) return;
         (u.childIds || []).forEach(function (cid) {
-            const c = getUser(cid);
+            const c = getMigrateAgent(cid);
             if (!c) return;
             if (c.ratio >= rootRatio) {
-                errors.push('下级 ' + c.wallet + ' (' + c.ratio + '%) 不低于上级 ' + (parentLabel || u.wallet) + ' (' + rootRatio + '%) — 返佣倒挂');
+                errors.push('迁移后倒挂：下级 ' + c.wallet + ' (' + c.ratio + '%) 不低于迁移用户新比例 ' + (parentLabel || u.wallet) + ' (' + rootRatio + '%)');
             }
-            checkSubtreeInversion(cid, c.ratio, errors, c.wallet);
+            checkMigrateSubtreeInversion(cid, c.ratio, errors, c.wallet);
         });
+    }
+
+    function buildMigratePreview(subject) {
+        if (subject.type === 'plain') {
+            const plain = subject.plainUser;
+            return {
+                type: 'plain', label: subject.label, plainUser: plain,
+                agentChain: [], directClients: (plain.directClients || []).map(function (c) {
+                    return { wallet: c.wallet, uid: c.uid || '', owner: plain.wallet };
+                })
+            };
+        }
+        const partner = subject.partnerUser;
+        const subtree = collectMigrateSubtree(partner.id);
+        const clients = collectMigrateDirectClients(partner.id);
+        return {
+            type: 'partner', label: subject.label, partnerUser: partner,
+            agentChain: subtree.map(function (u) {
+                return { wallet: u.wallet, uid: u.uid, level: u.level, ratio: u.ratio, note: u.note, id: u.id };
+            }),
+            directClients: clients,
+            hasInternalInversion: false
+        };
     }
 
     function checkMigrateInversion() {
         const errors = [];
         const targetKey = (document.getElementById('migrate-target-input') && document.getElementById('migrate-target-input').value || '').trim();
         const ratioVal = parseFloat(document.getElementById('migrate-ratio-input') && document.getElementById('migrate-ratio-input').value);
-        const target = findUserByWalletOrUid(targetKey);
+        const preview = migrateState.preview;
+        if (!preview) return errors;
+
         if (!targetKey) {
-            errors.push('请填写目标上级合伙人');
+            errors.push('请填写迁移到上级合伙人');
             return errors;
         }
+        const target = findMigrateTargetPartner(targetKey);
         if (!target) {
-            errors.push('未找到目标上级合伙人：' + targetKey);
+            errors.push('未找到目标上级合伙人：' + targetKey + '（演示可试 0xTo...L1 / 200001）');
             return errors;
         }
         if (isNaN(ratioVal) || ratioVal <= 0) {
@@ -1301,166 +1433,145 @@
         if (ratioVal > OPS_CAP) {
             errors.push('返佣比例超过运营权限上限 ' + OPS_CAP + '%');
         }
-        const preview = migrateState.preview;
-        if (!preview) return errors;
-        if (preview.scenario === 'partner' && preview.partnerUser) {
-            if (isDescendantOf(preview.partnerUser.id, target.id) || preview.partnerUser.id === target.id) {
+
+        if (preview.type === 'partner' && preview.partnerUser) {
+            const partner = preview.partnerUser;
+            const migTarget = findMigrateAgentUser(targetKey);
+            if (migTarget && (partner.id === migTarget.id || isMigrateDescendantOf(partner.id, migTarget.id))) {
                 errors.push('不能迁移到自身或自己的下级之下');
             }
-            checkSubtreeInversion(preview.partnerUser.id, ratioVal, errors, preview.partnerUser.wallet);
+            checkExistingTreeInversion(partner.id, errors);
+            checkMigrateSubtreeInversion(partner.id, ratioVal, errors, partner.wallet);
         }
         return errors;
     }
 
-    function renderMigrateScenarioButtons() {
-        const btnUser = document.getElementById('migrate-scenario-user');
-        const btnPartner = document.getElementById('migrate-scenario-partner');
-        const active = 'px-4 py-2 rounded font-bold text-[11px] border-2 border-blue-600 bg-blue-50 text-blue-700';
-        const inactive = 'px-4 py-2 rounded font-bold text-[11px] border border-slate-200 text-slate-600';
-        if (btnUser) btnUser.className = migrateState.scenario === 'user' ? active : inactive;
-        if (btnPartner) btnPartner.className = migrateState.scenario === 'partner' ? active : inactive;
-    }
-
     function showMigratePage() {
-        migrateState = { scenario: 'user', subjectKey: '', targetParent: '', newRatio: '', preview: null, inversionErrors: [] };
+        migrateState = { subjectKey: '', preview: null, inversionErrors: [] };
         window.PartnerPortal_showPage('page-rebate-migrate');
-        const subIn = document.getElementById('migrate-subject-input');
-        const targetIn = document.getElementById('migrate-target-input');
-        const ratioIn = document.getElementById('migrate-ratio-input');
-        if (subIn) subIn.value = '';
-        if (targetIn) targetIn.value = '';
-        if (ratioIn) ratioIn.value = '';
-        document.getElementById('migrate-subject-card').classList.add('hidden');
-        document.getElementById('migrate-form-section').classList.add('hidden');
+        ['migrate-subject-input', 'migrate-target-input', 'migrate-ratio-input'].forEach(function (id) {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        const card = document.getElementById('migrate-subject-card');
+        if (card) card.classList.add('hidden');
         document.getElementById('migrate-preview-section').classList.add('hidden');
         document.getElementById('migrate-errors-section').classList.add('hidden');
         const hint = document.getElementById('migrate-ratio-hint');
         if (hint) hint.textContent = '';
-        renderMigrateScenarioButtons();
         updateMigrateSubmitState();
     }
 
-    function setMigrateScenario(scenario) {
-        migrateState.scenario = scenario;
-        migrateState.preview = null;
-        renderMigrateScenarioButtons();
-        document.getElementById('migrate-subject-card').classList.add('hidden');
-        document.getElementById('migrate-form-section').classList.add('hidden');
-        document.getElementById('migrate-preview-section').classList.add('hidden');
-        document.getElementById('migrate-errors-section').classList.add('hidden');
-        updateMigrateSubmitState();
-    }
-
-    function lookupMigrateSubject() {
-        const key = (document.getElementById('migrate-subject-input') && document.getElementById('migrate-subject-input').value || '').trim();
-        if (!key) { alert('请输入待迁移用户钱包或 UID'); return; }
-        migrateState.subjectKey = key;
+    function renderMigrateSubjectCard(subject, preview) {
         const card = document.getElementById('migrate-subject-card');
-        const formSec = document.getElementById('migrate-form-section');
-        const partner = findUserByWalletOrUid(key);
-        const plain = findPlainMigrateUser(key);
-
-        if (migrateState.scenario === 'user') {
-            if (!plain) {
-                if (partner) {
-                    card.innerHTML = '<p class="text-amber-800 font-bold">该用户已是合伙人体系内用户。请切换为「合伙人」场景，或确认钱包/UID。</p>';
-                } else {
-                    card.innerHTML = '<p class="text-red-700 font-bold">未找到普通用户。演示数据可试：0xde...55aa / 100990</p>';
-                }
-                card.classList.remove('hidden');
-                formSec.classList.add('hidden');
-                migrateState.preview = null;
-                updateMigrateSubmitState();
-                return;
-            }
-            migrateState.preview = {
-                scenario: 'user', plainUser: plain,
-                agentChain: [], directClients: (plain.directClients || []).map(function (c) {
-                    return { wallet: c.wallet, uid: c.uid || '', owner: plain.wallet };
-                })
-            };
-            card.innerHTML = '<p class="font-black text-slate-800">普通用户 · ' + chip(plain.wallet, 'wallet') + ' ' + chip(plain.uid, 'uid') + '</p>' +
-                '<p class="text-slate-600 mt-2">' + (plain.note || '') + ' · 直客 ' + (plain.directClients || []).length + ' 人（将一并迁移）</p>';
-        } else {
-            if (!partner) {
-                if (plain) {
-                    card.innerHTML = '<p class="text-amber-800 font-bold">该用户为体系外普通用户。请切换为「普通用户」场景。</p>';
-                } else {
-                    card.innerHTML = '<p class="text-red-700 font-bold">未找到合伙人。演示可试：0xAbn...L4 / 100815（含倒挂下级）</p>';
-                }
-                card.classList.remove('hidden');
-                formSec.classList.add('hidden');
-                migrateState.preview = null;
-                updateMigrateSubmitState();
-                return;
-            }
-            const subtree = collectPartnerSubtree(partner.id);
-            const clients = collectDirectClientsForPartner(partner.id);
-            migrateState.preview = {
-                scenario: 'partner', partnerUser: partner,
-                agentChain: subtree.map(function (u) {
-                    return { wallet: u.wallet, uid: u.uid, level: u.level, ratio: u.ratio, note: u.note };
-                }),
-                directClients: clients
-            };
-            card.innerHTML = '<p class="font-black text-slate-800">合伙人 · ' + chip(partner.wallet, 'wallet') + ' ' + chip(partner.uid, 'uid') + ' · L' + partner.level + '</p>' +
-                '<p class="text-slate-600 mt-2">' + partner.note + ' · 当前比例 <strong>' + partner.ratio + '%</strong> · 上级 ' + (partner.parentWallet ? chip(partner.parentWallet, 'wallet') : '一级') + '</p>' +
-                '<p class="text-slate-500 mt-1">代理链路 ' + subtree.length + ' 人 · 伞下直客 ' + clients.length + ' 人（均将迁移）</p>';
-            const ratioIn = document.getElementById('migrate-ratio-input');
-            const hint = document.getElementById('migrate-ratio-hint');
-            if (ratioIn && !ratioIn.value) ratioIn.value = Math.min(partner.ratio, OPS_CAP);
-            if (hint) hint.innerHTML = '建议参考当前比例 <strong>' + partner.ratio + '%</strong>；高于新上级时将无法迁移。若下级比例高于新设置值会出现倒挂。';
+        if (!card) return;
+        if (!subject) {
+            card.innerHTML = '<p class="text-red-700 font-bold">未找到待迁移用户。演示：普通 0xPlain...U1 · 正常代理 0xMig...Ok · 倒挂代理 0xMig...Abn</p>';
+            card.classList.remove('hidden');
+            return;
         }
+        let html = '<div class="flex flex-wrap items-center gap-2 mb-2">' +
+            '<span class="bg-slate-900 text-white px-2 py-0.5 rounded text-[10px] font-black">系统自动识别：' + subject.label + '</span></div>';
+        if (preview.type === 'plain') {
+            const p = preview.plainUser;
+            html += '<p class="font-black text-slate-800">' + chip(p.wallet, 'wallet') + ' · ' + chip(p.uid, 'uid') + '</p>' +
+                '<p class="text-slate-600 mt-1">' + p.note + ' · 直客 ' + preview.directClients.length + ' 人（将一并迁移）</p>';
+        } else {
+            const u = preview.partnerUser;
+            html += '<p class="font-black text-slate-800">' + chip(u.wallet, 'wallet') + ' · ' + chip(u.uid, 'uid') + ' · L' + u.level + '</p>' +
+                '<p class="text-slate-600 mt-1">' + u.note + ' · 当前比例 <strong>' + u.ratio + '%</strong></p>' +
+                '<p class="text-slate-500 mt-1">代理链路 ' + preview.agentChain.length + ' 人 · 伞下直客 ' + preview.directClients.length + ' 人</p>';
+            const hint = document.getElementById('migrate-ratio-hint');
+            const ratioIn = document.getElementById('migrate-ratio-input');
+            if (hint) hint.innerHTML = '建议参考当前 <strong>' + u.ratio + '%</strong>；若设置值低于任一下级比例将触发倒挂校验。';
+            if (ratioIn && !ratioIn.value) ratioIn.value = Math.min(u.ratio, OPS_CAP);
+        }
+        card.innerHTML = html;
         card.classList.remove('hidden');
-        formSec.classList.remove('hidden');
-        previewMigrate();
     }
 
     function previewMigrate() {
+        const subjectKey = (document.getElementById('migrate-subject-input') && document.getElementById('migrate-subject-input').value || '').trim();
+        migrateState.subjectKey = subjectKey;
         const previewSec = document.getElementById('migrate-preview-section');
         const errSec = document.getElementById('migrate-errors-section');
         const body = document.getElementById('migrate-preview-body');
-        if (!migrateState.preview) {
+
+        if (!subjectKey) {
+            migrateState.preview = null;
+            migrateState.inversionErrors = [];
+            const card = document.getElementById('migrate-subject-card');
+            if (card) card.classList.add('hidden');
             if (previewSec) previewSec.classList.add('hidden');
+            if (errSec) errSec.classList.add('hidden');
             updateMigrateSubmitState();
             return;
         }
+
+        const subject = resolveMigrateSubject(subjectKey);
+        if (!subject) {
+            migrateState.preview = null;
+            migrateState.inversionErrors = ['未找到待迁移用户'];
+            renderMigrateSubjectCard(null, null);
+            if (previewSec) previewSec.classList.add('hidden');
+            const list = document.getElementById('migrate-errors-list');
+            if (list) list.innerHTML = '<li>未找到待迁移用户</li>';
+            if (errSec) errSec.classList.remove('hidden');
+            updateMigrateSubmitState();
+            return;
+        }
+
+        migrateState.preview = buildMigratePreview(subject);
+        renderMigrateSubjectCard(subject, migrateState.preview);
+
         const targetKey = (document.getElementById('migrate-target-input') && document.getElementById('migrate-target-input').value || '').trim();
         const ratioVal = parseFloat(document.getElementById('migrate-ratio-input') && document.getElementById('migrate-ratio-input').value);
-        const target = findUserByWalletOrUid(targetKey);
+        const target = findMigrateTargetPartner(targetKey);
         const p = migrateState.preview;
 
         let html = '';
         if (target) {
-            html += '<p class="font-bold text-slate-800">新上级：' + chip(target.wallet, 'wallet') + ' (' + target.ratio + '%) · 新设置比例：' + (isNaN(ratioVal) ? '—' : ratioVal + '%') + '</p>';
+            html += '<p class="font-bold text-slate-800">新上级：' + chip(target.wallet, 'wallet') + ' (' + target.ratio + '%) · 迁移后比例：' + (isNaN(ratioVal) ? '—' : ratioVal + '%') + '</p>';
         } else if (targetKey) {
-            html += '<p class="text-amber-700 font-bold">未找到目标上级：' + targetKey + '</p>';
+            html += '<p class="text-amber-700 font-bold">未找到目标上级，演示可试 0xTo...L1 或 0xTo...L2</p>';
+        } else {
+            html += '<p class="text-slate-500">填写目标上级后显示完整预览</p>';
         }
 
-        if (p.scenario === 'user') {
-            html += '<div class="mt-3"><p class="font-bold text-slate-600 mb-2">迁移主体（普通用户）</p><p>' + chip(p.plainUser.wallet, 'wallet') + '</p></div>';
-            if (p.directClients.length) {
-                html += '<div class="mt-3"><p class="font-bold text-slate-600 mb-2">一并迁移的直客 (' + p.directClients.length + ')</p><ul class="space-y-1">';
-                p.directClients.forEach(function (c) {
-                    html += '<li>' + chip(c.wallet, 'wallet') + (c.uid ? ' · ' + chip(c.uid, 'uid') : '') + '</li>';
-                });
-                html += '</ul></div>';
-            }
+        if (p.type === 'plain') {
+            html += '<div class="mt-3"><p class="font-bold text-slate-600 mb-2">迁移直客 (' + p.directClients.length + ')</p><ul class="space-y-1">';
+            p.directClients.forEach(function (c) {
+                html += '<li>' + chip(c.wallet, 'wallet') + (c.uid ? ' · ' + chip(c.uid, 'uid') : '') + '</li>';
+            });
+            html += '</ul></div>';
         } else {
+            const newRatio = ratioVal;
             html += '<div class="mt-3"><p class="font-bold text-slate-600 mb-2">代理链路 (' + p.agentChain.length + ')</p>';
             html += '<table class="w-full border text-[10px]"><thead class="bg-slate-50"><tr><th class="px-2 py-1">钱包</th><th class="px-2 py-1">层级</th><th class="px-2 py-1">比例</th><th class="px-2 py-1">备注</th></tr></thead><tbody>';
             p.agentChain.forEach(function (a) {
-                const warn = !isNaN(ratioVal) && a.wallet === p.partnerUser.wallet ? '' :
-                    (!isNaN(ratioVal) && a.ratio >= ratioVal && a.wallet !== p.partnerUser.wallet ? ' class="bg-red-50 text-red-700"' : '');
-                html += '<tr' + warn + '><td class="px-2 py-1">' + a.wallet + '</td><td class="px-2 py-1">L' + a.level + '</td><td class="px-2 py-1 font-bold">' + a.ratio + '%</td><td class="px-2 py-1">' + (a.note || '') + '</td></tr>';
+                const isRoot = a.id === p.partnerUser.id;
+                let rowCls = '';
+                if (!isNaN(newRatio) && isRoot && p.agentChain.some(function (x) {
+                    return x.id !== a.id && getMigrateAgent(x.id) && getMigrateAgentByWallet(getMigrateAgent(x.id).parentWallet) &&
+                        getMigrateAgent(x.id).parentWallet === p.partnerUser.wallet && x.ratio >= newRatio;
+                })) {
+                    rowCls = ' class="bg-amber-50"';
+                }
+                if (!isNaN(newRatio) && !isRoot && getMigrateAgent(a.id)) {
+                    const node = getMigrateAgent(a.id);
+                    const par = getMigrateAgentByWallet(node.parentWallet);
+                    if (par && node.ratio >= par.ratio) rowCls = ' class="bg-red-50 text-red-700"';
+                    if (par && par.id === p.partnerUser.id && node.ratio >= newRatio) rowCls = ' class="bg-red-50 text-red-700"';
+                }
+                html += '<tr' + rowCls + '><td class="px-2 py-1">' + a.wallet + '</td><td class="px-2 py-1">L' + a.level + '</td><td class="px-2 py-1 font-bold">' + a.ratio + '%</td><td class="px-2 py-1">' + (a.note || '') + '</td></tr>';
             });
             html += '</tbody></table></div>';
             if (p.directClients.length) {
-                html += '<div class="mt-3"><p class="font-bold text-slate-600 mb-2">伞下直客 (' + p.directClients.length + ')</p><ul class="space-y-1 max-h-32 overflow-y-auto">';
-                p.directClients.slice(0, 20).forEach(function (c) {
-                    html += '<li class="text-slate-600">' + c.wallet + ' <span class="text-slate-400">属 ' + c.owner + '</span></li>';
+                html += '<div class="mt-3"><p class="font-bold text-slate-600 mb-2">伞下直客 (' + p.directClients.length + ')</p><ul class="space-y-1 max-h-28 overflow-y-auto text-slate-600">';
+                p.directClients.slice(0, 15).forEach(function (c) {
+                    html += '<li>' + c.wallet + ' <span class="text-slate-400">属 ' + c.owner + '</span></li>';
                 });
-                if (p.directClients.length > 20) html += '<li class="text-slate-400">… 另有 ' + (p.directClients.length - 20) + ' 人</li>';
+                if (p.directClients.length > 15) html += '<li class="text-slate-400">… 另有 ' + (p.directClients.length - 15) + ' 人</li>';
                 html += '</ul></div>';
             }
         }
@@ -1473,18 +1584,17 @@
             const list = document.getElementById('migrate-errors-list');
             if (list) list.innerHTML = migrateState.inversionErrors.map(function (e) { return '<li>' + e + '</li>'; }).join('');
             if (errSec) errSec.classList.remove('hidden');
-        } else {
-            if (errSec) errSec.classList.add('hidden');
-        }
+        } else if (errSec) errSec.classList.add('hidden');
+
         updateMigrateSubmitState();
     }
 
     function updateMigrateSubmitState() {
         const btn = document.getElementById('migrate-submit-btn');
         if (!btn) return;
-        const ok = migrateState.preview && migrateState.inversionErrors.length === 0 &&
-            (document.getElementById('migrate-target-input') && document.getElementById('migrate-target-input').value.trim()) &&
-            !isNaN(parseFloat(document.getElementById('migrate-ratio-input') && document.getElementById('migrate-ratio-input').value));
+        const targetOk = document.getElementById('migrate-target-input') && document.getElementById('migrate-target-input').value.trim();
+        const ratioOk = !isNaN(parseFloat(document.getElementById('migrate-ratio-input') && document.getElementById('migrate-ratio-input').value));
+        const ok = migrateState.preview && migrateState.inversionErrors.length === 0 && targetOk && ratioOk;
         btn.disabled = !ok;
         btn.className = ok ? 'bg-blue-600 text-white px-6 py-2 rounded font-black text-[11px]' :
             'bg-blue-600 text-white px-6 py-2 rounded font-black text-[11px] opacity-50 cursor-not-allowed';
@@ -1492,22 +1602,21 @@
 
     function submitMigrate() {
         if (!migrateState.preview || migrateState.inversionErrors.length) {
-            alert('请先修正返佣倒挂问题');
+            alert('请先修正返佣倒挂或填写完整信息');
             return;
         }
-        const target = findUserByWalletOrUid(document.getElementById('migrate-target-input').value);
+        const target = findMigrateTargetPartner(document.getElementById('migrate-target-input').value);
         const ratioVal = parseFloat(document.getElementById('migrate-ratio-input').value);
         if (!target || isNaN(ratioVal)) return;
         const p = migrateState.preview;
-        if (p.scenario === 'partner' && p.partnerUser) {
+        const name = p.type === 'plain' ? p.plainUser.wallet : p.partnerUser.wallet;
+        if (p.type === 'partner' && p.partnerUser) {
             p.partnerUser.parentWallet = target.wallet;
             p.partnerUser.ratio = ratioVal;
             p.partnerUser.level = target.level + 1;
             p.partnerUser.rootWallet = target.rootWallet || target.wallet;
-            if (target.childIds && target.childIds.indexOf(p.partnerUser.id) < 0) target.childIds.push(p.partnerUser.id);
         }
-        alert('迁移成功（演示）：' + (p.scenario === 'user' ? p.plainUser.wallet : p.partnerUser.wallet) +
-            ' 已挂到 ' + target.wallet + ' 下，比例 ' + ratioVal + '%');
+        alert('迁移成功（演示）：' + name + ' → ' + target.wallet + '，比例 ' + ratioVal + '%');
         showMigratePage();
     }
 
@@ -1531,8 +1640,7 @@
         resetSettlementDetailFilters: resetSettlementDetailFilters, resetSupplementDetailFilters: resetSupplementDetailFilters,
         initSettlementDatePickers: initSettlementDatePickers,
         openEditSupplement: openEditSupplement, closeEditSupplementModal: closeEditSupplementModal, saveEditSupplement: saveEditSupplement,
-        showMigratePage: showMigratePage, setMigrateScenario: setMigrateScenario, lookupMigrateSubject: lookupMigrateSubject,
-        previewMigrate: previewMigrate, submitMigrate: submitMigrate,
+        showMigratePage: showMigratePage, previewMigrate: previewMigrate, submitMigrate: submitMigrate,
         getCurrentUserId: function () { return currentUserId; },
         applyHashTree: applyHashTree, DATA_VERSION: DATA_VERSION
     };

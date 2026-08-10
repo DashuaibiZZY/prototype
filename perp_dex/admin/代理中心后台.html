@@ -164,27 +164,13 @@
             <section class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm space-y-4">
                 <div>
                     <h2 class="text-base font-black text-slate-900">迁移返佣关系</h2>
-                    <p class="text-[11px] text-slate-500 mt-1">将普通用户或合伙人及其下级（代理链路 + 直客）迁移到新的上级合伙人之下。迁移前须校验返佣比例级差，存在倒挂时需先修正比例。</p>
+                    <p class="text-[11px] text-slate-500 mt-1">输入待迁移用户后系统自动识别类型（普通用户 / 代理用户），填写目标上级与返佣比例后预览。迁移代理用户时，若设置比例低于任一下级将触发倒挂校验。</p>
                 </div>
-                <div class="flex flex-wrap gap-4 items-end">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">迁移场景</label>
-                        <div class="flex gap-2">
-                            <button type="button" id="migrate-scenario-user" onclick="PartnerPortal.setMigrateScenario('user')" class="px-4 py-2 rounded font-bold text-[11px] border-2 border-blue-600 bg-blue-50 text-blue-700">普通用户</button>
-                            <button type="button" id="migrate-scenario-partner" onclick="PartnerPortal.setMigrateScenario('partner')" class="px-4 py-2 rounded font-bold text-[11px] border border-slate-200 text-slate-600">合伙人</button>
-                        </div>
-                    </div>
-                    <div class="flex-1 min-w-[200px]">
                         <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">待迁移用户</label>
-                        <input id="migrate-subject-input" type="text" placeholder="钱包 / UID" class="border rounded px-3 py-2 w-full text-[11px] outline-none focus:ring-1 focus:ring-blue-600">
+                        <input id="migrate-subject-input" type="text" placeholder="钱包 / UID" class="border rounded px-3 py-2 w-full text-[11px] outline-none focus:ring-1 focus:ring-blue-600" oninput="PartnerPortal.previewMigrate()">
                     </div>
-                    <button type="button" onclick="PartnerPortal.lookupMigrateSubject()" class="bg-slate-900 text-white px-5 py-2 rounded font-bold text-[11px]">查询用户</button>
-                </div>
-                <div id="migrate-subject-card" class="hidden bg-slate-50 border border-slate-200 rounded-lg p-4 text-[11px]"></div>
-            </section>
-
-            <section id="migrate-form-section" class="hidden bg-white rounded-lg border border-slate-200 p-5 shadow-sm space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">迁移到上级合伙人</label>
                         <input id="migrate-target-input" type="text" placeholder="目标上级钱包 / UID" class="border rounded px-3 py-2 w-full text-[11px] outline-none focus:ring-1 focus:ring-blue-600" oninput="PartnerPortal.previewMigrate()">
@@ -195,9 +181,15 @@
                         <p id="migrate-ratio-hint" class="text-[10px] text-slate-500 mt-1"></p>
                     </div>
                 </div>
-                <div class="flex gap-3">
-                    <button type="button" onclick="PartnerPortal.previewMigrate()" class="border px-4 py-2 rounded font-bold text-[11px] text-slate-700">预览迁移范围</button>
+                <div id="migrate-subject-card" class="hidden bg-slate-50 border border-slate-200 rounded-lg p-4 text-[11px]"></div>
+                <div class="flex flex-wrap gap-3 items-center">
+                    <button type="button" onclick="PartnerPortal.previewMigrate()" class="border px-4 py-2 rounded font-bold text-[11px] text-slate-700">预览迁移</button>
                     <button type="button" id="migrate-submit-btn" onclick="PartnerPortal.submitMigrate()" disabled class="bg-blue-600 text-white px-6 py-2 rounded font-black text-[11px] opacity-50 cursor-not-allowed">确认迁移</button>
+                </div>
+                <div class="text-[10px] text-slate-400 border-t pt-3 space-y-1">
+                    <p><strong>演示待迁移：</strong>普通用户 <code class="bg-slate-100 px-1">0xPlain...U1</code> · 正常代理 <code class="bg-slate-100 px-1">0xMig...Ok</code> · 倒挂代理 <code class="bg-slate-100 px-1">0xMig...Abn</code></p>
+                    <p><strong>演示目标上级：</strong><code class="bg-slate-100 px-1">0xTo...L1</code> (72%) · <code class="bg-slate-100 px-1">0xTo...L2</code> (56%)</p>
+                    <p><strong>倒挂测试：</strong>迁移 <code class="bg-slate-100 px-1">0xMig...Ok</code> 到 <code class="bg-slate-100 px-1">0xTo...L1</code>，将比例设为 30%（低于下级 50%）可触发倒挂提示</p>
                 </div>
             </section>
 
@@ -550,7 +542,7 @@
 <script src="admin-sidebar.js"></script>
 <script src="admin-approval.js"></script>
 <script src="admin-approval-ui.js"></script>
-<script src="admin-partner-portal.js?v=partner-demo-9"></script>
+<script src="admin-partner-portal.js?v=partner-demo-10"></script>
 <script>
     initModuleApproval({ types: ['partner_l1_bind', 'partner_ratio_change'], rootId: 'partner-approval-root', title: '合伙人配置审批', showExportList: false, showExportDetail: false, singleUserConfig: true });
 
