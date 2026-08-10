@@ -159,6 +159,60 @@
             </div>
         </div>
 
+        <!-- 迁移返佣关系 -->
+        <div id="page-rebate-migrate" class="hidden space-y-6">
+            <section class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm space-y-4">
+                <div>
+                    <h2 class="text-base font-black text-slate-900">迁移返佣关系</h2>
+                    <p class="text-[11px] text-slate-500 mt-1">将普通用户或合伙人及其下级（代理链路 + 直客）迁移到新的上级合伙人之下。迁移前须校验返佣比例级差，存在倒挂时需先修正比例。</p>
+                </div>
+                <div class="flex flex-wrap gap-4 items-end">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">迁移场景</label>
+                        <div class="flex gap-2">
+                            <button type="button" id="migrate-scenario-user" onclick="PartnerPortal.setMigrateScenario('user')" class="px-4 py-2 rounded font-bold text-[11px] border-2 border-blue-600 bg-blue-50 text-blue-700">普通用户</button>
+                            <button type="button" id="migrate-scenario-partner" onclick="PartnerPortal.setMigrateScenario('partner')" class="px-4 py-2 rounded font-bold text-[11px] border border-slate-200 text-slate-600">合伙人</button>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">待迁移用户</label>
+                        <input id="migrate-subject-input" type="text" placeholder="钱包 / UID" class="border rounded px-3 py-2 w-full text-[11px] outline-none focus:ring-1 focus:ring-blue-600">
+                    </div>
+                    <button type="button" onclick="PartnerPortal.lookupMigrateSubject()" class="bg-slate-900 text-white px-5 py-2 rounded font-bold text-[11px]">查询用户</button>
+                </div>
+                <div id="migrate-subject-card" class="hidden bg-slate-50 border border-slate-200 rounded-lg p-4 text-[11px]"></div>
+            </section>
+
+            <section id="migrate-form-section" class="hidden bg-white rounded-lg border border-slate-200 p-5 shadow-sm space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">迁移到上级合伙人</label>
+                        <input id="migrate-target-input" type="text" placeholder="目标上级钱包 / UID" class="border rounded px-3 py-2 w-full text-[11px] outline-none focus:ring-1 focus:ring-blue-600" oninput="PartnerPortal.previewMigrate()">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">设置返佣比例 (%)</label>
+                        <input id="migrate-ratio-input" type="number" min="1" max="80" step="1" class="border rounded px-3 py-2 w-full text-[11px] outline-none focus:ring-1 focus:ring-blue-600" oninput="PartnerPortal.previewMigrate()">
+                        <p id="migrate-ratio-hint" class="text-[10px] text-slate-500 mt-1"></p>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="PartnerPortal.previewMigrate()" class="border px-4 py-2 rounded font-bold text-[11px] text-slate-700">预览迁移范围</button>
+                    <button type="button" id="migrate-submit-btn" onclick="PartnerPortal.submitMigrate()" disabled class="bg-blue-600 text-white px-6 py-2 rounded font-black text-[11px] opacity-50 cursor-not-allowed">确认迁移</button>
+                </div>
+            </section>
+
+            <section id="migrate-preview-section" class="hidden bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+                <div class="px-5 py-3 border-b font-bold text-slate-700">迁移预览</div>
+                <div id="migrate-preview-body" class="p-5 text-[11px] space-y-4"></div>
+            </section>
+
+            <section id="migrate-errors-section" class="hidden bg-red-50 border border-red-200 rounded-lg p-5">
+                <p class="font-black text-red-800 text-sm mb-2">返佣倒挂校验未通过</p>
+                <p class="text-[11px] text-red-700 mb-3">请先在返佣树中下调相关下级比例，或调高上级比例后再迁移。</p>
+                <ul id="migrate-errors-list" class="text-[11px] text-red-800 space-y-1 list-disc pl-5"></ul>
+            </section>
+        </div>
+
         <!-- 返佣关系树 -->
         <div id="page-rebate-tree" class="hidden space-y-4">
             <div class="flex items-center gap-4 flex-wrap">
@@ -230,7 +284,6 @@
                         <h2 class="text-lg font-black" id="detail-title">结算批次明细</h2>
                     </div>
                     <div class="flex gap-2 flex-wrap">
-                        <button type="button" onclick="PartnerPortal.openBatchEditPage()" class="bg-white border-2 border-blue-600 text-blue-700 px-4 py-2 rounded font-black text-[11px]">批量修改实发</button>
                         <button class="bg-white border-2 border-slate-900 px-4 py-2 rounded font-black text-[11px]">下载对账单</button>
                         <button onclick="openModal('modal-reject')" class="bg-red-50 text-red-600 border px-4 py-2 rounded font-bold">拒绝放款</button>
                         <button onclick="openModal('modal-approve')" class="bg-blue-600 text-white px-6 py-2 rounded font-black">审核通过并放款</button>
@@ -277,6 +330,7 @@
                             </select>
                         </div>
                         <button type="button" onclick="PartnerPortal.resetSettlementDetailFilters()" class="border px-3 py-1.5 rounded text-[11px] font-bold text-slate-600">重置</button>
+                        <button type="button" onclick="PartnerPortal.openBatchEditPage('detail')" class="bg-blue-600 text-white px-4 py-1.5 rounded font-black text-[11px] ml-auto">批量修改实发</button>
                     </div>
                     <div id="settlement-supplement-filters" class="hidden px-4 py-3 border-b bg-slate-50 flex flex-wrap gap-3 items-end">
                         <div class="min-w-[140px]">
@@ -288,6 +342,7 @@
                             <input id="supplement-filter-original-date" type="text" placeholder="选择日期" class="border rounded px-2 py-1.5 w-40 text-[11px] outline-none bg-white" readonly>
                         </div>
                         <button type="button" onclick="PartnerPortal.resetSupplementDetailFilters()" class="border px-3 py-1.5 rounded text-[11px] font-bold text-slate-600">重置</button>
+                        <button type="button" onclick="PartnerPortal.openBatchEditPage('supplement')" class="bg-blue-600 text-white px-4 py-1.5 rounded font-black text-[11px] ml-auto">批量修改补发</button>
                     </div>
                     <div id="settlement-table-wrap">
                         <table class="w-full text-left text-[11px]">
@@ -313,8 +368,9 @@
                             <tr>
                                 <th class="px-4 py-4">合伙人</th>
                                 <th class="px-4 py-4">原应结日</th>
-                                <th class="px-4 py-4 text-right">补发佣金</th>
-                                <th class="px-4 py-4">说明</th>
+                                <th class="px-4 py-4 text-right">原始返佣</th>
+                                <th class="px-4 py-4 text-right">（实际）补发佣金</th>
+                                <th class="px-4 py-4 text-right">修改</th>
                             </tr>
                             </thead>
                             <tbody id="settlement-supplement-body" class="divide-y"></tbody>
@@ -330,7 +386,7 @@
                     <h2 id="batch-edit-title" class="text-lg font-black">批量修改实发佣金</h2>
                 </div>
                 <div class="bg-white rounded-lg border p-6 space-y-4 shadow-sm">
-                    <p class="text-[11px] text-slate-600">每行一条：<strong>钱包地址或 UID,实发金额</strong>。也支持上传 CSV / TXT（列：钱包或UID,金额）。实发不得高于原始佣金；待修正返佣后计算不可修改。</p>
+                    <p id="batch-edit-hint" class="text-[11px] text-slate-600">每行一条：<strong>钱包地址或 UID,实发金额</strong>。也支持上传 CSV / TXT。实发不得高于原始佣金；待修正返佣后计算不可修改。</p>
                     <div>
                         <label class="text-[10px] font-bold text-slate-400 uppercase">手动输入</label>
                         <textarea id="batch-edit-lines" rows="8" class="w-full border rounded p-3 mt-1 font-mono text-[11px] outline-none focus:ring-1 focus:ring-blue-600" placeholder="0xAbn...L1,6500&#10;100801,4200&#10;0xNorm...L3,1500"></textarea>
@@ -393,6 +449,24 @@
     </div>
 </div>
 
+<div id="modal-edit-supplement" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-lg shadow-2xl overflow-hidden">
+        <div class="px-6 py-4 border-b">
+            <h3 id="edit-supplement-title" class="font-bold text-slate-800">修改补发佣金</h3>
+            <p id="edit-supplement-hint" class="text-[11px] text-slate-500 mt-1"></p>
+        </div>
+        <div class="p-6">
+            <label class="text-[10px] font-bold text-slate-400 uppercase">补发佣金 (USD)</label>
+            <input id="edit-supplement-input" type="number" step="0.01" min="0" class="w-full border rounded p-2 mt-1 outline-none focus:ring-1 focus:ring-blue-600">
+            <p class="text-[10px] text-slate-400 mt-2">补发不得高于原始返佣；匹配字段含原应结日。</p>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 flex gap-3">
+            <button onclick="PartnerPortal.closeEditSupplementModal()" class="flex-1 py-2 border rounded font-bold text-slate-500">取消</button>
+            <button onclick="PartnerPortal.saveEditSupplement()" class="flex-1 py-2 bg-blue-600 text-white rounded font-bold">保存</button>
+        </div>
+    </div>
+</div>
+
 <div id="modal-edit-actual" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-lg shadow-2xl overflow-hidden">
         <div class="px-6 py-4 border-b">
@@ -432,6 +506,7 @@
         'page-agent-mgmt': '合伙人管理',
         'page-partner-detail': '合伙人详情',
         'page-rebate-tree': '返佣关系树',
+        'page-rebate-migrate': '迁移返佣关系',
         'page-agent-approval': '合伙人配置审批',
         'page-settlement': '佣金对账与发放'
     };
@@ -439,12 +514,13 @@
         'page-agent-mgmt': 'agent',
         'page-partner-detail': 'partner-detail',
         'page-rebate-tree': 'rebate-tree',
+        'page-rebate-migrate': 'migrate',
         'page-agent-approval': 'approval',
         'page-settlement': 'settlement'
     };
 
     function hideAllPartnerPages() {
-        ['page-agent-mgmt', 'page-partner-detail', 'page-rebate-tree', 'page-agent-approval', 'page-settlement'].forEach(function (id) {
+        ['page-agent-mgmt', 'page-partner-detail', 'page-rebate-tree', 'page-rebate-migrate', 'page-agent-approval', 'page-settlement'].forEach(function (id) {
             document.getElementById(id).classList.add('hidden');
         });
     }
@@ -474,7 +550,7 @@
 <script src="admin-sidebar.js"></script>
 <script src="admin-approval.js"></script>
 <script src="admin-approval-ui.js"></script>
-<script src="admin-partner-portal.js?v=partner-demo-8"></script>
+<script src="admin-partner-portal.js?v=partner-demo-9"></script>
 <script>
     initModuleApproval({ types: ['partner_l1_bind', 'partner_ratio_change'], rootId: 'partner-approval-root', title: '合伙人配置审批', showExportList: false, showExportDetail: false, singleUserConfig: true });
 
@@ -493,11 +569,13 @@
             initAdminSidebar('agent-mgmt');
         },
         approval: function () { showApprovalPage(); },
-        settlement: function () { PartnerPortal_showPage('page-settlement'); initAdminSidebar('agent-settlement'); PartnerPortal.filterSettlementBatches(); PartnerPortal.initSettlementDatePickers(); }
+        settlement: function () { PartnerPortal_showPage('page-settlement'); initAdminSidebar('agent-settlement'); PartnerPortal.filterSettlementBatches(); PartnerPortal.initSettlementDatePickers(); },
+        migrate: function () { PartnerPortal.showMigratePage(); initAdminSidebar('agent-migrate'); }
     }, 'agent', {
         agent: 'agent-mgmt',
         'partner-detail': 'agent-mgmt',
         'rebate-tree': 'agent-mgmt',
+        migrate: 'agent-migrate',
         approval: 'agent-approval',
         settlement: 'agent-settlement'
     });
