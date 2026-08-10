@@ -3,7 +3,18 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-5';
+    const DATA_VERSION = 'partner-demo-6';
+
+    function chip(v, type) {
+        if (!v || v === '—' || v === '--') return '<span class="text-slate-400">' + (v || '—') + '</span>';
+        if (window.AdminCopyChip) return AdminCopyChip.render(v, { type: type || (String(v).indexOf('0x') >= 0 ? 'wallet' : 'uid') });
+        return v;
+    }
+
+    function fmtMoney(n) {
+        if (n == null || isNaN(n)) return '—';
+        return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
 
     /** 仅列表展示的 4 个合伙人 */
     const LIST_IDS = ['p_n1', 'p_n3', 'p_a1', 'p_a4'];
@@ -30,7 +41,7 @@
             rebateTotal: '$6,200', rebateSelf: '$0.3k', rebateDirect: '$2.1k', rebateGap: '$3.9k',
             activeSubPartners: 2, totalSubPartners: 2, childIds: ['h_n2a', 'h_n2b'],
             directClients: [{ time: '2024-05-17', wallet: '0xde...55aa', vol: '$92,000', fee: '$92', rebate: '$64.40', status: '交易中' }],
-            settlements: [{ date: '2024-05-20', vol: '$1.1M', rebate: '$4,820', status: '已发放', note: '' }]
+            settlements: [{ date: '2024-05-20', vol: '$1.1M', rebate: '$4,820', originalRebate: '$4,820', status: '已发放', note: '' }]
         },
         helperUser('h_n2a', '0xNorm...L2a', '100802', '华东渠道', 2, 55, '0xNorm...L1', '0xNorm...L1', ['p_n3', 'h_n3a']),
         helperUser('h_n2b', '0xNorm...L2b', '100802b', '华南渠道', 2, 53, '0xNorm...L1', '0xNorm...L1', ['h_n3b', 'h_n3c']),
@@ -43,7 +54,7 @@
             rebateTotal: '$8,420', rebateSelf: '$0.1k', rebateDirect: '$0.8k', rebateGap: '$7.5k',
             activeSubPartners: 2, totalSubPartners: 2, childIds: ['h_n4a', 'h_n4b'],
             directClients: [{ time: '2024-05-21', wallet: '0xcc...88ab', vol: '$125,000', fee: '$125', rebate: '$56.25', status: '交易中' }],
-            settlements: [{ date: '2024-05-20', vol: '$420k', rebate: '$1,960', status: '已发放', note: '' }]
+            settlements: [{ date: '2024-05-20', vol: '$420k', rebate: '$1,960', originalRebate: '$1,960', status: '已发放', note: '' }]
         },
         helperUser('h_n3a', '0xNorm...L3a', '100803a', '华东-苏皖', 3, 42, '0xNorm...L2a', '0xNorm...L1', ['h_n4c']),
         helperUser('h_n3b', '0xNorm...L3b', '100803b', '华南-闽粤', 3, 40, '0xNorm...L2b', '0xNorm...L1', ['h_n4d']),
@@ -65,8 +76,8 @@
             activeSubPartners: 2, totalSubPartners: 2, childIds: ['h_a2a', 'h_a2b'],
             directClients: [{ time: '2024-05-18', wallet: '0x77...C3a1', vol: '$18,200', fee: '$18.20', rebate: '$12.37', status: '交易中' }],
             settlements: [
-                { date: '2024-05-21', vol: '$0', rebate: '$0.00', status: '待修正返佣后计算', note: '异常分支' },
-                { date: '2024-05-20', vol: '$3.8M', rebate: '$12,400', status: '已发放', note: '' }
+                { date: '2024-05-21', vol: '$0', rebate: '$0.00', originalRebate: null, status: '待修正返佣后计算', note: '异常分支' },
+                { date: '2024-05-20', vol: '$3.8M', rebate: '$12,400', originalRebate: '$12,400', status: '已发放', note: '' }
             ]
         },
         helperUser('h_a2a', '0xAbn...L2a', '100812', '正常分支', 2, 50, '0xAbn...L1', '0xAbn...L1', ['h_a2a1', 'h_a2a2']),
@@ -103,7 +114,7 @@
             rebateTotal: '--', rebateSelf: '--', rebateDirect: '--', rebateGap: '--',
             activeSubPartners: 0, totalSubPartners: 0, childIds: [],
             directClients: [],
-            settlements: [{ date: '2024-05-21', vol: '$128k', rebate: '$0', status: '待修正返佣后计算', note: '比例倒挂' }]
+            settlements: [{ date: '2024-05-21', vol: '$128k', rebate: '$0', originalRebate: null, status: '待修正返佣后计算', note: '比例倒挂' }]
         }
     ];
 
@@ -121,7 +132,23 @@
         { date: '2024-05-21', vol: '$9,800,000', payout: '$62,300.00', status: '等待对账', rejected: false }
     ];
 
+    const SETTLEMENT_BATCH_DETAILS = {
+        '2024-05-23': [
+            { id: 'sr1', wallet: '0xAbn...L1', uid: '100811', level: 1, ratio: 68, parentWallet: null, vol: '$1M', originalRebate: 6800, actualRebate: 6500, pendingFix: false },
+            { id: 'sr2', wallet: '0xAbn...L4', uid: '100815', level: 4, ratio: 62, parentWallet: '0xAbn...L3', vol: '$128k', originalRebate: null, actualRebate: 0, pendingFix: true },
+            { id: 'sr3', wallet: '0xNorm...L1', uid: '100801', level: 1, ratio: 70, parentWallet: null, vol: '$2.1M', originalRebate: 4200, actualRebate: 4200, pendingFix: false }
+        ],
+        '2024-05-22': [
+            { id: 'sr4', wallet: '0xNorm...L3', uid: '100803', level: 3, ratio: 45, parentWallet: '0xNorm...L2a', vol: '$800k', originalRebate: 1960, actualRebate: 1960, pendingFix: false }
+        ],
+        '2024-05-21': [
+            { id: 'sr5', wallet: '0xAbn...L1', uid: '100811', level: 1, ratio: 68, parentWallet: null, vol: '$3.8M', originalRebate: 12400, actualRebate: 12400, pendingFix: false }
+        ]
+    };
+
     let currentUserId = null;
+    let currentBatchDate = null;
+    let batchEditRowIds = null;
     let treeFocusId = null;
     let treeExpandedNodes = new Set();
     let treeHighlightId = null;
@@ -208,7 +235,9 @@
             const av = u.abnormalVol === '--' ? '<span class="text-slate-300">--</span>' : '<span class="text-amber-700 font-bold">' + u.abnormalVol + '</span>';
             const al = u.abnormalLines ? '<span class="text-red-600 font-black">' + u.abnormalLines + '</span>' : '<span class="text-slate-300">0</span>';
             return '<tr class="hover:bg-slate-50' + (u.settleStatus !== 'normal' ? ' bg-amber-50/20' : '') + '">' +
-                '<td class="px-4 py-3"><button onclick="PartnerPortal.showDetail(\'' + u.id + '\')" class="font-black hover:text-blue-600 hover:underline">' + u.wallet + '</button><span class="block text-slate-400 text-[9px]">' + u.note + '</span></td>' +
+                '<td class="px-4 py-3">' + chip(u.wallet, 'wallet') +
+                '<span class="block mt-1">' + chip(u.uid, 'uid') + '</span>' +
+                '<button type="button" onclick="PartnerPortal.showDetail(\'' + u.id + '\')" class="block mt-1 text-[10px] font-black text-blue-600 hover:underline">' + u.note + '</button></td>' +
                 '<td class="px-3 py-3 text-center font-bold">L' + u.level + ' · ' + childCount + ' 直属</td>' +
                 '<td class="px-3 py-3 text-center font-black">' + u.ratio + '%</td>' +
                 '<td class="px-3 py-3 text-center">' + settleLabel(u.settleStatus) + '</td>' +
@@ -236,7 +265,7 @@
         const focusCls = opts.isFocus ? ' tree-focus-ring' : '';
         let html = '<div id="tree-node-' + u.id + '" class="flex items-center gap-3 p-3 rounded-lg border ' + border + focusCls + highlight + ' shadow-sm min-w-[280px]">';
         html += '<span class="text-[10px] font-bold text-slate-400">L' + u.level + '</span>';
-        html += '<div class="flex-1 min-w-0"><p class="font-black font-mono text-[11px]">' + u.wallet + '</p><p class="text-[10px] text-slate-500">' + u.note + '</p></div>';
+        html += '<div class="flex-1 min-w-0"><p class="font-black text-[11px]">' + chip(u.wallet, 'wallet') + '</p><p class="text-[10px] text-slate-500 mt-0.5">' + chip(u.uid, 'uid') + ' · ' + u.note + '</p></div>';
         html += '<input type="number" id="ratio-input-' + u.id + '" value="' + displayRatio + '" class="w-14 border rounded px-1 py-1 text-center font-black text-blue-600 text-sm" onchange="PartnerPortal.stageRatioChange(\'' + u.id + '\')"><span class="text-slate-400 font-bold">%</span>';
         if (opts.isFocus) html += '<span class="text-[9px] font-black text-blue-600 uppercase">当前</span>';
         html += '</div>';
@@ -331,14 +360,17 @@
             return;
         }
         bar.classList.remove('hidden');
-        bar.innerHTML = '<div class="bg-slate-900 text-white rounded-lg p-4 flex flex-wrap justify-between gap-4">' +
-            '<div><p class="font-black text-sm">待提交 (' + pendingRatioChanges.length + ')</p>' +
+        bar.innerHTML = '<div class="bg-slate-900 text-white rounded-lg p-4 flex flex-wrap justify-between gap-4 mb-4">' +
+            '<div><p class="font-black text-sm">待提交修改 (' + pendingRatioChanges.length + ')</p>' +
             '<ul class="text-[10px] mt-2 space-y-1">' +
-            pendingRatioChanges.map(function (c) { return '<li>' + c.wallet + ': ' + c.oldRatio + '%→' + c.newRatio + '%</li>'; }).join('') +
+            pendingRatioChanges.map(function (c) {
+                const tag = c.newRatio > OPS_CAP ? '<span class="text-amber-300">[需审批]</span>' : '<span class="text-green-300">[立即生效]</span>';
+                return '<li>' + chip(c.wallet, 'wallet') + ' ' + c.oldRatio + '% → ' + c.newRatio + '% ' + tag + '</li>';
+            }).join('') +
             '</ul></div>' +
             '<div class="flex gap-2">' +
             '<button onclick="PartnerPortal.clearPendingChanges()" class="px-4 py-2 border border-slate-600 rounded font-bold text-[11px]">清空</button>' +
-            '<button onclick="PartnerPortal.submitPendingChanges()" class="px-6 py-2 bg-blue-600 rounded font-black text-[11px]">一并提交</button></div></div>';
+            '<button onclick="PartnerPortal.openTreeConfirmModal()" class="px-6 py-2 bg-blue-600 rounded font-black text-[11px]">提交修改</button></div></div>';
     }
 
     function renderAbnormalSection(rootWallet) {
@@ -351,8 +383,8 @@
             '<table class="w-full text-[11px]"><thead class="text-[10px] uppercase text-red-400"><tr>' +
             '<th class="pb-2">下级</th><th class="pb-2">上级</th><th class="pb-2 text-right">暂停额</th><th class="pb-2 text-right">操作</th></tr></thead><tbody>';
         records.forEach(function (r) {
-            html += '<tr class="border-t border-red-100"><td class="py-2 font-mono font-bold">' + r.childWallet + '</td>' +
-                '<td class="py-2 font-mono">' + r.parentWallet + '<span class="block text-[9px] text-red-500">' + r.parentRatio + '% &lt; ' + r.childRatio + '%</span></td>' +
+            html += '<tr class="border-t border-red-100"><td class="py-2 font-bold">' + chip(r.childWallet, 'wallet') + '</td>' +
+                '<td class="py-2">' + chip(r.parentWallet, 'wallet') + '<span class="block text-[9px] text-red-500">' + r.parentRatio + '% &lt; ' + r.childRatio + '%</span></td>' +
                 '<td class="py-2 text-right font-bold">' + r.pausedVol + '</td>' +
                 '<td class="py-2 text-right"><button onclick="PartnerPortal.fixAbnormalRebate(\'' + r.id + '\')" class="bg-red-600 text-white px-3 py-1 rounded font-bold hover:bg-red-700">修正返佣</button></td></tr>';
         });
@@ -367,7 +399,7 @@
         detailTableFilter = '';
         window.PartnerPortal_showPage('page-partner-detail');
         document.getElementById('detail-partner-title').textContent = u.note;
-        document.getElementById('detail-partner-sub').textContent = u.wallet + ' · UID ' + u.uid + ' · L' + u.level + ' · ' + u.ratio + '%';
+        document.getElementById('detail-partner-sub').innerHTML = chip(u.wallet, 'wallet') + ' · ' + chip(u.uid, 'uid') + ' · L' + u.level + ' · ' + u.ratio + '%';
         document.getElementById('detail-vol').textContent = u.vol;
         document.getElementById('detail-deposit').textContent = u.deposit;
         document.getElementById('detail-users').textContent = u.usersTotal + ' / ' + u.usersActive;
@@ -410,7 +442,7 @@
         tbody.innerHTML = filtered.length ? filtered.map(function (r) {
             return '<tr class="' + (r.abnormal ? 'bg-red-50/40' : '') + '">' +
                 '<td class="px-4 py-2 text-slate-400">' + r.time + '</td>' +
-                '<td class="px-3 py-2"><span class="font-black">' + r.wallet + '</span><span class="block text-[10px] text-slate-400">' + r.note + '</span></td>' +
+                '<td class="px-3 py-2">' + chip(r.wallet, 'wallet') + '<span class="block text-[10px] text-slate-400 mt-0.5">' + r.note + '</span></td>' +
                 '<td class="px-3 py-2 text-center font-bold ' + (r.abnormal ? 'text-red-600' : '') + '">' + r.ratio + '%</td>' +
                 '<td class="px-3 py-2 text-center"><span class="' + (r.gap < 0 ? 'text-red-600 font-black' : 'text-blue-600 font-bold') + '">' + r.gap + '%</span></td>' +
                 '<td class="px-3 py-2 text-right font-black text-blue-600">' + r.gapIncome + '</td>' +
@@ -427,7 +459,7 @@
         const q = detailTableFilter.toLowerCase();
         const filtered = clients.filter(function (c) { return !q || c.wallet.toLowerCase().indexOf(q) >= 0; });
         tbody.innerHTML = filtered.length ? filtered.map(function (c) {
-            return '<tr><td class="px-4 py-2">' + c.time + '</td><td class="px-3 py-2 font-mono font-black">' + c.wallet + '</td>' +
+            return '<tr><td class="px-4 py-2">' + c.time + '</td><td class="px-3 py-2">' + chip(c.wallet, 'wallet') + '</td>' +
                 '<td class="px-3 py-2 text-right">' + c.vol + '</td><td class="px-3 py-2 text-right">' + c.fee + '</td>' +
                 '<td class="px-3 py-2 text-right font-black text-blue-600">' + c.rebate + '</td>' +
                 '<td class="px-3 py-2 text-center text-green-600 font-bold">' + c.status + '</td></tr>';
@@ -439,11 +471,15 @@
         const rows = u.settlements || [];
         tbody.innerHTML = rows.length ? rows.map(function (r) {
             const cls = r.status === '已发放' ? 'text-green-600' : (r.status === '补结算' ? 'text-blue-600' : 'text-amber-600');
+            const origHtml = r.status === '待修正返佣后计算' || !r.originalRebate
+                ? '<span class="text-amber-700 font-bold">待修正返佣后计算</span>'
+                : '<span class="font-bold">' + r.originalRebate + '</span>';
             return '<tr><td class="px-4 py-2">' + r.date + '</td><td class="px-3 py-2 text-right">' + r.vol + '</td>' +
                 '<td class="px-3 py-2 text-right font-bold">' + r.rebate + '</td>' +
+                '<td class="px-3 py-2 text-right">' + origHtml + '</td>' +
                 '<td class="px-3 py-2 text-center font-bold ' + cls + '">' + r.status + '</td>' +
                 '<td class="px-4 py-2 text-slate-500">' + (r.note || '') + '</td></tr>';
-        }).join('') : '<tr><td colspan="5" class="px-4 py-6 text-center text-slate-400">暂无结算记录</td></tr>';
+        }).join('') : '<tr><td colspan="6" class="px-4 py-6 text-center text-slate-400">暂无结算记录</td></tr>';
     }
 
     function switchDetailTab(tab) {
@@ -570,19 +606,89 @@
         renderPendingChangesBar();
     }
 
-    function submitPendingChanges() {
+    function openTreeConfirmModal() {
         if (!pendingRatioChanges.length) return;
-        if (pendingRatioChanges.some(function (c) { return c.newRatio < c.oldRatio; }) &&
-            !confirm('含下调比例，可能触发分支异常。确认一并提交？')) return;
-        alert('已提交 ' + pendingRatioChanges.length + ' 项比例修改');
+        const body = document.getElementById('tree-confirm-body');
+        if (!body) { submitPendingChanges(true); return; }
+        const within = pendingRatioChanges.filter(function (c) { return c.newRatio <= OPS_CAP; });
+        const exceed = pendingRatioChanges.filter(function (c) { return c.newRatio > OPS_CAP; });
+        let html = '<ul class="text-[11px] space-y-2 mb-4">';
+        pendingRatioChanges.forEach(function (c) {
+            const tag = c.newRatio > OPS_CAP
+                ? '<span class="text-amber-700 font-bold">超权限 · 提交审批</span>'
+                : '<span class="text-green-700 font-bold">权限内 · 立即生效</span>';
+            html += '<li class="border-b border-slate-100 pb-2">' + chip(c.wallet, 'wallet') + '：' + c.oldRatio + '% → <b>' + c.newRatio + '%</b> <span class="block text-[10px] mt-0.5">' + tag + '</span></li>';
+        });
+        html += '</ul>';
+        if (within.length && exceed.length) {
+            html += '<p class="text-[11px] text-slate-600 bg-blue-50 border border-blue-100 rounded p-3">' +
+                '将拆分处理：<b>' + within.length + '</b> 项在运营权限内立即生效，<b>' + exceed.length + '</b> 项超上限走审批。</p>';
+        } else if (exceed.length) {
+            html += '<p class="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded p-3">全部修改均超过运营权限上限 ' + OPS_CAP + '%，提交后将进入审批流程。</p>';
+        } else {
+            html += '<p class="text-[11px] text-green-800 bg-green-50 border border-green-100 rounded p-3">全部修改在权限内，确认后将立即生效。</p>';
+        }
+        body.innerHTML = html;
+        document.getElementById('modal-tree-confirm').classList.remove('hidden');
+    }
+
+    function closeTreeConfirmModal() {
+        const modal = document.getElementById('modal-tree-confirm');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    function confirmTreeSubmit() {
+        submitPendingChanges(true);
+    }
+
+    function submitPendingChanges(skipModal) {
+        if (!pendingRatioChanges.length) return;
+        if (!skipModal) {
+            openTreeConfirmModal();
+            return;
+        }
+        closeTreeConfirmModal();
+        const within = pendingRatioChanges.filter(function (c) { return c.newRatio <= OPS_CAP; });
+        const exceed = pendingRatioChanges.filter(function (c) { return c.newRatio > OPS_CAP; });
+        if (within.some(function (c) { return c.newRatio < c.oldRatio; }) &&
+            !confirm('含下调比例，可能触发分支异常。确认继续？')) return;
+
+        within.forEach(function (c) {
+            const u = getUser(c.userId);
+            if (u) u.ratio = c.newRatio;
+        });
+
+        if (exceed.length && typeof submitApprovalApplication === 'function') {
+            exceed.forEach(function (c) {
+                submitApprovalApplication({
+                    type: 'partner_ratio_change',
+                    title: '合伙人返佣比例调整',
+                    applicant: 'Mkt_Allen',
+                    remark: c.wallet + ' ' + c.oldRatio + '% → ' + c.newRatio + '%（超运营上限）',
+                    summary: chip(c.wallet, 'wallet') + ' ' + c.oldRatio + '% → ' + c.newRatio + '%',
+                    payload: { wallet: c.wallet, oldRatio: c.oldRatio, newRatio: c.newRatio, opsCap: OPS_CAP }
+                });
+            });
+        }
+
+        let msg = '';
+        if (within.length) msg += within.length + ' 项已立即生效。';
+        if (exceed.length) msg += exceed.length + ' 项已提交审批。';
+        alert(msg || '已提交');
         pendingRatioChanges = [];
+        refreshTree();
         renderPendingChangesBar();
+        if (currentUserId) {
+            const u = getUser(currentUserId);
+            if (u && document.getElementById('page-partner-detail') && !document.getElementById('page-partner-detail').classList.contains('hidden')) {
+                showDetail(currentUserId);
+            }
+        }
     }
 
     function openBindModal() {
         document.getElementById('bind-wallet').value = '';
         document.getElementById('bind-ratio').value = '';
-        document.getElementById('bind-note').value = '';
         document.getElementById('bind-remark').value = '';
         document.getElementById('bind-cap-hint').textContent = '配置上限 ' + OPS_CAP + '%；超过须风控+老板审批';
         document.getElementById('modal-bind-partner').classList.remove('hidden');
@@ -593,7 +699,6 @@
     function submitBindPartner() {
         const walletInput = document.getElementById('bind-wallet').value.trim();
         const ratio = parseFloat(document.getElementById('bind-ratio').value);
-        const note = document.getElementById('bind-note').value.trim();
         const remark = document.getElementById('bind-remark').value.trim();
         if (!walletInput || !ratio || !remark) { alert('请填写完整信息'); return; }
         const isUid = /^\d+$/.test(walletInput);
@@ -604,13 +709,95 @@
             submitApprovalApplication({
                 type: 'partner_l1_bind', title: '一级合伙人绑定', applicant: 'Mkt_Allen', remark: remark,
                 summary: (uid ? 'UID ' + uid + ' · ' : wallet + ' · ') + ratio + '%',
-                payload: { uid: uid || '—', wallet: wallet, ratio: ratio, note: note, opsCap: OPS_CAP, exceedsCap: exceedsCap }
+                payload: { uid: uid || '—', wallet: wallet, ratio: ratio, opsCap: OPS_CAP, exceedsCap: exceedsCap }
             });
             alert('已提交审批');
         } else {
             alert('绑定成功（演示）');
         }
         closeBindModal();
+    }
+
+    function getBatchRows(date) {
+        return SETTLEMENT_BATCH_DETAILS[date] || [];
+    }
+
+    function renderSettlementDetailRows() {
+        const tbody = document.getElementById('settlement-detail-body');
+        if (!tbody || !currentBatchDate) return;
+        const rows = getBatchRows(currentBatchDate);
+        tbody.innerHTML = rows.map(function (r) {
+            const parentCell = r.parentWallet ? chip(r.parentWallet, 'wallet') : '<span class="text-slate-500">一级</span>';
+            const origCell = r.pendingFix
+                ? '<span class="text-amber-700 font-bold">待修正返佣后计算</span>'
+                : '<span class="font-bold">' + fmtMoney(r.originalRebate) + '</span>';
+            const actualCell = r.pendingFix
+                ? '<span class="text-slate-400">$0.00</span>'
+                : '<span class="text-blue-600 font-black">' + fmtMoney(r.actualRebate) + '</span>';
+            const editBtn = r.pendingFix
+                ? '<span class="text-[10px] text-slate-400">不可修改</span>'
+                : '<button onclick="PartnerPortal.openEditActual(\'' + r.id + '\')" class="text-blue-600 font-bold hover:underline text-[10px]">修改</button>';
+            return '<tr class="' + (r.pendingFix ? 'bg-amber-50/40' : 'hover:bg-slate-50') + '">' +
+                '<td class="px-6 py-4"><div class="font-bold">' + chip(r.wallet, 'wallet') + '</div><div class="mt-1">' + chip(r.uid, 'uid') + '</div></td>' +
+                '<td class="px-4 py-4 text-center font-bold">L' + r.level + '</td>' +
+                '<td class="px-4 py-4 text-center font-black">' + r.ratio + '%</td>' +
+                '<td class="px-4 py-4 text-center">' + parentCell + '</td>' +
+                '<td class="px-4 py-4 text-right font-bold">' + r.vol + '</td>' +
+                '<td class="px-4 py-4 text-right">' + origCell + '</td>' +
+                '<td class="px-4 py-4 text-right">' + actualCell + '</td>' +
+                '<td class="px-4 py-4 text-right">' + editBtn + '</td></tr>';
+        }).join('');
+    }
+
+    function openEditActual(rowId) {
+        const rows = getBatchRows(currentBatchDate);
+        const row = rows.find(function (r) { return r.id === rowId; });
+        if (!row || row.pendingFix) return;
+        batchEditRowIds = [rowId];
+        document.getElementById('edit-actual-title').textContent = '修改实发佣金';
+        document.getElementById('edit-actual-hint').textContent = '原始佣金 ' + fmtMoney(row.originalRebate) + '，实发不得高于原始佣金。';
+        document.getElementById('edit-actual-input').value = row.actualRebate;
+        document.getElementById('edit-actual-input').max = row.originalRebate;
+        document.getElementById('modal-edit-actual').classList.remove('hidden');
+    }
+
+    function openBatchEditActual() {
+        const rows = getBatchRows(currentBatchDate).filter(function (r) { return !r.pendingFix; });
+        if (!rows.length) { alert('本批次无可修改明细'); return; }
+        batchEditRowIds = rows.map(function (r) { return r.id; });
+        document.getElementById('edit-actual-title').textContent = '批量修改实发佣金';
+        document.getElementById('edit-actual-hint').textContent = '将对 ' + rows.length + ' 条可修改记录统一设置实发金额（每条仍不得高于各自原始佣金）。';
+        document.getElementById('edit-actual-input').value = '';
+        document.getElementById('edit-actual-input').removeAttribute('max');
+        document.getElementById('modal-edit-actual').classList.remove('hidden');
+    }
+
+    function closeEditActualModal() {
+        document.getElementById('modal-edit-actual').classList.add('hidden');
+        batchEditRowIds = null;
+    }
+
+    function saveEditActual() {
+        if (!batchEditRowIds || !currentBatchDate) return;
+        const val = parseFloat(document.getElementById('edit-actual-input').value);
+        if (isNaN(val) || val < 0) { alert('请输入有效金额'); return; }
+        const rows = getBatchRows(currentBatchDate);
+        const targets = rows.filter(function (r) { return batchEditRowIds.indexOf(r.id) >= 0 && !r.pendingFix; });
+        if (!targets.length) return;
+
+        if (batchEditRowIds.length === 1) {
+            const row = targets[0];
+            if (val > row.originalRebate) { alert('实发佣金不能高于原始佣金 ' + fmtMoney(row.originalRebate)); return; }
+            row.actualRebate = val;
+        } else {
+            targets.forEach(function (row) {
+                const capped = Math.min(val, row.originalRebate);
+                row.actualRebate = capped;
+            });
+        }
+        closeEditActualModal();
+        renderSettlementDetailRows();
+        alert('实发佣金已更新（演示）');
     }
 
     function filterSettlementBatches() {
@@ -629,17 +816,26 @@
                 '<td class="px-6 py-4 text-right font-bold">' + b.vol + '</td>' +
                 '<td class="px-6 py-4 text-right font-black text-blue-600">' + b.payout + '</td>' +
                 '<td class="px-6 py-4 text-center"><span class="' + stCls + ' px-3 py-1 rounded-full">' + b.status + '</span></td>' +
-                '<td class="px-6 py-4 text-right"><button onclick="PartnerPortal.showReviewDetail(' + (b.rejected ? 'true' : 'false') + ')" class="bg-slate-900 text-white px-4 py-1.5 rounded font-black uppercase">' + (b.rejected ? '查看原因' : '查看详情') + '</button></td></tr>';
+                '<td class="px-6 py-4 text-right"><button onclick="PartnerPortal.showReviewDetail(\'' + b.date + '\', ' + (b.rejected ? 'true' : 'false') + ')" class="bg-slate-900 text-white px-4 py-1.5 rounded font-black uppercase">' + (b.rejected ? '查看原因' : '查看详情') + '</button></td></tr>';
         }).join('');
     }
 
-    function showReviewDetail(isRejected) {
+    function showReviewDetail(batchDate, isRejected) {
+        currentBatchDate = batchDate || SETTLEMENT_BATCHES[0].date;
+        const filterSec = document.getElementById('settlement-filter-section');
+        if (filterSec) filterSec.classList.add('hidden');
         document.getElementById('view-batch-list').classList.add('hidden');
         document.getElementById('view-review-detail').classList.remove('hidden');
         document.getElementById('reject-banner').classList.toggle('hidden', !isRejected);
+        const titleEl = document.getElementById('detail-title');
+        if (titleEl) titleEl.textContent = '结算批次明细 · ' + currentBatchDate;
+        renderSettlementDetailRows();
     }
 
     function backToSettlementList() {
+        currentBatchDate = null;
+        const filterSec = document.getElementById('settlement-filter-section');
+        if (filterSec) filterSec.classList.remove('hidden');
         document.getElementById('view-review-detail').classList.add('hidden');
         document.getElementById('view-batch-list').classList.remove('hidden');
     }
@@ -659,9 +855,12 @@
         filterDetailTable: filterDetailTable, setListFilter: setListFilter,
         applyListSearch: applyListSearch, stageRatioChange: stageRatioChange,
         clearPendingChanges: clearPendingChanges, submitPendingChanges: submitPendingChanges,
+        openTreeConfirmModal: openTreeConfirmModal, closeTreeConfirmModal: closeTreeConfirmModal, confirmTreeSubmit: confirmTreeSubmit,
         openBindModal: openBindModal, closeBindModal: closeBindModal, submitBindPartner: submitBindPartner,
         filterSettlementBatches: filterSettlementBatches, showReviewDetail: showReviewDetail,
         backToSettlementList: backToSettlementList, renderPartnerList: renderPartnerList,
+        openEditActual: openEditActual, openBatchEditActual: openBatchEditActual,
+        closeEditActualModal: closeEditActualModal, saveEditActual: saveEditActual,
         getCurrentUserId: function () { return currentUserId; },
         applyHashTree: applyHashTree, DATA_VERSION: DATA_VERSION
     };

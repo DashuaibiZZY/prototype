@@ -149,7 +149,7 @@
                 <div class="px-6 py-4 border-b font-bold text-slate-700">佣金结算记录</div>
                 <table class="w-full text-left text-[11px]">
                     <thead class="bg-slate-50 border-b text-[10px] uppercase text-slate-500">
-                    <tr><th class="px-4 py-3">结算日期</th><th class="px-3 py-3 text-right">有效交易额</th><th class="px-3 py-3 text-right">应结佣金</th><th class="px-3 py-3 text-center">状态</th><th class="px-4 py-3">备注</th></tr>
+                    <tr><th class="px-4 py-3">结算日期</th><th class="px-3 py-3 text-right">有效交易额</th><th class="px-3 py-3 text-right">应结佣金</th><th class="px-3 py-3 text-right">原始佣金</th><th class="px-3 py-3 text-center">状态</th><th class="px-4 py-3">备注</th></tr>
                     </thead>
                     <tbody id="detail-settlement-rows" class="divide-y"></tbody>
                 </table>
@@ -167,11 +167,11 @@
                 </div>
             </div>
             <div id="tree-abnormal-section"></div>
+            <div id="tree-pending-bar" class="hidden"></div>
             <div class="bg-white rounded-lg border border-slate-200 p-4">
-                <p class="text-[11px] text-slate-600 mb-3 bg-slate-50 border border-slate-100 rounded p-3"><strong>运营操作：</strong>上级链已固定展示；下级默认只显示直属合伙人，点 <strong>+</strong> 展开下一层。下级返佣比例须低于其直属上级；多条修改后点底部<strong>一并提交</strong>。</p>
+                <p class="text-[11px] text-slate-600 mb-3 bg-slate-50 border border-slate-100 rounded p-3"><strong>运营操作：</strong>上级链已固定展示；下级默认只显示直属合伙人，点 <strong>+</strong> 展开下一层。下级返佣比例须低于其直属上级；多条修改后在树上方<strong>提交修改</strong>，权限内立即生效，超上限走审批。</p>
                 <div id="rebate-tree-root"></div>
             </div>
-            <div id="tree-pending-bar" class="hidden"></div>
         </div>
 
         <!-- 合伙人配置审批 -->
@@ -181,7 +181,7 @@
 
         <!-- 佣金对账与发放 -->
         <div id="page-settlement" class="hidden space-y-6">
-            <section class="bg-white rounded-lg border p-4 shadow-sm">
+            <section id="settlement-filter-section" class="bg-white rounded-lg border p-4 shadow-sm">
                 <div class="flex flex-wrap gap-4 items-end">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">结算日期</label>
@@ -224,6 +224,7 @@
                         <h2 class="text-lg font-black" id="detail-title">结算批次明细</h2>
                     </div>
                     <div class="flex gap-2 flex-wrap">
+                        <button onclick="PartnerPortal.openBatchEditActual()" class="bg-white border-2 border-blue-600 text-blue-700 px-4 py-2 rounded font-black text-[11px]">批量修改实发</button>
                         <button class="bg-white border-2 border-slate-900 px-4 py-2 rounded font-black text-[11px]">下载对账单</button>
                         <button onclick="openModal('modal-reject')" class="bg-red-50 text-red-600 border px-4 py-2 rounded font-bold">拒绝放款</button>
                         <button onclick="openModal('modal-approve')" class="bg-blue-600 text-white px-6 py-2 rounded font-black">审核通过并放款</button>
@@ -237,16 +238,16 @@
                         <thead class="bg-slate-50 border-b uppercase text-[10px] text-slate-400">
                         <tr>
                             <th class="px-6 py-4">合伙人</th>
-                            <th class="px-6 py-4 text-center">上级</th>
-                            <th class="px-6 py-4 text-right">成交额</th>
-                            <th class="px-6 py-4 text-right">原始佣金</th>
-                            <th class="px-6 py-4 text-right">实发</th>
+                            <th class="px-4 py-4 text-center">层级</th>
+                            <th class="px-4 py-4 text-center">返佣比例</th>
+                            <th class="px-4 py-4 text-center">上级</th>
+                            <th class="px-4 py-4 text-right">成交额</th>
+                            <th class="px-4 py-4 text-right">原始佣金</th>
+                            <th class="px-4 py-4 text-right">实发</th>
+                            <th class="px-4 py-4 text-right">操作</th>
                         </tr>
                         </thead>
-                        <tbody class="divide-y">
-                        <tr><td class="px-6 py-4 font-black">0xAbn...L1</td><td class="px-6 py-4 text-center">一级</td><td class="px-6 py-4 text-right">$1M</td><td class="px-6 py-4 text-right">$6,800</td><td class="px-6 py-4 text-right text-blue-600 font-black">$6,500</td></tr>
-                        <tr class="bg-amber-50/40"><td class="px-6 py-4 font-black">0xAbn...L4</td><td class="px-6 py-4 text-center">0xAbn...L3</td><td class="px-6 py-4 text-right">$128k</td><td class="px-6 py-4 text-right text-amber-700 font-bold">待修正返佣后计算</td><td class="px-6 py-4 text-right">$0</td></tr>
-                        </tbody>
+                        <tbody id="settlement-detail-body" class="divide-y"></tbody>
                     </table>
                 </div>
             </div>
@@ -275,12 +276,43 @@
             <p id="bind-cap-hint" class="text-[11px] text-blue-800 bg-blue-50 p-3 rounded border border-blue-100"></p>
             <div><label class="text-[10px] font-bold text-slate-400 uppercase">钱包 / UID</label><input id="bind-wallet" type="text" class="w-full border rounded p-2 mt-1 outline-none"></div>
             <div><label class="text-[10px] font-bold text-slate-400 uppercase">返佣比例 (%)</label><input id="bind-ratio" type="number" class="w-full border rounded p-2 mt-1 outline-none"></div>
-            <div><label class="text-[10px] font-bold text-slate-400 uppercase">备注</label><input id="bind-note" type="text" class="w-full border rounded p-2 mt-1 outline-none"></div>
-            <div><label class="text-[10px] font-bold text-slate-400 uppercase">申请备注（必填）</label><textarea id="bind-remark" rows="2" class="w-full border rounded p-2 mt-1 outline-none"></textarea></div>
+            <div><label class="text-[10px] font-bold text-slate-400 uppercase">申请备注（必填）</label><textarea id="bind-remark" rows="2" class="w-full border rounded p-2 mt-1 outline-none" placeholder="说明绑定原因、渠道背景等"></textarea></div>
         </div>
         <div class="px-6 py-4 bg-slate-50 flex gap-3">
             <button onclick="PartnerPortal.closeBindModal()" class="flex-1 py-2 border rounded font-bold text-slate-500">取消</button>
             <button onclick="PartnerPortal.submitBindPartner()" class="flex-1 py-2 bg-slate-900 text-white rounded font-bold">提交</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-tree-confirm" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-lg shadow-2xl overflow-hidden">
+        <div class="px-6 py-4 border-b flex justify-between items-center">
+            <h3 class="font-bold text-slate-800">确认提交返佣比例修改</h3>
+            <button onclick="PartnerPortal.closeTreeConfirmModal()" class="text-slate-400">✕</button>
+        </div>
+        <div class="p-6" id="tree-confirm-body"></div>
+        <div class="px-6 py-4 bg-slate-50 flex gap-3">
+            <button onclick="PartnerPortal.closeTreeConfirmModal()" class="flex-1 py-2 border rounded font-bold text-slate-500">取消</button>
+            <button onclick="PartnerPortal.confirmTreeSubmit()" class="flex-1 py-2 bg-blue-600 text-white rounded font-bold">确认提交</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-edit-actual" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-lg shadow-2xl overflow-hidden">
+        <div class="px-6 py-4 border-b">
+            <h3 id="edit-actual-title" class="font-bold text-slate-800">修改实发佣金</h3>
+            <p id="edit-actual-hint" class="text-[11px] text-slate-500 mt-1"></p>
+        </div>
+        <div class="p-6">
+            <label class="text-[10px] font-bold text-slate-400 uppercase">实发佣金 (USD)</label>
+            <input id="edit-actual-input" type="number" step="0.01" min="0" class="w-full border rounded p-2 mt-1 outline-none focus:ring-1 focus:ring-blue-600">
+            <p class="text-[10px] text-slate-400 mt-2">待修正返佣后计算的记录不支持修改；实发不得高于原始佣金。</p>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 flex gap-3">
+            <button onclick="PartnerPortal.closeEditActualModal()" class="flex-1 py-2 border rounded font-bold text-slate-500">取消</button>
+            <button onclick="PartnerPortal.saveEditActual()" class="flex-1 py-2 bg-blue-600 text-white rounded font-bold">保存</button>
         </div>
     </div>
 </div>
@@ -344,10 +376,11 @@
 <script src="admin-permission-registry.js"></script>
 <script src="admin-permission-store.js"></script>
 <script src="admin-permissions.js"></script>
+<script src="admin-copy-chip.js"></script>
 <script src="admin-sidebar.js"></script>
 <script src="admin-approval.js"></script>
 <script src="admin-approval-ui.js"></script>
-<script src="admin-partner-portal.js?v=partner-demo-5"></script>
+<script src="admin-partner-portal.js?v=partner-demo-6"></script>
 <script>
     initModuleApproval({ type: 'partner_l1_bind', rootId: 'partner-approval-root', title: '合伙人配置审批', showExportList: false, showExportDetail: false, singleUserConfig: true });
 

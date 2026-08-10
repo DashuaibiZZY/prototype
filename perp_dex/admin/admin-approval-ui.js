@@ -97,10 +97,15 @@
                 rows.push(['附件', (p.attachments || []).join('、') || '—']);
             }
         } else if (app.type === 'partner_l1_bind') {
-            rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['申请返佣比例', p.ratio + '%'], ['运营配置上限', p.opsCap + '%'], ['备注', p.note || '—'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
+            rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['申请返佣比例', p.ratio + '%'], ['运营配置上限', p.opsCap + '%'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
         }
         return rows.map(function (r) {
-            return '<div class="p-3 bg-slate-50 rounded-lg"><p class="text-[10px] text-slate-400 font-bold">' + r[0] + '</p><p class="font-bold text-slate-800 mt-1 break-all">' + (r[1] || '—') + '</p></div>';
+            let valHtml = (r[1] || '—');
+            if (window.AdminCopyChip && r[1] && r[1] !== '—') {
+                if (r[0] === 'UID') valHtml = AdminCopyChip.uid(r[1]);
+                else if (r[0] === '钱包') valHtml = AdminCopyChip.wallet(r[1]);
+            }
+            return '<div class="p-3 bg-slate-50 rounded-lg"><p class="text-[10px] text-slate-400 font-bold">' + r[0] + '</p><p class="font-bold text-slate-800 mt-1 break-all">' + valHtml + '</p></div>';
         }).join('');
     }
 
@@ -360,8 +365,10 @@
             const actionable = canApproveApplication(app, role);
             const typeCell = showTypeColumn ? '<td class="px-3 py-3 text-xs font-bold text-slate-600">' + getApprovalTypeLabel(app.type) + '</td>' : '';
             const su = getAppSubjectUser(app);
+            const walletCell = window.AdminCopyChip ? AdminCopyChip.wallet(su.wallet) : su.wallet;
+            const uidCell = window.AdminCopyChip ? AdminCopyChip.uid(su.uid) : su.uid;
             const walletUidCells = state.options.singleUserConfig
-                ? '<td class="px-3 py-3 font-mono text-[11px]">' + su.wallet + '</td><td class="px-3 py-3 font-bold">' + su.uid + '</td>'
+                ? '<td class="px-3 py-3">' + walletCell + '</td><td class="px-3 py-3">' + uidCell + '</td>'
                 : '';
             const activityCell = state.options.singleUserConfig ? '' : '<td class="px-3 py-3 max-w-[140px] truncate" title="' + formatApprovalActivity(app.payload) + '">' + formatApprovalActivity(app.payload) + '</td>';
             return '<tr class="hover:bg-slate-50"><td class="px-4 py-3 font-mono text-[11px] font-bold">' + app.id + '</td>' + typeCell +
