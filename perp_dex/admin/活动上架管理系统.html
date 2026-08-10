@@ -2668,11 +2668,13 @@
                 const nickname = row.querySelector('td:nth-child(3)').textContent;
 
                 if (action === 'view-user') {
-                    document.getElementById('view-user-uid').textContent = uid;
+                    if (window.AdminCopyChip) AdminCopyChip.setField(document.getElementById('view-user-uid'), uid, 'uid');
+                    else document.getElementById('view-user-uid').textContent = uid;
                     document.getElementById('view-user-nickname').textContent = nickname;
                     document.getElementById('view-user-data-modal').classList.add('active');
                 } else if (action === 'view-reward') {
-                    document.getElementById('view-reward-uid').textContent = uid;
+                    if (window.AdminCopyChip) AdminCopyChip.setField(document.getElementById('view-reward-uid'), uid, 'uid');
+                    else document.getElementById('view-reward-uid').textContent = uid;
                     document.getElementById('view-reward-nickname').textContent = nickname;
                     document.getElementById('view-reward-status-modal').classList.add('active');
                 }
@@ -3345,7 +3347,8 @@
 
         function showTaskDetail(rowIndex) {
             const data = taskDetailData[rowIndex];
-            document.getElementById('task-detail-uid').textContent = data.uid;
+            if (window.AdminCopyChip) AdminCopyChip.setField(document.getElementById('task-detail-uid'), data.uid, 'uid');
+            else document.getElementById('task-detail-uid').textContent = data.uid;
             document.getElementById('task-detail-nickname').textContent = data.nickname;
             document.getElementById('task-detail-activity').textContent = data.activity;
             document.getElementById('task-detail-taskname').textContent = data.taskname;
@@ -3380,7 +3383,8 @@
         function showRankingDetail(rowIndex, type) {
             const data = type === 'volume' ? volumeRankingData[rowIndex] : profitRankingData[rowIndex];
             document.getElementById('rank-detail-rank').textContent = data.rank;
-            document.getElementById('rank-detail-uid').textContent = data.uid;
+            if (window.AdminCopyChip) AdminCopyChip.setField(document.getElementById('rank-detail-uid'), data.uid, 'uid');
+            else document.getElementById('rank-detail-uid').textContent = data.uid;
             document.getElementById('rank-detail-nickname').textContent = data.nickname;
             document.getElementById('rank-detail-activity').textContent = data.activity;
             document.getElementById('rank-detail-type').textContent = type === 'volume' ? '交易量榜' : '盈利率榜';
@@ -4022,6 +4026,13 @@
             }
         })();
 
+</script>
+
+<script src="admin-copy-chip.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (window.AdminCopyChip) AdminCopyChip.enhanceTables('.data-table');
+});
 </script>
 
 </body>

@@ -963,8 +963,13 @@
         document.getElementById('userBackBtn').classList.remove('hidden');
         document.getElementById('userBackBtn').onclick = showPointsUsers;
         document.getElementById('userBackBtn').innerText = '← 返回用户列表';
-        document.getElementById('ptsDetailUid').innerText = user.uid;
-        document.getElementById('ptsDetailWallet').innerText = user.wallet;
+        if (window.AdminCopyChip) {
+            AdminCopyChip.setField(document.getElementById('ptsDetailUid'), user.uid, 'uid');
+            AdminCopyChip.setField(document.getElementById('ptsDetailWallet'), user.wallet, 'wallet');
+        } else {
+            document.getElementById('ptsDetailUid').innerText = user.uid;
+            document.getElementById('ptsDetailWallet').innerText = user.wallet;
+        }
         document.getElementById('ptsDetailBalance').innerText = user.balance.toLocaleString();
         document.getElementById('ptsDetailNaturalBonus').innerText = user.naturalMultiplier + 'x (级别 ' + (user.level || '无') + ')';
         const customWrap = document.getElementById('ptsDetailCustomBonusWrap');
@@ -991,7 +996,9 @@
 
     function renderPointsUserTable(list) {
         document.getElementById('pointsUserTableBody').innerHTML = list.map(function (u) {
-            return '<tr class="hover:bg-slate-50"><td class="px-4 py-3"><div class="font-bold">' + u.uid + '</div><div class="text-[10px] text-slate-400 font-mono">' + shortWallet(u.wallet) + '</div></td><td class="px-3 py-3 text-right font-black text-blue-600">' + u.balance.toLocaleString() + '</td><td class="px-3 py-3 text-center font-bold">' + u.multiplier + '</td><td class="px-3 py-3 text-center">' + bonusTypeLabel(u) + '</td><td class="px-3 py-3 text-right">' + u.umbrellaVolume + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.trade.toLocaleString() + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.position.toLocaleString() + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.invite.toLocaleString() + '</td><td class="px-3 py-3 text-right font-bold">' + u.lastWeek.total.toLocaleString() + '</td><td class="px-4 py-3 text-right"><button onclick="showPointsUserDetail(\'' + u.uid + '\')" class="text-blue-600 font-bold">查看流水</button></td></tr>';
+            const uidCell = window.AdminCopyChip ? AdminCopyChip.uid(u.uid) : u.uid;
+            const walletCell = window.AdminCopyChip ? AdminCopyChip.wallet(u.wallet) : (u.wallet.length > 14 ? u.wallet.slice(0, 6) + '...' + u.wallet.slice(-4) : u.wallet);
+            return '<tr class="hover:bg-slate-50"><td class="px-4 py-3"><div class="font-bold">' + uidCell + '</div><div class="text-[10px] text-slate-400 font-mono mt-0.5">' + walletCell + '</div></td><td class="px-3 py-3 text-right font-black text-blue-600">' + u.balance.toLocaleString() + '</td><td class="px-3 py-3 text-center font-bold">' + u.multiplier + '</td><td class="px-3 py-3 text-center">' + bonusTypeLabel(u) + '</td><td class="px-3 py-3 text-right">' + u.umbrellaVolume + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.trade.toLocaleString() + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.position.toLocaleString() + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.invite.toLocaleString() + '</td><td class="px-3 py-3 text-right font-bold">' + u.lastWeek.total.toLocaleString() + '</td><td class="px-4 py-3 text-right"><button onclick="showPointsUserDetail(\'' + u.uid + '\')" class="text-blue-600 font-bold">查看流水</button></td></tr>';
         }).join('');
     }
 
@@ -1585,6 +1592,7 @@
 <script src="admin-permission-registry.js"></script>
 <script src="admin-permission-store.js"></script>
 <script src="admin-permissions.js"></script>
+<script src="admin-copy-chip.js"></script>
 <script src="admin-sidebar.js"></script>
 <script>
     function applyPointsHash() {

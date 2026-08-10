@@ -578,8 +578,13 @@
     document.getElementById('page-user-detail').classList.remove('hidden');
     document.getElementById('page-title').innerText = '用户卡券详情';
     document.getElementById('riskBackBtn').classList.remove('hidden');
-    document.getElementById('detailUid').innerText = user.uid;
-    document.getElementById('detailWallet').innerText = user.wallet;
+    if (window.AdminCopyChip) {
+      AdminCopyChip.setField(document.getElementById('detailUid'), user.uid, 'uid');
+      AdminCopyChip.setField(document.getElementById('detailWallet'), user.wallet, 'wallet');
+    } else {
+      document.getElementById('detailUid').innerText = user.uid;
+      document.getElementById('detailWallet').innerText = user.wallet;
+    }
     document.getElementById('detailTotalIssued').innerText = user.totalIssued + ' USDT';
     document.getElementById('detailRemaining').innerText = user.remaining + ' USDT';
     renderUserCoupons(uid);
@@ -636,12 +641,19 @@
     return { available: '可用', used: '使用中', expired: '已过期', recycled: '已失效', pending: '待激活' }[s] || s;
   }
 
+  function userChipCell(u) {
+    if (window.AdminCopyChip) {
+      return '<td class="px-4 py-3"><div>' + AdminCopyChip.uid(u.uid) + '</div><div class="mt-0.5">' + AdminCopyChip.wallet(u.wallet) + '</div></td>';
+    }
+    return '<td class="px-4 py-3"><div class="font-bold">' + u.uid + '</div><div class="text-[10px] text-slate-400 font-mono">' + (u.wallet.length > 14 ? u.wallet.slice(0, 6) + '...' + u.wallet.slice(-4) : u.wallet) + '</div></td>';
+  }
+
   function renderTrialUserTable(list) {
     document.getElementById('trialUserTableBody').innerHTML = list.map(function (u) {
       const canRecycle = u.remaining > 0;
       const tagCls = u.riskWarn ? 'risk-tag-warn' : 'risk-tag-normal';
-      return '<tr class="hover:bg-slate-50"><td class="px-4 py-3"><div class="font-bold">' + u.uid + '</div><div class="text-[10px] text-slate-400 font-mono">' + shortWallet(u.wallet) + '</div></td><td class="px-3 py-3 text-right font-medium">' + u.totalIssued + ' U</td><td class="px-3 py-3 text-right font-bold text-blue-600">' + u.remaining + ' U</td><td class="px-3 py-3 text-center"><span class="status-tag status-' + u.couponStatus + '">' + statusText(u.couponStatus) + '</span></td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(u.lossUsed, u.lossLimit) + '</td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(u.feeUsed, u.feeLimit) + '</td><td class="px-3 py-3"><span class="' + tagCls + '">' + u.riskTag + '</span></td><td class="px-3 py-3">' + u.activity + '</td><td class="px-3 py-3 text-slate-500">' + u.issuedAt + '</td><td class="px-4 py-3 text-right space-x-2"><button onclick="showUserDetail(\'' + u.uid + '\')" class="text-blue-600 font-bold">查看详情</button>' + (canRecycle ? '<button onclick="recycleUserFromList(\'' + u.uid + '\')" class="text-red-600 font-bold">回收</button>' : '') + '</td></tr>';
-    }).join('');
+      return '<tr class="hover:bg-slate-50">' + userChipCell(u) +
+        '<td class="px-3 py-3 text-right font-medium">' + u.totalIssued + ' U</td><td class="px-3 py-3 text-right font-bold text-blue-600">' + u.remaining + ' U</td><td class="px-3 py-3 text-center"><span class="status-tag status-' + u.couponStatus + '">' + statusText(u.couponStatus) + '</span></td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(u.lossUsed, u.lossLimit) + '</td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(u.feeUsed, u.feeLimit) + '</td><td class="px-3 py-3"><span class="' + tagCls + '">' + u.riskTag + '</span></td><td class="px-3 py-3">' + u.activity + '</td><td class="px-3 py-3 text-slate-500">' + u.issuedAt + '</td><td class="px-4 py-3 text-right space-x-2"><button onclick="showUserDetail(\'' + u.uid + '\')" class="text-blue-600 font-bold">查看详情</button>' + (canRecycle ? '<button onclick="recycleUserFromList(\'' + u.uid + '\')" class="text-red-600 font-bold">回收</button>' : '') + '</td></tr>';
   }
 
   function renderUserCoupons(uid) {
@@ -862,6 +874,7 @@
 <script src="admin-permission-registry.js"></script>
 <script src="admin-permission-store.js"></script>
 <script src="admin-permissions.js"></script>
+<script src="admin-copy-chip.js"></script>
 <script src="admin-sidebar.js"></script>
 <script>
   initAdminSidebar('trial-config', '登录身份: 体验金管理员');

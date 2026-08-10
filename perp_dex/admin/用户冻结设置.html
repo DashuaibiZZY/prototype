@@ -212,8 +212,8 @@
         tbody.innerHTML = filteredUsers.map(u => `
             <tr class="hover:bg-slate-50">
                 <td class="px-6 py-4">
-                    <div class="font-bold text-slate-800">UID ${u.uid}</div>
-                    <div class="text-[10px] text-slate-400 font-mono mt-0.5">${u.wallet}</div>
+                    <div>${window.AdminCopyChip ? AdminCopyChip.uid(u.uid) : 'UID ' + u.uid}</div>
+                    <div class="mt-0.5">${window.AdminCopyChip ? AdminCopyChip.wallet(u.wallet) : u.wallet}</div>
                 </td>
                 <td class="px-6 py-4 text-center">${freezeStatusLabel(u.freezeStatus)}</td>
                 <td class="px-6 py-4 text-[11px] text-slate-500 max-w-[200px]">${activeFreezeLabels(u.flags)}</td>
@@ -272,7 +272,7 @@
         if (!user) return;
         currentUserId = uid;
         draftConfig = { riskTag: user.riskTag || '', flags: { ...user.flags } };
-        document.getElementById('drawerUserMeta').textContent = `UID ${user.uid} · ${user.wallet}`;
+        document.getElementById('drawerUserMeta').innerHTML = window.AdminCopyChip ? AdminCopyChip.uid(user.uid) + ' · ' + AdminCopyChip.wallet(user.wallet) : `UID ${user.uid} · ${user.wallet}`;
         document.getElementById('riskTagInput').value = user.riskTag || '';
         updateRiskTagPreview();
         renderFreezeList(draftConfig.flags);
@@ -352,6 +352,7 @@
 <script src="admin-permission-registry.js"></script>
 <script src="admin-permission-store.js"></script>
 <script src="admin-permissions.js"></script>
+<script src="admin-copy-chip.js"></script>
 <script src="admin-sidebar.js"></script>
 <script>initAdminSidebar('freeze-settings', '登录身份: 风控管理员');</script>
 </body>
