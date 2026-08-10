@@ -33,7 +33,7 @@
 
     function getAppSubjectUser(app) {
         const p = app.payload || {};
-        if (app.type === 'fee_config' || app.type === 'partner_l1_bind') {
+        if (app.type === 'fee_config' || app.type === 'partner_l1_bind' || app.type === 'partner_ratio_change') {
             return { wallet: p.wallet || '—', uid: p.uid || '—' };
         }
         return { wallet: '—', uid: '—' };
@@ -98,6 +98,8 @@
             }
         } else if (app.type === 'partner_l1_bind') {
             rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['申请返佣比例', p.ratio + '%'], ['运营配置上限', p.opsCap + '%'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
+        } else if (app.type === 'partner_ratio_change') {
+            rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['原返佣比例', p.oldRatio + '%'], ['新返佣比例', p.newRatio + '%'], ['运营配置上限', p.opsCap + '%'], ['超上限', p.exceedsCap ? '是' : '否']);
         }
         return rows.map(function (r) {
             let valHtml = (r[1] || '—');

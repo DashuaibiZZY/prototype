@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-6';
+    const DATA_VERSION = 'partner-demo-7';
 
     function chip(v, type) {
         if (!v || v === '—' || v === '--') return '<span class="text-slate-400">' + (v || '—') + '</span>';
@@ -134,21 +134,41 @@
 
     const SETTLEMENT_BATCH_DETAILS = {
         '2024-05-23': [
-            { id: 'sr1', wallet: '0xAbn...L1', uid: '100811', level: 1, ratio: 68, parentWallet: null, vol: '$1M', originalRebate: 6800, actualRebate: 6500, pendingFix: false },
-            { id: 'sr2', wallet: '0xAbn...L4', uid: '100815', level: 4, ratio: 62, parentWallet: '0xAbn...L3', vol: '$128k', originalRebate: null, actualRebate: 0, pendingFix: true },
-            { id: 'sr3', wallet: '0xNorm...L1', uid: '100801', level: 1, ratio: 70, parentWallet: null, vol: '$2.1M', originalRebate: 4200, actualRebate: 4200, pendingFix: false }
+            { id: 'sr1', wallet: '0xAbn...L1', uid: '100811', level: 1, ratio: 68, parentWallet: null, vol: '$1M', originalRebate: 6800, actualRebate: 6500, pendingFix: false, originalSettlementDate: '2024-05-23' },
+            { id: 'sr2', wallet: '0xAbn...L4', uid: '100815', level: 4, ratio: 62, parentWallet: '0xAbn...L3', vol: '$128k', originalRebate: null, actualRebate: 0, pendingFix: true, originalSettlementDate: '2024-05-21', pendingFixNote: '当日停止结算，待修正返佣' },
+            { id: 'sr3', wallet: '0xNorm...L1', uid: '100801', level: 1, ratio: 70, parentWallet: null, vol: '$2.1M', originalRebate: 4200, actualRebate: 4200, pendingFix: false, originalSettlementDate: '2024-05-23' }
         ],
         '2024-05-22': [
-            { id: 'sr4', wallet: '0xNorm...L3', uid: '100803', level: 3, ratio: 45, parentWallet: '0xNorm...L2a', vol: '$800k', originalRebate: 1960, actualRebate: 1960, pendingFix: false }
+            { id: 'sr4', wallet: '0xNorm...L3', uid: '100803', level: 3, ratio: 45, parentWallet: '0xNorm...L2a', vol: '$800k', originalRebate: 1960, actualRebate: 1960, pendingFix: false, originalSettlementDate: '2024-05-22' }
         ],
         '2024-05-21': [
-            { id: 'sr5', wallet: '0xAbn...L1', uid: '100811', level: 1, ratio: 68, parentWallet: null, vol: '$3.8M', originalRebate: 12400, actualRebate: 12400, pendingFix: false }
+            { id: 'sr5', wallet: '0xAbn...L1', uid: '100811', level: 1, ratio: 68, parentWallet: null, vol: '$3.8M', originalRebate: 12400, actualRebate: 12400, pendingFix: false, originalSettlementDate: '2024-05-21' }
         ]
     };
+
+    /** 修正返佣后的补发流水：补发执行日 ≠ 原应结日 */
+    const REBATE_SUPPLEMENT_FLOWS = [
+        {
+            id: 'sup1', payoutDate: '2024-05-30', wallet: '0xAbn...L4', uid: '100815',
+            originalSettlementDate: '2024-05-21', amount: 1856.40,
+            note: '5-21 比例倒挂暂停结算，5-30 修正返佣后补发'
+        },
+        {
+            id: 'sup2', payoutDate: '2024-10-10', wallet: '0xAbn...L4', uid: '100815',
+            originalSettlementDate: '2024-10-01', amount: 2340.00,
+            note: '10-01 待修正返佣后计算，10-10 修正后补发'
+        },
+        {
+            id: 'sup3', payoutDate: '2024-10-10', wallet: '0xAbn...L1', uid: '100811',
+            originalSettlementDate: '2024-10-01', amount: 890.50,
+            note: '异常分支修正后，补发 10-01 暂停分支佣金'
+        }
+    ];
 
     let currentUserId = null;
     let currentBatchDate = null;
     let batchEditRowIds = null;
+    let selectedSettlementRowIds = new Set();
     let treeFocusId = null;
     let treeExpandedNodes = new Set();
     let treeHighlightId = null;
@@ -729,16 +749,21 @@
         tbody.innerHTML = rows.map(function (r) {
             const parentCell = r.parentWallet ? chip(r.parentWallet, 'wallet') : '<span class="text-slate-500">一级</span>';
             const origCell = r.pendingFix
-                ? '<span class="text-amber-700 font-bold">待修正返佣后计算</span>'
+                ? '<span class="text-amber-700 font-bold">待修正返佣后计算</span><span class="block text-[9px] text-amber-600 mt-0.5">原应结日 ' + (r.originalSettlementDate || '—') + ' · 当日停结</span>'
                 : '<span class="font-bold">' + fmtMoney(r.originalRebate) + '</span>';
             const actualCell = r.pendingFix
-                ? '<span class="text-slate-400">$0.00</span>'
+                ? '<span class="text-slate-400">$0.00</span><span class="block text-[9px] text-slate-400 mt-0.5">修正后另日记补发流水</span>'
                 : '<span class="text-blue-600 font-black">' + fmtMoney(r.actualRebate) + '</span>';
             const editBtn = r.pendingFix
                 ? '<span class="text-[10px] text-slate-400">不可修改</span>'
                 : '<button onclick="PartnerPortal.openEditActual(\'' + r.id + '\')" class="text-blue-600 font-bold hover:underline text-[10px]">修改</button>';
+            const checked = selectedSettlementRowIds.has(r.id);
+            const checkCell = r.pendingFix
+                ? '<span class="text-slate-300">—</span>'
+                : '<input type="checkbox" class="settlement-row-check rounded border-slate-300" data-id="' + r.id + '" ' + (checked ? 'checked' : '') + ' onchange="PartnerPortal.toggleSettlementSelect(\'' + r.id + '\', this.checked)">';
             return '<tr class="' + (r.pendingFix ? 'bg-amber-50/40' : 'hover:bg-slate-50') + '">' +
-                '<td class="px-6 py-4"><div class="font-bold">' + chip(r.wallet, 'wallet') + '</div><div class="mt-1">' + chip(r.uid, 'uid') + '</div></td>' +
+                '<td class="px-4 py-4 text-center">' + checkCell + '</td>' +
+                '<td class="px-4 py-4"><div class="font-bold">' + chip(r.wallet, 'wallet') + '</div><div class="mt-1">' + chip(r.uid, 'uid') + '</div></td>' +
                 '<td class="px-4 py-4 text-center font-bold">L' + r.level + '</td>' +
                 '<td class="px-4 py-4 text-center font-black">' + r.ratio + '%</td>' +
                 '<td class="px-4 py-4 text-center">' + parentCell + '</td>' +
@@ -747,6 +772,71 @@
                 '<td class="px-4 py-4 text-right">' + actualCell + '</td>' +
                 '<td class="px-4 py-4 text-right">' + editBtn + '</td></tr>';
         }).join('');
+        updateSettlementBatchEditBtn();
+    }
+
+    function toggleSettlementSelect(rowId, checked) {
+        if (checked) selectedSettlementRowIds.add(rowId);
+        else selectedSettlementRowIds.delete(rowId);
+        updateSettlementBatchEditBtn();
+    }
+
+    function toggleSettlementSelectAll(checked) {
+        const rows = getBatchRows(currentBatchDate).filter(function (r) { return !r.pendingFix; });
+        selectedSettlementRowIds = new Set();
+        if (checked) rows.forEach(function (r) { selectedSettlementRowIds.add(r.id); });
+        renderSettlementDetailRows();
+    }
+
+    function updateSettlementBatchEditBtn() {
+        const btn = document.getElementById('btn-batch-edit-actual');
+        if (!btn) return;
+        const n = selectedSettlementRowIds.size;
+        btn.textContent = n ? '批量修改所选实发（' + n + '）' : '批量修改所选实发';
+        btn.disabled = n === 0;
+        btn.classList.toggle('opacity-50', n === 0);
+    }
+
+    function renderSupplementFlows() {
+        const tbody = document.getElementById('supplement-flow-body');
+        if (!tbody) return;
+        const dateQ = (document.getElementById('supplement-filter-date') && document.getElementById('supplement-filter-date').value) || '';
+        const filtered = REBATE_SUPPLEMENT_FLOWS.filter(function (f) {
+            if (!dateQ) return true;
+            return f.payoutDate.indexOf(dateQ) !== -1 || f.originalSettlementDate.indexOf(dateQ) !== -1;
+        });
+        tbody.innerHTML = filtered.length ? filtered.map(function (f) {
+            return '<tr class="hover:bg-slate-50">' +
+                '<td class="px-4 py-3 font-black">' + f.payoutDate + '</td>' +
+                '<td class="px-4 py-3"><div>' + chip(f.wallet, 'wallet') + '</div><div class="mt-1">' + chip(f.uid, 'uid') + '</div></td>' +
+                '<td class="px-4 py-3 font-bold text-amber-800">' + f.originalSettlementDate + '</td>' +
+                '<td class="px-4 py-3 text-right font-black text-blue-600">' + fmtMoney(f.amount) + '</td>' +
+                '<td class="px-4 py-3 text-slate-600 text-[11px]">' + f.note + '</td></tr>';
+        }).join('') : '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-400">暂无补发流水</td></tr>';
+    }
+
+    function filterSupplementFlows() {
+        renderSupplementFlows();
+    }
+
+    function initSettlementDatePickers() {
+        if (typeof flatpickr === 'undefined') return;
+        const opts = { dateFormat: 'Y-m-d', allowInput: true };
+        const batchDate = document.getElementById('settlement-filter-date');
+        if (batchDate && !batchDate._flatpickr) {
+            flatpickr(batchDate, Object.assign({}, opts, { onChange: function () { filterSettlementBatches(); } }));
+        }
+        const supDate = document.getElementById('supplement-filter-date');
+        if (supDate && !supDate._flatpickr) {
+            flatpickr(supDate, Object.assign({}, opts, { onChange: function () { filterSupplementFlows(); } }));
+        }
+    }
+
+    function setSettlementListView(inDetail) {
+        const filterSec = document.getElementById('settlement-filter-section');
+        const supplementSec = document.getElementById('settlement-supplement-section');
+        if (filterSec) filterSec.classList.toggle('hidden', inDetail);
+        if (supplementSec) supplementSec.classList.toggle('hidden', inDetail);
     }
 
     function openEditActual(rowId) {
@@ -762,11 +852,13 @@
     }
 
     function openBatchEditActual() {
-        const rows = getBatchRows(currentBatchDate).filter(function (r) { return !r.pendingFix; });
-        if (!rows.length) { alert('本批次无可修改明细'); return; }
+        const ids = Array.from(selectedSettlementRowIds);
+        if (!ids.length) { alert('请先勾选需要修改的合伙人'); return; }
+        const rows = getBatchRows(currentBatchDate).filter(function (r) { return ids.indexOf(r.id) >= 0 && !r.pendingFix; });
+        if (!rows.length) { alert('所选记录不可修改'); return; }
         batchEditRowIds = rows.map(function (r) { return r.id; });
-        document.getElementById('edit-actual-title').textContent = '批量修改实发佣金';
-        document.getElementById('edit-actual-hint').textContent = '将对 ' + rows.length + ' 条可修改记录统一设置实发金额（每条仍不得高于各自原始佣金）。';
+        document.getElementById('edit-actual-title').textContent = '批量修改所选实发佣金';
+        document.getElementById('edit-actual-hint').textContent = '已选 ' + rows.length + ' 人。统一填写实发金额，每人仍不得高于各自原始佣金。';
         document.getElementById('edit-actual-input').value = '';
         document.getElementById('edit-actual-input').removeAttribute('max');
         document.getElementById('modal-edit-actual').classList.remove('hidden');
@@ -822,8 +914,8 @@
 
     function showReviewDetail(batchDate, isRejected) {
         currentBatchDate = batchDate || SETTLEMENT_BATCHES[0].date;
-        const filterSec = document.getElementById('settlement-filter-section');
-        if (filterSec) filterSec.classList.add('hidden');
+        selectedSettlementRowIds = new Set();
+        setSettlementListView(true);
         document.getElementById('view-batch-list').classList.add('hidden');
         document.getElementById('view-review-detail').classList.remove('hidden');
         document.getElementById('reject-banner').classList.toggle('hidden', !isRejected);
@@ -834,8 +926,8 @@
 
     function backToSettlementList() {
         currentBatchDate = null;
-        const filterSec = document.getElementById('settlement-filter-section');
-        if (filterSec) filterSec.classList.remove('hidden');
+        selectedSettlementRowIds = new Set();
+        setSettlementListView(false);
         document.getElementById('view-review-detail').classList.add('hidden');
         document.getElementById('view-batch-list').classList.remove('hidden');
     }
@@ -861,6 +953,9 @@
         backToSettlementList: backToSettlementList, renderPartnerList: renderPartnerList,
         openEditActual: openEditActual, openBatchEditActual: openBatchEditActual,
         closeEditActualModal: closeEditActualModal, saveEditActual: saveEditActual,
+        toggleSettlementSelect: toggleSettlementSelect, toggleSettlementSelectAll: toggleSettlementSelectAll,
+        filterSupplementFlows: filterSupplementFlows, renderSupplementFlows: renderSupplementFlows,
+        initSettlementDatePickers: initSettlementDatePickers,
         getCurrentUserId: function () { return currentUserId; },
         applyHashTree: applyHashTree, DATA_VERSION: DATA_VERSION
     };
@@ -868,6 +963,8 @@
     document.addEventListener('DOMContentLoaded', function () {
         renderPartnerList();
         filterSettlementBatches();
+        renderSupplementFlows();
+        initSettlementDatePickers();
         applyHashTree();
     });
     window.addEventListener('hashchange', applyHashTree);
