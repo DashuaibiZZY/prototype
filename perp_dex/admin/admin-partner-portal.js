@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-7';
+    const DATA_VERSION = 'partner-demo-8';
 
     function chip(v, type) {
         if (!v || v === '—' || v === '--') return '<span class="text-slate-400">' + (v || '—') + '</span>';
@@ -127,9 +127,10 @@
     ];
 
     const SETTLEMENT_BATCHES = [
-        { date: '2024-05-23', vol: '$12,450,000', payout: '$85,140.00', status: '等待对账', rejected: false },
-        { date: '2024-05-22', vol: '$10,200,000', payout: '$70,000.00', status: '已拒绝', rejected: true },
-        { date: '2024-05-21', vol: '$9,800,000', payout: '$62,300.00', status: '等待对账', rejected: false }
+        { date: '2024-05-23', vol: '$12,450,000', status: '等待对账', rejected: false },
+        { date: '2024-05-22', vol: '$10,200,000', status: '已拒绝', rejected: true },
+        { date: '2024-05-21', vol: '$9,800,000', status: '等待对账', rejected: false },
+        { date: '2024-10-10', vol: '$8,600,000', status: '等待对账', rejected: false }
     ];
 
     const SETTLEMENT_BATCH_DETAILS = {
@@ -143,15 +144,19 @@
         ],
         '2024-05-21': [
             { id: 'sr5', wallet: '0xAbn...L1', uid: '100811', level: 1, ratio: 68, parentWallet: null, vol: '$3.8M', originalRebate: 12400, actualRebate: 12400, pendingFix: false, originalSettlementDate: '2024-05-21' }
+        ],
+        '2024-10-10': [
+            { id: 'sr6', wallet: '0xNorm...L1', uid: '100801', level: 1, ratio: 70, parentWallet: null, vol: '$1.8M', originalRebate: 3800, actualRebate: 3800, pendingFix: false, originalSettlementDate: '2024-10-10' },
+            { id: 'sr7', wallet: '0xNorm...L3', uid: '100803', level: 3, ratio: 45, parentWallet: '0xNorm...L2a', vol: '$620k', originalRebate: 1520, actualRebate: 1500, pendingFix: false, originalSettlementDate: '2024-10-10' }
         ]
     };
 
-    /** 修正返佣后的补发流水：补发执行日 ≠ 原应结日 */
+    /** 修正返佣补发：补发执行日入账，关联原应结日 */
     const REBATE_SUPPLEMENT_FLOWS = [
         {
-            id: 'sup1', payoutDate: '2024-05-30', wallet: '0xAbn...L4', uid: '100815',
+            id: 'sup1', payoutDate: '2024-05-23', wallet: '0xAbn...L4', uid: '100815',
             originalSettlementDate: '2024-05-21', amount: 1856.40,
-            note: '5-21 比例倒挂暂停结算，5-30 修正返佣后补发'
+            note: '5-21 比例倒挂停结，本日补发'
         },
         {
             id: 'sup2', payoutDate: '2024-10-10', wallet: '0xAbn...L4', uid: '100815',
@@ -161,14 +166,16 @@
         {
             id: 'sup3', payoutDate: '2024-10-10', wallet: '0xAbn...L1', uid: '100811',
             originalSettlementDate: '2024-10-01', amount: 890.50,
-            note: '异常分支修正后，补发 10-01 暂停分支佣金'
+            note: '异常分支修正后补发 10-01 暂停分支佣金'
         }
     ];
 
     let currentUserId = null;
     let currentBatchDate = null;
     let batchEditRowIds = null;
-    let selectedSettlementRowIds = new Set();
+    let settlementDetailTab = 'detail';
+    let settlementDetailFilters = { partner: '', level: 'all', pendingFix: 'all', modified: 'all' };
+    let supplementDetailFilters = { partner: '', originalDate: '' };
     let treeFocusId = null;
     let treeExpandedNodes = new Set();
     let treeHighlightId = null;
@@ -742,81 +749,154 @@
         return SETTLEMENT_BATCH_DETAILS[date] || [];
     }
 
+    function getSupplementsForBatch(date) {
+        return REBATE_SUPPLEMENT_FLOWS.filter(function (f) { return f.payoutDate === date; });
+    }
+
+    function getSupplementTotalForBatch(date) {
+        return getSupplementsForBatch(date).reduce(function (s, f) { return s + f.amount; }, 0);
+    }
+
+    function getTodayPayoutForBatch(date) {
+        return getBatchRows(date).filter(function (r) { return !r.pendingFix; }).reduce(function (s, r) { return s + (r.actualRebate || 0); }, 0);
+    }
+
+    function enrichBatch(b) {
+        const supplement = getSupplementTotalForBatch(b.date);
+        const today = getTodayPayoutForBatch(b.date);
+        return {
+            date: b.date, vol: b.vol, status: b.status, rejected: b.rejected,
+            supplementPayout: supplement, todayPayout: today, totalPayout: supplement + today
+        };
+    }
+
+    function isRowModified(r) {
+        if (r.pendingFix) return false;
+        return r.actualRebate != r.originalRebate;
+    }
+
+    function matchPartnerQuery(row, q) {
+        if (!q) return true;
+        const s = q.toLowerCase();
+        return row.wallet.toLowerCase().indexOf(s) >= 0 || String(row.uid).indexOf(s) >= 0;
+    }
+
+    function findBatchRowByWalletOrUid(key) {
+        const q = (key || '').trim().toLowerCase();
+        if (!q) return null;
+        const rows = getBatchRows(currentBatchDate);
+        return rows.find(function (r) {
+            return r.wallet.toLowerCase() === q || r.uid === key.trim() ||
+                r.wallet.toLowerCase().indexOf(q) >= 0 || q.indexOf(r.wallet.toLowerCase().replace(/\.\.\./g, '')) >= 0;
+        });
+    }
+
+    function switchSettlementDetailTab(tab) {
+        settlementDetailTab = tab;
+        const tabDetail = document.getElementById('settlement-tab-detail');
+        const tabSup = document.getElementById('settlement-tab-supplement');
+        const filtersDetail = document.getElementById('settlement-detail-filters');
+        const filtersSup = document.getElementById('settlement-supplement-filters');
+        const wrapDetail = document.getElementById('settlement-table-wrap');
+        const wrapSup = document.getElementById('settlement-supplement-table-wrap');
+        if (tabDetail) tabDetail.className = tab === 'detail' ? 'settlement-tab-active pb-2 text-[11px] font-black' : 'text-slate-400 font-bold pb-2 text-[11px]';
+        if (tabSup) tabSup.className = tab === 'supplement' ? 'settlement-tab-active pb-2 text-[11px] font-black' : 'text-slate-400 font-bold pb-2 text-[11px]';
+        if (filtersDetail) filtersDetail.classList.toggle('hidden', tab !== 'detail');
+        if (filtersSup) filtersSup.classList.toggle('hidden', tab !== 'supplement');
+        if (wrapDetail) wrapDetail.classList.toggle('hidden', tab !== 'detail');
+        if (wrapSup) wrapSup.classList.toggle('hidden', tab !== 'supplement');
+        if (tab === 'detail') renderSettlementDetailRows();
+        else renderSettlementSupplementRows();
+    }
+
+    function applySettlementDetailFilters() {
+        settlementDetailFilters.partner = (document.getElementById('settlement-filter-partner') && document.getElementById('settlement-filter-partner').value || '').trim();
+        settlementDetailFilters.level = document.getElementById('settlement-filter-level') ? document.getElementById('settlement-filter-level').value : 'all';
+        settlementDetailFilters.pendingFix = document.getElementById('settlement-filter-pending') ? document.getElementById('settlement-filter-pending').value : 'all';
+        settlementDetailFilters.modified = document.getElementById('settlement-filter-modified') ? document.getElementById('settlement-filter-modified').value : 'all';
+        renderSettlementDetailRows();
+    }
+
+    function applySupplementDetailFilters() {
+        supplementDetailFilters.partner = (document.getElementById('supplement-filter-partner') && document.getElementById('supplement-filter-partner').value || '').trim();
+        supplementDetailFilters.originalDate = (document.getElementById('supplement-filter-original-date') && document.getElementById('supplement-filter-original-date').value || '').trim();
+        renderSettlementSupplementRows();
+    }
+
+    function resetSettlementDetailFilters() {
+        settlementDetailFilters = { partner: '', level: 'all', pendingFix: 'all', modified: 'all' };
+        const p = document.getElementById('settlement-filter-partner');
+        if (p) p.value = '';
+        const l = document.getElementById('settlement-filter-level');
+        if (l) l.value = 'all';
+        const pf = document.getElementById('settlement-filter-pending');
+        if (pf) pf.value = 'all';
+        const m = document.getElementById('settlement-filter-modified');
+        if (m) m.value = 'all';
+        renderSettlementDetailRows();
+    }
+
+    function resetSupplementDetailFilters() {
+        supplementDetailFilters = { partner: '', originalDate: '' };
+        const p = document.getElementById('supplement-filter-partner');
+        if (p) p.value = '';
+        const d = document.getElementById('supplement-filter-original-date');
+        if (d) d.value = '';
+        renderSettlementSupplementRows();
+    }
+
     function renderSettlementDetailRows() {
         const tbody = document.getElementById('settlement-detail-body');
         if (!tbody || !currentBatchDate) return;
-        const rows = getBatchRows(currentBatchDate);
-        tbody.innerHTML = rows.map(function (r) {
+        const rows = getBatchRows(currentBatchDate).filter(function (r) {
+            if (!matchPartnerQuery(r, settlementDetailFilters.partner)) return false;
+            if (settlementDetailFilters.level !== 'all' && String(r.level) !== settlementDetailFilters.level) return false;
+            if (settlementDetailFilters.pendingFix === 'yes' && !r.pendingFix) return false;
+            if (settlementDetailFilters.pendingFix === 'no' && r.pendingFix) return false;
+            if (settlementDetailFilters.modified === 'yes' && !isRowModified(r)) return false;
+            if (settlementDetailFilters.modified === 'no' && isRowModified(r)) return false;
+            return true;
+        });
+        tbody.innerHTML = rows.length ? rows.map(function (r) {
             const parentCell = r.parentWallet ? chip(r.parentWallet, 'wallet') : '<span class="text-slate-500">一级</span>';
             const origCell = r.pendingFix
-                ? '<span class="text-amber-700 font-bold">待修正返佣后计算</span><span class="block text-[9px] text-amber-600 mt-0.5">原应结日 ' + (r.originalSettlementDate || '—') + ' · 当日停结</span>'
+                ? '<span class="text-amber-700 font-bold">待修正返佣后计算</span><span class="block text-[9px] text-amber-600 mt-0.5">原应结日 ' + (r.originalSettlementDate || '—') + '</span>'
                 : '<span class="font-bold">' + fmtMoney(r.originalRebate) + '</span>';
             const actualCell = r.pendingFix
-                ? '<span class="text-slate-400">$0.00</span><span class="block text-[9px] text-slate-400 mt-0.5">修正后另日记补发流水</span>'
-                : '<span class="text-blue-600 font-black">' + fmtMoney(r.actualRebate) + '</span>';
+                ? '<span class="text-slate-400">$0.00</span>'
+                : '<span class="text-blue-600 font-black">' + fmtMoney(r.actualRebate) + '</span>' +
+                (isRowModified(r) ? '<span class="block text-[9px] text-orange-600 font-bold mt-0.5">已调减</span>' : '');
             const editBtn = r.pendingFix
                 ? '<span class="text-[10px] text-slate-400">不可修改</span>'
-                : '<button onclick="PartnerPortal.openEditActual(\'' + r.id + '\')" class="text-blue-600 font-bold hover:underline text-[10px]">修改</button>';
-            const checked = selectedSettlementRowIds.has(r.id);
-            const checkCell = r.pendingFix
-                ? '<span class="text-slate-300">—</span>'
-                : '<input type="checkbox" class="settlement-row-check rounded border-slate-300" data-id="' + r.id + '" ' + (checked ? 'checked' : '') + ' onchange="PartnerPortal.toggleSettlementSelect(\'' + r.id + '\', this.checked)">';
+                : '<button type="button" onclick="PartnerPortal.openEditActual(\'' + r.id + '\')" class="text-blue-600 font-bold hover:underline text-[10px]">修改</button>';
             return '<tr class="' + (r.pendingFix ? 'bg-amber-50/40' : 'hover:bg-slate-50') + '">' +
-                '<td class="px-4 py-4 text-center">' + checkCell + '</td>' +
                 '<td class="px-4 py-4"><div class="font-bold">' + chip(r.wallet, 'wallet') + '</div><div class="mt-1">' + chip(r.uid, 'uid') + '</div></td>' +
                 '<td class="px-4 py-4 text-center font-bold">L' + r.level + '</td>' +
                 '<td class="px-4 py-4 text-center font-black">' + r.ratio + '%</td>' +
                 '<td class="px-4 py-4 text-center">' + parentCell + '</td>' +
+                '<td class="px-4 py-4 text-center">' + (r.pendingFix ? '<span class="text-amber-700 font-bold text-[10px]">是</span>' : '<span class="text-slate-500">否</span>') + '</td>' +
                 '<td class="px-4 py-4 text-right font-bold">' + r.vol + '</td>' +
                 '<td class="px-4 py-4 text-right">' + origCell + '</td>' +
                 '<td class="px-4 py-4 text-right">' + actualCell + '</td>' +
                 '<td class="px-4 py-4 text-right">' + editBtn + '</td></tr>';
-        }).join('');
-        updateSettlementBatchEditBtn();
+        }).join('') : '<tr><td colspan="9" class="px-4 py-8 text-center text-slate-400">无匹配记录</td></tr>';
     }
 
-    function toggleSettlementSelect(rowId, checked) {
-        if (checked) selectedSettlementRowIds.add(rowId);
-        else selectedSettlementRowIds.delete(rowId);
-        updateSettlementBatchEditBtn();
-    }
-
-    function toggleSettlementSelectAll(checked) {
-        const rows = getBatchRows(currentBatchDate).filter(function (r) { return !r.pendingFix; });
-        selectedSettlementRowIds = new Set();
-        if (checked) rows.forEach(function (r) { selectedSettlementRowIds.add(r.id); });
-        renderSettlementDetailRows();
-    }
-
-    function updateSettlementBatchEditBtn() {
-        const btn = document.getElementById('btn-batch-edit-actual');
-        if (!btn) return;
-        const n = selectedSettlementRowIds.size;
-        btn.textContent = n ? '批量修改所选实发（' + n + '）' : '批量修改所选实发';
-        btn.disabled = n === 0;
-        btn.classList.toggle('opacity-50', n === 0);
-    }
-
-    function renderSupplementFlows() {
-        const tbody = document.getElementById('supplement-flow-body');
-        if (!tbody) return;
-        const dateQ = (document.getElementById('supplement-filter-date') && document.getElementById('supplement-filter-date').value) || '';
-        const filtered = REBATE_SUPPLEMENT_FLOWS.filter(function (f) {
-            if (!dateQ) return true;
-            return f.payoutDate.indexOf(dateQ) !== -1 || f.originalSettlementDate.indexOf(dateQ) !== -1;
+    function renderSettlementSupplementRows() {
+        const tbody = document.getElementById('settlement-supplement-body');
+        if (!tbody || !currentBatchDate) return;
+        const rows = getSupplementsForBatch(currentBatchDate).filter(function (f) {
+            if (!matchPartnerQuery(f, supplementDetailFilters.partner)) return false;
+            if (supplementDetailFilters.originalDate && f.originalSettlementDate.indexOf(supplementDetailFilters.originalDate) === -1) return false;
+            return true;
         });
-        tbody.innerHTML = filtered.length ? filtered.map(function (f) {
+        tbody.innerHTML = rows.length ? rows.map(function (f) {
             return '<tr class="hover:bg-slate-50">' +
-                '<td class="px-4 py-3 font-black">' + f.payoutDate + '</td>' +
                 '<td class="px-4 py-3"><div>' + chip(f.wallet, 'wallet') + '</div><div class="mt-1">' + chip(f.uid, 'uid') + '</div></td>' +
                 '<td class="px-4 py-3 font-bold text-amber-800">' + f.originalSettlementDate + '</td>' +
                 '<td class="px-4 py-3 text-right font-black text-blue-600">' + fmtMoney(f.amount) + '</td>' +
                 '<td class="px-4 py-3 text-slate-600 text-[11px]">' + f.note + '</td></tr>';
-        }).join('') : '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-400">暂无补发流水</td></tr>';
-    }
-
-    function filterSupplementFlows() {
-        renderSupplementFlows();
+        }).join('') : '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400">本日无修正返佣补发流水</td></tr>';
     }
 
     function initSettlementDatePickers() {
@@ -826,17 +906,126 @@
         if (batchDate && !batchDate._flatpickr) {
             flatpickr(batchDate, Object.assign({}, opts, { onChange: function () { filterSettlementBatches(); } }));
         }
-        const supDate = document.getElementById('supplement-filter-date');
-        if (supDate && !supDate._flatpickr) {
-            flatpickr(supDate, Object.assign({}, opts, { onChange: function () { filterSupplementFlows(); } }));
+        const origDate = document.getElementById('supplement-filter-original-date');
+        if (origDate && !origDate._flatpickr) {
+            flatpickr(origDate, Object.assign({}, opts, { onChange: function () { applySupplementDetailFilters(); } }));
         }
     }
 
     function setSettlementListView(inDetail) {
         const filterSec = document.getElementById('settlement-filter-section');
-        const supplementSec = document.getElementById('settlement-supplement-section');
         if (filterSec) filterSec.classList.toggle('hidden', inDetail);
-        if (supplementSec) supplementSec.classList.toggle('hidden', inDetail);
+    }
+
+    function openBatchEditPage() {
+        if (!currentBatchDate) return;
+        document.getElementById('view-review-detail').classList.add('hidden');
+        const editView = document.getElementById('view-batch-edit-actual');
+        if (editView) editView.classList.remove('hidden');
+        const title = document.getElementById('batch-edit-title');
+        if (title) title.textContent = '批量修改实发佣金 · ' + currentBatchDate;
+        const lines = document.getElementById('batch-edit-lines');
+        if (lines) lines.value = '';
+        const results = document.getElementById('batch-edit-results');
+        if (results) results.innerHTML = '';
+        const file = document.getElementById('batch-edit-file');
+        if (file) file.value = '';
+    }
+
+    function closeBatchEditPage() {
+        document.getElementById('view-batch-edit-actual').classList.add('hidden');
+        document.getElementById('view-review-detail').classList.remove('hidden');
+    }
+
+    function parseBatchEditLines(text) {
+        const lines = (text || '').split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean);
+        const entries = [];
+        lines.forEach(function (line, idx) {
+            const parts = line.split(/[,;\t]/).map(function (p) { return p.trim(); });
+            if (parts.length < 2) {
+                entries.push({ line: idx + 1, key: line, amount: NaN, error: '格式错误，需：钱包或UID,实发金额' });
+                return;
+            }
+            const amount = parseFloat(parts[parts.length - 1].replace(/[$,]/g, ''));
+            const key = parts.slice(0, parts.length - 1).join(',').trim();
+            entries.push({ line: idx + 1, key: key, amount: amount });
+        });
+        return entries;
+    }
+
+    function applyBatchEditEntries(entries) {
+        const results = [];
+        entries.forEach(function (e) {
+            if (e.error) {
+                results.push({ key: e.key || '', amount: e.amount, status: 'fail', reason: e.error });
+                return;
+            }
+            if (isNaN(e.amount) || e.amount < 0) {
+                results.push({ key: e.key, amount: e.amount, status: 'fail', reason: '实发金额无效' });
+                return;
+            }
+            const row = findBatchRowByWalletOrUid(e.key);
+            if (!row) {
+                results.push({ key: e.key, amount: e.amount, status: 'fail', reason: '未找到本批次合伙人' });
+                return;
+            }
+            if (row.pendingFix) {
+                results.push({ key: e.key, amount: e.amount, status: 'fail', reason: '待修正返佣后计算，不可修改' });
+                return;
+            }
+            if (e.amount > row.originalRebate) {
+                results.push({ key: e.key, amount: e.amount, status: 'fail', reason: '高于原始佣金 ' + fmtMoney(row.originalRebate) });
+                return;
+            }
+            row.actualRebate = e.amount;
+            results.push({ key: row.wallet + ' / ' + row.uid, amount: e.amount, status: 'ok', reason: '已更新' });
+        });
+        return results;
+    }
+
+    function renderBatchEditResults(results) {
+        const el = document.getElementById('batch-edit-results');
+        if (!el) return;
+        const ok = results.filter(function (r) { return r.status === 'ok'; }).length;
+        const fail = results.length - ok;
+        let html = '<div class="px-4 py-3 border-b bg-slate-50 text-[11px]"><span class="font-bold text-green-700">成功 ' + ok + '</span> · <span class="font-bold text-red-600">失败 ' + fail + '</span></div>';
+        html += '<table class="w-full text-left text-[11px]"><thead class="bg-slate-50 border-b text-[10px] uppercase text-slate-400"><tr>' +
+            '<th class="px-4 py-2">钱包 / UID</th><th class="px-4 py-2 text-right">请求实发</th><th class="px-4 py-2 text-center">结果</th><th class="px-4 py-2">说明</th></tr></thead><tbody>';
+        results.forEach(function (r) {
+            const stCls = r.status === 'ok' ? 'text-green-700' : 'text-red-600';
+            html += '<tr class="border-t"><td class="px-4 py-2 font-mono">' + r.key + '</td><td class="px-4 py-2 text-right font-bold">' + (isNaN(r.amount) ? '—' : fmtMoney(r.amount)) + '</td>' +
+                '<td class="px-4 py-2 text-center font-black ' + stCls + '">' + (r.status === 'ok' ? '成功' : '失败') + '</td>' +
+                '<td class="px-4 py-2 text-slate-600">' + r.reason + '</td></tr>';
+        });
+        html += '</tbody></table>';
+        el.innerHTML = html;
+    }
+
+    function submitBatchEditLines() {
+        const text = document.getElementById('batch-edit-lines') ? document.getElementById('batch-edit-lines').value : '';
+        const entries = parseBatchEditLines(text);
+        if (!entries.length) { alert('请输入或上传修改数据'); return; }
+        const results = applyBatchEditEntries(entries);
+        renderBatchEditResults(results);
+        renderSettlementDetailRows();
+        filterSettlementBatches();
+    }
+
+    function handleBatchEditFile(input) {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+            const text = ev.target.result || '';
+            const linesEl = document.getElementById('batch-edit-lines');
+            if (linesEl) linesEl.value = text;
+            const entries = parseBatchEditLines(text);
+            const results = applyBatchEditEntries(entries);
+            renderBatchEditResults(results);
+            renderSettlementDetailRows();
+            filterSettlementBatches();
+        };
+        reader.readAsText(file);
     }
 
     function openEditActual(rowId) {
@@ -848,19 +1037,6 @@
         document.getElementById('edit-actual-hint').textContent = '原始佣金 ' + fmtMoney(row.originalRebate) + '，实发不得高于原始佣金。';
         document.getElementById('edit-actual-input').value = row.actualRebate;
         document.getElementById('edit-actual-input').max = row.originalRebate;
-        document.getElementById('modal-edit-actual').classList.remove('hidden');
-    }
-
-    function openBatchEditActual() {
-        const ids = Array.from(selectedSettlementRowIds);
-        if (!ids.length) { alert('请先勾选需要修改的合伙人'); return; }
-        const rows = getBatchRows(currentBatchDate).filter(function (r) { return ids.indexOf(r.id) >= 0 && !r.pendingFix; });
-        if (!rows.length) { alert('所选记录不可修改'); return; }
-        batchEditRowIds = rows.map(function (r) { return r.id; });
-        document.getElementById('edit-actual-title').textContent = '批量修改所选实发佣金';
-        document.getElementById('edit-actual-hint').textContent = '已选 ' + rows.length + ' 人。统一填写实发金额，每人仍不得高于各自原始佣金。';
-        document.getElementById('edit-actual-input').value = '';
-        document.getElementById('edit-actual-input').removeAttribute('max');
         document.getElementById('modal-edit-actual').classList.remove('hidden');
     }
 
@@ -889,6 +1065,7 @@
         }
         closeEditActualModal();
         renderSettlementDetailRows();
+        filterSettlementBatches();
         alert('实发佣金已更新（演示）');
     }
 
@@ -902,34 +1079,45 @@
             if (q && b.date.indexOf(q) === -1) return false;
             return true;
         }).map(function (b) {
+            const e = enrichBatch(b);
             const stCls = b.rejected ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700';
             return '<tr class="hover:bg-slate-50' + (b.rejected ? ' bg-red-50/20' : '') + '">' +
-                '<td class="px-6 py-4 font-black">' + b.date + '</td>' +
-                '<td class="px-6 py-4 text-right font-bold">' + b.vol + '</td>' +
-                '<td class="px-6 py-4 text-right font-black text-blue-600">' + b.payout + '</td>' +
-                '<td class="px-6 py-4 text-center"><span class="' + stCls + ' px-3 py-1 rounded-full">' + b.status + '</span></td>' +
-                '<td class="px-6 py-4 text-right"><button onclick="PartnerPortal.showReviewDetail(\'' + b.date + '\', ' + (b.rejected ? 'true' : 'false') + ')" class="bg-slate-900 text-white px-4 py-1.5 rounded font-black uppercase">' + (b.rejected ? '查看原因' : '查看详情') + '</button></td></tr>';
+                '<td class="px-4 py-4 font-black">' + e.date + '</td>' +
+                '<td class="px-4 py-4 text-right font-bold">' + e.vol + '</td>' +
+                '<td class="px-4 py-4 text-right font-bold text-amber-800">' + fmtMoney(e.supplementPayout) + '</td>' +
+                '<td class="px-4 py-4 text-right font-black text-blue-600">' + fmtMoney(e.todayPayout) + '</td>' +
+                '<td class="px-4 py-4 text-right font-black text-slate-900">' + fmtMoney(e.totalPayout) + '</td>' +
+                '<td class="px-4 py-4 text-center"><span class="' + stCls + ' px-3 py-1 rounded-full text-[10px]">' + e.status + '</span></td>' +
+                '<td class="px-4 py-4 text-right"><button type="button" onclick="PartnerPortal.showReviewDetail(\'' + e.date + '\', ' + (b.rejected ? 'true' : 'false') + ')" class="bg-slate-900 text-white px-4 py-1.5 rounded font-black uppercase text-[10px]">' + (b.rejected ? '查看原因' : '查看详情') + '</button></td></tr>';
         }).join('');
     }
 
     function showReviewDetail(batchDate, isRejected) {
         currentBatchDate = batchDate || SETTLEMENT_BATCHES[0].date;
-        selectedSettlementRowIds = new Set();
+        settlementDetailTab = 'detail';
+        settlementDetailFilters = { partner: '', level: 'all', pendingFix: 'all', modified: 'all' };
+        supplementDetailFilters = { partner: '', originalDate: '' };
         setSettlementListView(true);
         document.getElementById('view-batch-list').classList.add('hidden');
         document.getElementById('view-review-detail').classList.remove('hidden');
-        document.getElementById('reject-banner').classList.toggle('hidden', !isRejected);
+        const editView = document.getElementById('view-batch-edit-actual');
+        if (editView) editView.classList.add('hidden');
+        document.getElementById('reject-banner').classList.toggle('hidden', isRejected !== true && isRejected !== 'true');
         const titleEl = document.getElementById('detail-title');
         if (titleEl) titleEl.textContent = '结算批次明细 · ' + currentBatchDate;
-        renderSettlementDetailRows();
+        switchSettlementDetailTab('detail');
+        resetSettlementDetailFilters();
+        resetSupplementDetailFilters();
     }
 
     function backToSettlementList() {
         currentBatchDate = null;
-        selectedSettlementRowIds = new Set();
         setSettlementListView(false);
         document.getElementById('view-review-detail').classList.add('hidden');
+        const editView = document.getElementById('view-batch-edit-actual');
+        if (editView) editView.classList.add('hidden');
         document.getElementById('view-batch-list').classList.remove('hidden');
+        filterSettlementBatches();
     }
 
     function applyHashTree() {
@@ -951,10 +1139,12 @@
         openBindModal: openBindModal, closeBindModal: closeBindModal, submitBindPartner: submitBindPartner,
         filterSettlementBatches: filterSettlementBatches, showReviewDetail: showReviewDetail,
         backToSettlementList: backToSettlementList, renderPartnerList: renderPartnerList,
-        openEditActual: openEditActual, openBatchEditActual: openBatchEditActual,
+        openEditActual: openEditActual, openBatchEditPage: openBatchEditPage, closeBatchEditPage: closeBatchEditPage,
         closeEditActualModal: closeEditActualModal, saveEditActual: saveEditActual,
-        toggleSettlementSelect: toggleSettlementSelect, toggleSettlementSelectAll: toggleSettlementSelectAll,
-        filterSupplementFlows: filterSupplementFlows, renderSupplementFlows: renderSupplementFlows,
+        submitBatchEditLines: submitBatchEditLines, handleBatchEditFile: handleBatchEditFile,
+        switchSettlementDetailTab: switchSettlementDetailTab,
+        applySettlementDetailFilters: applySettlementDetailFilters, applySupplementDetailFilters: applySupplementDetailFilters,
+        resetSettlementDetailFilters: resetSettlementDetailFilters, resetSupplementDetailFilters: resetSupplementDetailFilters,
         initSettlementDatePickers: initSettlementDatePickers,
         getCurrentUserId: function () { return currentUserId; },
         applyHashTree: applyHashTree, DATA_VERSION: DATA_VERSION
@@ -963,7 +1153,6 @@
     document.addEventListener('DOMContentLoaded', function () {
         renderPartnerList();
         filterSettlementBatches();
-        renderSupplementFlows();
         initSettlementDatePickers();
         applyHashTree();
     });

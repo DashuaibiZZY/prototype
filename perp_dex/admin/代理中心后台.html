@@ -17,6 +17,7 @@
         .tree-expand-btn { flex-shrink: 0; margin-top: 0.75rem; width: 1.5rem; height: 1.5rem; border-radius: 0.25rem; border: 1px solid #e2e8f0; color: #64748b; font-size: 10px; font-weight: 800; line-height: 1; }
         .tree-expand-btn:hover { background: #f8fafc; }
         .detail-tab-active { color: #0f172a; border-bottom: 2px solid #0f172a; font-weight: 800; }
+        .settlement-tab-active { color: #0f172a; border-bottom: 2px solid #3b82f6; font-weight: 800; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -201,46 +202,23 @@
                     <button type="button" onclick="document.getElementById('settlement-filter-date').value='';document.getElementById('settlement-filter-status').value='all';PartnerPortal.filterSettlementBatches();" class="border px-4 py-2 rounded font-bold text-[11px] text-slate-600">重置</button>
                 </div>
             </section>
-            <div id="view-batch-list" class="space-y-6">
+            <div id="view-batch-list">
                 <div class="bg-white rounded-lg border overflow-hidden shadow-sm">
-                    <table class="w-full text-left">
+                    <table class="w-full text-left min-w-[900px]">
                         <thead class="bg-slate-50 text-slate-400 font-black border-b uppercase text-[10px]">
                         <tr>
-                            <th class="px-6 py-4">结算日期</th>
-                            <th class="px-6 py-4 text-right">返佣总成交额</th>
-                            <th class="px-6 py-4 text-right">待发放总佣金</th>
-                            <th class="px-6 py-4 text-center">状态</th>
-                            <th class="px-6 py-4 text-right">操作</th>
+                            <th class="px-4 py-4">结算日期</th>
+                            <th class="px-4 py-4 text-right">返佣总成交额</th>
+                            <th class="px-4 py-4 text-right">补发修正后发放金额</th>
+                            <th class="px-4 py-4 text-right">今日待发放总佣金</th>
+                            <th class="px-4 py-4 text-right">合计待发放</th>
+                            <th class="px-4 py-4 text-center">状态</th>
+                            <th class="px-4 py-4 text-right">操作</th>
                         </tr>
                         </thead>
                         <tbody id="settlement-batch-body" class="divide-y text-[11px]"></tbody>
                     </table>
                 </div>
-                <section id="settlement-supplement-section" class="bg-white rounded-lg border overflow-hidden shadow-sm">
-                    <div class="px-6 py-4 border-b">
-                        <h3 class="font-bold text-slate-800">返佣补发流水</h3>
-                        <p class="text-[10px] text-slate-500 mt-1">原结算日为「待修正返佣后计算」的佣金，在修正返佣后的<strong>补发执行日</strong>单独入账（非原应结日）。按补发日期 + 用户记录每笔补发对应的原应结日。</p>
-                    </div>
-                    <div class="px-6 py-3 border-b bg-slate-50 flex flex-wrap gap-4 items-end">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">补发 / 原应结日期</label>
-                            <input id="supplement-filter-date" type="text" placeholder="选择日期" class="border p-2 rounded w-44 outline-none bg-white text-[11px]" readonly>
-                        </div>
-                        <button type="button" onclick="PartnerPortal.filterSupplementFlows()" class="bg-slate-900 text-white px-4 py-2 rounded font-bold text-[11px]">查询</button>
-                    </div>
-                    <table class="w-full text-left text-[11px]">
-                        <thead class="bg-slate-50 border-b uppercase text-[10px] text-slate-400">
-                        <tr>
-                            <th class="px-4 py-3">补发执行日</th>
-                            <th class="px-4 py-3">合伙人</th>
-                            <th class="px-4 py-3">原应结日</th>
-                            <th class="px-4 py-3 text-right">补发佣金</th>
-                            <th class="px-4 py-3">说明</th>
-                        </tr>
-                        </thead>
-                        <tbody id="supplement-flow-body" class="divide-y"></tbody>
-                    </table>
-                </section>
             </div>
             <div id="view-review-detail" class="hidden space-y-6">
                 <div id="reject-banner" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded">
@@ -252,33 +230,120 @@
                         <h2 class="text-lg font-black" id="detail-title">结算批次明细</h2>
                     </div>
                     <div class="flex gap-2 flex-wrap">
-                        <button type="button" id="btn-batch-edit-actual" onclick="PartnerPortal.openBatchEditActual()" class="bg-white border-2 border-blue-600 text-blue-700 px-4 py-2 rounded font-black text-[11px] opacity-50" disabled>批量修改所选实发</button>
+                        <button type="button" onclick="PartnerPortal.openBatchEditPage()" class="bg-white border-2 border-blue-600 text-blue-700 px-4 py-2 rounded font-black text-[11px]">批量修改实发</button>
                         <button class="bg-white border-2 border-slate-900 px-4 py-2 rounded font-black text-[11px]">下载对账单</button>
                         <button onclick="openModal('modal-reject')" class="bg-red-50 text-red-600 border px-4 py-2 rounded font-bold">拒绝放款</button>
                         <button onclick="openModal('modal-approve')" class="bg-blue-600 text-white px-6 py-2 rounded font-black">审核通过并放款</button>
                     </div>
                 </div>
                 <div id="abnormal-banner" class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded text-[11px]">
-                    批次内异常记录为<strong>返佣分支</strong>暂停，非整棵一级树停结。
+                    批次内异常记录为<strong>返佣分支</strong>暂停，非整棵一级树停结。补发修正金额已计入列表「补发修正后发放金额」。
                 </div>
                 <div class="bg-white rounded-lg border overflow-hidden">
-                    <table class="w-full text-left text-[11px]">
-                        <thead class="bg-slate-50 border-b uppercase text-[10px] text-slate-400">
-                        <tr>
-                            <th class="px-4 py-4 text-center w-10"><input type="checkbox" class="rounded border-slate-300" title="全选可修改项" onchange="PartnerPortal.toggleSettlementSelectAll(this.checked)"></th>
-                            <th class="px-4 py-4">合伙人</th>
-                            <th class="px-4 py-4 text-center">层级</th>
-                            <th class="px-4 py-4 text-center">返佣比例</th>
-                            <th class="px-4 py-4 text-center">上级</th>
-                            <th class="px-4 py-4 text-right">成交额</th>
-                            <th class="px-4 py-4 text-right">原始佣金</th>
-                            <th class="px-4 py-4 text-right">实发</th>
-                            <th class="px-4 py-4 text-right">操作</th>
-                        </tr>
-                        </thead>
-                        <tbody id="settlement-detail-body" class="divide-y"></tbody>
-                    </table>
+                    <div class="px-4 pt-4 border-b flex gap-6">
+                        <button type="button" id="settlement-tab-detail" onclick="PartnerPortal.switchSettlementDetailTab('detail')" class="settlement-tab-active pb-2 text-[11px]">批次明细</button>
+                        <button type="button" id="settlement-tab-supplement" onclick="PartnerPortal.switchSettlementDetailTab('supplement')" class="text-slate-400 font-bold pb-2 text-[11px]">修正返佣补发</button>
+                    </div>
+                    <div id="settlement-detail-filters" class="px-4 py-3 border-b bg-slate-50 flex flex-wrap gap-3 items-end">
+                        <div class="min-w-[140px]">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">合伙人</label>
+                            <input id="settlement-filter-partner" type="text" placeholder="钱包 / UID" class="border rounded px-2 py-1.5 w-full text-[11px] outline-none" oninput="PartnerPortal.applySettlementDetailFilters()">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">层级</label>
+                            <select id="settlement-filter-level" class="border rounded px-2 py-1.5 text-[11px] bg-white" onchange="PartnerPortal.applySettlementDetailFilters()">
+                                <option value="all">全部</option>
+                                <option value="1">L1</option>
+                                <option value="2">L2</option>
+                                <option value="3">L3</option>
+                                <option value="4">L4</option>
+                                <option value="5">L5</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">待修正返佣</label>
+                            <select id="settlement-filter-pending" class="border rounded px-2 py-1.5 text-[11px] bg-white" onchange="PartnerPortal.applySettlementDetailFilters()">
+                                <option value="all">全部</option>
+                                <option value="yes">是</option>
+                                <option value="no">否</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">已修改实发</label>
+                            <select id="settlement-filter-modified" class="border rounded px-2 py-1.5 text-[11px] bg-white" onchange="PartnerPortal.applySettlementDetailFilters()">
+                                <option value="all">全部</option>
+                                <option value="yes">是</option>
+                                <option value="no">否</option>
+                            </select>
+                        </div>
+                        <button type="button" onclick="PartnerPortal.resetSettlementDetailFilters()" class="border px-3 py-1.5 rounded text-[11px] font-bold text-slate-600">重置</button>
+                    </div>
+                    <div id="settlement-supplement-filters" class="hidden px-4 py-3 border-b bg-slate-50 flex flex-wrap gap-3 items-end">
+                        <div class="min-w-[140px]">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">合伙人</label>
+                            <input id="supplement-filter-partner" type="text" placeholder="钱包 / UID" class="border rounded px-2 py-1.5 w-full text-[11px] outline-none" oninput="PartnerPortal.applySupplementDetailFilters()">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">原应结日</label>
+                            <input id="supplement-filter-original-date" type="text" placeholder="选择日期" class="border rounded px-2 py-1.5 w-40 text-[11px] outline-none bg-white" readonly>
+                        </div>
+                        <button type="button" onclick="PartnerPortal.resetSupplementDetailFilters()" class="border px-3 py-1.5 rounded text-[11px] font-bold text-slate-600">重置</button>
+                    </div>
+                    <div id="settlement-table-wrap">
+                        <table class="w-full text-left text-[11px]">
+                            <thead class="bg-slate-50 border-b uppercase text-[10px] text-slate-400">
+                            <tr>
+                                <th class="px-4 py-4">合伙人</th>
+                                <th class="px-4 py-4 text-center">层级</th>
+                                <th class="px-4 py-4 text-center">返佣比例</th>
+                                <th class="px-4 py-4 text-center">上级</th>
+                                <th class="px-4 py-4 text-center">待修正</th>
+                                <th class="px-4 py-4 text-right">成交额</th>
+                                <th class="px-4 py-4 text-right">原始佣金</th>
+                                <th class="px-4 py-4 text-right">实发</th>
+                                <th class="px-4 py-4 text-right">操作</th>
+                            </tr>
+                            </thead>
+                            <tbody id="settlement-detail-body" class="divide-y"></tbody>
+                        </table>
+                    </div>
+                    <div id="settlement-supplement-table-wrap" class="hidden">
+                        <table class="w-full text-left text-[11px]">
+                            <thead class="bg-slate-50 border-b uppercase text-[10px] text-slate-400">
+                            <tr>
+                                <th class="px-4 py-4">合伙人</th>
+                                <th class="px-4 py-4">原应结日</th>
+                                <th class="px-4 py-4 text-right">补发佣金</th>
+                                <th class="px-4 py-4">说明</th>
+                            </tr>
+                            </thead>
+                            <tbody id="settlement-supplement-body" class="divide-y"></tbody>
+                        </table>
+                    </div>
                 </div>
+            </div>
+            <div id="view-batch-edit-actual" class="hidden space-y-6">
+                <div class="flex items-center gap-4 flex-wrap">
+                    <button type="button" onclick="PartnerPortal.closeBatchEditPage()" class="p-2 bg-white border rounded hover:bg-slate-50">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
+                    </button>
+                    <h2 id="batch-edit-title" class="text-lg font-black">批量修改实发佣金</h2>
+                </div>
+                <div class="bg-white rounded-lg border p-6 space-y-4 shadow-sm">
+                    <p class="text-[11px] text-slate-600">每行一条：<strong>钱包地址或 UID,实发金额</strong>。也支持上传 CSV / TXT（列：钱包或UID,金额）。实发不得高于原始佣金；待修正返佣后计算不可修改。</p>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">手动输入</label>
+                        <textarea id="batch-edit-lines" rows="8" class="w-full border rounded p-3 mt-1 font-mono text-[11px] outline-none focus:ring-1 focus:ring-blue-600" placeholder="0xAbn...L1,6500&#10;100801,4200&#10;0xNorm...L3,1500"></textarea>
+                    </div>
+                    <div class="flex flex-wrap gap-4 items-end">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase">或上传文件</label>
+                            <input id="batch-edit-file" type="file" accept=".csv,.txt,.xlsx" class="mt-1 text-[11px]" onchange="PartnerPortal.handleBatchEditFile(this)">
+                        </div>
+                        <button type="button" onclick="PartnerPortal.submitBatchEditLines()" class="bg-blue-600 text-white px-6 py-2 rounded font-black text-[11px]">提交修改</button>
+                    </div>
+                </div>
+                <div id="batch-edit-results" class="bg-white rounded-lg border overflow-hidden shadow-sm"></div>
             </div>
         </div>
     </div>
@@ -409,7 +474,7 @@
 <script src="admin-sidebar.js"></script>
 <script src="admin-approval.js"></script>
 <script src="admin-approval-ui.js"></script>
-<script src="admin-partner-portal.js?v=partner-demo-7"></script>
+<script src="admin-partner-portal.js?v=partner-demo-8"></script>
 <script>
     initModuleApproval({ types: ['partner_l1_bind', 'partner_ratio_change'], rootId: 'partner-approval-root', title: '合伙人配置审批', showExportList: false, showExportDetail: false, singleUserConfig: true });
 
@@ -428,7 +493,7 @@
             initAdminSidebar('agent-mgmt');
         },
         approval: function () { showApprovalPage(); },
-        settlement: function () { PartnerPortal_showPage('page-settlement'); initAdminSidebar('agent-settlement'); PartnerPortal.filterSettlementBatches(); PartnerPortal.renderSupplementFlows(); PartnerPortal.initSettlementDatePickers(); }
+        settlement: function () { PartnerPortal_showPage('page-settlement'); initAdminSidebar('agent-settlement'); PartnerPortal.filterSettlementBatches(); PartnerPortal.initSettlementDatePickers(); }
     }, 'agent', {
         agent: 'agent-mgmt',
         'partner-detail': 'agent-mgmt',
