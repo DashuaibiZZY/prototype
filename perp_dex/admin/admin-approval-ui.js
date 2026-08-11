@@ -111,10 +111,29 @@
             let valHtml = (r[1] || '—');
             if (window.AdminCopyChip && r[1] && r[1] !== '—') {
                 if (r[0] === 'UID') valHtml = AdminCopyChip.uid(r[1]);
-                else if (r[0] === '钱包') valHtml = AdminCopyChip.wallet(r[1]);
+                else if (r[0] === '钱包' || r[0] === '待迁移用户' || r[0] === '迁移到上级') valHtml = AdminCopyChip.wallet(r[1]);
             }
             return '<div class="p-3 bg-slate-50 rounded-lg"><p class="text-[10px] text-slate-400 font-bold">' + r[0] + '</p><p class="font-bold text-slate-800 mt-1 break-all">' + valHtml + '</p></div>';
         }).join('');
+    }
+
+    function renderMigrateDetailSection(app) {
+        if (app.type !== 'partner_rebate_migrate') return '';
+        const p = app.payload || {};
+        const typeLabel = p.subjectType === 'plain' ? '普通用户' : '代理用户';
+        const fixesHtml = (p.ratioFixes && p.ratioFixes.length)
+            ? '<ul class="mt-2 space-y-1 text-[11px]">' + p.ratioFixes.map(function (f) {
+                return '<li class="font-bold text-amber-900">' + f.wallet + '：<span class="text-slate-500">' + f.oldRatio + '%</span> → <span class="text-blue-600">' + f.newRatio + '%</span></li>';
+            }).join('') + '</ul>'
+            : '<p class="mt-1 text-slate-500 text-[11px]">无（未修改下级比例）</p>';
+        return '<div class="col-span-2 border border-slate-200 rounded-lg p-4 bg-slate-50/50">' +
+            '<p class="text-[10px] font-bold text-slate-500 uppercase mb-3">迁移申请内容</p>' +
+            '<div class="grid grid-cols-2 gap-4 text-sm">' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">待迁移用户</p><p class="font-black mt-1">' + (window.AdminCopyChip ? AdminCopyChip.wallet(p.subjectWallet) : p.subjectWallet || '—') + '</p><p class="text-[10px] text-slate-400 mt-1">' + (p.subjectUid || '—') + ' · ' + typeLabel + '</p></div>' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">迁移到上级合伙人</p><p class="font-black mt-1">' + (window.AdminCopyChip ? AdminCopyChip.wallet(p.targetWallet) : p.targetWallet || '—') + '</p><p class="text-[10px] text-slate-400 mt-1">UID ' + (p.targetUid || '—') + '</p></div>' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">迁移后返佣比例</p><p class="font-black mt-1 text-blue-600 text-lg">' + (p.newRatio != null ? p.newRatio + '%' : '—') + '</p></div>' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">下级返佣修改</p>' + fixesHtml + '</div>' +
+            '</div></div>';
     }
 
     function formatPoolMinHolding(cfg) {
@@ -430,7 +449,9 @@
             ? '<div class="text-sm">' + renderPoolConfigDetailSection(app) + '</div>'
             : app.type === 'points_program_switch'
                 ? '<div class="text-sm">' + renderProgramSwitchDetailSection(app) + '</div>'
-                : '<div class="grid grid-cols-2 gap-3 text-sm">' + renderPayloadMeta(app, opts) + renderRecipientSection(rootId, app) + '</div>';
+                : app.type === 'partner_rebate_migrate'
+                    ? '<div class="text-sm">' + renderMigrateDetailSection(app) + '</div>'
+                    : '<div class="grid grid-cols-2 gap-3 text-sm">' + renderPayloadMeta(app, opts) + renderRecipientSection(rootId, app) + '</div>';
         const typeBadge = state.types.length > 1
             ? '<span class="inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">' + getApprovalTypeLabel(app.type) + '</span>'
             : '';

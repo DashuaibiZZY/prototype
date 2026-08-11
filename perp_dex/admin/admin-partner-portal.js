@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-11';
+    const DATA_VERSION = 'partner-demo-12';
 
     function chip(v, type) {
         if (!v || v === '—' || v === '--') return '<span class="text-slate-400">' + (v || '—') + '</span>';
@@ -210,13 +210,14 @@
     ];
 
     /** 3.2 正常代理：系统 L2 · 3 条向下 5 层 */
-    const MIGRATE_AGENT_OK_ROOT = migAgent('mig_ok_l1', '0xMig...Ok', '200201', 2, 58, '演示·正常代理（系统L2·3×5层）', null, '0xMig...Ok', ['mig_a_l2', 'mig_b_l2', 'mig_c_l2'], [
+    const MIGRATE_AGENT_OK_ROOT = migAgent('mig_ok_l1', '0xMig...Ok', '200201', 2, 58, '演示·正常代理（系统L2·4×5层）', null, '0xMig...Ok', ['mig_a_l2', 'mig_b_l2', 'mig_c_l2', 'mig_d_l2'], [
         { wallet: '0xMig...OkD1', uid: '200201d' }
     ]);
     const MIGRATE_AGENTS_OK = [MIGRATE_AGENT_OK_ROOT]
         .concat(migBranch('a', 'OkA', '0xMig...Ok', 2, 50, 42, 35, 28, false))
         .concat(migBranch('b', 'OkB', '0xMig...Ok', 2, 49, 41, 34, 27, false))
-        .concat(migBranch('c', 'OkC', '0xMig...Ok', 2, 48, 40, 33, 26, false));
+        .concat(migBranch('c', 'OkC', '0xMig...Ok', 2, 48, 40, 33, 26, false))
+        .concat(migBranch('d', 'OkD', '0xMig...Ok', 2, 47, 39, 32, 25, false));
 
     /** 3.3 倒挂代理：系统 L6 · B 支深层链路倒挂（非迁移比例导致） */
     const MIGRATE_AGENT_ABN_ROOT = migAgent('mig_abn_l1', '0xMig...Abn', '200301', 6, 62, '演示·链路内倒挂（系统L6·3×5层）', null, '0xMig...Abn', ['mig_ab_a_l2', 'mig_ab_b_l2', 'mig_ab_c_l2']);
@@ -238,7 +239,7 @@
     let migrateState = { subjectKey: '', preview: null, inversionErrors: [], treePage: 0, clientsPage: 0 };
     let migrateTreeExpanded = new Set();
     let migrateRatioOverrides = {};
-    const MIGRATE_TREE_PAGE_SIZE = 5;
+    const MIGRATE_TREE_PAGE_SIZE = 2;
     let treeFocusId = null;
     let treeExpandedNodes = new Set();
     let treeHighlightId = null;
@@ -1514,14 +1515,14 @@
         const origRatio = u.ratio;
         const inverted = migrateTreeNodeInverted(agentId, rootId, rootEffectiveRatio);
         const border = inverted ? 'border-red-300 bg-red-50/70' : 'border-slate-200 bg-white';
-        let html = '<div class="migrate-tree-node mb-2">';
+        let html = '<div class="migrate-tree-node mb-2" id="migrate-node-wrap-' + agentId + '">';
         html += '<div class="flex items-start gap-1">';
         if (hasKids && depth > 0) {
             html += '<button type="button" class="tree-expand-btn" onclick="PartnerPortal.toggleMigrateTreeExpand(\'' + agentId + '\')">' + (expanded ? '−' : '+') + '</button>';
         } else {
             html += '<span class="w-6 shrink-0"></span>';
         }
-        html += '<div class="flex-1 flex items-center gap-2 p-2 rounded-lg border ' + border + ' shadow-sm min-w-0">';
+        html += '<div class="flex-1 flex items-center gap-2 p-2 rounded-lg border ' + border + ' shadow-sm min-w-0" id="migrate-node-' + agentId + '">';
         html += '<span class="text-[10px] font-bold text-blue-700 shrink-0">' + migrateDepthLabel(depth) + '</span>';
         html += migrateSystemLevelTag(u.level);
         html += '<div class="flex-1 min-w-0"><p class="font-bold text-[11px] truncate">' + u.wallet + '</p><p class="text-[10px] text-slate-500">' + u.note + '</p></div>';
@@ -1547,18 +1548,75 @@
         return html;
     }
 
+    function collectInvertedMigrateIds(rootId, rootEffectiveRatio) {
+        const ids = [];
+        collectMigrateSubtree(rootId).forEach(function (u) {
+            if (migrateTreeNodeInverted(u.id, rootId, rootEffectiveRatio)) ids.push(u.id);
+        });
+        return ids;
+    }
+
+    function renderMigrateInversionBanner(invertedIds) {
+        if (!invertedIds || !invertedIds.length) return '';
+        return '<div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">' +
+            '<p class="text-red-900 font-black text-sm mb-1">检测到 <span class="underline">' + invertedIds.length + '</span> 处返佣倒挂</p>' +
+            '<p class="text-[11px] text-red-700">可在下方树中修改节点比例；或 ' +
+            '<button type="button" onclick="PartnerPortal.jumpToMigrateInversion()" class="text-red-800 font-black underline hover:text-red-900">点击立即展开倒挂位置</button></p></div>';
+    }
+
+    function jumpToMigrateInversion() {
+        const p = migrateState.preview;
+        if (!p || !p.partnerUser) return;
+        const ratioVal = parseFloat(document.getElementById('migrate-ratio-input') && document.getElementById('migrate-ratio-input').value);
+        const effectiveRootRatio = !isNaN(ratioVal) ? ratioVal : p.partnerUser.ratio;
+        const invertedIds = migrateState.invertedNodeIds || collectInvertedMigrateIds(p.partnerUser.id, effectiveRootRatio);
+        if (!invertedIds.length) return;
+        invertedIds.forEach(function (nid) {
+            let u = getMigrateAgent(nid);
+            while (u && u.id !== p.partnerUser.id) {
+                const parent = getMigrateAgentByWallet(u.parentWallet);
+                if (parent) migrateTreeExpanded.add(parent.id);
+                u = parent;
+            }
+        });
+        const first = getMigrateAgent(invertedIds[0]);
+        if (first) {
+            let topBranch = first;
+            while (topBranch.parentWallet && topBranch.parentWallet !== p.partnerUser.wallet) {
+                topBranch = getMigrateAgentByWallet(topBranch.parentWallet);
+            }
+            if (topBranch && topBranch.parentWallet === p.partnerUser.wallet) {
+                const siblings = p.partnerUser.childIds || [];
+                const idx = siblings.indexOf(topBranch.id);
+                if (idx >= 0) migrateState.treePage = Math.floor(idx / MIGRATE_TREE_PAGE_SIZE);
+            }
+        }
+        renderMigratePreviewContent();
+        migrateState.inversionErrors = checkMigrateInversion();
+        updateMigrateSubmitState();
+        setTimeout(function () {
+            const el = document.getElementById('migrate-node-' + invertedIds[0]);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 120);
+    }
+
     function renderMigratePagination(containerId, total, page, pageSize, onPageFn) {
         const el = document.getElementById(containerId);
-        if (!el || total <= pageSize) {
-            if (el) el.innerHTML = '';
+        if (!el) return;
+        if (total <= pageSize) {
+            el.innerHTML = total ? '<p class="text-[10px] text-slate-400 mt-2">共 ' + total + ' 条</p>' : '';
             return;
         }
         const pages = Math.ceil(total / pageSize);
-        let html = '<div class="flex items-center justify-between text-[10px] text-slate-500 mt-2">';
-        html += '<span>共 ' + total + ' 条 · 第 ' + (page + 1) + '/' + pages + ' 页</span>';
-        html += '<div class="flex gap-1">';
-        if (page > 0) html += '<button type="button" class="border px-2 py-0.5 rounded" onclick="' + onPageFn + '(' + (page - 1) + ')">上一页</button>';
-        if (page < pages - 1) html += '<button type="button" class="border px-2 py-0.5 rounded" onclick="' + onPageFn + '(' + (page + 1) + ')">下一页</button>';
+        let html = '<div class="flex flex-wrap items-center justify-between gap-2 mt-3 pt-3 border-t border-slate-200">';
+        html += '<span class="text-[11px] font-bold text-slate-600">分页：共 ' + total + ' 条 · 每页 ' + pageSize + ' 条</span>';
+        html += '<div class="flex flex-wrap gap-1 items-center">';
+        if (page > 0) html += '<button type="button" class="border border-slate-300 px-2 py-1 rounded text-[10px] font-bold" onclick="' + onPageFn + '(' + (page - 1) + ')">上一页</button>';
+        for (let i = 0; i < pages; i++) {
+            const active = i === page ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-300';
+            html += '<button type="button" class="border px-2.5 py-1 rounded text-[10px] font-bold ' + active + '" onclick="' + onPageFn + '(' + i + ')">' + (i + 1) + '</button>';
+        }
+        if (page < pages - 1) html += '<button type="button" class="border border-slate-300 px-2 py-1 rounded text-[10px] font-bold" onclick="' + onPageFn + '(' + (page + 1) + ')">下一页</button>';
         html += '</div></div>';
         el.innerHTML = html;
     }
@@ -1595,19 +1653,23 @@
                 html += '<li>' + chip(c.wallet, 'wallet') + (c.uid ? ' · ' + chip(c.uid, 'uid') : '') + '</li>';
             });
             html += '</ul><div id="migrate-clients-pagination"></div></div>';
-        } else if (p.partnerUser && !isNaN(ratioVal)) {
+        } else if (p.partnerUser) {
             const root = p.partnerUser;
+            const effectiveRootRatio = !isNaN(ratioVal) ? ratioVal : root.ratio;
+            const invertedIds = collectInvertedMigrateIds(root.id, effectiveRootRatio);
+            migrateState.invertedNodeIds = invertedIds;
+            if (invertedIds.length) html += renderMigrateInversionBanner(invertedIds);
             const directIds = root.childIds || [];
             const page = migrateState.treePage || 0;
             const pageIds = directIds.slice(page * MIGRATE_TREE_PAGE_SIZE, (page + 1) * MIGRATE_TREE_PAGE_SIZE);
-            html += '<div class="mt-3"><p class="font-bold text-slate-600 mb-2">代理链路（树形 · 默认仅直接下级，点击 + 展开）</p>';
-            html += '<p class="text-[10px] text-slate-400 mb-2">层级为相对迁移主体；括号内为系统标准层级 Lx</p>';
+            html += '<div class="mt-3"><p class="font-bold text-slate-600 mb-2">代理链路（树形 · 默认仅直接下级，点击 + 展开更深层）</p>';
+            html += '<p class="text-[10px] text-slate-400 mb-2">相对层级：迁移主体 / 直接下级 / 二级下级… · 系统标准层级标注为「系统 Lx」</p>';
             html += '<div class="bg-slate-50 border rounded-lg p-3">';
-            html += renderMigrateTreeNode(root.id, root.id, ratioVal, 0);
-            if (pageIds.length) {
-                html += '<div class="mt-3 border-t pt-3"><p class="text-[10px] font-bold text-slate-500 mb-2">直接下级支路</p>';
+            html += renderMigrateTreeNode(root.id, root.id, effectiveRootRatio, 0);
+            if (directIds.length) {
+                html += '<div class="mt-3 border-t pt-3"><p class="text-[10px] font-bold text-slate-500 mb-2">直接下级支路（本页 ' + pageIds.length + ' / 总 ' + directIds.length + '）</p>';
                 pageIds.forEach(function (cid) {
-                    html += renderMigrateTreeNode(cid, root.id, ratioVal, 1);
+                    html += renderMigrateTreeNode(cid, root.id, effectiveRootRatio, 1);
                 });
                 html += '<div id="migrate-tree-pagination"></div></div>';
             }
@@ -1638,6 +1700,7 @@
         if (card) card.classList.add('hidden');
         document.getElementById('migrate-preview-section').classList.add('hidden');
         document.getElementById('migrate-errors-section').classList.add('hidden');
+        document.getElementById('migrate-submit-footer').classList.add('hidden');
         const hint = document.getElementById('migrate-ratio-hint');
         if (hint) hint.textContent = '';
         updateMigrateSubmitState();
@@ -1704,15 +1767,22 @@
 
         migrateState.preview = buildMigratePreview(subject);
         renderMigrateSubjectCard(subject, migrateState.preview);
+        migrateState.inversionErrors = checkMigrateInversion();
+        if (migrateState.preview && migrateState.preview.partnerUser) {
+            const ratioVal = parseFloat(document.getElementById('migrate-ratio-input') && document.getElementById('migrate-ratio-input').value);
+            const er = !isNaN(ratioVal) ? ratioVal : migrateState.preview.partnerUser.ratio;
+            migrateState.invertedNodeIds = collectInvertedMigrateIds(migrateState.preview.partnerUser.id, er);
+        }
         if (previewSec) previewSec.classList.remove('hidden');
         renderMigratePreviewContent();
-
-        migrateState.inversionErrors = checkMigrateInversion();
         if (migrateState.inversionErrors.length) {
             const list = document.getElementById('migrate-errors-list');
             if (list) list.innerHTML = migrateState.inversionErrors.map(function (e) { return '<li>' + e + '</li>'; }).join('');
             if (errSec) errSec.classList.remove('hidden');
         } else if (errSec) errSec.classList.add('hidden');
+
+        const footer = document.getElementById('migrate-submit-footer');
+        if (footer) footer.classList.toggle('hidden', !migrateState.preview);
 
         updateMigrateSubmitState();
     }
@@ -1729,11 +1799,53 @@
             'bg-blue-600 text-white px-6 py-2 rounded font-black text-[11px] opacity-50 cursor-not-allowed';
     }
 
-    function submitMigrate() {
+    function openMigrateConfirmModal() {
         if (!migrateState.preview || migrateState.inversionErrors.length) {
             alert('请先修正返佣倒挂或填写完整信息');
             return;
         }
+        const p = migrateState.preview;
+        const target = findMigrateTargetPartner(document.getElementById('migrate-target-input').value);
+        const ratioVal = parseFloat(document.getElementById('migrate-ratio-input').value);
+        if (!target || isNaN(ratioVal)) return;
+        const subjectWallet = p.type === 'plain' ? p.plainUser.wallet : p.partnerUser.wallet;
+        const ratioFixes = [];
+        Object.keys(migrateRatioOverrides).forEach(function (agentId) {
+            const a = getMigrateAgent(agentId);
+            if (a && migrateRatioOverrides[agentId] !== a.ratio) {
+                ratioFixes.push({ wallet: a.wallet, oldRatio: a.ratio, newRatio: migrateRatioOverrides[agentId] });
+            }
+        });
+        let body = '<p class="text-[11px] text-slate-600 mb-3">确认后将提交<strong>风控审核</strong>，包含以下迁移与比例修改：</p>';
+        body += '<ul class="text-[11px] space-y-2 text-slate-800">';
+        body += '<li><span class="text-slate-500">待迁移</span> <b>' + subjectWallet + '</b></li>';
+        body += '<li><span class="text-slate-500">迁移到</span> <b>' + target.wallet + '</b></li>';
+        body += '<li><span class="text-slate-500">迁移后比例</span> <b>' + ratioVal + '%</b></li>';
+        if (ratioFixes.length) {
+            body += '<li><span class="text-slate-500">下级比例修正</span><ul class="mt-1 pl-4">';
+            ratioFixes.forEach(function (f) {
+                body += '<li>' + f.wallet + '：' + f.oldRatio + '% → ' + f.newRatio + '%</li>';
+            });
+            body += '</ul></li>';
+        } else {
+            body += '<li><span class="text-slate-500">下级比例修正</span> 无</li>';
+        }
+        body += '</ul>';
+        document.getElementById('migrate-confirm-body').innerHTML = body;
+        document.getElementById('modal-migrate-confirm').classList.remove('hidden');
+    }
+
+    function closeMigrateConfirmModal() {
+        document.getElementById('modal-migrate-confirm').classList.add('hidden');
+    }
+
+    function submitMigrate() {
+        openMigrateConfirmModal();
+    }
+
+    function confirmMigrateSubmit() {
+        closeMigrateConfirmModal();
+        if (!migrateState.preview || migrateState.inversionErrors.length) return;
         const target = findMigrateTargetPartner(document.getElementById('migrate-target-input').value);
         const ratioVal = parseFloat(document.getElementById('migrate-ratio-input').value);
         if (!target || isNaN(ratioVal)) return;
@@ -1794,8 +1906,10 @@
         initSettlementDatePickers: initSettlementDatePickers,
         openEditSupplement: openEditSupplement, closeEditSupplementModal: closeEditSupplementModal, saveEditSupplement: saveEditSupplement,
         showMigratePage: showMigratePage, previewMigrate: previewMigrate, submitMigrate: submitMigrate,
+        confirmMigrateSubmit: confirmMigrateSubmit, closeMigrateConfirmModal: closeMigrateConfirmModal,
         toggleMigrateTreeExpand: toggleMigrateTreeExpand, stageMigrateRatioChange: stageMigrateRatioChange,
         setMigrateTreePage: setMigrateTreePage, setMigrateClientsPage: setMigrateClientsPage,
+        jumpToMigrateInversion: jumpToMigrateInversion,
         getCurrentUserId: function () { return currentUserId; },
         applyHashTree: applyHashTree, DATA_VERSION: DATA_VERSION
     };
