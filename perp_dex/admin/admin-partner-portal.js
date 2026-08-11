@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-13';
+    const DATA_VERSION = 'partner-demo-14';
 
     function chip(v, type) {
         if (!v || v === '—' || v === '--') return '<span class="text-slate-400">' + (v || '—') + '</span>';
@@ -240,7 +240,7 @@
     let migrateTreeExpanded = new Set();
     let migrateRatioOverrides = {};
     let migrateAttachments = [];
-    const MIGRATE_TREE_PAGE_SIZE = 2;
+    const MIGRATE_TREE_PAGE_SIZE = 10;
     let treeFocusId = null;
     let treeExpandedNodes = new Set();
     let treeHighlightId = null;
@@ -248,6 +248,27 @@
     let listSearchQ = '';
     let pendingRatioChanges = [];
     let detailTableFilter = '';
+    let listPage = 1;
+    let detailSubPage = 1;
+    let detailClientPage = 1;
+    let detailSettlementPage = 1;
+    let settlementBatchPage = 1;
+    let settlementDetailPage = 1;
+    let supplementDetailPage = 1;
+    let migrateTreeHighlightId = null;
+
+    function paginate(items, page) {
+        if (window.AdminPagination) return AdminPagination.slice(items, page);
+        const pageSize = 10;
+        const total = items.length;
+        const p = Math.max(1, Math.min(page || 1, Math.max(1, Math.ceil(total / pageSize))));
+        const start = (p - 1) * pageSize;
+        return { items: items.slice(start, start + pageSize), page: p, total: total };
+    }
+
+    function mountListPagination(containerId, total, page, handlerId) {
+        if (window.AdminPagination) AdminPagination.mount(containerId, total, page, handlerId);
+    }
 
     function getUser(id) { return USERS.find(function (u) { return u.id === id; }); }
     function getUserByWallet(w) { return USERS.find(function (u) { return u.wallet === w; }); }
@@ -319,9 +340,15 @@
     function renderPartnerList() {
         const tbody = document.getElementById('partner-list-body');
         if (!tbody) return;
-        tbody.innerHTML = LIST_IDS.map(function (id) {
+        const ids = LIST_IDS.filter(function (id) {
             const u = getUser(id);
-            if (!u || !matchesListFilter(u)) return '';
+            return u && matchesListFilter(u);
+        });
+        const sliced = paginate(ids, listPage);
+        listPage = sliced.page;
+        tbody.innerHTML = sliced.items.map(function (id) {
+            const u = getUser(id);
+            if (!u) return '';
             const childCount = (u.childIds || []).length;
             const netHtml = u.net === '--' ? '<span class="text-slate-400">--</span>' : '<span class="text-blue-600 font-black">' + u.net + '</span>';
             const av = u.abnormalVol === '--' ? '<span class="text-slate-300">--</span>' : '<span class="text-amber-700 font-bold">' + u.abnormalVol + '</span>';
@@ -345,6 +372,7 @@
                 '<button onclick="PartnerPortal.showTree(\'' + u.id + '\')" class="text-blue-600 font-bold hover:underline">返佣树</button>' +
                 '</td></tr>';
         }).join('');
+        mountListPagination('partner-list-pagination', sliced.total, listPage, 'partner-list');
     }
 
     function renderNodeCard(u, opts) {
@@ -431,10 +459,44 @@
         const root = document.getElementById('rebate-tree-root');
         if (!root || !treeFocusId) return;
         root.innerHTML = renderRebateTree(treeFocusId);
-        if (treeHighlightId) {
-            const el = document.getElementById('tree-node-' + treeHighlightId);
+        const highlightId = treeHighlightId;
+        if (highlightId) {
+            const el = document.getElementById('tree-node-' + highlightId);
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
+    }
+
+    function focusTreeOnUser(userId) {
+        const user = getUser(userId);
+        if (!user) return false;
+        treeFocusId = userId;
+        treeHighlightId = userId;
+        treeExpandedNodes = new Set();
+        getAncestorChain(user).forEach(function (a) {
+            (a.childIds || []).forEach(function (cid) {
+                if (cid === user.id || isDescendantOf(cid, user.id)) treeExpandedNodes.add(a.id);
+            });
+        });
+        document.getElementById('tree-title').textContent = user.note + ' · 返佣树';
+        const abnSec = document.getElementById('tree-abnormal-section');
+        if (abnSec) abnSec.innerHTML = renderAbnormalSection(user.rootWallet);
+        refreshTree();
+        return true;
+    }
+
+    function searchRebateTree() {
+        const input = document.getElementById('tree-search-input');
+        const q = input && input.value;
+        const focus = getUser(treeFocusId);
+        if (!q || !focus) return;
+        const found = USERS.find(function (u) {
+            return u.rootWallet === focus.rootWallet && matchWalletOrUid(q, u.wallet, u.uid);
+        });
+        if (!found) {
+            alert('未在当前一级伞（' + focus.rootWallet + '）内找到匹配的钱包或 UID');
+            return;
+        }
+        focusTreeOnUser(found.id);
     }
 
     function toggleTreeExpand(userId) {
@@ -489,6 +551,9 @@
         if (!u) return;
         currentUserId = id;
         detailTableFilter = '';
+        detailSubPage = 1;
+        detailClientPage = 1;
+        detailSettlementPage = 1;
         window.PartnerPortal_showPage('page-partner-detail');
         document.getElementById('detail-partner-title').textContent = u.note;
         document.getElementById('detail-partner-sub').innerHTML = chip(u.wallet, 'wallet') + ' · ' + chip(u.uid, 'uid') + ' · L' + u.level + ' · ' + u.ratio + '%';
@@ -531,7 +596,9 @@
             if (!q) return true;
             return (r.wallet + r.note).toLowerCase().indexOf(q) >= 0;
         });
-        tbody.innerHTML = filtered.length ? filtered.map(function (r) {
+        const sliced = paginate(filtered, detailSubPage);
+        detailSubPage = sliced.page;
+        tbody.innerHTML = sliced.items.length ? sliced.items.map(function (r) {
             return '<tr class="' + (r.abnormal ? 'bg-red-50/40' : '') + '">' +
                 '<td class="px-4 py-2 text-slate-400">' + r.time + '</td>' +
                 '<td class="px-3 py-2">' + chip(r.wallet, 'wallet') + '<span class="block text-[10px] text-slate-400 mt-0.5">' + r.note + '</span></td>' +
@@ -543,6 +610,7 @@
                 '<td class="px-3 py-2 text-center">' + r.users + '</td>' +
                 '<td class="px-3 py-2 text-center">' + settleLabel(r.settle) + '</td></tr>';
         }).join('') : '<tr><td colspan="9" class="px-4 py-8 text-center text-slate-400">无直属下级合伙人</td></tr>';
+        mountListPagination('detail-sub-pagination', sliced.total, detailSubPage, 'detail-sub');
     }
 
     function renderDetailClientTable(u) {
@@ -550,18 +618,23 @@
         const clients = u.directClients || [];
         const q = detailTableFilter.toLowerCase();
         const filtered = clients.filter(function (c) { return !q || c.wallet.toLowerCase().indexOf(q) >= 0; });
-        tbody.innerHTML = filtered.length ? filtered.map(function (c) {
+        const sliced = paginate(filtered, detailClientPage);
+        detailClientPage = sliced.page;
+        tbody.innerHTML = sliced.items.length ? sliced.items.map(function (c) {
             return '<tr><td class="px-4 py-2">' + c.time + '</td><td class="px-3 py-2">' + chip(c.wallet, 'wallet') + '</td>' +
                 '<td class="px-3 py-2 text-right">' + c.vol + '</td><td class="px-3 py-2 text-right">' + c.fee + '</td>' +
                 '<td class="px-3 py-2 text-right font-black text-blue-600">' + c.rebate + '</td>' +
                 '<td class="px-3 py-2 text-center text-green-600 font-bold">' + c.status + '</td></tr>';
         }).join('') : '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">暂无自邀直客</td></tr>';
+        mountListPagination('detail-clients-pagination', sliced.total, detailClientPage, 'detail-clients');
     }
 
     function renderDetailSettlements(u) {
         const tbody = document.getElementById('detail-settlement-rows');
         const rows = u.settlements || [];
-        tbody.innerHTML = rows.length ? rows.map(function (r) {
+        const sliced = paginate(rows, detailSettlementPage);
+        detailSettlementPage = sliced.page;
+        tbody.innerHTML = sliced.items.length ? sliced.items.map(function (r) {
             const cls = r.status === '已发放' ? 'text-green-600' : (r.status === '补结算' ? 'text-blue-600' : 'text-amber-600');
             const origHtml = r.status === '待修正返佣后计算' || !r.originalRebate
                 ? '<span class="text-amber-700 font-bold">待修正返佣后计算</span>'
@@ -572,6 +645,7 @@
                 '<td class="px-3 py-2 text-center font-bold ' + cls + '">' + r.status + '</td>' +
                 '<td class="px-4 py-2 text-slate-500">' + (r.note || '') + '</td></tr>';
         }).join('') : '<tr><td colspan="6" class="px-4 py-6 text-center text-slate-400">暂无结算记录</td></tr>';
+        mountListPagination('detail-settlement-pagination', sliced.total, detailSettlementPage, 'detail-settlement');
     }
 
     function switchDetailTab(tab) {
@@ -594,6 +668,8 @@
 
     function filterDetailTable(q) {
         detailTableFilter = q || '';
+        detailSubPage = 1;
+        detailClientPage = 1;
         const u = getUser(currentUserId);
         if (u) {
             renderDetailSubTable(u);
@@ -624,25 +700,10 @@
         if (!child) return;
         closeAbnormalModal();
         currentUserId = child.id;
-        treeFocusId = child.id;
-        treeHighlightId = child.id;
-        treeExpandedNodes = new Set();
-        getAncestorChain(child).forEach(function (a) {
-            (a.childIds || []).forEach(function (cid) {
-                if (cid === child.id || isDescendantOf(cid, child.id)) treeExpandedNodes.add(a.id);
-            });
-        });
         window.PartnerPortal_showPage('page-rebate-tree');
-        document.getElementById('tree-title').textContent = child.note + ' · 修正返佣';
-        const abnSec = document.getElementById('tree-abnormal-section');
-        if (abnSec) abnSec.innerHTML = renderAbnormalSection(record.rootWallet);
-        document.getElementById('rebate-tree-root').innerHTML = renderRebateTree(child.id);
+        focusTreeOnUser(child.id);
         renderPendingChangesBar();
         location.hash = 'rebate-tree';
-        setTimeout(function () {
-            const el = document.getElementById('tree-node-' + child.id);
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 80);
     }
 
     function openAbnormalModal() {
@@ -662,6 +723,7 @@
 
     function setListFilter(status) {
         listFilterStatus = status;
+        listPage = 1;
         const sel = document.getElementById('list-status-select');
         if (sel) sel.value = status;
         renderPartnerList();
@@ -669,6 +731,7 @@
 
     function applyListSearch(q) {
         listSearchQ = (q || '').trim();
+        listPage = 1;
         renderPartnerList();
     }
 
@@ -880,17 +943,20 @@
         settlementDetailFilters.level = document.getElementById('settlement-filter-level') ? document.getElementById('settlement-filter-level').value : 'all';
         settlementDetailFilters.pendingFix = document.getElementById('settlement-filter-pending') ? document.getElementById('settlement-filter-pending').value : 'all';
         settlementDetailFilters.modified = document.getElementById('settlement-filter-modified') ? document.getElementById('settlement-filter-modified').value : 'all';
+        settlementDetailPage = 1;
         renderSettlementDetailRows();
     }
 
     function applySupplementDetailFilters() {
         supplementDetailFilters.partner = (document.getElementById('supplement-filter-partner') && document.getElementById('supplement-filter-partner').value || '').trim();
         supplementDetailFilters.originalDate = (document.getElementById('supplement-filter-original-date') && document.getElementById('supplement-filter-original-date').value || '').trim();
+        supplementDetailPage = 1;
         renderSettlementSupplementRows();
     }
 
     function resetSettlementDetailFilters() {
         settlementDetailFilters = { partner: '', level: 'all', pendingFix: 'all', modified: 'all' };
+        settlementDetailPage = 1;
         const p = document.getElementById('settlement-filter-partner');
         if (p) p.value = '';
         const l = document.getElementById('settlement-filter-level');
@@ -904,6 +970,7 @@
 
     function resetSupplementDetailFilters() {
         supplementDetailFilters = { partner: '', originalDate: '' };
+        supplementDetailPage = 1;
         const p = document.getElementById('supplement-filter-partner');
         if (p) p.value = '';
         const d = document.getElementById('supplement-filter-original-date');
@@ -923,7 +990,9 @@
             if (settlementDetailFilters.modified === 'no' && isRowModified(r)) return false;
             return true;
         });
-        tbody.innerHTML = rows.length ? rows.map(function (r) {
+        const sliced = paginate(rows, settlementDetailPage);
+        settlementDetailPage = sliced.page;
+        tbody.innerHTML = sliced.items.length ? sliced.items.map(function (r) {
             const parentCell = r.parentWallet ? chip(r.parentWallet, 'wallet') : '<span class="text-slate-500">一级</span>';
             const origCell = r.pendingFix
                 ? '<span class="text-amber-700 font-bold">待修正返佣后计算</span><span class="block text-[9px] text-amber-600 mt-0.5">原应结日 ' + (r.originalSettlementDate || '—') + '</span>'
@@ -946,6 +1015,7 @@
                 '<td class="px-4 py-4 text-right">' + actualCell + '</td>' +
                 '<td class="px-4 py-4 text-right">' + editBtn + '</td></tr>';
         }).join('') : '<tr><td colspan="9" class="px-4 py-8 text-center text-slate-400">无匹配记录</td></tr>';
+        mountListPagination('settlement-detail-pagination', sliced.total, settlementDetailPage, 'settlement-detail');
     }
 
     function renderSettlementSupplementRows() {
@@ -956,7 +1026,9 @@
             if (supplementDetailFilters.originalDate && f.originalSettlementDate.indexOf(supplementDetailFilters.originalDate) === -1) return false;
             return true;
         });
-        tbody.innerHTML = rows.length ? rows.map(function (f) {
+        const sliced = paginate(rows, supplementDetailPage);
+        supplementDetailPage = sliced.page;
+        tbody.innerHTML = sliced.items.length ? sliced.items.map(function (f) {
             const modTag = f.amount < f.originalRebate ? '<span class="block text-[9px] text-orange-600 font-bold mt-0.5">已调减</span>' : '';
             return '<tr class="hover:bg-slate-50">' +
                 '<td class="px-4 py-3"><div>' + chip(f.wallet, 'wallet') + '</div><div class="mt-1">' + chip(f.uid, 'uid') + '</div></td>' +
@@ -965,6 +1037,7 @@
                 '<td class="px-4 py-3 text-right font-black text-blue-600">' + fmtMoney(f.amount) + modTag + '</td>' +
                 '<td class="px-4 py-3 text-right"><button type="button" onclick="PartnerPortal.openEditSupplement(\'' + f.id + '\')" class="text-blue-600 font-bold hover:underline text-[10px]">修改</button></td></tr>';
         }).join('') : '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-400">本日无修正返佣补发流水</td></tr>';
+        mountListPagination('settlement-supplement-pagination', sliced.total, supplementDetailPage, 'settlement-supplement');
     }
 
     function findSupplementById(id) {
@@ -1228,11 +1301,14 @@
         const st = document.getElementById('settlement-filter-status').value;
         const tbody = document.getElementById('settlement-batch-body');
         if (!tbody) return;
-        tbody.innerHTML = SETTLEMENT_BATCHES.filter(function (b) {
+        const batches = SETTLEMENT_BATCHES.filter(function (b) {
             if (st !== 'all' && b.status !== st) return false;
             if (q && b.date.indexOf(q) === -1) return false;
             return true;
-        }).map(function (b) {
+        });
+        const sliced = paginate(batches, settlementBatchPage);
+        settlementBatchPage = sliced.page;
+        tbody.innerHTML = sliced.items.map(function (b) {
             const e = enrichBatch(b);
             const stCls = b.rejected ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700';
             return '<tr class="hover:bg-slate-50' + (b.rejected ? ' bg-red-50/20' : '') + '">' +
@@ -1244,6 +1320,7 @@
                 '<td class="px-4 py-4 text-center"><span class="' + stCls + ' px-3 py-1 rounded-full text-[10px]">' + e.status + '</span></td>' +
                 '<td class="px-4 py-4 text-right"><button type="button" onclick="PartnerPortal.showReviewDetail(\'' + e.date + '\', ' + (b.rejected ? 'true' : 'false') + ')" class="bg-slate-900 text-white px-4 py-1.5 rounded font-black uppercase text-[10px]">' + (b.rejected ? '查看原因' : '查看详情') + '</button></td></tr>';
         }).join('');
+        mountListPagination('settlement-batch-pagination', sliced.total, settlementBatchPage, 'settlement-batch');
     }
 
     function showReviewDetail(batchDate, isRejected) {
@@ -1251,6 +1328,8 @@
         settlementDetailTab = 'detail';
         settlementDetailFilters = { partner: '', level: 'all', pendingFix: 'all', modified: 'all' };
         supplementDetailFilters = { partner: '', originalDate: '' };
+        settlementDetailPage = 1;
+        supplementDetailPage = 1;
         setSettlementListView(true);
         document.getElementById('view-batch-list').classList.add('hidden');
         document.getElementById('view-review-detail').classList.remove('hidden');
@@ -1515,7 +1594,8 @@
         const displayRatio = getEffectiveMigrateRatio(agentId, rootId, rootEffectiveRatio);
         const origRatio = u.ratio;
         const inverted = migrateTreeNodeInverted(agentId, rootId, rootEffectiveRatio);
-        const border = inverted ? 'border-red-300 bg-red-50/70' : 'border-slate-200 bg-white';
+        const isHighlight = agentId === migrateTreeHighlightId;
+        const border = inverted ? 'border-red-300 bg-red-50/70' : (isHighlight ? 'border-amber-400 bg-amber-50/80 ring-2 ring-amber-300' : 'border-slate-200 bg-white');
         let html = '<div class="migrate-tree-node mb-2" id="migrate-node-wrap-' + agentId + '">';
         html += '<div class="flex items-start gap-1">';
         if (hasKids && depth > 0) {
@@ -1589,9 +1669,10 @@
             if (topBranch && topBranch.parentWallet === p.partnerUser.wallet) {
                 const siblings = p.partnerUser.childIds || [];
                 const idx = siblings.indexOf(topBranch.id);
-                if (idx >= 0) migrateState.treePage = Math.floor(idx / MIGRATE_TREE_PAGE_SIZE);
+                if (idx >= 0) migrateState.treePage = Math.floor(idx / MIGRATE_TREE_PAGE_SIZE) + 1;
             }
         }
+        migrateTreeHighlightId = invertedIds[0];
         renderMigratePreviewContent();
         migrateState.inversionErrors = checkMigrateInversion();
         updateMigrateSubmitState();
@@ -1601,34 +1682,48 @@
         }, 120);
     }
 
-    function renderMigratePagination(containerId, total, page, pageSize, onPageFn) {
-        const el = document.getElementById(containerId);
-        if (!el) return;
-        if (total <= pageSize) {
-            el.innerHTML = total ? '<p class="text-[10px] text-slate-400 mt-2">共 ' + total + ' 条</p>' : '';
+    function searchMigrateTree() {
+        const input = document.getElementById('migrate-tree-search-input');
+        const q = input && input.value;
+        const p = migrateState.preview;
+        if (!p || !p.partnerUser || !q) return;
+        const root = p.partnerUser;
+        const found = collectMigrateSubtree(root.id).find(function (u) {
+            return matchWalletOrUid(q, u.wallet, u.uid);
+        });
+        if (!found) {
+            alert('未在当前迁移伞内找到匹配的钱包或 UID');
             return;
         }
-        const pages = Math.ceil(total / pageSize);
-        let html = '<div class="flex flex-wrap items-center justify-between gap-2 mt-3 pt-3 border-t border-slate-200">';
-        html += '<span class="text-[11px] font-bold text-slate-600">分页：共 ' + total + ' 条 · 每页 ' + pageSize + ' 条</span>';
-        html += '<div class="flex flex-wrap gap-1 items-center">';
-        if (page > 0) html += '<button type="button" class="border border-slate-300 px-2 py-1 rounded text-[10px] font-bold" onclick="' + onPageFn + '(' + (page - 1) + ')">上一页</button>';
-        for (let i = 0; i < pages; i++) {
-            const active = i === page ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-300';
-            html += '<button type="button" class="border px-2.5 py-1 rounded text-[10px] font-bold ' + active + '" onclick="' + onPageFn + '(' + i + ')">' + (i + 1) + '</button>';
+        migrateTreeHighlightId = found.id;
+        migrateTreeExpanded = new Set();
+        let u = found;
+        while (u && u.id !== root.id) {
+            const parent = getMigrateAgentByWallet(u.parentWallet);
+            if (parent && parent.id !== root.id) migrateTreeExpanded.add(parent.id);
+            u = parent;
         }
-        if (page < pages - 1) html += '<button type="button" class="border border-slate-300 px-2 py-1 rounded text-[10px] font-bold" onclick="' + onPageFn + '(' + (page + 1) + ')">下一页</button>';
-        html += '</div></div>';
-        el.innerHTML = html;
+        if (found.parentWallet === root.wallet) {
+            const siblings = root.childIds || [];
+            const idx = siblings.indexOf(found.id);
+            if (idx >= 0) migrateState.treePage = Math.floor(idx / MIGRATE_TREE_PAGE_SIZE) + 1;
+        }
+        renderMigratePreviewContent();
+        migrateState.inversionErrors = checkMigrateInversion();
+        updateMigrateSubmitState();
+        setTimeout(function () {
+            const el = document.getElementById('migrate-node-' + found.id);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 120);
     }
 
     function setMigrateTreePage(p) {
-        migrateState.treePage = Math.max(0, p);
+        migrateState.treePage = Math.max(1, p);
         renderMigratePreviewContent();
     }
 
     function setMigrateClientsPage(p) {
-        migrateState.clientsPage = Math.max(0, p);
+        migrateState.clientsPage = Math.max(1, p);
         renderMigratePreviewContent();
     }
 
@@ -1647,8 +1742,9 @@
         }
         if (p.type === 'plain') {
             const clients = p.directClients;
-            const page = migrateState.clientsPage || 0;
-            const slice = clients.slice(page * MIGRATE_TREE_PAGE_SIZE, (page + 1) * MIGRATE_TREE_PAGE_SIZE);
+            const page = migrateState.clientsPage || 1;
+            const slice = paginate(clients, page).items;
+            migrateState.clientsPage = paginate(clients, page).page;
             html += '<div class="mt-3"><p class="font-bold text-slate-600 mb-2">直客（一并迁移）</p><ul class="space-y-1">';
             slice.forEach(function (c) {
                 html += '<li>' + chip(c.wallet, 'wallet') + (c.uid ? ' · ' + chip(c.uid, 'uid') : '') + '</li>';
@@ -1661,10 +1757,16 @@
             migrateState.invertedNodeIds = invertedIds;
             if (invertedIds.length) html += renderMigrateInversionBanner(invertedIds);
             const directIds = root.childIds || [];
-            const page = migrateState.treePage || 0;
-            const pageIds = directIds.slice(page * MIGRATE_TREE_PAGE_SIZE, (page + 1) * MIGRATE_TREE_PAGE_SIZE);
+            const treePage = migrateState.treePage || 1;
+            const branchSlice = paginate(directIds, treePage);
+            migrateState.treePage = branchSlice.page;
+            const pageIds = branchSlice.items;
             html += '<div class="mt-3"><p class="font-bold text-slate-600 mb-2">代理链路（树形 · 默认仅直接下级，点击 + 展开更深层）</p>';
             html += '<p class="text-[10px] text-slate-400 mb-2">相对层级：迁移主体 / 直接下级 / 二级下级… · 系统标准层级标注为「系统 Lx」</p>';
+            html += '<div class="flex flex-wrap gap-2 items-center mb-3">';
+            html += '<input id="migrate-tree-search-input" type="text" placeholder="钱包 / UID 快速定位" class="border rounded px-3 py-2 text-[11px] w-56 outline-none focus:ring-1 focus:ring-blue-500" onkeydown="if(event.key===\'Enter\')PartnerPortal.searchMigrateTree()">';
+            html += '<button type="button" onclick="PartnerPortal.searchMigrateTree()" class="bg-slate-900 text-white px-4 py-2 rounded font-bold text-[11px]">定位</button>';
+            html += '<span class="text-[10px] text-slate-400">在迁移伞内搜索并展开定位</span></div>';
             html += '<div class="bg-slate-50 border rounded-lg p-3">';
             html += renderMigrateTreeNode(root.id, root.id, effectiveRootRatio, 0);
             if (directIds.length) {
@@ -1682,17 +1784,18 @@
         }
         body.innerHTML = html;
         if (p.type === 'plain') {
-            renderMigratePagination('migrate-clients-pagination', p.directClients.length, migrateState.clientsPage || 0, MIGRATE_TREE_PAGE_SIZE, 'PartnerPortal.setMigrateClientsPage');
+            mountListPagination('migrate-clients-pagination', p.directClients.length, migrateState.clientsPage || 1, 'migrate-clients');
         } else if (p.partnerUser) {
-            renderMigratePagination('migrate-tree-pagination', (p.partnerUser.childIds || []).length, migrateState.treePage || 0, MIGRATE_TREE_PAGE_SIZE, 'PartnerPortal.setMigrateTreePage');
+            mountListPagination('migrate-tree-pagination', (p.partnerUser.childIds || []).length, migrateState.treePage || 1, 'migrate-tree-branches');
         }
     }
 
     function showMigratePage() {
-        migrateState = { subjectKey: '', preview: null, inversionErrors: [], treePage: 0, clientsPage: 0 };
+        migrateState = { subjectKey: '', preview: null, inversionErrors: [], treePage: 1, clientsPage: 1 };
         migrateTreeExpanded = new Set();
         migrateRatioOverrides = {};
         migrateAttachments = [];
+        migrateTreeHighlightId = null;
         const remarkEl = document.getElementById('migrate-remark-input');
         if (remarkEl) remarkEl.value = '';
         const fileEl = document.getElementById('migrate-attachment-input');
@@ -1984,6 +2087,8 @@
         toggleMigrateTreeExpand: toggleMigrateTreeExpand, stageMigrateRatioChange: stageMigrateRatioChange,
         setMigrateTreePage: setMigrateTreePage, setMigrateClientsPage: setMigrateClientsPage,
         jumpToMigrateInversion: jumpToMigrateInversion,
+        searchRebateTree: searchRebateTree,
+        searchMigrateTree: searchMigrateTree,
         handleMigrateAttachmentFiles: handleMigrateAttachmentFiles,
         removeMigrateAttachment: removeMigrateAttachment,
         getCurrentUserId: function () { return currentUserId; },
@@ -1991,6 +2096,29 @@
     };
 
     document.addEventListener('DOMContentLoaded', function () {
+        if (window.AdminPagination) {
+            AdminPagination.register('partner-list', function (p) { listPage = p; renderPartnerList(); });
+            AdminPagination.register('detail-sub', function (p) {
+                detailSubPage = p;
+                const u = getUser(currentUserId);
+                if (u) renderDetailSubTable(u);
+            });
+            AdminPagination.register('detail-clients', function (p) {
+                detailClientPage = p;
+                const u = getUser(currentUserId);
+                if (u) renderDetailClientTable(u);
+            });
+            AdminPagination.register('detail-settlement', function (p) {
+                detailSettlementPage = p;
+                const u = getUser(currentUserId);
+                if (u) renderDetailSettlements(u);
+            });
+            AdminPagination.register('settlement-batch', function (p) { settlementBatchPage = p; filterSettlementBatches(); });
+            AdminPagination.register('settlement-detail', function (p) { settlementDetailPage = p; renderSettlementDetailRows(); });
+            AdminPagination.register('settlement-supplement', function (p) { supplementDetailPage = p; renderSettlementSupplementRows(); });
+            AdminPagination.register('migrate-tree-branches', function (p) { migrateState.treePage = p; renderMigratePreviewContent(); });
+            AdminPagination.register('migrate-clients', function (p) { migrateState.clientsPage = p; renderMigratePreviewContent(); });
+        }
         renderPartnerList();
         filterSettlementBatches();
         initSettlementDatePickers();
