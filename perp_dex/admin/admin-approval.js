@@ -4,7 +4,7 @@
 (function () {
     const STORAGE_KEY = 'forx_approval_applications';
     const ROLE_KEY = 'forx_approval_view_role';
-    const SEED_VERSION = '2026-08-04-v1';
+    const SEED_VERSION = '2026-08-10-partner-v3';
     const SEED_VERSION_KEY = 'forx_approval_seed_v';
 
     const STEPS = [
@@ -15,7 +15,9 @@
     ];
 
     const TYPE_FLOW_PROFILE = {
-        points_pool_config: 'cross_risk'
+        points_pool_config: 'cross_risk',
+        partner_l1_bind: 'risk_boss',
+        partner_ratio_change: 'full'
     };
 
     const FLOW_PROFILES = {
@@ -34,6 +36,16 @@
             ],
             afterRisk: 'approved',
             larkOnRisk: false
+        },
+        risk_boss: {
+            key: 'risk_boss',
+            steps: [
+                { key: 'apply', label: '市场运营提交', role: '市场运营' },
+                { key: 'risk', label: '风控审核', role: '风控' },
+                { key: 'boss', label: '老板审批', role: '老板' }
+            ],
+            afterRisk: 'pending_boss',
+            larkOnRisk: true
         }
     };
 
@@ -43,7 +55,9 @@
         fee_config: '用户费率配置',
         points_bonus_config: '积分加成配置',
         points_pool_config: '积分总池配置',
-        points_program_switch: '积分计划总开关'
+        points_program_switch: '积分计划总开关',
+        partner_l1_bind: '一级合伙人绑定（超上限）',
+        partner_ratio_change: '合伙人返佣比例调整'
     };
 
     const ROLE_LABELS = {
@@ -305,6 +319,166 @@
                 timeline: [
                     { at: '2026-07-22 09:00', actor: 'Points_Admin', action: '提交申请', note: '临时补发申请' },
                     { at: '2026-07-22 10:30', actor: 'Mkt_Cross', action: '驳回', note: '请关联平台活动后重新提交' }
+                ]
+            },
+            {
+                id: 'APR20260801031',
+                type: 'partner_l1_bind',
+                title: '一级合伙人绑定（超上限）',
+                applicant: 'Mkt_Allen',
+                status: 'pending_risk',
+                flowProfile: 'risk_boss',
+                createdAt: '2026-08-01 10:20',
+                remark: '头部 KOL 谈判比例 78%',
+                summary: 'UID 100920 · 0xfa12...88ce · 78%',
+                payload: {
+                    uid: '100920',
+                    wallet: '0xfa12...88ce',
+                    ratio: 78,
+                    opsCap: 80,
+                    exceedsCap: true
+                },
+                timeline: [
+                    { at: '2026-08-01 10:20', actor: 'Mkt_Allen', action: '提交申请', note: '头部 KOL 谈判比例 78%' }
+                ]
+            },
+            {
+                id: 'APR20260802041',
+                type: 'partner_ratio_change',
+                title: '合伙人返佣比例调整',
+                applicant: 'Mkt_Allen',
+                status: 'pending_cross',
+                flowProfile: 'full',
+                createdAt: '2026-08-02 09:15',
+                remark: '华东渠道下调级差，需交叉复核',
+                summary: '0xNorm...L2a · 55% → 48%',
+                payload: {
+                    uid: '100802',
+                    wallet: '0xNorm...L2a',
+                    oldRatio: 55,
+                    newRatio: 48,
+                    opsCap: 80,
+                    exceedsCap: false
+                },
+                timeline: [{ at: '2026-08-02 09:15', actor: 'Mkt_Allen', action: '提交申请', note: '华东渠道下调级差' }]
+            },
+            {
+                id: 'APR20260803051',
+                type: 'partner_l1_bind',
+                title: '一级合伙人绑定（超上限）',
+                applicant: 'Mkt_Bob',
+                status: 'pending_boss',
+                flowProfile: 'risk_boss',
+                createdAt: '2026-08-03 14:00',
+                remark: '海外做市商 85% 谈判',
+                summary: 'UID 100931 · 0xk9aa...31de · 85%',
+                payload: {
+                    uid: '100931',
+                    wallet: '0xk9aa...31de',
+                    ratio: 85,
+                    opsCap: 80,
+                    exceedsCap: true
+                },
+                lark: { id: 'LARK-20260803-4412', status: 'pending', url: 'https://www.feishu.cn/approval/admin/preview/LARK-20260803-4412', syncedAt: '2026-08-03 16:10' },
+                timeline: [
+                    { at: '2026-08-03 14:00', actor: 'Mkt_Bob', action: '提交申请', note: '海外做市商 85% 谈判' },
+                    { at: '2026-08-03 15:20', actor: 'Risk_Control', action: '风控通过', note: '已核实协议与历史交易量' },
+                    { at: '2026-08-03 16:10', actor: 'System', action: '已同步 Lark 审批', note: '等待老板审批' }
+                ]
+            },
+            {
+                id: 'APR20260804061',
+                type: 'partner_ratio_change',
+                title: '合伙人返佣比例调整',
+                applicant: 'Mkt_Allen',
+                status: 'pending_risk',
+                flowProfile: 'full',
+                createdAt: '2026-08-04 11:30',
+                remark: '超运营上限 82%，上调华南线',
+                summary: '0xAbn...L2b · 52% → 82%',
+                payload: {
+                    uid: '100813',
+                    wallet: '0xAbn...L2b',
+                    oldRatio: 52,
+                    newRatio: 82,
+                    opsCap: 80,
+                    exceedsCap: true
+                },
+                timeline: [
+                    { at: '2026-08-04 11:30', actor: 'Mkt_Allen', action: '提交申请', note: '超运营上限 82%' },
+                    { at: '2026-08-04 13:00', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '已与渠道负责人确认' }
+                ]
+            },
+            {
+                id: 'APR20260805071',
+                type: 'partner_ratio_change',
+                title: '合伙人返佣比例调整',
+                applicant: 'Mkt_Bob',
+                status: 'pending_boss',
+                flowProfile: 'full',
+                createdAt: '2026-08-05 10:00',
+                remark: 'VIP 渠道 88% 特批',
+                summary: '0xVIP...L1 · 70% → 88%',
+                payload: {
+                    uid: '100945',
+                    wallet: '0xVIP...L1',
+                    oldRatio: 70,
+                    newRatio: 88,
+                    opsCap: 80,
+                    exceedsCap: true
+                },
+                lark: { id: 'LARK-20260805-9921', status: 'pending', url: 'https://www.feishu.cn/approval/admin/preview/LARK-20260805-9921', syncedAt: '2026-08-05 14:20' },
+                timeline: [
+                    { at: '2026-08-05 10:00', actor: 'Mkt_Bob', action: '提交申请', note: 'VIP 渠道 88% 特批' },
+                    { at: '2026-08-05 11:10', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '交叉复核通过' },
+                    { at: '2026-08-05 12:30', actor: 'Risk_Control', action: '风控通过', note: '风险敞口可接受' },
+                    { at: '2026-08-05 14:20', actor: 'System', action: '已同步 Lark 审批', note: '等待老板审批' }
+                ]
+            },
+            {
+                id: 'APR20260806081',
+                type: 'partner_l1_bind',
+                title: '一级合伙人绑定（超上限）',
+                applicant: 'Mkt_Allen',
+                status: 'approved',
+                flowProfile: 'risk_boss',
+                createdAt: '2026-08-06 09:00',
+                remark: '东南亚代理 75%',
+                summary: 'UID 100902 · 0xsea1...44ab · 75%',
+                payload: {
+                    uid: '100902',
+                    wallet: '0xsea1...44ab',
+                    ratio: 75,
+                    opsCap: 80,
+                    exceedsCap: false
+                },
+                timeline: [
+                    { at: '2026-08-06 09:00', actor: 'Mkt_Allen', action: '提交申请', note: '东南亚代理' },
+                    { at: '2026-08-06 10:30', actor: 'Risk_Control', action: '风控通过', note: '资料齐全' },
+                    { at: '2026-08-06 11:45', actor: 'Boss', action: '老板审批通过', note: '同意绑定' }
+                ]
+            },
+            {
+                id: 'APR20260807091',
+                type: 'partner_ratio_change',
+                title: '合伙人返佣比例调整',
+                applicant: 'Mkt_Bob',
+                status: 'rejected',
+                flowProfile: 'full',
+                createdAt: '2026-08-07 15:20',
+                remark: '试图上调至 90%',
+                summary: '0xBad...L3 · 45% → 90%',
+                payload: {
+                    uid: '100816',
+                    wallet: '0xBad...L3',
+                    oldRatio: 45,
+                    newRatio: 90,
+                    opsCap: 80,
+                    exceedsCap: true
+                },
+                timeline: [
+                    { at: '2026-08-07 15:20', actor: 'Mkt_Bob', action: '提交申请', note: '试图上调至 90%' },
+                    { at: '2026-08-07 16:00', actor: 'Mkt_Cross', action: '驳回', note: '比例过高且未附谈判依据' }
                 ]
             },
             {
@@ -685,14 +859,16 @@
     window.submitApprovalApplication = function (opts) {
         opts = opts || {};
         seedIfEmpty();
+        const profileKey = opts.flowProfile || TYPE_FLOW_PROFILE[opts.type] || 'full';
+        const initialStatus = profileKey === 'risk_boss' ? 'pending_risk' : 'pending_cross';
         const app = {
             id: 'APR' + Date.now(),
             type: opts.type || 'other',
             title: opts.title || '审批申请',
             summary: opts.summary || '',
             applicant: opts.applicant || '市场运营',
-            status: 'pending_cross',
-            flowProfile: opts.flowProfile || TYPE_FLOW_PROFILE[opts.type] || 'full',
+            status: initialStatus,
+            flowProfile: profileKey,
             createdAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
             remark: opts.remark || '',
             payload: opts.payload || {},
@@ -836,6 +1012,8 @@
             Object.keys(p).forEach(function (k) {
                 if (k !== 'recipients') rows.push([k, Array.isArray(p[k]) ? p[k].join('; ') : p[k]]);
             });
+        } else if (app.type === 'partner_l1_bind') {
+            rows.push(['wallet', p.wallet], ['ratio', p.ratio], ['note', p.note], ['opsCap', p.opsCap]);
         }
         downloadCsv(app.id + '_detail.csv', rows);
     };
