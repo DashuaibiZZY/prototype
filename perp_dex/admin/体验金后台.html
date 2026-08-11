@@ -88,6 +88,7 @@
           </thead>
           <tbody id="configTableBody" class="divide-y divide-slate-100"></tbody>
         </table>
+        <div id="trial-config-pagination"></div>
       </div>
     </div>
 
@@ -187,6 +188,7 @@
             </thead>
             <tbody id="trialUserTableBody" class="divide-y divide-slate-50"></tbody>
           </table>
+          <div id="trial-user-pagination"></div>
         </div>
       </div>
     </div>
@@ -222,6 +224,7 @@
             </thead>
             <tbody id="userCouponTableBody" class="divide-y divide-slate-50"></tbody>
           </table>
+          <div id="trial-coupon-pagination"></div>
         </div>
       </div>
       <div class="card overflow-hidden">
@@ -240,6 +243,7 @@
             </thead>
             <tbody id="couponUsageTableBody" class="divide-y divide-slate-50"></tbody>
           </table>
+          <div id="trial-usage-pagination"></div>
         </div>
       </div>
     </div>
@@ -289,6 +293,7 @@
           </thead>
           <tbody id="trialLogTableBody" class="divide-y divide-slate-50"></tbody>
         </table>
+        <div id="trial-log-pagination"></div>
       </div>
     </div>
 
@@ -415,6 +420,7 @@
 </div>
 
 <script src="admin-approval.js"></script>
+<script src="admin-pagination.js"></script>
 <script src="admin-activity-picker.js"></script>
 <script src="admin-approval-ui.js"></script>
 <script>
@@ -493,6 +499,19 @@
 
   let currentDetailUid = null;
   let pendingRecycleFn = null;
+  let trialConfigPage = 1;
+  let trialUserListPage = 1;
+  let trialLogPage = 1;
+  let trialCouponPage = 1;
+  let trialUsagePage = 1;
+
+  function trialSlice(items, page) {
+    if (window.AdminPagination) return AdminPagination.slice(items, page);
+    return { items: items, page: 1, total: items.length };
+  }
+  function trialMountPag(containerId, total, page, handlerId) {
+    if (window.AdminPagination) AdminPagination.mount(containerId, total, page, handlerId);
+  }
 
   const PAGE_MAP = {
     config: { id: 'page-config', title: '卡组配置', sidebar: 'trial-config' },
@@ -569,6 +588,8 @@
   }
 
   function showUserDetail(uid) {
+    trialCouponPage = 1;
+    trialUsagePage = 1;
     currentDetailUid = uid;
     const user = TRIAL_USERS.find(function (u) { return u.uid === uid; });
     if (!user) return;
@@ -597,13 +618,17 @@
   function renderConfigTable() {
     const q = (document.getElementById('configFilterName').value || '').trim().toLowerCase();
     const list = CARD_GROUPS.filter(function (g) { return !q || g.name.toLowerCase().indexOf(q) !== -1; });
-    document.getElementById('configTableBody').innerHTML = list.length ? list.map(function (g) {
+    const sliced = trialSlice(list, trialConfigPage);
+    trialConfigPage = sliced.page;
+    document.getElementById('configTableBody').innerHTML = sliced.items.length ? sliced.items.map(function (g) {
       return '<tr class="hover:bg-slate-50"><td class="px-6 py-4 font-bold">' + g.name + '</td><td class="px-6 py-4">' + g.couponValidDays + ' 天</td><td class="px-6 py-4">' + g.openValidDays + ' 天</td><td class="px-6 py-4 text-green-600 font-bold">' + (g.lossEnabled ? '开启 (' + g.lossPct + '%)' : '关闭') + '</td><td class="px-6 py-4">' + (g.feeEnabled ? '开启 (' + g.feePct + '%)' : '关闭') + '</td><td class="px-6 py-4 text-right"><button class="text-blue-600 font-bold">编辑</button></td></tr>';
     }).join('') : '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">无匹配卡组</td></tr>';
+    trialMountPag('trial-config-pagination', sliced.total, trialConfigPage, 'trial-config');
   }
 
   function resetConfigFilter() {
     document.getElementById('configFilterName').value = '';
+    trialConfigPage = 1;
     renderConfigTable();
   }
 
@@ -649,7 +674,15 @@
   }
 
   function renderTrialUserTable(list) {
-    document.getElementById('trialUserTableBody').innerHTML = list.map(function (u) {
+    const sliced = trialSlice(list, trialUserListPage);
+    trialUserListPage = sliced.page;
+    const tbody = document.getElementById('trialUserTableBody');
+    if (!sliced.items.length) {
+      tbody.innerHTML = '<tr><td colspan="10" class="px-4 py-12 text-center text-slate-400">未找到匹配用户</td></tr>';
+      trialMountPag('trial-user-pagination', sliced.total, trialUserListPage, 'trial-users');
+      return;
+    }
+    tbody.innerHTML = sliced.items.map(function (u) {
       const canRecycle = u.remaining > 0;
       const tagCls = u.riskWarn ? 'risk-tag-warn' : 'risk-tag-normal';
       return '<tr class="hover:bg-slate-50">' + userChipCell(u) +
@@ -662,7 +695,8 @@
     document.getElementById('userCouponTableBody').innerHTML = coupons.map(function (c) {
       const canRecycle = c.status === 'available' || c.status === 'used';
       return '<tr class="hover:bg-slate-50"><td class="px-4 py-3 font-mono font-bold">' + c.id + '</td><td class="px-3 py-3">' + c.total + ' U</td><td class="px-3 py-3 font-bold">' + c.balance + ' U</td><td class="px-3 py-3"><span class="status-tag status-' + c.status + '">' + statusText(c.status) + '</span></td><td class="px-3 py-3">' + c.group + '</td><td class="px-3 py-3">' + c.activity + '</td><td class="px-3 py-3 text-slate-500">' + c.issuedAt + '</td><td class="px-3 py-3 text-xs text-slate-500">' + c.activateDeadline + ' / ' + c.openDeadline + '</td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(c.lossUsed, c.lossLimit) + '</td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(c.feeUsed, c.feeLimit) + '</td><td class="px-4 py-3 text-right">' + (canRecycle ? '<button onclick="recycleSingleCoupon(\'' + c.id + '\')" class="text-red-600 font-bold">回收</button>' : '-') + '</td></tr>';
-    }).join('');
+    }).join('') : '<tr><td colspan="11" class="px-4 py-8 text-center text-slate-400">暂无卡券</td></tr>';
+    trialMountPag('trial-coupon-pagination', couponSliced.total, trialCouponPage, 'trial-coupons');
     let usageRows = [];
     coupons.forEach(function (c) {
       (COUPON_USAGE[c.id] || []).forEach(function (row) {
@@ -670,9 +704,12 @@
       });
     });
     usageRows.sort(function (a, b) { return b.time.localeCompare(a.time); });
-    document.getElementById('couponUsageTableBody').innerHTML = usageRows.length ? usageRows.map(function (r) {
+    const usageSliced = trialSlice(usageRows, trialUsagePage);
+    trialUsagePage = usageSliced.page;
+    document.getElementById('couponUsageTableBody').innerHTML = usageSliced.items.length ? usageSliced.items.map(function (r) {
       return '<tr><td class="px-4 py-3">' + r.time + '</td><td class="px-3 py-3 font-mono">' + r.couponId + '</td><td class="px-3 py-3">' + r.type + '</td><td class="px-3 py-3 font-bold">' + r.amount + '</td><td class="px-3 py-3 font-mono text-xs">' + r.order + '</td><td class="px-3 py-3 text-slate-500">' + r.note + '</td></tr>';
     }).join('') : '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">暂无使用流水</td></tr>';
+    trialMountPag('trial-usage-pagination', usageSliced.total, trialUsagePage, 'trial-usage');
   }
 
   function applyUserFilters() {
@@ -688,20 +725,30 @@
       if (status === 'in_use' && u.couponStatus !== 'used') return false;
       return true;
     });
+    trialUserListPage = 1;
     renderTrialUserTable(list);
   }
 
   function resetUserFilters() {
     ['userFilterUid', 'userFilterWallet', 'userFilterActivity'].forEach(function (id) { document.getElementById(id).value = ''; });
     document.getElementById('userFilterStatus').value = 'all';
+    trialUserListPage = 1;
     renderTrialUserTable(TRIAL_USERS);
   }
 
   function renderTrialLogs(list) {
-    document.getElementById('trialLogTableBody').innerHTML = list.map(function (log) {
-      const tagCls = log.type === '发放' ? 'log-tag-issue' : 'log-tag-recycle';
-      return '<tr class="hover:bg-slate-50"><td class="px-4 py-3">' + log.time + '</td><td class="px-3 py-3">' + log.operator + '</td><td class="px-3 py-3"><span class="status-tag ' + tagCls + '">' + log.type + '</span></td><td class="px-3 py-3 font-mono text-xs">' + log.user + '</td><td class="px-3 py-3">' + log.detail + '</td><td class="px-3 py-3 text-right font-bold">' + log.amount + '</td><td class="px-4 py-3 text-slate-500">' + log.remark + '</td></tr>';
-    }).join('');
+    const sliced = trialSlice(list, trialLogPage);
+    trialLogPage = sliced.page;
+    const logBody = document.getElementById('trialLogTableBody');
+    if (!sliced.items.length) {
+      logBody.innerHTML = '<tr><td colspan="7" class="px-4 py-12 text-center text-slate-400">暂无记录</td></tr>';
+    } else {
+      logBody.innerHTML = sliced.items.map(function (log) {
+        const tagCls = log.type === '发放' ? 'log-tag-issue' : 'log-tag-recycle';
+        return '<tr class="hover:bg-slate-50"><td class="px-4 py-3">' + log.time + '</td><td class="px-3 py-3">' + log.operator + '</td><td class="px-3 py-3"><span class="status-tag ' + tagCls + '">' + log.type + '</span></td><td class="px-3 py-3 font-mono text-xs">' + log.user + '</td><td class="px-3 py-3">' + log.detail + '</td><td class="px-3 py-3 text-right font-bold">' + log.amount + '</td><td class="px-4 py-3 text-slate-500">' + log.remark + '</td></tr>';
+      }).join('');
+    }
+    trialMountPag('trial-log-pagination', sliced.total, trialLogPage, 'trial-logs');
   }
 
   function applyLogFilters() {
@@ -714,12 +761,14 @@
       if (type !== 'all' && log.type !== type) return false;
       return true;
     });
+    trialLogPage = 1;
     renderTrialLogs(list);
   }
 
   function resetLogFilters() {
     ['logFilterUser', 'logFilterOperator'].forEach(function (id) { document.getElementById(id).value = ''; });
     document.getElementById('logFilterType').value = 'all';
+    trialLogPage = 1;
     renderTrialLogs(TRIAL_LOGS);
   }
 
@@ -865,6 +914,13 @@
   }
   function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
+  if (window.AdminPagination) {
+    AdminPagination.register('trial-config', function (p) { trialConfigPage = p; renderConfigTable(); });
+    AdminPagination.register('trial-users', function (p) { trialUserListPage = p; applyUserFilters(); });
+    AdminPagination.register('trial-logs', function (p) { trialLogPage = p; applyLogFilters(); });
+    AdminPagination.register('trial-coupons', function (p) { trialCouponPage = p; if (currentDetailUid) renderUserCoupons(currentDetailUid); });
+    AdminPagination.register('trial-usage', function (p) { trialUsagePage = p; if (currentDetailUid) renderUserCoupons(currentDetailUid); });
+  }
   renderConfigTable();
   renderCardGroupSelector();
   renderTrialUserTable(TRIAL_USERS);

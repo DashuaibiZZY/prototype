@@ -1,5 +1,5 @@
 /**
- * 后台统一列表分页：< 1 2 3 ... N >
+ * 后台统一列表分页：< 1 2 3 ... N >（无数据时也展示分页器）
  */
 (function () {
     const PAGE_SIZE = 10;
@@ -7,17 +7,19 @@
 
     function totalPages(total, pageSize) {
         pageSize = pageSize || PAGE_SIZE;
-        return Math.max(1, Math.ceil(total / pageSize));
+        return Math.max(1, Math.ceil((total || 0) / pageSize) || 1);
     }
 
     function clampPage(page, total, pageSize) {
-        return Math.max(1, Math.min(page, totalPages(total, pageSize)));
+        pageSize = pageSize || PAGE_SIZE;
+        if (!total) return 1;
+        return Math.max(1, Math.min(page || 1, totalPages(total, pageSize)));
     }
 
     function slice(items, page, pageSize) {
         pageSize = pageSize || PAGE_SIZE;
         const total = items.length;
-        const p = clampPage(page || 1, total, pageSize);
+        const p = clampPage(page, total, pageSize);
         const start = (p - 1) * pageSize;
         return { items: items.slice(start, start + pageSize), page: p, total: total, pageSize: pageSize };
     }
@@ -43,10 +45,9 @@
     }
 
     function buildHtml(total, page, pageSize, handlerId) {
-        if (!total) return '';
         pageSize = pageSize || PAGE_SIZE;
         const pages = totalPages(total, pageSize);
-        page = clampPage(page, total, pageSize);
+        page = total > 0 ? clampPage(page, total, pageSize) : 1;
         let html = '<div class="admin-pagination flex items-center justify-center gap-1 py-3 text-[11px]">';
         html += '<button type="button" class="px-2.5 py-1 rounded border border-slate-200 font-bold text-slate-600 hover:bg-slate-50' +
             (page <= 1 ? ' opacity-40 pointer-events-none' : '') +
@@ -62,14 +63,14 @@
             }
         });
         html += '<button type="button" class="px-2.5 py-1 rounded border border-slate-200 font-bold text-slate-600 hover:bg-slate-50' +
-            (page >= pages ? ' opacity-40 pointer-events-none' : '') +
+            (page >= pages || !total ? ' opacity-40 pointer-events-none' : '') +
             '" onclick="adminPaginationGo(\'' + handlerId + '\',' + (page + 1) + ')">&gt;</button>';
         html += '</div>';
         return html;
     }
 
     window.adminPaginationGo = function (handlerId, page) {
-        if (handlers[handlerId]) handlers[handlerId](page);
+        if (handlers[handlerId]) handlers[handlerId](Math.max(1, page));
     };
 
     window.AdminPagination = {

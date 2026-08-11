@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-14';
+    const DATA_VERSION = 'partner-demo-17';
 
     function chip(v, type) {
         if (!v || v === '—' || v === '--') return '<span class="text-slate-400">' + (v || '—') + '</span>';
@@ -242,6 +242,8 @@
     let migrateAttachments = [];
     const MIGRATE_TREE_PAGE_SIZE = 10;
     let treeFocusId = null;
+    let treeEntryId = null;
+    let treeBranchPage = 1;
     let treeExpandedNodes = new Set();
     let treeHighlightId = null;
     let listFilterStatus = 'all';
@@ -396,107 +398,138 @@
         return '<button type="button" class="tree-expand-btn" onclick="PartnerPortal.toggleTreeExpand(\'' + userId + '\')" title="' + childCount + ' 个直属下级" aria-label="展开下级">' + (expanded ? '−' : '+') + '</button>';
     }
 
-    /** 上级链固定全展示；下级仅直接下级，点击 + 逐级展开 */
-    function renderRebateTree(focusId) {
-        const focus = getUser(focusId);
-        if (!focus) return '';
+    /** 返佣树：对齐迁移树 — 主体固定 + 直接下级支路分页，定位不切换为单一路径 */
+    function renderAncestorChainBar(u) {
+        const chain = getAncestorChain(u);
+        if (!chain.length && u.level === 1) return '';
+        let html = '<p class="text-[10px] text-slate-500 mb-3 bg-white border border-slate-100 rounded p-2"><span class="font-bold text-slate-600">上级链：</span> ';
+        chain.forEach(function (a, i) {
+            html += chip(a.wallet, 'wallet');
+            if (i < chain.length - 1) html += '<span class="text-slate-300 mx-1">→</span>';
+        });
+        if (chain.length) html += '<span class="text-slate-300 mx-1">→</span>';
+        html += chip(u.wallet, 'wallet');
+        html += '</p>';
+        return html;
+    }
 
-        function renderLazyDown(parentId) {
-            const parent = getUser(parentId);
-            const childIds = parent.childIds || [];
-            if (!childIds.length) return '';
-            let h = '<div class="tree-children mt-2 space-y-2">';
-            childIds.forEach(function (cid) { h += renderDownNode(cid); });
+    function renderTreeBranchNode(userId, depth) {
+        const u = getUser(userId);
+        if (!u) return '';
+        const childIds = u.childIds || [];
+        const hasKids = childIds.length > 0;
+        const expanded = treeExpandedNodes.has(userId);
+        let h = '<div class="tree-node-down mb-2">';
+        h += '<div class="flex items-start gap-1">';
+        h += hasKids ? renderExpandToggle(userId, expanded, childIds.length) : '<span class="w-6 shrink-0"></span>';
+        h += '<div class="flex-1">' + renderNodeCard(u, { highlight: userId === treeHighlightId }) + '</div>';
+        h += '</div>';
+        if (hasKids && expanded) {
+            h += '<div class="tree-children ml-4 mt-1 space-y-2">';
+            childIds.forEach(function (cid) { h += renderTreeBranchNode(cid, depth + 1); });
             h += '</div>';
-            return h;
         }
+        h += '</div>';
+        return h;
+    }
 
-        function renderDownNode(userId) {
-            const u = getUser(userId);
-            if (!u) return '';
-            const childIds = u.childIds || [];
-            const hasKids = childIds.length > 0;
-            const expanded = treeExpandedNodes.has(userId);
-            let h = '<div class="tree-node-down">';
-            h += '<div class="flex items-start gap-1">';
-            h += hasKids ? renderExpandToggle(userId, expanded, childIds.length) : '<span class="w-6 shrink-0"></span>';
-            h += '<div class="flex-1">' + renderNodeCard(u, {
-                isFocus: userId === focusId,
-                highlight: userId === treeHighlightId
-            }) + '</div>';
-            h += '</div>';
-            if (hasKids && expanded) h += renderLazyDown(userId);
-            h += '</div>';
-            return h;
+    function renderRebateTree(entryId) {
+        const entry = getUser(entryId);
+        if (!entry) return '';
+        let html = renderAncestorChainBar(entry);
+        html += '<div class="bg-slate-50 border rounded-lg p-3">';
+        html += '<div class="flex items-start gap-1 mb-2">';
+        html += '<span class="w-6 shrink-0"></span>';
+        html += '<div class="flex-1">' + renderNodeCard(entry, {
+            isFocus: true,
+            highlight: entry.id === treeHighlightId
+        }) + '</div></div>';
+        const directIds = entry.childIds || [];
+        const branchPag = paginate(directIds, treeBranchPage);
+        treeBranchPage = branchPag.page;
+        if (directIds.length) {
+            html += '<div class="mt-3 border-t pt-3">';
+            html += '<p class="text-[10px] font-bold text-slate-500 mb-2">直接下级支路（本页 ' + branchPag.items.length + ' / 总 ' + directIds.length + '）</p>';
+            branchPag.items.forEach(function (cid) { html += renderTreeBranchNode(cid, 1); });
+            html += '<div id="rebate-tree-branch-pagination"></div></div>';
         }
-
-        function renderPathFromRoot(userId, depth) {
-            const u = getUser(userId);
-            if (!u) return '';
-            const isFocus = userId === focusId;
-            const wrapCls = depth > 0 ? 'tree-children mt-2' : '';
-            let h = '<div class="' + wrapCls + '">';
-            h += renderNodeCard(u, {
-                isFocus: isFocus,
-                highlight: userId === treeHighlightId
-            });
-            if (isFocus) {
-                h += renderLazyDown(userId);
-            } else {
-                const pathChild = childOnPathToFocus(u, focusId);
-                if (pathChild) h += renderPathFromRoot(pathChild, depth + 1);
-            }
-            h += '</div>';
-            return h;
-        }
-
-        const ancestors = getAncestorChain(focus);
-        const rootId = ancestors.length ? ancestors[0].id : focusId;
-        return '<div class="space-y-2">' + renderPathFromRoot(rootId, 0) + '</div>';
+        html += '</div>';
+        return html;
     }
 
     function refreshTree() {
         const root = document.getElementById('rebate-tree-root');
-        if (!root || !treeFocusId) return;
-        root.innerHTML = renderRebateTree(treeFocusId);
-        const highlightId = treeHighlightId;
-        if (highlightId) {
-            const el = document.getElementById('tree-node-' + highlightId);
+        if (!root || !treeEntryId) return;
+        root.innerHTML = renderRebateTree(treeEntryId);
+        const entry = getUser(treeEntryId);
+        if (entry) {
+            mountListPagination('rebate-tree-branch-pagination', (entry.childIds || []).length, treeBranchPage, 'rebate-tree-branches');
+        }
+        if (treeHighlightId) {
+            const el = document.getElementById('tree-node-' + treeHighlightId);
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
 
-    function focusTreeOnUser(userId) {
+    function locateInRebateTree(userId) {
         const user = getUser(userId);
         if (!user) return false;
-        treeFocusId = userId;
+        let entryId = treeEntryId || resolveTreeEntryId(userId);
+        const entry = getUser(entryId);
+        if (!entry || user.rootWallet !== entry.rootWallet) {
+            entryId = resolveTreeEntryId(userId);
+        } else if (userId !== entryId && !isDescendantOf(entryId, userId)) {
+            entryId = resolveTreeEntryId(userId);
+        }
+        treeEntryId = entryId;
+        const entryNow = getUser(treeEntryId);
+        if (!entryNow) return false;
+        treeFocusId = treeEntryId;
         treeHighlightId = userId;
         treeExpandedNodes = new Set();
-        getAncestorChain(user).forEach(function (a) {
-            (a.childIds || []).forEach(function (cid) {
-                if (cid === user.id || isDescendantOf(cid, user.id)) treeExpandedNodes.add(a.id);
-            });
+
+        const path = [];
+        let u = user;
+        while (u && u.id !== entryNow.id) {
+            path.unshift(u);
+            u = u.parentWallet ? getUserByWallet(u.parentWallet) : null;
+        }
+        path.forEach(function (node, i) {
+            if (i < path.length - 1 && (node.childIds || []).length) treeExpandedNodes.add(node.id);
         });
-        document.getElementById('tree-title').textContent = user.note + ' · 返佣树';
-        const abnSec = document.getElementById('tree-abnormal-section');
-        if (abnSec) abnSec.innerHTML = renderAbnormalSection(user.rootWallet);
+        if (path.length) {
+            const directBranch = path[0];
+            const siblings = entryNow.childIds || [];
+            const idx = siblings.indexOf(directBranch.id);
+            const pageSize = window.AdminPagination ? AdminPagination.PAGE_SIZE : 10;
+            if (idx >= 0) treeBranchPage = Math.floor(idx / pageSize) + 1;
+        }
         refreshTree();
         return true;
+    }
+
+    function focusTreeOnUser(userId) {
+        return locateInRebateTree(userId);
     }
 
     function searchRebateTree() {
         const input = document.getElementById('tree-search-input');
         const q = input && input.value;
-        const focus = getUser(treeFocusId);
-        if (!q || !focus) return;
+        const entry = getUser(treeEntryId);
+        if (!q || !entry) return;
         const found = USERS.find(function (u) {
-            return u.rootWallet === focus.rootWallet && matchWalletOrUid(q, u.wallet, u.uid);
+            return u.rootWallet === entry.rootWallet && matchWalletOrUid(q, u.wallet, u.uid);
         });
         if (!found) {
-            alert('未在当前一级伞（' + focus.rootWallet + '）内找到匹配的钱包或 UID');
+            alert('未在当前一级伞（' + entry.rootWallet + '）内找到匹配的钱包或 UID');
             return;
         }
-        focusTreeOnUser(found.id);
+        locateInRebateTree(found.id);
+    }
+
+    function setRebateTreeBranchPage(p) {
+        treeBranchPage = Math.max(1, p);
+        refreshTree();
     }
 
     function toggleTreeExpand(userId) {
@@ -677,18 +710,33 @@
         }
     }
 
+    function resolveTreeEntryId(userId) {
+        const u = getUser(userId);
+        if (!u) return userId;
+        const chain = getAncestorChain(u);
+        if (chain.length) return chain[0].id;
+        if (u.level === 1) return u.id;
+        const l1 = USERS.find(function (x) { return x.wallet === u.rootWallet && x.level === 1; });
+        return l1 ? l1.id : userId;
+    }
+
     function showTree(id) {
         const u = getUser(id);
         if (!u) return;
         currentUserId = id;
-        treeFocusId = id;
+        treeEntryId = resolveTreeEntryId(id);
+        treeFocusId = treeEntryId;
         treeHighlightId = null;
+        treeBranchPage = 1;
         treeExpandedNodes = new Set();
         window.PartnerPortal_showPage('page-rebate-tree');
-        document.getElementById('tree-title').textContent = u.note + ' · 返佣树';
+        const entry = getUser(treeEntryId);
+        const titleSuffix = entry && entry.id !== u.id ? u.note + ' · ' + entry.note : (entry ? entry.note : u.note);
+        document.getElementById('tree-title').textContent = titleSuffix + ' · 返佣树';
         const abnSec = document.getElementById('tree-abnormal-section');
         if (abnSec) abnSec.innerHTML = renderAbnormalSection(u.rootWallet);
-        document.getElementById('rebate-tree-root').innerHTML = renderRebateTree(id);
+        refreshTree();
+        if (id !== treeEntryId) locateInRebateTree(id);
         renderPendingChangesBar();
         if (location.hash.indexOf('rebate-tree') === -1) location.hash = 'rebate-tree';
     }
@@ -700,8 +748,18 @@
         if (!child) return;
         closeAbnormalModal();
         currentUserId = child.id;
-        window.PartnerPortal_showPage('page-rebate-tree');
-        focusTreeOnUser(child.id);
+        const l1 = USERS.find(function (u) { return u.wallet === record.rootWallet && u.level === 1; }) ||
+            USERS.find(function (u) { return u.wallet === record.rootWallet; });
+        const needOpen = !treeEntryId || !getUser(treeEntryId) || getUser(treeEntryId).rootWallet !== record.rootWallet;
+        if (needOpen) {
+            showTree(l1 ? l1.id : child.id);
+        } else {
+            window.PartnerPortal_showPage('page-rebate-tree');
+            const abnSec = document.getElementById('tree-abnormal-section');
+            if (abnSec) abnSec.innerHTML = renderAbnormalSection(record.rootWallet);
+        }
+        document.getElementById('tree-title').textContent = child.note + ' · 修正返佣';
+        locateInRebateTree(child.id);
         renderPendingChangesBar();
         location.hash = 'rebate-tree';
     }
@@ -1355,9 +1413,9 @@
     }
 
     function applyHashTree() {
-        const hash = (location.hash || '').replace('#', '');
-        if (hash.indexOf('rebate-tree') === 0 && (currentUserId || treeFocusId)) {
-            showTree(currentUserId || treeFocusId);
+        const hash = (location.hash || '').replace('#', '').split('?')[0];
+        if (hash === 'rebate-tree' && (currentUserId || treeEntryId || treeFocusId)) {
+            showTree(currentUserId || treeEntryId || treeFocusId);
         }
     }
 
@@ -1742,11 +1800,10 @@
         }
         if (p.type === 'plain') {
             const clients = p.directClients;
-            const page = migrateState.clientsPage || 1;
-            const slice = paginate(clients, page).items;
-            migrateState.clientsPage = paginate(clients, page).page;
+            const clientPag = paginate(clients, migrateState.clientsPage || 1);
+            migrateState.clientsPage = clientPag.page;
             html += '<div class="mt-3"><p class="font-bold text-slate-600 mb-2">直客（一并迁移）</p><ul class="space-y-1">';
-            slice.forEach(function (c) {
+            clientPag.items.forEach(function (c) {
                 html += '<li>' + chip(c.wallet, 'wallet') + (c.uid ? ' · ' + chip(c.uid, 'uid') : '') + '</li>';
             });
             html += '</ul><div id="migrate-clients-pagination"></div></div>';
@@ -2062,6 +2119,114 @@
         showMigratePage();
     }
 
+    const PARTNER_APP_TYPES = ['partner_l1_bind', 'partner_ratio_change', 'partner_rebate_migrate'];
+    const PARTNER_TYPE_LABELS = {
+        partner_l1_bind: '一级合伙人绑定',
+        partner_ratio_change: '返佣比例调整',
+        partner_rebate_migrate: '返佣关系迁移'
+    };
+    const PARTNER_OP_TYPE_LABELS = {
+        submit: '提交审批',
+        cross_pass: '交叉审核通过',
+        risk_pass: '风控审核通过',
+        boss_pass: '老板审批通过',
+        reject: '审批驳回',
+        ratio_change: '返佣比例调整',
+        migrate: '返佣关系迁移',
+        bind: '一级合伙人绑定'
+    };
+
+    function mapTimelineToOpType(action, appType) {
+        const a = action || '';
+        if (a.indexOf('驳回') >= 0 || a.indexOf('拒绝') >= 0) return 'reject';
+        if (a.indexOf('老板') >= 0 && a.indexOf('通过') >= 0) return 'boss_pass';
+        if (a.indexOf('风控') >= 0 && a.indexOf('通过') >= 0) return 'risk_pass';
+        if (a.indexOf('交叉') >= 0 && a.indexOf('通过') >= 0) return 'cross_pass';
+        if (a.indexOf('提交') >= 0) {
+            if (appType === 'partner_rebate_migrate') return 'migrate';
+            if (appType === 'partner_l1_bind') return 'bind';
+            if (appType === 'partner_ratio_change') return 'ratio_change';
+            return 'submit';
+        }
+        return 'submit';
+    }
+
+    const PARTNER_OP_LOG_SEEDS = [
+        { time: '2026-08-11 09:20', operator: 'Mkt_Allen', opType: 'migrate', opLabel: '提交·返佣关系迁移', appId: 'APR20260811002', typeLabel: '返佣关系迁移', summary: '0xMig...Ok → 0xTo...L1 · 48%', note: '正常代理整伞迁移' },
+        { time: '2026-08-11 08:45', operator: 'Mkt_Allen', opType: 'ratio_change', opLabel: '提交·返佣比例调整', appId: 'APR20260811004', typeLabel: '合伙人返佣比例调整', summary: '0xNorm...L3 45%', note: '渠道协商下调' },
+        { time: '2026-08-10 16:30', operator: 'Risk_Control', opType: 'risk_pass', opLabel: '风控审核通过', appId: 'APR20260810003', typeLabel: '一级合伙人绑定', summary: '0xNew...L1 72%', note: '' },
+        { time: '2026-08-10 11:00', operator: 'Boss', opType: 'boss_pass', opLabel: '老板审批通过', appId: 'APR20260810003', typeLabel: '一级合伙人绑定', summary: '0xNew...L1 72%', note: 'Lark 同步通过' },
+        { time: '2026-08-09 14:22', operator: 'Mkt_Cross', opType: 'reject', opLabel: '审批驳回', appId: 'APR20260809001', typeLabel: '返佣关系迁移', summary: '0xAbn...L4 迁移申请', note: '倒挂未修正，请调整后重提' }
+    ];
+
+    function collectPartnerOpLogs() {
+        const logs = [];
+        const seen = new Set();
+        try {
+            const apps = JSON.parse(localStorage.getItem('forx_approval_applications') || '[]');
+            apps.forEach(function (app) {
+                if (PARTNER_APP_TYPES.indexOf(app.type) === -1) return;
+                (app.timeline || []).forEach(function (t) {
+                    const opType = mapTimelineToOpType(t.action, app.type);
+                    const key = app.id + '|' + t.at + '|' + t.action;
+                    if (seen.has(key)) return;
+                    seen.add(key);
+                    logs.push({
+                        time: t.at,
+                        operator: t.actor,
+                        opType: opType,
+                        opLabel: PARTNER_OP_TYPE_LABELS[opType] || t.action,
+                        action: t.action,
+                        appId: app.id,
+                        appType: app.type,
+                        typeLabel: PARTNER_TYPE_LABELS[app.type] || app.type,
+                        summary: app.summary || '',
+                        note: t.note || ''
+                    });
+                });
+            });
+        } catch (e) { /* ignore */ }
+        PARTNER_OP_LOG_SEEDS.forEach(function (s) {
+            const key = s.appId + '|' + s.time + '|' + s.opLabel;
+            if (!seen.has(key)) logs.push(s);
+        });
+        logs.sort(function (a, b) { return (b.time || '').localeCompare(a.time || ''); });
+        return logs;
+    }
+
+    let partnerOpLogsPage = 1;
+
+    function showPartnerLogsPage() {
+        partnerOpLogsPage = 1;
+        window.PartnerPortal_showPage('page-partner-logs');
+        const typeSel = document.getElementById('partner-logs-filter-type');
+        if (typeSel) typeSel.value = 'all';
+        renderPartnerOpLogs();
+    }
+
+    function renderPartnerOpLogs() {
+        const typeSel = document.getElementById('partner-logs-filter-type');
+        const type = typeSel ? typeSel.value : 'all';
+        let list = collectPartnerOpLogs();
+        if (type !== 'all') list = list.filter(function (l) { return l.opType === type; });
+        const sliced = paginate(list, partnerOpLogsPage);
+        partnerOpLogsPage = sliced.page;
+        const tbody = document.getElementById('partner-logs-body');
+        if (!tbody) return;
+        tbody.innerHTML = sliced.items.length ? sliced.items.map(function (l) {
+            const badgeCls = l.opType === 'reject' ? 'bg-red-100 text-red-700' :
+                (l.opType.indexOf('pass') >= 0 ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800');
+            return '<tr class="hover:bg-slate-50"><td class="px-4 py-3 text-slate-500 text-[11px]">' + l.time + '</td>' +
+                '<td class="px-3 py-3 font-bold">' + l.operator + '</td>' +
+                '<td class="px-3 py-3"><span class="' + badgeCls + ' px-2 py-0.5 rounded text-[10px] font-black">' + l.opLabel + '</span></td>' +
+                '<td class="px-3 py-3 font-mono text-[10px] font-bold">' + (l.appId || '—') + '</td>' +
+                '<td class="px-3 py-3 text-[10px] text-slate-600">' + (l.typeLabel || '—') + '</td>' +
+                '<td class="px-3 py-3 text-[11px]">' + (l.summary || '—') + '</td>' +
+                '<td class="px-3 py-3 text-[10px] text-slate-500">' + (l.note || '—') + '</td></tr>';
+        }).join('') : '<tr><td colspan="7" class="px-4 py-12 text-center text-slate-400">暂无操作记录</td></tr>';
+        mountListPagination('partner-logs-pagination', sliced.total, partnerOpLogsPage, 'partner-logs');
+    }
+
     window.PartnerPortal = {
         showList: showList, showDetail: showDetail, showTree: showTree,
         fixAbnormalRebate: fixAbnormalRebate, openAbnormalModal: openAbnormalModal,
@@ -2089,6 +2254,9 @@
         jumpToMigrateInversion: jumpToMigrateInversion,
         searchRebateTree: searchRebateTree,
         searchMigrateTree: searchMigrateTree,
+        setRebateTreeBranchPage: setRebateTreeBranchPage,
+        showPartnerLogsPage: showPartnerLogsPage,
+        renderPartnerOpLogs: renderPartnerOpLogs,
         handleMigrateAttachmentFiles: handleMigrateAttachmentFiles,
         removeMigrateAttachment: removeMigrateAttachment,
         getCurrentUserId: function () { return currentUserId; },
@@ -2118,6 +2286,8 @@
             AdminPagination.register('settlement-supplement', function (p) { supplementDetailPage = p; renderSettlementSupplementRows(); });
             AdminPagination.register('migrate-tree-branches', function (p) { migrateState.treePage = p; renderMigratePreviewContent(); });
             AdminPagination.register('migrate-clients', function (p) { migrateState.clientsPage = p; renderMigratePreviewContent(); });
+            AdminPagination.register('rebate-tree-branches', function (p) { setRebateTreeBranchPage(p); });
+            AdminPagination.register('partner-logs', function (p) { partnerOpLogsPage = p; renderPartnerOpLogs(); });
         }
         renderPartnerList();
         filterSettlementBatches();

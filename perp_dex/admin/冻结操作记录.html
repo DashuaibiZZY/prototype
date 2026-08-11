@@ -66,10 +66,12 @@
                 </thead>
                 <tbody id="logTableBody" class="divide-y divide-slate-50 text-[12px]"></tbody>
             </table>
+            <div id="freeze-log-pagination"></div>
         </section>
     </div>
 </main>
 
+<script src="admin-pagination.js"></script>
 <script>
     const FREEZE_LOG_KEY = 'forx_freeze_operation_logs';
     const SEED_LOGS = [
@@ -85,14 +87,31 @@
     }
 
     let filteredLogs = [];
+    let freezeLogPage = 1;
+
+    function freezeLogSlice(items, page) {
+        if (window.AdminPagination) return AdminPagination.slice(items, page);
+        const pageSize = 10;
+        const total = items.length;
+        const p = Math.max(1, Math.min(page || 1, Math.max(1, Math.ceil(total / pageSize) || 1)));
+        const start = (p - 1) * pageSize;
+        return { items: items.slice(start, start + pageSize), page: p, total: total, pageSize: pageSize };
+    }
+
+    function freezeLogMountPag(containerId, total, page, handlerId) {
+        if (window.AdminPagination) AdminPagination.mount(containerId, total, page, handlerId);
+    }
 
     function renderTable() {
         const tbody = document.getElementById('logTableBody');
+        const sliced = freezeLogSlice(filteredLogs, freezeLogPage);
+        freezeLogPage = sliced.page;
         if (!filteredLogs.length) {
             tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">暂无记录</td></tr>';
+            freezeLogMountPag('freeze-log-pagination', 0, 1, 'freeze-logs');
             return;
         }
-        tbody.innerHTML = filteredLogs.map(l => `
+        tbody.innerHTML = sliced.items.map(l => `
             <tr class="hover:bg-slate-50">
                 <td class="px-5 py-4 font-mono text-[11px] text-slate-600">${l.time}</td>
                 <td class="px-4 py-4 font-bold text-slate-700">${l.operator}</td>
@@ -102,6 +121,7 @@
                 <td class="px-5 py-4 text-[11px] text-slate-500">${l.remark}</td>
             </tr>
         `).join('');
+        freezeLogMountPag('freeze-log-pagination', sliced.total, freezeLogPage, 'freeze-logs');
     }
 
     function applyFilters() {
@@ -114,6 +134,7 @@
             if (action !== 'all' && l.action !== action) return false;
             return true;
         });
+        freezeLogPage = 1;
         renderTable();
     }
 
@@ -122,12 +143,16 @@
         document.getElementById('filterOperator').value = '';
         document.getElementById('filterAction').value = 'all';
         filteredLogs = [...allLogs];
+        freezeLogPage = 1;
         renderTable();
     }
 
     loadLogs();
     filteredLogs = [...allLogs];
     renderTable();
+    if (window.AdminPagination) {
+        AdminPagination.register('freeze-logs', function (p) { freezeLogPage = p; renderTable(); });
+    }
 </script>
 <script src="admin-permission-registry.js"></script>
 <script src="admin-permission-store.js"></script>

@@ -98,6 +98,7 @@
                     </thead>
                     <tbody id="userTableBody" class="divide-y divide-slate-50 text-[12px]"></tbody>
                 </table>
+                <div id="fee-user-pagination"></div>
             </div>
         </section>
     </div>
@@ -238,6 +239,20 @@
     let currentUserId = null;
     let draftConfig = null;
     let uploadState = { proof: null, proofDataUrl: null };
+    let feeUserListPage = 1;
+
+    function feeSlice(items, page) {
+        if (window.AdminPagination) return AdminPagination.slice(items, page);
+        const pageSize = 10;
+        const total = items.length;
+        const p = Math.max(1, Math.min(page || 1, Math.max(1, Math.ceil(total / pageSize) || 1)));
+        const start = (p - 1) * pageSize;
+        return { items: items.slice(start, start + pageSize), page: p, total: total, pageSize: pageSize };
+    }
+
+    function feeMountPag(containerId, total, page, handlerId) {
+        if (window.AdminPagination) AdminPagination.mount(containerId, total, page, handlerId);
+    }
 
     function calcVolumeTier(volume14d) {
         if (volume14d >= 500000000) return 4;
@@ -305,12 +320,15 @@
 
     function renderUserTable() {
         const tbody = document.getElementById('userTableBody');
+        const sliced = feeSlice(filteredUsers, feeUserListPage);
+        feeUserListPage = sliced.page;
         document.getElementById('userCount').textContent = `(${filteredUsers.length})`;
         if (!filteredUsers.length) {
             tbody.innerHTML = '<tr><td colspan="10" class="px-6 py-12 text-center text-slate-400">未找到匹配用户</td></tr>';
+            feeMountPag('fee-user-pagination', 0, 1, 'fee-users');
             return;
         }
-        tbody.innerHTML = filteredUsers.map(u => `
+        tbody.innerHTML = sliced.items.map(u => `
             <tr class="hover:bg-slate-50">
                 <td class="px-4 py-4">${window.AdminCopyChip ? AdminCopyChip.uid(u.uid) : u.uid}</td>
                 <td class="px-3 py-4">${window.AdminCopyChip ? AdminCopyChip.wallet(u.wallet) : u.wallet}</td>
@@ -328,6 +346,7 @@
                 </td>
             </tr>
         `).join('');
+        feeMountPag('fee-user-pagination', sliced.total, feeUserListPage, 'fee-users');
     }
 
     function matchLevelFilter(u, levelFilter) {
@@ -346,6 +365,7 @@
             if (!matchLevelFilter(u, levelFilter)) return false;
             return true;
         });
+        feeUserListPage = 1;
         renderUserTable();
     }
 
@@ -353,6 +373,7 @@
         document.getElementById('filterUser').value = '';
         document.getElementById('filterLevel').value = 'all';
         filteredUsers = [...users];
+        feeUserListPage = 1;
         renderUserTable();
     }
 
@@ -566,8 +587,12 @@
 
     renderVipRefTable();
     renderUserTable();
+    if (window.AdminPagination) {
+        AdminPagination.register('fee-users', function (p) { feeUserListPage = p; renderUserTable(); });
+    }
 </script>
 <script src="admin-approval.js"></script>
+<script src="admin-pagination.js"></script>
 <script src="admin-activity-picker.js"></script>
 <script src="admin-approval-ui.js"></script>
 <script src="admin-permission-registry.js"></script>

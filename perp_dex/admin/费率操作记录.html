@@ -69,10 +69,12 @@
                 </thead>
                 <tbody id="logTableBody" class="divide-y divide-slate-50 text-[12px]"></tbody>
             </table>
+            <div id="fee-log-pagination"></div>
         </section>
     </div>
 </main>
 
+<script src="admin-pagination.js"></script>
 <script>
     const FEE_LOG_KEY = 'forx_fee_operation_logs';
     const SEED_LOGS = [
@@ -90,6 +92,20 @@
     }
 
     let filteredLogs = [];
+    let feeLogPage = 1;
+
+    function feeLogSlice(items, page) {
+        if (window.AdminPagination) return AdminPagination.slice(items, page);
+        const pageSize = 10;
+        const total = items.length;
+        const p = Math.max(1, Math.min(page || 1, Math.max(1, Math.ceil(total / pageSize) || 1)));
+        const start = (p - 1) * pageSize;
+        return { items: items.slice(start, start + pageSize), page: p, total: total, pageSize: pageSize };
+    }
+
+    function feeLogMountPag(containerId, total, page, handlerId) {
+        if (window.AdminPagination) AdminPagination.mount(containerId, total, page, handlerId);
+    }
 
     function actionTag(action) {
         const cls = action === '撤销费率设置' ? 'action-revoke' : 'action-config';
@@ -98,11 +114,14 @@
 
     function renderTable() {
         const tbody = document.getElementById('logTableBody');
+        const sliced = feeLogSlice(filteredLogs, feeLogPage);
+        feeLogPage = sliced.page;
         if (!filteredLogs.length) {
             tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-slate-400">暂无记录</td></tr>';
+            feeLogMountPag('fee-log-pagination', 0, 1, 'fee-logs');
             return;
         }
-        tbody.innerHTML = filteredLogs.map(l => `
+        tbody.innerHTML = sliced.items.map(l => `
             <tr class="hover:bg-slate-50">
                 <td class="px-5 py-4 font-mono text-[11px] text-slate-600">${l.time}</td>
                 <td class="px-4 py-4 font-bold text-slate-700">${l.operator}</td>
@@ -113,6 +132,7 @@
                 <td class="px-5 py-4 text-[10px] text-blue-600">${l.attachments || '—'}</td>
             </tr>
         `).join('');
+        feeLogMountPag('fee-log-pagination', sliced.total, feeLogPage, 'fee-logs');
     }
 
     function applyFilters() {
@@ -125,6 +145,7 @@
             if (action !== 'all' && l.action !== action) return false;
             return true;
         });
+        feeLogPage = 1;
         renderTable();
     }
 
@@ -133,12 +154,16 @@
         document.getElementById('filterOperator').value = '';
         document.getElementById('filterAction').value = 'all';
         filteredLogs = [...allLogs];
+        feeLogPage = 1;
         renderTable();
     }
 
     loadLogs();
     filteredLogs = [...allLogs];
     renderTable();
+    if (window.AdminPagination) {
+        AdminPagination.register('fee-logs', function (p) { feeLogPage = p; renderTable(); });
+    }
 </script>
 <script src="admin-permission-registry.js"></script>
 <script src="admin-permission-store.js"></script>
