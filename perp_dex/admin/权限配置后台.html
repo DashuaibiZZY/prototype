@@ -85,6 +85,7 @@
           </thead>
           <tbody id="staffTableBody"></tbody>
         </table>
+        <div id="staff-table-pagination"></div>
       </div>
     </div>
 
@@ -203,6 +204,7 @@
 <script src="admin-permission-store.js"></script>
 <script src="admin-permissions.js"></script>
 <script src="admin-copy-chip.js"></script>
+<script src="admin-pagination.js"></script>
 <script src="admin-sidebar.js"></script>
 <script>
 (function () {
@@ -227,6 +229,17 @@
     return id === 'super_admin' ? '超级管理员' : '普通操作人员';
   }
 
+  var staffListPage = 1;
+
+  function permSlice(items, page) {
+    if (window.AdminPagination) return AdminPagination.slice(items, page);
+    return { items: items, page: 1, total: items.length };
+  }
+
+  function permMountPag(containerId, total, page, handlerId) {
+    if (window.AdminPagination) AdminPagination.mount(containerId, total, page, handlerId);
+  }
+
   function showPermTab(tab) {
     $('page-staff').classList.toggle('hidden', tab !== 'staff');
     $('page-groups').classList.toggle('hidden', tab !== 'groups');
@@ -246,9 +259,12 @@
     $('page-subtitle').textContent = '共 ' + (store.users || []).length + ' 人（启用 ' + activeCount + '）· 编辑页面读/写；敏感操作组独立维护';
     if (!store.users || !store.users.length) {
       tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-8 text-center text-slate-400">暂无人员，请点击右上角「恢复默认配置」加载模拟数据</td></tr>';
+      permMountPag('staff-table-pagination', 0, 1, 'perm-staff');
       return;
     }
-    tbody.innerHTML = store.users.map(function (u) {
+    var sliced = permSlice(store.users, staffListPage);
+    staffListPage = sliced.page;
+    tbody.innerHTML = sliced.items.map(function (u) {
       var st = u.status === 'active' ? '<span class="status-tag status-on">启用</span>' : '<span class="status-tag status-off">停用</span>';
       var ga = u.gaBound ? '<span class="text-emerald-600 font-bold">已绑定</span>' : '<span class="text-amber-600 font-bold">待绑定</span>';
       var idHtml = isSuperAdmin(u) ? '<span class="text-violet-700 font-bold">超级管理员</span>' : '<span>普通操作人员</span>';
@@ -278,6 +294,7 @@
     tbody.querySelectorAll('.btn-on').forEach(function (btn) {
       btn.addEventListener('click', function () { toggleStatus(btn.getAttribute('data-on'), 'active'); });
     });
+    permMountPag('staff-table-pagination', sliced.total, staffListPage, 'perm-staff');
   }
 
   function buildPermTables(disableAll) {
@@ -592,6 +609,9 @@
       return;
     }
     loadPermissionStore();
+    if (window.AdminPagination) {
+      AdminPagination.register('perm-staff', function (p) { staffListPage = p; renderStaffTable(); });
+    }
     $('tab-btn-staff').addEventListener('click', function () { showPermTab('staff'); });
     $('tab-btn-groups').addEventListener('click', function () { showPermTab('groups'); });
     $('btn-add-user').addEventListener('click', openCreateModal);

@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-10';
+    const DATA_VERSION = 'partner-demo-17';
 
     function chip(v, type) {
         if (!v || v === '—' || v === '--') return '<span class="text-slate-400">' + (v || '—') + '</span>';
@@ -184,15 +184,15 @@
         };
     }
 
-    /** 构建 5 层代理分支（L2–L5） */
-    function migBranch(prefix, tag, rootWallet, l2Ratio, l3Ratio, l4Ratio, l5Ratio, invertAtL4) {
+    /** 构建 5 层代理分支（相对迁移主体的向下 5 层） */
+    function migBranch(prefix, tag, rootWallet, baseLevel, l2Ratio, l3Ratio, l4Ratio, l5Ratio, invertAtL4) {
         const idP = 'mig_' + prefix;
         const wP = '0xMig...' + tag;
-        const l2 = migAgent(idP + '_l2', wP + 'L2', '20' + tag + '02', 2, l2Ratio, tag + '·二级', rootWallet, rootWallet, [idP + '_l3']);
-        const l3 = migAgent(idP + '_l3', wP + 'L3', '20' + tag + '03', 3, l3Ratio, tag + '·三级', l2.wallet, rootWallet, [idP + '_l4']);
+        const l2 = migAgent(idP + '_l2', wP + 'L2', '20' + tag + '02', baseLevel + 1, l2Ratio, tag + '·支路', rootWallet, rootWallet, [idP + '_l3']);
+        const l3 = migAgent(idP + '_l3', wP + 'L3', '20' + tag + '03', baseLevel + 2, l3Ratio, tag + '·支路', l2.wallet, rootWallet, [idP + '_l4']);
         const l4RatioActual = invertAtL4 ? Math.max(l4Ratio, l3Ratio + 2) : l4Ratio;
-        const l4 = migAgent(idP + '_l4', wP + 'L4', '20' + tag + '04', 4, l4RatioActual, tag + '·四级' + (invertAtL4 ? '·倒挂' : ''), l3.wallet, rootWallet, [idP + '_l5']);
-        const l5 = migAgent(idP + '_l5', wP + 'L5', '20' + tag + '05', 5, l5Ratio, tag + '·五级', l4.wallet, rootWallet, [], [
+        const l4 = migAgent(idP + '_l4', wP + 'L4', '20' + tag + '04', baseLevel + 3, l4RatioActual, tag + '·支路' + (invertAtL4 ? '·链路倒挂' : ''), l3.wallet, rootWallet, [idP + '_l5']);
+        const l5 = migAgent(idP + '_l5', wP + 'L5', '20' + tag + '05', baseLevel + 4, l5Ratio, tag + '·支路', l4.wallet, rootWallet, [], [
             { wallet: wP + 'C1', uid: '20' + tag + 'c1' }
         ]);
         return [l2, l3, l4, l5];
@@ -209,21 +209,22 @@
         }
     ];
 
-    /** 3.2 正常代理：3 条 5 层链路 */
-    const MIGRATE_AGENT_OK_ROOT = migAgent('mig_ok_l1', '0xMig...Ok', '200201', 1, 58, '演示·正常代理（3×5层）', null, '0xMig...Ok', ['mig_a_l2', 'mig_b_l2', 'mig_c_l2'], [
+    /** 3.2 正常代理：系统 L2 · 3 条向下 5 层 */
+    const MIGRATE_AGENT_OK_ROOT = migAgent('mig_ok_l1', '0xMig...Ok', '200201', 2, 58, '演示·正常代理（系统L2·4×5层）', null, '0xMig...Ok', ['mig_a_l2', 'mig_b_l2', 'mig_c_l2', 'mig_d_l2'], [
         { wallet: '0xMig...OkD1', uid: '200201d' }
     ]);
     const MIGRATE_AGENTS_OK = [MIGRATE_AGENT_OK_ROOT]
-        .concat(migBranch('a', 'OkA', '0xMig...Ok', 50, 42, 35, 28, false))
-        .concat(migBranch('b', 'OkB', '0xMig...Ok', 49, 41, 34, 27, false))
-        .concat(migBranch('c', 'OkC', '0xMig...Ok', 48, 40, 33, 26, false));
+        .concat(migBranch('a', 'OkA', '0xMig...Ok', 2, 50, 42, 35, 28, false))
+        .concat(migBranch('b', 'OkB', '0xMig...Ok', 2, 49, 41, 34, 27, false))
+        .concat(migBranch('c', 'OkC', '0xMig...Ok', 2, 48, 40, 33, 26, false))
+        .concat(migBranch('d', 'OkD', '0xMig...Ok', 2, 47, 39, 32, 25, false));
 
-    /** 3.3 倒挂代理：3 条 5 层，B 支 L4 比例高于 L3 */
-    const MIGRATE_AGENT_ABN_ROOT = migAgent('mig_abn_l1', '0xMig...Abn', '200301', 1, 62, '演示·含倒挂分支（3×5层）', null, '0xMig...Abn', ['mig_ab_a_l2', 'mig_ab_b_l2', 'mig_ab_c_l2']);
+    /** 3.3 倒挂代理：系统 L6 · B 支深层链路倒挂（非迁移比例导致） */
+    const MIGRATE_AGENT_ABN_ROOT = migAgent('mig_abn_l1', '0xMig...Abn', '200301', 6, 62, '演示·链路内倒挂（系统L6·3×5层）', null, '0xMig...Abn', ['mig_ab_a_l2', 'mig_ab_b_l2', 'mig_ab_c_l2']);
     const MIGRATE_AGENTS_ABN = [MIGRATE_AGENT_ABN_ROOT]
-        .concat(migBranch('ab_a', 'AbnA', '0xMig...Abn', 52, 44, 36, 29, false))
-        .concat(migBranch('ab_b', 'AbnB', '0xMig...Abn', 51, 40, 34, 28, true))
-        .concat(migBranch('ab_c', 'AbnC', '0xMig...Abn', 50, 43, 35, 27, false));
+        .concat(migBranch('ab_a', 'AbnA', '0xMig...Abn', 6, 52, 44, 36, 29, false))
+        .concat(migBranch('ab_b', 'AbnB', '0xMig...Abn', 6, 51, 40, 34, 28, true))
+        .concat(migBranch('ab_c', 'AbnC', '0xMig...Abn', 6, 50, 43, 35, 27, false));
 
     const MIGRATE_AGENT_USERS = MIGRATE_AGENTS_OK.concat(MIGRATE_AGENTS_ABN);
 
@@ -235,14 +236,41 @@
     let settlementDetailTab = 'detail';
     let settlementDetailFilters = { partner: '', level: 'all', pendingFix: 'all', modified: 'all' };
     let supplementDetailFilters = { partner: '', originalDate: '' };
-    let migrateState = { subjectKey: '', preview: null, inversionErrors: [] };
+    let migrateState = { subjectKey: '', preview: null, inversionErrors: [], treePage: 0, clientsPage: 0 };
+    let migrateTreeExpanded = new Set();
+    let migrateRatioOverrides = {};
+    let migrateAttachments = [];
+    const MIGRATE_TREE_PAGE_SIZE = 10;
     let treeFocusId = null;
+    let treeEntryId = null;
+    let treeBranchPage = 1;
     let treeExpandedNodes = new Set();
     let treeHighlightId = null;
     let listFilterStatus = 'all';
     let listSearchQ = '';
     let pendingRatioChanges = [];
     let detailTableFilter = '';
+    let listPage = 1;
+    let detailSubPage = 1;
+    let detailClientPage = 1;
+    let detailSettlementPage = 1;
+    let settlementBatchPage = 1;
+    let settlementDetailPage = 1;
+    let supplementDetailPage = 1;
+    let migrateTreeHighlightId = null;
+
+    function paginate(items, page) {
+        if (window.AdminPagination) return AdminPagination.slice(items, page);
+        const pageSize = 10;
+        const total = items.length;
+        const p = Math.max(1, Math.min(page || 1, Math.max(1, Math.ceil(total / pageSize))));
+        const start = (p - 1) * pageSize;
+        return { items: items.slice(start, start + pageSize), page: p, total: total };
+    }
+
+    function mountListPagination(containerId, total, page, handlerId) {
+        if (window.AdminPagination) AdminPagination.mount(containerId, total, page, handlerId);
+    }
 
     function getUser(id) { return USERS.find(function (u) { return u.id === id; }); }
     function getUserByWallet(w) { return USERS.find(function (u) { return u.wallet === w; }); }
@@ -314,9 +342,15 @@
     function renderPartnerList() {
         const tbody = document.getElementById('partner-list-body');
         if (!tbody) return;
-        tbody.innerHTML = LIST_IDS.map(function (id) {
+        const ids = LIST_IDS.filter(function (id) {
             const u = getUser(id);
-            if (!u || !matchesListFilter(u)) return '';
+            return u && matchesListFilter(u);
+        });
+        const sliced = paginate(ids, listPage);
+        listPage = sliced.page;
+        tbody.innerHTML = sliced.items.map(function (id) {
+            const u = getUser(id);
+            if (!u) return '';
             const childCount = (u.childIds || []).length;
             const netHtml = u.net === '--' ? '<span class="text-slate-400">--</span>' : '<span class="text-blue-600 font-black">' + u.net + '</span>';
             const av = u.abnormalVol === '--' ? '<span class="text-slate-300">--</span>' : '<span class="text-amber-700 font-bold">' + u.abnormalVol + '</span>';
@@ -340,6 +374,7 @@
                 '<button onclick="PartnerPortal.showTree(\'' + u.id + '\')" class="text-blue-600 font-bold hover:underline">返佣树</button>' +
                 '</td></tr>';
         }).join('');
+        mountListPagination('partner-list-pagination', sliced.total, listPage, 'partner-list');
     }
 
     function renderNodeCard(u, opts) {
@@ -363,73 +398,138 @@
         return '<button type="button" class="tree-expand-btn" onclick="PartnerPortal.toggleTreeExpand(\'' + userId + '\')" title="' + childCount + ' 个直属下级" aria-label="展开下级">' + (expanded ? '−' : '+') + '</button>';
     }
 
-    /** 上级链固定全展示；下级仅直接下级，点击 + 逐级展开 */
-    function renderRebateTree(focusId) {
-        const focus = getUser(focusId);
-        if (!focus) return '';
+    /** 返佣树：对齐迁移树 — 主体固定 + 直接下级支路分页，定位不切换为单一路径 */
+    function renderAncestorChainBar(u) {
+        const chain = getAncestorChain(u);
+        if (!chain.length && u.level === 1) return '';
+        let html = '<p class="text-[10px] text-slate-500 mb-3 bg-white border border-slate-100 rounded p-2"><span class="font-bold text-slate-600">上级链：</span> ';
+        chain.forEach(function (a, i) {
+            html += chip(a.wallet, 'wallet');
+            if (i < chain.length - 1) html += '<span class="text-slate-300 mx-1">→</span>';
+        });
+        if (chain.length) html += '<span class="text-slate-300 mx-1">→</span>';
+        html += chip(u.wallet, 'wallet');
+        html += '</p>';
+        return html;
+    }
 
-        function renderLazyDown(parentId) {
-            const parent = getUser(parentId);
-            const childIds = parent.childIds || [];
-            if (!childIds.length) return '';
-            let h = '<div class="tree-children mt-2 space-y-2">';
-            childIds.forEach(function (cid) { h += renderDownNode(cid); });
+    function renderTreeBranchNode(userId, depth) {
+        const u = getUser(userId);
+        if (!u) return '';
+        const childIds = u.childIds || [];
+        const hasKids = childIds.length > 0;
+        const expanded = treeExpandedNodes.has(userId);
+        let h = '<div class="tree-node-down mb-2">';
+        h += '<div class="flex items-start gap-1">';
+        h += hasKids ? renderExpandToggle(userId, expanded, childIds.length) : '<span class="w-6 shrink-0"></span>';
+        h += '<div class="flex-1">' + renderNodeCard(u, { highlight: userId === treeHighlightId }) + '</div>';
+        h += '</div>';
+        if (hasKids && expanded) {
+            h += '<div class="tree-children ml-4 mt-1 space-y-2">';
+            childIds.forEach(function (cid) { h += renderTreeBranchNode(cid, depth + 1); });
             h += '</div>';
-            return h;
         }
+        h += '</div>';
+        return h;
+    }
 
-        function renderDownNode(userId) {
-            const u = getUser(userId);
-            if (!u) return '';
-            const childIds = u.childIds || [];
-            const hasKids = childIds.length > 0;
-            const expanded = treeExpandedNodes.has(userId);
-            let h = '<div class="tree-node-down">';
-            h += '<div class="flex items-start gap-1">';
-            h += hasKids ? renderExpandToggle(userId, expanded, childIds.length) : '<span class="w-6 shrink-0"></span>';
-            h += '<div class="flex-1">' + renderNodeCard(u, {
-                isFocus: userId === focusId,
-                highlight: userId === treeHighlightId
-            }) + '</div>';
-            h += '</div>';
-            if (hasKids && expanded) h += renderLazyDown(userId);
-            h += '</div>';
-            return h;
+    function renderRebateTree(entryId) {
+        const entry = getUser(entryId);
+        if (!entry) return '';
+        let html = renderAncestorChainBar(entry);
+        html += '<div class="bg-slate-50 border rounded-lg p-3">';
+        html += '<div class="flex items-start gap-1 mb-2">';
+        html += '<span class="w-6 shrink-0"></span>';
+        html += '<div class="flex-1">' + renderNodeCard(entry, {
+            isFocus: true,
+            highlight: entry.id === treeHighlightId
+        }) + '</div></div>';
+        const directIds = entry.childIds || [];
+        const branchPag = paginate(directIds, treeBranchPage);
+        treeBranchPage = branchPag.page;
+        if (directIds.length) {
+            html += '<div class="mt-3 border-t pt-3">';
+            html += '<p class="text-[10px] font-bold text-slate-500 mb-2">直接下级支路（本页 ' + branchPag.items.length + ' / 总 ' + directIds.length + '）</p>';
+            branchPag.items.forEach(function (cid) { html += renderTreeBranchNode(cid, 1); });
+            html += '<div id="rebate-tree-branch-pagination"></div></div>';
         }
-
-        function renderPathFromRoot(userId, depth) {
-            const u = getUser(userId);
-            if (!u) return '';
-            const isFocus = userId === focusId;
-            const wrapCls = depth > 0 ? 'tree-children mt-2' : '';
-            let h = '<div class="' + wrapCls + '">';
-            h += renderNodeCard(u, {
-                isFocus: isFocus,
-                highlight: userId === treeHighlightId
-            });
-            if (isFocus) {
-                h += renderLazyDown(userId);
-            } else {
-                const pathChild = childOnPathToFocus(u, focusId);
-                if (pathChild) h += renderPathFromRoot(pathChild, depth + 1);
-            }
-            h += '</div>';
-            return h;
-        }
-
-        const ancestors = getAncestorChain(focus);
-        const rootId = ancestors.length ? ancestors[0].id : focusId;
-        return '<div class="space-y-2">' + renderPathFromRoot(rootId, 0) + '</div>';
+        html += '</div>';
+        return html;
     }
 
     function refreshTree() {
         const root = document.getElementById('rebate-tree-root');
-        if (!root || !treeFocusId) return;
-        root.innerHTML = renderRebateTree(treeFocusId);
+        if (!root || !treeEntryId) return;
+        root.innerHTML = renderRebateTree(treeEntryId);
+        const entry = getUser(treeEntryId);
+        if (entry) {
+            mountListPagination('rebate-tree-branch-pagination', (entry.childIds || []).length, treeBranchPage, 'rebate-tree-branches');
+        }
         if (treeHighlightId) {
             const el = document.getElementById('tree-node-' + treeHighlightId);
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
+    }
+
+    function locateInRebateTree(userId) {
+        const user = getUser(userId);
+        if (!user) return false;
+        let entryId = treeEntryId || resolveTreeEntryId(userId);
+        const entry = getUser(entryId);
+        if (!entry || user.rootWallet !== entry.rootWallet) {
+            entryId = resolveTreeEntryId(userId);
+        } else if (userId !== entryId && !isDescendantOf(entryId, userId)) {
+            entryId = resolveTreeEntryId(userId);
+        }
+        treeEntryId = entryId;
+        const entryNow = getUser(treeEntryId);
+        if (!entryNow) return false;
+        treeFocusId = treeEntryId;
+        treeHighlightId = userId;
+        treeExpandedNodes = new Set();
+
+        const path = [];
+        let u = user;
+        while (u && u.id !== entryNow.id) {
+            path.unshift(u);
+            u = u.parentWallet ? getUserByWallet(u.parentWallet) : null;
+        }
+        path.forEach(function (node, i) {
+            if (i < path.length - 1 && (node.childIds || []).length) treeExpandedNodes.add(node.id);
+        });
+        if (path.length) {
+            const directBranch = path[0];
+            const siblings = entryNow.childIds || [];
+            const idx = siblings.indexOf(directBranch.id);
+            const pageSize = window.AdminPagination ? AdminPagination.PAGE_SIZE : 10;
+            if (idx >= 0) treeBranchPage = Math.floor(idx / pageSize) + 1;
+        }
+        refreshTree();
+        return true;
+    }
+
+    function focusTreeOnUser(userId) {
+        return locateInRebateTree(userId);
+    }
+
+    function searchRebateTree() {
+        const input = document.getElementById('tree-search-input');
+        const q = input && input.value;
+        const entry = getUser(treeEntryId);
+        if (!q || !entry) return;
+        const found = USERS.find(function (u) {
+            return u.rootWallet === entry.rootWallet && matchWalletOrUid(q, u.wallet, u.uid);
+        });
+        if (!found) {
+            alert('未在当前一级伞（' + entry.rootWallet + '）内找到匹配的钱包或 UID');
+            return;
+        }
+        locateInRebateTree(found.id);
+    }
+
+    function setRebateTreeBranchPage(p) {
+        treeBranchPage = Math.max(1, p);
+        refreshTree();
     }
 
     function toggleTreeExpand(userId) {
@@ -484,6 +584,9 @@
         if (!u) return;
         currentUserId = id;
         detailTableFilter = '';
+        detailSubPage = 1;
+        detailClientPage = 1;
+        detailSettlementPage = 1;
         window.PartnerPortal_showPage('page-partner-detail');
         document.getElementById('detail-partner-title').textContent = u.note;
         document.getElementById('detail-partner-sub').innerHTML = chip(u.wallet, 'wallet') + ' · ' + chip(u.uid, 'uid') + ' · L' + u.level + ' · ' + u.ratio + '%';
@@ -526,7 +629,9 @@
             if (!q) return true;
             return (r.wallet + r.note).toLowerCase().indexOf(q) >= 0;
         });
-        tbody.innerHTML = filtered.length ? filtered.map(function (r) {
+        const sliced = paginate(filtered, detailSubPage);
+        detailSubPage = sliced.page;
+        tbody.innerHTML = sliced.items.length ? sliced.items.map(function (r) {
             return '<tr class="' + (r.abnormal ? 'bg-red-50/40' : '') + '">' +
                 '<td class="px-4 py-2 text-slate-400">' + r.time + '</td>' +
                 '<td class="px-3 py-2">' + chip(r.wallet, 'wallet') + '<span class="block text-[10px] text-slate-400 mt-0.5">' + r.note + '</span></td>' +
@@ -538,6 +643,7 @@
                 '<td class="px-3 py-2 text-center">' + r.users + '</td>' +
                 '<td class="px-3 py-2 text-center">' + settleLabel(r.settle) + '</td></tr>';
         }).join('') : '<tr><td colspan="9" class="px-4 py-8 text-center text-slate-400">无直属下级合伙人</td></tr>';
+        mountListPagination('detail-sub-pagination', sliced.total, detailSubPage, 'detail-sub');
     }
 
     function renderDetailClientTable(u) {
@@ -545,18 +651,23 @@
         const clients = u.directClients || [];
         const q = detailTableFilter.toLowerCase();
         const filtered = clients.filter(function (c) { return !q || c.wallet.toLowerCase().indexOf(q) >= 0; });
-        tbody.innerHTML = filtered.length ? filtered.map(function (c) {
+        const sliced = paginate(filtered, detailClientPage);
+        detailClientPage = sliced.page;
+        tbody.innerHTML = sliced.items.length ? sliced.items.map(function (c) {
             return '<tr><td class="px-4 py-2">' + c.time + '</td><td class="px-3 py-2">' + chip(c.wallet, 'wallet') + '</td>' +
                 '<td class="px-3 py-2 text-right">' + c.vol + '</td><td class="px-3 py-2 text-right">' + c.fee + '</td>' +
                 '<td class="px-3 py-2 text-right font-black text-blue-600">' + c.rebate + '</td>' +
                 '<td class="px-3 py-2 text-center text-green-600 font-bold">' + c.status + '</td></tr>';
         }).join('') : '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">暂无自邀直客</td></tr>';
+        mountListPagination('detail-clients-pagination', sliced.total, detailClientPage, 'detail-clients');
     }
 
     function renderDetailSettlements(u) {
         const tbody = document.getElementById('detail-settlement-rows');
         const rows = u.settlements || [];
-        tbody.innerHTML = rows.length ? rows.map(function (r) {
+        const sliced = paginate(rows, detailSettlementPage);
+        detailSettlementPage = sliced.page;
+        tbody.innerHTML = sliced.items.length ? sliced.items.map(function (r) {
             const cls = r.status === '已发放' ? 'text-green-600' : (r.status === '补结算' ? 'text-blue-600' : 'text-amber-600');
             const origHtml = r.status === '待修正返佣后计算' || !r.originalRebate
                 ? '<span class="text-amber-700 font-bold">待修正返佣后计算</span>'
@@ -567,6 +678,7 @@
                 '<td class="px-3 py-2 text-center font-bold ' + cls + '">' + r.status + '</td>' +
                 '<td class="px-4 py-2 text-slate-500">' + (r.note || '') + '</td></tr>';
         }).join('') : '<tr><td colspan="6" class="px-4 py-6 text-center text-slate-400">暂无结算记录</td></tr>';
+        mountListPagination('detail-settlement-pagination', sliced.total, detailSettlementPage, 'detail-settlement');
     }
 
     function switchDetailTab(tab) {
@@ -589,6 +701,8 @@
 
     function filterDetailTable(q) {
         detailTableFilter = q || '';
+        detailSubPage = 1;
+        detailClientPage = 1;
         const u = getUser(currentUserId);
         if (u) {
             renderDetailSubTable(u);
@@ -596,18 +710,33 @@
         }
     }
 
+    function resolveTreeEntryId(userId) {
+        const u = getUser(userId);
+        if (!u) return userId;
+        const chain = getAncestorChain(u);
+        if (chain.length) return chain[0].id;
+        if (u.level === 1) return u.id;
+        const l1 = USERS.find(function (x) { return x.wallet === u.rootWallet && x.level === 1; });
+        return l1 ? l1.id : userId;
+    }
+
     function showTree(id) {
         const u = getUser(id);
         if (!u) return;
         currentUserId = id;
-        treeFocusId = id;
+        treeEntryId = resolveTreeEntryId(id);
+        treeFocusId = treeEntryId;
         treeHighlightId = null;
+        treeBranchPage = 1;
         treeExpandedNodes = new Set();
         window.PartnerPortal_showPage('page-rebate-tree');
-        document.getElementById('tree-title').textContent = u.note + ' · 返佣树';
+        const entry = getUser(treeEntryId);
+        const titleSuffix = entry && entry.id !== u.id ? u.note + ' · ' + entry.note : (entry ? entry.note : u.note);
+        document.getElementById('tree-title').textContent = titleSuffix + ' · 返佣树';
         const abnSec = document.getElementById('tree-abnormal-section');
         if (abnSec) abnSec.innerHTML = renderAbnormalSection(u.rootWallet);
-        document.getElementById('rebate-tree-root').innerHTML = renderRebateTree(id);
+        refreshTree();
+        if (id !== treeEntryId) locateInRebateTree(id);
         renderPendingChangesBar();
         if (location.hash.indexOf('rebate-tree') === -1) location.hash = 'rebate-tree';
     }
@@ -619,25 +748,20 @@
         if (!child) return;
         closeAbnormalModal();
         currentUserId = child.id;
-        treeFocusId = child.id;
-        treeHighlightId = child.id;
-        treeExpandedNodes = new Set();
-        getAncestorChain(child).forEach(function (a) {
-            (a.childIds || []).forEach(function (cid) {
-                if (cid === child.id || isDescendantOf(cid, child.id)) treeExpandedNodes.add(a.id);
-            });
-        });
-        window.PartnerPortal_showPage('page-rebate-tree');
+        const l1 = USERS.find(function (u) { return u.wallet === record.rootWallet && u.level === 1; }) ||
+            USERS.find(function (u) { return u.wallet === record.rootWallet; });
+        const needOpen = !treeEntryId || !getUser(treeEntryId) || getUser(treeEntryId).rootWallet !== record.rootWallet;
+        if (needOpen) {
+            showTree(l1 ? l1.id : child.id);
+        } else {
+            window.PartnerPortal_showPage('page-rebate-tree');
+            const abnSec = document.getElementById('tree-abnormal-section');
+            if (abnSec) abnSec.innerHTML = renderAbnormalSection(record.rootWallet);
+        }
         document.getElementById('tree-title').textContent = child.note + ' · 修正返佣';
-        const abnSec = document.getElementById('tree-abnormal-section');
-        if (abnSec) abnSec.innerHTML = renderAbnormalSection(record.rootWallet);
-        document.getElementById('rebate-tree-root').innerHTML = renderRebateTree(child.id);
+        locateInRebateTree(child.id);
         renderPendingChangesBar();
         location.hash = 'rebate-tree';
-        setTimeout(function () {
-            const el = document.getElementById('tree-node-' + child.id);
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 80);
     }
 
     function openAbnormalModal() {
@@ -657,6 +781,7 @@
 
     function setListFilter(status) {
         listFilterStatus = status;
+        listPage = 1;
         const sel = document.getElementById('list-status-select');
         if (sel) sel.value = status;
         renderPartnerList();
@@ -664,6 +789,7 @@
 
     function applyListSearch(q) {
         listSearchQ = (q || '').trim();
+        listPage = 1;
         renderPartnerList();
     }
 
@@ -750,10 +876,11 @@
                 submitApprovalApplication({
                     type: 'partner_ratio_change',
                     title: '合伙人返佣比例调整',
+                    flowProfile: 'risk_boss',
                     applicant: 'Mkt_Allen',
                     remark: c.wallet + ' ' + c.oldRatio + '% → ' + c.newRatio + '%（超运营上限）',
                     summary: chip(c.wallet, 'wallet') + ' ' + c.oldRatio + '% → ' + c.newRatio + '%',
-                    payload: { wallet: c.wallet, oldRatio: c.oldRatio, newRatio: c.newRatio, opsCap: OPS_CAP }
+                    payload: { wallet: c.wallet, oldRatio: c.oldRatio, newRatio: c.newRatio, opsCap: OPS_CAP, exceedsCap: true }
                 });
             });
         }
@@ -874,17 +1001,20 @@
         settlementDetailFilters.level = document.getElementById('settlement-filter-level') ? document.getElementById('settlement-filter-level').value : 'all';
         settlementDetailFilters.pendingFix = document.getElementById('settlement-filter-pending') ? document.getElementById('settlement-filter-pending').value : 'all';
         settlementDetailFilters.modified = document.getElementById('settlement-filter-modified') ? document.getElementById('settlement-filter-modified').value : 'all';
+        settlementDetailPage = 1;
         renderSettlementDetailRows();
     }
 
     function applySupplementDetailFilters() {
         supplementDetailFilters.partner = (document.getElementById('supplement-filter-partner') && document.getElementById('supplement-filter-partner').value || '').trim();
         supplementDetailFilters.originalDate = (document.getElementById('supplement-filter-original-date') && document.getElementById('supplement-filter-original-date').value || '').trim();
+        supplementDetailPage = 1;
         renderSettlementSupplementRows();
     }
 
     function resetSettlementDetailFilters() {
         settlementDetailFilters = { partner: '', level: 'all', pendingFix: 'all', modified: 'all' };
+        settlementDetailPage = 1;
         const p = document.getElementById('settlement-filter-partner');
         if (p) p.value = '';
         const l = document.getElementById('settlement-filter-level');
@@ -898,6 +1028,7 @@
 
     function resetSupplementDetailFilters() {
         supplementDetailFilters = { partner: '', originalDate: '' };
+        supplementDetailPage = 1;
         const p = document.getElementById('supplement-filter-partner');
         if (p) p.value = '';
         const d = document.getElementById('supplement-filter-original-date');
@@ -917,7 +1048,9 @@
             if (settlementDetailFilters.modified === 'no' && isRowModified(r)) return false;
             return true;
         });
-        tbody.innerHTML = rows.length ? rows.map(function (r) {
+        const sliced = paginate(rows, settlementDetailPage);
+        settlementDetailPage = sliced.page;
+        tbody.innerHTML = sliced.items.length ? sliced.items.map(function (r) {
             const parentCell = r.parentWallet ? chip(r.parentWallet, 'wallet') : '<span class="text-slate-500">一级</span>';
             const origCell = r.pendingFix
                 ? '<span class="text-amber-700 font-bold">待修正返佣后计算</span><span class="block text-[9px] text-amber-600 mt-0.5">原应结日 ' + (r.originalSettlementDate || '—') + '</span>'
@@ -940,6 +1073,7 @@
                 '<td class="px-4 py-4 text-right">' + actualCell + '</td>' +
                 '<td class="px-4 py-4 text-right">' + editBtn + '</td></tr>';
         }).join('') : '<tr><td colspan="9" class="px-4 py-8 text-center text-slate-400">无匹配记录</td></tr>';
+        mountListPagination('settlement-detail-pagination', sliced.total, settlementDetailPage, 'settlement-detail');
     }
 
     function renderSettlementSupplementRows() {
@@ -950,7 +1084,9 @@
             if (supplementDetailFilters.originalDate && f.originalSettlementDate.indexOf(supplementDetailFilters.originalDate) === -1) return false;
             return true;
         });
-        tbody.innerHTML = rows.length ? rows.map(function (f) {
+        const sliced = paginate(rows, supplementDetailPage);
+        supplementDetailPage = sliced.page;
+        tbody.innerHTML = sliced.items.length ? sliced.items.map(function (f) {
             const modTag = f.amount < f.originalRebate ? '<span class="block text-[9px] text-orange-600 font-bold mt-0.5">已调减</span>' : '';
             return '<tr class="hover:bg-slate-50">' +
                 '<td class="px-4 py-3"><div>' + chip(f.wallet, 'wallet') + '</div><div class="mt-1">' + chip(f.uid, 'uid') + '</div></td>' +
@@ -959,6 +1095,7 @@
                 '<td class="px-4 py-3 text-right font-black text-blue-600">' + fmtMoney(f.amount) + modTag + '</td>' +
                 '<td class="px-4 py-3 text-right"><button type="button" onclick="PartnerPortal.openEditSupplement(\'' + f.id + '\')" class="text-blue-600 font-bold hover:underline text-[10px]">修改</button></td></tr>';
         }).join('') : '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-400">本日无修正返佣补发流水</td></tr>';
+        mountListPagination('settlement-supplement-pagination', sliced.total, supplementDetailPage, 'settlement-supplement');
     }
 
     function findSupplementById(id) {
@@ -1222,11 +1359,14 @@
         const st = document.getElementById('settlement-filter-status').value;
         const tbody = document.getElementById('settlement-batch-body');
         if (!tbody) return;
-        tbody.innerHTML = SETTLEMENT_BATCHES.filter(function (b) {
+        const batches = SETTLEMENT_BATCHES.filter(function (b) {
             if (st !== 'all' && b.status !== st) return false;
             if (q && b.date.indexOf(q) === -1) return false;
             return true;
-        }).map(function (b) {
+        });
+        const sliced = paginate(batches, settlementBatchPage);
+        settlementBatchPage = sliced.page;
+        tbody.innerHTML = sliced.items.map(function (b) {
             const e = enrichBatch(b);
             const stCls = b.rejected ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700';
             return '<tr class="hover:bg-slate-50' + (b.rejected ? ' bg-red-50/20' : '') + '">' +
@@ -1238,6 +1378,7 @@
                 '<td class="px-4 py-4 text-center"><span class="' + stCls + ' px-3 py-1 rounded-full text-[10px]">' + e.status + '</span></td>' +
                 '<td class="px-4 py-4 text-right"><button type="button" onclick="PartnerPortal.showReviewDetail(\'' + e.date + '\', ' + (b.rejected ? 'true' : 'false') + ')" class="bg-slate-900 text-white px-4 py-1.5 rounded font-black uppercase text-[10px]">' + (b.rejected ? '查看原因' : '查看详情') + '</button></td></tr>';
         }).join('');
+        mountListPagination('settlement-batch-pagination', sliced.total, settlementBatchPage, 'settlement-batch');
     }
 
     function showReviewDetail(batchDate, isRejected) {
@@ -1245,6 +1386,8 @@
         settlementDetailTab = 'detail';
         settlementDetailFilters = { partner: '', level: 'all', pendingFix: 'all', modified: 'all' };
         supplementDetailFilters = { partner: '', originalDate: '' };
+        settlementDetailPage = 1;
+        supplementDetailPage = 1;
         setSettlementListView(true);
         document.getElementById('view-batch-list').classList.add('hidden');
         document.getElementById('view-review-detail').classList.remove('hidden');
@@ -1270,9 +1413,9 @@
     }
 
     function applyHashTree() {
-        const hash = (location.hash || '').replace('#', '');
-        if (hash.indexOf('rebate-tree') === 0 && (currentUserId || treeFocusId)) {
-            showTree(currentUserId || treeFocusId);
+        const hash = (location.hash || '').replace('#', '').split('?')[0];
+        if (hash === 'rebate-tree' && (currentUserId || treeEntryId || treeFocusId)) {
+            showTree(currentUserId || treeEntryId || treeFocusId);
         }
     }
 
@@ -1349,6 +1492,37 @@
         return result;
     }
 
+    function migrateDepthLabel(depth) {
+        if (depth === 0) return '迁移主体';
+        if (depth === 1) return '直接下级';
+        if (depth === 2) return '二级下级';
+        if (depth === 3) return '三级下级';
+        return depth + '级下级';
+    }
+
+    function migrateSystemLevelTag(level) {
+        return '<span class="text-[9px] text-slate-400 font-bold ml-1">系统 L' + level + '</span>';
+    }
+
+    function getMigrateDepthFromRoot(rootId, nodeId) {
+        let depth = 0;
+        let cur = getMigrateAgent(nodeId);
+        const root = getMigrateAgent(rootId);
+        if (!cur || !root) return 0;
+        while (cur && cur.id !== rootId) {
+            depth++;
+            cur = cur.parentWallet ? getMigrateAgentByWallet(cur.parentWallet) : null;
+        }
+        return cur ? depth : 0;
+    }
+
+    function getEffectiveMigrateRatio(agentId, rootId, rootEffectiveRatio) {
+        if (agentId === rootId) return rootEffectiveRatio;
+        if (migrateRatioOverrides[agentId] != null) return migrateRatioOverrides[agentId];
+        const a = getMigrateAgent(agentId);
+        return a ? a.ratio : 0;
+    }
+
     function collectMigrateDirectClients(userId) {
         const clients = [];
         collectMigrateSubtree(userId).forEach(function (u) {
@@ -1359,29 +1533,24 @@
         return clients;
     }
 
-    function checkExistingTreeInversion(rootId, errors) {
-        const subtree = collectMigrateSubtree(rootId);
-        subtree.forEach(function (u) {
-            if (!u.parentWallet) return;
-            const parent = getMigrateAgentByWallet(u.parentWallet);
-            if (!parent) return;
-            if (u.ratio >= parent.ratio) {
-                errors.push('链路内倒挂：' + u.wallet + ' (' + u.ratio + '%) 不低于上级 ' + parent.wallet + ' (' + parent.ratio + '%)');
-            }
-        });
-    }
-
-    function checkMigrateSubtreeInversion(rootId, rootRatio, errors, parentLabel) {
-        const u = getMigrateAgent(rootId);
-        if (!u) return;
-        (u.childIds || []).forEach(function (cid) {
-            const c = getMigrateAgent(cid);
-            if (!c) return;
-            if (c.ratio >= rootRatio) {
-                errors.push('迁移后倒挂：下级 ' + c.wallet + ' (' + c.ratio + '%) 不低于迁移用户新比例 ' + (parentLabel || u.wallet) + ' (' + rootRatio + '%)');
-            }
-            checkMigrateSubtreeInversion(cid, c.ratio, errors, c.wallet);
-        });
+    function checkEffectiveMigrateTree(rootId, rootEffectiveRatio, errors) {
+        const root = getMigrateAgent(rootId);
+        if (!root) return;
+        function walk(id, depth) {
+            const u = getMigrateAgent(id);
+            if (!u) return;
+            const myRatio = getEffectiveMigrateRatio(id, rootId, rootEffectiveRatio);
+            (u.childIds || []).forEach(function (cid) {
+                const c = getMigrateAgent(cid);
+                if (!c) return;
+                const childRatio = getEffectiveMigrateRatio(cid, rootId, rootEffectiveRatio);
+                if (childRatio >= myRatio) {
+                    errors.push('倒挂（' + migrateDepthLabel(depth + 1) + '）：' + c.wallet + ' ' + childRatio + '% 不低于上级 ' + u.wallet + ' ' + myRatio + '%');
+                }
+                walk(cid, depth + 1);
+            });
+        }
+        walk(rootId, 0);
     }
 
     function buildMigratePreview(subject) {
@@ -1400,7 +1569,10 @@
         return {
             type: 'partner', label: subject.label, partnerUser: partner,
             agentChain: subtree.map(function (u) {
-                return { wallet: u.wallet, uid: u.uid, level: u.level, ratio: u.ratio, note: u.note, id: u.id };
+                return {
+                    wallet: u.wallet, uid: u.uid, level: u.level, ratio: u.ratio, note: u.note, id: u.id,
+                    migrateDepth: getMigrateDepthFromRoot(partner.id, u.id)
+                };
             }),
             directClients: clients,
             hasInternalInversion: false
@@ -1440,14 +1612,252 @@
             if (migTarget && (partner.id === migTarget.id || isMigrateDescendantOf(partner.id, migTarget.id))) {
                 errors.push('不能迁移到自身或自己的下级之下');
             }
-            checkExistingTreeInversion(partner.id, errors);
-            checkMigrateSubtreeInversion(partner.id, ratioVal, errors, partner.wallet);
+            checkEffectiveMigrateTree(partner.id, ratioVal, errors);
         }
         return errors;
     }
 
+    function toggleMigrateTreeExpand(id) {
+        if (migrateTreeExpanded.has(id)) migrateTreeExpanded.delete(id);
+        else migrateTreeExpanded.add(id);
+        renderMigratePreviewContent();
+    }
+
+    function stageMigrateRatioChange(agentId) {
+        const u = getMigrateAgent(agentId);
+        const input = document.getElementById('migrate-ratio-' + agentId);
+        if (!u || !input) return;
+        const val = parseFloat(input.value);
+        if (!val || val <= 0) return;
+        migrateRatioOverrides[agentId] = val;
+        previewMigrate();
+    }
+
+    function migrateTreeNodeInverted(agentId, rootId, rootEffectiveRatio) {
+        const u = getMigrateAgent(agentId);
+        if (!u || !u.parentWallet) return false;
+        const parent = getMigrateAgentByWallet(u.parentWallet);
+        if (!parent) return false;
+        const pRatio = getEffectiveMigrateRatio(parent.id, rootId, rootEffectiveRatio);
+        const cRatio = getEffectiveMigrateRatio(agentId, rootId, rootEffectiveRatio);
+        return cRatio >= pRatio;
+    }
+
+    function renderMigrateTreeNode(agentId, rootId, rootEffectiveRatio, depth) {
+        const u = getMigrateAgent(agentId);
+        if (!u) return '';
+        const childIds = u.childIds || [];
+        const hasKids = childIds.length > 0;
+        const expanded = migrateTreeExpanded.has(agentId);
+        const displayRatio = getEffectiveMigrateRatio(agentId, rootId, rootEffectiveRatio);
+        const origRatio = u.ratio;
+        const inverted = migrateTreeNodeInverted(agentId, rootId, rootEffectiveRatio);
+        const isHighlight = agentId === migrateTreeHighlightId;
+        const border = inverted ? 'border-red-300 bg-red-50/70' : (isHighlight ? 'border-amber-400 bg-amber-50/80 ring-2 ring-amber-300' : 'border-slate-200 bg-white');
+        let html = '<div class="migrate-tree-node mb-2" id="migrate-node-wrap-' + agentId + '">';
+        html += '<div class="flex items-start gap-1">';
+        if (hasKids && depth > 0) {
+            html += '<button type="button" class="tree-expand-btn" onclick="PartnerPortal.toggleMigrateTreeExpand(\'' + agentId + '\')">' + (expanded ? '−' : '+') + '</button>';
+        } else {
+            html += '<span class="w-6 shrink-0"></span>';
+        }
+        html += '<div class="flex-1 flex items-center gap-2 p-2 rounded-lg border ' + border + ' shadow-sm min-w-0" id="migrate-node-' + agentId + '">';
+        html += '<span class="text-[10px] font-bold text-blue-700 shrink-0">' + migrateDepthLabel(depth) + '</span>';
+        html += migrateSystemLevelTag(u.level);
+        html += '<div class="flex-1 min-w-0"><p class="font-bold text-[11px] truncate">' + u.wallet + '</p><p class="text-[10px] text-slate-500">' + u.note + '</p></div>';
+        if (agentId === rootId) {
+            html += '<span class="font-black text-blue-600">' + displayRatio + '%</span>';
+        } else {
+            html += '<input type="number" id="migrate-ratio-' + agentId + '" value="' + displayRatio + '" class="w-14 border rounded px-1 py-1 text-center font-black text-blue-600 text-sm" onchange="PartnerPortal.stageMigrateRatioChange(\'' + agentId + '\')">';
+            html += '<span class="text-slate-400 font-bold">%</span>';
+            if (migrateRatioOverrides[agentId] != null && migrateRatioOverrides[agentId] !== origRatio) {
+                html += '<span class="text-[9px] text-orange-600 font-bold">已改</span>';
+            }
+        }
+        if (inverted) html += '<span class="text-[9px] text-red-600 font-black">倒挂</span>';
+        html += '</div></div>';
+        if (hasKids && expanded && depth > 0) {
+            html += '<div class="tree-children ml-4 mt-1 space-y-2">';
+            childIds.forEach(function (cid) {
+                html += renderMigrateTreeNode(cid, rootId, rootEffectiveRatio, depth + 1);
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+        return html;
+    }
+
+    function collectInvertedMigrateIds(rootId, rootEffectiveRatio) {
+        const ids = [];
+        collectMigrateSubtree(rootId).forEach(function (u) {
+            if (migrateTreeNodeInverted(u.id, rootId, rootEffectiveRatio)) ids.push(u.id);
+        });
+        return ids;
+    }
+
+    function renderMigrateInversionBanner(invertedIds) {
+        if (!invertedIds || !invertedIds.length) return '';
+        return '<div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">' +
+            '<p class="text-red-900 font-black text-sm mb-1">检测到 <span class="underline">' + invertedIds.length + '</span> 处返佣倒挂</p>' +
+            '<p class="text-[11px] text-red-700">可在下方树中修改节点比例；或 ' +
+            '<button type="button" onclick="PartnerPortal.jumpToMigrateInversion()" class="text-red-800 font-black underline hover:text-red-900">点击立即展开倒挂位置</button></p></div>';
+    }
+
+    function jumpToMigrateInversion() {
+        const p = migrateState.preview;
+        if (!p || !p.partnerUser) return;
+        const ratioVal = parseFloat(document.getElementById('migrate-ratio-input') && document.getElementById('migrate-ratio-input').value);
+        const effectiveRootRatio = !isNaN(ratioVal) ? ratioVal : p.partnerUser.ratio;
+        const invertedIds = migrateState.invertedNodeIds || collectInvertedMigrateIds(p.partnerUser.id, effectiveRootRatio);
+        if (!invertedIds.length) return;
+        invertedIds.forEach(function (nid) {
+            let u = getMigrateAgent(nid);
+            while (u && u.id !== p.partnerUser.id) {
+                const parent = getMigrateAgentByWallet(u.parentWallet);
+                if (parent && parent.id !== p.partnerUser.id) migrateTreeExpanded.add(parent.id);
+                u = parent;
+            }
+        });
+        const first = getMigrateAgent(invertedIds[0]);
+        if (first) {
+            let topBranch = first;
+            while (topBranch.parentWallet && topBranch.parentWallet !== p.partnerUser.wallet) {
+                topBranch = getMigrateAgentByWallet(topBranch.parentWallet);
+            }
+            if (topBranch && topBranch.parentWallet === p.partnerUser.wallet) {
+                const siblings = p.partnerUser.childIds || [];
+                const idx = siblings.indexOf(topBranch.id);
+                if (idx >= 0) migrateState.treePage = Math.floor(idx / MIGRATE_TREE_PAGE_SIZE) + 1;
+            }
+        }
+        migrateTreeHighlightId = invertedIds[0];
+        renderMigratePreviewContent();
+        migrateState.inversionErrors = checkMigrateInversion();
+        updateMigrateSubmitState();
+        setTimeout(function () {
+            const el = document.getElementById('migrate-node-' + invertedIds[0]);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 120);
+    }
+
+    function searchMigrateTree() {
+        const input = document.getElementById('migrate-tree-search-input');
+        const q = input && input.value;
+        const p = migrateState.preview;
+        if (!p || !p.partnerUser || !q) return;
+        const root = p.partnerUser;
+        const found = collectMigrateSubtree(root.id).find(function (u) {
+            return matchWalletOrUid(q, u.wallet, u.uid);
+        });
+        if (!found) {
+            alert('未在当前迁移伞内找到匹配的钱包或 UID');
+            return;
+        }
+        migrateTreeHighlightId = found.id;
+        migrateTreeExpanded = new Set();
+        let u = found;
+        while (u && u.id !== root.id) {
+            const parent = getMigrateAgentByWallet(u.parentWallet);
+            if (parent && parent.id !== root.id) migrateTreeExpanded.add(parent.id);
+            u = parent;
+        }
+        if (found.parentWallet === root.wallet) {
+            const siblings = root.childIds || [];
+            const idx = siblings.indexOf(found.id);
+            if (idx >= 0) migrateState.treePage = Math.floor(idx / MIGRATE_TREE_PAGE_SIZE) + 1;
+        }
+        renderMigratePreviewContent();
+        migrateState.inversionErrors = checkMigrateInversion();
+        updateMigrateSubmitState();
+        setTimeout(function () {
+            const el = document.getElementById('migrate-node-' + found.id);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 120);
+    }
+
+    function setMigrateTreePage(p) {
+        migrateState.treePage = Math.max(1, p);
+        renderMigratePreviewContent();
+    }
+
+    function setMigrateClientsPage(p) {
+        migrateState.clientsPage = Math.max(1, p);
+        renderMigratePreviewContent();
+    }
+
+    function renderMigratePreviewContent() {
+        const body = document.getElementById('migrate-preview-body');
+        if (!body || !migrateState.preview) return;
+        const p = migrateState.preview;
+        const targetKey = (document.getElementById('migrate-target-input') && document.getElementById('migrate-target-input').value || '').trim();
+        const ratioVal = parseFloat(document.getElementById('migrate-ratio-input') && document.getElementById('migrate-ratio-input').value);
+        const target = findMigrateTargetPartner(targetKey);
+        let html = '';
+        if (target) {
+            html += '<p class="font-bold text-slate-800">新上级：' + chip(target.wallet, 'wallet') + ' (' + target.ratio + '%) · 迁移主体比例：' + (isNaN(ratioVal) ? '—' : ratioVal + '%') + '</p>';
+        } else if (targetKey) {
+            html += '<p class="text-amber-700 font-bold">未找到目标上级，演示可试 0xTo...L1 或 0xTo...L2</p>';
+        }
+        if (p.type === 'plain') {
+            const clients = p.directClients;
+            const clientPag = paginate(clients, migrateState.clientsPage || 1);
+            migrateState.clientsPage = clientPag.page;
+            html += '<div class="mt-3"><p class="font-bold text-slate-600 mb-2">直客（一并迁移）</p><ul class="space-y-1">';
+            clientPag.items.forEach(function (c) {
+                html += '<li>' + chip(c.wallet, 'wallet') + (c.uid ? ' · ' + chip(c.uid, 'uid') : '') + '</li>';
+            });
+            html += '</ul><div id="migrate-clients-pagination"></div></div>';
+        } else if (p.partnerUser) {
+            const root = p.partnerUser;
+            const effectiveRootRatio = !isNaN(ratioVal) ? ratioVal : root.ratio;
+            const invertedIds = collectInvertedMigrateIds(root.id, effectiveRootRatio);
+            migrateState.invertedNodeIds = invertedIds;
+            if (invertedIds.length) html += renderMigrateInversionBanner(invertedIds);
+            const directIds = root.childIds || [];
+            const treePage = migrateState.treePage || 1;
+            const branchSlice = paginate(directIds, treePage);
+            migrateState.treePage = branchSlice.page;
+            const pageIds = branchSlice.items;
+            html += '<div class="mt-3"><p class="font-bold text-slate-600 mb-2">代理链路（树形 · 默认仅直接下级，点击 + 展开更深层）</p>';
+            html += '<p class="text-[10px] text-slate-400 mb-2">相对层级：迁移主体 / 直接下级 / 二级下级… · 系统标准层级标注为「系统 Lx」</p>';
+            html += '<div class="flex flex-wrap gap-2 items-center mb-3">';
+            html += '<input id="migrate-tree-search-input" type="text" placeholder="钱包 / UID 快速定位" class="border rounded px-3 py-2 text-[11px] w-56 outline-none focus:ring-1 focus:ring-blue-500" onkeydown="if(event.key===\'Enter\')PartnerPortal.searchMigrateTree()">';
+            html += '<button type="button" onclick="PartnerPortal.searchMigrateTree()" class="bg-slate-900 text-white px-4 py-2 rounded font-bold text-[11px]">定位</button>';
+            html += '<span class="text-[10px] text-slate-400">在迁移伞内搜索并展开定位</span></div>';
+            html += '<div class="bg-slate-50 border rounded-lg p-3">';
+            html += renderMigrateTreeNode(root.id, root.id, effectiveRootRatio, 0);
+            if (directIds.length) {
+                html += '<div class="mt-3 border-t pt-3"><p class="text-[10px] font-bold text-slate-500 mb-2">直接下级支路（本页 ' + pageIds.length + ' / 总 ' + directIds.length + '）</p>';
+                pageIds.forEach(function (cid) {
+                    html += renderMigrateTreeNode(cid, root.id, effectiveRootRatio, 1);
+                });
+                html += '<div id="migrate-tree-pagination"></div></div>';
+            }
+            html += '</div>';
+            if (p.directClients.length) {
+                html += '<div class="mt-3"><p class="font-bold text-slate-600 mb-2">伞下直客 ' + p.directClients.length + ' 人</p>';
+                html += '<p class="text-[10px] text-slate-500">直客随链路一并迁移，此处仅摘要展示</p></div>';
+            }
+        }
+        body.innerHTML = html;
+        if (p.type === 'plain') {
+            mountListPagination('migrate-clients-pagination', p.directClients.length, migrateState.clientsPage || 1, 'migrate-clients');
+        } else if (p.partnerUser) {
+            mountListPagination('migrate-tree-pagination', (p.partnerUser.childIds || []).length, migrateState.treePage || 1, 'migrate-tree-branches');
+        }
+    }
+
     function showMigratePage() {
-        migrateState = { subjectKey: '', preview: null, inversionErrors: [] };
+        migrateState = { subjectKey: '', preview: null, inversionErrors: [], treePage: 1, clientsPage: 1 };
+        migrateTreeExpanded = new Set();
+        migrateRatioOverrides = {};
+        migrateAttachments = [];
+        migrateTreeHighlightId = null;
+        const remarkEl = document.getElementById('migrate-remark-input');
+        if (remarkEl) remarkEl.value = '';
+        const fileEl = document.getElementById('migrate-attachment-input');
+        if (fileEl) fileEl.value = '';
+        renderMigrateAttachmentPreview();
         window.PartnerPortal_showPage('page-rebate-migrate');
         ['migrate-subject-input', 'migrate-target-input', 'migrate-ratio-input'].forEach(function (id) {
             const el = document.getElementById(id);
@@ -1457,6 +1867,7 @@
         if (card) card.classList.add('hidden');
         document.getElementById('migrate-preview-section').classList.add('hidden');
         document.getElementById('migrate-errors-section').classList.add('hidden');
+        document.getElementById('migrate-submit-footer').classList.add('hidden');
         const hint = document.getElementById('migrate-ratio-hint');
         if (hint) hint.textContent = '';
         updateMigrateSubmitState();
@@ -1478,12 +1889,12 @@
                 '<p class="text-slate-600 mt-1">' + p.note + ' · 直客 ' + preview.directClients.length + ' 人（将一并迁移）</p>';
         } else {
             const u = preview.partnerUser;
-            html += '<p class="font-black text-slate-800">' + chip(u.wallet, 'wallet') + ' · ' + chip(u.uid, 'uid') + ' · L' + u.level + '</p>' +
-                '<p class="text-slate-600 mt-1">' + u.note + ' · 当前比例 <strong>' + u.ratio + '%</strong></p>' +
+            html += '<p class="font-black text-slate-800">' + chip(u.wallet, 'wallet') + ' · ' + chip(u.uid, 'uid') + migrateSystemLevelTag(u.level) + '</p>' +
+                '<p class="text-slate-600 mt-1">' + migrateDepthLabel(0) + ' · ' + u.note + ' · 当前比例 <strong>' + u.ratio + '%</strong></p>' +
                 '<p class="text-slate-500 mt-1">代理链路 ' + preview.agentChain.length + ' 人 · 伞下直客 ' + preview.directClients.length + ' 人</p>';
             const hint = document.getElementById('migrate-ratio-hint');
             const ratioIn = document.getElementById('migrate-ratio-input');
-            if (hint) hint.innerHTML = '建议参考当前 <strong>' + u.ratio + '%</strong>；若设置值低于任一下级比例将触发倒挂校验。';
+            if (hint) hint.innerHTML = '建议参考当前 <strong>' + u.ratio + '%</strong>。链路内深层倒挂可在下方树中修改比例后重新校验。';
             if (ratioIn && !ratioIn.value) ratioIn.value = Math.min(u.ratio, OPS_CAP);
         }
         card.innerHTML = html;
@@ -1517,74 +1928,30 @@
             const list = document.getElementById('migrate-errors-list');
             if (list) list.innerHTML = '<li>未找到待迁移用户</li>';
             if (errSec) errSec.classList.remove('hidden');
+            const footerErr = document.getElementById('migrate-submit-footer');
+            if (footerErr) footerErr.classList.add('hidden');
             updateMigrateSubmitState();
             return;
         }
 
         migrateState.preview = buildMigratePreview(subject);
         renderMigrateSubjectCard(subject, migrateState.preview);
-
-        const targetKey = (document.getElementById('migrate-target-input') && document.getElementById('migrate-target-input').value || '').trim();
-        const ratioVal = parseFloat(document.getElementById('migrate-ratio-input') && document.getElementById('migrate-ratio-input').value);
-        const target = findMigrateTargetPartner(targetKey);
-        const p = migrateState.preview;
-
-        let html = '';
-        if (target) {
-            html += '<p class="font-bold text-slate-800">新上级：' + chip(target.wallet, 'wallet') + ' (' + target.ratio + '%) · 迁移后比例：' + (isNaN(ratioVal) ? '—' : ratioVal + '%') + '</p>';
-        } else if (targetKey) {
-            html += '<p class="text-amber-700 font-bold">未找到目标上级，演示可试 0xTo...L1 或 0xTo...L2</p>';
-        } else {
-            html += '<p class="text-slate-500">填写目标上级后显示完整预览</p>';
-        }
-
-        if (p.type === 'plain') {
-            html += '<div class="mt-3"><p class="font-bold text-slate-600 mb-2">迁移直客 (' + p.directClients.length + ')</p><ul class="space-y-1">';
-            p.directClients.forEach(function (c) {
-                html += '<li>' + chip(c.wallet, 'wallet') + (c.uid ? ' · ' + chip(c.uid, 'uid') : '') + '</li>';
-            });
-            html += '</ul></div>';
-        } else {
-            const newRatio = ratioVal;
-            html += '<div class="mt-3"><p class="font-bold text-slate-600 mb-2">代理链路 (' + p.agentChain.length + ')</p>';
-            html += '<table class="w-full border text-[10px]"><thead class="bg-slate-50"><tr><th class="px-2 py-1">钱包</th><th class="px-2 py-1">层级</th><th class="px-2 py-1">比例</th><th class="px-2 py-1">备注</th></tr></thead><tbody>';
-            p.agentChain.forEach(function (a) {
-                const isRoot = a.id === p.partnerUser.id;
-                let rowCls = '';
-                if (!isNaN(newRatio) && isRoot && p.agentChain.some(function (x) {
-                    return x.id !== a.id && getMigrateAgent(x.id) && getMigrateAgentByWallet(getMigrateAgent(x.id).parentWallet) &&
-                        getMigrateAgent(x.id).parentWallet === p.partnerUser.wallet && x.ratio >= newRatio;
-                })) {
-                    rowCls = ' class="bg-amber-50"';
-                }
-                if (!isNaN(newRatio) && !isRoot && getMigrateAgent(a.id)) {
-                    const node = getMigrateAgent(a.id);
-                    const par = getMigrateAgentByWallet(node.parentWallet);
-                    if (par && node.ratio >= par.ratio) rowCls = ' class="bg-red-50 text-red-700"';
-                    if (par && par.id === p.partnerUser.id && node.ratio >= newRatio) rowCls = ' class="bg-red-50 text-red-700"';
-                }
-                html += '<tr' + rowCls + '><td class="px-2 py-1">' + a.wallet + '</td><td class="px-2 py-1">L' + a.level + '</td><td class="px-2 py-1 font-bold">' + a.ratio + '%</td><td class="px-2 py-1">' + (a.note || '') + '</td></tr>';
-            });
-            html += '</tbody></table></div>';
-            if (p.directClients.length) {
-                html += '<div class="mt-3"><p class="font-bold text-slate-600 mb-2">伞下直客 (' + p.directClients.length + ')</p><ul class="space-y-1 max-h-28 overflow-y-auto text-slate-600">';
-                p.directClients.slice(0, 15).forEach(function (c) {
-                    html += '<li>' + c.wallet + ' <span class="text-slate-400">属 ' + c.owner + '</span></li>';
-                });
-                if (p.directClients.length > 15) html += '<li class="text-slate-400">… 另有 ' + (p.directClients.length - 15) + ' 人</li>';
-                html += '</ul></div>';
-            }
-        }
-
-        if (body) body.innerHTML = html;
-        if (previewSec) previewSec.classList.remove('hidden');
-
         migrateState.inversionErrors = checkMigrateInversion();
+        if (migrateState.preview && migrateState.preview.partnerUser) {
+            const ratioVal = parseFloat(document.getElementById('migrate-ratio-input') && document.getElementById('migrate-ratio-input').value);
+            const er = !isNaN(ratioVal) ? ratioVal : migrateState.preview.partnerUser.ratio;
+            migrateState.invertedNodeIds = collectInvertedMigrateIds(migrateState.preview.partnerUser.id, er);
+        }
+        if (previewSec) previewSec.classList.remove('hidden');
+        renderMigratePreviewContent();
         if (migrateState.inversionErrors.length) {
             const list = document.getElementById('migrate-errors-list');
             if (list) list.innerHTML = migrateState.inversionErrors.map(function (e) { return '<li>' + e + '</li>'; }).join('');
             if (errSec) errSec.classList.remove('hidden');
         } else if (errSec) errSec.classList.add('hidden');
+
+        const footer = document.getElementById('migrate-submit-footer');
+        if (footer) footer.classList.toggle('hidden', !migrateState.preview);
 
         updateMigrateSubmitState();
     }
@@ -1596,28 +1963,268 @@
         const ratioOk = !isNaN(parseFloat(document.getElementById('migrate-ratio-input') && document.getElementById('migrate-ratio-input').value));
         const ok = migrateState.preview && migrateState.inversionErrors.length === 0 && targetOk && ratioOk;
         btn.disabled = !ok;
+        btn.textContent = '提交风控审核';
         btn.className = ok ? 'bg-blue-600 text-white px-6 py-2 rounded font-black text-[11px]' :
             'bg-blue-600 text-white px-6 py-2 rounded font-black text-[11px] opacity-50 cursor-not-allowed';
     }
 
-    function submitMigrate() {
+    function renderMigrateAttachmentPreview() {
+        const el = document.getElementById('migrate-attachment-preview');
+        if (!el) return;
+        if (!migrateAttachments.length) {
+            el.innerHTML = '';
+            return;
+        }
+        el.innerHTML = migrateAttachments.map(function (a, i) {
+            return '<div class="relative group border rounded overflow-hidden w-16 h-16 bg-white">' +
+                '<img src="' + a.dataUrl + '" alt="' + a.name + '" class="w-full h-full object-cover">' +
+                '<button type="button" onclick="PartnerPortal.removeMigrateAttachment(' + i + ')" class="absolute top-0 right-0 bg-red-600 text-white text-[9px] px-1 leading-none opacity-90">×</button>' +
+                '<span class="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[8px] px-1 truncate">' + a.name + '</span></div>';
+        }).join('');
+    }
+
+    function handleMigrateAttachmentFiles(input) {
+        if (!input || !input.files) return;
+        const files = Array.from(input.files);
+        const remain = 4 - migrateAttachments.length;
+        if (remain <= 0) {
+            alert('最多上传 4 张图片');
+            input.value = '';
+            return;
+        }
+        const toAdd = files.slice(0, remain);
+        if (files.length > remain) alert('最多上传 4 张图片，已忽略超出部分');
+        let pending = toAdd.length;
+        if (!pending) {
+            input.value = '';
+            return;
+        }
+        toAdd.forEach(function (file) {
+            if (!file.type || file.type.indexOf('image/') !== 0) {
+                pending--;
+                if (pending === 0) input.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                migrateAttachments.push({ name: file.name, dataUrl: ev.target.result });
+                renderMigrateAttachmentPreview();
+                pending--;
+                if (pending === 0) input.value = '';
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function removeMigrateAttachment(index) {
+        migrateAttachments.splice(index, 1);
+        renderMigrateAttachmentPreview();
+        const fileEl = document.getElementById('migrate-attachment-input');
+        if (fileEl) fileEl.value = '';
+    }
+
+    function openMigrateConfirmModal() {
         if (!migrateState.preview || migrateState.inversionErrors.length) {
             alert('请先修正返佣倒挂或填写完整信息');
             return;
         }
+        const p = migrateState.preview;
+        const target = findMigrateTargetPartner(document.getElementById('migrate-target-input').value);
+        const ratioVal = parseFloat(document.getElementById('migrate-ratio-input').value);
+        if (!target || isNaN(ratioVal)) return;
+        const subjectWallet = p.type === 'plain' ? p.plainUser.wallet : p.partnerUser.wallet;
+        const ratioFixes = [];
+        Object.keys(migrateRatioOverrides).forEach(function (agentId) {
+            const a = getMigrateAgent(agentId);
+            if (a && migrateRatioOverrides[agentId] !== a.ratio) {
+                ratioFixes.push({ wallet: a.wallet, oldRatio: a.ratio, newRatio: migrateRatioOverrides[agentId] });
+            }
+        });
+        let body = '<p class="text-[11px] text-slate-600 mb-3">确认后将提交<strong>风控审核</strong>，包含以下迁移与比例修改：</p>';
+        body += '<ul class="text-[11px] space-y-2 text-slate-800">';
+        body += '<li><span class="text-slate-500">待迁移</span> <b>' + subjectWallet + '</b></li>';
+        body += '<li><span class="text-slate-500">迁移到</span> <b>' + target.wallet + '</b></li>';
+        body += '<li><span class="text-slate-500">迁移后比例</span> <b>' + ratioVal + '%</b></li>';
+        if (ratioFixes.length) {
+            body += '<li><span class="text-slate-500">下级比例修正</span><ul class="mt-1 pl-4">';
+            ratioFixes.forEach(function (f) {
+                body += '<li>' + f.wallet + '：' + f.oldRatio + '% → ' + f.newRatio + '%</li>';
+            });
+            body += '</ul></li>';
+        } else {
+            body += '<li><span class="text-slate-500">下级比例修正</span> 无</li>';
+        }
+        const remarkText = (document.getElementById('migrate-remark-input') && document.getElementById('migrate-remark-input').value.trim()) || '无';
+        body += '<li><span class="text-slate-500">审核备注</span> ' + remarkText + '</li>';
+        body += '<li><span class="text-slate-500">图片附件</span> ' + (migrateAttachments.length ? migrateAttachments.map(function (a) { return a.name; }).join('、') : '无') + '</li>';
+        body += '</ul>';
+        document.getElementById('migrate-confirm-body').innerHTML = body;
+        document.getElementById('modal-migrate-confirm').classList.remove('hidden');
+    }
+
+    function closeMigrateConfirmModal() {
+        document.getElementById('modal-migrate-confirm').classList.add('hidden');
+    }
+
+    function submitMigrate() {
+        openMigrateConfirmModal();
+    }
+
+    function confirmMigrateSubmit() {
+        closeMigrateConfirmModal();
+        if (!migrateState.preview || migrateState.inversionErrors.length) return;
         const target = findMigrateTargetPartner(document.getElementById('migrate-target-input').value);
         const ratioVal = parseFloat(document.getElementById('migrate-ratio-input').value);
         if (!target || isNaN(ratioVal)) return;
         const p = migrateState.preview;
-        const name = p.type === 'plain' ? p.plainUser.wallet : p.partnerUser.wallet;
-        if (p.type === 'partner' && p.partnerUser) {
-            p.partnerUser.parentWallet = target.wallet;
-            p.partnerUser.ratio = ratioVal;
-            p.partnerUser.level = target.level + 1;
-            p.partnerUser.rootWallet = target.rootWallet || target.wallet;
+        const subjectWallet = p.type === 'plain' ? p.plainUser.wallet : p.partnerUser.wallet;
+        const subjectUid = p.type === 'plain' ? p.plainUser.uid : p.partnerUser.uid;
+        const ratioFixes = [];
+        Object.keys(migrateRatioOverrides).forEach(function (agentId) {
+            const a = getMigrateAgent(agentId);
+            if (a && migrateRatioOverrides[agentId] !== a.ratio) {
+                ratioFixes.push({ wallet: a.wallet, oldRatio: a.ratio, newRatio: migrateRatioOverrides[agentId] });
+            }
+        });
+        if (typeof submitApprovalApplication === 'function') {
+            const remarkEl = document.getElementById('migrate-remark-input');
+            const remark = (remarkEl && remarkEl.value.trim()) || '';
+            const attachmentNames = migrateAttachments.map(function (a) { return a.name; });
+            const attachmentPreviews = {};
+            migrateAttachments.forEach(function (a) { attachmentPreviews[a.name] = a.dataUrl; });
+            submitApprovalApplication({
+                type: 'partner_rebate_migrate',
+                title: '返佣关系迁移',
+                flowProfile: 'risk_only',
+                applicant: 'Mkt_Allen',
+                remark: remark || '返佣关系迁移申请',
+                summary: subjectWallet + ' → ' + target.wallet + ' · ' + ratioVal + '%',
+                payload: {
+                    subjectWallet: subjectWallet,
+                    subjectUid: subjectUid,
+                    subjectType: p.type,
+                    targetWallet: target.wallet,
+                    targetUid: target.uid || '',
+                    newRatio: ratioVal,
+                    ratioFixes: ratioFixes,
+                    opsCap: OPS_CAP,
+                    attachments: attachmentNames,
+                    attachmentPreviews: attachmentPreviews
+                }
+            });
+            alert('已提交风控审核（演示）。审批通过后将执行迁移。');
+        } else {
+            alert('审批模块未加载（演示）');
         }
-        alert('迁移成功（演示）：' + name + ' → ' + target.wallet + '，比例 ' + ratioVal + '%');
         showMigratePage();
+    }
+
+    const PARTNER_APP_TYPES = ['partner_l1_bind', 'partner_ratio_change', 'partner_rebate_migrate'];
+    const PARTNER_TYPE_LABELS = {
+        partner_l1_bind: '一级合伙人绑定',
+        partner_ratio_change: '返佣比例调整',
+        partner_rebate_migrate: '返佣关系迁移'
+    };
+    const PARTNER_OP_TYPE_LABELS = {
+        submit: '提交审批',
+        cross_pass: '交叉审核通过',
+        risk_pass: '风控审核通过',
+        boss_pass: '老板审批通过',
+        reject: '审批驳回',
+        ratio_change: '返佣比例调整',
+        migrate: '返佣关系迁移',
+        bind: '一级合伙人绑定'
+    };
+
+    function mapTimelineToOpType(action, appType) {
+        const a = action || '';
+        if (a.indexOf('驳回') >= 0 || a.indexOf('拒绝') >= 0) return 'reject';
+        if (a.indexOf('老板') >= 0 && a.indexOf('通过') >= 0) return 'boss_pass';
+        if (a.indexOf('风控') >= 0 && a.indexOf('通过') >= 0) return 'risk_pass';
+        if (a.indexOf('交叉') >= 0 && a.indexOf('通过') >= 0) return 'cross_pass';
+        if (a.indexOf('提交') >= 0) {
+            if (appType === 'partner_rebate_migrate') return 'migrate';
+            if (appType === 'partner_l1_bind') return 'bind';
+            if (appType === 'partner_ratio_change') return 'ratio_change';
+            return 'submit';
+        }
+        return 'submit';
+    }
+
+    const PARTNER_OP_LOG_SEEDS = [
+        { time: '2026-08-11 09:20', operator: 'Mkt_Allen', opType: 'migrate', opLabel: '提交·返佣关系迁移', appId: 'APR20260811002', typeLabel: '返佣关系迁移', summary: '0xMig...Ok → 0xTo...L1 · 48%', note: '正常代理整伞迁移' },
+        { time: '2026-08-11 08:45', operator: 'Mkt_Allen', opType: 'ratio_change', opLabel: '提交·返佣比例调整', appId: 'APR20260811004', typeLabel: '合伙人返佣比例调整', summary: '0xNorm...L3 45%', note: '渠道协商下调' },
+        { time: '2026-08-10 16:30', operator: 'Risk_Control', opType: 'risk_pass', opLabel: '风控审核通过', appId: 'APR20260810003', typeLabel: '一级合伙人绑定', summary: '0xNew...L1 72%', note: '' },
+        { time: '2026-08-10 11:00', operator: 'Boss', opType: 'boss_pass', opLabel: '老板审批通过', appId: 'APR20260810003', typeLabel: '一级合伙人绑定', summary: '0xNew...L1 72%', note: 'Lark 同步通过' },
+        { time: '2026-08-09 14:22', operator: 'Mkt_Cross', opType: 'reject', opLabel: '审批驳回', appId: 'APR20260809001', typeLabel: '返佣关系迁移', summary: '0xAbn...L4 迁移申请', note: '倒挂未修正，请调整后重提' }
+    ];
+
+    function collectPartnerOpLogs() {
+        const logs = [];
+        const seen = new Set();
+        try {
+            const apps = JSON.parse(localStorage.getItem('forx_approval_applications') || '[]');
+            apps.forEach(function (app) {
+                if (PARTNER_APP_TYPES.indexOf(app.type) === -1) return;
+                (app.timeline || []).forEach(function (t) {
+                    const opType = mapTimelineToOpType(t.action, app.type);
+                    const key = app.id + '|' + t.at + '|' + t.action;
+                    if (seen.has(key)) return;
+                    seen.add(key);
+                    logs.push({
+                        time: t.at,
+                        operator: t.actor,
+                        opType: opType,
+                        opLabel: PARTNER_OP_TYPE_LABELS[opType] || t.action,
+                        action: t.action,
+                        appId: app.id,
+                        appType: app.type,
+                        typeLabel: PARTNER_TYPE_LABELS[app.type] || app.type,
+                        summary: app.summary || '',
+                        note: t.note || ''
+                    });
+                });
+            });
+        } catch (e) { /* ignore */ }
+        PARTNER_OP_LOG_SEEDS.forEach(function (s) {
+            const key = s.appId + '|' + s.time + '|' + s.opLabel;
+            if (!seen.has(key)) logs.push(s);
+        });
+        logs.sort(function (a, b) { return (b.time || '').localeCompare(a.time || ''); });
+        return logs;
+    }
+
+    let partnerOpLogsPage = 1;
+
+    function showPartnerLogsPage() {
+        partnerOpLogsPage = 1;
+        window.PartnerPortal_showPage('page-partner-logs');
+        const typeSel = document.getElementById('partner-logs-filter-type');
+        if (typeSel) typeSel.value = 'all';
+        renderPartnerOpLogs();
+    }
+
+    function renderPartnerOpLogs() {
+        const typeSel = document.getElementById('partner-logs-filter-type');
+        const type = typeSel ? typeSel.value : 'all';
+        let list = collectPartnerOpLogs();
+        if (type !== 'all') list = list.filter(function (l) { return l.opType === type; });
+        const sliced = paginate(list, partnerOpLogsPage);
+        partnerOpLogsPage = sliced.page;
+        const tbody = document.getElementById('partner-logs-body');
+        if (!tbody) return;
+        tbody.innerHTML = sliced.items.length ? sliced.items.map(function (l) {
+            const badgeCls = l.opType === 'reject' ? 'bg-red-100 text-red-700' :
+                (l.opType.indexOf('pass') >= 0 ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800');
+            return '<tr class="hover:bg-slate-50"><td class="px-4 py-3 text-slate-500 text-[11px]">' + l.time + '</td>' +
+                '<td class="px-3 py-3 font-bold">' + l.operator + '</td>' +
+                '<td class="px-3 py-3"><span class="' + badgeCls + ' px-2 py-0.5 rounded text-[10px] font-black">' + l.opLabel + '</span></td>' +
+                '<td class="px-3 py-3 font-mono text-[10px] font-bold">' + (l.appId || '—') + '</td>' +
+                '<td class="px-3 py-3 text-[10px] text-slate-600">' + (l.typeLabel || '—') + '</td>' +
+                '<td class="px-3 py-3 text-[11px]">' + (l.summary || '—') + '</td>' +
+                '<td class="px-3 py-3 text-[10px] text-slate-500">' + (l.note || '—') + '</td></tr>';
+        }).join('') : '<tr><td colspan="7" class="px-4 py-12 text-center text-slate-400">暂无操作记录</td></tr>';
+        mountListPagination('partner-logs-pagination', sliced.total, partnerOpLogsPage, 'partner-logs');
     }
 
     window.PartnerPortal = {
@@ -1641,11 +2248,47 @@
         initSettlementDatePickers: initSettlementDatePickers,
         openEditSupplement: openEditSupplement, closeEditSupplementModal: closeEditSupplementModal, saveEditSupplement: saveEditSupplement,
         showMigratePage: showMigratePage, previewMigrate: previewMigrate, submitMigrate: submitMigrate,
+        confirmMigrateSubmit: confirmMigrateSubmit, closeMigrateConfirmModal: closeMigrateConfirmModal,
+        toggleMigrateTreeExpand: toggleMigrateTreeExpand, stageMigrateRatioChange: stageMigrateRatioChange,
+        setMigrateTreePage: setMigrateTreePage, setMigrateClientsPage: setMigrateClientsPage,
+        jumpToMigrateInversion: jumpToMigrateInversion,
+        searchRebateTree: searchRebateTree,
+        searchMigrateTree: searchMigrateTree,
+        setRebateTreeBranchPage: setRebateTreeBranchPage,
+        showPartnerLogsPage: showPartnerLogsPage,
+        renderPartnerOpLogs: renderPartnerOpLogs,
+        handleMigrateAttachmentFiles: handleMigrateAttachmentFiles,
+        removeMigrateAttachment: removeMigrateAttachment,
         getCurrentUserId: function () { return currentUserId; },
         applyHashTree: applyHashTree, DATA_VERSION: DATA_VERSION
     };
 
     document.addEventListener('DOMContentLoaded', function () {
+        if (window.AdminPagination) {
+            AdminPagination.register('partner-list', function (p) { listPage = p; renderPartnerList(); });
+            AdminPagination.register('detail-sub', function (p) {
+                detailSubPage = p;
+                const u = getUser(currentUserId);
+                if (u) renderDetailSubTable(u);
+            });
+            AdminPagination.register('detail-clients', function (p) {
+                detailClientPage = p;
+                const u = getUser(currentUserId);
+                if (u) renderDetailClientTable(u);
+            });
+            AdminPagination.register('detail-settlement', function (p) {
+                detailSettlementPage = p;
+                const u = getUser(currentUserId);
+                if (u) renderDetailSettlements(u);
+            });
+            AdminPagination.register('settlement-batch', function (p) { settlementBatchPage = p; filterSettlementBatches(); });
+            AdminPagination.register('settlement-detail', function (p) { settlementDetailPage = p; renderSettlementDetailRows(); });
+            AdminPagination.register('settlement-supplement', function (p) { supplementDetailPage = p; renderSettlementSupplementRows(); });
+            AdminPagination.register('migrate-tree-branches', function (p) { migrateState.treePage = p; renderMigratePreviewContent(); });
+            AdminPagination.register('migrate-clients', function (p) { migrateState.clientsPage = p; renderMigratePreviewContent(); });
+            AdminPagination.register('rebate-tree-branches', function (p) { setRebateTreeBranchPage(p); });
+            AdminPagination.register('partner-logs', function (p) { partnerOpLogsPage = p; renderPartnerOpLogs(); });
+        }
         renderPartnerList();
         filterSettlementBatches();
         initSettlementDatePickers();

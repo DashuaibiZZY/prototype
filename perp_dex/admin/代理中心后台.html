@@ -81,6 +81,7 @@
                         <tbody id="partner-list-body" class="divide-y divide-slate-50 text-[11px]"></tbody>
                     </table>
                 </div>
+                <div id="partner-list-pagination"></div>
             </section>
         </div>
 
@@ -135,6 +136,7 @@
                         </thead>
                         <tbody id="detail-sub-partners" class="divide-y"></tbody>
                     </table>
+                    <div id="detail-sub-pagination"></div>
                 </div>
                 <div id="detail-table-clients" class="overflow-x-auto hidden">
                     <table class="w-full text-left text-[11px]">
@@ -145,6 +147,7 @@
                         </thead>
                         <tbody id="detail-direct-clients" class="divide-y"></tbody>
                     </table>
+                    <div id="detail-clients-pagination"></div>
                 </div>
             </div>
 
@@ -156,6 +159,7 @@
                     </thead>
                     <tbody id="detail-settlement-rows" class="divide-y"></tbody>
                 </table>
+                <div id="detail-settlement-pagination"></div>
             </div>
         </div>
 
@@ -182,25 +186,39 @@
                     </div>
                 </div>
                 <div id="migrate-subject-card" class="hidden bg-slate-50 border border-slate-200 rounded-lg p-4 text-[11px]"></div>
-                <div class="flex flex-wrap gap-3 items-center">
-                    <button type="button" onclick="PartnerPortal.previewMigrate()" class="border px-4 py-2 rounded font-bold text-[11px] text-slate-700">预览迁移</button>
-                    <button type="button" id="migrate-submit-btn" onclick="PartnerPortal.submitMigrate()" disabled class="bg-blue-600 text-white px-6 py-2 rounded font-black text-[11px] opacity-50 cursor-not-allowed">确认迁移</button>
-                </div>
                 <div class="text-[10px] text-slate-400 border-t pt-3 space-y-1">
-                    <p><strong>演示待迁移：</strong>普通用户 <code class="bg-slate-100 px-1">0xPlain...U1</code> · 正常代理 <code class="bg-slate-100 px-1">0xMig...Ok</code> · 倒挂代理 <code class="bg-slate-100 px-1">0xMig...Abn</code></p>
-                    <p><strong>演示目标上级：</strong><code class="bg-slate-100 px-1">0xTo...L1</code> (72%) · <code class="bg-slate-100 px-1">0xTo...L2</code> (56%)</p>
-                    <p><strong>倒挂测试：</strong>迁移 <code class="bg-slate-100 px-1">0xMig...Ok</code> 到 <code class="bg-slate-100 px-1">0xTo...L1</code>，将比例设为 30%（低于下级 50%）可触发倒挂提示</p>
+                    <p><strong>演示待迁移：</strong>普通 <code class="bg-slate-100 px-1">0xPlain...U1</code> · 正常代理 <code class="bg-slate-100 px-1">0xMig...Ok</code>（系统L2）· 链路倒挂 <code class="bg-slate-100 px-1">0xMig...Abn</code>（系统L6·B支深层倒挂）</p>
+                    <p><strong>目标上级：</strong><code class="bg-slate-100 px-1">0xTo...L1</code> · <code class="bg-slate-100 px-1">0xTo...L2</code></p>
+                    <p><strong>倒挂修正：</strong>迁移 <code class="bg-slate-100 px-1">0xMig...Abn</code> 后在树中将 <code class="bg-slate-100 px-1">0xMig...AbnBL4</code> 比例调低至 38% 以下即可提交</p>
                 </div>
             </section>
 
             <section id="migrate-preview-section" class="hidden bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
-                <div class="px-5 py-3 border-b font-bold text-slate-700">迁移预览</div>
+                <div class="px-5 py-3 border-b font-bold text-slate-700">迁移预览 · 代理链路</div>
                 <div id="migrate-preview-body" class="p-5 text-[11px] space-y-4"></div>
+                <div id="migrate-submit-footer" class="hidden border-t bg-slate-50 px-5 py-4 space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase">审核备注说明</label>
+                            <textarea id="migrate-remark-input" rows="3" class="w-full border rounded p-2 mt-1 text-[11px] outline-none focus:ring-1 focus:ring-blue-600" placeholder="补充申请原因、渠道资源说明等"></textarea>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase">图片附件（最多 4 张）</label>
+                            <input id="migrate-attachment-input" type="file" accept="image/*" multiple class="mt-1 text-[11px] w-full" onchange="PartnerPortal.handleMigrateAttachmentFiles(this)">
+                            <p class="text-[10px] text-slate-400 mt-1">支持 JPG / PNG 等图片，用于补充申请资源</p>
+                            <div id="migrate-attachment-preview" class="flex flex-wrap gap-2 mt-2"></div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-3">
+                        <p class="text-[10px] text-slate-500">下方树中的比例修改将随迁移申请一并提交风控审核</p>
+                        <button type="button" id="migrate-submit-btn" onclick="PartnerPortal.submitMigrate()" disabled class="bg-blue-600 text-white px-8 py-2.5 rounded font-black text-[11px] opacity-50 cursor-not-allowed">提交风控审核</button>
+                    </div>
+                </div>
             </section>
 
             <section id="migrate-errors-section" class="hidden bg-red-50 border border-red-200 rounded-lg p-5">
                 <p class="font-black text-red-800 text-sm mb-2">返佣倒挂校验未通过</p>
-                <p class="text-[11px] text-red-700 mb-3">请先在返佣树中下调相关下级比例，或调高上级比例后再迁移。</p>
+                <p class="text-[11px] text-red-700 mb-3">可在下方代理链路树中修改倒挂节点比例，修正后自动重新校验。链路内深层倒挂（非迁移比例导致）也须修正后方可提交风控审核。</p>
                 <ul id="migrate-errors-list" class="text-[11px] text-red-800 space-y-1 list-disc pl-5"></ul>
             </section>
         </div>
@@ -219,13 +237,59 @@
             <div id="tree-pending-bar" class="hidden"></div>
             <div class="bg-white rounded-lg border border-slate-200 p-4">
                 <p class="text-[11px] text-slate-600 mb-3 bg-slate-50 border border-slate-100 rounded p-3"><strong>运营操作：</strong>上级链已固定展示；下级默认只显示直属合伙人，点 <strong>+</strong> 展开下一层。下级返佣比例须低于其直属上级；多条修改后在树上方<strong>提交修改</strong>，权限内立即生效，超上限走审批。</p>
+                <div class="flex flex-wrap gap-2 items-center mb-3">
+                    <input id="tree-search-input" type="text" placeholder="钱包地址 / UID 快速定位" class="border border-slate-200 rounded-lg px-3 py-2 text-[11px] w-64 max-w-full outline-none focus:ring-1 focus:ring-blue-500" onkeydown="if(event.key==='Enter')PartnerPortal.searchRebateTree()">
+                    <button type="button" onclick="PartnerPortal.searchRebateTree()" class="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-[11px]">定位</button>
+                    <span class="text-[10px] text-slate-400">在当前一级伞内搜索并展开定位到节点</span>
+                </div>
                 <div id="rebate-tree-root"></div>
             </div>
         </div>
 
         <!-- 合伙人配置审批 -->
-        <div id="page-agent-approval" class="hidden flex-1 overflow-y-auto">
+        <div id="page-agent-approval" class="hidden flex-1 overflow-y-auto space-y-8">
             <div id="partner-approval-root"></div>
+        </div>
+
+        <!-- 合伙人操作记录 -->
+        <div id="page-partner-logs" class="hidden space-y-6">
+            <section class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+                <div class="px-5 py-4 border-b flex flex-wrap justify-between items-center gap-3">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-700">操作记录</h2>
+                        <p class="text-[11px] text-slate-400 mt-1">与审核相关的提交、通过、驳回等操作均记录于此（数据来自审批流时间线）</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase">操作类型</label>
+                        <select id="partner-logs-filter-type" class="border rounded px-3 py-2 text-[11px] bg-white" onchange="PartnerPortal.renderPartnerOpLogs()">
+                            <option value="all">全部</option>
+                            <option value="submit">提交审批</option>
+                            <option value="migrate">返佣关系迁移</option>
+                            <option value="bind">一级合伙人绑定</option>
+                            <option value="ratio_change">返佣比例调整</option>
+                            <option value="cross_pass">交叉审核通过</option>
+                            <option value="risk_pass">风控审核通过</option>
+                            <option value="boss_pass">老板审批通过</option>
+                            <option value="reject">审批驳回</option>
+                        </select>
+                    </div>
+                </div>
+                <table class="w-full text-left text-[11px] min-w-[900px]">
+                    <thead class="bg-slate-50 border-b text-[10px] uppercase text-slate-500 font-bold">
+                    <tr>
+                        <th class="px-4 py-3">时间</th>
+                        <th class="px-3 py-3">操作人</th>
+                        <th class="px-3 py-3">操作类型</th>
+                        <th class="px-3 py-3">审批单号</th>
+                        <th class="px-3 py-3">审批类型</th>
+                        <th class="px-3 py-3">摘要</th>
+                        <th class="px-3 py-3">备注</th>
+                    </tr>
+                    </thead>
+                    <tbody id="partner-logs-body" class="divide-y divide-slate-50"></tbody>
+                </table>
+                <div id="partner-logs-pagination"></div>
+            </section>
         </div>
 
         <!-- 佣金对账与发放 -->
@@ -264,6 +328,7 @@
                         </thead>
                         <tbody id="settlement-batch-body" class="divide-y text-[11px]"></tbody>
                     </table>
+                    <div id="settlement-batch-pagination"></div>
                 </div>
             </div>
             <div id="view-review-detail" class="hidden space-y-6">
@@ -353,6 +418,7 @@
                             </thead>
                             <tbody id="settlement-detail-body" class="divide-y"></tbody>
                         </table>
+                        <div id="settlement-detail-pagination"></div>
                     </div>
                     <div id="settlement-supplement-table-wrap" class="hidden">
                         <table class="w-full text-left text-[11px]">
@@ -367,6 +433,7 @@
                             </thead>
                             <tbody id="settlement-supplement-body" class="divide-y"></tbody>
                         </table>
+                        <div id="settlement-supplement-pagination"></div>
                     </div>
                 </div>
             </div>
@@ -398,6 +465,19 @@
 </main>
 
 <!-- 新增一级合伙人 -->
+<div id="modal-migrate-confirm" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-lg shadow-2xl overflow-hidden">
+        <div class="px-6 py-4 border-b">
+            <h3 class="font-bold text-slate-800">确认提交风控审核</h3>
+        </div>
+        <div class="p-6" id="migrate-confirm-body"></div>
+        <div class="px-6 py-4 bg-slate-50 flex gap-3">
+            <button onclick="PartnerPortal.closeMigrateConfirmModal()" class="flex-1 py-2 border rounded font-bold text-slate-500">取消</button>
+            <button onclick="PartnerPortal.confirmMigrateSubmit()" class="flex-1 py-2 bg-blue-600 text-white rounded font-bold">确认提交</button>
+        </div>
+    </div>
+</div>
+
 <div id="modal-abnormal-list" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-2xl rounded-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
         <div class="px-6 py-4 border-b flex justify-between items-center shrink-0">
@@ -500,6 +580,7 @@
         'page-rebate-tree': '返佣关系树',
         'page-rebate-migrate': '迁移返佣关系',
         'page-agent-approval': '合伙人配置审批',
+        'page-partner-logs': '操作记录',
         'page-settlement': '佣金对账与发放'
     };
     const PAGE_HASH = {
@@ -508,11 +589,12 @@
         'page-rebate-tree': 'rebate-tree',
         'page-rebate-migrate': 'migrate',
         'page-agent-approval': 'approval',
+        'page-partner-logs': 'logs',
         'page-settlement': 'settlement'
     };
 
     function hideAllPartnerPages() {
-        ['page-agent-mgmt', 'page-partner-detail', 'page-rebate-tree', 'page-rebate-migrate', 'page-agent-approval', 'page-settlement'].forEach(function (id) {
+        ['page-agent-mgmt', 'page-partner-detail', 'page-rebate-tree', 'page-rebate-migrate', 'page-agent-approval', 'page-partner-logs', 'page-settlement'].forEach(function (id) {
             document.getElementById(id).classList.add('hidden');
         });
     }
@@ -539,12 +621,21 @@
 <script src="admin-permission-store.js"></script>
 <script src="admin-permissions.js"></script>
 <script src="admin-copy-chip.js"></script>
+<script src="admin-pagination.js"></script>
 <script src="admin-sidebar.js"></script>
 <script src="admin-approval.js"></script>
 <script src="admin-approval-ui.js"></script>
-<script src="admin-partner-portal.js?v=partner-demo-10"></script>
+<script src="admin-partner-portal.js?v=partner-demo-17"></script>
 <script>
-    initModuleApproval({ types: ['partner_l1_bind', 'partner_ratio_change'], rootId: 'partner-approval-root', title: '合伙人配置审批', showExportList: false, showExportDetail: false, singleUserConfig: true });
+    initModuleApproval({
+        types: ['partner_l1_bind', 'partner_ratio_change', 'partner_rebate_migrate'],
+        rootId: 'partner-approval-root',
+        title: '合伙人审核',
+        showExportList: false,
+        showExportDetail: false,
+        singleUserConfig: true,
+        approvalRoles: ['risk', 'boss']
+    });
 
     function showApprovalPage() {
         PartnerPortal_showPage('page-agent-approval');
@@ -561,15 +652,19 @@
             initAdminSidebar('agent-mgmt');
         },
         approval: function () { showApprovalPage(); },
+        'approval-migrate': function () { showApprovalPage(); },
         settlement: function () { PartnerPortal_showPage('page-settlement'); initAdminSidebar('agent-settlement'); PartnerPortal.filterSettlementBatches(); PartnerPortal.initSettlementDatePickers(); },
-        migrate: function () { PartnerPortal.showMigratePage(); initAdminSidebar('agent-migrate'); }
+        migrate: function () { PartnerPortal.showMigratePage(); initAdminSidebar('agent-migrate'); },
+        logs: function () { PartnerPortal.showPartnerLogsPage(); initAdminSidebar('agent-logs'); }
     }, 'agent', {
         agent: 'agent-mgmt',
         'partner-detail': 'agent-mgmt',
         'rebate-tree': 'agent-mgmt',
         migrate: 'agent-migrate',
         approval: 'agent-approval',
-        settlement: 'agent-settlement'
+        'approval-migrate': 'agent-approval',
+        settlement: 'agent-settlement',
+        logs: 'agent-logs'
     });
 </script>
 </body>

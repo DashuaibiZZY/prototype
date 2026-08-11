@@ -579,6 +579,8 @@ https://dashuaibizzy.github.io/prototype/perp_dex/流程图/回收执行流程.s
 
 详见《[后台权限与人员管理](后台权限与角色管理.md)》§4.2、§5、§7。原型业务页 **全量展示** UI；正式上线按人员权限裁剪。
 
+**列表分页与 UID/地址复制**：各 Tab 查询列表、详情子表、审批名单统一见《[后台权限与人员管理](后台权限与角色管理.md)》§3.1（每页 10 条，`< 1 2 3 ... N >`）。
+
 ---
 
 ## 9.1 卡组配置
@@ -617,6 +619,8 @@ https://dashuaibizzy.github.io/prototype/perp_dex/流程图/回收执行流程.s
 | 亏损抵扣上限 | `开启 (20%)` 或 `关闭` |
 | 费用抵扣上限 | `开启 (10%)` 或 `关闭` |
 | 操作 | 编辑 |
+
+列表底部分页器：每页 10 条（卡组较多时分页浏览）。
 
 ### 新建卡组配置
 
@@ -799,6 +803,8 @@ https://dashuaibizzy.github.io/prototype/perp_dex/流程图/回收执行流程.s
 | 发放时间 | 最近发放时间 |
 | 操作 | 「查看详情」；有剩余体验金时展示「回收」 |
 
+UID / 钱包列缩写 + 一键复制。用户列表底部分页器：每页 10 条。
+
 ### 用户卡券详情
 
 页面截图：[**后台 · 用户卡券详情**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/体验金/admin-user-detail.png)
@@ -812,6 +818,8 @@ https://dashuaibizzy.github.io/prototype/perp_dex/流程图/回收执行流程.s
 | 回收该用户全部可用卡券 | 一键回收按钮（红色） |
 
 详情页左上角提供「← 返回用户列表」。
+
+**卡券列表、使用流水** 各带独立分页器（每页 10 条）。
 
 #### 卡券列表与使用记录
 
@@ -1015,6 +1023,8 @@ https://dashuaibizzy.github.io/prototype/perp_dex/流程图/回收执行流程.s
 | 变更详情 | 如：`新用户注册礼包 · CPN010（250 USDT）`；`回收 CPN088（剩余 120 USDT）` |
 | 金额 | 发放或回收的 USDT 金额 |
 | 备注 | 操作备注摘要；发放审批中标注审批单号 |
+
+列表底部分页器：每页 10 条。
 
 ### 记录时机
 

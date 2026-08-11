@@ -14,7 +14,8 @@
             items: [
                 { key: 'agent-mgmt', label: '合伙人管理', href: '代理中心后台.html#agent' },
                 { key: 'agent-migrate', label: '迁移返佣关系', href: '代理中心后台.html#migrate' },
-                { key: 'agent-approval', label: '合伙人配置审批', href: '代理中心后台.html#approval' },
+                { key: 'agent-approval', label: '合伙人审核', href: '代理中心后台.html#approval' },
+                { key: 'agent-logs', label: '操作记录', href: '代理中心后台.html#logs' },
                 { key: 'agent-settlement', label: '佣金对账与发放', href: '代理中心后台.html#settlement' }
             ]
         },

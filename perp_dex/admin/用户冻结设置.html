@@ -92,6 +92,7 @@
                 </thead>
                 <tbody id="userTableBody" class="divide-y divide-slate-50 text-[12px]"></tbody>
             </table>
+            <div id="freeze-user-pagination"></div>
         </section>
     </div>
 </main>
@@ -142,6 +143,7 @@
 </div>
 <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-lg text-sm font-bold shadow-xl z-[70] hidden"></div>
 
+<script src="admin-pagination.js"></script>
 <script>
     const FREEZE_CONFIGS = [
         { key: 'withdrawFreeze', title: '提现冻结', desc: '禁止发起链上提现申请' },
@@ -168,6 +170,20 @@
     let filteredUsers = [...users];
     let currentUserId = null;
     let draftConfig = null;
+    let freezeUserListPage = 1;
+
+    function freezeUserSlice(items, page) {
+        if (window.AdminPagination) return AdminPagination.slice(items, page);
+        const pageSize = 10;
+        const total = items.length;
+        const p = Math.max(1, Math.min(page || 1, Math.max(1, Math.ceil(total / pageSize) || 1)));
+        const start = (p - 1) * pageSize;
+        return { items: items.slice(start, start + pageSize), page: p, total: total, pageSize: pageSize };
+    }
+
+    function freezeUserMountPag(containerId, total, page, handlerId) {
+        if (window.AdminPagination) AdminPagination.mount(containerId, total, page, handlerId);
+    }
 
     function appendFreezeLog(entry) {
         const logs = JSON.parse(localStorage.getItem(FREEZE_LOG_KEY) || '[]');
@@ -204,12 +220,15 @@
 
     function renderUserTable() {
         const tbody = document.getElementById('userTableBody');
+        const sliced = freezeUserSlice(filteredUsers, freezeUserListPage);
+        freezeUserListPage = sliced.page;
         document.getElementById('userCount').textContent = `(${filteredUsers.length})`;
         if (!filteredUsers.length) {
             tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-12 text-center text-slate-400">未找到匹配用户</td></tr>';
+            freezeUserMountPag('freeze-user-pagination', 0, 1, 'freeze-users');
             return;
         }
-        tbody.innerHTML = filteredUsers.map(u => `
+        tbody.innerHTML = sliced.items.map(u => `
             <tr class="hover:bg-slate-50">
                 <td class="px-6 py-4">
                     <div>${window.AdminCopyChip ? AdminCopyChip.uid(u.uid) : 'UID ' + u.uid}</div>
@@ -221,6 +240,7 @@
                 <td class="px-6 py-4 text-right"><button onclick="openDrawer('${u.uid}')" class="text-blue-600 font-bold hover:underline">配置冻结</button></td>
             </tr>
         `).join('');
+        freezeUserMountPag('freeze-user-pagination', sliced.total, freezeUserListPage, 'freeze-users');
     }
 
     function applyFilters() {
@@ -233,6 +253,7 @@
             if (freeze !== 'all' && u.freezeStatus !== freeze) return false;
             return true;
         });
+        freezeUserListPage = 1;
         renderUserTable();
     }
 
@@ -241,6 +262,7 @@
         document.getElementById('filterUid').value = '';
         document.getElementById('filterFreeze').value = 'all';
         filteredUsers = [...users];
+        freezeUserListPage = 1;
         renderUserTable();
     }
 
@@ -348,6 +370,9 @@
     }
 
     renderUserTable();
+    if (window.AdminPagination) {
+        AdminPagination.register('freeze-users', function (p) { freezeUserListPage = p; renderUserTable(); });
+    }
 </script>
 <script src="admin-permission-registry.js"></script>
 <script src="admin-permission-store.js"></script>
