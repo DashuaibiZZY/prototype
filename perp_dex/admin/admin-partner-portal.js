@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-12';
+    const DATA_VERSION = 'partner-demo-13';
 
     function chip(v, type) {
         if (!v || v === '—' || v === '--') return '<span class="text-slate-400">' + (v || '—') + '</span>';
@@ -239,6 +239,7 @@
     let migrateState = { subjectKey: '', preview: null, inversionErrors: [], treePage: 0, clientsPage: 0 };
     let migrateTreeExpanded = new Set();
     let migrateRatioOverrides = {};
+    let migrateAttachments = [];
     const MIGRATE_TREE_PAGE_SIZE = 2;
     let treeFocusId = null;
     let treeExpandedNodes = new Set();
@@ -1537,7 +1538,7 @@
         }
         if (inverted) html += '<span class="text-[9px] text-red-600 font-black">倒挂</span>';
         html += '</div></div>';
-        if (hasKids && expanded) {
+        if (hasKids && expanded && depth > 0) {
             html += '<div class="tree-children ml-4 mt-1 space-y-2">';
             childIds.forEach(function (cid) {
                 html += renderMigrateTreeNode(cid, rootId, rootEffectiveRatio, depth + 1);
@@ -1575,7 +1576,7 @@
             let u = getMigrateAgent(nid);
             while (u && u.id !== p.partnerUser.id) {
                 const parent = getMigrateAgentByWallet(u.parentWallet);
-                if (parent) migrateTreeExpanded.add(parent.id);
+                if (parent && parent.id !== p.partnerUser.id) migrateTreeExpanded.add(parent.id);
                 u = parent;
             }
         });
@@ -1691,6 +1692,12 @@
         migrateState = { subjectKey: '', preview: null, inversionErrors: [], treePage: 0, clientsPage: 0 };
         migrateTreeExpanded = new Set();
         migrateRatioOverrides = {};
+        migrateAttachments = [];
+        const remarkEl = document.getElementById('migrate-remark-input');
+        if (remarkEl) remarkEl.value = '';
+        const fileEl = document.getElementById('migrate-attachment-input');
+        if (fileEl) fileEl.value = '';
+        renderMigrateAttachmentPreview();
         window.PartnerPortal_showPage('page-rebate-migrate');
         ['migrate-subject-input', 'migrate-target-input', 'migrate-ratio-input'].forEach(function (id) {
             const el = document.getElementById(id);
@@ -1761,6 +1768,8 @@
             const list = document.getElementById('migrate-errors-list');
             if (list) list.innerHTML = '<li>未找到待迁移用户</li>';
             if (errSec) errSec.classList.remove('hidden');
+            const footerErr = document.getElementById('migrate-submit-footer');
+            if (footerErr) footerErr.classList.add('hidden');
             updateMigrateSubmitState();
             return;
         }
@@ -1799,6 +1808,61 @@
             'bg-blue-600 text-white px-6 py-2 rounded font-black text-[11px] opacity-50 cursor-not-allowed';
     }
 
+    function renderMigrateAttachmentPreview() {
+        const el = document.getElementById('migrate-attachment-preview');
+        if (!el) return;
+        if (!migrateAttachments.length) {
+            el.innerHTML = '';
+            return;
+        }
+        el.innerHTML = migrateAttachments.map(function (a, i) {
+            return '<div class="relative group border rounded overflow-hidden w-16 h-16 bg-white">' +
+                '<img src="' + a.dataUrl + '" alt="' + a.name + '" class="w-full h-full object-cover">' +
+                '<button type="button" onclick="PartnerPortal.removeMigrateAttachment(' + i + ')" class="absolute top-0 right-0 bg-red-600 text-white text-[9px] px-1 leading-none opacity-90">×</button>' +
+                '<span class="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[8px] px-1 truncate">' + a.name + '</span></div>';
+        }).join('');
+    }
+
+    function handleMigrateAttachmentFiles(input) {
+        if (!input || !input.files) return;
+        const files = Array.from(input.files);
+        const remain = 4 - migrateAttachments.length;
+        if (remain <= 0) {
+            alert('最多上传 4 张图片');
+            input.value = '';
+            return;
+        }
+        const toAdd = files.slice(0, remain);
+        if (files.length > remain) alert('最多上传 4 张图片，已忽略超出部分');
+        let pending = toAdd.length;
+        if (!pending) {
+            input.value = '';
+            return;
+        }
+        toAdd.forEach(function (file) {
+            if (!file.type || file.type.indexOf('image/') !== 0) {
+                pending--;
+                if (pending === 0) input.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                migrateAttachments.push({ name: file.name, dataUrl: ev.target.result });
+                renderMigrateAttachmentPreview();
+                pending--;
+                if (pending === 0) input.value = '';
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function removeMigrateAttachment(index) {
+        migrateAttachments.splice(index, 1);
+        renderMigrateAttachmentPreview();
+        const fileEl = document.getElementById('migrate-attachment-input');
+        if (fileEl) fileEl.value = '';
+    }
+
     function openMigrateConfirmModal() {
         if (!migrateState.preview || migrateState.inversionErrors.length) {
             alert('请先修正返佣倒挂或填写完整信息');
@@ -1830,6 +1894,9 @@
         } else {
             body += '<li><span class="text-slate-500">下级比例修正</span> 无</li>';
         }
+        const remarkText = (document.getElementById('migrate-remark-input') && document.getElementById('migrate-remark-input').value.trim()) || '无';
+        body += '<li><span class="text-slate-500">审核备注</span> ' + remarkText + '</li>';
+        body += '<li><span class="text-slate-500">图片附件</span> ' + (migrateAttachments.length ? migrateAttachments.map(function (a) { return a.name; }).join('、') : '无') + '</li>';
         body += '</ul>';
         document.getElementById('migrate-confirm-body').innerHTML = body;
         document.getElementById('modal-migrate-confirm').classList.remove('hidden');
@@ -1860,12 +1927,17 @@
             }
         });
         if (typeof submitApprovalApplication === 'function') {
+            const remarkEl = document.getElementById('migrate-remark-input');
+            const remark = (remarkEl && remarkEl.value.trim()) || '';
+            const attachmentNames = migrateAttachments.map(function (a) { return a.name; });
+            const attachmentPreviews = {};
+            migrateAttachments.forEach(function (a) { attachmentPreviews[a.name] = a.dataUrl; });
             submitApprovalApplication({
                 type: 'partner_rebate_migrate',
                 title: '返佣关系迁移',
                 flowProfile: 'risk_only',
                 applicant: 'Mkt_Allen',
-                remark: '返佣关系迁移申请',
+                remark: remark || '返佣关系迁移申请',
                 summary: subjectWallet + ' → ' + target.wallet + ' · ' + ratioVal + '%',
                 payload: {
                     subjectWallet: subjectWallet,
@@ -1875,7 +1947,9 @@
                     targetUid: target.uid || '',
                     newRatio: ratioVal,
                     ratioFixes: ratioFixes,
-                    opsCap: OPS_CAP
+                    opsCap: OPS_CAP,
+                    attachments: attachmentNames,
+                    attachmentPreviews: attachmentPreviews
                 }
             });
             alert('已提交风控审核（演示）。审批通过后将执行迁移。');
@@ -1910,6 +1984,8 @@
         toggleMigrateTreeExpand: toggleMigrateTreeExpand, stageMigrateRatioChange: stageMigrateRatioChange,
         setMigrateTreePage: setMigrateTreePage, setMigrateClientsPage: setMigrateClientsPage,
         jumpToMigrateInversion: jumpToMigrateInversion,
+        handleMigrateAttachmentFiles: handleMigrateAttachmentFiles,
+        removeMigrateAttachment: removeMigrateAttachment,
         getCurrentUserId: function () { return currentUserId; },
         applyHashTree: applyHashTree, DATA_VERSION: DATA_VERSION
     };

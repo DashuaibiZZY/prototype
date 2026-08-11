@@ -192,9 +192,23 @@
             <section id="migrate-preview-section" class="hidden bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
                 <div class="px-5 py-3 border-b font-bold text-slate-700">迁移预览 · 代理链路</div>
                 <div id="migrate-preview-body" class="p-5 text-[11px] space-y-4"></div>
-                <div id="migrate-submit-footer" class="hidden border-t bg-slate-50 px-5 py-4 flex flex-wrap items-center justify-between gap-3">
-                    <p class="text-[10px] text-slate-500">下方树中的比例修改将随迁移申请一并提交风控审核</p>
-                    <button type="button" id="migrate-submit-btn" onclick="PartnerPortal.submitMigrate()" disabled class="bg-blue-600 text-white px-8 py-2.5 rounded font-black text-[11px] opacity-50 cursor-not-allowed">提交风控审核</button>
+                <div id="migrate-submit-footer" class="hidden border-t bg-slate-50 px-5 py-4 space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase">审核备注说明</label>
+                            <textarea id="migrate-remark-input" rows="3" class="w-full border rounded p-2 mt-1 text-[11px] outline-none focus:ring-1 focus:ring-blue-600" placeholder="补充申请原因、渠道资源说明等"></textarea>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase">图片附件（最多 4 张）</label>
+                            <input id="migrate-attachment-input" type="file" accept="image/*" multiple class="mt-1 text-[11px] w-full" onchange="PartnerPortal.handleMigrateAttachmentFiles(this)">
+                            <p class="text-[10px] text-slate-400 mt-1">支持 JPG / PNG 等图片，用于补充申请资源</p>
+                            <div id="migrate-attachment-preview" class="flex flex-wrap gap-2 mt-2"></div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-3">
+                        <p class="text-[10px] text-slate-500">下方树中的比例修改将随迁移申请一并提交风控审核</p>
+                        <button type="button" id="migrate-submit-btn" onclick="PartnerPortal.submitMigrate()" disabled class="bg-blue-600 text-white px-8 py-2.5 rounded font-black text-[11px] opacity-50 cursor-not-allowed">提交风控审核</button>
+                    </div>
                 </div>
             </section>
 
@@ -226,7 +240,6 @@
         <!-- 合伙人配置审批 -->
         <div id="page-agent-approval" class="hidden flex-1 overflow-y-auto space-y-8">
             <div id="partner-approval-root"></div>
-            <div id="partner-migrate-approval-root"></div>
         </div>
 
         <!-- 佣金对账与发放 -->
@@ -556,38 +569,22 @@
 <script src="admin-sidebar.js"></script>
 <script src="admin-approval.js"></script>
 <script src="admin-approval-ui.js"></script>
-<script src="admin-partner-portal.js?v=partner-demo-12"></script>
+<script src="admin-partner-portal.js?v=partner-demo-13"></script>
 <script>
     initModuleApproval({
-        types: ['partner_l1_bind', 'partner_ratio_change'],
+        types: ['partner_l1_bind', 'partner_ratio_change', 'partner_rebate_migrate'],
         rootId: 'partner-approval-root',
-        title: '返佣配置审批',
+        title: '合伙人审核',
         showExportList: false,
         showExportDetail: false,
         singleUserConfig: true,
         approvalRoles: ['risk', 'boss']
-    });
-    initModuleApproval({
-        types: ['partner_rebate_migrate'],
-        rootId: 'partner-migrate-approval-root',
-        title: '迁移返佣关系审核',
-        showExportList: false,
-        showExportDetail: false,
-        singleUserConfig: true,
-        approvalRoles: ['risk']
     });
 
     function showApprovalPage() {
         PartnerPortal_showPage('page-agent-approval');
         initAdminSidebar('agent-approval', '登录身份: 市场运营');
         moduleApprovalBackList('partner-approval-root', false);
-        moduleApprovalBackList('partner-migrate-approval-root', false);
-    }
-
-    function showMigrateApprovalPage() {
-        PartnerPortal_showPage('page-agent-approval');
-        initAdminSidebar('agent-migrate-approval', '登录身份: 市场运营');
-        moduleApprovalBackList('partner-migrate-approval-root', false);
     }
 
     initAdminSidebar('agent-mgmt', '登录身份: 市场运营');
@@ -599,7 +596,7 @@
             initAdminSidebar('agent-mgmt');
         },
         approval: function () { showApprovalPage(); },
-        'approval-migrate': function () { showMigrateApprovalPage(); },
+        'approval-migrate': function () { showApprovalPage(); },
         settlement: function () { PartnerPortal_showPage('page-settlement'); initAdminSidebar('agent-settlement'); PartnerPortal.filterSettlementBatches(); PartnerPortal.initSettlementDatePickers(); },
         migrate: function () { PartnerPortal.showMigratePage(); initAdminSidebar('agent-migrate'); }
     }, 'agent', {
@@ -608,7 +605,7 @@
         'rebate-tree': 'agent-mgmt',
         migrate: 'agent-migrate',
         approval: 'agent-approval',
-        'approval-migrate': 'agent-migrate-approval',
+        'approval-migrate': 'agent-approval',
         settlement: 'agent-settlement'
     });
 </script>
