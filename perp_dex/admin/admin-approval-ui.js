@@ -106,6 +106,13 @@
             if (p.ratioFixes && p.ratioFixes.length) {
                 rows.push(['倒挂修正', p.ratioFixes.map(function (f) { return f.wallet + ' ' + f.oldRatio + '%→' + f.newRatio + '%'; }).join('；')]);
             }
+            if (p.attachments && p.attachments.length) {
+                const previews = p.attachmentPreviews || {};
+                rows.push(['图片附件', p.attachments.map(function (name) {
+                    const url = previews[name] || '';
+                    return '<button type="button" class="text-blue-600 font-bold hover:underline mr-2" onclick="openApprovalAttachment(\'' + name.replace(/'/g, "\\'") + '\', \'' + url.replace(/'/g, "\\'") + '\')">' + name + '（查看）</button>';
+                }).join('')]);
+            }
         }
         return rows.map(function (r) {
             let valHtml = (r[1] || '—');
@@ -126,6 +133,17 @@
                 return '<li class="font-bold text-amber-900">' + f.wallet + '：<span class="text-slate-500">' + f.oldRatio + '%</span> → <span class="text-blue-600">' + f.newRatio + '%</span></li>';
             }).join('') + '</ul>'
             : '<p class="mt-1 text-slate-500 text-[11px]">无（未修改下级比例）</p>';
+        let attachHtml = '<p class="mt-1 text-slate-500 text-[11px]">无</p>';
+        if (p.attachments && p.attachments.length) {
+            const previews = p.attachmentPreviews || {};
+            attachHtml = '<div class="flex flex-wrap gap-2 mt-2">' + p.attachments.map(function (name) {
+                const url = previews[name] || '';
+                if (url) {
+                    return '<button type="button" onclick="openApprovalAttachment(\'' + name.replace(/'/g, "\\'") + '\', \'' + url.replace(/'/g, "\\'") + '\')" class="border rounded overflow-hidden w-14 h-14 hover:ring-2 ring-blue-400"><img src="' + url + '" alt="' + name + '" class="w-full h-full object-cover"></button>';
+                }
+                return '<span class="text-[11px] font-bold text-blue-600">' + name + '</span>';
+            }).join('') + '</div>';
+        }
         return '<div class="col-span-2 border border-slate-200 rounded-lg p-4 bg-slate-50/50">' +
             '<p class="text-[10px] font-bold text-slate-500 uppercase mb-3">迁移申请内容</p>' +
             '<div class="grid grid-cols-2 gap-4 text-sm">' +
@@ -133,6 +151,7 @@
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">迁移到上级合伙人</p><p class="font-black mt-1">' + (window.AdminCopyChip ? AdminCopyChip.wallet(p.targetWallet) : p.targetWallet || '—') + '</p><p class="text-[10px] text-slate-400 mt-1">UID ' + (p.targetUid || '—') + '</p></div>' +
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">迁移后返佣比例</p><p class="font-black mt-1 text-blue-600 text-lg">' + (p.newRatio != null ? p.newRatio + '%' : '—') + '</p></div>' +
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">下级返佣修改</p>' + fixesHtml + '</div>' +
+            '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">图片附件</p>' + attachHtml + '</div>' +
             '</div></div>';
     }
 

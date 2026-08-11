@@ -88,14 +88,17 @@
 
     function stepIndex(status, profile) {
         const steps = (profile && profile.steps) || STEPS;
-        const map = {
-            draft: 0,
-            pending_cross: 1,
-            pending_risk: 2,
-            pending_boss: 3,
-            approved: steps.length,
-            rejected: -1
-        };
+        const profileKey = profile && profile.key;
+        let map;
+        if (profileKey === 'risk_only') {
+            map = { draft: 0, pending_cross: 1, pending_risk: 1, pending_boss: 1, approved: steps.length, rejected: -1 };
+        } else if (profileKey === 'risk_boss') {
+            map = { draft: 0, pending_cross: 1, pending_risk: 1, pending_boss: 2, approved: steps.length, rejected: -1 };
+        } else if (profileKey === 'cross_risk') {
+            map = { draft: 0, pending_cross: 1, pending_risk: 2, pending_boss: 2, approved: steps.length, rejected: -1 };
+        } else {
+            map = { draft: 0, pending_cross: 1, pending_risk: 2, pending_boss: 3, approved: steps.length, rejected: -1 };
+        }
         return map[status] !== undefined ? map[status] : 0;
     }
 
