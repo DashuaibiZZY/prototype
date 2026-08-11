@@ -249,12 +249,25 @@
             });
         }
         html += '</tbody></table></div>';
-        html += '<div class="flex justify-between items-center mt-2 text-[11px] text-slate-500">';
-        html += '<span>共 ' + total + ' 条' + (q ? '（已筛选）' : '') + ' · 第 ' + filter.page + '/' + totalPages + ' 页</span>';
-        html += '<div class="flex gap-1">';
-        html += '<button type="button" onclick="moduleApprovalRecipientPage(\'' + rootId + '\',\'' + app.id + '\', -1)" class="px-2 py-1 border rounded' + (filter.page <= 1 ? ' opacity-40' : '') + '" ' + (filter.page <= 1 ? 'disabled' : '') + '>上一页</button>';
-        html += '<button type="button" onclick="moduleApprovalRecipientPage(\'' + rootId + '\',\'' + app.id + '\', 1)" class="px-2 py-1 border rounded' + (filter.page >= totalPages ? ' opacity-40' : '') + '" ' + (filter.page >= totalPages ? 'disabled' : '') + '>下一页</button>';
-        html += '</div></div></div>';
+        const recipientHandlerId = 'recipient-' + rootId + '-' + app.id;
+        if (window.AdminPagination) {
+            AdminPagination.register(recipientHandlerId, function (p) {
+                const st = instances[rootId];
+                if (!st) return;
+                const f = getRecipientFilter(st, app.id);
+                f.page = p;
+                refreshRecipientSection(rootId, app.id);
+            });
+            html += AdminPagination.html(total, filter.page, RECIPIENT_PAGE_SIZE, recipientHandlerId);
+        } else {
+            html += '<div class="flex justify-between items-center mt-2 text-[11px] text-slate-500">';
+            html += '<span>共 ' + total + ' 条' + (q ? '（已筛选）' : '') + ' · 第 ' + filter.page + '/' + totalPages + ' 页</span>';
+            html += '<div class="flex gap-1">';
+            html += '<button type="button" onclick="moduleApprovalRecipientPage(\'' + rootId + '\',\'' + app.id + '\', -1)" class="px-2 py-1 border rounded' + (filter.page <= 1 ? ' opacity-40' : '') + '" ' + (filter.page <= 1 ? 'disabled' : '') + '>上一页</button>';
+            html += '<button type="button" onclick="moduleApprovalRecipientPage(\'' + rootId + '\',\'' + app.id + '\', 1)" class="px-2 py-1 border rounded' + (filter.page >= totalPages ? ' opacity-40' : '') + '" ' + (filter.page >= totalPages ? 'disabled' : '') + '>下一页</button>';
+            html += '</div>';
+        }
+        html += '</div>';
         return html;
     }
 
@@ -305,8 +318,15 @@
         const root = document.getElementById(rootId);
         if (!root || !types.length) return;
 
-        const state = { types: types, view: 'list', detailId: null, listMode: 'pending', options: options, recipientFilters: {} };
+        const state = { types: types, view: 'list', detailId: null, listMode: 'pending', listPage: 1, options: options, recipientFilters: {} };
         instances[rootId] = state;
+
+        if (window.AdminPagination) {
+            AdminPagination.register('approval-list-' + rootId, function (p) {
+                state.listPage = p;
+                moduleApprovalRenderList(rootId);
+            });
+        }
 
         const exportBtn = showExportList ? '<button type="button" onclick="moduleApprovalExportList(\'' + rootId + '\')" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">导出 CSV</button>' : '';
         const typeFilter = showTypeColumn
@@ -350,7 +370,8 @@
             walletUidHeaders + activityHeader +
             '<th class="px-3 py-3 text-xs font-bold text-slate-500">摘要</th><th class="px-3 py-3 text-xs font-bold text-slate-500">状态</th><th class="px-4 py-3 text-xs font-bold text-slate-500 text-right">操作</th>' +
             '</tr></thead><tbody id="' + rootId + '-tbody" class="divide-y divide-slate-50"></tbody></table>' +
-            '<div id="' + rootId + '-empty" class="hidden py-16 text-center text-slate-400 text-sm">暂无审批记录</div></div></div>' +
+            '<div id="' + rootId + '-empty" class="hidden py-16 text-center text-slate-400 text-sm">暂无审批记录</div>' +
+            '<div id="' + rootId + '-pagination"></div></div></div>' +
             '<div id="' + rootId + '-detail" class="hidden space-y-6 max-w-5xl"></div>';
 
         setApprovalViewRole(defaultRole);
@@ -405,13 +426,29 @@
         const showTypeColumn = state.types.length > 1;
         const tbody = document.getElementById(rootId + '-tbody');
         const empty = document.getElementById(rootId + '-empty');
+        const pagEl = document.getElementById(rootId + '-pagination');
         if (!list.length) {
             tbody.innerHTML = '';
+            if (pagEl) pagEl.innerHTML = '';
             empty.classList.remove('hidden');
             return;
         }
         empty.classList.add('hidden');
-        tbody.innerHTML = list.map(function (app) {
+        let pageRows = list;
+        let pageNum = state.listPage || 1;
+        if (window.AdminPagination) {
+            const sliced = AdminPagination.slice(list, pageNum);
+            pageRows = sliced.items;
+            pageNum = sliced.page;
+            state.listPage = pageNum;
+        } else {
+            const pageSize = 10;
+            const totalPages = Math.max(1, Math.ceil(list.length / pageSize));
+            pageNum = Math.max(1, Math.min(pageNum, totalPages));
+            state.listPage = pageNum;
+            pageRows = list.slice((pageNum - 1) * pageSize, pageNum * pageSize);
+        }
+        tbody.innerHTML = pageRows.map(function (app) {
             const actionable = canApproveApplication(app, role);
             const typeCell = showTypeColumn ? '<td class="px-3 py-3 text-xs font-bold text-slate-600">' + getApprovalTypeLabel(app.type) + '</td>' : '';
             const su = getAppSubjectUser(app);
@@ -430,6 +467,9 @@
                 (actionable ? '<button type="button" onclick="moduleApprovalOpenDetail(\'' + rootId + '\',\'' + app.id + '\')" class="text-green-600 font-bold hover:underline">审批</button>' : '') +
                 '</td></tr>';
         }).join('');
+        if (window.AdminPagination && pagEl) {
+            AdminPagination.mount(rootId + '-pagination', list.length, pageNum, 'approval-list-' + rootId);
+        }
     };
 
     window.moduleApprovalOpenDetail = function (rootId, id, pushHash) {
@@ -512,6 +552,7 @@
         if (!state) return;
         state.view = 'list';
         state.detailId = null;
+        state.listPage = 1;
         document.getElementById(rootId + '-detail').classList.add('hidden');
         document.getElementById(rootId + '-list').classList.remove('hidden');
         if (pushHash !== false && state.hashList) location.hash = state.hashList;
