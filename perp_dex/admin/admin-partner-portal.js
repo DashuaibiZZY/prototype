@@ -240,6 +240,7 @@
     let migrateTreeExpanded = new Set();
     let migrateRatioOverrides = {};
     let migrateAttachments = [];
+    let bindAttachments = [];
     const MIGRATE_TREE_PAGE_SIZE = 10;
     let treeFocusId = null;
     let treeEntryId = null;
@@ -904,11 +905,70 @@
         document.getElementById('bind-wallet').value = '';
         document.getElementById('bind-ratio').value = '';
         document.getElementById('bind-remark').value = '';
+        bindAttachments = [];
+        renderBindAttachmentPreview();
+        const fileEl = document.getElementById('bind-attachment-input');
+        if (fileEl) fileEl.value = '';
         document.getElementById('bind-cap-hint').textContent = '配置上限 ' + OPS_CAP + '%；超过须风控+老板审批';
         document.getElementById('modal-bind-partner').classList.remove('hidden');
     }
 
     function closeBindModal() { document.getElementById('modal-bind-partner').classList.add('hidden'); }
+
+    function renderBindAttachmentPreview() {
+        const el = document.getElementById('bind-attachment-preview');
+        if (!el) return;
+        if (!bindAttachments.length) {
+            el.innerHTML = '';
+            return;
+        }
+        el.innerHTML = bindAttachments.map(function (a, i) {
+            return '<div class="relative group border rounded overflow-hidden w-16 h-16 bg-white">' +
+                '<img src="' + a.dataUrl + '" alt="' + a.name + '" class="w-full h-full object-cover">' +
+                '<button type="button" onclick="PartnerPortal.removeBindAttachment(' + i + ')" class="absolute top-0 right-0 bg-red-600 text-white text-[9px] px-1 leading-none opacity-90">×</button>' +
+                '<span class="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[8px] px-1 truncate">' + a.name + '</span></div>';
+        }).join('');
+    }
+
+    function handleBindAttachmentFiles(input) {
+        if (!input || !input.files) return;
+        const files = Array.from(input.files);
+        const remain = 4 - bindAttachments.length;
+        if (remain <= 0) {
+            alert('最多上传 4 张图片');
+            input.value = '';
+            return;
+        }
+        const toAdd = files.slice(0, remain);
+        if (files.length > remain) alert('最多上传 4 张图片，已忽略超出部分');
+        let pending = toAdd.length;
+        if (!pending) {
+            input.value = '';
+            return;
+        }
+        toAdd.forEach(function (file) {
+            if (!file.type || file.type.indexOf('image/') !== 0) {
+                pending--;
+                if (pending === 0) input.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                bindAttachments.push({ name: file.name, dataUrl: ev.target.result });
+                renderBindAttachmentPreview();
+                pending--;
+                if (pending === 0) input.value = '';
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function removeBindAttachment(index) {
+        bindAttachments.splice(index, 1);
+        renderBindAttachmentPreview();
+        const fileEl = document.getElementById('bind-attachment-input');
+        if (fileEl) fileEl.value = '';
+    }
 
     function submitBindPartner() {
         const walletInput = document.getElementById('bind-wallet').value.trim();
@@ -919,15 +979,22 @@
         const uid = isUid ? walletInput : '';
         const wallet = isUid ? '—' : walletInput;
         const exceedsCap = ratio > OPS_CAP;
+        const attachmentNames = bindAttachments.map(function (a) { return a.name; });
+        const attachmentPreviews = {};
+        bindAttachments.forEach(function (a) { attachmentPreviews[a.name] = a.dataUrl; });
         if (exceedsCap && typeof submitApprovalApplication === 'function') {
             submitApprovalApplication({
                 type: 'partner_l1_bind', title: '一级合伙人绑定', applicant: 'Mkt_Allen', remark: remark,
                 summary: (uid ? 'UID ' + uid + ' · ' : wallet + ' · ') + ratio + '%',
-                payload: { uid: uid || '—', wallet: wallet, ratio: ratio, opsCap: OPS_CAP, exceedsCap: exceedsCap }
+                payload: {
+                    uid: uid || '—', wallet: wallet, ratio: ratio, opsCap: OPS_CAP, exceedsCap: exceedsCap,
+                    attachments: attachmentNames,
+                    attachmentPreviews: attachmentPreviews
+                }
             });
             alert('已提交审批');
         } else {
-            alert('绑定成功（演示）');
+            alert('绑定成功（演示）' + (attachmentNames.length ? '，已附 ' + attachmentNames.length + ' 张图片' : ''));
         }
         closeBindModal();
     }
@@ -2199,16 +2266,48 @@
     function showPartnerLogsPage() {
         partnerOpLogsPage = 1;
         window.PartnerPortal_showPage('page-partner-logs');
+        resetPartnerLogFilters();
+    }
+
+    function resetPartnerLogFilters() {
+        const opEl = document.getElementById('partner-logs-filter-operator');
         const typeSel = document.getElementById('partner-logs-filter-type');
+        const appIdEl = document.getElementById('partner-logs-filter-appid');
+        const appTypeSel = document.getElementById('partner-logs-filter-apptype');
+        if (opEl) opEl.value = '';
         if (typeSel) typeSel.value = 'all';
+        if (appIdEl) appIdEl.value = '';
+        if (appTypeSel) appTypeSel.value = 'all';
+        partnerOpLogsPage = 1;
+        renderPartnerOpLogs();
+    }
+
+    function applyPartnerLogFilters() {
+        partnerOpLogsPage = 1;
         renderPartnerOpLogs();
     }
 
     function renderPartnerOpLogs() {
         const typeSel = document.getElementById('partner-logs-filter-type');
+        const opEl = document.getElementById('partner-logs-filter-operator');
+        const appIdEl = document.getElementById('partner-logs-filter-appid');
+        const appTypeSel = document.getElementById('partner-logs-filter-apptype');
         const type = typeSel ? typeSel.value : 'all';
+        const operatorQ = (opEl && opEl.value.trim()) || '';
+        const appIdQ = (appIdEl && appIdEl.value.trim().toUpperCase()) || '';
+        const appType = appTypeSel ? appTypeSel.value : 'all';
         let list = collectPartnerOpLogs();
         if (type !== 'all') list = list.filter(function (l) { return l.opType === type; });
+        if (operatorQ) {
+            const q = operatorQ.toLowerCase();
+            list = list.filter(function (l) { return (l.operator || '').toLowerCase().indexOf(q) !== -1; });
+        }
+        if (appIdQ) {
+            list = list.filter(function (l) { return (l.appId || '').toUpperCase().indexOf(appIdQ) !== -1; });
+        }
+        if (appType !== 'all') {
+            list = list.filter(function (l) { return l.appType === appType; });
+        }
         const sliced = paginate(list, partnerOpLogsPage);
         partnerOpLogsPage = sliced.page;
         const tbody = document.getElementById('partner-logs-body');
@@ -2257,8 +2356,12 @@
         setRebateTreeBranchPage: setRebateTreeBranchPage,
         showPartnerLogsPage: showPartnerLogsPage,
         renderPartnerOpLogs: renderPartnerOpLogs,
+        applyPartnerLogFilters: applyPartnerLogFilters,
+        resetPartnerLogFilters: resetPartnerLogFilters,
         handleMigrateAttachmentFiles: handleMigrateAttachmentFiles,
         removeMigrateAttachment: removeMigrateAttachment,
+        handleBindAttachmentFiles: handleBindAttachmentFiles,
+        removeBindAttachment: removeBindAttachment,
         getCurrentUserId: function () { return currentUserId; },
         applyHashTree: applyHashTree, DATA_VERSION: DATA_VERSION
     };
