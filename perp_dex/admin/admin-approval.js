@@ -4,7 +4,7 @@
 (function () {
     const STORAGE_KEY = 'forx_approval_applications';
     const ROLE_KEY = 'forx_approval_view_role';
-    const SEED_VERSION = '2026-08-11-partner-v4';
+    const SEED_VERSION = '2026-08-11-partner-v5';
     const SEED_VERSION_KEY = 'forx_approval_seed_v';
 
     const STEPS = [
@@ -440,7 +440,6 @@
                 lark: { id: 'LARK-20260805-9921', status: 'pending', url: 'https://www.feishu.cn/approval/admin/preview/LARK-20260805-9921', syncedAt: '2026-08-05 14:20' },
                 timeline: [
                     { at: '2026-08-05 10:00', actor: 'Mkt_Bob', action: '提交申请', note: 'VIP 渠道 88% 特批' },
-                    { at: '2026-08-05 11:10', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '交叉复核通过' },
                     { at: '2026-08-05 12:30', actor: 'Risk_Control', action: '风控通过', note: '风险敞口可接受' },
                     { at: '2026-08-05 14:20', actor: 'System', action: '已同步 Lark 审批', note: '等待老板审批' }
                 ]
@@ -504,11 +503,58 @@
                 payload: {
                     subjectWallet: '0xMig...Abn',
                     subjectUid: '200301',
+                    subjectType: 'partner',
                     targetWallet: '0xTo...L1',
+                    targetUid: '200001',
                     newRatio: 58,
                     ratioFixes: [{ wallet: '0xMig...AbnBL4', oldRatio: 42, newRatio: 38 }]
                 },
                 timeline: [{ at: '2026-08-11 09:30', actor: 'Mkt_Allen', action: '提交申请', note: '含倒挂分支修正后迁移' }]
+            },
+            {
+                id: 'APR20260811002',
+                type: 'partner_rebate_migrate',
+                title: '返佣关系迁移',
+                applicant: 'Mkt_Bob',
+                status: 'pending_risk',
+                flowProfile: 'risk_only',
+                createdAt: '2026-08-11 10:15',
+                remark: '正常代理整伞迁移',
+                summary: '0xMig...Ok → 0xTo...L2 · 52%',
+                payload: {
+                    subjectWallet: '0xMig...Ok',
+                    subjectUid: '200201',
+                    subjectType: 'partner',
+                    targetWallet: '0xTo...L2',
+                    targetUid: '200002',
+                    newRatio: 52,
+                    ratioFixes: []
+                },
+                timeline: [{ at: '2026-08-11 10:15', actor: 'Mkt_Bob', action: '提交申请', note: '正常代理整伞迁移' }]
+            },
+            {
+                id: 'APR20260811003',
+                type: 'partner_rebate_migrate',
+                title: '返佣关系迁移',
+                applicant: 'Mkt_Allen',
+                status: 'approved',
+                flowProfile: 'risk_only',
+                createdAt: '2026-08-10 16:40',
+                remark: '普通用户引流迁移',
+                summary: '0xPlain...U1 → 0xTo...L1 · 45%',
+                payload: {
+                    subjectWallet: '0xPlain...U1',
+                    subjectUid: '200101',
+                    subjectType: 'plain',
+                    targetWallet: '0xTo...L1',
+                    targetUid: '200001',
+                    newRatio: 45,
+                    ratioFixes: []
+                },
+                timeline: [
+                    { at: '2026-08-10 16:40', actor: 'Mkt_Allen', action: '提交申请', note: '普通用户引流迁移' },
+                    { at: '2026-08-10 17:20', actor: 'Risk_Control', action: '风控通过', note: '直客关系清晰' }
+                ]
             },
             {
                 id: 'APR20260727021',
@@ -709,9 +755,13 @@
         else if (status === 'rejected') html += '<p class="approval-note err">✕ 审批已驳回，请修改后重新提交</p>';
         else if (status === 'pending_cross') html += '<p class="approval-note wait">等待另一位市场运营交叉审核…</p>';
         else if (status === 'pending_risk') {
-            html += profile.afterRisk === 'approved'
-                ? '<p class="approval-note wait">交叉审核已通过，等待风控审核（无需老板审批）…</p>'
-                : '<p class="approval-note wait">交叉审核已通过，等待风控审核…</p>';
+            if (profile.key === 'risk_only') {
+                html += '<p class="approval-note wait">等待风控审核…</p>';
+            } else if (profile.afterRisk === 'approved') {
+                html += '<p class="approval-note wait">等待风控审核（无需老板审批）…</p>';
+            } else {
+                html += '<p class="approval-note wait">等待风控审核…</p>';
+            }
         } else if (status === 'pending_boss') html += '<p class="approval-note wait">风控已通过，等待老板审批（后台或 Lark）…</p>';
         return html;
     }
