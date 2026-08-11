@@ -184,23 +184,23 @@
                 <div id="migrate-subject-card" class="hidden bg-slate-50 border border-slate-200 rounded-lg p-4 text-[11px]"></div>
                 <div class="flex flex-wrap gap-3 items-center">
                     <button type="button" onclick="PartnerPortal.previewMigrate()" class="border px-4 py-2 rounded font-bold text-[11px] text-slate-700">预览迁移</button>
-                    <button type="button" id="migrate-submit-btn" onclick="PartnerPortal.submitMigrate()" disabled class="bg-blue-600 text-white px-6 py-2 rounded font-black text-[11px] opacity-50 cursor-not-allowed">确认迁移</button>
+                    <button type="button" id="migrate-submit-btn" onclick="PartnerPortal.submitMigrate()" disabled class="bg-blue-600 text-white px-6 py-2 rounded font-black text-[11px] opacity-50 cursor-not-allowed">提交风控审核</button>
                 </div>
                 <div class="text-[10px] text-slate-400 border-t pt-3 space-y-1">
-                    <p><strong>演示待迁移：</strong>普通用户 <code class="bg-slate-100 px-1">0xPlain...U1</code> · 正常代理 <code class="bg-slate-100 px-1">0xMig...Ok</code> · 倒挂代理 <code class="bg-slate-100 px-1">0xMig...Abn</code></p>
-                    <p><strong>演示目标上级：</strong><code class="bg-slate-100 px-1">0xTo...L1</code> (72%) · <code class="bg-slate-100 px-1">0xTo...L2</code> (56%)</p>
-                    <p><strong>倒挂测试：</strong>迁移 <code class="bg-slate-100 px-1">0xMig...Ok</code> 到 <code class="bg-slate-100 px-1">0xTo...L1</code>，将比例设为 30%（低于下级 50%）可触发倒挂提示</p>
+                    <p><strong>演示待迁移：</strong>普通 <code class="bg-slate-100 px-1">0xPlain...U1</code> · 正常代理 <code class="bg-slate-100 px-1">0xMig...Ok</code>（系统L2）· 链路倒挂 <code class="bg-slate-100 px-1">0xMig...Abn</code>（系统L6·B支深层倒挂）</p>
+                    <p><strong>目标上级：</strong><code class="bg-slate-100 px-1">0xTo...L1</code> · <code class="bg-slate-100 px-1">0xTo...L2</code></p>
+                    <p><strong>倒挂修正：</strong>迁移 <code class="bg-slate-100 px-1">0xMig...Abn</code> 后在树中将 <code class="bg-slate-100 px-1">0xMig...AbnBL4</code> 比例调低至 38% 以下即可提交</p>
                 </div>
             </section>
 
             <section id="migrate-preview-section" class="hidden bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
-                <div class="px-5 py-3 border-b font-bold text-slate-700">迁移预览</div>
+                <div class="px-5 py-3 border-b font-bold text-slate-700">迁移预览 · 代理链路</div>
                 <div id="migrate-preview-body" class="p-5 text-[11px] space-y-4"></div>
             </section>
 
             <section id="migrate-errors-section" class="hidden bg-red-50 border border-red-200 rounded-lg p-5">
                 <p class="font-black text-red-800 text-sm mb-2">返佣倒挂校验未通过</p>
-                <p class="text-[11px] text-red-700 mb-3">请先在返佣树中下调相关下级比例，或调高上级比例后再迁移。</p>
+                <p class="text-[11px] text-red-700 mb-3">可在下方代理链路树中修改倒挂节点比例，修正后自动重新校验。链路内深层倒挂（非迁移比例导致）也须修正后方可提交风控审核。</p>
                 <ul id="migrate-errors-list" class="text-[11px] text-red-800 space-y-1 list-disc pl-5"></ul>
             </section>
         </div>
@@ -542,9 +542,17 @@
 <script src="admin-sidebar.js"></script>
 <script src="admin-approval.js"></script>
 <script src="admin-approval-ui.js"></script>
-<script src="admin-partner-portal.js?v=partner-demo-10"></script>
+<script src="admin-partner-portal.js?v=partner-demo-11"></script>
 <script>
-    initModuleApproval({ types: ['partner_l1_bind', 'partner_ratio_change'], rootId: 'partner-approval-root', title: '合伙人配置审批', showExportList: false, showExportDetail: false, singleUserConfig: true });
+    initModuleApproval({
+        types: ['partner_l1_bind', 'partner_ratio_change', 'partner_rebate_migrate'],
+        rootId: 'partner-approval-root',
+        title: '合伙人配置审批',
+        showExportList: false,
+        showExportDetail: false,
+        singleUserConfig: true,
+        approvalRoles: ['risk', 'boss']
+    });
 
     function showApprovalPage() {
         PartnerPortal_showPage('page-agent-approval');

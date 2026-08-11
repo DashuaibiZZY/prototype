@@ -4,7 +4,7 @@
 (function () {
     const STORAGE_KEY = 'forx_approval_applications';
     const ROLE_KEY = 'forx_approval_view_role';
-    const SEED_VERSION = '2026-08-10-partner-v3';
+    const SEED_VERSION = '2026-08-11-partner-v4';
     const SEED_VERSION_KEY = 'forx_approval_seed_v';
 
     const STEPS = [
@@ -17,7 +17,8 @@
     const TYPE_FLOW_PROFILE = {
         points_pool_config: 'cross_risk',
         partner_l1_bind: 'risk_boss',
-        partner_ratio_change: 'full'
+        partner_ratio_change: 'risk_boss',
+        partner_rebate_migrate: 'risk_only'
     };
 
     const FLOW_PROFILES = {
@@ -46,6 +47,15 @@
             ],
             afterRisk: 'pending_boss',
             larkOnRisk: true
+        },
+        risk_only: {
+            key: 'risk_only',
+            steps: [
+                { key: 'apply', label: '市场运营提交', role: '市场运营' },
+                { key: 'risk', label: '风控审核', role: '风控' }
+            ],
+            afterRisk: 'approved',
+            larkOnRisk: false
         }
     };
 
@@ -57,7 +67,8 @@
         points_pool_config: '积分总池配置',
         points_program_switch: '积分计划总开关',
         partner_l1_bind: '一级合伙人绑定（超上限）',
-        partner_ratio_change: '合伙人返佣比例调整'
+        partner_ratio_change: '合伙人返佣比例调整',
+        partner_rebate_migrate: '返佣关系迁移'
     };
 
     const ROLE_LABELS = {
@@ -347,10 +358,10 @@
                 type: 'partner_ratio_change',
                 title: '合伙人返佣比例调整',
                 applicant: 'Mkt_Allen',
-                status: 'pending_cross',
-                flowProfile: 'full',
+                status: 'approved',
+                flowProfile: 'risk_boss',
                 createdAt: '2026-08-02 09:15',
-                remark: '华东渠道下调级差，需交叉复核',
+                remark: '华东渠道下调级差（权限内，历史单）',
                 summary: '0xNorm...L2a · 55% → 48%',
                 payload: {
                     uid: '100802',
@@ -360,7 +371,7 @@
                     opsCap: 80,
                     exceedsCap: false
                 },
-                timeline: [{ at: '2026-08-02 09:15', actor: 'Mkt_Allen', action: '提交申请', note: '华东渠道下调级差' }]
+                timeline: [{ at: '2026-08-02 09:15', actor: 'Mkt_Allen', action: '提交申请', note: '华东渠道下调级差' }, { at: '2026-08-02 11:00', actor: 'Risk_Control', action: '风控通过', note: '权限内下调' }]
             },
             {
                 id: 'APR20260803051',
@@ -392,7 +403,7 @@
                 title: '合伙人返佣比例调整',
                 applicant: 'Mkt_Allen',
                 status: 'pending_risk',
-                flowProfile: 'full',
+                flowProfile: 'risk_boss',
                 createdAt: '2026-08-04 11:30',
                 remark: '超运营上限 82%，上调华南线',
                 summary: '0xAbn...L2b · 52% → 82%',
@@ -405,8 +416,7 @@
                     exceedsCap: true
                 },
                 timeline: [
-                    { at: '2026-08-04 11:30', actor: 'Mkt_Allen', action: '提交申请', note: '超运营上限 82%' },
-                    { at: '2026-08-04 13:00', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '已与渠道负责人确认' }
+                    { at: '2026-08-04 11:30', actor: 'Mkt_Allen', action: '提交申请', note: '超运营上限 82%' }
                 ]
             },
             {
@@ -415,7 +425,7 @@
                 title: '合伙人返佣比例调整',
                 applicant: 'Mkt_Bob',
                 status: 'pending_boss',
-                flowProfile: 'full',
+                flowProfile: 'risk_boss',
                 createdAt: '2026-08-05 10:00',
                 remark: 'VIP 渠道 88% 特批',
                 summary: '0xVIP...L1 · 70% → 88%',
@@ -464,7 +474,7 @@
                 title: '合伙人返佣比例调整',
                 applicant: 'Mkt_Bob',
                 status: 'rejected',
-                flowProfile: 'full',
+                flowProfile: 'risk_boss',
                 createdAt: '2026-08-07 15:20',
                 remark: '试图上调至 90%',
                 summary: '0xBad...L3 · 45% → 90%',
@@ -478,8 +488,27 @@
                 },
                 timeline: [
                     { at: '2026-08-07 15:20', actor: 'Mkt_Bob', action: '提交申请', note: '试图上调至 90%' },
-                    { at: '2026-08-07 16:00', actor: 'Mkt_Cross', action: '驳回', note: '比例过高且未附谈判依据' }
+                    { at: '2026-08-07 16:00', actor: 'Risk_Control', action: '驳回', note: '比例过高且未附谈判依据' }
                 ]
+            },
+            {
+                id: 'APR20260811001',
+                type: 'partner_rebate_migrate',
+                title: '返佣关系迁移',
+                applicant: 'Mkt_Allen',
+                status: 'pending_risk',
+                flowProfile: 'risk_only',
+                createdAt: '2026-08-11 09:30',
+                remark: '含倒挂分支修正后迁移',
+                summary: '0xMig...Abn → 0xTo...L1 · 58%',
+                payload: {
+                    subjectWallet: '0xMig...Abn',
+                    subjectUid: '200301',
+                    targetWallet: '0xTo...L1',
+                    newRatio: 58,
+                    ratioFixes: [{ wallet: '0xMig...AbnBL4', oldRatio: 42, newRatio: 38 }]
+                },
+                timeline: [{ at: '2026-08-11 09:30', actor: 'Mkt_Allen', action: '提交申请', note: '含倒挂分支修正后迁移' }]
             },
             {
                 id: 'APR20260727021',
@@ -860,7 +889,7 @@
         opts = opts || {};
         seedIfEmpty();
         const profileKey = opts.flowProfile || TYPE_FLOW_PROFILE[opts.type] || 'full';
-        const initialStatus = profileKey === 'risk_boss' ? 'pending_risk' : 'pending_cross';
+        const initialStatus = (profileKey === 'risk_boss' || profileKey === 'risk_only') ? 'pending_risk' : 'pending_cross';
         const app = {
             id: 'APR' + Date.now(),
             type: opts.type || 'other',

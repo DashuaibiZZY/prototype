@@ -33,8 +33,8 @@
 
     function getAppSubjectUser(app) {
         const p = app.payload || {};
-        if (app.type === 'fee_config' || app.type === 'partner_l1_bind' || app.type === 'partner_ratio_change') {
-            return { wallet: p.wallet || '—', uid: p.uid || '—' };
+        if (app.type === 'fee_config' || app.type === 'partner_l1_bind' || app.type === 'partner_ratio_change' || app.type === 'partner_rebate_migrate') {
+            return { wallet: p.subjectWallet || p.wallet || '—', uid: p.subjectUid || p.uid || '—' };
         }
         return { wallet: '—', uid: '—' };
     }
@@ -99,7 +99,13 @@
         } else if (app.type === 'partner_l1_bind') {
             rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['申请返佣比例', p.ratio + '%'], ['运营配置上限', p.opsCap + '%'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
         } else if (app.type === 'partner_ratio_change') {
-            rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['原返佣比例', p.oldRatio + '%'], ['新返佣比例', p.newRatio + '%'], ['运营配置上限', p.opsCap + '%'], ['超上限', p.exceedsCap ? '是' : '否']);
+            rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['原返佣比例', p.oldRatio + '%'], ['新返佣比例', p.newRatio + '%'], ['运营配置上限', p.opsCap + '%'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
+        } else if (app.type === 'partner_rebate_migrate') {
+            rows.push(['待迁移用户', p.subjectWallet || '—'], ['UID', p.subjectUid || '—'], ['类型', p.subjectType === 'plain' ? '普通用户' : '代理用户'],
+                ['迁移到上级', p.targetWallet || '—'], ['迁移后比例', p.newRatio + '%']);
+            if (p.ratioFixes && p.ratioFixes.length) {
+                rows.push(['倒挂修正', p.ratioFixes.map(function (f) { return f.wallet + ' ' + f.oldRatio + '%→' + f.newRatio + '%'; }).join('；')]);
+            }
         }
         return rows.map(function (r) {
             let valHtml = (r[1] || '—');
@@ -255,6 +261,8 @@
         const showExportDetail = options.showExportDetail === true;
         const detailImagePreview = options.detailImagePreview === true;
         const singleUserConfig = options.singleUserConfig === true;
+        const approvalRoles = options.approvalRoles || ['cross', 'risk', 'boss'];
+        const defaultRole = approvalRoles[0] || 'risk';
         const showTypeColumn = types.length > 1;
         const root = document.getElementById(rootId);
         if (!root || !types.length) return;
@@ -278,14 +286,16 @@
             ? '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID / 钱包地址</label><input id="' + rootId + '-filter-wallet-uid" type="text" placeholder="输入 UID 或钱包" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm" oninput="moduleApprovalRenderList(\'' + rootId + '\')"></div>'
             : '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">活动名称</label><input id="' + rootId + '-filter-activity" type="text" placeholder="模糊匹配" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm" oninput="moduleApprovalRenderList(\'' + rootId + '\')"></div>';
 
+        const roleTabsHtml = approvalRoles.map(function (r) {
+            const labels = { cross: '市场运营交叉', risk: '风控', boss: '老板' };
+            return '<button type="button" class="role-tab" data-root="' + rootId + '" data-role="' + r + '" onclick="moduleApprovalSwitchRole(\'' + rootId + '\',\'' + r + '\')">' + (labels[r] || r) + '</button>';
+        }).join('');
+
         root.innerHTML =
             '<div id="' + rootId + '-list" class="space-y-6">' +
             '<div class="flex flex-wrap justify-between items-start gap-4">' +
             '<div><h2 class="text-lg font-bold text-slate-700">' + title + '</h2><p class="text-sm text-slate-400 mt-1">本模块审批在此处理，支持查看原数据及 Lark 老板审批联动</p></div>' +
-            '<div class="flex flex-wrap gap-2 items-center">' +
-            '<button type="button" class="role-tab active" data-root="' + rootId + '" data-role="cross" onclick="moduleApprovalSwitchRole(\'' + rootId + '\',\'cross\')">市场运营交叉</button>' +
-            '<button type="button" class="role-tab" data-root="' + rootId + '" data-role="risk" onclick="moduleApprovalSwitchRole(\'' + rootId + '\',\'risk\')">风控</button>' +
-            '<button type="button" class="role-tab" data-root="' + rootId + '" data-role="boss" onclick="moduleApprovalSwitchRole(\'' + rootId + '\',\'boss\')">老板</button>' +
+            '<div class="flex flex-wrap gap-2 items-center">' + roleTabsHtml +
             '</div></div>' +
             '<section class="card p-5"><div class="grid ' + gridCols + ' gap-4 items-end">' +
             '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">视图</label><select id="' + rootId + '-view-mode" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white" onchange="moduleApprovalRenderList(\'' + rootId + '\')"><option value="pending">待我审批</option><option value="all">全部审批</option></select></div>' +
@@ -305,8 +315,8 @@
             '<div id="' + rootId + '-empty" class="hidden py-16 text-center text-slate-400 text-sm">暂无审批记录</div></div></div>' +
             '<div id="' + rootId + '-detail" class="hidden space-y-6 max-w-5xl"></div>';
 
-        setApprovalViewRole('cross');
-        moduleApprovalSwitchRole(rootId, 'cross');
+        setApprovalViewRole(defaultRole);
+        moduleApprovalSwitchRole(rootId, defaultRole);
         moduleApprovalRenderList(rootId);
 
         if (options.onReady) options.onReady(state);
