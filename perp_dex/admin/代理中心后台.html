@@ -251,6 +251,47 @@
             <div id="partner-approval-root"></div>
         </div>
 
+        <!-- 合伙人操作记录 -->
+        <div id="page-partner-logs" class="hidden space-y-6">
+            <section class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+                <div class="px-5 py-4 border-b flex flex-wrap justify-between items-center gap-3">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-700">操作记录</h2>
+                        <p class="text-[11px] text-slate-400 mt-1">与审核相关的提交、通过、驳回等操作均记录于此（数据来自审批流时间线）</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase">操作类型</label>
+                        <select id="partner-logs-filter-type" class="border rounded px-3 py-2 text-[11px] bg-white" onchange="PartnerPortal.renderPartnerOpLogs()">
+                            <option value="all">全部</option>
+                            <option value="submit">提交审批</option>
+                            <option value="migrate">返佣关系迁移</option>
+                            <option value="bind">一级合伙人绑定</option>
+                            <option value="ratio_change">返佣比例调整</option>
+                            <option value="cross_pass">交叉审核通过</option>
+                            <option value="risk_pass">风控审核通过</option>
+                            <option value="boss_pass">老板审批通过</option>
+                            <option value="reject">审批驳回</option>
+                        </select>
+                    </div>
+                </div>
+                <table class="w-full text-left text-[11px] min-w-[900px]">
+                    <thead class="bg-slate-50 border-b text-[10px] uppercase text-slate-500 font-bold">
+                    <tr>
+                        <th class="px-4 py-3">时间</th>
+                        <th class="px-3 py-3">操作人</th>
+                        <th class="px-3 py-3">操作类型</th>
+                        <th class="px-3 py-3">审批单号</th>
+                        <th class="px-3 py-3">审批类型</th>
+                        <th class="px-3 py-3">摘要</th>
+                        <th class="px-3 py-3">备注</th>
+                    </tr>
+                    </thead>
+                    <tbody id="partner-logs-body" class="divide-y divide-slate-50"></tbody>
+                </table>
+                <div id="partner-logs-pagination"></div>
+            </section>
+        </div>
+
         <!-- 佣金对账与发放 -->
         <div id="page-settlement" class="hidden space-y-6">
             <section id="settlement-filter-section" class="bg-white rounded-lg border p-4 shadow-sm">
@@ -539,6 +580,7 @@
         'page-rebate-tree': '返佣关系树',
         'page-rebate-migrate': '迁移返佣关系',
         'page-agent-approval': '合伙人配置审批',
+        'page-partner-logs': '操作记录',
         'page-settlement': '佣金对账与发放'
     };
     const PAGE_HASH = {
@@ -547,11 +589,12 @@
         'page-rebate-tree': 'rebate-tree',
         'page-rebate-migrate': 'migrate',
         'page-agent-approval': 'approval',
+        'page-partner-logs': 'logs',
         'page-settlement': 'settlement'
     };
 
     function hideAllPartnerPages() {
-        ['page-agent-mgmt', 'page-partner-detail', 'page-rebate-tree', 'page-rebate-migrate', 'page-agent-approval', 'page-settlement'].forEach(function (id) {
+        ['page-agent-mgmt', 'page-partner-detail', 'page-rebate-tree', 'page-rebate-migrate', 'page-agent-approval', 'page-partner-logs', 'page-settlement'].forEach(function (id) {
             document.getElementById(id).classList.add('hidden');
         });
     }
@@ -582,7 +625,7 @@
 <script src="admin-sidebar.js"></script>
 <script src="admin-approval.js"></script>
 <script src="admin-approval-ui.js"></script>
-<script src="admin-partner-portal.js?v=partner-demo-14"></script>
+<script src="admin-partner-portal.js?v=partner-demo-17"></script>
 <script>
     initModuleApproval({
         types: ['partner_l1_bind', 'partner_ratio_change', 'partner_rebate_migrate'],
@@ -611,7 +654,8 @@
         approval: function () { showApprovalPage(); },
         'approval-migrate': function () { showApprovalPage(); },
         settlement: function () { PartnerPortal_showPage('page-settlement'); initAdminSidebar('agent-settlement'); PartnerPortal.filterSettlementBatches(); PartnerPortal.initSettlementDatePickers(); },
-        migrate: function () { PartnerPortal.showMigratePage(); initAdminSidebar('agent-migrate'); }
+        migrate: function () { PartnerPortal.showMigratePage(); initAdminSidebar('agent-migrate'); },
+        logs: function () { PartnerPortal.showPartnerLogsPage(); initAdminSidebar('agent-logs'); }
     }, 'agent', {
         agent: 'agent-mgmt',
         'partner-detail': 'agent-mgmt',
@@ -619,7 +663,8 @@
         migrate: 'agent-migrate',
         approval: 'agent-approval',
         'approval-migrate': 'agent-approval',
-        settlement: 'agent-settlement'
+        settlement: 'agent-settlement',
+        logs: 'agent-logs'
     });
 </script>
 </body>

@@ -134,6 +134,7 @@
                 <tbody id="shadow-table-body" class="divide-y divide-slate-50 text-[11px] font-medium">
                 </tbody>
             </table>
+            <div id="shadow-table-pagination"></div>
         </section>
     </div>
 </main>
@@ -251,6 +252,7 @@
     </div>
 </div>
 
+<script src="admin-pagination.js"></script>
 <script>
     const ACTIVITY_MAP = {
         'act-001': 'ForX嘉年华交易大赛',
@@ -300,8 +302,50 @@
         }
     ];
 
+    (function seedShadowDemoRows() {
+        var statuses = ['active', 'decay', 'offline'];
+        var statusLabels = { active: '活跃', decay: '衰减中', offline: '已下线' };
+        for (var i = 3; i <= 14; i++) {
+            var st = statuses[i % 3];
+            shadowRows.push({
+                id: i,
+                address: '0xShad' + String(i).padStart(2, '0') + '...' + (1000 + i),
+                targetType: i % 2 === 0 ? 'activity' : 'platform',
+                activityId: i % 2 === 0 ? 'act-002' : '',
+                activityName: i % 2 === 0 ? '新手成长任务' : '',
+                pnl: 'Top ' + (i % 5 + 1) + '-' + (i % 5 + 4),
+                roi: 'Top ' + (i % 8 + 1) + '-' + (i % 8 + 5),
+                volume: 'Top ' + (i % 6 + 2) + '-' + (i % 6 + 8),
+                points: 'Top ' + (i * 3) + '-' + (i * 3 + 10),
+                status: st,
+                statusLabel: statusLabels[st],
+                lifecycle: 'Day ' + (i % 12 + 1) + ' / 30',
+                lifecyclePct: Math.min(95, i * 7),
+                pnlValue: '+$' + (i * 12500).toLocaleString(),
+                roiValue: (i * 3.2).toFixed(2) + '%',
+                volumeValue: '$' + (i * 0.42).toFixed(1) + 'M',
+                pointsValue: (i * 820).toLocaleString() + ' Pts'
+            });
+        }
+    })();
+
     let modalTargetType = 'platform';
     let editingId = null;
+    let filteredShadowRows = shadowRows.slice();
+    let shadowListPage = 1;
+
+    function shadowSlice(items, page) {
+        if (window.AdminPagination) return AdminPagination.slice(items, page);
+        const pageSize = 10;
+        const total = items.length;
+        const p = Math.max(1, Math.min(page || 1, Math.max(1, Math.ceil(total / pageSize) || 1)));
+        const start = (p - 1) * pageSize;
+        return { items: items.slice(start, start + pageSize), page: p, total: total, pageSize: pageSize };
+    }
+
+    function shadowMountPag(containerId, total, page, handlerId) {
+        if (window.AdminPagination) AdminPagination.mount(containerId, total, page, handlerId);
+    }
 
     function toggleModal(id) {
         const modal = document.getElementById(id);
@@ -320,7 +364,9 @@
         document.getElementById('filter-target-type').value = 'all';
         document.getElementById('filter-activity-name').value = '';
         onFilterTargetTypeChange();
-        renderTable(shadowRows);
+        filteredShadowRows = shadowRows.slice();
+        shadowListPage = 1;
+        renderTable();
     }
 
     function applyFilters() {
@@ -335,7 +381,9 @@
             return true;
         });
 
-        renderTable(filtered);
+        filteredShadowRows = filtered;
+        shadowListPage = 1;
+        renderTable();
     }
 
     function renderTargetCell(row) {
@@ -345,16 +393,19 @@
         return '<div class="space-y-1"><span class="target-badge-activity">平台活动</span><p class="text-[10px] font-bold text-violet-700 leading-tight">' + row.activityName + '</p></div>';
     }
 
-    function renderTable(rows) {
+    function renderTable() {
         const tbody = document.getElementById('shadow-table-body');
-        document.getElementById('filter-result-hint').textContent = '共 ' + rows.length + ' 条';
+        const sliced = shadowSlice(filteredShadowRows, shadowListPage);
+        shadowListPage = sliced.page;
+        document.getElementById('filter-result-hint').textContent = '共 ' + filteredShadowRows.length + ' 条';
 
-        if (!rows.length) {
+        if (!filteredShadowRows.length) {
             tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-10 text-center text-slate-400 font-bold">暂无匹配的影子账户</td></tr>';
+            shadowMountPag('shadow-table-pagination', 0, 1, 'shadow-list');
             return;
         }
 
-        tbody.innerHTML = rows.map(row => `
+        tbody.innerHTML = sliced.items.map(row => `
             <tr class="hover:bg-slate-50/50 transition-colors">
                 <td class="px-6 py-4">${window.AdminCopyChip ? AdminCopyChip.wallet(row.address) : '<span class="font-mono font-black text-slate-900 block text-[12px]">' + row.address + '</span>'}</td>
                 <td class="px-6 py-4">${renderTargetCell(row)}</td>
@@ -381,6 +432,7 @@
                 </td>
             </tr>
         `).join('');
+        shadowMountPag('shadow-table-pagination', sliced.total, shadowListPage, 'shadow-list');
     }
 
     function setModalTargetType(type) {
@@ -432,7 +484,10 @@
         if (modalTargetType === 'activity') setModalTargetType('activity');
     });
 
-    renderTable(shadowRows);
+    renderTable();
+    if (window.AdminPagination) {
+        AdminPagination.register('shadow-list', function (p) { shadowListPage = p; renderTable(); });
+    }
 </script>
 <script src="admin-permission-registry.js"></script>
 <script src="admin-permission-store.js"></script>

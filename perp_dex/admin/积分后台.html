@@ -279,6 +279,7 @@
                     </thead>
                     <tbody id="weeklyBatchTableBody" class="divide-y divide-slate-50"></tbody>
                 </table>
+                <div id="weekly-batch-pagination"></div>
             </div>
         </div>
 
@@ -326,6 +327,7 @@
                         <tbody id="weeklyDetailTableBody" class="divide-y divide-slate-50 text-[11px]"></tbody>
                     </table>
                 </div>
+                <div id="weekly-detail-pagination"></div>
             </section>
         </div>
 
@@ -374,6 +376,7 @@
                         <tbody id="pointsUserTableBody" class="divide-y divide-slate-50"></tbody>
                     </table>
                 </div>
+                <div id="points-user-pagination"></div>
             </div>
         </div>
 
@@ -404,6 +407,7 @@
                     </thead>
                     <tbody id="pointsHistoryTableBody" class="divide-y divide-slate-50"></tbody>
                 </table>
+                <div id="points-history-pagination"></div>
             </div>
         </div>
 
@@ -513,6 +517,7 @@
                     </thead>
                     <tbody id="pointsLogTableBody" class="divide-y divide-slate-50"></tbody>
                 </table>
+                <div id="points-log-pagination"></div>
             </div>
         </div>
 
@@ -632,6 +637,7 @@
 
 <script src="../shared/points-program.js"></script>
 <script src="admin-approval.js"></script>
+<script src="admin-pagination.js"></script>
 <script src="admin-activity-picker.js"></script>
 <script src="admin-approval-ui.js"></script>
 <script>
@@ -718,6 +724,24 @@
     let filteredWeeklyBatches = WEEKLY_BATCHES.slice();
     let currentWeeklyBatchId = null;
     let filteredWeeklyDetailRows = [];
+    let weeklyBatchPage = 1;
+    let weeklyDetailPage = 1;
+    let pointsUserPage = 1;
+    let pointsHistoryPage = 1;
+    let pointsLogPage = 1;
+
+    function ptsSlice(items, page) {
+        if (window.AdminPagination) return AdminPagination.slice(items, page);
+        const pageSize = 10;
+        const total = items.length;
+        const p = Math.max(1, Math.min(page || 1, Math.max(1, Math.ceil(total / pageSize) || 1)));
+        const start = (p - 1) * pageSize;
+        return { items: items.slice(start, start + pageSize), page: p, total: total, pageSize: pageSize };
+    }
+
+    function ptsMountPag(containerId, total, page, handlerId) {
+        if (window.AdminPagination) AdminPagination.mount(containerId, total, page, handlerId);
+    }
 
     function formatDimCell(d) {
         if (!d) return '—';
@@ -770,7 +794,9 @@
     }
 
     function renderWeeklyBatchTable(list) {
-        document.getElementById('weeklyBatchTableBody').innerHTML = list.map(function (b) {
+        const sliced = ptsSlice(list, weeklyBatchPage);
+        weeklyBatchPage = sliced.page;
+        document.getElementById('weeklyBatchTableBody').innerHTML = sliced.items.map(function (b) {
             const typeTag = b.type === 'system' ? '<span class="status-tag tag-system">系统周结算</span>' : '<span class="status-tag tag-manual">手动发放</span>';
             const shadow = b.type === 'system' ? b.shadow.toLocaleString() : '—';
             const users = b.realUserCount + ' / ' + b.shadowUserCount;
@@ -780,6 +806,7 @@
                 '<td class="px-3 py-3 text-right text-xs">' + users + '</td>' +
                 '<td class="px-4 py-3 text-right"><button onclick="showWeeklyDetail(\'' + b.id + '\')" class="text-blue-600 font-bold hover:underline">查看详情</button></td></tr>';
         }).join('');
+        ptsMountPag('weekly-batch-pagination', sliced.total, weeklyBatchPage, 'pts-weekly-batch');
     }
 
     function applyWeeklyFilters() {
@@ -797,6 +824,7 @@
             }
             return true;
         });
+        weeklyBatchPage = 1;
         renderWeeklyBatchTable(filteredWeeklyBatches);
     }
 
@@ -805,6 +833,7 @@
         document.getElementById('weeklyFilterLabel').value = '';
         document.getElementById('weeklyFilterUser').value = '';
         filteredWeeklyBatches = WEEKLY_BATCHES.slice();
+        weeklyBatchPage = 1;
         renderWeeklyBatchTable(filteredWeeklyBatches);
     }
 
@@ -842,12 +871,15 @@
         document.getElementById('weeklyDetailFilterUser').value = '';
         document.getElementById('weeklyDetailFilterType').value = 'all';
         filteredWeeklyDetailRows = batch.recipients.slice();
+        weeklyDetailPage = 1;
         renderWeeklyDetailTable(batch);
     }
 
     function renderWeeklyDetailTable(batch) {
         const isManual = batch.type === 'manual';
-        document.getElementById('weeklyDetailTableBody').innerHTML = filteredWeeklyDetailRows.map(function (r) {
+        const sliced = ptsSlice(filteredWeeklyDetailRows, weeklyDetailPage);
+        weeklyDetailPage = sliced.page;
+        document.getElementById('weeklyDetailTableBody').innerHTML = sliced.items.map(function (r) {
             const typeTag = r.userType === 'shadow' ? '<span class="status-tag tag-config">影子</span>' : '<span class="text-slate-500">真实</span>';
             if (isManual || r.manual) {
                 return '<tr class="hover:bg-slate-50"><td class="px-3 py-2 font-mono font-bold">' + r.uid + '</td><td class="px-3 py-2 font-mono">' + r.wallet + '</td><td class="px-3 py-2">' + typeTag + '</td><td class="px-3 py-2 text-center">—</td><td class="px-3 py-2 text-right font-bold text-green-600">+' + r.total + '</td><td colspan="6" class="px-3 py-2 text-slate-400">手动发放，无六维拆分</td></tr>';
@@ -855,6 +887,7 @@
             return '<tr class="hover:bg-slate-50' + (r.userType === 'shadow' ? ' bg-amber-50/40' : '') + '"><td class="px-3 py-2 font-mono font-bold">' + r.uid + '</td><td class="px-3 py-2 font-mono">' + r.wallet + '</td><td class="px-3 py-2">' + typeTag + '</td><td class="px-3 py-2 text-center font-bold">' + r.multiplier + '</td><td class="px-3 py-2 text-right font-bold">' + r.total + '</td>' +
                 DIM_META.map(function (m) { return '<td class="px-3 py-2 text-right text-slate-600">' + formatDimCell(r.dims[m.key]) + '</td>'; }).join('') + '</tr>';
         }).join('');
+        ptsMountPag('weekly-detail-pagination', sliced.total, weeklyDetailPage, 'pts-weekly-detail');
     }
 
     function applyWeeklyDetailFilters() {
@@ -867,6 +900,7 @@
             if (userQ && r.uid.toLowerCase().indexOf(userQ) === -1 && r.wallet.toLowerCase().indexOf(userQ) === -1) return false;
             return true;
         });
+        weeklyDetailPage = 1;
         renderWeeklyDetailTable(batch);
     }
 
@@ -980,6 +1014,7 @@
             customWrap.classList.add('hidden');
         }
         document.getElementById('ptsDetailVolume').innerText = user.umbrellaVolume;
+        pointsHistoryPage = 1;
         renderPointsHistory(uid);
     }
 
@@ -995,11 +1030,14 @@
     }
 
     function renderPointsUserTable(list) {
-        document.getElementById('pointsUserTableBody').innerHTML = list.map(function (u) {
+        const sliced = ptsSlice(list, pointsUserPage);
+        pointsUserPage = sliced.page;
+        document.getElementById('pointsUserTableBody').innerHTML = sliced.items.map(function (u) {
             const uidCell = window.AdminCopyChip ? AdminCopyChip.uid(u.uid) : u.uid;
             const walletCell = window.AdminCopyChip ? AdminCopyChip.wallet(u.wallet) : (u.wallet.length > 14 ? u.wallet.slice(0, 6) + '...' + u.wallet.slice(-4) : u.wallet);
             return '<tr class="hover:bg-slate-50"><td class="px-4 py-3"><div class="font-bold">' + uidCell + '</div><div class="text-[10px] text-slate-400 font-mono mt-0.5">' + walletCell + '</div></td><td class="px-3 py-3 text-right font-black text-blue-600">' + u.balance.toLocaleString() + '</td><td class="px-3 py-3 text-center font-bold">' + u.multiplier + '</td><td class="px-3 py-3 text-center">' + bonusTypeLabel(u) + '</td><td class="px-3 py-3 text-right">' + u.umbrellaVolume + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.trade.toLocaleString() + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.position.toLocaleString() + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.invite.toLocaleString() + '</td><td class="px-3 py-3 text-right font-bold">' + u.lastWeek.total.toLocaleString() + '</td><td class="px-4 py-3 text-right"><button onclick="showPointsUserDetail(\'' + u.uid + '\')" class="text-blue-600 font-bold">查看流水</button></td></tr>';
         }).join('');
+        ptsMountPag('points-user-pagination', sliced.total, pointsUserPage, 'pts-users');
     }
 
     function renderDimBreakdown(d) {
@@ -1009,10 +1047,13 @@
 
     function renderPointsHistory(uid) {
         const rows = POINTS_HISTORY[uid] || [];
-        document.getElementById('pointsHistoryTableBody').innerHTML = rows.length ? rows.map(function (r) {
+        const sliced = ptsSlice(rows, pointsHistoryPage);
+        pointsHistoryPage = sliced.page;
+        document.getElementById('pointsHistoryTableBody').innerHTML = sliced.items.length ? sliced.items.map(function (r) {
             const dimHtml = r.source === '系统周结算' && r.dimensions ? renderDimBreakdown(r.dimensions) : '';
             return '<tr class="hover:bg-slate-50 align-top"><td class="px-4 py-3">' + r.time + '</td><td class="px-3 py-3"><span class="status-tag ' + r.sourceTag + '">' + r.source + '</span></td><td class="px-3 py-3"><div>' + r.activity + dimHtml + '</div></td><td class="px-3 py-3 text-right font-bold text-green-600">' + r.delta + '</td><td class="px-3 py-3 text-right">' + r.balance.toLocaleString() + '</td><td class="px-4 py-3 text-slate-500">' + r.note + '</td></tr>';
         }).join('') : '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">暂无流水记录</td></tr>';
+        ptsMountPag('points-history-pagination', sliced.total, pointsHistoryPage, 'pts-history');
     }
 
     function applyPtsUserFilters() {
@@ -1025,6 +1066,7 @@
             if (bonusType !== 'all' && u.bonusType !== bonusType) return false;
             return true;
         });
+        pointsUserPage = 1;
         renderPointsUserTable(list);
     }
 
@@ -1032,14 +1074,18 @@
         document.getElementById('ptsFilterUser').value = '';
         document.getElementById('ptsFilterLevel').value = 'all';
         document.getElementById('ptsFilterBonusType').value = 'all';
+        pointsUserPage = 1;
         renderPointsUserTable(POINTS_USERS);
     }
 
     function renderPointsLogs(list) {
-        document.getElementById('pointsLogTableBody').innerHTML = list.map(function (log) {
+        const sliced = ptsSlice(list, pointsLogPage);
+        pointsLogPage = sliced.page;
+        document.getElementById('pointsLogTableBody').innerHTML = sliced.items.map(function (log) {
             const tag = log.type === '手动发放' ? 'tag-manual' : 'tag-config';
             return '<tr class="hover:bg-slate-50"><td class="px-4 py-3">' + log.time + '</td><td class="px-3 py-3">' + log.operator + '</td><td class="px-3 py-3"><span class="status-tag ' + tag + '">' + log.type + '</span></td><td class="px-3 py-3 font-mono text-xs">' + log.user + '</td><td class="px-3 py-3">' + log.detail + '</td><td class="px-3 py-3 text-right font-bold">' + log.points + '</td><td class="px-4 py-3 text-slate-500">' + log.remark + '</td></tr>';
         }).join('');
+        ptsMountPag('points-log-pagination', sliced.total, pointsLogPage, 'pts-logs');
     }
 
     function applyPtsLogFilters() {
@@ -1052,6 +1098,7 @@
             if (type !== 'all' && log.type !== type) return false;
             return true;
         });
+        pointsLogPage = 1;
         renderPointsLogs(list);
     }
 
@@ -1573,6 +1620,20 @@
     renderPointsLogs(POINTS_LOGS);
     renderPointsOverview();
     renderWeeklyBatchTable(WEEKLY_BATCHES);
+    if (window.AdminPagination) {
+        AdminPagination.register('pts-weekly-batch', function (p) { weeklyBatchPage = p; renderWeeklyBatchTable(filteredWeeklyBatches); });
+        AdminPagination.register('pts-weekly-detail', function (p) {
+            weeklyDetailPage = p;
+            const batch = WEEKLY_BATCHES.find(function (b) { return b.id === currentWeeklyBatchId; });
+            if (batch) renderWeeklyDetailTable(batch);
+        });
+        AdminPagination.register('pts-users', function (p) { pointsUserPage = p; applyPtsUserFilters(); });
+        AdminPagination.register('pts-history', function (p) {
+            pointsHistoryPage = p;
+            if (currentPtsUid) renderPointsHistory(currentPtsUid);
+        });
+        AdminPagination.register('pts-logs', function (p) { pointsLogPage = p; applyPtsLogFilters(); });
+    }
     const REWARD_NAME_DEMOS = {
         points: { 'zh-CN': '运营补偿积分', 'zh-TW': '運營補償積分', 'en': 'Ops Compensation Points', 'ja': '運営補償ポイント' },
         bonus: { 'zh-CN': '高净值积分加成', 'zh-TW': '高淨值積分加成', 'en': 'High-Net-Worth Points Bonus', 'ja': '高純資産積分ボーナス' },
