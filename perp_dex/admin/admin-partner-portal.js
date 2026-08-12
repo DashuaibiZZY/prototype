@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-18';
+    const DATA_VERSION = 'partner-demo-19';
 
     function chip(v, type) {
         if (!v || v === '—' || v === '--') return '<span class="text-slate-400">' + (v || '—') + '</span>';
@@ -290,6 +290,7 @@
     let migrateRatioOverrides = {};
     let migrateAttachments = [];
     let bindAttachments = [];
+    let treeAttachments = [];
     const MIGRATE_TREE_PAGE_SIZE = 10;
     let treeFocusId = null;
     let treeEntryId = null;
@@ -945,6 +946,10 @@
         const body = document.getElementById('tree-confirm-body');
         const remarkEl = document.getElementById('tree-confirm-remark');
         if (remarkEl) remarkEl.value = '';
+        treeAttachments = [];
+        renderTreeAttachmentPreview();
+        const fileEl = document.getElementById('tree-attachment-input');
+        if (fileEl) fileEl.value = '';
         if (!body) { submitPendingChanges(true); return; }
         const within = pendingRatioChanges.filter(function (c) { return c.newRatio <= OPS_CAP; });
         const exceed = pendingRatioChanges.filter(function (c) { return c.newRatio > OPS_CAP; });
@@ -973,6 +978,65 @@
         if (modal) modal.classList.add('hidden');
         const remarkEl = document.getElementById('tree-confirm-remark');
         if (remarkEl) remarkEl.value = '';
+        treeAttachments = [];
+        renderTreeAttachmentPreview();
+        const fileEl = document.getElementById('tree-attachment-input');
+        if (fileEl) fileEl.value = '';
+    }
+
+    function renderTreeAttachmentPreview() {
+        const el = document.getElementById('tree-attachment-preview');
+        if (!el) return;
+        if (!treeAttachments.length) {
+            el.innerHTML = '';
+            return;
+        }
+        el.innerHTML = treeAttachments.map(function (a, i) {
+            return '<div class="relative group border rounded overflow-hidden w-16 h-16 bg-white">' +
+                '<img src="' + a.dataUrl + '" alt="' + a.name + '" class="w-full h-full object-cover">' +
+                '<button type="button" onclick="PartnerPortal.removeTreeAttachment(' + i + ')" class="absolute top-0 right-0 bg-red-600 text-white text-[9px] px-1 leading-none opacity-90">×</button>' +
+                '<span class="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[8px] px-1 truncate">' + a.name + '</span></div>';
+        }).join('');
+    }
+
+    function handleTreeAttachmentFiles(input) {
+        if (!input || !input.files) return;
+        const files = Array.from(input.files);
+        const remain = 4 - treeAttachments.length;
+        if (remain <= 0) {
+            alert('最多上传 4 张图片');
+            input.value = '';
+            return;
+        }
+        const toAdd = files.slice(0, remain);
+        if (files.length > remain) alert('最多上传 4 张图片，已忽略超出部分');
+        let pending = toAdd.length;
+        if (!pending) {
+            input.value = '';
+            return;
+        }
+        toAdd.forEach(function (file) {
+            if (!file.type || file.type.indexOf('image/') !== 0) {
+                pending--;
+                if (pending === 0) input.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                treeAttachments.push({ name: file.name, dataUrl: ev.target.result });
+                renderTreeAttachmentPreview();
+                pending--;
+                if (pending === 0) input.value = '';
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function removeTreeAttachment(index) {
+        treeAttachments.splice(index, 1);
+        renderTreeAttachmentPreview();
+        const fileEl = document.getElementById('tree-attachment-input');
+        if (fileEl) fileEl.value = '';
     }
 
     function confirmTreeSubmit() {
@@ -1019,7 +1083,11 @@
         }
 
         if (exceed.length && typeof submitApprovalApplication === 'function') {
+            const attachmentNames = treeAttachments.map(function (a) { return a.name; });
+            const attachmentPreviews = {};
+            treeAttachments.forEach(function (a) { attachmentPreviews[a.name] = a.dataUrl; });
             exceed.forEach(function (c) {
+                const u = getUser(c.userId);
                 submitApprovalApplication({
                     type: 'partner_ratio_change',
                     title: '返佣比例调整（超出上限）',
@@ -1029,11 +1097,14 @@
                     summary: chip(c.wallet, 'wallet') + ' ' + c.oldRatio + '% → ' + c.newRatio + '%',
                     payload: {
                         wallet: c.wallet,
+                        uid: u ? (u.uid || '—') : '—',
                         oldRatio: c.oldRatio,
                         newRatio: c.newRatio,
                         opsCap: OPS_CAP,
                         exceedsCap: true,
-                        changeRemark: changeRemark
+                        changeRemark: changeRemark,
+                        attachments: attachmentNames,
+                        attachmentPreviews: attachmentPreviews
                     }
                 });
             });
@@ -2521,6 +2592,8 @@
         removeMigrateAttachment: removeMigrateAttachment,
         handleBindAttachmentFiles: handleBindAttachmentFiles,
         removeBindAttachment: removeBindAttachment,
+        handleTreeAttachmentFiles: handleTreeAttachmentFiles,
+        removeTreeAttachment: removeTreeAttachment,
         getCurrentUserId: function () { return currentUserId; },
         applyHashTree: applyHashTree, DATA_VERSION: DATA_VERSION
     };
