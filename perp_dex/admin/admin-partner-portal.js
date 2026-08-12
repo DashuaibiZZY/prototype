@@ -3,7 +3,9 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-20';
+    const DATA_VERSION = 'partner-demo-21';
+    const RECONCILIATION_DOWNLOAD_COOLDOWN_MS = 10 * 60 * 1000;
+    let lastReconciliationDownloadAt = 0;
 
     function chip(v, type) {
         if (!v || v === '—' || v === '--') return '<span class="text-slate-400">' + (v || '—') + '</span>';
@@ -189,7 +191,8 @@
         {
             id: 'ap1', rootWallet: '0xAbn...L1',
             parentWallet: '0xAbn...L3', childWallet: '0xAbn...L4',
-            parentRatio: 55, childRatio: 62, pausedVol: '$128,000', childUserId: 'p_a4'
+            parentRatio: 55, childRatio: 62, pausedVol: 128000, pausedFee: 1280,
+            pausedVolDisplay: '$128,000', childUserId: 'p_a4'
         }
     ];
 
@@ -292,12 +295,12 @@
         inversionLineCount: 1,
         pausedVol: 128000,
         pausedFee: 1280,
-        pendingRebate: 1920,
         lines: [
             {
                 parentWallet: '0xMig...AbnBL3', parentRatio: 40,
                 childWallet: '0xMig...AbnBL4', childRatio: 42,
-                pausedVol: 128000, pausedFee: 1280, pendingRebate: 1920,
+                childAgentId: 'mig_ab_b_l4',
+                pausedVol: 128000, pausedFee: 1280,
                 reason: '下级配置比例超过该级代理'
             }
         ]
@@ -721,23 +724,85 @@
             '<button onclick="PartnerPortal.openTreeConfirmModal()" class="px-6 py-2 bg-blue-600 rounded font-black text-[11px]">提交修改</button></div></div>';
     }
 
+    function renderPausedSettlementPendingBlock(opts) {
+        opts = opts || {};
+        const lines = opts.lines || [];
+        const inversionCount = opts.inversionCount != null ? opts.inversionCount : lines.length;
+        const context = opts.context || 'tree';
+        if (!lines.length && inversionCount <= 0) return '';
+
+        let sumVol = 0;
+        let sumFee = 0;
+        lines.forEach(function (l) {
+            sumVol += typeof l.pausedVol === 'number' ? l.pausedVol : parseVolToNumber(l.pausedVol);
+            const fee = typeof l.pausedFee === 'number' ? l.pausedFee : parseFloat(String(l.pausedFee).replace(/[$,]/g, ''));
+            sumFee += isNaN(fee) ? 0 : fee;
+        });
+
+        let html = '<div class="bg-amber-50 border border-amber-300 rounded-lg p-4 mb-4">';
+        if (inversionCount > 0) {
+            html += '<p class="text-amber-900 font-black text-sm">检测到 <span class="underline">' + inversionCount + '</span> 条返佣倒挂（下级比例 &gt; 上级比例）</p>' +
+                '<p class="text-[11px] text-amber-800 mt-1">级差为 0（上下级比例相等）不算倒挂。比例异常期间<strong>尚未计算应发返佣</strong>，仅展示暂停结算的交易额与手续费。</p>';
+        }
+        html += '<div class="mt-3">';
+        html += '<p class="text-[11px] font-black text-amber-900 mb-1">' + (opts.title || '暂停结算待处理') + '</p>';
+        if (opts.footerNote) {
+            html += '<p class="text-[10px] text-amber-700 mb-2">' + opts.footerNote + '</p>';
+        }
+        if (lines.length) {
+            html += '<p class="text-[11px] text-amber-800 mb-2">暂停结算交易额合计 <strong>' + fmtMoney(sumVol) + '</strong> · 暂停结算手续费合计 <strong>' + fmtMoney(sumFee) + '</strong></p>';
+            html += '<table class="w-full text-[10px] border border-amber-200 rounded overflow-hidden"><thead><tr class="bg-amber-100/60 text-amber-900">' +
+                '<th class="px-2 py-1.5 text-left">上级</th><th class="px-2 py-1.5 text-left">下级（倒挂）</th>' +
+                '<th class="px-2 py-1.5 text-right">暂停结算交易额</th><th class="px-2 py-1.5 text-right">暂停结算手续费</th>' +
+                '<th class="px-2 py-1.5 text-right">操作</th></tr></thead><tbody>';
+            lines.forEach(function (l) {
+                const volDisplay = typeof l.pausedVol === 'number' ? fmtMoney(l.pausedVol) : (l.pausedVolDisplay || l.pausedVol || '—');
+                const feeNum = typeof l.pausedFee === 'number' ? l.pausedFee : parseFloat(String(l.pausedFee).replace(/[$,]/g, ''));
+                const feeDisplay = !isNaN(feeNum) ? fmtMoney(feeNum) : (l.pausedFee || '—');
+                let actionBtn;
+                if (context === 'migrate') {
+                    const agentId = (l.childAgentId || l.agentId || '').replace(/'/g, '');
+                    actionBtn = '<button type="button" onclick="PartnerPortal.jumpToMigrateInversion(\'' + agentId + '\')" class="text-amber-900 font-black underline hover:text-amber-950 text-[10px]">展开倒挂位置</button>';
+                } else {
+                    actionBtn = '<button type="button" onclick="PartnerPortal.fixAbnormalRebate(\'' + l.recordId + '\')" class="text-amber-900 font-black underline hover:text-amber-950 text-[10px]">展开倒挂位置</button>';
+                }
+                html += '<tr class="border-t border-amber-100 bg-white/50">' +
+                    '<td class="px-2 py-1.5">' + l.parentWallet + ' <span class="text-slate-500">' + l.parentRatio + '%</span></td>' +
+                    '<td class="px-2 py-1.5 font-bold text-red-700">' + l.childWallet + ' <span>' + l.childRatio + '%</span></td>' +
+                    '<td class="px-2 py-1.5 text-right">' + volDisplay + '</td>' +
+                    '<td class="px-2 py-1.5 text-right">' + feeDisplay + '</td>' +
+                    '<td class="px-2 py-1.5 text-right">' + actionBtn + '</td></tr>';
+            });
+            html += '</tbody></table>';
+        }
+        html += '</div></div>';
+        return html;
+    }
+
     function renderAbnormalSection(rootWallet) {
         const records = ABNORMAL_RECORDS.filter(function (r) {
             return !rootWallet || r.rootWallet === rootWallet;
         });
         if (!records.length) return '';
-        let html = '<div class="bg-red-50 border border-red-100 rounded-lg p-4 mb-4">' +
-            '<p class="text-red-900 font-black text-sm mb-2">异常返佣线（比例倒挂）</p>' +
-            '<table class="w-full text-[11px]"><thead class="text-[10px] uppercase text-red-400"><tr>' +
-            '<th class="pb-2">下级</th><th class="pb-2">上级</th><th class="pb-2 text-right">暂停额</th><th class="pb-2 text-right">操作</th></tr></thead><tbody>';
-        records.forEach(function (r) {
-            html += '<tr class="border-t border-red-100"><td class="py-2 font-bold">' + chip(r.childWallet, 'wallet') + '</td>' +
-                '<td class="py-2">' + chip(r.parentWallet, 'wallet') + '<span class="block text-[9px] text-red-500">' + r.parentRatio + '% &lt; ' + r.childRatio + '%</span></td>' +
-                '<td class="py-2 text-right font-bold">' + r.pausedVol + '</td>' +
-                '<td class="py-2 text-right"><button onclick="PartnerPortal.fixAbnormalRebate(\'' + r.id + '\')" class="bg-red-600 text-white px-3 py-1 rounded font-bold hover:bg-red-700">修正返佣</button></td></tr>';
+        const lines = records.map(function (r) {
+            return {
+                recordId: r.id,
+                parentWallet: r.parentWallet,
+                parentRatio: r.parentRatio,
+                childWallet: r.childWallet,
+                childRatio: r.childRatio,
+                pausedVol: r.pausedVol,
+                pausedFee: r.pausedFee,
+                pausedVolDisplay: r.pausedVolDisplay
+            };
         });
-        html += '</tbody></table></div>';
-        return html;
+        return renderPausedSettlementPendingBlock({
+            lines: lines,
+            inversionCount: records.length,
+            context: 'tree',
+            title: '暂停结算待处理',
+            footerNote: '修正下级比例至 ≤ 上级后恢复结算；系统将按修正后比例重算应发返佣。'
+        });
     }
 
     function showDetail(id) {
@@ -1434,7 +1499,7 @@
         }
         const headers = [
             '结算日期', '合伙人钱包', 'UID', '层级', '返佣比例(%)', '上级钱包',
-            '待修正原因', '原应结日', '暂停结算成交额(USDT)', '暂停结算手续费(USDT)', '待发放原始佣金(USDT)'
+            '待修正原因', '原应结日', '暂停结算成交额(USDT)', '暂停结算手续费(USDT)'
         ];
         const data = rows.map(function (r) {
             return [
@@ -1447,8 +1512,7 @@
                 r.pendingFixReason || r.pendingFixNote || '下级配置比例超过该级代理',
                 r.originalSettlementDate || '—',
                 r.pausedVol != null ? r.pausedVol : '',
-                r.pausedFee != null ? r.pausedFee : '',
-                r.pendingRebateEstimate != null ? r.pendingRebateEstimate : ''
+                r.pausedFee != null ? r.pausedFee : ''
             ];
         });
         downloadCsvFile('Abnormal_Agents_' + currentBatchDate + '.csv', headers, data);
@@ -1597,6 +1661,14 @@
             alert('请先进入结算批次详情');
             return;
         }
+        const now = Date.now();
+        if (lastReconciliationDownloadAt && now - lastReconciliationDownloadAt < RECONCILIATION_DOWNLOAD_COOLDOWN_MS) {
+            const remainSec = Math.ceil((RECONCILIATION_DOWNLOAD_COOLDOWN_MS - (now - lastReconciliationDownloadAt)) / 1000);
+            const remainMin = Math.ceil(remainSec / 60);
+            alert('对账单下载过于频繁，请 ' + remainMin + ' 分钟后再试（每 10 分钟限下载 1 次，降低数据库压力）');
+            return;
+        }
+        lastReconciliationDownloadAt = now;
         const pack = buildSettlementCsvExports(currentBatchDate);
         const keys = ['table1', 'table2', 'table2a', 'table3', 'table4'];
         keys.forEach(function (k, i) {
@@ -2233,52 +2305,29 @@
         if (!root) return '';
         const pending = root.abnormalPending;
         const inversionCount = invertedIds ? invertedIds.length : 0;
-        const hasPending = pending && (pending.pendingRebate > 0 || pending.pausedVol > 0);
-        if (!inversionCount && !hasPending) return '';
-        let html = '<div class="bg-amber-50 border border-amber-300 rounded-lg p-4 mb-4">';
-        if (inversionCount) {
-            html += '<p class="text-amber-900 font-black text-sm">检测到 <span class="underline">' + inversionCount + '</span> 条返佣倒挂（下级比例 &gt; 上级比例）</p>' +
-                '<p class="text-[11px] text-amber-800 mt-1">级差为 0（上下级比例相等）不算倒挂，可在下方树中修改节点比例。</p>';
-        }
-        if (hasPending) {
-            html += '<div class="mt-3 pt-3 border-t border-amber-200">' +
-                '<p class="text-[11px] font-black text-amber-900 mb-2">暂停结算待处理（迁移后将归属新上级统计与发放）</p>' +
-                '<p class="text-[11px] text-amber-800">异常暂停交易额 <strong>' + fmtMoney(pending.pausedVol) + '</strong> · 手续费 <strong>' + fmtMoney(pending.pausedFee) + '</strong> · 待发放返佣 <strong>' + fmtMoney(pending.pendingRebate) + '</strong></p>';
-            if (pending.lines && pending.lines.length) {
-                html += '<table class="w-full text-[10px] mt-2 border border-amber-200 rounded overflow-hidden"><thead><tr class="bg-amber-100/60 text-amber-900">' +
-                    '<th class="px-2 py-1.5 text-left">上级</th><th class="px-2 py-1.5 text-left">下级（倒挂）</th>' +
-                    '<th class="px-2 py-1.5 text-right">暂停交易额</th><th class="px-2 py-1.5 text-right">手续费</th><th class="px-2 py-1.5 text-right">待发放返佣</th></tr></thead><tbody>';
-                pending.lines.forEach(function (l) {
-                    html += '<tr class="border-t border-amber-100 bg-white/50">' +
-                        '<td class="px-2 py-1.5">' + l.parentWallet + ' <span class="text-slate-500">' + l.parentRatio + '%</span></td>' +
-                        '<td class="px-2 py-1.5 font-bold text-red-700">' + l.childWallet + ' <span>' + l.childRatio + '%</span></td>' +
-                        '<td class="px-2 py-1.5 text-right">' + fmtMoney(l.pausedVol) + '</td>' +
-                        '<td class="px-2 py-1.5 text-right">' + fmtMoney(l.pausedFee) + '</td>' +
-                        '<td class="px-2 py-1.5 text-right font-bold">' + fmtMoney(l.pendingRebate) + '</td></tr>';
-                });
-                html += '</tbody></table>';
-            }
-            html += '</div>';
-        }
-        if (inversionCount) {
-            html += '<p class="text-[11px] text-amber-800 mt-3">' +
-                '<button type="button" onclick="PartnerPortal.jumpToMigrateInversion()" class="text-amber-900 font-black underline hover:text-amber-950">点击立即展开倒挂位置</button></p>';
-        }
-        html += '</div>';
-        return html;
+        const lines = (pending && pending.lines) ? pending.lines.slice() : [];
+        if (!lines.length && inversionCount <= 0) return '';
+        return renderPausedSettlementPendingBlock({
+            lines: lines,
+            inversionCount: inversionCount,
+            context: 'migrate',
+            title: '暂停结算待处理（迁移后将归属新上级统计与发放）',
+            footerNote: '比例异常期间尚未计算应发返佣。迁移并修正比例、恢复结算后，由新上级维度统计并按修正后比例计算返佣。'
+        });
     }
 
     function renderMigrateInversionBanner(invertedIds) {
         return '';
     }
 
-    function jumpToMigrateInversion() {
+    function jumpToMigrateInversion(targetAgentId) {
         const p = migrateState.preview;
         if (!p || !p.partnerUser) return;
         const ratioVal = parseFloat(document.getElementById('migrate-ratio-input') && document.getElementById('migrate-ratio-input').value);
         const effectiveRootRatio = !isNaN(ratioVal) ? ratioVal : p.partnerUser.ratio;
         const invertedIds = migrateState.invertedNodeIds || collectInvertedMigrateIds(p.partnerUser.id, effectiveRootRatio);
         if (!invertedIds.length) return;
+        const focusId = targetAgentId && invertedIds.indexOf(targetAgentId) >= 0 ? targetAgentId : invertedIds[0];
         invertedIds.forEach(function (nid) {
             let u = getMigrateAgent(nid);
             while (u && u.id !== p.partnerUser.id) {
@@ -2287,7 +2336,7 @@
                 u = parent;
             }
         });
-        const first = getMigrateAgent(invertedIds[0]);
+        const first = getMigrateAgent(focusId);
         if (first) {
             let topBranch = first;
             while (topBranch.parentWallet && topBranch.parentWallet !== p.partnerUser.wallet) {
@@ -2299,12 +2348,12 @@
                 if (idx >= 0) migrateState.treePage = Math.floor(idx / MIGRATE_TREE_PAGE_SIZE) + 1;
             }
         }
-        migrateTreeHighlightId = invertedIds[0];
+        migrateTreeHighlightId = focusId;
         renderMigratePreviewContent();
         migrateState.inversionErrors = checkMigrateInversion();
         updateMigrateSubmitState();
         setTimeout(function () {
-            const el = document.getElementById('migrate-node-' + invertedIds[0]);
+            const el = document.getElementById('migrate-node-' + focusId);
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 120);
     }
@@ -2381,7 +2430,7 @@
             const effectiveRootRatio = !isNaN(ratioVal) ? ratioVal : root.ratio;
             const invertedIds = collectInvertedMigrateIds(root.id, effectiveRootRatio);
             migrateState.invertedNodeIds = invertedIds;
-            if (invertedIds.length || (root.abnormalPending && root.abnormalPending.pendingRebate > 0)) {
+            if (invertedIds.length || (root.abnormalPending && root.abnormalPending.lines && root.abnormalPending.lines.length)) {
                 html += renderMigrateAbnormalBanner(p, invertedIds);
             }
             const directIds = root.childIds || [];
