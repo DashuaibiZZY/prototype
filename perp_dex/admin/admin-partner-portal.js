@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-17';
+    const DATA_VERSION = 'partner-demo-18';
 
     function chip(v, type) {
         if (!v || v === '—' || v === '--') return '<span class="text-slate-400">' + (v || '—') + '</span>';
@@ -117,6 +117,55 @@
             settlements: [{ date: '2024-05-21', vol: '$128k', rebate: '$0', originalRebate: null, status: '待修正返佣后计算', note: '比例倒挂' }]
         }
     ];
+
+    const PERIOD_SCALES = { '1D': 0.04, '1W': 0.22, '1M': 0.48, '3M': 0.78, 'ALL': 1 };
+
+    function parseMoneyToNum(s) {
+        if (!s || s === '--' || s === '—') return 0;
+        let t = String(s).replace(/\s/g, '').replace(/,/g, '');
+        const neg = t.indexOf('-') === 0;
+        t = t.replace(/^[-+]/, '').replace(/^\$/, '');
+        let mult = 1;
+        if (/m/i.test(t)) { mult = 1e6; t = t.replace(/m/i, ''); }
+        else if (/k/i.test(t)) { mult = 1e3; t = t.replace(/k/i, ''); }
+        const n = parseFloat(t);
+        if (isNaN(n)) return 0;
+        return neg ? -n * mult : n * mult;
+    }
+
+    function initUserPeriodStats() {
+        USERS.forEach(function (u) {
+            const volN = parseMoneyToNum(u.vol);
+            const rebateN = parseMoneyToNum(u.rebateTotal === '--' ? 0 : u.rebateTotal);
+            let netN = u.net === '--' ? 0 : parseMoneyToNum(u.net);
+            const feeN = volN > 0 ? volN * 0.01 : 0;
+            if (!netN && feeN && u.net !== '--') netN = feeN - rebateN;
+            const base = { vol: volN, fee: feeN, rebate: rebateN, netIncome: netN };
+            u.statsByPeriod = {};
+            Object.keys(PERIOD_SCALES).forEach(function (p) {
+                const sc = PERIOD_SCALES[p];
+                u.statsByPeriod[p] = {
+                    vol: base.vol * sc,
+                    fee: base.fee * sc,
+                    rebate: base.rebate * sc,
+                    netIncome: base.netIncome * sc
+                };
+            });
+        });
+    }
+
+    function getUserPeriodStats(u, period) {
+        period = period || 'ALL';
+        if (!u || !u.statsByPeriod) return { vol: 0, fee: 0, rebate: 0, netIncome: 0 };
+        return u.statsByPeriod[period] || u.statsByPeriod.ALL;
+    }
+
+    function formatStatMoney(n, dashIfZero) {
+        if (dashIfZero && !n) return '--';
+        return fmtMoney(n);
+    }
+
+    initUserPeriodStats();
 
     const ABNORMAL_RECORDS = [
         {
@@ -259,6 +308,10 @@
     let settlementDetailPage = 1;
     let supplementDetailPage = 1;
     let migrateTreeHighlightId = null;
+    let listStatsPeriod = 'ALL';
+    let detailStatsPeriod = 'ALL';
+    let listSortKey = null;
+    let listSortDir = 'desc';
 
     function paginate(items, page) {
         if (window.AdminPagination) return AdminPagination.slice(items, page);
@@ -343,19 +396,21 @@
     function renderPartnerList() {
         const tbody = document.getElementById('partner-list-body');
         if (!tbody) return;
-        const ids = LIST_IDS.filter(function (id) {
+        let ids = LIST_IDS.filter(function (id) {
             const u = getUser(id);
             return u && matchesListFilter(u);
         });
+        ids = sortListIds(ids);
         const sliced = paginate(ids, listPage);
         listPage = sliced.page;
         tbody.innerHTML = sliced.items.map(function (id) {
             const u = getUser(id);
             if (!u) return '';
+            const stats = getUserPeriodStats(u, listStatsPeriod);
             const childCount = (u.childIds || []).length;
-            const netHtml = u.net === '--' ? '<span class="text-slate-400">--</span>' : '<span class="text-blue-600 font-black">' + u.net + '</span>';
             const av = u.abnormalVol === '--' ? '<span class="text-slate-300">--</span>' : '<span class="text-amber-700 font-bold">' + u.abnormalVol + '</span>';
             const al = u.abnormalLines ? '<span class="text-red-600 font-black">' + u.abnormalLines + '</span>' : '<span class="text-slate-300">0</span>';
+            const netDash = u.net === '--';
             return '<tr class="hover:bg-slate-50' + (u.settleStatus !== 'normal' ? ' bg-amber-50/20' : '') + '">' +
                 '<td class="px-4 py-3">' + chip(u.wallet, 'wallet') +
                 '<span class="block mt-1">' + chip(u.uid, 'uid') + '</span>' +
@@ -365,17 +420,89 @@
                 '<td class="px-3 py-3 text-center">' + settleLabel(u.settleStatus) + '</td>' +
                 '<td class="px-3 py-3 text-right">' + av + '</td>' +
                 '<td class="px-3 py-3 text-center">' + al + '</td>' +
-                '<td class="px-3 py-3 text-right font-bold">' + u.vol + '</td>' +
+                '<td class="px-3 py-3 text-right font-bold">' + formatStatMoney(stats.vol) + '</td>' +
+                '<td class="px-3 py-3 text-right font-bold text-slate-700">' + formatStatMoney(stats.fee) + '</td>' +
+                '<td class="px-3 py-3 text-right font-bold text-amber-700">' + formatStatMoney(stats.rebate, u.rebateTotal === '--') + '</td>' +
+                '<td class="px-3 py-3 text-right font-black text-blue-600">' + formatStatMoney(stats.netIncome, netDash && listStatsPeriod === 'ALL') + '</td>' +
                 '<td class="px-3 py-3 text-right font-bold text-green-600">' + u.deposit + '</td>' +
-                '<td class="px-3 py-3 text-center font-black">' + u.usersTotal + ' <span class="text-slate-300">/ ' + u.usersActive + '</span></td>' +
-                '<td class="px-3 py-3 text-right">' + netHtml + '</td>' +
+                '<td class="px-3 py-3 text-center font-black">' + u.usersActive + ' <span class="text-slate-300">/ ' + u.usersTotal + '</span></td>' +
                 '<td class="px-3 py-3 text-slate-500">' + (u.level === 1 ? u.operator : '—') + '</td>' +
                 '<td class="px-4 py-3 text-right space-x-2">' +
                 '<button onclick="PartnerPortal.showDetail(\'' + u.id + '\')" class="text-slate-600 font-bold hover:underline">详情</button>' +
                 '<button onclick="PartnerPortal.showTree(\'' + u.id + '\')" class="text-blue-600 font-bold hover:underline">返佣树</button>' +
                 '</td></tr>';
         }).join('');
+        updateListSortIcons();
         mountListPagination('partner-list-pagination', sliced.total, listPage, 'partner-list');
+    }
+
+    function sortListIds(ids) {
+        if (!listSortKey) return ids;
+        const period = listStatsPeriod;
+        const dir = listSortDir === 'asc' ? 1 : -1;
+        return ids.slice().sort(function (a, b) {
+            const sa = getUserPeriodStats(getUser(a), period)[listSortKey] || 0;
+            const sb = getUserPeriodStats(getUser(b), period)[listSortKey] || 0;
+            return (sa - sb) * dir;
+        });
+    }
+
+    function setListSort(key) {
+        if (listSortKey === key) listSortDir = listSortDir === 'asc' ? 'desc' : 'asc';
+        else { listSortKey = key; listSortDir = 'desc'; }
+        listPage = 1;
+        renderPartnerList();
+    }
+
+    function updateListSortIcons() {
+        ['vol', 'fee', 'rebate', 'netIncome'].forEach(function (k) {
+            const el = document.getElementById('list-sort-' + k);
+            if (!el) return;
+            if (listSortKey === k) el.textContent = listSortDir === 'asc' ? '↑' : '↓';
+            else el.textContent = '';
+        });
+    }
+
+    function updatePeriodTabUi(prefix, period) {
+        document.querySelectorAll('.' + prefix + '-period-btn').forEach(function (btn) {
+            const active = btn.getAttribute('data-period') === period;
+            btn.className = prefix + '-period-btn px-3 py-1 rounded border text-[11px] font-bold' +
+                (active ? ' bg-slate-900 text-white border-slate-900' : ' border-slate-200 text-slate-600 hover:bg-slate-50');
+        });
+    }
+
+    function setListStatsPeriod(period) {
+        listStatsPeriod = period || 'ALL';
+        updatePeriodTabUi('list', listStatsPeriod);
+        renderPartnerList();
+    }
+
+    function setDetailStatsPeriod(period) {
+        detailStatsPeriod = period || 'ALL';
+        updatePeriodTabUi('detail', detailStatsPeriod);
+        const u = getUser(currentUserId);
+        if (u) refreshDetailMetrics(u);
+    }
+
+    function refreshDetailMetrics(u) {
+        if (!u) return;
+        const stats = getUserPeriodStats(u, detailStatsPeriod);
+        const sc = PERIOD_SCALES[detailStatsPeriod] || 1;
+        const volEl = document.getElementById('detail-vol');
+        const feeEl = document.getElementById('detail-fee');
+        const netIncEl = document.getElementById('detail-net-income');
+        if (volEl) volEl.textContent = formatStatMoney(stats.vol);
+        if (feeEl) feeEl.textContent = formatStatMoney(stats.fee);
+        if (netIncEl) netIncEl.textContent = u.net === '--' && detailStatsPeriod === 'ALL' ? '--' : formatStatMoney(stats.netIncome);
+        document.getElementById('detail-rebate-total').textContent = formatStatMoney(stats.rebate, u.rebateTotal === '--');
+        const selfN = parseMoneyToNum(u.rebateSelf === '--' ? 0 : u.rebateSelf) * sc;
+        const directN = parseMoneyToNum(u.rebateDirect === '--' ? 0 : u.rebateDirect) * sc;
+        const gapN = parseMoneyToNum(u.rebateGap === '--' ? 0 : u.rebateGap) * sc;
+        document.getElementById('detail-rebate-self').textContent = u.rebateSelf === '--' ? '--' : formatStatMoney(selfN);
+        document.getElementById('detail-rebate-direct').textContent = u.rebateDirect === '--' ? '--' : formatStatMoney(directN);
+        document.getElementById('detail-rebate-gap').textContent = u.rebateGap === '--' ? '--' : formatStatMoney(gapN);
+        document.getElementById('detail-deposit').textContent = u.deposit;
+        document.getElementById('detail-users').textContent = u.usersActive + ' / ' + u.usersTotal;
     }
 
     function renderNodeCard(u, opts) {
@@ -588,19 +715,12 @@
         detailSubPage = 1;
         detailClientPage = 1;
         detailSettlementPage = 1;
+        detailStatsPeriod = listStatsPeriod;
+        updatePeriodTabUi('detail', detailStatsPeriod);
         window.PartnerPortal_showPage('page-partner-detail');
         document.getElementById('detail-partner-title').textContent = u.note;
         document.getElementById('detail-partner-sub').innerHTML = chip(u.wallet, 'wallet') + ' · ' + chip(u.uid, 'uid') + ' · L' + u.level + ' · ' + u.ratio + '%';
-        document.getElementById('detail-vol').textContent = u.vol;
-        document.getElementById('detail-deposit').textContent = u.deposit;
-        document.getElementById('detail-users').textContent = u.usersTotal + ' / ' + u.usersActive;
-        document.getElementById('detail-net').textContent = u.net;
-        document.getElementById('detail-net-hint').textContent = u.netHint || '';
-        document.getElementById('detail-rebate-total').textContent = u.rebateTotal || '—';
-        document.getElementById('detail-rebate-self').textContent = u.rebateSelf || '—';
-        document.getElementById('detail-rebate-direct').textContent = u.rebateDirect || '—';
-        document.getElementById('detail-rebate-gap').textContent = u.rebateGap || '—';
-        document.getElementById('detail-active-subs').textContent = u.activeSubPartners + ' / ' + u.totalSubPartners;
+        refreshDetailMetrics(u);
 
         const banner = document.getElementById('detail-abnormal-banner');
         const abnEntry = document.getElementById('detail-abnormal-entry');
@@ -823,6 +943,8 @@
     function openTreeConfirmModal() {
         if (!pendingRatioChanges.length) return;
         const body = document.getElementById('tree-confirm-body');
+        const remarkEl = document.getElementById('tree-confirm-remark');
+        if (remarkEl) remarkEl.value = '';
         if (!body) { submitPendingChanges(true); return; }
         const within = pendingRatioChanges.filter(function (c) { return c.newRatio <= OPS_CAP; });
         const exceed = pendingRatioChanges.filter(function (c) { return c.newRatio > OPS_CAP; });
@@ -835,8 +957,8 @@
         });
         html += '</ul>';
         if (within.length && exceed.length) {
-            html += '<p class="text-[11px] text-slate-600 bg-blue-50 border border-blue-100 rounded p-3">' +
-                '将拆分处理：<b>' + within.length + '</b> 项在运营权限内立即生效，<b>' + exceed.length + '</b> 项超上限走审批。</p>';
+            html += '<p class="text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded p-3">' +
+                '<b>存在超上限调整：</b>仅超上限项将进入审批流程；<b>' + within.length + '</b> 项权限内修改将被<strong>自动放弃</strong>，不会生效。请先处理超上限申请。</p>';
         } else if (exceed.length) {
             html += '<p class="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded p-3">全部修改均超过运营权限上限 ' + OPS_CAP + '%，提交后将进入审批流程。</p>';
         } else {
@@ -849,10 +971,20 @@
     function closeTreeConfirmModal() {
         const modal = document.getElementById('modal-tree-confirm');
         if (modal) modal.classList.add('hidden');
+        const remarkEl = document.getElementById('tree-confirm-remark');
+        if (remarkEl) remarkEl.value = '';
     }
 
     function confirmTreeSubmit() {
         submitPendingChanges(true);
+    }
+
+    function revertTreeRatioInputs(changes) {
+        (changes || []).forEach(function (c) {
+            const u = getUser(c.userId);
+            const input = document.getElementById('ratio-input-' + c.userId);
+            if (u && input) input.value = u.ratio;
+        });
     }
 
     function submitPendingChanges(skipModal) {
@@ -861,34 +993,59 @@
             openTreeConfirmModal();
             return;
         }
+        const remarkEl = document.getElementById('tree-confirm-remark');
+        const changeRemark = remarkEl ? remarkEl.value.trim() : '';
+        if (!changeRemark) {
+            alert('请填写修改原因备注');
+            return;
+        }
         closeTreeConfirmModal();
         const within = pendingRatioChanges.filter(function (c) { return c.newRatio <= OPS_CAP; });
         const exceed = pendingRatioChanges.filter(function (c) { return c.newRatio > OPS_CAP; });
-        if (within.some(function (c) { return c.newRatio < c.oldRatio; }) &&
+        const hasBoth = within.length && exceed.length;
+
+        if (hasBoth) {
+            if (!confirm('存在超上限调整：仅超上限项将进入审批，' + within.length + ' 项权限内修改将被系统放弃。确认继续？')) return;
+        } else if (within.some(function (c) { return c.newRatio < c.oldRatio; }) &&
             !confirm('含下调比例，可能触发分支异常。确认继续？')) return;
 
-        within.forEach(function (c) {
-            const u = getUser(c.userId);
-            if (u) u.ratio = c.newRatio;
-        });
+        if (!hasBoth && within.length) {
+            within.forEach(function (c) {
+                const u = getUser(c.userId);
+                if (u) u.ratio = c.newRatio;
+            });
+        } else if (hasBoth) {
+            revertTreeRatioInputs(within);
+        }
 
         if (exceed.length && typeof submitApprovalApplication === 'function') {
             exceed.forEach(function (c) {
                 submitApprovalApplication({
                     type: 'partner_ratio_change',
-                    title: '合伙人返佣比例调整',
+                    title: '返佣比例调整（超出上限）',
                     flowProfile: 'risk_boss',
                     applicant: 'Mkt_Allen',
-                    remark: c.wallet + ' ' + c.oldRatio + '% → ' + c.newRatio + '%（超运营上限）',
+                    remark: changeRemark,
                     summary: chip(c.wallet, 'wallet') + ' ' + c.oldRatio + '% → ' + c.newRatio + '%',
-                    payload: { wallet: c.wallet, oldRatio: c.oldRatio, newRatio: c.newRatio, opsCap: OPS_CAP, exceedsCap: true }
+                    payload: {
+                        wallet: c.wallet,
+                        oldRatio: c.oldRatio,
+                        newRatio: c.newRatio,
+                        opsCap: OPS_CAP,
+                        exceedsCap: true,
+                        changeRemark: changeRemark
+                    }
                 });
             });
         }
 
         let msg = '';
-        if (within.length) msg += within.length + ' 项已立即生效。';
-        if (exceed.length) msg += exceed.length + ' 项已提交审批。';
+        if (hasBoth) {
+            msg = '已提交 ' + exceed.length + ' 项超上限审批；' + within.length + ' 项权限内修改已放弃。';
+        } else {
+            if (within.length) msg += within.length + ' 项已立即生效。';
+            if (exceed.length) msg += exceed.length + ' 项已提交审批。';
+        }
         alert(msg || '已提交');
         pendingRatioChanges = [];
         refreshTree();
@@ -2189,7 +2346,7 @@
     const PARTNER_APP_TYPES = ['partner_l1_bind', 'partner_ratio_change', 'partner_rebate_migrate'];
     const PARTNER_TYPE_LABELS = {
         partner_l1_bind: '一级合伙人绑定',
-        partner_ratio_change: '返佣比例调整',
+        partner_ratio_change: '返佣比例调整（超出上限）',
         partner_rebate_migrate: '返佣关系迁移'
     };
     const PARTNER_OP_TYPE_LABELS = {
@@ -2220,7 +2377,7 @@
 
     const PARTNER_OP_LOG_SEEDS = [
         { time: '2026-08-11 09:20', operator: 'Mkt_Allen', opType: 'migrate', opLabel: '提交·返佣关系迁移', appId: 'APR20260811002', typeLabel: '返佣关系迁移', summary: '0xMig...Ok → 0xTo...L1 · 48%', note: '正常代理整伞迁移' },
-        { time: '2026-08-11 08:45', operator: 'Mkt_Allen', opType: 'ratio_change', opLabel: '提交·返佣比例调整', appId: 'APR20260811004', typeLabel: '合伙人返佣比例调整', summary: '0xNorm...L3 45%', note: '渠道协商下调' },
+        { time: '2026-08-11 08:45', operator: 'Mkt_Allen', opType: 'ratio_change', opLabel: '提交·返佣比例调整（超出上限）', appId: 'APR20260811004', typeLabel: '返佣比例调整（超出上限）', summary: '0xNorm...L3 45%', note: '渠道协商下调' },
         { time: '2026-08-10 16:30', operator: 'Risk_Control', opType: 'risk_pass', opLabel: '风控审核通过', appId: 'APR20260810003', typeLabel: '一级合伙人绑定', summary: '0xNew...L1 72%', note: '' },
         { time: '2026-08-10 11:00', operator: 'Boss', opType: 'boss_pass', opLabel: '老板审批通过', appId: 'APR20260810003', typeLabel: '一级合伙人绑定', summary: '0xNew...L1 72%', note: 'Lark 同步通过' },
         { time: '2026-08-09 14:22', operator: 'Mkt_Cross', opType: 'reject', opLabel: '审批驳回', appId: 'APR20260809001', typeLabel: '返佣关系迁移', summary: '0xAbn...L4 迁移申请', note: '倒挂未修正，请调整后重提' }
@@ -2332,7 +2489,9 @@
         closeAbnormalModal: closeAbnormalModal, switchDetailTab: switchDetailTab,
         toggleTreeExpand: toggleTreeExpand, refreshTree: refreshTree,
         filterDetailTable: filterDetailTable, setListFilter: setListFilter,
-        applyListSearch: applyListSearch, stageRatioChange: stageRatioChange,
+        applyListSearch: applyListSearch, setListSort: setListSort, setListStatsPeriod: setListStatsPeriod,
+        setDetailStatsPeriod: setDetailStatsPeriod,
+        stageRatioChange: stageRatioChange,
         clearPendingChanges: clearPendingChanges, submitPendingChanges: submitPendingChanges,
         openTreeConfirmModal: openTreeConfirmModal, closeTreeConfirmModal: closeTreeConfirmModal, confirmTreeSubmit: confirmTreeSubmit,
         openBindModal: openBindModal, closeBindModal: closeBindModal, submitBindPartner: submitBindPartner,
@@ -2392,6 +2551,7 @@
             AdminPagination.register('rebate-tree-branches', function (p) { setRebateTreeBranchPage(p); });
             AdminPagination.register('partner-logs', function (p) { partnerOpLogsPage = p; renderPartnerOpLogs(); });
         }
+        updatePeriodTabUi('list', listStatsPeriod);
         renderPartnerList();
         filterSettlementBatches();
         initSettlementDatePickers();

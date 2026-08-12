@@ -67,7 +67,7 @@
         points_pool_config: '积分总池配置',
         points_program_switch: '积分计划总开关',
         partner_l1_bind: '一级合伙人绑定（超上限）',
-        partner_ratio_change: '合伙人返佣比例调整',
+        partner_ratio_change: '返佣比例调整（超出上限）',
         partner_rebate_migrate: '返佣关系迁移'
     };
 
@@ -359,7 +359,7 @@
             {
                 id: 'APR20260802041',
                 type: 'partner_ratio_change',
-                title: '合伙人返佣比例调整',
+                title: '返佣比例调整（超出上限）',
                 applicant: 'Mkt_Allen',
                 status: 'approved',
                 flowProfile: 'risk_boss',
@@ -403,7 +403,7 @@
             {
                 id: 'APR20260804061',
                 type: 'partner_ratio_change',
-                title: '合伙人返佣比例调整',
+                title: '返佣比例调整（超出上限）',
                 applicant: 'Mkt_Allen',
                 status: 'pending_risk',
                 flowProfile: 'risk_boss',
@@ -425,7 +425,7 @@
             {
                 id: 'APR20260805071',
                 type: 'partner_ratio_change',
-                title: '合伙人返佣比例调整',
+                title: '返佣比例调整（超出上限）',
                 applicant: 'Mkt_Bob',
                 status: 'pending_boss',
                 flowProfile: 'risk_boss',
@@ -473,7 +473,7 @@
             {
                 id: 'APR20260807091',
                 type: 'partner_ratio_change',
-                title: '合伙人返佣比例调整',
+                title: '返佣比例调整（超出上限）',
                 applicant: 'Mkt_Bob',
                 status: 'rejected',
                 flowProfile: 'risk_boss',
