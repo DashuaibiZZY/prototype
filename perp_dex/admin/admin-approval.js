@@ -4,7 +4,7 @@
 (function () {
     const STORAGE_KEY = 'forx_approval_applications';
     const ROLE_KEY = 'forx_approval_view_role';
-    const SEED_VERSION = '2026-08-11-partner-v5';
+    const SEED_VERSION = '2026-08-11-partner-v6';
     const SEED_VERSION_KEY = 'forx_approval_seed_v';
 
     const STEPS = [
@@ -147,8 +147,14 @@
         return 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="480" height="280"><rect fill="#f0f4f8" width="480" height="280"/><text x="24" y="48" font-size="18" fill="#334155" font-family="sans-serif">用户价值证明截图（演示）</text><text x="24" y="88" font-size="14" fill="#64748b" font-family="sans-serif">其他交易所 VIP / 交易量证明</text></svg>');
     }
 
+    function partnerAttachmentPreview(label) {
+        return 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="480" height="280"><rect fill="#e8f0fe" width="480" height="280"/><text x="24" y="48" font-size="18" fill="#1e3a5f" font-family="sans-serif">' + label + '</text><text x="24" y="88" font-size="14" fill="#64748b" font-family="sans-serif">渠道协议 / 谈判依据截图（演示）</text></svg>');
+    }
+
     function buildSeedData() {
         const feeImg = feeAttachmentPreview();
+        const partnerImg1 = partnerAttachmentPreview('KOL 合作协议.png');
+        const partnerImg2 = partnerAttachmentPreview('渠道谈判纪要.png');
         return [
             {
                 id: 'APR20260727001',
@@ -350,7 +356,9 @@
                     wallet: '0xfa12...88ce',
                     ratio: 78,
                     opsCap: 80,
-                    exceedsCap: true
+                    exceedsCap: true,
+                    attachments: ['KOL合作协议.png', '渠道背景说明.png'],
+                    attachmentPreviews: { 'KOL合作协议.png': partnerImg1, '渠道背景说明.png': partnerImg2 }
                 },
                 timeline: [
                     { at: '2026-08-01 10:20', actor: 'Mkt_Allen', action: '提交申请', note: '头部 KOL 谈判比例 78%' }
@@ -391,7 +399,9 @@
                     wallet: '0xk9aa...31de',
                     ratio: 85,
                     opsCap: 80,
-                    exceedsCap: true
+                    exceedsCap: true,
+                    attachments: ['做市商协议.png', '海外资质证明.png'],
+                    attachmentPreviews: { '做市商协议.png': partnerImg1, '海外资质证明.png': partnerImg2 }
                 },
                 lark: { id: 'LARK-20260803-4412', status: 'pending', url: 'https://www.feishu.cn/approval/admin/preview/LARK-20260803-4412', syncedAt: '2026-08-03 16:10' },
                 timeline: [
@@ -416,7 +426,10 @@
                     oldRatio: 52,
                     newRatio: 82,
                     opsCap: 80,
-                    exceedsCap: true
+                    exceedsCap: true,
+                    changeRemark: '超运营上限 82%，上调华南线',
+                    attachments: ['华南线上调依据.png'],
+                    attachmentPreviews: { '华南线上调依据.png': partnerImg1 }
                 },
                 timeline: [
                     { at: '2026-08-04 11:30', actor: 'Mkt_Allen', action: '提交申请', note: '超运营上限 82%' }
@@ -438,7 +451,10 @@
                     oldRatio: 70,
                     newRatio: 88,
                     opsCap: 80,
-                    exceedsCap: true
+                    exceedsCap: true,
+                    changeRemark: 'VIP 渠道 88% 特批',
+                    attachments: ['VIP特批协议.png', '历史交易量证明.png'],
+                    attachmentPreviews: { 'VIP特批协议.png': partnerImg1, '历史交易量证明.png': partnerImg2 }
                 },
                 lark: { id: 'LARK-20260805-9921', status: 'pending', url: 'https://www.feishu.cn/approval/admin/preview/LARK-20260805-9921', syncedAt: '2026-08-05 14:20' },
                 timeline: [
@@ -486,7 +502,8 @@
                     oldRatio: 45,
                     newRatio: 90,
                     opsCap: 80,
-                    exceedsCap: true
+                    exceedsCap: true,
+                    changeRemark: '试图上调至 90%'
                 },
                 timeline: [
                     { at: '2026-08-07 15:20', actor: 'Mkt_Bob', action: '提交申请', note: '试图上调至 90%' },
