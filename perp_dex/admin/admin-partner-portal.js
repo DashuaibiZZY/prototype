@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-19';
+    const DATA_VERSION = 'partner-demo-20';
 
     function chip(v, type) {
         if (!v || v === '—' || v === '--') return '<span class="text-slate-400">' + (v || '—') + '</span>';
@@ -14,6 +14,24 @@
     function fmtMoney(n) {
         if (n == null || isNaN(n)) return '—';
         return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function csvEscape(val) {
+        const s = String(val == null ? '' : val);
+        if (s.indexOf(',') >= 0 || s.indexOf('"') >= 0 || s.indexOf('\n') >= 0) return '"' + s.replace(/"/g, '""') + '"';
+        return s;
+    }
+
+    function downloadCsvFile(filename, headers, rows) {
+        const lines = [headers.map(csvEscape).join(',')].concat(
+            rows.map(function (r) { return r.map(csvEscape).join(','); })
+        );
+        const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        a.click();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 500);
     }
 
     /** 仅列表展示的 4 个合伙人 */
@@ -185,7 +203,7 @@
     const SETTLEMENT_BATCH_DETAILS = {
         '2024-05-23': [
             { id: 'sr1', wallet: '0xAbn...L1', uid: '100811', level: 1, ratio: 68, parentWallet: null, vol: '$1M', originalRebate: 6800, actualRebate: 6500, pendingFix: false, originalSettlementDate: '2024-05-23' },
-            { id: 'sr2', wallet: '0xAbn...L4', uid: '100815', level: 4, ratio: 62, parentWallet: '0xAbn...L3', vol: '$128k', originalRebate: null, actualRebate: 0, pendingFix: true, originalSettlementDate: '2024-05-21', pendingFixNote: '当日停止结算，待修正返佣' },
+            { id: 'sr2', wallet: '0xAbn...L4', uid: '100815', level: 4, ratio: 62, parentWallet: '0xAbn...L3', vol: '$128k', originalRebate: null, actualRebate: 0, pendingFix: true, originalSettlementDate: '2024-05-21', pendingFixNote: '当日停止结算，待修正返佣', pendingFixReason: '下级配置比例超过该级代理', pausedVol: 128000, pausedFee: 1280, pendingRebateEstimate: 1920 },
             { id: 'sr3', wallet: '0xNorm...L1', uid: '100801', level: 1, ratio: 70, parentWallet: null, vol: '$2.1M', originalRebate: 4200, actualRebate: 4200, pendingFix: false, originalSettlementDate: '2024-05-23' }
         ],
         '2024-05-22': [
@@ -270,6 +288,20 @@
 
     /** 3.3 倒挂代理：系统 L6 · B 支深层链路倒挂（非迁移比例导致） */
     const MIGRATE_AGENT_ABN_ROOT = migAgent('mig_abn_l1', '0xMig...Abn', '200301', 6, 62, '演示·链路内倒挂（系统L6·3×5层）', null, '0xMig...Abn', ['mig_ab_a_l2', 'mig_ab_b_l2', 'mig_ab_c_l2']);
+    MIGRATE_AGENT_ABN_ROOT.abnormalPending = {
+        inversionLineCount: 1,
+        pausedVol: 128000,
+        pausedFee: 1280,
+        pendingRebate: 1920,
+        lines: [
+            {
+                parentWallet: '0xMig...AbnBL3', parentRatio: 40,
+                childWallet: '0xMig...AbnBL4', childRatio: 42,
+                pausedVol: 128000, pausedFee: 1280, pendingRebate: 1920,
+                reason: '下级配置比例超过该级代理'
+            }
+        ]
+    };
     const MIGRATE_AGENTS_ABN = [MIGRATE_AGENT_ABN_ROOT]
         .concat(migBranch('ab_a', 'AbnA', '0xMig...Abn', 6, 52, 44, 36, 29, false))
         .concat(migBranch('ab_b', 'AbnB', '0xMig...Abn', 6, 51, 40, 34, 28, true))
@@ -1369,6 +1401,211 @@
                 '<td class="px-4 py-4 text-right">' + editBtn + '</td></tr>';
         }).join('') : '<tr><td colspan="9" class="px-4 py-8 text-center text-slate-400">无匹配记录</td></tr>';
         mountListPagination('settlement-detail-pagination', sliced.total, settlementDetailPage, 'settlement-detail');
+        updateSettlementAbnormalBanner();
+    }
+
+    function updateSettlementAbnormalBanner() {
+        const banner = document.getElementById('abnormal-banner');
+        if (!banner) return;
+        if (!currentBatchDate) {
+            banner.classList.add('hidden');
+            banner.innerHTML = '';
+            return;
+        }
+        const abnormalRows = getBatchRows(currentBatchDate).filter(function (r) { return r.pendingFix; });
+        if (!abnormalRows.length) {
+            banner.classList.add('hidden');
+            banner.innerHTML = '';
+            return;
+        }
+        banner.classList.remove('hidden');
+        banner.innerHTML =
+            '<p class="text-blue-900 font-black text-sm mb-2">检测到该批次包含 <span class="underline">' + abnormalRows.length + '</span> 个异常代理记录。</p>' +
+            '<p class="text-blue-800 mb-3">原因：下级配置比例超过该级代理。受影响代理的佣金已自动置为暂停结算状态。</p>' +
+            '<button type="button" onclick="PartnerPortal.exportAbnormalAgentsCsv()" class="bg-blue-600 text-white px-4 py-2 rounded font-black text-[10px] hover:bg-blue-700">导出异常明细</button>';
+    }
+
+    function exportAbnormalAgentsCsv() {
+        if (!currentBatchDate) return;
+        const rows = getBatchRows(currentBatchDate).filter(function (r) { return r.pendingFix; });
+        if (!rows.length) {
+            alert('本批次无异常代理记录');
+            return;
+        }
+        const headers = [
+            '结算日期', '合伙人钱包', 'UID', '层级', '返佣比例(%)', '上级钱包',
+            '待修正原因', '原应结日', '暂停结算成交额(USDT)', '暂停结算手续费(USDT)', '待发放原始佣金(USDT)'
+        ];
+        const data = rows.map(function (r) {
+            return [
+                currentBatchDate,
+                r.wallet,
+                r.uid,
+                'L' + r.level,
+                r.ratio,
+                r.parentWallet || '—',
+                r.pendingFixReason || r.pendingFixNote || '下级配置比例超过该级代理',
+                r.originalSettlementDate || '—',
+                r.pausedVol != null ? r.pausedVol : '',
+                r.pausedFee != null ? r.pausedFee : '',
+                r.pendingRebateEstimate != null ? r.pendingRebateEstimate : ''
+            ];
+        });
+        downloadCsvFile('Abnormal_Agents_' + currentBatchDate + '.csv', headers, data);
+    }
+
+    function parseVolToNumber(volStr) {
+        if (!volStr) return 0;
+        let s = String(volStr).replace(/[$,\s]/g, '');
+        let mult = 1;
+        if (/k$/i.test(s)) {
+            mult = 1000;
+            s = s.replace(/k$/i, '');
+        } else if (/m$/i.test(s)) {
+            mult = 1000000;
+            s = s.replace(/m$/i, '');
+        }
+        const n = parseFloat(s);
+        return isNaN(n) ? 0 : n * mult;
+    }
+
+    function buildSettlementCsvExports(batchDate) {
+        const batch = SETTLEMENT_BATCHES.find(function (b) { return b.date === batchDate; });
+        const rows = getBatchRows(batchDate);
+        const volNum = batch ? parseVolToNumber(batch.vol) : 0;
+        const netFee = volNum * 0.01;
+        const totalPayout = rows.reduce(function (s, r) {
+            if (r.pendingFix) return s + (r.pendingRebateEstimate || 0);
+            return s + (r.originalRebate || 0);
+        }, 0);
+        const payablePayout = getTodayPayoutForBatch(batchDate);
+        const periodStart = batchDate + ' 00:00:00';
+        const periodEnd = batchDate + ' 23:59:59';
+        const platformRetain = netFee - totalPayout;
+        const ratioPct = netFee > 0 ? ((totalPayout / netFee) * 100).toFixed(4) : '0';
+
+        const table1Headers = [
+            '结算日期', '计算周期开始', '计算周期结束', '平台总成交额(USDT)', '全站可参与返佣手续费_NetFee(USDT)',
+            '全站返佣总预算_TotalPayout(USDT)', '返佣手续费占比(%)', '平台留存收入(USDT)', '本批次可发放实发合计(USDT)'
+        ];
+        const table1Rows = [[
+            batchDate, periodStart, periodEnd,
+            volNum.toFixed(2), netFee.toFixed(2), totalPayout.toFixed(2),
+            ratioPct, platformRetain.toFixed(2), payablePayout.toFixed(2)
+        ]];
+
+        const table2Headers = [
+            '结算日期', '用户地址', '直接上级地址', '顶级一级代理地址', '用户当前等级', '用户返佣比例(%)',
+            '上级返佣比例(%)', '级差空间(%)', '配置状态', '完整路径'
+        ];
+        const table2Rows = [];
+        rows.forEach(function (r) {
+            const parent = r.parentWallet ? USERS.find(function (u) { return u.wallet === r.parentWallet; }) : null;
+            const rootWallet = parent ? parent.rootWallet : r.wallet;
+            const parentRatio = parent ? parent.ratio : '—';
+            const gap = parent ? (parent.ratio - r.ratio) : '—';
+            const status = r.pendingFix ? '待修正返佣后计算' : '正常';
+            table2Rows.push([
+                batchDate, r.wallet, r.parentWallet || '—', rootWallet || r.wallet,
+                r.level, r.ratio, parentRatio, gap, status, (rootWallet || r.wallet) + ' / ' + r.wallet
+            ]);
+        });
+
+        const l1Map = {};
+        rows.forEach(function (r) {
+            const u = USERS.find(function (x) { return x.wallet === r.wallet; });
+            const rootWallet = u ? u.rootWallet : r.wallet;
+            const l1 = USERS.find(function (x) { return x.wallet === rootWallet && x.level === 1; }) ||
+                USERS.find(function (x) { return x.wallet === r.wallet && x.level === 1; });
+            if (!l1) return;
+            if (!l1Map[l1.wallet]) {
+                l1Map[l1.wallet] = { l1: l1, netFee: 0, pendingBranches: 0 };
+            }
+            const vol = parseVolToNumber(r.vol);
+            l1Map[l1.wallet].netFee += vol * 0.01;
+            if (r.pendingFix) l1Map[l1.wallet].pendingBranches += 1;
+        });
+        const table2aHeaders = [
+            '结算日期', '一级合伙人地址', '一级合伙人UID', '一级返佣比例(%)',
+            '所属一级下伞内净手续费_NetFee(USDT)', '一级理论最大原始应发佣金(USDT)', '伞内待修正分支数', '备注'
+        ];
+        const table2aRows = Object.keys(l1Map).map(function (w) {
+            const item = l1Map[w];
+            const maxPayout = item.netFee * (item.l1.ratio / 100);
+            const note = item.pendingBranches > 0 ? '存在待修正分支，须结合表2穿透' : '';
+            return [
+                batchDate, item.l1.wallet, item.l1.uid, item.l1.ratio,
+                item.netFee.toFixed(2), maxPayout.toFixed(2), item.pendingBranches, note
+            ];
+        });
+
+        const table3Headers = [
+            '结算日期', '源_产生交易用户地址', '源_该用户期间成交额(USDT)', '源_该用户产生手续费_NetFee(USDT)',
+            '源_该用户的上级地址', '源_该用户的顶级一级代理', '分_佣金获得者地址', '分_分账角色类型',
+            '分_分账级差比例(%)', '分_最终分账金额(USDT)', '分账状态'
+        ];
+        const table3Rows = [];
+        rows.forEach(function (r) {
+            const vol = parseVolToNumber(r.vol);
+            const fee = vol * 0.01;
+            const u = USERS.find(function (x) { return x.wallet === r.wallet; });
+            const rootWallet = u ? u.rootWallet : r.wallet;
+            const status = r.pendingFix ? '暂停结算' : '正常';
+            if (r.pendingFix) {
+                table3Rows.push([
+                    batchDate, r.wallet, vol.toFixed(2), fee.toFixed(2),
+                    r.parentWallet || '—', rootWallet, r.wallet, 'SELF',
+                    r.ratio, '0.00', status
+                ]);
+            } else {
+                table3Rows.push([
+                    batchDate, r.wallet, vol.toFixed(2), fee.toFixed(2),
+                    r.parentWallet || '—', rootWallet, r.wallet, 'SELF',
+                    r.ratio, (r.originalRebate || 0).toFixed(2), status
+                ]);
+            }
+        });
+
+        const table4Headers = [
+            '结算日期', '代理地址', '所属顶级代理(Root)', '代理等级', '待结算返佣总额(USDT)',
+            '人工调减金额(USDT)', '最终实发金额(USDT)', '待修正返佣后计算'
+        ];
+        const table4Rows = rows.map(function (r) {
+            const u = USERS.find(function (x) { return x.wallet === r.wallet; });
+            const rootWallet = u ? u.rootWallet : r.wallet;
+            const proposed = r.pendingFix ? 0 : (r.originalRebate || 0);
+            const adjust = r.pendingFix ? 0 : ((r.originalRebate || 0) - (r.actualRebate || 0));
+            return [
+                batchDate, r.wallet, rootWallet, r.level,
+                r.pendingFix ? (r.pendingRebateEstimate || 0).toFixed(2) : (r.originalRebate || 0).toFixed(2),
+                adjust.toFixed(2), (r.actualRebate || 0).toFixed(2),
+                r.pendingFix ? '是' : '否'
+            ];
+        });
+
+        return {
+            table1: { name: 'Platform_Summary_' + batchDate + '.csv', headers: table1Headers, rows: table1Rows },
+            table2: { name: 'Affiliate_Map_' + batchDate + '.csv', headers: table2Headers, rows: table2Rows },
+            table2a: { name: 'L1_Rebate_Ratio_Snapshot_' + batchDate + '.csv', headers: table2aHeaders, rows: table2aRows },
+            table3: { name: 'Rebate_Split_Detail_' + batchDate + '.csv', headers: table3Headers, rows: table3Rows },
+            table4: { name: 'System_Proposed_Payout_' + batchDate + '.csv', headers: table4Headers, rows: table4Rows }
+        };
+    }
+
+    function downloadSettlementReconciliationPackage() {
+        if (!currentBatchDate) {
+            alert('请先进入结算批次详情');
+            return;
+        }
+        const pack = buildSettlementCsvExports(currentBatchDate);
+        const keys = ['table1', 'table2', 'table2a', 'table3', 'table4'];
+        keys.forEach(function (k, i) {
+            const t = pack[k];
+            setTimeout(function () {
+                downloadCsvFile(t.name, t.headers, t.rows);
+            }, i * 350);
+        });
+        alert('将依次下载 5 个对账 CSV 文件（表1–表4及一级比例快照表2a）');
     }
 
     function renderSettlementSupplementRows() {
@@ -1694,6 +1931,7 @@
         switchSettlementDetailTab('detail');
         resetSettlementDetailFilters();
         resetSupplementDetailFilters();
+        updateSettlementAbnormalBanner();
         setTimeout(function () { initSettlementDatePickers(); }, 50);
     }
 
@@ -1839,8 +2077,8 @@
                 const c = getMigrateAgent(cid);
                 if (!c) return;
                 const childRatio = getEffectiveMigrateRatio(cid, rootId, rootEffectiveRatio);
-                if (childRatio >= myRatio) {
-                    errors.push('倒挂（' + migrateDepthLabel(depth + 1) + '）：' + c.wallet + ' ' + childRatio + '% 不低于上级 ' + u.wallet + ' ' + myRatio + '%');
+                if (childRatio > myRatio) {
+                    errors.push('倒挂（' + migrateDepthLabel(depth + 1) + '）：' + c.wallet + ' ' + childRatio + '% 高于上级 ' + u.wallet + ' ' + myRatio + '%');
                 }
                 walk(cid, depth + 1);
             });
@@ -1935,7 +2173,7 @@
         if (!parent) return false;
         const pRatio = getEffectiveMigrateRatio(parent.id, rootId, rootEffectiveRatio);
         const cRatio = getEffectiveMigrateRatio(agentId, rootId, rootEffectiveRatio);
-        return cRatio >= pRatio;
+        return cRatio > pRatio;
     }
 
     function renderMigrateTreeNode(agentId, rootId, rootEffectiveRatio, depth) {
@@ -1990,12 +2228,48 @@
         return ids;
     }
 
+    function renderMigrateAbnormalBanner(p, invertedIds) {
+        const root = p.partnerUser;
+        if (!root) return '';
+        const pending = root.abnormalPending;
+        const inversionCount = invertedIds ? invertedIds.length : 0;
+        const hasPending = pending && (pending.pendingRebate > 0 || pending.pausedVol > 0);
+        if (!inversionCount && !hasPending) return '';
+        let html = '<div class="bg-amber-50 border border-amber-300 rounded-lg p-4 mb-4">';
+        if (inversionCount) {
+            html += '<p class="text-amber-900 font-black text-sm">检测到 <span class="underline">' + inversionCount + '</span> 条返佣倒挂（下级比例 &gt; 上级比例）</p>' +
+                '<p class="text-[11px] text-amber-800 mt-1">级差为 0（上下级比例相等）不算倒挂，可在下方树中修改节点比例。</p>';
+        }
+        if (hasPending) {
+            html += '<div class="mt-3 pt-3 border-t border-amber-200">' +
+                '<p class="text-[11px] font-black text-amber-900 mb-2">暂停结算待处理（迁移后将归属新上级统计与发放）</p>' +
+                '<p class="text-[11px] text-amber-800">异常暂停交易额 <strong>' + fmtMoney(pending.pausedVol) + '</strong> · 手续费 <strong>' + fmtMoney(pending.pausedFee) + '</strong> · 待发放返佣 <strong>' + fmtMoney(pending.pendingRebate) + '</strong></p>';
+            if (pending.lines && pending.lines.length) {
+                html += '<table class="w-full text-[10px] mt-2 border border-amber-200 rounded overflow-hidden"><thead><tr class="bg-amber-100/60 text-amber-900">' +
+                    '<th class="px-2 py-1.5 text-left">上级</th><th class="px-2 py-1.5 text-left">下级（倒挂）</th>' +
+                    '<th class="px-2 py-1.5 text-right">暂停交易额</th><th class="px-2 py-1.5 text-right">手续费</th><th class="px-2 py-1.5 text-right">待发放返佣</th></tr></thead><tbody>';
+                pending.lines.forEach(function (l) {
+                    html += '<tr class="border-t border-amber-100 bg-white/50">' +
+                        '<td class="px-2 py-1.5">' + l.parentWallet + ' <span class="text-slate-500">' + l.parentRatio + '%</span></td>' +
+                        '<td class="px-2 py-1.5 font-bold text-red-700">' + l.childWallet + ' <span>' + l.childRatio + '%</span></td>' +
+                        '<td class="px-2 py-1.5 text-right">' + fmtMoney(l.pausedVol) + '</td>' +
+                        '<td class="px-2 py-1.5 text-right">' + fmtMoney(l.pausedFee) + '</td>' +
+                        '<td class="px-2 py-1.5 text-right font-bold">' + fmtMoney(l.pendingRebate) + '</td></tr>';
+                });
+                html += '</tbody></table>';
+            }
+            html += '</div>';
+        }
+        if (inversionCount) {
+            html += '<p class="text-[11px] text-amber-800 mt-3">' +
+                '<button type="button" onclick="PartnerPortal.jumpToMigrateInversion()" class="text-amber-900 font-black underline hover:text-amber-950">点击立即展开倒挂位置</button></p>';
+        }
+        html += '</div>';
+        return html;
+    }
+
     function renderMigrateInversionBanner(invertedIds) {
-        if (!invertedIds || !invertedIds.length) return '';
-        return '<div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">' +
-            '<p class="text-red-900 font-black text-sm mb-1">检测到 <span class="underline">' + invertedIds.length + '</span> 处返佣倒挂</p>' +
-            '<p class="text-[11px] text-red-700">可在下方树中修改节点比例；或 ' +
-            '<button type="button" onclick="PartnerPortal.jumpToMigrateInversion()" class="text-red-800 font-black underline hover:text-red-900">点击立即展开倒挂位置</button></p></div>';
+        return '';
     }
 
     function jumpToMigrateInversion() {
@@ -2107,7 +2381,9 @@
             const effectiveRootRatio = !isNaN(ratioVal) ? ratioVal : root.ratio;
             const invertedIds = collectInvertedMigrateIds(root.id, effectiveRootRatio);
             migrateState.invertedNodeIds = invertedIds;
-            if (invertedIds.length) html += renderMigrateInversionBanner(invertedIds);
+            if (invertedIds.length || (root.abnormalPending && root.abnormalPending.pendingRebate > 0)) {
+                html += renderMigrateAbnormalBanner(p, invertedIds);
+            }
             const directIds = root.childIds || [];
             const treePage = migrateState.treePage || 1;
             const branchSlice = paginate(directIds, treePage);
@@ -2595,6 +2871,8 @@
         handleTreeAttachmentFiles: handleTreeAttachmentFiles,
         removeTreeAttachment: removeTreeAttachment,
         getCurrentUserId: function () { return currentUserId; },
+        downloadSettlementReconciliationPackage: downloadSettlementReconciliationPackage,
+        exportAbnormalAgentsCsv: exportAbnormalAgentsCsv,
         applyHashTree: applyHashTree, DATA_VERSION: DATA_VERSION
     };
 
