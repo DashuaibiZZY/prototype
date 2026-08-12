@@ -98,6 +98,15 @@
             }
         } else if (app.type === 'partner_l1_bind') {
             rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['申请返佣比例', p.ratio + '%'], ['运营配置上限', p.opsCap + '%'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
+            if (opts && opts.detailImagePreview && p.attachments && p.attachments.length) {
+                const previews = p.attachmentPreviews || {};
+                rows.push(['图片附件', p.attachments.map(function (name) {
+                    const url = previews[name] || '';
+                    return '<button type="button" class="text-blue-600 font-bold hover:underline mr-2" onclick="openApprovalAttachment(\'' + name.replace(/'/g, "\\'") + '\', \'' + url.replace(/'/g, "\\'") + '\')">' + name + '（查看）</button>';
+                }).join('')]);
+            } else if (p.attachments && p.attachments.length) {
+                rows.push(['图片附件', p.attachments.join('、')]);
+            }
         } else if (app.type === 'partner_ratio_change') {
             rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['原返佣比例', p.oldRatio + '%'], ['新返佣比例', p.newRatio + '%'], ['运营配置上限', p.opsCap + '%'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
         } else if (app.type === 'partner_rebate_migrate') {

@@ -52,16 +52,26 @@
                     </div>
                     <button onclick="PartnerPortal.openBindModal()" class="bg-blue-600 text-white px-5 py-2 rounded font-bold hover:bg-blue-700 shrink-0">+ 新增一级合伙人</button>
                 </div>
-                <p class="text-[10px] text-slate-400 mt-3">团队指标均为该用户<strong>向下整伞</strong>汇总；平台净利润 = 伞下净手续费 − 由伞下交易触发的<strong>全部返佣</strong>（含向上级级差）。异常仅暂停<strong>相关返佣分支</strong>，非整棵一级树。</p>
+                <p class="text-[10px] text-slate-400 mt-3">团队指标均为该用户<strong>向下整伞</strong>汇总；净收入 = 伞下净手续费 − 由伞下交易触发的<strong>全部返佣</strong>（含向上级级差）。异常仅暂停<strong>相关返佣分支</strong>，非整棵一级树。</p>
+                <div class="flex flex-wrap items-center gap-2 mt-3">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">统计周期</span>
+                    <div id="list-period-tabs" class="flex gap-1">
+                        <button type="button" data-period="1D" onclick="PartnerPortal.setListStatsPeriod('1D')" class="list-period-btn px-3 py-1 rounded border text-[11px] font-bold">1D</button>
+                        <button type="button" data-period="1W" onclick="PartnerPortal.setListStatsPeriod('1W')" class="list-period-btn px-3 py-1 rounded border text-[11px] font-bold">1W</button>
+                        <button type="button" data-period="1M" onclick="PartnerPortal.setListStatsPeriod('1M')" class="list-period-btn px-3 py-1 rounded border text-[11px] font-bold">1M</button>
+                        <button type="button" data-period="3M" onclick="PartnerPortal.setListStatsPeriod('3M')" class="list-period-btn px-3 py-1 rounded border text-[11px] font-bold">3M</button>
+                        <button type="button" data-period="ALL" onclick="PartnerPortal.setListStatsPeriod('ALL')" class="list-period-btn px-3 py-1 rounded border text-[11px] font-bold bg-slate-900 text-white border-slate-900">ALL</button>
+                    </div>
+                </div>
             </section>
 
             <section class="bg-white rounded-lg border border-slate-200 overflow-hidden">
                 <div class="px-4 py-3 border-b border-slate-100 flex justify-between items-center">
                     <span class="font-bold text-slate-600">查询结果</span>
-                    <span class="text-[10px] text-slate-400 italic">数据每 5 分钟校验级差</span>
+                    <span class="text-[10px] text-slate-400 italic">数据每 5 分钟校验级差 · 点击金额列头排序</span>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left min-w-[1100px]">
+                    <table class="w-full text-left min-w-[1280px]">
                         <thead class="bg-slate-50 text-slate-500 font-bold border-b uppercase text-[10px]">
                         <tr>
                             <th class="px-4 py-3">合伙人</th>
@@ -70,10 +80,12 @@
                             <th class="px-3 py-3 text-center">结算状态</th>
                             <th class="px-3 py-3 text-right">异常暂停交易额</th>
                             <th class="px-3 py-3 text-center">异常线</th>
-                            <th class="px-3 py-3 text-right">团队总交易额</th>
+                            <th class="px-3 py-3 text-right cursor-pointer hover:text-slate-800 select-none" onclick="PartnerPortal.setListSort('vol')">团队总交易额 <span id="list-sort-vol" class="text-slate-400"></span></th>
+                            <th class="px-3 py-3 text-right cursor-pointer hover:text-slate-800 select-none" onclick="PartnerPortal.setListSort('fee')">手续费 <span id="list-sort-fee" class="text-slate-400"></span></th>
+                            <th class="px-3 py-3 text-right cursor-pointer hover:text-slate-800 select-none" onclick="PartnerPortal.setListSort('rebate')">返佣 <span id="list-sort-rebate" class="text-slate-400"></span></th>
+                            <th class="px-3 py-3 text-right cursor-pointer hover:text-slate-800 select-none" onclick="PartnerPortal.setListSort('netIncome')" title="伞下净手续费 − 伞下触发的全部返佣">净收入 <span id="list-sort-netIncome" class="text-slate-400"></span></th>
                             <th class="px-3 py-3 text-right">团队净入金</th>
                             <th class="px-3 py-3 text-center">用户规模</th>
-                            <th class="px-3 py-3 text-right" title="伞下净手续费 − 伞下触发的全部返佣">平台净利润</th>
                             <th class="px-3 py-3">配置运营</th>
                             <th class="px-4 py-3 text-right">操作</th>
                         </tr>
@@ -107,16 +119,27 @@
                 <p id="detail-abnormal-scope" class="text-amber-700 text-[10px] mt-2 italic"></p>
             </div>
 
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="text-[10px] font-bold text-slate-500 uppercase">统计周期</span>
+                <div id="detail-period-tabs" class="flex gap-1">
+                    <button type="button" data-period="1D" onclick="PartnerPortal.setDetailStatsPeriod('1D')" class="detail-period-btn px-3 py-1 rounded border text-[11px] font-bold">1D</button>
+                    <button type="button" data-period="1W" onclick="PartnerPortal.setDetailStatsPeriod('1W')" class="detail-period-btn px-3 py-1 rounded border text-[11px] font-bold">1W</button>
+                    <button type="button" data-period="1M" onclick="PartnerPortal.setDetailStatsPeriod('1M')" class="detail-period-btn px-3 py-1 rounded border text-[11px] font-bold">1M</button>
+                    <button type="button" data-period="3M" onclick="PartnerPortal.setDetailStatsPeriod('3M')" class="detail-period-btn px-3 py-1 rounded border text-[11px] font-bold">3M</button>
+                    <button type="button" data-period="ALL" onclick="PartnerPortal.setDetailStatsPeriod('ALL')" class="detail-period-btn px-3 py-1 rounded border text-[11px] font-bold bg-slate-900 text-white border-slate-900">ALL</button>
+                </div>
+            </div>
+
             <div class="grid grid-cols-4 gap-4">
                 <div class="bg-white p-5 rounded-lg border shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">团队总交易额</p><p id="detail-vol" class="text-2xl font-black"></p></div>
+                <div class="bg-white p-5 rounded-lg border shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">手续费</p><p id="detail-fee" class="text-2xl font-black"></p></div>
                 <div class="bg-white p-5 rounded-lg border shadow-sm border-l-4 border-l-blue-600"><p class="text-[10px] font-bold text-blue-600 uppercase mb-1">总返佣收入 (本期预估)</p><p id="detail-rebate-total" class="text-2xl font-black"></p><div class="mt-2 grid grid-cols-3 gap-1 text-[9px] text-slate-400 font-bold"><span>自返佣 <b id="detail-rebate-self" class="text-slate-800"></b></span><span>直客 <b id="detail-rebate-direct" class="text-slate-800"></b></span><span class="text-blue-600">级差 <b id="detail-rebate-gap"></b></span></div></div>
-                <div class="bg-white p-5 rounded-lg border shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">团队净入金</p><p id="detail-deposit" class="text-2xl font-black text-green-600"></p></div>
-                <div class="bg-white p-5 rounded-lg border shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">活跃下级合伙人</p><p id="detail-active-subs" class="text-2xl font-black"></p></div>
+                <div class="bg-white p-5 rounded-lg border shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">净收入</p><p id="detail-net-income" class="text-2xl font-black text-blue-600"></p></div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
-                <div class="bg-white p-5 rounded-lg border"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">用户规模（向下伞）</p><p id="detail-users" class="text-xl font-black"></p></div>
-                <div class="bg-white p-5 rounded-lg border"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">平台净利润</p><p id="detail-net" class="text-xl font-black text-blue-600"></p><p id="detail-net-hint" class="text-[9px] text-slate-400 mt-2"></p></div>
+                <div class="bg-white p-5 rounded-lg border"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">团队净入金</p><p id="detail-deposit" class="text-xl font-black text-green-600"></p></div>
+                <div class="bg-white p-5 rounded-lg border"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">活跃/总人数（向下伞）</p><p id="detail-users" class="text-xl font-black"></p></div>
             </div>
 
             <div class="bg-white rounded-lg border overflow-hidden shadow-sm">
@@ -541,6 +564,10 @@
             <button onclick="PartnerPortal.closeTreeConfirmModal()" class="text-slate-400">✕</button>
         </div>
         <div class="p-6" id="tree-confirm-body"></div>
+        <div class="px-6 pb-4">
+            <label class="text-[10px] font-bold text-slate-500 uppercase">修改原因备注（必填）</label>
+            <textarea id="tree-confirm-remark" rows="2" class="w-full border rounded p-2 mt-1 text-[11px] outline-none focus:ring-1 focus:ring-blue-500" placeholder="说明比例调整原因、渠道协商依据等"></textarea>
+        </div>
         <div class="px-6 py-4 bg-slate-50 flex gap-3">
             <button onclick="PartnerPortal.closeTreeConfirmModal()" class="flex-1 py-2 border rounded font-bold text-slate-500">取消</button>
             <button onclick="PartnerPortal.confirmTreeSubmit()" class="flex-1 py-2 bg-blue-600 text-white rounded font-bold">确认提交</button>
@@ -652,7 +679,7 @@
 <script src="admin-sidebar.js"></script>
 <script src="admin-approval.js"></script>
 <script src="admin-approval-ui.js"></script>
-<script src="admin-partner-portal.js?v=partner-demo-17"></script>
+<script src="admin-partner-portal.js?v=partner-demo-18"></script>
 <script>
     initModuleApproval({
         types: ['partner_l1_bind', 'partner_ratio_change', 'partner_rebate_migrate'],
