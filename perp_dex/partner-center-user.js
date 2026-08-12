@@ -3,8 +3,7 @@
  */
 (function () {
     const PERIOD_SCALE = { '1D': 0.14, '1W': 1, '1M': 4.2, '3M': 12 };
-
-    const SORT_ICON = ' <span class="sort-icon text-gray-300">↕</span>';
+    const MY_MAX_RATIO = 70;
 
     let overviewPeriod = '1W';
     let linksPeriod = '1W';
@@ -15,6 +14,9 @@
     let subPartnerSearch = '';
     let subPartnerSort = { key: null, dir: 'desc' };
     let directClientSort = { key: null, dir: 'desc' };
+    let activeOverviewTable = 'sub-agent';
+    let adjustRatioPartnerId = null;
+    let teamTreeExpanded = {};
 
     const inviteLinksData = [
         { remark: '預設連結', code: 'E6DL28G', directCount: 124, subPartnerCount: 42, totalVol: 5200000, totalFee: 5200, rebateIncome: 3640, netDeposit: 420000, isDefault: true },
@@ -34,39 +36,48 @@
     const existingCodesList = inviteLinksData.map(function (r) { return r.code; });
 
     const subPartnersData = [
-        { id: 'sp1', joinDate: '2024-05-12', wallet: '0x3f...12a', remark: '渠道-小王', ratio: 60, gap: 10, gapIncome: 1250, totalVol: 12500000, netDeposit: 500000, totalUsers: 1240, activeUsers: 420, settlementStatus: 'normal', name: '合伙人-小王' },
-        { id: 'sp2', joinDate: '2024-05-10', wallet: '0x8e...55c', remark: '推特KOL-J', ratio: 50, gap: 20, gapIncome: 0, totalVol: 16200000, netDeposit: 820000, totalUsers: 850, activeUsers: 120, settlementStatus: 'team_tree_abnormal', paused: true, abnormalLines: 2, name: 'KOL-J' },
-        { id: 'sp3', joinDate: '2024-05-08', wallet: '0x5c...882', remark: '', ratio: 75, gap: -5, gapIncome: 0, totalVol: 2100000, netDeposit: -120000, totalUsers: 12, activeUsers: 0, settlementStatus: 'direct_inversion', name: '异常合伙人' },
-        { id: 'sp4', joinDate: '2024-05-05', wallet: '0x2a...9f1', remark: '東南亞渠道', ratio: 55, gap: 15, gapIncome: 890, totalVol: 8900000, netDeposit: 320000, totalUsers: 620, activeUsers: 180, settlementStatus: 'normal', name: '东南亚渠道' },
-        { id: 'sp5', joinDate: '2024-04-28', wallet: '0x7b...4c2', remark: '韓國KOL', ratio: 45, gap: 25, gapIncome: 2100, totalVol: 22400000, netDeposit: 980000, totalUsers: 1580, activeUsers: 510, settlementStatus: 'normal', name: '韩国KOL' }
+        { id: 'sp1', joinDate: '2024-05-12', wallet: '0x3f...12a', walletFull: '0x3f8a2b1c9d4e5f60718293a4b5c6d7e8f9012a', remark: '渠道-小王', ratio: 60, minSubRatio: 45, gap: 10, gapIncome: 1250, totalVol: 12500000, netDeposit: 500000, totalUsers: 1240, activeUsers: 420, settlementStatus: 'normal', name: '合伙人-小王' },
+        { id: 'sp2', joinDate: '2024-05-10', wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J', ratio: 50, minSubRatio: 55, gap: 20, gapIncome: 980, gapIncomeUnsettled: 420, totalVol: 16200000, netDeposit: 820000, totalUsers: 850, activeUsers: 120, settlementStatus: 'team_tree_abnormal', abnormalLines: 5, name: 'KOL-J' },
+        { id: 'sp3', joinDate: '2024-05-08', wallet: '0x5c...882', walletFull: '0x5c8821a0b9c8d7e6f504938271605948372618882', remark: '', ratio: 75, minSubRatio: 60, gap: -5, gapIncome: 0, totalVol: 2100000, netDeposit: -120000, totalUsers: 12, activeUsers: 0, settlementStatus: 'direct_inversion', name: '异常合伙人' },
+        { id: 'sp4', joinDate: '2024-05-05', wallet: '0x2a...9f1', walletFull: '0x2a9f1e8d7c6b5a4938271605948372616059489f1', remark: '東南亞渠道', ratio: 55, minSubRatio: 40, gap: 15, gapIncome: 890, totalVol: 8900000, netDeposit: 320000, totalUsers: 620, activeUsers: 180, settlementStatus: 'normal', name: '东南亚渠道' },
+        { id: 'sp5', joinDate: '2024-04-28', wallet: '0x7b...4c2', walletFull: '0x7b4c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4c2', remark: '韓國KOL', ratio: 45, minSubRatio: 30, gap: 25, gapIncome: 2100, totalVol: 22400000, netDeposit: 980000, totalUsers: 1580, activeUsers: 510, settlementStatus: 'normal', name: '韩国KOL' }
     ];
 
     const teamTreeAbnormalData = {
         sp2: [
-            {
-                title: '异常返佣线 1',
-                nodes: [
-                    { wallet: '0x8e...55c', remark: '推特KOL-J（直属下级）', ratio: '50%' },
-                    { wallet: '0xBc...4431', remark: '下级合伙人-A', ratio: '55%' },
-                    { wallet: '0x7a...E912', remark: '交易用户', ratio: '40%' }
-                ]
-            },
-            {
-                title: '异常返佣线 2',
-                nodes: [
-                    { wallet: '0x8e...55c', remark: '推特KOL-J（直属下级）', ratio: '50%' },
-                    { wallet: '0xDe...8821', remark: '下级合伙人-B', ratio: '52%' },
-                    { wallet: '0xF1...009a', remark: '交易用户', ratio: '48%' }
-                ]
-            }
+            { id: 'line1', title: '异常返佣线 1', summary: '0x8e...55c → 0xBc...4431 → 0x7a...E912', nodes: [
+                { wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J（直属下级）', ratio: '50%' },
+                { wallet: '0xBc...4431', walletFull: '0xBc4431a2098f7e6d5c4b3a291807f6e5d4c3b4431', remark: '下级合伙人-A', ratio: '55%' },
+                { wallet: '0x7a...E912', walletFull: '0x7aE912f6059483726180a9b8c7d6e5f4a3b2c1912', remark: '交易用户', ratio: '40%' }
+            ]},
+            { id: 'line2', title: '异常返佣线 2', summary: '0x8e...55c → 0xDe...8821 → 0xF1...009a', nodes: [
+                { wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J（直属下级）', ratio: '50%' },
+                { wallet: '0xDe...8821', walletFull: '0xDe8821a0b9c8d7e6f504938271605948372618821', remark: '下级合伙人-B', ratio: '52%' },
+                { wallet: '0xF1...009a', walletFull: '0xF1009a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3a', remark: '交易用户', ratio: '48%' }
+            ]},
+            { id: 'line3', title: '异常返佣线 3', summary: '0x8e...55c → 0xAa...1102 → 0x22...cc44', nodes: [
+                { wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J（直属下级）', ratio: '50%' },
+                { wallet: '0xAa...1102', walletFull: '0xAa1102b3c4d5e6f708192a3b4c5d6e7f8091a1102', remark: '下级合伙人-C', ratio: '58%' },
+                { wallet: '0x22...cc44', walletFull: '0x22cc44d5e6f708192a3b4c5d6e7f8091a2b3c4cc44', remark: '交易用户', ratio: '45%' }
+            ]},
+            { id: 'line4', title: '异常返佣线 4', summary: '0x8e...55c → 0x33...dd55 → 0x44...ee66', nodes: [
+                { wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J（直属下级）', ratio: '50%' },
+                { wallet: '0x33...dd55', walletFull: '0x33dd55e6f708192a3b4c5d6e7f8091a2b3c4d5dd55', remark: '下级合伙人-D', ratio: '54%' },
+                { wallet: '0x44...ee66', walletFull: '0x44ee66f708192a3b4c5d6e7f8091a2b3c4d5e6ee66', remark: '交易用户', ratio: '46%' }
+            ]},
+            { id: 'line5', title: '异常返佣线 5', summary: '0x8e...55c → 0x55...ff77 → 0x66...0088', nodes: [
+                { wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J（直属下级）', ratio: '50%' },
+                { wallet: '0x55...ff77', walletFull: '0x55ff7708192a3b4c5d6e7f8091a2b3c4d5e6f7ff77', remark: '下级合伙人-E', ratio: '53%' },
+                { wallet: '0x66...0088', walletFull: '0x660088192a3b4c5d6e7f8091a2b3c4d5e6f70880088', remark: '交易用户', ratio: '47%' }
+            ]}
         ]
     };
 
     const directClientsData = [
-        { joinDate: '2024-05-20', wallet: '0x99...F4d2', totalVol: 42500, totalFee: 42.50, rebate: 29.75, netDeposit: 5200 },
-        { joinDate: '2024-05-18', wallet: '0xAb...12cd', totalVol: 128000, totalFee: 128.00, rebate: 89.60, netDeposit: 15000 },
-        { joinDate: '2024-05-15', wallet: '0xCd...88ef', totalVol: 8900, totalFee: 8.90, rebate: 6.23, netDeposit: -1200 },
-        { joinDate: '2024-05-12', wallet: '0xEf...33aa', totalVol: 256000, totalFee: 256.00, rebate: 179.20, netDeposit: 32000 }
+        { joinDate: '2024-05-20', wallet: '0x99...F4d2', walletFull: '0x99F4d2a1b0c9d8e7f6059483726180a9b8c7d6e5', totalVol: 42500, totalFee: 42.50, rebate: 29.75, netDeposit: 5200 },
+        { joinDate: '2024-05-18', wallet: '0xAb...12cd', walletFull: '0xAb12cd9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b12cd', totalVol: 128000, totalFee: 128.00, rebate: 89.60, netDeposit: 15000 },
+        { joinDate: '2024-05-15', wallet: '0xCd...88ef', walletFull: '0xCd88ef7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d88ef', totalVol: 8900, totalFee: 8.90, rebate: 6.23, netDeposit: -1200 },
+        { joinDate: '2024-05-12', wallet: '0xEf...33aa', walletFull: '0xEf33aa5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f33aa', totalVol: 256000, totalFee: 256.00, rebate: 179.20, netDeposit: 32000 }
     ];
 
     const overviewBase = {
@@ -76,8 +87,8 @@
         directRebate: 1200,
         gapRebate: 11600,
         teamNetDeposit: 1240000,
-        activeSubPartners: 42,
-        totalSubPartners: 120,
+        totalTradeUsers: 4850,
+        activeTradeUsers: 1680,
         volChange: 12.4
     };
 
@@ -97,8 +108,29 @@
         return Math.round(n).toLocaleString();
     }
 
-    function periodValue(base, period) {
-        return base * (PERIOD_SCALE[period] || 1);
+    function esc(s) {
+        return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function copyText(text, label) {
+        if (!text) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () {
+                alert((label || '内容') + '已复制');
+            }).catch(function () {
+                alert('复制失败，请手动复制');
+            });
+        } else {
+            alert('已复制: ' + text);
+        }
+    }
+
+    function jsEsc(s) {
+        return String(s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
+    }
+
+    function copyChipBtn(text, label) {
+        return '<button type="button" class="copy-chip-btn" title="复制" onclick="PartnerCenter.copyText(\'' + jsEsc(text) + '\', \'' + jsEsc(label || '内容') + '\')">📋</button>';
     }
 
     function sortIconHtml(key, sortState) {
@@ -156,6 +188,21 @@
         });
     }
 
+    function updateLinksPeriodButtons() {
+        document.querySelectorAll('.links-period-btn').forEach(function (btn) {
+            const p = btn.getAttribute('data-period');
+            if (p === linksPeriod) {
+                btn.className = 'links-period-btn px-3 py-1 text-[10px] font-bold bg-black text-white rounded-sm shadow-md';
+            } else {
+                btn.className = 'links-period-btn px-3 py-1 text-[10px] font-bold hover:bg-gray-50';
+            }
+        });
+    }
+
+    function findSubPartner(id) {
+        return subPartnersData.find(function (r) { return r.id === id; });
+    }
+
     function renderOverview() {
         const scale = PERIOD_SCALE[overviewPeriod] || 1;
         const vol = overviewBase.teamVol * scale;
@@ -164,8 +211,8 @@
         const direct = overviewBase.directRebate * scale;
         const gap = overviewBase.gapRebate * scale;
         const net = overviewBase.teamNetDeposit * scale;
-        const activeSubs = Math.round(overviewBase.activeSubPartners * Math.min(scale, 1.2));
-        const totalSubs = overviewBase.totalSubPartners;
+        const totalUsers = overviewBase.totalTradeUsers;
+        const activeUsers = Math.round(overviewBase.activeTradeUsers * Math.min(scale, 1.2));
 
         const volEl = document.getElementById('overview-team-vol');
         if (volEl) volEl.textContent = fmtMoney(vol);
@@ -179,10 +226,10 @@
         if (gapEl) gapEl.textContent = fmtMoney(gap);
         const netEl = document.getElementById('overview-team-net');
         if (netEl) netEl.textContent = fmtMoney(net, { signed: true });
-        const activeEl = document.getElementById('overview-active-subs');
-        if (activeEl) activeEl.innerHTML = activeSubs + ' <span class="text-sm text-gray-300">/ ' + totalSubs + '</span>';
-        const activeHint = document.getElementById('overview-active-subs-hint');
-        if (activeHint) activeHint.textContent = '本周期内有交易的下级合伙人 ' + activeSubs + ' / 总计 ' + totalSubs;
+        const totalEl = document.getElementById('overview-trade-users-total');
+        if (totalEl) totalEl.textContent = fmtNum(totalUsers);
+        const activeEl = document.getElementById('overview-trade-users-active');
+        if (activeEl) activeEl.textContent = fmtNum(activeUsers) + ' 本周期交易';
 
         updatePeriodButtons('overview-period-btn', overviewPeriod);
         renderSubPartners();
@@ -201,6 +248,7 @@
             directCount: function (r) { return r.directCount; },
             subPartnerCount: function (r) { return r.subPartnerCount; },
             totalVol: function (r) { return r.totalVol * scale; },
+            totalFee: function (r) { return r.totalFee * scale; },
             rebateIncome: function (r) { return r.rebateIncome * scale; },
             netDeposit: function (r) { return r.netDeposit; }
         };
@@ -214,11 +262,10 @@
                 '<tr>' +
                 '<th class="px-6 py-4">備註名稱</th>' +
                 '<th class="px-6 py-4">邀請碼</th>' +
-                '<th class="px-6 py-4">邀請連結</th>' +
                 '<th class="px-6 py-4 text-center cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setLinksSort(\'directCount\')">直邀人數' + sortIconHtml('directCount', linksSort) + '</th>' +
                 '<th class="px-6 py-4 text-center cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setLinksSort(\'subPartnerCount\')">下級合伙人數' + sortIconHtml('subPartnerCount', linksSort) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setLinksSort(\'totalVol\')">总交易额' + sortIconHtml('totalVol', linksSort) + '</th>' +
-                '<th class="px-6 py-4 text-right">合计手续费</th>' +
+                '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setLinksSort(\'totalFee\')">合计手续费' + sortIconHtml('totalFee', linksSort) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setLinksSort(\'rebateIncome\')">合计返佣收入' + sortIconHtml('rebateIncome', linksSort) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setLinksSort(\'netDeposit\')">总净入金' + sortIconHtml('netDeposit', linksSort) + '</th>' +
                 '<th class="px-6 py-4 text-right">操作</th>' +
@@ -229,20 +276,20 @@
         if (!tbody) return;
         tbody.innerHTML = sliced.items.map(function (row) {
             const vol = row.totalVol * scale;
+            const fee = row.totalFee * scale;
             const rebate = row.rebateIncome * scale;
-            const link = 'forx.finance/?ref=' + row.code;
+            const linkUrl = 'https://forx.finance/?ref=' + row.code;
             return '<tr class="hover:bg-slate-50 transition-colors">' +
-                '<td class="px-6 py-4 font-black">' + row.remark + '</td>' +
-                '<td class="px-6 py-4 font-mono text-blue-600">' + row.code + '</td>' +
-                '<td class="px-6 py-4 text-gray-400">' + link + '</td>' +
+                '<td class="px-6 py-4 font-black">' + esc(row.remark) + '</td>' +
+                '<td class="px-6 py-4 font-mono text-blue-600">' + esc(row.code) + '</td>' +
                 '<td class="px-6 py-4 text-center font-bold">' + row.directCount + '</td>' +
                 '<td class="px-6 py-4 text-center font-bold">' + row.subPartnerCount + '</td>' +
                 '<td class="px-6 py-4 text-right font-bold">' + fmtMoney(vol) + '</td>' +
-                '<td class="px-6 py-4 text-right font-bold">' + fmtMoney(row.totalFee) + '</td>' +
+                '<td class="px-6 py-4 text-right font-bold">' + fmtMoney(fee) + '</td>' +
                 '<td class="px-6 py-4 text-right font-black text-blue-600">' + fmtMoney(rebate) + '</td>' +
                 '<td class="px-6 py-4 text-right font-bold text-green-500">' + fmtMoney(row.netDeposit, { signed: true }) + '</td>' +
                 '<td class="px-6 py-4 text-right space-x-2">' +
-                '<button type="button" onclick="alert(\'連結已複製\')" class="text-blue-600 font-black hover:underline">複製連結</button>' +
+                '<button type="button" onclick="PartnerCenter.copyText(\'' + linkUrl + '\', \'邀请链接\')" class="text-blue-600 font-black hover:underline">複製連結</button>' +
                 '<button class="text-gray-300">|</button>' +
                 '<button type="button" onclick="openReferralModal(\'edit\', \'' + row.remark.replace(/'/g, "\\'") + '\', \'' + row.code + '\')" class="text-gray-400 hover:text-black">修改備註</button>' +
                 '</td></tr>';
@@ -251,7 +298,7 @@
         const countEl = document.getElementById('links-create-count');
         if (countEl) countEl.textContent = '+ 創建新連結 (已用 ' + inviteLinksData.length + '/50)';
 
-        updatePeriodButtons('links-period-btn', linksPeriod);
+        updateLinksPeriodButtons();
         buildPaginationHtml('links-pagination', sliced.page, sliced.total, 10, 'PartnerCenter.goLinksPage');
     }
 
@@ -261,9 +308,50 @@
         }
         if (row.settlementStatus === 'team_tree_abnormal') {
             const n = row.abnormalLines || 1;
-            return '<button type="button" onclick="PartnerCenter.openTeamTreeModal(\'' + row.id + '\')" class="text-[10px] text-amber-700 font-bold hover:underline text-left">⚠️ 团队返佣树异常（' + n + ' 条）</button>';
+            return '<button type="button" onclick="PartnerCenter.openTeamTreeModal(\'' + row.id + '\')" class="text-[10px] text-amber-700 font-bold underline hover:text-amber-900 text-left">⚠️ 团队返佣树异常（' + n + ' 条）</button>';
         }
         return '<span class="text-[10px] text-gray-400">—</span>';
+    }
+
+    function gapIncomeCell(row, scale) {
+        const gapIncome = row.gapIncome * scale;
+        if (row.settlementStatus === 'direct_inversion' && !gapIncome) {
+            return '<span class="font-black text-slate-400 italic">-- 暂停结算</span>';
+        }
+        if (row.settlementStatus === 'team_tree_abnormal' && row.gapIncomeUnsettled) {
+            const unsettled = row.gapIncomeUnsettled * scale;
+            return '<div><span class="font-black text-blue-600">' + fmtMoney(gapIncome) + '</span>' +
+                '<span class="block text-[9px] text-amber-700 font-bold mt-0.5">含 ' + fmtMoney(unsettled) + ' 未结算</span></div>';
+        }
+        if (gapIncome) {
+            return '<span class="font-black text-blue-600">' + fmtMoney(gapIncome) + '</span>';
+        }
+        return '<span class="font-black text-slate-400 italic">-- 暂停结算</span>';
+    }
+
+    function walletRemarkCell(row) {
+        let html = '<div class="copy-chip"><span class="text-gray-900 font-black">' + esc(row.wallet) + '</span>' + copyChipBtn(row.walletFull || row.wallet, '钱包地址') + '</div>';
+        if (row.remark) {
+            html += '<div class="copy-chip mt-1"><span class="text-[10px] text-gray-400 font-bold">' + esc(row.remark) + '</span>' + copyChipBtn(row.remark, '备注') + '</div>';
+        }
+        return html;
+    }
+
+    function buildDrillData(row, scale, activeUsers, gapIncome) {
+        const vol = row.totalVol * scale;
+        return JSON.stringify({
+            name: row.name,
+            uid: row.wallet,
+            joinTime: row.joinDate,
+            totalVol: fmtMoney(vol),
+            netDeposit: fmtMoney(row.netDeposit, { signed: true }),
+            activeUsers: activeUsers,
+            totalUsers: row.totalUsers,
+            profitSelf: fmtMoney(200 * scale),
+            profitDirect: fmtMoney(1200 * scale),
+            profitGap: fmtMoney(gapIncome),
+            totalProfit: fmtMoney(gapIncome + 1400 * scale)
+        }).replace(/"/g, '&quot;');
     }
 
     function renderSubPartners() {
@@ -305,45 +393,28 @@
 
         tbody.innerHTML = filtered.map(function (row) {
             const isDirectBad = row.settlementStatus === 'direct_inversion';
-            const paused = row.paused || isDirectBad;
             const activeUsers = Math.round(row.activeUsers * Math.min(scale, 1.2));
             const gapIncome = row.gapIncome * scale;
             const vol = row.totalVol * scale;
             const rowClass = isDirectBad ? 'bg-red-50/30' : 'hover:bg-slate-50';
-            const remarkHtml = row.remark ? '<span class="block text-[10px] text-gray-400 font-bold">' + row.remark + '</span>' : '';
             const ratioClass = isDirectBad ? 'text-red-600 underline font-black' : 'text-gray-700 font-bold';
             const gapClass = row.gap < 0 ? 'bg-red-100 text-red-600 font-black px-2 py-0.5 rounded-sm' : 'gap-tag';
-            const incomeHtml = paused && !gapIncome ? '<span class="font-black text-slate-400 italic">-- 暂停结算</span>' : '<span class="font-black text-blue-600">' + fmtMoney(gapIncome) + '</span>';
-            const drillData = JSON.stringify({
-                name: row.name,
-                uid: row.wallet,
-                joinTime: row.joinDate,
-                totalVol: fmtMoney(vol),
-                netDeposit: fmtMoney(row.netDeposit, { signed: true }),
-                activeUsers: activeUsers,
-                totalUsers: row.totalUsers,
-                profitSelf: fmtMoney(200 * scale),
-                profitDirect: fmtMoney(1200 * scale),
-                profitGap: fmtMoney(gapIncome),
-                totalProfit: fmtMoney(gapIncome + 1400 * scale)
-            }).replace(/"/g, '&quot;');
-            const teamBtn = isDirectBad
-                ? '<button disabled class="text-gray-300 font-black cursor-not-allowed" title="数据异常，请先修复比例配置">查看团队</button>'
-                : '<button type="button" onclick="drillDownToTeam(' + drillData + ')" class="text-blue-600 font-black hover:underline">查看团队</button>';
+            const drillData = buildDrillData(row, scale, activeUsers, gapIncome);
+            const teamBtn = '<button type="button" onclick="drillDownToTeam(' + drillData + ')" class="text-blue-600 font-black hover:underline">查看团队</button>';
 
             return '<tr class="' + rowClass + ' transition-colors">' +
                 '<td class="px-6 py-4 text-gray-400 font-bold">' + row.joinDate + '</td>' +
-                '<td class="px-6 py-4"><span class="text-gray-900 font-black">' + row.wallet + '</span>' + remarkHtml + '</td>' +
+                '<td class="px-6 py-4">' + walletRemarkCell(row) + '</td>' +
                 '<td class="px-6 py-4 text-center ' + ratioClass + '">' + row.ratio + '%</td>' +
                 '<td class="px-6 py-4 text-center"><span class="' + gapClass + '">' + row.gap + '%</span></td>' +
                 '<td class="px-6 py-4">' + settlementStatusCell(row) + '</td>' +
-                '<td class="px-6 py-4 text-right">' + incomeHtml + '</td>' +
-                '<td class="px-6 py-4 text-right font-bold' + (paused && isDirectBad ? ' text-gray-400' : '') + '">' + fmtMoney(vol) + '</td>' +
+                '<td class="px-6 py-4 text-right">' + gapIncomeCell(row, scale) + '</td>' +
+                '<td class="px-6 py-4 text-right font-bold' + (isDirectBad ? ' text-gray-400' : '') + '">' + fmtMoney(vol) + '</td>' +
                 '<td class="px-6 py-4 text-right font-bold text-green-500">' + fmtMoney(row.netDeposit, { signed: true }) + '</td>' +
                 '<td class="px-6 py-4 text-center"><span class="text-gray-900 font-black">' + fmtNum(row.totalUsers) + '</span><span class="text-[9px] text-gray-400 block font-bold">' + fmtNum(activeUsers) + ' 本周期交易</span></td>' +
                 '<td class="px-6 py-4 text-right">' + teamBtn +
                 '<span class="mx-2 text-gray-200">|</span>' +
-                '<button type="button" class="text-gray-400 font-black hover:text-black' + (isDirectBad ? ' text-blue-600 hover:underline' : '') + '" onclick="' + (isDirectBad ? 'alert(\'即将进入调整页面以修复比例倒挂问题\')' : 'alert(\'调整比例\')') + '">调整</button></td>' +
+                '<button type="button" class="text-gray-400 font-black hover:text-black hover:underline" onclick="PartnerCenter.openAdjustRatioModal(\'' + row.id + '\')">调整</button></td>' +
                 '</tr>';
         }).join('');
     }
@@ -352,7 +423,8 @@
         const getters = {
             totalVol: function (r) { return r.totalVol; },
             totalFee: function (r) { return r.totalFee; },
-            rebate: function (r) { return r.rebate; }
+            rebate: function (r) { return r.rebate; },
+            netDeposit: function (r) { return r.netDeposit; }
         };
         const sorted = applySort(directClientsData, directClientSort, getters);
 
@@ -365,7 +437,7 @@
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setDirectClientSort(\'totalVol\')">累计交易额' + sortIconHtml('totalVol', directClientSort) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setDirectClientSort(\'totalFee\')">累计手续费' + sortIconHtml('totalFee', directClientSort) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setDirectClientSort(\'rebate\')">返佣金额' + sortIconHtml('rebate', directClientSort) + '</th>' +
-                '<th class="px-6 py-4 text-right">净入金</th>' +
+                '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setDirectClientSort(\'netDeposit\')">净入金' + sortIconHtml('netDeposit', directClientSort) + '</th>' +
                 '<th class="px-6 py-4 text-right">操作</th>' +
                 '</tr>';
         }
@@ -376,7 +448,7 @@
             const netClass = row.netDeposit >= 0 ? 'text-green-500' : 'text-red-400';
             return '<tr class="hover:bg-slate-50 transition-colors">' +
                 '<td class="px-6 py-4 text-gray-400 font-bold">' + row.joinDate + '</td>' +
-                '<td class="px-6 py-4 font-black text-gray-900">' + row.wallet + '</td>' +
+                '<td class="px-6 py-4"><div class="copy-chip"><span class="font-black text-gray-900">' + esc(row.wallet) + '</span>' + copyChipBtn(row.walletFull || row.wallet, '钱包地址') + '</div></td>' +
                 '<td class="px-6 py-4 text-right font-bold">' + fmtMoney(row.totalVol) + '</td>' +
                 '<td class="px-6 py-4 text-right font-bold">' + fmtMoney(row.totalFee) + '</td>' +
                 '<td class="px-6 py-4 text-right font-black text-blue-600">' + fmtMoney(row.rebate) + '</td>' +
@@ -387,23 +459,105 @@
         }).join('');
     }
 
-    function openTeamTreeModal(partnerId) {
+    function renderTeamTreeLine(line, partnerId, expanded) {
+        const key = partnerId + '_' + line.id;
+        const isOpen = expanded[key];
+        let nodesHtml = '';
+        if (isOpen) {
+            nodesHtml = line.nodes.map(function (node, i) {
+                const pad = 12 + i * 16;
+                return '<div class="flex items-center gap-2 py-2 border-l-2 border-amber-200 ml-3" style="padding-left:' + pad + 'px">' +
+                    '<div class="flex-1 min-w-0">' +
+                    '<div class="copy-chip"><span class="font-mono font-black text-gray-900 text-[11px]">' + esc(node.wallet) + '</span>' + copyChipBtn(node.walletFull || node.wallet, '钱包地址') + '</div>' +
+                    '<div class="copy-chip mt-0.5"><span class="text-[10px] text-gray-500 font-bold">' + esc(node.remark) + '</span>' + copyChipBtn(node.remark, '备注') + '</div>' +
+                    '</div>' +
+                    '<span class="text-[11px] font-black text-amber-700 shrink-0">' + esc(node.ratio) + '</span></div>';
+            }).join('');
+        }
+        return '<div class="tree-line-panel">' +
+            '<div class="tree-line-header flex items-center justify-between px-4 py-3 hover:bg-amber-50/80" onclick="PartnerCenter.toggleTeamTreeLine(\'' + partnerId + '\', \'' + line.id + '\')">' +
+            '<div><p class="font-black text-amber-900 text-[11px]">' + esc(line.title) + '</p>' +
+            '<p class="text-[10px] text-amber-700/80 font-medium mt-0.5 truncate max-w-[520px]">' + esc(line.summary) + '</p></div>' +
+            '<span class="text-[10px] font-black text-amber-600 shrink-0 ml-2">' + (isOpen ? '收起' : '展开') + '</span></div>' +
+            (isOpen ? '<div class="tree-line-body px-2 pb-2">' + nodesHtml + '</div>' : '') +
+            '</div>';
+    }
+
+    function renderTeamTreeModalBody(partnerId) {
         const lines = teamTreeAbnormalData[partnerId] || [];
         const body = document.getElementById('team-tree-modal-body');
         if (!body) return;
-        body.innerHTML = lines.map(function (line, idx) {
-            const nodesHtml = line.nodes.map(function (node, i) {
-                const indent = i * 16;
-                return '<div class="flex items-center py-2 border-l-2 border-amber-200 ml-' + (i > 0 ? '4' : '0') + '" style="padding-left:' + (indent + 12) + 'px">' +
-                    '<div class="flex-1"><span class="font-mono font-black text-gray-900">' + node.wallet + '</span>' +
-                    '<span class="text-[10px] text-gray-400 font-bold ml-2">' + node.remark + '</span></div>' +
-                    '<span class="text-[11px] font-black text-amber-700">' + node.ratio + '</span></div>';
-            }).join('');
-            return '<div class="mb-6 border border-amber-100 rounded-sm bg-amber-50/30 p-4">' +
-                '<p class="text-[11px] font-black text-amber-800 uppercase mb-3">' + line.title + '</p>' +
-                '<div class="space-y-1">' + nodesHtml + '</div></div>';
+        body.innerHTML = lines.map(function (line) {
+            return renderTeamTreeLine(line, partnerId, teamTreeExpanded);
         }).join('');
+    }
+
+    function openTeamTreeModal(partnerId) {
+        const partner = findSubPartner(partnerId);
+        const subtitle = document.getElementById('team-tree-modal-subtitle');
+        if (subtitle && partner) {
+            subtitle.textContent = partner.wallet + (partner.remark ? ' · ' + partner.remark : '') + ' · 共 ' + (partner.abnormalLines || linesCount(partnerId)) + ' 条异常线';
+        }
+        teamTreeExpanded = {};
+        renderTeamTreeModalBody(partnerId);
+        window._teamTreeModalPartnerId = partnerId;
         toggleModal('modal-team-tree');
+    }
+
+    function linesCount(partnerId) {
+        return (teamTreeAbnormalData[partnerId] || []).length;
+    }
+
+    function updateAdjustRatioWarning(ratio, partner) {
+        const warn = document.getElementById('adjust-ratio-warning');
+        if (!warn || !partner) return;
+        const minSub = partner.minSubRatio || 0;
+        if (ratio < minSub) {
+            warn.classList.remove('hidden');
+            warn.innerHTML = '当前设置 <strong>' + ratio + '%</strong> 低于其下级最高比例 <strong>' + minSub + '%</strong>，将触发返佣倒挂并暂停相关交易额结算。请确认已与下级沟通后再调整。';
+        } else if (ratio > MY_MAX_RATIO) {
+            warn.classList.remove('hidden');
+            warn.textContent = '返佣比例不能超过您的最高比例 ' + MY_MAX_RATIO + '%。';
+        } else {
+            warn.classList.add('hidden');
+            warn.textContent = '';
+        }
+    }
+
+    function openAdjustRatioModal(partnerId) {
+        const partner = findSubPartner(partnerId);
+        if (!partner) return;
+        adjustRatioPartnerId = partnerId;
+        const walletEl = document.getElementById('adjust-ratio-wallet');
+        const remarkEl = document.getElementById('adjust-ratio-remark');
+        const remarkRow = document.getElementById('adjust-ratio-remark-row');
+        const slider = document.getElementById('adjust-ratio-slider');
+        const display = document.getElementById('adjust-ratio-display');
+        if (walletEl) walletEl.textContent = partner.wallet;
+        if (remarkEl && remarkRow) {
+            if (partner.remark) {
+                remarkEl.textContent = partner.remark;
+                remarkRow.classList.remove('hidden');
+            } else {
+                remarkRow.classList.add('hidden');
+            }
+        }
+        if (slider) slider.value = partner.ratio;
+        if (display) display.textContent = partner.ratio + '%';
+        updateAdjustRatioWarning(partner.ratio, partner);
+        toggleModal('modal-adjust-ratio');
+    }
+
+    function onTableSwitch(tableId) {
+        activeOverviewTable = tableId;
+        const filterEl = document.getElementById('sub-partner-status-filter');
+        if (filterEl) {
+            if (tableId === 'direct-client') {
+                filterEl.classList.add('hidden');
+            } else {
+                filterEl.classList.remove('hidden');
+            }
+        }
     }
 
     window.PartnerCenter = {
@@ -444,7 +598,57 @@
             toggleSort(directClientSort, key);
             renderDirectClients();
         },
+        copyText: copyText,
         openTeamTreeModal: openTeamTreeModal,
+        toggleTeamTreeLine: function (partnerId, lineId) {
+            const key = partnerId + '_' + lineId;
+            teamTreeExpanded[key] = !teamTreeExpanded[key];
+            renderTeamTreeModalBody(partnerId);
+        },
+        expandAllTeamTrees: function () {
+            const partnerId = window._teamTreeModalPartnerId;
+            if (!partnerId) return;
+            (teamTreeAbnormalData[partnerId] || []).forEach(function (line) {
+                teamTreeExpanded[partnerId + '_' + line.id] = true;
+            });
+            renderTeamTreeModalBody(partnerId);
+        },
+        openAdjustRatioModal: openAdjustRatioModal,
+        onAdjustRatioInput: function (val) {
+            const display = document.getElementById('adjust-ratio-display');
+            if (display) display.textContent = val + '%';
+            const partner = findSubPartner(adjustRatioPartnerId);
+            updateAdjustRatioWarning(parseInt(val, 10), partner);
+        },
+        copyAdjustWallet: function () {
+            const partner = findSubPartner(adjustRatioPartnerId);
+            if (partner) copyText(partner.walletFull || partner.wallet, '钱包地址');
+        },
+        copyAdjustRemark: function () {
+            const partner = findSubPartner(adjustRatioPartnerId);
+            if (partner && partner.remark) copyText(partner.remark, '备注');
+        },
+        submitAdjustRatio: function () {
+            const partner = findSubPartner(adjustRatioPartnerId);
+            const slider = document.getElementById('adjust-ratio-slider');
+            if (!partner || !slider) return;
+            const ratio = parseInt(slider.value, 10);
+            if (ratio > MY_MAX_RATIO) {
+                alert('返佣比例不能超过 ' + MY_MAX_RATIO + '%');
+                return;
+            }
+            if (ratio < (partner.minSubRatio || 0)) {
+                if (!confirm('当前比例低于下级最高比例，将暂停相关返佣结算。是否确认调整？')) return;
+            }
+            partner.ratio = ratio;
+            partner.gap = MY_MAX_RATIO - ratio;
+            if (ratio >= partner.minSubRatio && ratio <= MY_MAX_RATIO) {
+                partner.settlementStatus = 'normal';
+            }
+            toggleModal('modal-adjust-ratio');
+            alert('返佣比例已更新为 ' + ratio + '%');
+            renderSubPartners();
+        },
         openAddSubPartnerModal: function (wallet) {
             const input = document.getElementById('input-add-agent-wallet');
             if (input) input.value = wallet || '';
@@ -466,7 +670,9 @@
             linksPage = 1;
             renderInviteLinks();
         },
+        onTableSwitch: onTableSwitch,
         init: function () {
+            onTableSwitch(activeOverviewTable);
             renderOverview();
             renderInviteLinks();
         }

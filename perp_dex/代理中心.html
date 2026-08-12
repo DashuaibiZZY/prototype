@@ -16,6 +16,12 @@
         .sort-icon { font-size: 10px; }
         th.cursor-pointer .sort-icon { opacity: 0.7; }
         th.cursor-pointer:hover .sort-icon { opacity: 1; }
+        .copy-chip { display: inline-flex; align-items: center; gap: 4px; }
+        .copy-chip-btn { color: #9ca3af; padding: 2px; line-height: 1; border-radius: 2px; }
+        .copy-chip-btn:hover { color: #2563eb; background: #eff6ff; }
+        .tree-line-panel { border: 1px solid #fde68a; border-radius: 4px; background: rgba(255,251,235,0.5); }
+        .tree-line-header { cursor: pointer; }
+        .tree-line-body { border-top: 1px solid #fde68a; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col text-[12px]">
@@ -212,9 +218,9 @@
                         <p class="text-[10px] text-gray-400 mt-2">包含下级穿透数据</p>
                     </div>
                     <div class="stats-card">
-                        <p class="text-gray-400 font-bold mb-2">活跃下级合伙人</p>
-                        <h3 id="overview-active-subs" class="text-3xl font-black text-gray-900">42 <span class="text-sm text-gray-300">/ 120</span></h3>
-                        <p id="overview-active-subs-hint" class="text-[10px] text-gray-400 mt-2 font-medium">本周期内有交易的下级合伙人</p>
+                        <p class="text-gray-400 font-bold mb-2">交易用户规模</p>
+                        <h3 id="overview-trade-users-total" class="text-3xl font-black text-gray-900">4,850</h3>
+                        <p id="overview-trade-users-active" class="text-[10px] text-gray-400 mt-2 font-bold">1,680 本周期交易</p>
                     </div>
                 </div>
 
@@ -499,7 +505,6 @@
                         <button type="button" data-period="1M" onclick="PartnerCenter.setLinksPeriod('1M')" class="links-period-btn px-3 py-1 text-[10px] font-bold hover:bg-gray-50">1M</button>
                         <button type="button" data-period="3M" onclick="PartnerCenter.setLinksPeriod('3M')" class="links-period-btn px-3 py-1 text-[10px] font-bold hover:bg-gray-50">3M</button>
                     </div>
-                    <p class="text-[10px] text-gray-400 font-bold">切换周期影响「总交易额」「合计返佣收入」</p>
                     <div class="relative">
                         <input type="text" placeholder="搜索備註名稱或邀請碼..." oninput="PartnerCenter.setLinksSearch(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[11px] w-52 outline-none focus:ring-1 focus:ring-black">
                         <svg class="w-3.5 h-3.5 absolute right-2 top-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2"/></svg>
@@ -650,17 +655,53 @@
     </div>
 </div>
 
-<!-- 团队返佣树异常详情（只读、默认展开） -->
+<!-- 调整下级返佣比例 -->
+<div id="modal-adjust-ratio" class="modal-overlay" onclick="closeModalOnSide(event, 'modal-adjust-ratio')">
+    <div class="bg-white w-[440px] rounded-sm shadow-2xl overflow-hidden">
+        <div class="flex justify-between items-center px-6 py-4 border-b border-gray-50">
+            <span class="text-sm font-black italic">调整返佣比例</span>
+            <span class="cursor-pointer text-gray-400 hover:text-black" onclick="toggleModal('modal-adjust-ratio')">✕</span>
+        </div>
+        <div class="p-6 space-y-5">
+            <div class="space-y-1">
+                <p class="text-[10px] font-black text-gray-400 uppercase">下级合伙人</p>
+                <div class="copy-chip">
+                    <span id="adjust-ratio-wallet" class="font-mono font-black text-gray-900 text-[12px]"></span>
+                    <button type="button" class="copy-chip-btn" title="复制地址" onclick="PartnerCenter.copyAdjustWallet()">📋</button>
+                </div>
+                <div id="adjust-ratio-remark-row" class="copy-chip mt-1 hidden">
+                    <span id="adjust-ratio-remark" class="text-[11px] text-gray-500 font-bold"></span>
+                    <button type="button" class="copy-chip-btn" title="复制备注" onclick="PartnerCenter.copyAdjustRemark()">📋</button>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">返佣比例</label>
+                    <span id="adjust-ratio-display" class="text-sm font-black text-blue-600">50%</span>
+                </div>
+                <input type="range" id="adjust-ratio-slider" min="0" max="70" step="5" value="50" oninput="PartnerCenter.onAdjustRatioInput(this.value)" class="w-full accent-black cursor-pointer">
+                <div class="flex justify-between text-[9px] font-bold text-gray-300"><span>0%</span><span>MAX: 70%</span></div>
+            </div>
+            <div id="adjust-ratio-warning" class="hidden bg-amber-50 border border-amber-200 rounded-sm p-3 text-[11px] text-amber-800 font-medium leading-relaxed"></div>
+            <button type="button" onclick="PartnerCenter.submitAdjustRatio()" class="w-full bg-black text-white py-3.5 rounded-sm font-black uppercase hover:bg-gray-800 transition shadow-xl">确认调整</button>
+        </div>
+    </div>
+</div>
+
+<!-- 团队返佣树异常详情 -->
 <div id="modal-team-tree" class="modal-overlay" onclick="closeModalOnSide(event, 'modal-team-tree')">
-    <div class="bg-white w-[520px] max-h-[85vh] rounded-sm shadow-2xl overflow-hidden flex flex-col">
+    <div class="bg-white w-[min(720px,92vw)] max-h-[88vh] rounded-sm shadow-2xl overflow-hidden flex flex-col">
         <div class="flex justify-between items-center px-6 py-4 border-b border-gray-50 bg-amber-50 shrink-0">
-            <span class="text-sm font-black text-amber-900">团队返佣树异常明细</span>
-            <span class="cursor-pointer text-gray-400 hover:text-black font-bold" onclick="toggleModal('modal-team-tree')">✕</span>
+            <div>
+                <span class="text-sm font-black text-amber-900">团队返佣树异常明细</span>
+                <p id="team-tree-modal-subtitle" class="text-[10px] text-amber-700 font-bold mt-0.5"></p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button type="button" id="team-tree-expand-all-btn" onclick="PartnerCenter.expandAllTeamTrees()" class="text-[10px] font-black text-amber-800 underline hover:text-amber-900">展开全部</button>
+                <span class="cursor-pointer text-gray-400 hover:text-black font-bold" onclick="toggleModal('modal-team-tree')">✕</span>
+            </div>
         </div>
-        <div id="team-tree-modal-body" class="p-6 overflow-y-auto flex-1 text-[11px]">
-        </div>
-        <div class="px-6 py-3 border-t border-gray-50 bg-gray-50 text-[10px] text-gray-400 font-medium shrink-0">
-            以下为只读预览，不支持修改或折叠。请与下级沟通调整返佣比例后等待系统重算。
+        <div id="team-tree-modal-body" class="p-4 overflow-y-auto flex-1 text-[11px] space-y-2">
         </div>
     </div>
 </div>
@@ -680,6 +721,8 @@
         // 更新 Tab 样式
         document.getElementById('tab-sub-agent').className = (tableId === 'sub-agent') ? "tab-active pb-1" : "text-gray-400 font-bold pb-1 hover:text-black";
         document.getElementById('tab-direct-client').className = (tableId === 'direct-client') ? "tab-active pb-1" : "text-gray-400 font-bold pb-1 hover:text-black";
+
+        if (window.PartnerCenter && PartnerCenter.onTableSwitch) PartnerCenter.onTableSwitch(tableId);
     }
 
     function toggleModal(id) {
