@@ -1111,12 +1111,17 @@
             renderOverview();
             renderInviteLinks();
             renderSettlementTable();
+        },
+        onPageShow: function (pageId) {
+            var settlementBody = document.getElementById('settlement-table-body');
+            if (settlementBody && !settlementBody.innerHTML.trim()) {
+                this.init();
+                return;
+            }
+            if (pageId === 'page-overview') renderOverview();
+            else if (pageId === 'page-settlement') renderSettlementTable();
+            else if (pageId === 'page-links') renderInviteLinks();
+            else if (pageId === 'page-drill-overview') renderDrillOverview();
         }
     };
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function () { PartnerCenter.init(); });
-    } else {
-        PartnerCenter.init();
-    }
 })();

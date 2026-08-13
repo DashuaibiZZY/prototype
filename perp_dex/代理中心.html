@@ -180,7 +180,7 @@
     <main class="flex-1 overflow-y-auto bg-slate-50 p-8">
         <div class="max-w-[1250px] mx-auto space-y-8">
             <!-- 页面 A: 数据总览 -->
-            <div id="page-overview" class="space-y-8 block">
+            <div id="page-overview" class="space-y-8 hidden">
                 <div class="flex justify-between items-end">
                     <div>
                         <h1 class="text-2xl font-black tracking-tight">合伙人管理</h1>
@@ -747,10 +747,11 @@
                 btn.className = "w-full text-left px-4 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all";
             }
         });
-    }
 
-    // 初始設置：預設打開連結管理頁
-    showMainPage('page-links');
+        if (window.PartnerCenter && PartnerCenter.onPageShow) {
+            PartnerCenter.onPageShow(pageId);
+        }
+    }
 
     let currentModalMode = 'create'; // 'create' or 'edit'
     const existingCodes = ['E6DL28G', 'FORX99', 'YT2024', 'DSC001', 'ASIA01', 'EUR002', 'SZ2405', 'SG2406', 'KOL003', 'MED001', 'MED002', 'VIRAL1'];
@@ -833,6 +834,12 @@
 
         toggleModal('modal-referral-link');
     }
+
+    // 初始設置：渲染动态数据后默认打开邀请链接页
+    if (window.PartnerCenter && PartnerCenter.init) {
+        PartnerCenter.init();
+    }
+    showMainPage('page-links');
 </script>
 
 </body>
