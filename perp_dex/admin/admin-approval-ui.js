@@ -98,8 +98,26 @@
             }
         } else if (app.type === 'partner_l1_bind') {
             rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['申请返佣比例', p.ratio + '%'], ['运营配置上限', p.opsCap + '%'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
+            if (opts && opts.detailImagePreview && p.attachments && p.attachments.length) {
+                const previews = p.attachmentPreviews || {};
+                rows.push(['图片附件', p.attachments.map(function (name) {
+                    const url = previews[name] || '';
+                    return '<button type="button" class="text-blue-600 font-bold hover:underline mr-2" onclick="openApprovalAttachment(\'' + name.replace(/'/g, "\\'") + '\', \'' + url.replace(/'/g, "\\'") + '\')">' + name + '（查看）</button>';
+                }).join('')]);
+            } else if (p.attachments && p.attachments.length) {
+                rows.push(['图片附件', p.attachments.join('、')]);
+            }
         } else if (app.type === 'partner_ratio_change') {
             rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['原返佣比例', p.oldRatio + '%'], ['新返佣比例', p.newRatio + '%'], ['运营配置上限', p.opsCap + '%'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
+            if (opts && opts.detailImagePreview && p.attachments && p.attachments.length) {
+                const previews = p.attachmentPreviews || {};
+                rows.push(['图片附件', p.attachments.map(function (name) {
+                    const url = previews[name] || '';
+                    return '<button type="button" class="text-blue-600 font-bold hover:underline mr-2" onclick="openApprovalAttachment(\'' + name.replace(/'/g, "\\'") + '\', \'' + url.replace(/'/g, "\\'") + '\')">' + name + '（查看）</button>';
+                }).join('')]);
+            } else if (p.attachments && p.attachments.length) {
+                rows.push(['图片附件', p.attachments.join('、')]);
+            }
         } else if (app.type === 'partner_rebate_migrate') {
             rows.push(['待迁移用户', p.subjectWallet || '—'], ['UID', p.subjectUid || '—'], ['类型', p.subjectType === 'plain' ? '普通用户' : '代理用户'],
                 ['迁移到上级', p.targetWallet || '—'], ['迁移后比例', p.newRatio + '%']);
@@ -124,6 +142,56 @@
         }).join('');
     }
 
+    function renderPartnerAttachmentThumbnails(p) {
+        if (!p.attachments || !p.attachments.length) {
+            return '<p class="mt-1 text-slate-500 text-[11px]">无</p>';
+        }
+        const previews = p.attachmentPreviews || {};
+        return '<div class="flex flex-wrap gap-2 mt-2">' + p.attachments.map(function (name) {
+            const url = previews[name] || '';
+            if (url) {
+                return '<button type="button" onclick="openApprovalAttachment(\'' + name.replace(/'/g, "\\'") + '\', \'' + url.replace(/'/g, "\\'") + '\')" class="border rounded overflow-hidden w-14 h-14 hover:ring-2 ring-blue-400"><img src="' + url + '" alt="' + name + '" class="w-full h-full object-cover"></button>';
+            }
+            return '<span class="text-[11px] font-bold text-blue-600">' + name + '</span>';
+        }).join('') + '</div>';
+    }
+
+    function renderPartnerL1BindDetailSection(app) {
+        if (app.type !== 'partner_l1_bind') return '';
+        const p = app.payload || {};
+        const exceedLabel = p.exceedsCap ? '是，须风控+老板审批' : '否';
+        return '<div class="col-span-2 border border-slate-200 rounded-lg p-4 bg-slate-50/50">' +
+            '<p class="text-[10px] font-bold text-slate-500 uppercase mb-3">一级合伙人绑定申请</p>' +
+            '<div class="grid grid-cols-2 gap-4 text-sm">' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">UID</p><p class="font-black mt-1">' + (window.AdminCopyChip ? AdminCopyChip.uid(p.uid || '—') : p.uid || '—') + '</p></div>' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">钱包</p><p class="font-black mt-1">' + (window.AdminCopyChip ? AdminCopyChip.wallet(p.wallet) : p.wallet || '—') + '</p></div>' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">申请返佣比例</p><p class="font-black mt-1 text-blue-600 text-lg">' + (p.ratio != null ? p.ratio + '%' : '—') + '</p></div>' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">运营配置上限 / 超上限</p><p class="font-black mt-1">' + (p.opsCap != null ? p.opsCap + '%' : '—') + ' · <span class="text-amber-700">' + exceedLabel + '</span></p></div>' +
+            '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">图片附件</p>' + renderPartnerAttachmentThumbnails(p) + '</div>' +
+            '</div></div>';
+    }
+
+    function renderPartnerRatioChangeDetailSection(app) {
+        if (app.type !== 'partner_ratio_change') return '';
+        const p = app.payload || {};
+        const exceedLabel = p.exceedsCap ? '是，须风控+老板审批' : '否';
+        const remarkHtml = p.changeRemark
+            ? '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">修改原因备注</p><p class="font-bold mt-1 text-slate-700 text-[11px]">' + p.changeRemark + '</p></div>'
+            : '';
+        return '<div class="col-span-2 border border-slate-200 rounded-lg p-4 bg-slate-50/50">' +
+            '<p class="text-[10px] font-bold text-slate-500 uppercase mb-3">返佣比例调整申请</p>' +
+            '<div class="grid grid-cols-2 gap-4 text-sm">' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">UID</p><p class="font-black mt-1">' + (window.AdminCopyChip ? AdminCopyChip.uid(p.uid || '—') : p.uid || '—') + '</p></div>' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">钱包</p><p class="font-black mt-1">' + (window.AdminCopyChip ? AdminCopyChip.wallet(p.wallet) : p.wallet || '—') + '</p></div>' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">原返佣比例</p><p class="font-black mt-1 text-slate-600">' + (p.oldRatio != null ? p.oldRatio + '%' : '—') + '</p></div>' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">新返佣比例</p><p class="font-black mt-1 text-blue-600 text-lg">' + (p.newRatio != null ? p.newRatio + '%' : '—') + '</p></div>' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">运营配置上限</p><p class="font-black mt-1">' + (p.opsCap != null ? p.opsCap + '%' : '—') + '</p></div>' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">超上限</p><p class="font-black mt-1 text-amber-700">' + exceedLabel + '</p></div>' +
+            remarkHtml +
+            '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">图片附件</p>' + renderPartnerAttachmentThumbnails(p) + '</div>' +
+            '</div></div>';
+    }
+
     function renderMigrateDetailSection(app) {
         if (app.type !== 'partner_rebate_migrate') return '';
         const p = app.payload || {};
@@ -133,17 +201,7 @@
                 return '<li class="font-bold text-amber-900">' + f.wallet + '：<span class="text-slate-500">' + f.oldRatio + '%</span> → <span class="text-blue-600">' + f.newRatio + '%</span></li>';
             }).join('') + '</ul>'
             : '<p class="mt-1 text-slate-500 text-[11px]">无（未修改下级比例）</p>';
-        let attachHtml = '<p class="mt-1 text-slate-500 text-[11px]">无</p>';
-        if (p.attachments && p.attachments.length) {
-            const previews = p.attachmentPreviews || {};
-            attachHtml = '<div class="flex flex-wrap gap-2 mt-2">' + p.attachments.map(function (name) {
-                const url = previews[name] || '';
-                if (url) {
-                    return '<button type="button" onclick="openApprovalAttachment(\'' + name.replace(/'/g, "\\'") + '\', \'' + url.replace(/'/g, "\\'") + '\')" class="border rounded overflow-hidden w-14 h-14 hover:ring-2 ring-blue-400"><img src="' + url + '" alt="' + name + '" class="w-full h-full object-cover"></button>';
-                }
-                return '<span class="text-[11px] font-bold text-blue-600">' + name + '</span>';
-            }).join('') + '</div>';
-        }
+        const attachHtml = renderPartnerAttachmentThumbnails(p);
         return '<div class="col-span-2 border border-slate-200 rounded-lg p-4 bg-slate-50/50">' +
             '<p class="text-[10px] font-bold text-slate-500 uppercase mb-3">迁移申请内容</p>' +
             '<div class="grid grid-cols-2 gap-4 text-sm">' +
@@ -510,7 +568,11 @@
                 ? '<div class="text-sm">' + renderProgramSwitchDetailSection(app) + '</div>'
                 : app.type === 'partner_rebate_migrate'
                     ? '<div class="text-sm">' + renderMigrateDetailSection(app) + '</div>'
-                    : '<div class="grid grid-cols-2 gap-3 text-sm">' + renderPayloadMeta(app, opts) + renderRecipientSection(rootId, app) + '</div>';
+                    : app.type === 'partner_l1_bind'
+                        ? '<div class="text-sm">' + renderPartnerL1BindDetailSection(app) + '</div>'
+                        : app.type === 'partner_ratio_change'
+                            ? '<div class="text-sm">' + renderPartnerRatioChangeDetailSection(app) + '</div>'
+                            : '<div class="grid grid-cols-2 gap-3 text-sm">' + renderPayloadMeta(app, opts) + renderRecipientSection(rootId, app) + '</div>';
         const typeBadge = state.types.length > 1
             ? '<span class="inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">' + getApprovalTypeLabel(app.type) + '</span>'
             : '';

@@ -13,6 +13,15 @@
         .gap-tag { background: #eff6ff; color: #2563eb; font-weight: 900; padding: 2px 4px; border-radius: 2px; }
         .modal-overlay { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; align-items: center; justify-content: center; display: none; }
         .sidebar-btn-active { background: #000; color: #fff; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .sort-icon { font-size: 10px; }
+        th.cursor-pointer .sort-icon { opacity: 0.7; }
+        th.cursor-pointer:hover .sort-icon { opacity: 1; }
+        .copy-chip { display: inline-flex; align-items: center; gap: 4px; }
+        .copy-chip-btn { color: #9ca3af; padding: 2px; line-height: 1; border-radius: 2px; }
+        .copy-chip-btn:hover { color: #2563eb; background: #eff6ff; }
+        .tree-line-panel { border: 1px solid #fde68a; border-radius: 4px; background: rgba(255,251,235,0.5); }
+        .tree-line-header { cursor: pointer; }
+        .tree-line-body { border-top: 1px solid #fde68a; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col text-[12px]">
@@ -171,7 +180,7 @@
     <main class="flex-1 overflow-y-auto bg-slate-50 p-8">
         <div class="max-w-[1250px] mx-auto space-y-8">
             <!-- 页面 A: 数据总览 -->
-            <div id="page-overview" class="space-y-8 block">
+            <div id="page-overview" class="space-y-8 hidden">
                 <div class="flex justify-between items-end">
                     <div>
                         <h1 class="text-2xl font-black tracking-tight">合伙人管理</h1>
@@ -179,10 +188,24 @@
                     </div>
                     <!-- 全局时间过滤 -->
                     <div class="flex bg-white p-1 rounded border border-gray-200 shadow-sm">
-                        <button class="px-4 py-1 text-[10px] font-bold hover:bg-gray-50">1D</button>
-                        <button class="px-4 py-1 text-[10px] font-bold bg-black text-white rounded-sm shadow-md">1W</button>
-                        <button class="px-4 py-1 text-[10px] font-bold hover:bg-gray-50">1M</button>
-                        <button class="px-4 py-1 text-[10px] font-bold hover:bg-gray-50">3M</button>
+                        <button type="button" data-period="1D" onclick="PartnerCenter.setOverviewPeriod('1D')" class="overview-period-btn px-4 py-1 text-[10px] font-bold hover:bg-gray-50">1D</button>
+                        <button type="button" data-period="1W" onclick="PartnerCenter.setOverviewPeriod('1W')" class="overview-period-btn px-4 py-1 text-[10px] font-bold bg-black text-white rounded-sm shadow-md">1W</button>
+                        <button type="button" data-period="1M" onclick="PartnerCenter.setOverviewPeriod('1M')" class="overview-period-btn px-4 py-1 text-[10px] font-bold hover:bg-gray-50">1M</button>
+                        <button type="button" data-period="3M" onclick="PartnerCenter.setOverviewPeriod('3M')" class="overview-period-btn px-4 py-1 text-[10px] font-bold hover:bg-gray-50">3M</button>
+                    </div>
+                </div>
+
+                <!-- 我的上级 / 我的返佣比例 -->
+                <div class="stats-card py-4 px-5">
+                    <div class="flex flex-wrap items-center justify-between gap-6">
+                        <div>
+                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">我的上级</p>
+                            <div id="overview-my-superior" class="text-[13px] font-black text-gray-900"></div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">我的返佣比例</p>
+                            <div id="overview-my-ratio" class="text-2xl font-black text-blue-600 italic">—</div>
+                        </div>
                     </div>
                 </div>
 
@@ -190,60 +213,40 @@
                 <div class="grid grid-cols-4 gap-4">
                     <div class="stats-card">
                         <p class="text-gray-400 font-bold mb-2">团队总交易额</p>
-                        <h3 class="text-3xl font-black">$52,450,000</h3>
+                        <h3 id="overview-team-vol" class="text-3xl font-black">$52,450,000</h3>
                         <p class="text-[10px] text-gray-400 mt-2">较上周期 <span class="text-green-500">+12.4%</span></p>
                     </div>
                     <div class="stats-card border-l-4 border-l-blue-600">
                         <p class="text-gray-400 font-bold mb-2 text-blue-600">总返佣收入 (本期预估)</p>
-                        <h3 class="text-3xl font-black text-gray-900">$12,840.50</h3>
+                        <h3 id="overview-total-rebate" class="text-3xl font-black text-gray-900">$12,840.50</h3>
                         <!-- 收入拆解 -->
                         <div class="mt-3 grid grid-cols-3 gap-1 text-[9px] font-black uppercase text-gray-400 border-t pt-3 border-gray-50">
-                            <div>自返佣: <span class="text-gray-900">$0.2k</span></div>
-                            <div>直客: <span class="text-gray-900">$1.2k</span></div>
-                            <div class="text-blue-600">级差: <span>$11.6k</span></div>
+                            <div>自返佣: <span id="overview-self-rebate" class="text-gray-900">$0.2k</span></div>
+                            <div>直客: <span id="overview-direct-rebate" class="text-gray-900">$1.2k</span></div>
+                            <div class="text-blue-600">级差: <span id="overview-gap-rebate">$11.6k</span></div>
                         </div>
                     </div>
                     <div class="stats-card">
                         <p class="text-gray-400 font-bold mb-2">团队净入金</p>
-                        <h3 class="text-3xl font-black text-green-500">+$1,240,000</h3>
+                        <h3 id="overview-team-net" class="text-3xl font-black text-green-500">+$1,240,000</h3>
                         <p class="text-[10px] text-gray-400 mt-2">包含下级穿透数据</p>
                     </div>
                     <div class="stats-card">
-                        <p class="text-gray-400 font-bold mb-2">活跃下级合伙人</p>
-                        <h3 class="text-3xl font-black text-gray-900">42 <span class="text-sm text-gray-300">/ 120</span></h3>
-                        <p class="text-[10px] text-blue-600 mt-2 font-bold cursor-pointer hover:underline">查看列表 &rarr;</p>
+                        <p class="text-gray-400 font-bold mb-2">用户规模</p>
+                        <h3 id="overview-trade-users-active" class="text-3xl font-black text-gray-900">1,850 <span class="text-base font-bold text-gray-600">交易用户</span></h3>
+                        <p id="overview-trade-users-total" class="text-[10px] text-gray-400 mt-2 font-bold">3,680 总用户</p>
                     </div>
                 </div>
 
-                <!-- === 团队全局异常警告横幅 === -->
-                <div id="partner-abnormal-banner" class="bg-amber-50 border-l-4 border-amber-500 p-5 rounded shadow-sm mb-6 animate-in slide-in-from-top duration-500">
-                    <div class="flex items-start justify-between">
-                        <div class="flex items-start flex-1 pr-8">
-                            <!-- 警告图标 -->
-                            <svg class="w-6 h-6 text-amber-600 mr-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                                <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                            </svg>
-                            <div>
-                                <p class="text-amber-900 font-black text-sm mb-1 uppercase tracking-tight">
-                                    团队全链路配置异常提醒 (检测到 <span class="underline decoration-2">3</span> 处链路冲突)
-                                </p>
-                                <div class="text-amber-700 font-medium leading-relaxed space-y-1">
-                                    <p>检测到合伙人全链路存在比例倒挂。以下为<strong>返佣分支级</strong>暂停：异常暂停交易额 <span class="font-black underline">$1,240,000</span>，共 <span class="font-black underline">2</span> 条异常返佣线；<strong>非整棵一级树停结</strong>，其他分支仍正常结算。</p>
-                                    <p class="text-[11px] opacity-90 italic">
-                                        * 修复比例后，下一结算日 00:00 将按新比例重算异常期间未结算交易并合并发放。即使您个人配置正常，链路内任意层级冲突仍会暂停整条纵向链路的级差佣金计算。
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- 辅助操作 -->
-                        <div class="flex flex-col space-y-2 shrink-0">
-                            <button class="bg-amber-600 text-white px-4 py-2 rounded-sm font-black text-[10px] uppercase shadow-md hover:bg-amber-700 transition-all">
-                                导出异常明细
-                            </button>
-                            <button class="text-[9px] text-amber-500 font-bold hover:text-amber-700 text-right underline underline-offset-2">
-                                查看链路规则
-                            </button>
-                        </div>
+                <!-- === 团队返佣异常简要提醒 === -->
+                <div id="partner-abnormal-banner" class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded shadow-sm mb-6">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        <p class="text-amber-900 font-bold text-[12px] leading-relaxed">
+                            检测到 <span class="font-black">2</span> 条异常返佣线，暂停结算交易额 <span class="font-black">$1,240,000</span>。请在下表查看异常明细并与下级沟通调整返佣比例，否则相关返佣将无法结算。
+                        </p>
                     </div>
                 </div>
 
@@ -255,14 +258,15 @@
                             <button onclick="switchTable('direct-client')" id="tab-direct-client" class="text-gray-400 font-bold pb-1 hover:text-black">自邀直客明细</button>
                         </div>
                         <div class="flex items-center space-x-4">
-                            <!-- === 2. 状态筛选切换 === -->
-                            <div class="flex bg-slate-100 p-1 rounded-md text-[10px] font-bold">
-                                <button class="px-4 py-1.5 bg-white shadow-sm rounded text-slate-900">全部正常 (117)</button>
-                                <button class="px-4 py-1.5 text-slate-400 hover:text-red-500 transition-colors">异常预警 (3)</button>
-                            </div>
+                            <select id="sub-partner-status-filter" onchange="PartnerCenter.setSubPartnerFilter(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[10px] font-bold text-gray-700 outline-none focus:ring-1 focus:ring-black cursor-pointer">
+                                <option value="all">全部结算状态</option>
+                                <option value="normal">正常</option>
+                                <option value="direct_inversion">返佣比例倒挂（直属下级）</option>
+                                <option value="team_tree_abnormal">团队返佣树异常</option>
+                            </select>
 
                             <div class="relative">
-                                <input type="text" placeholder="搜索地址或备注..." class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[11px] w-48 outline-none focus:ring-1 focus:ring-black">
+                                <input type="text" id="sub-partner-search" placeholder="搜索地址或备注..." oninput="PartnerCenter.setSubPartnerSearch(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[11px] w-48 outline-none focus:ring-1 focus:ring-black">
                                 <svg class="w-3.5 h-3.5 absolute right-2 top-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2"/></svg>
                             </div>
                         </div>
@@ -274,141 +278,23 @@
                     <!-- 表格容器 1: 下级代理 -->
                     <div id="table-sub-agent" class="overflow-x-auto block">
                         <table class="w-full text-left whitespace-nowrap">
-                            <thead class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase tracking-wider">
-                            <tr>
-                                <th class="px-6 py-4">加入时间</th>
-                                <th class="px-6 py-4">下级合伙人 (备注)</th>
-                                <th class="px-6 py-4 text-center">设置比例</th>
-                                <th class="px-6 py-4 text-center">我的级差</th>
-                                <th class="px-6 py-4 text-right">贡献级差收入</th>
-                                <th class="px-6 py-4 text-right">总交易额</th>
-                                <th class="px-6 py-4 text-right">总净入金</th>
-                                <th class="px-6 py-4 text-center">用户规模</th>
-                                <th class="px-6 py-4 text-right">操作</th>
-                            </tr>
+                            <thead id="sub-partner-table-head" class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase tracking-wider">
                             </thead>
-                            <tbody class="divide-y divide-gray-50 text-[11px] font-medium">
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4 text-gray-400 font-bold">2024-05-12</td>
-                                <td class="px-6 py-4">
-                                    <span class="text-gray-900 font-black">0x3f...12a</span>
-                                    <span class="block text-[10px] text-gray-400 font-bold">渠道-小王</span>
-                                </td>
-                                <td class="px-6 py-4 text-center font-bold text-gray-700">60%</td>
-                                <td class="px-6 py-4 text-center"><span class="gap-tag">10%</span></td>
-                                <td class="px-6 py-4 text-right font-black text-blue-600">$1,250.00</td>
-                                <td class="px-6 py-4 text-right font-bold">$12.5M</td>
-                                <td class="px-6 py-4 text-right text-green-500 font-bold">+$500k</td>
-                                <td class="px-6 py-4 text-center">
-                                    <span class="text-gray-900 font-black">1,240</span>
-                                    <span class="text-[9px] text-gray-400 block font-bold">420 活跃</span>
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <button onclick="drillDownToTeam({
-                                        name: '合伙人-小王',
-                                        uid: '0x3f...12a',
-                                        joinTime: '2024-05-12',
-                                        totalVol: '$12.5M',
-                                        netDeposit: '+$524k',
-                                        activeUsers: 420,
-                                        totalUsers: 1240,
-                                        profitSelf: '$0.2k',
-                                        profitDirect: '$1.2k',
-                                        profitGap: '$11.6k',
-                                        totalProfit: '$13,000.00'
-                                    })" class="text-blue-600 font-black hover:underline">
-                                        查看团队
-                                    </button>·
-                                    <span class="mx-2 text-gray-200">|</span>
-                                    <button class="text-gray-400 font-black hover:text-black">调整</button>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4 text-gray-400 font-bold">2024-05-10</td>
-                                <td class="px-6 py-4">
-                                    <span class="text-gray-900 font-black">0x8e...55c</span>
-                                    <span class="block text-[10px] text-gray-400 font-bold">推特KOL-J</span>
-                                </td>
-                                <td class="px-6 py-4 text-center font-bold text-gray-700">50%</td>
-                                <td class="px-6 py-4 text-center"><span class="gap-tag">20%</span></td>
-                                <td class="px-6 py-4 text-right font-black text-slate-400 italic">-- 暂停结算</td>
-                                <td class="px-6 py-4 text-right font-bold">$16.2M</td>
-                                <td class="px-6 py-4 text-right text-green-500 font-bold">+$820k</td>
-                                <td class="px-6 py-4 text-center">
-                                    <span class="text-gray-900 font-black">850</span>
-                                    <span class="text-[9px] text-gray-400 block font-bold">120 活跃</span>
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <button onclick="drillDownToTeam({
-                                        name: 'KOL-J',
-                                        uid: '0x3f...12a',
-                                        joinTime: '2024-05-12',
-                                        totalVol: '$12.5M',
-                                        netDeposit: '+$524k',
-                                        activeUsers: 420,
-                                        totalUsers: 1240,
-                                        profitSelf: '$0.2k',
-                                        profitDirect: '$1.2k',
-                                        profitGap: '$11.6k',
-                                        totalProfit: '$13,000.00'
-                                    })" class="text-blue-600 font-black hover:underline">
-                                        查看团队
-                                    </button>
-                                    <span class="mx-2 text-gray-200">|</span>
-                                    <button class="text-gray-400 font-black hover:text-black">调整</button>
-                                </td>
-                            </tr>
-                            <!-- === 异常代理行演示 === -->
-                            <tr class="bg-red-50/30 transition-colors">
-                                <td class="px-6 py-4 text-gray-400 font-bold">2024-05-08</td>
-                                <td class="px-6 py-4">
-                                    <span class="text-gray-900 font-black">0x5c...882</span>
-                                    <span class="block text-[10px] text-red-500 font-bold italic">⚠️ 返佣比例已高于您，请立即调整</span>
-                                </td>
-                                <!-- 比例变红 -->
-                                <td class="px-6 py-4 text-center font-black text-red-600 underline">75%</td>
-                                <!-- 级差变红显示负值或警告 -->
-                                <td class="px-6 py-4 text-center"><span class="bg-red-100 text-red-600 font-black px-2 py-0.5 rounded-sm">-5%</span></td>
-                                <!-- 收入暂停结算 -->
-                                <td class="px-6 py-4 text-right font-black text-slate-400 italic">-- 暂停结算</td>
-                                <td class="px-6 py-4 text-right font-bold text-gray-400">$2.1M</td>
-                                <td class="px-6 py-4 text-right text-gray-400">-$120k</td>
-                                <td class="px-6 py-4 text-center text-gray-400">12 / 0</td>
-                                <td class="px-6 py-4 text-right">
-                                    <!-- 禁用查看团队 -->
-                                    <button disabled class="text-gray-300 font-black cursor-not-allowed" title="数据异常，请先修复比例配置">查看团队</button>
-                                    <span class="mx-2 text-gray-200">|</span>
-                                    <button class="text-blue-600 font-black hover:underline" onclick="alert('即将进入调整页面以修复比例倒挂问题')">调整</button>
-                                </td>
-                            </tr>
+                            <tbody id="sub-partner-table-body" class="divide-y divide-gray-50 text-[11px] font-medium">
                             </tbody>
                         </table>
+                        <div id="sub-partner-pagination"></div>
                     </div>
 
                     <!-- 表格容器 2: 直客明细 -->
                     <div id="table-direct-client" class="overflow-x-auto hidden animate-in fade-in">
                         <table class="w-full text-left whitespace-nowrap">
-                            <thead class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase">
-                            <tr>
-                                <th class="px-6 py-4">注册时间</th>
-                                <th class="px-6 py-4">直客钱包/UID</th>
-                                <th class="px-6 py-4 text-right">累计交易额</th>
-                                <th class="px-6 py-4 text-right">累计手续费</th>
-                                <th class="px-6 py-4 text-right text-blue-600">为我贡献返佣</th>
-                                <th class="px-6 py-4 text-right">状态</th>
-                            </tr>
+                            <thead id="direct-client-table-head" class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase">
                             </thead>
-                            <tbody class="divide-y divide-gray-50 text-[11px]">
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4 text-gray-400 font-bold">2024-05-20</td>
-                                <td class="px-6 py-4 font-black text-gray-900">0x99...F4d2</td>
-                                <td class="px-6 py-4 text-right font-bold">$42,500</td>
-                                <td class="px-6 py-4 text-right font-bold">$42.50</td>
-                                <td class="px-6 py-4 text-right font-black text-blue-600">$29.75</td>
-                                <td class="px-6 py-4 text-right"><span class="text-green-500 font-bold">交易中</span></td>
-                            </tr>
+                            <tbody id="direct-client-table-body" class="divide-y divide-gray-50 text-[11px]">
                             </tbody>
                         </table>
+                        <div id="direct-client-pagination"></div>
                     </div>
                 </div>
             </div>
@@ -440,150 +326,129 @@
 
                 <!-- 结算列表 -->
                 <div class="stats-card !p-0">
-                    <div class="p-6 border-b border-gray-50 bg-white">
-                        <h4 class="font-black text-sm uppercase">每日结算流水 (Daily Settlement)</h4>
+                    <div class="p-6 border-b border-gray-50 bg-white flex flex-wrap justify-between items-center gap-4">
+                        <h4 class="font-black text-sm">每日结算流水</h4>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <input type="date" id="settlement-filter-date" onchange="PartnerCenter.setSettlementDateFilter(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[11px] outline-none focus:ring-1 focus:ring-black">
+                            <select id="settlement-filter-status" onchange="PartnerCenter.setSettlementStatusFilter(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[10px] font-bold text-gray-700 outline-none focus:ring-1 focus:ring-black cursor-pointer">
+                                <option value="all">全部状态</option>
+                                <option value="pending">待结算</option>
+                                <option value="settled">已结算</option>
+                                <option value="rebate_stopped">返佣异常停止结算</option>
+                            </select>
+                        </div>
                     </div>
                     <table class="w-full text-left">
-                        <thead class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase">
-                        <tr>
-                            <th class="px-6 py-4">结算日期</th>
-                            <th class="px-6 py-4 text-right">有效交易额</th>
-                            <th class="px-6 py-4 text-right">产生总手续费</th>
-                            <th class="px-6 py-4 text-right text-blue-600">应结佣金 (Rebate)</th>
-                            <th class="px-6 py-4 text-right">结算状态</th>
-                        </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-50 text-[11px] font-bold">
-                        <tr class="hover:bg-slate-50 bg-amber-50/40">
-                            <td class="px-6 py-4 text-gray-900">2024-05-23</td>
-                            <td class="px-6 py-4 text-right text-gray-500">$0</td>
-                            <td class="px-6 py-4 text-right text-gray-500">$0.00</td>
-                            <td class="px-6 py-4 text-right text-amber-700 font-black">$0.00</td>
-                            <td class="px-6 py-4 text-right"><span class="text-amber-600 font-bold" title="链路异常，交易额仍记录但不计入待结算">待修正返佣后计算</span></td>
-                        </tr>
-                        <tr class="hover:bg-slate-50 bg-blue-50/30">
-                            <td class="px-6 py-4 text-gray-900">2024-05-22</td>
-                            <td class="px-6 py-4 text-right text-gray-500">$1,240,000</td>
-                            <td class="px-6 py-4 text-right text-gray-500">$1,240.00</td>
-                            <td class="px-6 py-4 text-right text-blue-600">$868.00</td>
-                            <td class="px-6 py-4 text-right"><span class="text-blue-600 font-bold" title="含异常期间重算佣金">补结算</span></td>
-                        </tr>
-                        <tr class="hover:bg-slate-50">
-                            <td class="px-6 py-4 text-gray-900">2024-05-21</td>
-                            <td class="px-6 py-4 text-right text-gray-500">$980,000</td>
-                            <td class="px-6 py-4 text-right text-gray-500">$980.00</td>
-                            <td class="px-6 py-4 text-right text-blue-600">$686.00</td>
-                            <td class="px-6 py-4 text-right"><span class="text-green-500">已发放</span></td>
-                        </tr>
-                        </tbody>
+                        <thead id="settlement-table-head" class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase"></thead>
+                        <tbody id="settlement-table-body" class="divide-y divide-gray-50 text-[11px] font-bold"></tbody>
                     </table>
+                    <div id="settlement-pagination"></div>
                 </div>
             </div>
 
         </div>
 
-        <!-- 页面 C: 下级团队穿透详情 (New Page) -->
-        <div id="page-team-detail" class="space-y-6 hidden">
-            <!-- 顶部：返回、标题与时间切换 -->
-            <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-4">
-                    <button onclick="showMainPage('page-overview')" class="p-2 bg-white border border-gray-200 rounded-sm hover:bg-gray-50">
+        <!-- 页面 C: 团队穿透（脱敏版合伙人管理） -->
+        <div id="page-drill-overview" class="space-y-8 hidden">
+            <div class="flex justify-between items-end">
+                <div class="flex items-start gap-4">
+                    <button type="button" onclick="PartnerCenter.drillBack()" class="p-2 bg-white border border-gray-200 rounded-sm hover:bg-gray-50 shrink-0 mt-1">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
                     </button>
                     <div>
-                        <h1 class="text-xl font-black tracking-tight" id="detail-page-title">合伙人-小王 的团队业绩</h1>
-                        <p class="text-[10px] text-gray-400 font-bold uppercase" id="detail-page-subtitle">ID: 0x3f...12a | 加入时间: 2024-05-12</p>
+                        <h1 id="drill-page-title" class="text-2xl font-black tracking-tight">团队穿透</h1>
+                        <p id="drill-page-subtitle" class="text-gray-400 font-medium text-[12px]">脱敏预览 · 仅可向下穿透查看</p>
                     </div>
                 </div>
-                <!-- 时间切换 -->
                 <div class="flex bg-white p-1 rounded border border-gray-200 shadow-sm">
-                    <button class="px-3 py-1 text-[10px] font-bold">1D</button>
-                    <button class="px-3 py-1 text-[10px] font-bold bg-black text-white rounded-sm">1W</button>
-                    <button class="px-3 py-1 text-[10px] font-bold">1M</button>
-                    <button class="px-3 py-1 text-[10px] font-bold">3M</button>
-                    <button class="px-3 py-1 text-[10px] font-bold">ALL</button>
+                    <button type="button" data-period="1D" onclick="PartnerCenter.setDrillPeriod('1D')" class="drill-period-btn px-4 py-1 text-[10px] font-bold hover:bg-gray-50">1D</button>
+                    <button type="button" data-period="1W" onclick="PartnerCenter.setDrillPeriod('1W')" class="drill-period-btn px-4 py-1 text-[10px] font-bold bg-black text-white rounded-sm shadow-md">1W</button>
+                    <button type="button" data-period="1M" onclick="PartnerCenter.setDrillPeriod('1M')" class="drill-period-btn px-4 py-1 text-[10px] font-bold hover:bg-gray-50">1M</button>
+                    <button type="button" data-period="3M" onclick="PartnerCenter.setDrillPeriod('3M')" class="drill-period-btn px-4 py-1 text-[10px] font-bold hover:bg-gray-50">3M</button>
                 </div>
             </div>
 
-            <!-- 中间：总览数据看板 (引用弹窗内的数据布局) -->
+            <div class="stats-card py-4 px-5">
+                <div class="flex flex-wrap items-center justify-between gap-6">
+                    <div>
+                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">我的上级</p>
+                        <div id="drill-my-superior" class="text-[13px] font-black text-gray-900"></div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">我的返佣比例</p>
+                        <div id="drill-my-ratio" class="text-2xl font-black text-blue-600 italic">—</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="grid grid-cols-4 gap-4">
                 <div class="stats-card">
-                    <p class="text-[10px] text-gray-400 font-bold uppercase mb-2">本期伞下总交易额</p>
-                    <h3 class="text-2xl font-black text-gray-900" id="detail-v-vol">$12.5M</h3>
+                    <p class="text-gray-400 font-bold mb-2">团队总交易额</p>
+                    <h3 id="drill-team-vol" class="text-3xl font-black">—</h3>
+                    <p class="text-[10px] text-gray-400 mt-2">较上周期 <span class="text-green-500">+12.4%</span></p>
+                </div>
+                <div class="stats-card border-l-4 border-l-blue-600">
+                    <p class="text-gray-400 font-bold mb-2 text-blue-600">总返佣收入 (本期预估)</p>
+                    <h3 id="drill-total-rebate" class="text-3xl font-black text-gray-900">—</h3>
+                    <div class="mt-3 grid grid-cols-3 gap-1 text-[9px] font-black uppercase text-gray-400 border-t pt-3 border-gray-50">
+                        <div>自返佣: <span id="drill-self-rebate" class="text-gray-900">—</span></div>
+                        <div>直客: <span id="drill-direct-rebate" class="text-gray-900">—</span></div>
+                        <div class="text-blue-600">级差: <span id="drill-gap-rebate">—</span></div>
+                    </div>
                 </div>
                 <div class="stats-card">
-                    <p class="text-[10px] text-gray-400 font-bold uppercase mb-2">本期团队净入金</p>
-                    <h3 class="text-2xl font-black text-green-500" id="detail-v-deposit">+$524k</h3>
+                    <p class="text-gray-400 font-bold mb-2">团队净入金</p>
+                    <h3 id="drill-team-net" class="text-3xl font-black text-green-500">—</h3>
+                    <p class="text-[10px] text-gray-400 mt-2">包含下级穿透数据</p>
                 </div>
                 <div class="stats-card">
-                    <p class="text-[10px] text-gray-400 font-bold uppercase mb-2">活跃/总人数</p>
-                    <h3 class="text-2xl font-black text-gray-900" id="detail-v-users">420 / 1240</h3>
-                </div>
-                <div class="stats-card bg-black text-white border-none shadow-xl">
-                    <p class="text-[10px] text-gray-400 font-bold uppercase mb-2">本期为我贡献总收入</p>
-                    <h3 class="text-2xl font-black text-blue-400" id="detail-v-total-profit">$13,000.00</h3>
+                    <p class="text-gray-400 font-bold mb-2">用户规模</p>
+                    <h3 id="drill-users-active" class="text-3xl font-black text-gray-900">— <span class="text-base font-bold text-gray-600">交易用户</span></h3>
+                    <p id="drill-users-total" class="text-[10px] text-gray-400 mt-2 font-bold">— 总用户</p>
                 </div>
             </div>
 
-            <!-- 三种收益贡献拆解 -->
-            <div class="grid grid-cols-3 gap-4">
-                <div class="bg-white p-4 border border-gray-200 rounded-sm">
-                    <div class="flex justify-between items-center">
-                        <span class="text-[10px] text-gray-400 font-bold uppercase">自返佣贡献</span>
-                        <span class="text-lg font-black text-gray-900" id="detail-v-self">$0.2k</span>
-                    </div>
-                </div>
-                <div class="bg-white p-4 border border-gray-200 rounded-sm">
-                    <div class="flex justify-between items-center">
-                        <span class="text-[10px] text-gray-400 font-bold uppercase">直客贡献</span>
-                        <span class="text-lg font-black text-gray-900" id="detail-v-direct">$1.2k</span>
-                    </div>
-                </div>
-                <div class="bg-white p-4 border border-gray-200 rounded-sm">
-                    <div class="flex justify-between items-center text-blue-600">
-                        <span class="text-[10px] font-bold uppercase">下级级差贡献</span>
-                        <span class="text-lg font-black" id="detail-v-gap">$11.6k</span>
-                    </div>
+            <div id="drill-abnormal-banner" class="hidden bg-amber-50 border-l-4 border-amber-500 p-4 rounded shadow-sm">
+                <div class="flex items-start gap-3">
+                    <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                        <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <p id="drill-abnormal-text" class="text-amber-900 font-bold text-[12px] leading-relaxed"></p>
                 </div>
             </div>
 
-            <!-- 底部：贡献明细列表 -->
-            <div class="stats-card !p-0 overflow-hidden shadow-sm">
-                <div class="p-4 border-b border-gray-50 bg-white flex justify-between items-center">
-                    <h4 class="font-black text-[12px] uppercase">贡献明细清单</h4>
-                    <!-- 地址搜索框 -->
-                    <div class="relative">
-                        <input type="text" placeholder="搜索地址..." class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[11px] w-48 outline-none focus:ring-1 focus:ring-black">
-                        <svg class="w-3.5 h-3.5 absolute right-2 top-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2"/></svg>
+            <div class="stats-card !p-0 overflow-hidden shadow-xl">
+                <div class="p-6 border-b border-gray-50 flex justify-between items-center bg-white">
+                    <div class="flex space-x-10">
+                        <button type="button" onclick="PartnerCenter.switchDrillTable('sub-agent')" id="drill-tab-sub-agent" class="tab-active pb-1">直属下级合伙人明细</button>
+                        <button type="button" onclick="PartnerCenter.switchDrillTable('direct-client')" id="drill-tab-direct-client" class="text-gray-400 font-bold pb-1 hover:text-black">自邀直客明细</button>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <select id="drill-sub-partner-status-filter" onchange="PartnerCenter.setDrillSubFilter(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[10px] font-bold text-gray-700 outline-none focus:ring-1 focus:ring-black cursor-pointer">
+                            <option value="all">全部结算状态</option>
+                            <option value="normal">正常</option>
+                            <option value="direct_inversion">返佣比例倒挂（直属下级）</option>
+                            <option value="team_tree_abnormal">团队返佣树异常</option>
+                        </select>
+                        <div class="relative">
+                            <input type="text" id="drill-sub-partner-search" placeholder="搜索地址..." oninput="PartnerCenter.setDrillSubSearch(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[11px] w-40 outline-none focus:ring-1 focus:ring-black">
+                        </div>
                     </div>
                 </div>
-                <table class="w-full text-left">
-                    <thead class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase">
-                    <tr>
-                        <th class="px-6 py-3">钱包地址</th>
-                        <th class="px-6 py-3">他的上级</th>
-                        <th class="px-6 py-3 text-right">期间交易额</th>
-                        <th class="px-6 py-3 text-right text-blue-600">你的手续费返佣</th>
-                        <th class="px-6 py-3 text-right">期间净充值</th>
-                    </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-50 text-[11px] font-bold">
-                    <tr class="hover:bg-slate-50">
-                        <td class="px-6 py-4 text-gray-900 font-mono">0x7a...E912</td>
-                        <td class="px-6 py-4 text-gray-400 font-mono">0x3f...12a (本级)</td>
-                        <td class="px-6 py-4 text-right">$125,000</td>
-                        <td class="px-6 py-4 text-right text-blue-600">$125.00</td>
-                        <td class="px-6 py-4 text-right text-green-500">+$12,000</td>
-                    </tr>
-                    <tr class="hover:bg-slate-50">
-                        <td class="px-6 py-4 text-gray-900 font-mono">0xBc...4431</td>
-                        <td class="px-6 py-4 text-gray-400 font-mono">0x8e...55c</td>
-                        <td class="px-6 py-4 text-right">$42,000</td>
-                        <td class="px-6 py-4 text-right text-blue-600">$42.00</td>
-                        <td class="px-6 py-4 text-right text-red-400">-$2,500</td>
-                    </tr>
-                    </tbody>
-                </table>
+                <div id="drill-table-sub-agent" class="overflow-x-auto block">
+                    <table class="w-full text-left whitespace-nowrap">
+                        <thead id="drill-sub-partner-table-head" class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase tracking-wider"></thead>
+                        <tbody id="drill-sub-partner-table-body" class="divide-y divide-gray-50 text-[11px] font-medium"></tbody>
+                    </table>
+                    <div id="drill-sub-partner-pagination"></div>
+                </div>
+                <div id="drill-table-direct-client" class="overflow-x-auto hidden">
+                    <table class="w-full text-left whitespace-nowrap">
+                        <thead id="drill-direct-client-table-head" class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase"></thead>
+                        <tbody id="drill-direct-client-table-body" class="divide-y divide-gray-50 text-[11px]"></tbody>
+                    </table>
+                    <div id="drill-direct-client-pagination"></div>
+                </div>
             </div>
         </div>
 
@@ -594,8 +459,8 @@
                     <h1 class="text-2xl font-black tracking-tight">邀请链接管理</h1>
                     <p class="text-gray-400 font-medium">您可以創建多個邀請連結用於不同渠道的推廣效果追蹤。</p>
                 </div>
-                <button onclick="openReferralModal('create')" class="bg-blue-600 text-white px-6 py-2.5 rounded-sm font-black text-[11px] hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">
-                    + 創建新連結 (已用 3/50)
+                <button onclick="openReferralModal('create')" id="links-create-count" class="bg-blue-600 text-white px-6 py-2.5 rounded-sm font-black text-[11px] hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">
+                    + 創建新連結 (已用 12/50)
                 </button>
             </div>
 
@@ -628,44 +493,25 @@
 
             <!-- 連結列表表格 -->
             <div class="stats-card !p-0 overflow-hidden shadow-xl bg-white">
+                <div class="p-4 border-b border-gray-50 flex flex-wrap items-center justify-between gap-4 bg-white">
+                    <div class="flex bg-white p-1 rounded border border-gray-200 shadow-sm">
+                        <button type="button" data-period="1D" onclick="PartnerCenter.setLinksPeriod('1D')" class="links-period-btn px-3 py-1 text-[10px] font-bold hover:bg-gray-50">1D</button>
+                        <button type="button" data-period="1W" onclick="PartnerCenter.setLinksPeriod('1W')" class="links-period-btn px-3 py-1 text-[10px] font-bold bg-black text-white rounded-sm shadow-md">1W</button>
+                        <button type="button" data-period="1M" onclick="PartnerCenter.setLinksPeriod('1M')" class="links-period-btn px-3 py-1 text-[10px] font-bold hover:bg-gray-50">1M</button>
+                        <button type="button" data-period="3M" onclick="PartnerCenter.setLinksPeriod('3M')" class="links-period-btn px-3 py-1 text-[10px] font-bold hover:bg-gray-50">3M</button>
+                    </div>
+                    <div class="relative">
+                        <input type="text" placeholder="搜索備註名稱或邀請碼..." oninput="PartnerCenter.setLinksSearch(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[11px] w-52 outline-none focus:ring-1 focus:ring-black">
+                        <svg class="w-3.5 h-3.5 absolute right-2 top-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2"/></svg>
+                    </div>
+                </div>
                 <table class="w-full text-left">
-                    <thead class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase tracking-wider border-b border-gray-100">
-                    <tr>
-                        <th class="px-6 py-4">備註名稱</th>
-                        <th class="px-6 py-4">邀請碼</th>
-                        <th class="px-6 py-4">邀請連結</th>
-                        <th class="px-6 py-4 text-center">直邀人數</th>
-                        <th class="px-6 py-4 text-center">下級合伙人數</th>
-                        <th class="px-6 py-4 text-right">操作</th>
-                    </tr>
+                    <thead id="links-table-head" class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase tracking-wider border-b border-gray-100">
                     </thead>
-                    <tbody class="divide-y divide-gray-50 text-[11px] font-medium">
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 font-black">預設連結</td>
-                        <td class="px-6 py-4 font-mono text-blue-600">E6DL28G</td>
-                        <td class="px-6 py-4 text-gray-400">forx.finance/?ref=E6DL28G</td>
-                        <td class="px-6 py-4 text-center font-bold">124</td>
-                        <td class="px-6 py-4 text-center font-bold">42</td>
-                        <td class="px-6 py-4 text-right space-x-2">
-                            <button onclick="alert('連結已複製')" class="text-blue-600 font-black hover:underline">複製連結</button>
-                            <button class="text-gray-300">|</button>
-                            <button onclick="openReferralModal('edit', '預設連結', 'E6DL28G')" class="text-gray-400 hover:text-black">修改備註</button>
-                        </td>
-                    </tr>
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 font-black">推特推廣-01</td>
-                        <td class="px-6 py-4 font-mono text-blue-600">FORX99</td>
-                        <td class="px-6 py-4 text-gray-400">forx.finance/?ref=FORX99</td>
-                        <td class="px-6 py-4 text-center font-bold">12</td>
-                        <td class="px-6 py-4 text-center font-bold">0</td>
-                        <td class="px-6 py-4 text-right space-x-2">
-                            <button onclick="alert('連結已複製')" class="text-blue-600 font-black hover:underline">複製連結</button>
-                            <button class="text-gray-300">|</button>
-                            <button onclick="openReferralModal('edit', '推特推廣-01', 'FORX99')" class="text-gray-400 hover:text-black">修改備註</button>
-                        </td>
-                    </tr>
+                    <tbody id="links-table-body" class="divide-y divide-gray-50 text-[11px] font-medium">
                     </tbody>
                 </table>
+                <div id="links-pagination"></div>
             </div>
         </div>
     </main>
@@ -681,7 +527,7 @@
         <div class="p-8 space-y-6">
             <div class="space-y-2">
                 <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">下级钱包地址 / UID</label>
-                <input type="text" placeholder="0x..." class="w-full border border-gray-200 p-3 rounded-sm outline-none focus:border-blue-600 font-bold">
+                <input type="text" id="input-add-agent-wallet" placeholder="0x..." class="w-full border border-gray-200 p-3 rounded-sm outline-none focus:border-blue-600 font-bold">
             </div>
             <div class="space-y-2">
                 <div class="flex justify-between items-center">
@@ -775,22 +621,21 @@
                        class="w-full border border-gray-200 p-3 rounded-sm outline-none focus:border-blue-600 font-bold text-[13px] transition-colors">
             </div>
 
-            <!-- 2. 自定義邀請碼 (修改為選填提示) -->
+            <!-- 2. 自定義邀請碼 (必须 6 位) -->
             <div class="space-y-2" id="code-input-container">
                 <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest flex justify-between">
-                    自定義邀請碼 (選填)
-                    <span class="text-blue-500 font-black">最多 6 位</span>
+                    自定義邀請碼
+                    <span class="text-red-500 font-black">必须 6 位</span>
                 </label>
                 <div class="relative">
-                    <!-- 修改了 placeholder -->
-                    <input type="text" id="input-link-code" placeholder="不填則預設自動生成" maxlength="6"
+                    <input type="text" id="input-link-code" placeholder="请输入 6 位字母或数字" maxlength="6"
                            class="w-full border border-gray-200 p-3 rounded-sm outline-none focus:border-blue-600 font-mono font-black text-[15px] uppercase transition-colors">
                     <div id="code-lock-icon" class="hidden absolute right-3 top-3 text-gray-300">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
                     </div>
                 </div>
                 <p id="code-hint" class="text-[9px] text-gray-400 font-medium leading-relaxed">
-                    * 支持字母與數字。如果不填寫，系統將為您生成專屬隨機碼。
+                    * 创建时必须输入 6 位邀请码，支持字母与数字组合。
                 </p>
             </div>
 
@@ -805,6 +650,62 @@
     </div>
 </div>
 
+<!-- 调整下级返佣比例 -->
+<div id="modal-adjust-ratio" class="modal-overlay" onclick="closeModalOnSide(event, 'modal-adjust-ratio')">
+    <div class="bg-white w-[440px] rounded-sm shadow-2xl overflow-hidden">
+        <div class="flex justify-between items-center px-6 py-4 border-b border-gray-50">
+            <span class="text-sm font-black italic">调整返佣比例</span>
+            <span class="cursor-pointer text-gray-400 hover:text-black" onclick="toggleModal('modal-adjust-ratio')">✕</span>
+        </div>
+        <div class="p-6 space-y-5">
+            <div class="space-y-1">
+                <p class="text-[10px] font-black text-gray-400 uppercase">下级合伙人</p>
+                <div class="copy-chip">
+                    <span id="adjust-ratio-wallet" class="font-mono font-black text-gray-900 text-[12px]"></span>
+                    <button type="button" class="copy-chip-btn" title="复制地址" onclick="PartnerCenter.copyAdjustWallet()">📋</button>
+                </div>
+                <div id="adjust-ratio-remark-row" class="copy-chip mt-1 hidden">
+                    <span id="adjust-ratio-remark" class="text-[11px] text-gray-500 font-bold"></span>
+                    <button type="button" class="copy-chip-btn" title="复制备注" onclick="PartnerCenter.copyAdjustRemark()">📋</button>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">返佣比例</label>
+                    <span id="adjust-ratio-display" class="text-sm font-black text-blue-600">50%</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <input type="number" id="adjust-ratio-input" min="0" max="70" step="1" value="50" oninput="PartnerCenter.onAdjustRatioInput(this.value)" class="w-20 bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[13px] font-black text-center outline-none focus:ring-1 focus:ring-black">
+                    <span class="text-sm font-bold text-gray-400">%</span>
+                    <input type="range" id="adjust-ratio-slider" min="0" max="70" step="1" value="50" oninput="PartnerCenter.onAdjustRatioInput(this.value)" class="flex-1 accent-black cursor-pointer">
+                </div>
+                <div class="flex justify-between text-[9px] font-bold text-gray-300"><span>0%</span><span>MAX: 70%</span></div>
+            </div>
+            <div id="adjust-ratio-warning" class="hidden bg-amber-50 border border-amber-200 rounded-sm p-3 text-[11px] text-amber-800 font-medium leading-relaxed"></div>
+            <button type="button" onclick="PartnerCenter.submitAdjustRatio()" class="w-full bg-black text-white py-3.5 rounded-sm font-black uppercase hover:bg-gray-800 transition shadow-xl">确认调整</button>
+        </div>
+    </div>
+</div>
+
+<!-- 团队返佣树异常详情 -->
+<div id="modal-team-tree" class="modal-overlay" onclick="closeModalOnSide(event, 'modal-team-tree')">
+    <div class="bg-white w-[min(720px,92vw)] max-h-[88vh] rounded-sm shadow-2xl overflow-hidden flex flex-col">
+        <div class="flex justify-between items-center px-6 py-4 border-b border-gray-50 bg-amber-50 shrink-0">
+            <div>
+                <span class="text-sm font-black text-amber-900">团队返佣树异常明细</span>
+                <p id="team-tree-modal-subtitle" class="text-[10px] text-amber-700 font-bold mt-0.5"></p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button type="button" id="team-tree-expand-all-btn" onclick="PartnerCenter.expandAllTeamTrees()" class="text-[10px] font-black text-amber-800 underline hover:text-amber-900">展开全部</button>
+                <span class="cursor-pointer text-gray-400 hover:text-black font-bold" onclick="toggleModal('modal-team-tree')">✕</span>
+            </div>
+        </div>
+        <div id="team-tree-modal-body" class="p-4 overflow-y-auto flex-1 text-[11px] space-y-2">
+        </div>
+    </div>
+</div>
+
+<script src="partner-center-user.js"></script>
 <script>
     // 切换数据表格 (下级代理 vs 直客)
     function switchTable(tableId) {
@@ -819,6 +720,8 @@
         // 更新 Tab 样式
         document.getElementById('tab-sub-agent').className = (tableId === 'sub-agent') ? "tab-active pb-1" : "text-gray-400 font-bold pb-1 hover:text-black";
         document.getElementById('tab-direct-client').className = (tableId === 'direct-client') ? "tab-active pb-1" : "text-gray-400 font-bold pb-1 hover:text-black";
+
+        if (window.PartnerCenter && PartnerCenter.onTableSwitch) PartnerCenter.onTableSwitch(tableId);
     }
 
     function toggleModal(id) {
@@ -834,28 +737,15 @@
         document.getElementById('rebate-display').innerText = val + '%';
     }
 
-    // 2. 绑定到表格中“查看团队”按钮的新函数
-    function drillDownToTeam(d) {
-        // 填充详情页数据
-        document.getElementById('detail-page-title').innerText = d.name + " 的团队业绩";
-        document.getElementById('detail-page-subtitle').innerText = `ID: ${d.uid} | 加入时间: ${d.joinTime}`;
-
-        document.getElementById('detail-v-vol').innerText = d.totalVol;
-        document.getElementById('detail-v-deposit').innerText = d.netDeposit;
-        document.getElementById('detail-v-users').innerText = `${d.activeUsers} / ${d.totalUsers}`;
-        document.getElementById('detail-v-total-profit').innerText = d.totalProfit;
-
-        document.getElementById('detail-v-self').innerText = d.profitSelf;
-        document.getElementById('detail-v-direct').innerText = d.profitDirect;
-        document.getElementById('detail-v-gap').innerText = d.profitGap;
-
-        // 切换到详情页面
-        showMainPage('page-team-detail');
+    // 查看团队 → 无限穿透（脱敏）
+    function drillDownToTeam(partnerId) {
+        if (window.PartnerCenter && PartnerCenter.openDrillTeam) {
+            PartnerCenter.openDrillTeam(partnerId);
+        }
     }
 
     function showMainPage(pageId) {
-        // 1. 隱藏所有頁面
-        const pages = ['page-links', 'page-overview', 'page-settlement', 'page-team-detail'];
+        const pages = ['page-links', 'page-overview', 'page-settlement', 'page-drill-overview'];
         pages.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.classList.add('hidden');
@@ -868,7 +758,7 @@
         const sidebarBtns = {
             'page-links': 'sidebar-links',
             'page-overview': 'sidebar-overview',
-            'page-team-detail': 'sidebar-overview', // 詳情頁時代理管理依然亮起
+            'page-drill-overview': 'sidebar-overview',
             'page-settlement': 'sidebar-settlement'
         };
 
@@ -882,13 +772,14 @@
                 btn.className = "w-full text-left px-4 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all";
             }
         });
+
+        if (window.PartnerCenter && PartnerCenter.onPageShow) {
+            PartnerCenter.onPageShow(pageId);
+        }
     }
 
-    // 初始設置：預設打開連結管理頁
-    showMainPage('page-links');
-
     let currentModalMode = 'create'; // 'create' or 'edit'
-    const existingCodes = ['E6DL28G', 'FORX99', 'TW_001']; // 模擬已存在的邀請碼
+    const existingCodes = ['E6DL28G', 'FORX99', 'YT2024', 'DSC001', 'ASIA01', 'EUR002', 'SZ2405', 'SG2406', 'KOL003', 'MED001', 'MED002', 'VIRAL1'];
 
     // 打開彈窗：支持創建或修改
     function openReferralModal(mode, remark = '', code = '') {
@@ -906,6 +797,7 @@
         if (mode === 'create') {
             titleEl.innerText = "創建新邀請連結";
             codeInput.readOnly = false;
+            codeInput.value = '';
             codeInput.classList.remove('bg-gray-50', 'text-gray-400');
             codeLock.classList.add('hidden');
             codeHint.classList.remove('hidden');
@@ -921,7 +813,7 @@
         toggleModal('modal-referral-link');
     }
 
-    // 生成 6 位隨機邀請碼的函數
+    // 生成 6 位隨機邀請碼的函數（仅演示备用）
     function generateRandomCode(length = 6) {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         let result = '';
@@ -944,29 +836,35 @@
         }
 
         if (currentModalMode === 'create') {
-            // 如果邀請碼為空，則自動生成
-            if (!code) {
-                code = generateRandomCode(6);
-                console.log("用戶未填寫，自動生成代碼: " + code);
-            } else {
-                // 如果填寫了，檢查長度與是否重複
-                if (code.length > 6) {
-                    alert("邀請碼不能超過 6 位");
-                    return;
-                }
-                if (existingCodes.includes(code)) {
-                    alert("該邀請碼已被佔用，請重新輸入或保持空白以自動生成");
-                    return;
-                }
+            if (!code || code.length !== 6) {
+                alert("請輸入 6 位邀請碼");
+                return;
             }
-            alert(`創建成功！\n備註：${remark}\n邀請碼：${code}`);
+            if (!/^[A-Z0-9]{6}$/.test(code)) {
+                alert("邀請碼僅支持 6 位字母或數字");
+                return;
+            }
+            if (existingCodes.includes(code)) {
+                alert("該邀請碼已被佔用，請重新輸入");
+                return;
+            }
+            existingCodes.push(code);
+            if (window.PartnerCenter && PartnerCenter.addInviteLink) {
+                PartnerCenter.addInviteLink(remark, code);
+            }
+            alert('創建成功！\n備註：' + remark + '\n邀請碼：' + code);
         } else {
-            // 修改模式
-            alert(`備註修改成功: ${remark}`);
+            alert('備註修改成功: ' + remark);
         }
 
         toggleModal('modal-referral-link');
     }
+
+    // 初始設置：渲染动态数据后默认打开邀请链接页
+    if (window.PartnerCenter && PartnerCenter.init) {
+        PartnerCenter.init();
+    }
+    showMainPage('page-links');
 </script>
 
 </body>
