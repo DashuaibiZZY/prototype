@@ -38,7 +38,14 @@
     const mySuperiorInfo = {
         level: 2,
         parentWallet: '0x1a2b...3c4d',
-        parentWalletFull: '0x1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d'
+        parentWalletFull: '0x1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d',
+        myRatio: 70
+    };
+
+    const myPartnerProfile = {
+        wallet: '0x9f...8a1',
+        walletFull: '0x9f8a1b2c3d4e5f60718293a4b5c6d7e8f9012a9f8',
+        ratio: 70
     };
 
     const settlementRecords = [
@@ -83,34 +90,34 @@
 
     const teamTreeAbnormalData = {
         sp2: [
-            { id: 'line1', title: '异常返佣线 1', summary: '0x8e...55c → 0xBc...4431 → 0x7a...E912', nodes: [
+            { id: 'line1', title: '异常返佣线 1', summary: '0x8e...55c → 0xBc...4431 → 0x7a...E912', pausedVol: 22000, nodes: [
                 { wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J（直属下级）', ratio: '50%' },
                 { wallet: '0xBc...4431', walletFull: '0xBc4431a2098f7e6d5c4b3a291807f6e5d4c3b4431', remark: '下级合伙人-A', ratio: '55%' },
                 { wallet: '0x7a...E912', walletFull: '0x7aE912f6059483726180a9b8c7d6e5f4a3b2c1912', remark: '交易用户', ratio: '40%' }
             ]},
-            { id: 'line2', title: '异常返佣线 2', summary: '0x8e...55c → 0xDe...8821 → 0xF1...009a', nodes: [
+            { id: 'line2', title: '异常返佣线 2', summary: '0x8e...55c → 0xDe...8821 → 0xF1...009a', pausedVol: 18500, nodes: [
                 { wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J（直属下级）', ratio: '50%' },
                 { wallet: '0xDe...8821', walletFull: '0xDe8821a0b9c8d7e6f504938271605948372618821', remark: '下级合伙人-B', ratio: '52%' },
                 { wallet: '0xF1...009a', walletFull: '0xF1009a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3a', remark: '交易用户', ratio: '48%' }
             ]},
-            { id: 'line3', title: '异常返佣线 3', summary: '0x8e...55c → 0xAa...1102 → 0x22...cc44', nodes: [
+            { id: 'line3', title: '异常返佣线 3', summary: '0x8e...55c → 0xAa...1102 → 0x22...cc44', pausedVol: 15200, nodes: [
                 { wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J（直属下级）', ratio: '50%' },
                 { wallet: '0xAa...1102', walletFull: '0xAa1102b3c4d5e6f708192a3b4c5d6e7f8091a1102', remark: '下级合伙人-C', ratio: '58%' },
                 { wallet: '0x22...cc44', walletFull: '0x22cc44d5e6f708192a3b4c5d6e7f8091a2b3c4cc44', remark: '交易用户', ratio: '45%' }
             ]},
-            { id: 'line4', title: '异常返佣线 4', summary: '0x8e...55c → 0x33...dd55 → 0x44...ee66', nodes: [
+            { id: 'line4', title: '异常返佣线 4', summary: '0x8e...55c → 0x33...dd55 → 0x44...ee66', pausedVol: 12800, nodes: [
                 { wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J（直属下级）', ratio: '50%' },
                 { wallet: '0x33...dd55', walletFull: '0x33dd55e6f708192a3b4c5d6e7f8091a2b3c4d5dd55', remark: '下级合伙人-D', ratio: '54%' },
                 { wallet: '0x44...ee66', walletFull: '0x44ee66f708192a3b4c5d6e7f8091a2b3c4d5e6ee66', remark: '交易用户', ratio: '46%' }
             ]},
-            { id: 'line5', title: '异常返佣线 5', summary: '0x8e...55c → 0x55...ff77 → 0x66...0088', nodes: [
+            { id: 'line5', title: '异常返佣线 5', summary: '0x8e...55c → 0x55...ff77 → 0x66...0088', pausedVol: 12300, nodes: [
                 { wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J（直属下级）', ratio: '50%' },
                 { wallet: '0x55...ff77', walletFull: '0x55ff7708192a3b4c5d6e7f8091a2b3c4d5e6f7ff77', remark: '下级合伙人-E', ratio: '53%' },
                 { wallet: '0x66...0088', walletFull: '0x660088192a3b4c5d6e7f8091a2b3c4d5e6f70880088', remark: '交易用户', ratio: '47%' }
             ]}
         ],
         sp1_b: [
-            { id: 'line1', title: '异常返佣线 1', summary: '0x9c...a12 → 0x1d...b34 → 0x2e...c56', nodes: [
+            { id: 'line1', title: '异常返佣线 1', summary: '0x9c...a12 → 0x1d...b34 → 0x2e...c56', pausedVol: 280000, nodes: [
                 { wallet: '0x9c...a12', walletFull: '0x9ca12b34c56d78e90f1234567890abcdef9ca12', remark: '下级合伙人-X', ratio: '48%' },
                 { wallet: '0x1d...b34', walletFull: '0x1db34c56d78e90f1234567890abcdef1db34c56', remark: '下级合伙人-Y', ratio: '52%' },
                 { wallet: '0x2e...c56', walletFull: '0x2ec56d78e90f1234567890abcdef2ec56d78', remark: '交易用户', ratio: '44%' }
@@ -130,7 +137,12 @@
             name: '合伙人-小王',
             label: '渠道-小王',
             wallet: '0x3f...12a',
+            walletFull: '0x3f8a2b1c9d4e5f60718293a4b5c6d7e8f9012a',
             joinDate: '2024-05-12',
+            ratio: 60,
+            superiorLevel: 2,
+            superiorWallet: myPartnerProfile.wallet,
+            superiorWalletFull: myPartnerProfile.walletFull,
             overview: { teamVol: 12500000, totalRebate: 13000, selfRebate: 200, directRebate: 1200, gapRebate: 11600, teamNetDeposit: 524000, totalUsers: 3680, activeUsers: 1850 },
             abnormalText: null,
             subPartners: [
@@ -146,7 +158,12 @@
             name: '二级-KOL',
             label: '二级-KOL',
             wallet: '0x4a...b21',
+            walletFull: '0x4ab21c32d54e67f8091a2b3c4d5e6f70891a2b21',
             joinDate: '2024-05-11',
+            ratio: 45,
+            superiorLevel: 3,
+            superiorWallet: '0x3f...12a',
+            superiorWalletFull: '0x3f8a2b1c9d4e5f60718293a4b5c6d7e8f9012a',
             overview: { teamVol: 4200000, totalRebate: 3200, selfRebate: 80, directRebate: 400, gapRebate: 2320, teamNetDeposit: 180000, totalUsers: 920, activeUsers: 310 },
             abnormalText: null,
             subPartners: [
@@ -160,7 +177,12 @@
             name: 'KOL-J',
             label: '推特KOL-J',
             wallet: '0x8e...55c',
+            walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c',
             joinDate: '2024-05-10',
+            ratio: 50,
+            superiorLevel: 2,
+            superiorWallet: myPartnerProfile.wallet,
+            superiorWalletFull: myPartnerProfile.walletFull,
             overview: { teamVol: 16200000, totalRebate: 8400, selfRebate: 150, directRebate: 900, gapRebate: 6650, teamNetDeposit: 820000, totalUsers: 850, activeUsers: 120 },
             abnormalText: '检测到 5 条异常返佣线，暂停结算交易额 $620,000。',
             subPartners: [
@@ -174,7 +196,12 @@
             name: '东南亚渠道',
             label: '東南亞渠道',
             wallet: '0x2a...9f1',
+            walletFull: '0x2a9f1e8d7c6b5a4938271605948372616059489f1',
             joinDate: '2024-05-05',
+            ratio: 55,
+            superiorLevel: 2,
+            superiorWallet: myPartnerProfile.wallet,
+            superiorWalletFull: myPartnerProfile.walletFull,
             overview: { teamVol: 8900000, totalRebate: 5200, selfRebate: 120, directRebate: 680, gapRebate: 4000, teamNetDeposit: 320000, totalUsers: 620, activeUsers: 180 },
             abnormalText: null,
             subPartners: [],
@@ -187,7 +214,12 @@
             name: '韩国KOL',
             label: '韓國KOL',
             wallet: '0x7b...4c2',
+            walletFull: '0x7b4c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4c2',
             joinDate: '2024-04-28',
+            ratio: 45,
+            superiorLevel: 2,
+            superiorWallet: myPartnerProfile.wallet,
+            superiorWalletFull: myPartnerProfile.walletFull,
             overview: { teamVol: 22400000, totalRebate: 11200, selfRebate: 280, directRebate: 1400, gapRebate: 9520, teamNetDeposit: 980000, totalUsers: 1580, activeUsers: 510 },
             abnormalText: null,
             subPartners: [
@@ -201,7 +233,12 @@
             name: '异常合伙人',
             label: '异常合伙人',
             wallet: '0x5c...882',
+            walletFull: '0x5c8821a0b9c8d7e6f504938271605948372618882',
             joinDate: '2024-05-08',
+            ratio: 75,
+            superiorLevel: 2,
+            superiorWallet: myPartnerProfile.wallet,
+            superiorWalletFull: myPartnerProfile.walletFull,
             overview: { teamVol: 2100000, totalRebate: 0, selfRebate: 0, directRebate: 0, gapRebate: 0, teamNetDeposit: -120000, totalUsers: 12, activeUsers: 0 },
             abnormalText: null,
             subPartners: [],
@@ -382,15 +419,67 @@
         renderDirectClientsTable({ masked: false });
     }
 
-    function renderMySuperior() {
-        const el = document.getElementById('overview-my-superior');
-        if (!el) return;
-        if (mySuperiorInfo.level <= 1) {
-            el.innerHTML = '<span class="text-blue-600 font-black">一级代理</span>';
-        } else {
-            el.innerHTML = '<div class="copy-chip"><span class="font-mono">' + esc(mySuperiorInfo.parentWallet) + '</span>' +
-                copyChipBtn(mySuperiorInfo.parentWalletFull || mySuperiorInfo.parentWallet, '上级钱包地址') + '</div>';
+    function renderPartnerIdentityBar(superiorElId, ratioElId, info) {
+        const el = document.getElementById(superiorElId);
+        if (el) {
+            if (info.superiorLevel <= 1) {
+                el.innerHTML = '<span class="text-blue-600 font-black">一级代理</span>';
+            } else if (info.masked) {
+                el.innerHTML = '<span class="font-mono font-black text-gray-900">' + esc(info.superiorWallet) + '</span>';
+            } else {
+                el.innerHTML = '<div class="copy-chip"><span class="font-mono">' + esc(info.superiorWallet) + '</span>' +
+                    copyChipBtn(info.superiorWalletFull || info.superiorWallet, '上级钱包地址') + '</div>';
+            }
         }
+        const ratioEl = document.getElementById(ratioElId);
+        if (ratioEl) ratioEl.textContent = info.ratio + '%';
+    }
+
+    function renderMySuperior() {
+        renderPartnerIdentityBar('overview-my-superior', 'overview-my-ratio', {
+            superiorLevel: mySuperiorInfo.level,
+            superiorWallet: mySuperiorInfo.parentWallet,
+            superiorWalletFull: mySuperiorInfo.parentWalletFull,
+            ratio: mySuperiorInfo.myRatio,
+            masked: false
+        });
+    }
+
+    function drillParentContext() {
+        if (drillStack.length > 0) {
+            const parentId = drillStack[drillStack.length - 1];
+            const parentTeam = drillTeams[parentId];
+            if (parentTeam) {
+                return {
+                    wallet: parentTeam.wallet,
+                    walletFull: parentTeam.walletFull || parentTeam.wallet,
+                    level: parentTeam.superiorLevel ? parentTeam.superiorLevel + 1 : 2
+                };
+            }
+        }
+        return {
+            wallet: myPartnerProfile.wallet,
+            walletFull: myPartnerProfile.walletFull,
+            level: mySuperiorInfo.level
+        };
+    }
+
+    function clampRatio(val) {
+        const n = parseInt(val, 10);
+        if (isNaN(n)) return 0;
+        return Math.max(0, Math.min(MY_MAX_RATIO, n));
+    }
+
+    function setAdjustRatioValue(ratio) {
+        ratio = clampRatio(ratio);
+        const slider = document.getElementById('adjust-ratio-slider');
+        const input = document.getElementById('adjust-ratio-input');
+        const display = document.getElementById('adjust-ratio-display');
+        if (slider) slider.value = ratio;
+        if (input) input.value = ratio;
+        if (display) display.textContent = ratio + '%';
+        const partner = findSubPartner(adjustRatioPartnerId);
+        updateAdjustRatioWarning(ratio, partner);
     }
 
     function settlementStatusLabel(status) {
@@ -481,6 +570,13 @@
         }
 
         updatePeriodButtons('drill-period-btn', drillPeriod);
+        renderPartnerIdentityBar('drill-my-superior', 'drill-my-ratio', {
+            superiorLevel: team.superiorLevel || 2,
+            superiorWallet: team.superiorWallet || myPartnerProfile.wallet,
+            superiorWalletFull: team.superiorWalletFull || myPartnerProfile.walletFull,
+            ratio: team.ratio || 0,
+            masked: true
+        });
         renderSubPartnersTable({ masked: true, drill: true });
         renderDirectClientsTable({ masked: true, drill: true });
         updateDrillTableTabs();
@@ -706,11 +802,17 @@
         if (drillTeams[partnerId]) return drillTeams[partnerId];
         const row = findPartnerRowById(partnerId);
         if (!row) return null;
+        const parentCtx = drillParentContext();
         drillTeams[partnerId] = {
             name: row.name || row.remark || '下级团队',
             label: row.remark || row.wallet,
             wallet: row.wallet,
+            walletFull: row.walletFull || row.wallet,
             joinDate: row.joinDate,
+            ratio: row.ratio,
+            superiorLevel: parentCtx.level,
+            superiorWallet: parentCtx.wallet,
+            superiorWalletFull: parentCtx.walletFull,
             overview: {
                 teamVol: row.totalVol,
                 totalRebate: Math.max(row.gapIncome * 4, 500),
@@ -814,8 +916,10 @@
         }
         return '<div class="tree-line-panel">' +
             '<div class="tree-line-header flex items-center justify-between px-4 py-3 hover:bg-amber-50/80" onclick="PartnerCenter.toggleTeamTreeLine(\'' + partnerId + '\', \'' + line.id + '\')">' +
-            '<div><p class="font-black text-amber-900 text-[11px]">' + esc(line.title) + '</p>' +
-            '<p class="text-[10px] text-amber-700/80 font-medium mt-0.5 truncate max-w-[520px]">' + esc(line.summary) + '</p></div>' +
+            '<div class="min-w-0 flex-1"><p class="font-black text-amber-900 text-[11px]">' + esc(line.title) + '</p>' +
+            '<p class="text-[10px] text-amber-700/80 font-medium mt-0.5 truncate max-w-[520px]">' + esc(line.summary) + '</p>' +
+            (line.pausedVol ? '<p class="text-[10px] text-red-600 font-black mt-1">停止结算交易额 ' + fmtMoney(line.pausedVol) + '</p>' : '') +
+            '</div>' +
             '<span class="text-[10px] font-black text-amber-600 shrink-0 ml-2">' + (isOpen ? '收起' : '展开') + '</span></div>' +
             (isOpen ? '<div class="tree-line-body px-2 pb-2">' + nodesHtml + '</div>' : '') +
             '</div>';
@@ -877,8 +981,6 @@
         const walletEl = document.getElementById('adjust-ratio-wallet');
         const remarkEl = document.getElementById('adjust-ratio-remark');
         const remarkRow = document.getElementById('adjust-ratio-remark-row');
-        const slider = document.getElementById('adjust-ratio-slider');
-        const display = document.getElementById('adjust-ratio-display');
         if (walletEl) walletEl.textContent = partner.wallet;
         if (remarkEl && remarkRow) {
             if (partner.remark) {
@@ -888,9 +990,7 @@
                 remarkRow.classList.add('hidden');
             }
         }
-        if (slider) slider.value = partner.ratio;
-        if (display) display.textContent = partner.ratio + '%';
-        updateAdjustRatioWarning(partner.ratio, partner);
+        setAdjustRatioValue(partner.ratio);
         toggleModal('modal-adjust-ratio');
     }
 
@@ -1007,10 +1107,7 @@
         },
         openAdjustRatioModal: openAdjustRatioModal,
         onAdjustRatioInput: function (val) {
-            const display = document.getElementById('adjust-ratio-display');
-            if (display) display.textContent = val + '%';
-            const partner = findSubPartner(adjustRatioPartnerId);
-            updateAdjustRatioWarning(parseInt(val, 10), partner);
+            setAdjustRatioValue(val);
         },
         copyAdjustWallet: function () {
             const partner = findSubPartner(adjustRatioPartnerId);
@@ -1022,9 +1119,10 @@
         },
         submitAdjustRatio: function () {
             const partner = findSubPartner(adjustRatioPartnerId);
+            const input = document.getElementById('adjust-ratio-input');
             const slider = document.getElementById('adjust-ratio-slider');
-            if (!partner || !slider) return;
-            const ratio = parseInt(slider.value, 10);
+            if (!partner) return;
+            const ratio = clampRatio(input ? input.value : slider ? slider.value : 0);
             if (ratio > MY_MAX_RATIO) {
                 alert('返佣比例不能超过 ' + MY_MAX_RATIO + '%');
                 return;
