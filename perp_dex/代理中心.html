@@ -195,6 +195,12 @@
                     </div>
                 </div>
 
+                <!-- 我的上级 -->
+                <div class="stats-card py-4 px-5">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">我的上级</p>
+                    <div id="overview-my-superior" class="text-[13px] font-black text-gray-900"></div>
+                </div>
+
                 <!-- 核心指标 -->
                 <div class="grid grid-cols-4 gap-4">
                     <div class="stats-card">
@@ -269,6 +275,7 @@
                             <tbody id="sub-partner-table-body" class="divide-y divide-gray-50 text-[11px] font-medium">
                             </tbody>
                         </table>
+                        <div id="sub-partner-pagination"></div>
                     </div>
 
                     <!-- 表格容器 2: 直客明细 -->
@@ -279,6 +286,7 @@
                             <tbody id="direct-client-table-body" class="divide-y divide-gray-50 text-[11px]">
                             </tbody>
                         </table>
+                        <div id="direct-client-pagination"></div>
                     </div>
                 </div>
             </div>
@@ -310,43 +318,23 @@
 
                 <!-- 结算列表 -->
                 <div class="stats-card !p-0">
-                    <div class="p-6 border-b border-gray-50 bg-white">
-                        <h4 class="font-black text-sm uppercase">每日结算流水 (Daily Settlement)</h4>
+                    <div class="p-6 border-b border-gray-50 bg-white flex flex-wrap justify-between items-center gap-4">
+                        <h4 class="font-black text-sm">每日结算流水</h4>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <input type="date" id="settlement-filter-date" onchange="PartnerCenter.setSettlementDateFilter(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[11px] outline-none focus:ring-1 focus:ring-black">
+                            <select id="settlement-filter-status" onchange="PartnerCenter.setSettlementStatusFilter(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[10px] font-bold text-gray-700 outline-none focus:ring-1 focus:ring-black cursor-pointer">
+                                <option value="all">全部状态</option>
+                                <option value="pending">待结算</option>
+                                <option value="settled">已结算</option>
+                                <option value="rebate_stopped">返佣异常停止结算</option>
+                            </select>
+                        </div>
                     </div>
                     <table class="w-full text-left">
-                        <thead class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase">
-                        <tr>
-                            <th class="px-6 py-4">结算日期</th>
-                            <th class="px-6 py-4 text-right">有效交易额</th>
-                            <th class="px-6 py-4 text-right">产生总手续费</th>
-                            <th class="px-6 py-4 text-right text-blue-600">应结佣金 (Rebate)</th>
-                            <th class="px-6 py-4 text-right">结算状态</th>
-                        </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-50 text-[11px] font-bold">
-                        <tr class="hover:bg-slate-50 bg-amber-50/40">
-                            <td class="px-6 py-4 text-gray-900">2024-05-23</td>
-                            <td class="px-6 py-4 text-right text-gray-500">$0</td>
-                            <td class="px-6 py-4 text-right text-gray-500">$0.00</td>
-                            <td class="px-6 py-4 text-right text-amber-700 font-black">$0.00</td>
-                            <td class="px-6 py-4 text-right"><span class="text-amber-600 font-bold" title="链路异常，交易额仍记录但不计入待结算">待修正返佣后计算</span></td>
-                        </tr>
-                        <tr class="hover:bg-slate-50 bg-blue-50/30">
-                            <td class="px-6 py-4 text-gray-900">2024-05-22</td>
-                            <td class="px-6 py-4 text-right text-gray-500">$1,240,000</td>
-                            <td class="px-6 py-4 text-right text-gray-500">$1,240.00</td>
-                            <td class="px-6 py-4 text-right text-blue-600">$868.00</td>
-                            <td class="px-6 py-4 text-right"><span class="text-blue-600 font-bold" title="含异常期间重算佣金">补结算</span></td>
-                        </tr>
-                        <tr class="hover:bg-slate-50">
-                            <td class="px-6 py-4 text-gray-900">2024-05-21</td>
-                            <td class="px-6 py-4 text-right text-gray-500">$980,000</td>
-                            <td class="px-6 py-4 text-right text-gray-500">$980.00</td>
-                            <td class="px-6 py-4 text-right text-blue-600">$686.00</td>
-                            <td class="px-6 py-4 text-right"><span class="text-green-500">已发放</span></td>
-                        </tr>
-                        </tbody>
+                        <thead id="settlement-table-head" class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase"></thead>
+                        <tbody id="settlement-table-body" class="divide-y divide-gray-50 text-[11px] font-bold"></tbody>
                     </table>
+                    <div id="settlement-pagination"></div>
                 </div>
             </div>
 
@@ -431,12 +419,14 @@
                         <thead id="drill-sub-partner-table-head" class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase tracking-wider"></thead>
                         <tbody id="drill-sub-partner-table-body" class="divide-y divide-gray-50 text-[11px] font-medium"></tbody>
                     </table>
+                    <div id="drill-sub-partner-pagination"></div>
                 </div>
                 <div id="drill-table-direct-client" class="overflow-x-auto hidden">
                     <table class="w-full text-left whitespace-nowrap">
                         <thead id="drill-direct-client-table-head" class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase"></thead>
                         <tbody id="drill-direct-client-table-body" class="divide-y divide-gray-50 text-[11px]"></tbody>
                     </table>
+                    <div id="drill-direct-client-pagination"></div>
                 </div>
             </div>
         </div>
