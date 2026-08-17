@@ -40,6 +40,7 @@
 | APP 端指标设置页 | `指标设置-app/` | `capture-indicator-settings-doc-screenshots.mjs` | 主列表/各指标子页、线宽与颜色浮层、参数校验提示、重置确认底栏 |
 | 导航栏（Web） | `导航栏/` | `capture-navbar-doc-screenshots.mjs` | Logo/主导航/更多下拉、主题/铃铛/语言/设置抽屉（钱包充提见关联文档） |
 | 邀请返佣（Web/APP） | `邀请返佣/` | `capture-referral-doc-screenshots.mjs` | Web/App 邀请页、好友明细、分享海报、说明弹窗、排序 Sheet、代理占位态 |
+| 邀请合伙人无限层返佣 | `合伙人/` | `capture-partner-doc-screenshots.mjs` | 后台列表/详情/穿透/返佣树/迁移/审核/对账、Web 合伙人中心各页与弹窗 |
 | 登录、划转与充提（Web） | `登录充提-web/` | `capture-login-finance-doc-screenshots.mjs` | 登录 Modal、钱包下拉、身份验证器/导出钱包 Modal、充提划转 Modal |
 | 活动中心（Web/App） | `活动中心-web/`、`活动中心-app/` | `capture-activity-center-doc-screenshots.mjs` | 我的活动入口、Web 奖励记录弹窗、App 奖励记录列表 |
 | 持仓流水 / 交易流水（App） | `持仓流水/`、`交易流水-app/` | `capture-position-flow-doc-screenshots.mjs`、`capture-trade-flow-doc-screenshots.mjs` | 分享盈亏海报（含邀请码）、流水页分享弹窗 |
@@ -63,6 +64,7 @@ node scripts/capture-markets-doc-screenshots.mjs
 node scripts/capture-indicator-settings-doc-screenshots.mjs
 node scripts/capture-navbar-doc-screenshots.mjs
 node scripts/capture-referral-doc-screenshots.mjs
+node scripts/capture-partner-doc-screenshots.mjs
 node scripts/capture-profile-center-doc-screenshots.mjs
 node scripts/capture-login-finance-doc-screenshots.mjs
 node scripts/capture-activity-center-doc-screenshots.mjs
@@ -86,6 +88,7 @@ node scripts/push-doc-assets.mjs
 | `document/assets/指标设置-app/` | 《APP 端指标设置页》配图 |
 | `document/assets/导航栏/` | 《导航栏》（Web 顶部导航）配图 |
 | `document/assets/邀请返佣/` | 《邀请返佣（Web/APP）》配图 |
+| `document/assets/合伙人/` | 《邀请合伙人无限层返佣系统》（后台/Web 合伙人中心）配图 |
 | `document/assets/个人中心-app/` | 《APP 端个人中心》配图 |
 | `document/assets/登录充提-web/` | 《登录、划转与充提》（Web 钱包入口与充提）配图 |
 | `document/assets/活动中心-web/` | 活动中心 Web（我的活动、奖励记录弹窗） |
