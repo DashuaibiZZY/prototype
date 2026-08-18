@@ -9,8 +9,12 @@
         markPrice: 63697.49,
         openAvg: 61297.77,
         latestPrice: 63650.00,
-        posQtyUsdt: 10032.23,
-        closableUsdt: 10032.23,
+        coinQty: 0.500,
+        coin: 'BTC',
+        valueUsdc: 31233.23,
+        direction: 'long',
+        posQtyUsdc: 10032.23,
+        closableUsdc: 10032.23,
         estPnl: 3211.83,
         pnlCoin: 'USDC',
     };
@@ -38,7 +42,7 @@
     }
 
     function getModalCloseQtyValue() {
-        const val = DEMO_POS.closableUsdt * modalCloseQtyPct / 100;
+        const val = DEMO_POS.closableUsdc * modalCloseQtyPct / 100;
         return fmtUsdt(val);
     }
 
@@ -50,7 +54,7 @@
     }
 
     function getQuickCloseQtyValue() {
-        const val = DEMO_POS.closableUsdt * quickQtyPct / 100;
+        const val = DEMO_POS.closableUsdc * quickQtyPct / 100;
         return fmtUsdt(val);
     }
 
@@ -107,11 +111,7 @@
         return `<span class="inline-flex items-center gap-1 text-gray-500 whitespace-nowrap">
             <span id="pos-close-col-label">${label}</span>
             <button type="button" class="pos-close-mode-switch" title="切换标准/快捷平仓" onclick="PositionClose.cyclePosCloseMode(1)" aria-label="切换平仓模式">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="2" y="3.5" width="4.5" height="9" rx="0.75"/>
-                    <rect x="9.5" y="3.5" width="4.5" height="9" rx="0.75"/>
-                    <path d="M7.25 6.25h1.5M7.25 8.25h1.5"/>
-                </svg>
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 11H13.5M13.5 11L11 8.5M13.5 11L11 13.5M12 5H2.5M2.5 5L5 2.5M2.5 5L5 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
         </span>`;
     }
@@ -142,8 +142,8 @@
 
     function renderStandardCloseCell() {
         return `<td class="px-3 py-2.5 text-right whitespace-nowrap">
-            <button type="button" onclick="PositionClose.openPositionCloseModal()" class="text-gray-900 hover:text-blue-600 font-bold mr-2">平仓</button>
-            <button type="button" onclick="PositionClose.openMarketCloseConfirm()" class="text-gray-900 hover:text-blue-600 font-bold">市价全平</button>
+            <button type="button" onclick="PositionClose.openPositionCloseModal()" class="pos-close-action-btn mr-1.5">平仓</button>
+            <button type="button" onclick="PositionClose.openMarketCloseConfirm()" class="pos-close-action-btn">市价全平</button>
         </td>`;
     }
 
@@ -170,8 +170,8 @@
                             ${renderQtySliderBlock('quick-close-qty-slider', quickQtyPct, 'PositionClose.setQuickCloseQtyPct(Number(this.value))')}
                         </div>
                     </div>
-                    <button type="button" onclick="PositionClose.openQuickCloseConfirm()" class="text-gray-900 hover:text-blue-600 font-bold text-[10px]">平仓</button>
-                    <button type="button" onclick="PositionClose.openMarketCloseConfirm()" class="text-gray-900 hover:text-blue-600 font-bold text-[10px]">市价全平</button>
+                    <button type="button" onclick="PositionClose.openQuickCloseConfirm()" class="pos-close-action-btn">平仓</button>
+                    <button type="button" onclick="PositionClose.openMarketCloseConfirm()" class="pos-close-action-btn">市价全平</button>
                 </div>
                 <div class="text-[9px] text-gray-400">预计收益 <span id="quick-close-est-pnl" class="text-green-500 font-bold">${fmtPnl(DEMO_POS.estPnl * quickQtyPct / 100)} ${DEMO_POS.pnlCoin}</span></div>
             </div>
@@ -180,6 +180,40 @@
 
     function renderCloseCell() {
         return closeMode === 'standard' ? renderStandardCloseCell() : renderQuickCloseCell();
+    }
+
+    function getOrderQtyUnit() {
+        return document.getElementById('qty-unit')?.innerText?.trim() || 'USDC';
+    }
+
+    function renderPosQtyMainText() {
+        const unit = getOrderQtyUnit();
+        if (unit === 'BTC') return DEMO_POS.coinQty.toFixed(3) + ' ' + DEMO_POS.coin;
+        return fmtUsdt(DEMO_POS.valueUsdc) + ' USDC';
+    }
+
+    function renderPosQtyCellInner() {
+        const dirLabel = DEMO_POS.direction === 'long' ? '开多' : '开空';
+        const dirClass = DEMO_POS.direction === 'long' ? 'text-green-500' : 'text-red-500';
+        const coinQtyStr = DEMO_POS.coinQty.toFixed(3) + ' ' + DEMO_POS.coin;
+        const valueStr = fmtUsdt(DEMO_POS.valueUsdc) + ' USDC';
+        return `<div class="pos-qty-hover-wrap">
+            <span id="pos-qty-display">${renderPosQtyMainText()}</span>
+            <div class="pos-qty-tip">
+                <div class="pos-qty-tip-row"><span class="text-gray-400">交易方向</span><span class="${dirClass} font-bold">${dirLabel}</span></div>
+                <div class="pos-qty-tip-row"><span class="text-gray-400">持仓币数</span><span class="font-bold text-gray-900">${coinQtyStr}</span></div>
+                <div class="pos-qty-tip-row"><span class="text-gray-400">持仓价值</span><span class="font-bold text-gray-900">${valueStr}</span></div>
+            </div>
+        </div>`;
+    }
+
+    function renderPosQtyCell() {
+        return `<td class="px-3 py-2.5 whitespace-nowrap font-medium text-gray-900" id="pos-qty-cell">${renderPosQtyCellInner()}</td>`;
+    }
+
+    function refreshPosQtyDisplay() {
+        const display = document.getElementById('pos-qty-display');
+        if (display) display.textContent = renderPosQtyMainText();
     }
 
     function refreshPosTableCloseColumn() {
@@ -246,8 +280,8 @@
             if (open) open.textContent = fmtUsdt(DEMO_POS.openAvg);
             if (qtyInput) qtyInput.value = getModalCloseQtyValue();
             if (slider) slider.value = 100;
-            document.getElementById('modal-close-pos-qty').textContent = fmtUsdt(DEMO_POS.posQtyUsdt) + ' USDT';
-            document.getElementById('modal-close-closable-qty').textContent = fmtUsdt(DEMO_POS.closableUsdt) + ' USDT';
+            document.getElementById('modal-close-pos-qty').textContent = fmtUsdt(DEMO_POS.posQtyUsdc) + ' USDC';
+            document.getElementById('modal-close-closable-qty').textContent = fmtUsdt(DEMO_POS.closableUsdc) + ' USDC';
             updateModalCloseEstPnl();
             toggleModal('modal-position-close');
         },
@@ -274,7 +308,7 @@
 
         openCloseOrderConfirm: function (source) {
             const price = source === 'quick' ? getQuickClosePriceValue() : getModalClosePriceValue();
-            const qty = source === 'quick' ? getQuickCloseQtyValue() + ' USDT' : getModalCloseQtyValue() + ' USDT';
+            const qty = source === 'quick' ? getQuickCloseQtyValue() + ' USDC' : getModalCloseQtyValue() + ' USDC';
             const isMarket = price === '市价';
             if (typeof openOrderConfirm === 'function') {
                 if (isMarket) openOrderConfirm('close-long-market', { price: '市價', qty: qty });
@@ -334,6 +368,9 @@
 
         renderCloseColHeader: renderCloseColHeader,
         renderCloseCell: renderCloseCell,
+        renderQtySliderBlock: renderQtySliderBlock,
+        renderPosQtyCell: renderPosQtyCell,
+        refreshPosQtyDisplay: refreshPosQtyDisplay,
         refreshPosTableCloseColumn: refreshPosTableCloseColumn,
     };
 
