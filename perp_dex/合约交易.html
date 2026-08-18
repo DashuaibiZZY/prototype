@@ -30,6 +30,10 @@
         .date-range-picker-popover .picker-scroll { overflow: visible; }
         .pos-close-slider { width: 100%; accent-color: #111827; }
         .pos-close-slider-marks { display: flex; justify-content: space-between; font-size: 8px; color: #9ca3af; font-weight: 700; margin-top: 4px; }
+        .pos-close-mode-arrow { padding: 2px; color: #9ca3af; border-radius: 2px; line-height: 0; }
+        .pos-close-mode-arrow:hover { color: #111827; background: #f3f4f6; }
+        #close-all-btn { background: #f3f4f6; color: #111827; border: 1px solid #e5e7eb; padding: 2px 8px; border-radius: 2px; font-size: 9px; font-weight: 700; }
+        #close-all-btn:hover { background: #e5e7eb; }
         .ob-layout-btn { width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; color: #9ca3af; transition: color .15s, background .15s; }
         .ob-layout-btn:hover { color: #111827; background: #f3f4f6; }
         .ob-layout-btn.active { color: #111827; background: #f3f4f6; }
@@ -1065,7 +1069,8 @@
         <!-- 左侧：数据表格区 -->
         <div class="flex-1 flex flex-col border-r border-gray-100 bg-white min-h-0">
             <!-- 主标签栏（持仓/委托/历史...） -->
-            <div class="h-8 border-b border-gray-50 flex items-center px-4 space-x-5 text-[10px] font-bold text-gray-400 overflow-x-auto scrollbar-hide shrink-0">
+            <div class="h-8 border-b border-gray-50 flex items-center px-4 shrink-0">
+                <div class="flex items-center space-x-5 text-[10px] font-bold text-gray-400 overflow-x-auto scrollbar-hide flex-1 min-w-0">
                 <span onclick="switchDataTab('pos')" id="tab-data-pos" class="tab-active cursor-pointer h-8 flex items-center shrink-0">當前持倉 (1)</span>
                 <span onclick="switchDataTab('order')" id="tab-data-order" class="cursor-pointer h-8 flex items-center shrink-0">當前委託 (1)</span>
                 <span onclick="switchDataTab('hist-order')" id="tab-data-hist-order" class="cursor-pointer h-8 flex items-center shrink-0">歷史委託</span>
@@ -1073,21 +1078,13 @@
                 <span onclick="switchDataTab('hist-pos')" id="tab-data-hist-pos" class="cursor-pointer h-8 flex items-center shrink-0">歷史持倉</span>
                 <span onclick="switchDataTab('asset-log')" id="tab-data-asset-log" class="cursor-pointer h-8 flex items-center shrink-0">資金流水</span>
                 <span onclick="switchDataTab('funding-fee')" id="tab-data-funding-fee" class="cursor-pointer h-8 flex items-center shrink-0">資金費用</span>
-                <!-- 隐藏其他合约 -->
-                <div class="flex items-center space-x-1.5 pl-4 border-l border-gray-100 ml-4 shrink-0">
-                    <input type="checkbox" id="hide-other" class="w-3 h-3 rounded-full border-gray-300 accent-black cursor-pointer appearance-none checked:bg-black checked:border-black border relative focus:outline-none transition-all">
-                    <label for="hide-other" class="text-[9px] font-bold cursor-pointer whitespace-nowrap text-gray-400 hover:text-black">隐藏其他合约</label>
                 </div>
-                <button type="button" onclick="PositionClose.openCloseAllConfirm()" class="text-[9px] font-bold whitespace-nowrap text-gray-400 hover:text-black shrink-0 ml-2">一键平仓</button>
-                <div class="relative shrink-0 ml-1">
-                    <button type="button" id="pos-close-mode-trigger" onclick="PositionClose.togglePosCloseModeDropdown(event)" class="flex items-center space-x-1 text-[9px] font-bold text-gray-700 hover:text-black border border-gray-200 px-2 py-0.5 rounded-sm bg-white">
-                        <span id="pos-close-mode-label">标准平仓</span>
-                        <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div id="pos-close-mode-dropdown" class="absolute top-full left-0 mt-1 bg-white border border-gray-200 shadow-lg rounded-sm hidden z-[120] text-[10px] font-bold min-w-[100px]">
-                        <div class="px-3 py-2 hover:bg-gray-100 cursor-pointer" onclick="PositionClose.setPosCloseMode('standard')">标准平仓</div>
-                        <div class="px-3 py-2 hover:bg-gray-100 cursor-pointer" onclick="PositionClose.setPosCloseMode('quick')">快捷平仓</div>
+                <div id="data-tab-actions" class="flex items-center space-x-2 shrink-0 ml-3 pl-4 border-l border-gray-100">
+                    <div id="hide-other-wrap" class="hidden items-center space-x-1.5">
+                        <input type="checkbox" id="hide-other" class="w-3 h-3 rounded-full border-gray-300 accent-black cursor-pointer appearance-none checked:bg-black checked:border-black border relative focus:outline-none transition-all">
+                        <label for="hide-other" class="text-[9px] font-bold cursor-pointer whitespace-nowrap text-gray-400 hover:text-black">隐藏其他合约</label>
                     </div>
+                    <button type="button" id="close-all-btn" class="hidden shrink-0" onclick="PositionClose.openCloseAllConfirm()">一键平仓</button>
                 </div>
             </div>
 
@@ -2756,7 +2753,7 @@
                 <label class="text-[10px] font-bold text-gray-500">平仓价格 (USDT)</label>
                 <div class="flex items-center h-8 border border-gray-200 rounded-sm px-2 gap-2">
                     <input type="text" id="modal-close-price-input" class="flex-1 bg-transparent font-mono font-bold text-[11px] outline-none" value="63,697.49">
-                    <button type="button" onclick="PositionClose.setModalCloseMarketPrice()" class="text-[9px] font-bold text-blue-600 hover:text-blue-800 shrink-0 px-1">市价</button>
+                    <button type="button" id="modal-close-market-btn" onclick="PositionClose.toggleModalClosePriceMode()" class="text-[9px] font-bold text-blue-600 hover:text-blue-800 shrink-0 px-1">市价</button>
                 </div>
             </div>
             <div class="space-y-1.5">
@@ -3738,6 +3735,17 @@
     let currentDataTab = 'pos';
     let currentOrderSubTab = 'base';
 
+    function updateDataTabActions(tabId) {
+        const hideWrap = document.getElementById('hide-other-wrap');
+        const closeAllBtn = document.getElementById('close-all-btn');
+        const showHideOther = tabId === 'pos' || tabId === 'order';
+        if (hideWrap) {
+            hideWrap.classList.toggle('hidden', !showHideOther);
+            hideWrap.classList.toggle('flex', showHideOther);
+        }
+        if (closeAllBtn) closeAllBtn.classList.toggle('hidden', tabId !== 'pos');
+    }
+
     function switchDataTab(tabId) {
         const tabs = ['pos','order','hist-order','hist-trade','hist-pos','asset-log','funding-fee'];
         tabs.forEach(t => {
@@ -3760,6 +3768,7 @@
             if (subtabsEl) subtabsEl.classList.add('hidden');
             renderTableForTab(tabId);
         }
+        updateDataTabActions(tabId);
     }
 
     function switchOrderSubTab(type) {
@@ -3787,8 +3796,7 @@
         filterIds.forEach(id => document.getElementById(id)?.classList.add('hidden'));
 
         if (tabId === 'pos') {
-            const closeHeader = PositionClose.renderCloseColHeader();
-            h.innerHTML = `<th class="px-3 py-2 font-medium">合約</th><th class="px-3 py-2 font-medium">數量</th><th class="px-3 py-2 font-medium">開倉均價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="最新标记价格，用于计算盈亏和强平">標記價格</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="持仓达到盈亏平衡时的价格">盈虧平衡價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="预估触发强平的价格">預估強平價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="当前保证金与持仓价值的比率，越高风险越高，接近100%有爆仓风险">風險率</th><th class="px-3 py-2 font-medium">保證金</th><th class="px-3 py-2 font-medium">盈虧 (ROE%)</th><th class="px-3 py-2 font-medium" id="pos-close-col-header">${closeHeader}</th><th class="px-3 py-2 font-medium">止盈/止損</th>`;
+            h.innerHTML = `<th class="px-3 py-2 font-medium">合約</th><th class="px-3 py-2 font-medium">數量</th><th class="px-3 py-2 font-medium">開倉均價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="最新标记价格，用于计算盈亏和强平">標記價格</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="持仓达到盈亏平衡时的价格">盈虧平衡價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="预估触发强平的价格">預估強平價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="当前保证金与持仓价值的比率，越高风险越高，接近100%有爆仓风险">風險率</th><th class="px-3 py-2 font-medium">保證金</th><th class="px-3 py-2 font-medium">盈虧 (ROE%)</th>${PositionClose.renderCloseColHeaderHtml()}<th class="px-3 py-2 font-medium">止盈/止損</th>`;
             b.innerHTML = `<tr class="hover:bg-gray-50 transition-colors border-b border-gray-50">
             <td class="px-3 py-2.5 whitespace-nowrap"><div class="font-bold text-black text-[10px]">BTCUSDT <span class="text-green-500 bg-green-50 px-1 rounded-[1px]">20x</span></div></td>
             <td class="px-3 py-2.5 whitespace-nowrap font-medium text-gray-900"><div class="flex items-center">0.500 BTC<button onclick="toggleModal('modal-unit-switch')" class="ml-1.5 p-0.5 hover:bg-gray-100 rounded text-gray-400"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 11H13.5M13.5 11L11 8.5M13.5 11L11 13.5M12 5H2.5M2.5 5L5 2.5M2.5 5L5 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></td>
