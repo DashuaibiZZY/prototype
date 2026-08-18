@@ -28,10 +28,88 @@
         .date-range-picker-popover { z-index: 200; max-height: none; overflow: visible; }
         .date-range-picker-popover.picker-fixed { position: fixed; }
         .date-range-picker-popover .picker-scroll { overflow: visible; }
-        .pos-close-slider { width: 100%; accent-color: #111827; }
-        .pos-close-slider-marks { display: flex; justify-content: space-between; font-size: 8px; color: #9ca3af; font-weight: 700; margin-top: 4px; }
-        .pos-close-mode-arrow { padding: 2px; color: #9ca3af; border-radius: 2px; line-height: 0; }
-        .pos-close-mode-arrow:hover { color: #111827; background: #f3f4f6; }
+        .pos-close-slider-wrap { margin-top: 2px; }
+        .pos-close-slider-rail { position: relative; height: 18px; }
+        .pos-close-slider-ticks {
+            position: absolute;
+            left: 3px;
+            right: 3px;
+            top: 7px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .pos-close-slider-tick {
+            width: 4px;
+            height: 4px;
+            border: 1px solid #d1d5db;
+            border-radius: 50%;
+            background: #fff;
+            box-sizing: border-box;
+        }
+        .pos-close-slider-input {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: 18px;
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+        }
+        .pos-close-slider-input:focus { outline: none; }
+        .pos-close-slider-input::-webkit-slider-runnable-track {
+            height: 2px;
+            background: #e5e7eb;
+            border-radius: 1px;
+        }
+        .pos-close-slider-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 7px;
+            height: 7px;
+            margin-top: -2.5px;
+            background: #111827;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .pos-close-slider-input::-moz-range-track {
+            height: 2px;
+            background: #e5e7eb;
+            border-radius: 1px;
+            border: none;
+        }
+        .pos-close-slider-input::-moz-range-thumb {
+            width: 7px;
+            height: 7px;
+            background: #111827;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .pos-close-slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 8px;
+            color: #9ca3af;
+            font-weight: 700;
+            margin-top: 2px;
+            padding: 0 1px;
+        }
+        .pos-close-mode-switch {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px;
+            color: #9ca3af;
+            border-radius: 2px;
+            line-height: 0;
+            vertical-align: middle;
+        }
+        .pos-close-mode-switch:hover { color: #111827; background: #f3f4f6; }
         #close-all-btn { background: #f3f4f6; color: #111827; border: 1px solid #e5e7eb; padding: 2px 8px; border-radius: 2px; font-size: 9px; font-weight: 700; }
         #close-all-btn:hover { background: #e5e7eb; }
         .ob-layout-btn { width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; color: #9ca3af; transition: color .15s, background .15s; }
@@ -2759,9 +2837,20 @@
             <div class="space-y-1.5">
                 <label class="text-[10px] font-bold text-gray-500">平仓数量 (USDT)</label>
                 <input type="text" id="modal-close-qty-input" class="w-full h-8 border border-gray-200 rounded-sm px-2 font-mono font-bold text-[11px] outline-none focus:border-blue-400" value="10,032.23">
-                <input type="range" id="modal-close-qty-slider" class="pos-close-slider" min="0" max="100" step="25" value="100"
-                    oninput="PositionClose.setModalCloseQtyPct(Number(this.value))">
-                <div class="pos-close-slider-marks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+                <div class="pos-close-slider-wrap">
+                    <div class="pos-close-slider-rail">
+                        <div class="pos-close-slider-ticks" aria-hidden="true">
+                            <span class="pos-close-slider-tick"></span>
+                            <span class="pos-close-slider-tick"></span>
+                            <span class="pos-close-slider-tick"></span>
+                            <span class="pos-close-slider-tick"></span>
+                            <span class="pos-close-slider-tick"></span>
+                        </div>
+                        <input type="range" id="modal-close-qty-slider" class="pos-close-slider-input" min="0" max="100" step="25" value="100"
+                            oninput="PositionClose.setModalCloseQtyPct(Number(this.value))">
+                    </div>
+                    <div class="pos-close-slider-labels"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+                </div>
             </div>
             <div class="space-y-1 text-[10px] text-gray-500">
                 <div class="flex justify-between"><span>持仓量</span><span id="modal-close-pos-qty" class="font-mono font-bold text-gray-900">10,032.23 USDT</span></div>
