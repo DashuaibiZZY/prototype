@@ -86,6 +86,45 @@
         return closeMode === 'standard' ? '标准平仓' : '快捷平仓';
     }
 
+    function renderCloseColHeaderHtml() {
+        const label = renderCloseColHeader();
+        return `<th class="px-3 py-2 font-medium" id="pos-close-col-header">
+            <span class="inline-flex items-center gap-0.5 text-gray-500 whitespace-nowrap">
+                <span id="pos-close-col-label">${label}</span>
+                <button type="button" class="pos-close-mode-arrow" title="上一模式" onclick="PositionClose.cyclePosCloseMode(-1)" aria-label="上一模式">
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <button type="button" class="pos-close-mode-arrow" title="下一模式" onclick="PositionClose.cyclePosCloseMode(1)" aria-label="下一模式">
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </button>
+            </span>
+        </th>`;
+    }
+
+    function applyModalCloseLimitPrice() {
+        modalClosePriceMode = 'limit';
+        const priceInput = document.getElementById('modal-close-price-input');
+        const marketBtn = document.getElementById('modal-close-market-btn');
+        if (priceInput) {
+            priceInput.disabled = false;
+            priceInput.value = fmtUsdt(DEMO_POS.markPrice);
+            priceInput.classList.remove('text-center', 'text-gray-500');
+        }
+        if (marketBtn) marketBtn.textContent = '市价';
+    }
+
+    function applyModalCloseMarketPrice() {
+        modalClosePriceMode = 'market';
+        const priceInput = document.getElementById('modal-close-price-input');
+        const marketBtn = document.getElementById('modal-close-market-btn');
+        if (priceInput) {
+            priceInput.value = '市价';
+            priceInput.disabled = true;
+            priceInput.classList.add('text-center', 'text-gray-500');
+        }
+        if (marketBtn) marketBtn.textContent = '限价';
+    }
+
     function renderStandardCloseCell() {
         return `<td class="px-3 py-2.5 text-right whitespace-nowrap">
             <button type="button" onclick="PositionClose.openPositionCloseModal()" class="text-gray-900 hover:text-blue-600 font-bold mr-2">平仓</button>
@@ -134,8 +173,8 @@
     }
 
     function refreshPosTableCloseColumn() {
-        const headerEl = document.getElementById('pos-close-col-header');
-        if (headerEl) headerEl.textContent = renderCloseColHeader();
+        const labelEl = document.getElementById('pos-close-col-label');
+        if (labelEl) labelEl.textContent = renderCloseColHeader();
         const cell = document.getElementById('pos-close-action-cell');
         if (cell) {
             const tmp = document.createElement('tbody');
@@ -146,8 +185,6 @@
                 newTd.id = 'pos-close-action-cell';
             }
         }
-        const label = document.getElementById('pos-close-mode-label');
-        if (label) label.textContent = renderCloseColHeader();
     }
 
     function shouldSkipMarketCloseConfirm() {
@@ -165,15 +202,16 @@
 
         setPosCloseMode: function (mode) {
             closeMode = mode === 'quick' ? 'quick' : 'standard';
-            const dd = document.getElementById('pos-close-mode-dropdown');
-            if (dd) dd.classList.add('hidden');
             refreshPosTableCloseColumn();
         },
 
-        togglePosCloseModeDropdown: function (e) {
-            e.stopPropagation();
-            document.getElementById('pos-close-mode-dropdown')?.classList.toggle('hidden');
+        cyclePosCloseMode: function (delta) {
+            if (delta > 0) closeMode = closeMode === 'standard' ? 'quick' : 'standard';
+            else closeMode = closeMode === 'quick' ? 'standard' : 'quick';
+            refreshPosTableCloseColumn();
         },
+
+        renderCloseColHeaderHtml: renderCloseColHeaderHtml,
 
         openCloseAllConfirm: function () {
             toggleModal('modal-close-all');
@@ -185,9 +223,8 @@
         },
 
         openPositionCloseModal: function () {
-            modalClosePriceMode = 'limit';
             modalCloseQtyPct = 100;
-            const priceInput = document.getElementById('modal-close-price-input');
+            applyModalCloseLimitPrice();
             const qtyInput = document.getElementById('modal-close-qty-input');
             const slider = document.getElementById('modal-close-qty-slider');
             const label = document.getElementById('modal-close-contract-label');
@@ -196,11 +233,6 @@
             if (label) label.textContent = DEMO_POS.contractLabel;
             if (mark) mark.textContent = fmtUsdt(DEMO_POS.markPrice);
             if (open) open.textContent = fmtUsdt(DEMO_POS.openAvg);
-            if (priceInput) {
-                priceInput.disabled = false;
-                priceInput.value = fmtUsdt(DEMO_POS.markPrice);
-                priceInput.classList.remove('text-center', 'text-gray-400');
-            }
             if (qtyInput) qtyInput.value = getModalCloseQtyValue();
             if (slider) slider.value = 100;
             document.getElementById('modal-close-pos-qty').textContent = fmtUsdt(DEMO_POS.posQtyUsdt) + ' USDT';
@@ -213,14 +245,9 @@
             toggleModal('modal-position-close');
         },
 
-        setModalCloseMarketPrice: function () {
-            modalClosePriceMode = 'market';
-            const priceInput = document.getElementById('modal-close-price-input');
-            if (priceInput) {
-                priceInput.value = '市价';
-                priceInput.disabled = true;
-                priceInput.classList.add('text-center', 'text-gray-500');
-            }
+        toggleModalClosePriceMode: function () {
+            if (modalClosePriceMode === 'market') applyModalCloseLimitPrice();
+            else applyModalCloseMarketPrice();
         },
 
         setModalCloseQtyPct: setModalCloseQtyPct,
@@ -300,9 +327,6 @@
     };
 
     document.addEventListener('click', function (e) {
-        if (!e.target.closest('#pos-close-mode-trigger') && !e.target.closest('#pos-close-mode-dropdown')) {
-            document.getElementById('pos-close-mode-dropdown')?.classList.add('hidden');
-        }
         if (!e.target.closest('#quick-close-price') && !e.target.closest('#quick-price-dropdown')) {
             document.getElementById('quick-price-dropdown')?.classList.add('hidden');
         }
