@@ -86,15 +86,32 @@
         return closeMode === 'standard' ? '标准平仓' : '快捷平仓';
     }
 
+    function renderQtySliderBlock(sliderId, value, oninputHandler) {
+        return `<div class="pos-close-slider-wrap">
+            <div class="pos-close-slider-rail">
+                <div class="pos-close-slider-ticks" aria-hidden="true">
+                    <span class="pos-close-slider-tick"></span>
+                    <span class="pos-close-slider-tick"></span>
+                    <span class="pos-close-slider-tick"></span>
+                    <span class="pos-close-slider-tick"></span>
+                    <span class="pos-close-slider-tick"></span>
+                </div>
+                <input type="range" id="${sliderId}" class="pos-close-slider-input" min="0" max="100" step="25" value="${value}" oninput="${oninputHandler}">
+            </div>
+            <div class="pos-close-slider-labels"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+        </div>`;
+    }
+
     function renderCloseColHeaderInner() {
         const label = renderCloseColHeader();
-        return `<span class="inline-flex items-center gap-0.5 text-gray-500 whitespace-nowrap">
+        return `<span class="inline-flex items-center gap-1 text-gray-500 whitespace-nowrap">
             <span id="pos-close-col-label">${label}</span>
-            <button type="button" class="pos-close-mode-arrow" title="上一模式" onclick="PositionClose.cyclePosCloseMode(-1)" aria-label="上一模式">
-                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-            </button>
-            <button type="button" class="pos-close-mode-arrow" title="下一模式" onclick="PositionClose.cyclePosCloseMode(1)" aria-label="下一模式">
-                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            <button type="button" class="pos-close-mode-switch" title="切换标准/快捷平仓" onclick="PositionClose.cyclePosCloseMode(1)" aria-label="切换平仓模式">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="3.5" width="4.5" height="9" rx="0.75"/>
+                    <rect x="9.5" y="3.5" width="4.5" height="9" rx="0.75"/>
+                    <path d="M7.25 6.25h1.5M7.25 8.25h1.5"/>
+                </svg>
             </button>
         </span>`;
     }
@@ -149,13 +166,8 @@
                             onclick="PositionClose.toggleQuickQtyPanel(event)"
                             class="w-24 h-6 text-[10px] border border-gray-200 rounded px-1 outline-none focus:border-blue-400 cursor-pointer bg-white"
                             value="${getQuickCloseQtyValue()}">
-                        <div id="quick-qty-panel" class="absolute top-full left-0 mt-1 bg-white border border-gray-200 shadow-lg rounded-sm hidden z-[120] p-2 w-44">
-                            <input type="range" id="quick-close-qty-slider" min="0" max="100" step="25" value="${quickQtyPct}"
-                                class="w-full accent-black h-1"
-                                oninput="PositionClose.setQuickCloseQtyPct(Number(this.value))">
-                            <div class="flex justify-between text-[8px] text-gray-400 font-bold mt-1">
-                                <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
-                            </div>
+                        <div id="quick-qty-panel" class="absolute top-full left-0 mt-1 bg-white border border-gray-200 shadow-lg rounded-sm hidden z-[120] p-2 w-48">
+                            ${renderQtySliderBlock('quick-close-qty-slider', quickQtyPct, 'PositionClose.setQuickCloseQtyPct(Number(this.value))')}
                         </div>
                     </div>
                     <button type="button" onclick="PositionClose.openQuickCloseConfirm()" class="text-gray-900 hover:text-blue-600 font-bold text-[10px]">平仓</button>
