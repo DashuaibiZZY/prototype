@@ -15,19 +15,19 @@
     ];
 
     const HIST_ORDER_TPSL = [
-        { time: '2026-06-15 13:55:00', symbol: 'BNBUSDT', type: '市價止盈', dir: '平多', dirClass: 'text-green-500', price: '市價', qty: '100.32 USDT', trigger: '最新價格 >= 616.20', eff: '2026-06-15 13:55:02', status: '已完成', statusClass: 'text-blue-600' },
+        { time: '2026-06-15 13:55:00', symbol: 'BNBUSDT', type: '市價止盈', dir: '平多', dirClass: 'text-green-500', price: '市價', qty: '100.32 USDC', trigger: '最新價格 >= 616.20', eff: '2026-06-15 13:55:02', status: '已完成', statusClass: 'text-blue-600' },
         { time: '2026-06-15 10:20:15', symbol: 'BTCUSDT', type: '市價止損', dir: '平空', dirClass: 'text-red-500', price: '市價', qty: '全部平倉', trigger: '最新價格 <= 64,200.0', eff: '2026-06-15 10:21:08', status: '已完成', statusClass: 'text-blue-600' },
         { time: '2026-06-14 18:45:33', symbol: 'ETHUSDT', type: '限價止盈', dir: '平多', dirClass: 'text-green-500', price: '2,520.0', qty: '5.0 ETH', trigger: '最新價格 >= 2,520.0', eff: '--', status: '已取消', statusClass: 'text-gray-400', statusTip: '用户手动取消' },
         { time: '2026-06-14 08:10:19', symbol: 'SOLUSDT', type: '限價止損', dir: '平空', dirClass: 'text-red-500', price: '138.5', qty: '80 SOL', trigger: '最新價格 <= 138.5', eff: '--', status: '已取消', statusClass: 'text-gray-400', statusTip: '仓位止盈订单触发，关联持仓已完全平仓', statusDashed: true },
-        { time: '2026-06-13 23:58:44', symbol: 'BNBUSDT', type: '市價止盈', dir: '平多', dirClass: 'text-green-500', price: '市價', qty: '50.00 USDT', trigger: '最新價格 >= 610.00', eff: '2026-06-13 23:59:01', status: '已完成', statusClass: 'text-blue-600' },
+        { time: '2026-06-13 23:58:44', symbol: 'BNBUSDT', type: '市價止盈', dir: '平多', dirClass: 'text-green-500', price: '市價', qty: '50.00 USDC', trigger: '最新價格 >= 610.00', eff: '2026-06-13 23:59:01', status: '已完成', statusClass: 'text-blue-600' },
     ];
 
     const HIST_TRADES = [
-        { time: '2026-06-15 14:20:16', orderId: 'OR_1041927385473', symbol: 'BNBUSDT', dir: '開多', dirClass: 'text-green-500', avg: '618.50', qty: '618.50 USDT', role: '吃單方', fee: '0.619 USDT', pnl: '--', pnlClass: 'text-gray-400' },
-        { time: '2026-06-15 11:05:43', orderId: 'OR_1041927385120', symbol: 'BTCUSDT', dir: '平多', dirClass: 'text-red-500', avg: '65,420.0', qty: '22,897.00 USDT', role: '掛單方', fee: '1.145 USDT', pnl: '+184.32 USDT', pnlClass: 'text-green-500' },
-        { time: '2026-06-14 16:40:12', orderId: 'OR_1041927384001', symbol: 'SOLUSDT', dir: '開空', dirClass: 'text-red-500', avg: '142.80', qty: '17,136.00 USDT', role: '吃單方', fee: '0.856 USDT', pnl: '--', pnlClass: 'text-gray-400' },
-        { time: '2026-06-14 09:30:05', orderId: 'OR_1041927383888', symbol: 'ETHUSDT', dir: '平空', dirClass: 'text-green-500', avg: '2,410.5', qty: '4,821.00 USDT', role: '吃單方', fee: '0.241 USDT', pnl: '+42.18 USDT', pnlClass: 'text-green-500' },
-        { time: '2026-06-13 20:33:29', orderId: 'OR_1041927383777', symbol: 'BTCUSDT', dir: '開多', dirClass: 'text-green-500', avg: '64,980.0', qty: '7,797.60 USDT', role: '掛單方', fee: '0.390 USDT', pnl: '--', pnlClass: 'text-gray-400' },
+        { time: '2026-06-15 14:20:16', orderId: 'OR_1041927385473', symbol: 'BNBUSDT', dir: '開多', dirClass: 'text-green-500', avg: '618.50', qty: '618.50 USDC', role: '吃單方', fee: '0.619 USDC', pnl: '--', pnlClass: 'text-gray-400' },
+        { time: '2026-06-15 11:05:43', orderId: 'OR_1041927385120', symbol: 'BTCUSDT', dir: '平多', dirClass: 'text-red-500', avg: '65,420.0', qty: '22,897.00 USDC', role: '掛單方', fee: '1.145 USDC', pnl: '+184.32 USDC', pnlClass: 'text-green-500' },
+        { time: '2026-06-14 16:40:12', orderId: 'OR_1041927384001', symbol: 'SOLUSDT', dir: '開空', dirClass: 'text-red-500', avg: '142.80', qty: '17,136.00 USDC', role: '吃單方', fee: '0.856 USDC', pnl: '--', pnlClass: 'text-gray-400' },
+        { time: '2026-06-14 09:30:05', orderId: 'OR_1041927383888', symbol: 'ETHUSDT', dir: '平空', dirClass: 'text-green-500', avg: '2,410.5', qty: '4,821.00 USDC', role: '吃單方', fee: '0.241 USDC', pnl: '+42.18 USDC', pnlClass: 'text-green-500' },
+        { time: '2026-06-13 20:33:29', orderId: 'OR_1041927383777', symbol: 'BTCUSDT', dir: '開多', dirClass: 'text-green-500', avg: '64,980.0', qty: '7,797.60 USDC', role: '掛單方', fee: '0.390 USDC', pnl: '--', pnlClass: 'text-gray-400' },
     ];
 
     const HIST_POSITIONS = [
@@ -36,8 +36,8 @@
             posQty: '10.0 ETH', closedQty: '10.0 ETH', pnlKey: 'hist', status: '已全部平仓', statusKey: 'full',
             openTime: '2026-06-10 10:00:00', closeTime: '2026-06-11 11:47:17',
             closes: [
-                { time: '2026-06-11 11:47:17', qty: '6.0 ETH', price: '2,448.0', pnl: '+288.00 USDT', type: '市價平倉' },
-                { time: '2026-06-11 10:22:05', qty: '4.0 ETH', price: '2,453.0', pnl: '+212.00 USDT', type: '限價平倉' },
+                { time: '2026-06-11 11:47:17', qty: '6.0 ETH', price: '2,448.0', pnl: '+288.00 USDC', type: '市價平倉' },
+                { time: '2026-06-11 10:22:05', qty: '4.0 ETH', price: '2,453.0', pnl: '+212.00 USDC', type: '限價平倉' },
             ],
         },
         {
@@ -45,8 +45,8 @@
             posQty: '1.02 BNB', closedQty: '0.68 BNB', pnlKey: 'histBn', status: '部分平仓', statusKey: 'partial',
             openTime: '2026-06-11 18:59:05', closeTime: '2026-06-12 09:15:40',
             closes: [
-                { time: '2026-06-12 09:15:40', qty: '0.50 BNB', price: '605.10', pnl: '+6.48 USDT', type: '市價平倉' },
-                { time: '2026-06-11 19:12:18', qty: '0.18 BNB', price: '603.80', pnl: '+1.95 USDT', type: '限價平倉' },
+                { time: '2026-06-12 09:15:40', qty: '0.50 BNB', price: '605.10', pnl: '+6.48 USDC', type: '市價平倉' },
+                { time: '2026-06-11 19:12:18', qty: '0.18 BNB', price: '603.80', pnl: '+1.95 USDC', type: '限價平倉' },
             ],
         },
         {
@@ -54,7 +54,7 @@
             posQty: '0.50 BTC', closedQty: '0.50 BTC', pnlKey: 'histBtc', status: '已全部平仓', statusKey: 'full',
             openTime: '2026-06-08 08:30:00', closeTime: '2026-06-09 16:20:11',
             closes: [
-                { time: '2026-06-09 16:20:11', qty: '0.50 BTC', price: '65,800.0', pnl: '+349.75 USDT', type: '市價平倉' },
+                { time: '2026-06-09 16:20:11', qty: '0.50 BTC', price: '65,800.0', pnl: '+349.75 USDC', type: '市價平倉' },
             ],
         },
         {
@@ -62,28 +62,28 @@
             posQty: '200 SOL', closedQty: '120 SOL', pnlKey: 'histSol', status: '部分平仓', statusKey: 'partial',
             openTime: '2026-06-12 14:05:22', closeTime: '2026-06-13 11:40:33',
             closes: [
-                { time: '2026-06-13 11:40:33', qty: '80 SOL', price: '146.10', pnl: '-96.00 USDT', type: '市價平倉' },
-                { time: '2026-06-12 20:18:44', qty: '40 SOL', price: '145.20', pnl: '-40.00 USDT', type: '限價平倉' },
+                { time: '2026-06-13 11:40:33', qty: '80 SOL', price: '146.10', pnl: '-96.00 USDC', type: '市價平倉' },
+                { time: '2026-06-12 20:18:44', qty: '40 SOL', price: '145.20', pnl: '-40.00 USDC', type: '限價平倉' },
             ],
         },
     ];
 
     const ASSET_LOGS = [
-        { time: '2026-06-15 08:00:00', type: '資金費用', amount: '-0.45202481 USDT', amountClass: 'text-red-500', coin: 'USDT', symbol: 'BNBUSDT' },
-        { time: '2026-06-14 18:22:15', type: '已實現盈虧', amount: '+124.52 USDT', amountClass: 'text-green-500', coin: 'USDT', symbol: 'BTCUSDT' },
-        { time: '2026-06-14 10:05:33', type: '手續費', amount: '-1.24500000 USDT', amountClass: 'text-red-500', coin: 'USDT', symbol: 'BNBUSDT' },
-        { time: '2026-06-13 16:40:08', type: '轉帳', amount: '+500.00 USDT', amountClass: 'text-green-500', coin: 'USDT', symbol: '--' },
-        { time: '2026-06-13 09:12:44', type: '爆倉清算', amount: '-88.40 USDT', amountClass: 'text-red-500', coin: 'USDT', symbol: 'SOLUSDT' },
-        { time: '2026-06-12 21:30:19', type: '邀請返佣', amount: '+12.80 USDT', amountClass: 'text-green-500', coin: 'USDT', symbol: '--' },
-        { time: '2026-06-12 15:00:00', type: '體驗金入帳', amount: '+200.00 USDT', amountClass: 'text-green-500', coin: 'USDT', symbol: '--' },
-        { time: '2026-06-11 23:59:59', type: '體驗金回收', amount: '-50.00 USDT', amountClass: 'text-red-500', coin: 'USDT', symbol: '--' },
+        { time: '2026-06-15 08:00:00', type: '資金費用', amount: '-0.45202481 USDC', amountClass: 'text-red-500', coin: 'USDC', symbol: 'BNBUSDT' },
+        { time: '2026-06-14 18:22:15', type: '已實現盈虧', amount: '+124.52 USDC', amountClass: 'text-green-500', coin: 'USDC', symbol: 'BTCUSDT' },
+        { time: '2026-06-14 10:05:33', type: '手續費', amount: '-1.24500000 USDC', amountClass: 'text-red-500', coin: 'USDC', symbol: 'BNBUSDT' },
+        { time: '2026-06-13 16:40:08', type: '轉帳', amount: '+500.00 USDC', amountClass: 'text-green-500', coin: 'USDC', symbol: '--' },
+        { time: '2026-06-13 09:12:44', type: '爆倉清算', amount: '-88.40 USDC', amountClass: 'text-red-500', coin: 'USDC', symbol: 'SOLUSDT' },
+        { time: '2026-06-12 21:30:19', type: '邀請返佣', amount: '+12.80 USDC', amountClass: 'text-green-500', coin: 'USDC', symbol: '--' },
+        { time: '2026-06-12 15:00:00', type: '體驗金入帳', amount: '+200.00 USDC', amountClass: 'text-green-500', coin: 'USDC', symbol: '--' },
+        { time: '2026-06-11 23:59:59', type: '體驗金回收', amount: '-50.00 USDC', amountClass: 'text-red-500', coin: 'USDC', symbol: '--' },
     ];
 
     const FUNDING_FEES = [
-        { time: '2026-06-15 08:00:00', symbol: 'BNBUSDT', dir: '多頭支付空頭', fee: '-0.45202481 USDT', feeClass: 'text-red-500' },
-        { time: '2026-06-14 08:00:00', symbol: 'BTCUSDT', dir: '空頭支付多頭', fee: '+0.12840000 USDT', feeClass: 'text-green-500' },
-        { time: '2026-06-13 08:00:00', symbol: 'ETHUSDT', dir: '多頭支付空頭', fee: '-0.08620000 USDT', feeClass: 'text-red-500' },
-        { time: '2026-06-12 08:00:00', symbol: 'SOLUSDT', dir: '多頭支付空頭', fee: '-0.03150000 USDT', feeClass: 'text-red-500' },
+        { time: '2026-06-15 08:00:00', symbol: 'BNBUSDT', dir: '多頭支付空頭', fee: '-0.45202481 USDC', feeClass: 'text-red-500' },
+        { time: '2026-06-14 08:00:00', symbol: 'BTCUSDT', dir: '空頭支付多頭', fee: '+0.12840000 USDC', feeClass: 'text-green-500' },
+        { time: '2026-06-13 08:00:00', symbol: 'ETHUSDT', dir: '多頭支付空頭', fee: '-0.08620000 USDC', feeClass: 'text-red-500' },
+        { time: '2026-06-12 08:00:00', symbol: 'SOLUSDT', dir: '多頭支付空頭', fee: '-0.03150000 USDC', feeClass: 'text-red-500' },
     ];
 
     const PNL_BREAKDOWN_EXTRA = {
