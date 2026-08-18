@@ -86,19 +86,17 @@
         return closeMode === 'standard' ? '标准平仓' : '快捷平仓';
     }
 
-    function renderCloseColHeaderHtml() {
+    function renderCloseColHeaderInner() {
         const label = renderCloseColHeader();
-        return `<th class="px-3 py-2 font-medium" id="pos-close-col-header">
-            <span class="inline-flex items-center gap-0.5 text-gray-500 whitespace-nowrap">
-                <span id="pos-close-col-label">${label}</span>
-                <button type="button" class="pos-close-mode-arrow" title="上一模式" onclick="PositionClose.cyclePosCloseMode(-1)" aria-label="上一模式">
-                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <button type="button" class="pos-close-mode-arrow" title="下一模式" onclick="PositionClose.cyclePosCloseMode(1)" aria-label="下一模式">
-                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                </button>
-            </span>
-        </th>`;
+        return `<span class="inline-flex items-center gap-0.5 text-gray-500 whitespace-nowrap">
+            <span id="pos-close-col-label">${label}</span>
+            <button type="button" class="pos-close-mode-arrow" title="上一模式" onclick="PositionClose.cyclePosCloseMode(-1)" aria-label="上一模式">
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <button type="button" class="pos-close-mode-arrow" title="下一模式" onclick="PositionClose.cyclePosCloseMode(1)" aria-label="下一模式">
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </button>
+        </span>`;
     }
 
     function applyModalCloseLimitPrice() {
@@ -173,8 +171,8 @@
     }
 
     function refreshPosTableCloseColumn() {
-        const labelEl = document.getElementById('pos-close-col-label');
-        if (labelEl) labelEl.textContent = renderCloseColHeader();
+        const headerEl = document.getElementById('pos-close-col-header');
+        if (headerEl) headerEl.innerHTML = renderCloseColHeaderInner();
         const cell = document.getElementById('pos-close-action-cell');
         if (cell) {
             const tmp = document.createElement('tbody');
@@ -211,7 +209,8 @@
             refreshPosTableCloseColumn();
         },
 
-        renderCloseColHeaderHtml: renderCloseColHeaderHtml,
+        renderCloseColHeaderInner: renderCloseColHeaderInner,
+        renderCloseColHeader: renderCloseColHeader,
 
         openCloseAllConfirm: function () {
             toggleModal('modal-close-all');
