@@ -141,7 +141,7 @@
     }
 
     function renderStandardCloseCell() {
-        return `<td class="px-3 py-2.5 text-right whitespace-nowrap">
+        return `<td class="px-3 py-2.5 whitespace-nowrap">
             <button type="button" onclick="PositionClose.openPositionCloseModal()" class="pos-close-action-btn mr-1.5">平仓</button>
             <button type="button" onclick="PositionClose.openMarketCloseConfirm()" class="pos-close-action-btn">市价全平</button>
         </td>`;
