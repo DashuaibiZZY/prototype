@@ -81,7 +81,7 @@
         quickQtyPct = pct;
         const input = document.getElementById('quick-close-qty');
         const slider = document.getElementById('quick-close-qty-slider');
-        if (input) input.value = getModalCloseQtyValue();
+        if (input) input.value = getQuickCloseQtyValue();
         if (slider) slider.value = pct;
         updateQuickCloseEstPnl();
     }
@@ -205,10 +205,6 @@
                 <div class="pos-qty-tip-row"><span class="text-gray-400">持仓价值</span><span class="font-bold text-gray-900">${valueStr}</span></div>
             </div>
         </div>`;
-    }
-
-    function renderPosQtyCell() {
-        return `<td class="px-3 py-2.5 whitespace-nowrap font-medium text-gray-900" id="pos-qty-cell">${renderPosQtyCellInner()}</td>`;
     }
 
     function refreshPosQtyDisplay() {
@@ -366,10 +362,9 @@
 
         setQuickCloseQtyPct: setQuickCloseQtyPct,
 
-        renderCloseColHeader: renderCloseColHeader,
         renderCloseCell: renderCloseCell,
         renderQtySliderBlock: renderQtySliderBlock,
-        renderPosQtyCell: renderPosQtyCell,
+        renderPosQtyCellInner: renderPosQtyCellInner,
         refreshPosQtyDisplay: refreshPosQtyDisplay,
         refreshPosTableCloseColumn: refreshPosTableCloseColumn,
     };
