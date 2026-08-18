@@ -18,11 +18,29 @@
         .realized-pnl-tip-title { border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; margin-bottom: 6px; }
         .realized-pnl-tip-details { display: flex; flex-direction: column; gap: 4px; }
         .market-hint-wrap { position: relative; display: inline-block; z-index: 1; }
-        .market-hint-wrap:hover { z-index: 200; }
+        .market-hint-wrap:hover { z-index: 1000; }
         .market-hint-tip { position: absolute; top: calc(100% + 8px); left: 0; z-index: 200; min-width: 220px; max-width: 280px; background: #fff; border: 1px solid #e5e7eb; border-radius: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 10px 12px; font-size: 10px; line-height: 1.6; color: #4b5563; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity .15s, visibility .15s; }
         .market-hint-wrap:hover .market-hint-tip { opacity: 1; visibility: visible; }
         .market-hint-tip.funding-tip { min-width: 260px; }
-        .market-hint-tip.ob-mark-tip { min-width: 240px; max-width: 300px; }
+        .market-hint-tip.ob-mark-tip {
+            min-width: 240px;
+            max-width: 300px;
+            z-index: 1000;
+            bottom: calc(100% + 8px);
+            top: auto;
+            left: auto;
+            right: 0;
+            transform: none;
+        }
+        .market-hint-tip.best-price-tip {
+            left: auto;
+            right: 0;
+            min-width: 240px;
+            max-width: 300px;
+            z-index: 1000;
+        }
+        #ob-mid-price-bar { z-index: 30; overflow: visible; }
+        #ob-content-book { overflow: visible; }
         .ob-mid-mode-btn {
             display: inline-flex;
             align-items: center;
@@ -956,14 +974,14 @@
         </div>
 
         <!-- 订单簿容器 -->
-        <div class="w-64 border-r border-gray-100 flex flex-col bg-white">
+        <div class="w-64 border-r border-gray-100 flex flex-col bg-white relative z-50">
             <div class="h-8 flex border-b border-gray-50 text-[10px] font-bold text-gray-400">
                 <button onclick="switchAreaTab('ob', 'book')" id="tab-ob-book" class="flex-1 border-b-2 border-black text-black">訂單簿</button>
                 <button onclick="switchAreaTab('ob', 'trades')" id="tab-ob-trades" class="flex-1">最新成交</button>
             </div>
 
             <!-- 訂單簿內容 -->
-            <div class="flex-1 flex flex-col overflow-hidden relative" id="ob-content-book">
+            <div class="flex-1 flex flex-col relative" id="ob-content-book">
                 <!-- 表頭 -->
                 <div class="h-7 flex items-center justify-between px-3 text-[10px] text-gray-400 uppercase">
                     <span>價格</span><span>數量</span><span>累計</span>
@@ -972,19 +990,19 @@
                 <div id="sell-orders" class="flex-1 flex flex-col-reverse overflow-hidden font-medium"></div>
 
                 <!-- 中間價 + 標記價格 -->
-                <div id="ob-mid-price-bar" class="py-2 text-center text-sm font-black text-green-500 bg-gray-50 relative flex items-center justify-center min-h-[36px]">
-                    <span id="ob-last-price">65,432.10</span>
-                    <span id="ob-spread-display" class="hidden text-[11px] font-bold text-gray-700">價差 0.9 (0.001%)</span>
-                    <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-                        <span class="market-hint-wrap">
+                <div id="ob-mid-price-bar" class="py-2 text-sm font-black text-green-500 bg-gray-50 relative flex items-center min-h-[36px] px-3 gap-2">
+                    <div id="ob-mid-center" class="flex-1 flex items-center justify-center gap-2.5 min-w-0 pr-1">
+                        <span id="ob-last-price">65,432.10</span>
+                        <span id="ob-spread-display" class="hidden text-[11px] font-bold text-gray-700 whitespace-nowrap">價差 0.9 (0.001%)</span>
+                        <span id="ob-mark-price-wrap" class="market-hint-wrap shrink-0">
                             <span id="ob-mark-price" class="text-[10px] font-medium text-gray-500 border-b border-dashed border-gray-400 cursor-help">65,450.00</span>
                             <div class="market-hint-tip ob-mark-tip">标记价格用于计算您的强平价格和持仓保证金，标记价格源自经过处理的指数价格。</div>
                         </span>
-                        <button type="button" id="ob-mid-mode-toggle" class="ob-mid-mode-btn market-hint-wrap" onclick="toggleObMidMode()" aria-label="切换订单簿中间价显示模式">
-                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 11H13.5M13.5 11L11 8.5M13.5 11L11 13.5M12 5H2.5M2.5 5L5 2.5M2.5 5L5 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            <div class="market-hint-tip ob-mid-mode-tip">切換價差模式</div>
-                        </button>
                     </div>
+                    <button type="button" id="ob-mid-mode-toggle" class="ob-mid-mode-btn market-hint-wrap shrink-0" onclick="toggleObMidMode()" aria-label="切换订单簿中间价显示模式">
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 11H13.5M13.5 11L11 8.5M13.5 11L11 13.5M12 5H2.5M2.5 5L5 2.5M2.5 5L5 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <div class="market-hint-tip ob-mid-mode-tip">切換價差模式</div>
+                    </button>
                 </div>
 
                 <!-- 買單容器 -->
@@ -4284,7 +4302,7 @@
         obLastPrice: '65,432.10',
         obMarkPrice: '65,450.00',
         obSpreadText: '價差 0.9 (0.001%)',
-        obMidBarClass: 'py-2 text-center text-sm font-black text-green-500 bg-gray-50 relative flex items-center justify-center min-h-[36px]'
+        obMidBarClass: 'py-2 text-sm font-black text-green-500 bg-gray-50 relative flex items-center min-h-[36px] px-3 gap-2'
     };
 
     const marketCountdownSnapshot = {
@@ -4305,7 +4323,7 @@
         obLastPrice: '--',
         obMarkPrice: '--',
         obSpreadText: '--',
-        obMidBarClass: 'py-2 text-center text-sm font-black text-gray-400 bg-gray-50 relative flex items-center justify-center min-h-[36px]'
+        obMidBarClass: 'py-2 text-sm font-black text-gray-400 bg-gray-50 relative flex items-center min-h-[36px] px-3 gap-2'
     };
 
     function applyMarketBarState(snapshot) {
@@ -4351,15 +4369,18 @@
     function applyObMidBarMode() {
         const lastEl = document.getElementById('ob-last-price');
         const spreadEl = document.getElementById('ob-spread-display');
+        const markWrap = document.getElementById('ob-mark-price-wrap');
         const tipEl = document.querySelector('#ob-mid-mode-toggle .ob-mid-mode-tip');
         if (!lastEl || !spreadEl) return;
         if (obMidMode === 'last') {
             lastEl.classList.remove('hidden');
             spreadEl.classList.add('hidden');
+            if (markWrap) markWrap.classList.remove('hidden');
             if (tipEl) tipEl.textContent = '切換價差模式';
         } else {
             lastEl.classList.add('hidden');
             spreadEl.classList.remove('hidden');
+            if (markWrap) markWrap.classList.add('hidden');
             if (tipEl) tipEl.textContent = '切換最新價模式';
         }
     }
@@ -4396,6 +4417,14 @@
         return String(Math.max(0, n)).padStart(2, '0');
     }
 
+    function formatMarketListCountdown() {
+        const days = Math.floor(klineCountdownRemaining / 86400);
+        const hours = Math.floor((klineCountdownRemaining % 86400) / 3600);
+        const mins = Math.floor((klineCountdownRemaining % 3600) / 60);
+        const secs = klineCountdownRemaining % 60;
+        return `${padCountdown(days)}天 ${padCountdown(hours)}:${padCountdown(mins)}:${padCountdown(secs)}`;
+    }
+
     function renderKlineCountdown() {
         const days = Math.floor(klineCountdownRemaining / 86400);
         const hours = Math.floor((klineCountdownRemaining % 86400) / 3600);
@@ -4406,6 +4435,8 @@
             const el = document.getElementById(id);
             if (el) el.textContent = padCountdown(val);
         });
+        const listCd = document.getElementById('market-list-pepe-countdown');
+        if (listCd) listCd.textContent = formatMarketListCountdown();
     }
 
     function setKlineCountdownMode(enabled) {
@@ -4654,17 +4685,15 @@
                 <div class="text-right text-blue-500">0.0001%</div>
             </div>
             <div data-market-category="all new" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-orange-50 cursor-pointer text-[10px]" onclick="selectMarketPair('PEPEUSDC')">
-                <div class="flex items-center space-x-1.5">
-                    <span class="w-3 h-3 rounded-full bg-orange-100 text-orange-500 text-[8px] font-black flex items-center justify-center">P</span>
-                    <span class="font-bold">PEPEUSDC</span>
-                    <span class="text-[8px] bg-orange-50 text-orange-600 px-1 py-0.5 rounded font-bold">即将上线</span>
-                    <span class="text-[8px] bg-gray-100 px-1 py-0.5 rounded">50x</span>
+                <div class="flex items-center space-x-1.5 min-w-0">
+                    <span class="w-3 h-3 rounded-full bg-orange-100 text-orange-500 text-[8px] font-black flex items-center justify-center shrink-0">P</span>
+                    <span class="font-bold truncate">PEPEUSDC</span>
+                    <span class="text-[8px] bg-gray-100 px-1 py-0.5 rounded shrink-0">50x</span>
                 </div>
-                <div class="text-right text-gray-400">--</div>
-                <div class="text-right text-gray-400">--</div>
-                <div class="text-right text-gray-400">--</div>
-                <div class="text-right text-gray-400">--</div>
-                <div class="text-right text-orange-500 font-bold">倒计时</div>
+                <div class="col-span-5 flex items-center justify-end gap-2 text-right whitespace-nowrap">
+                    <span class="text-orange-600 font-bold">即将上线</span>
+                    <span id="market-list-pepe-countdown" class="font-mono text-orange-500 font-bold">${formatMarketListCountdown()}</span>
+                </div>
             </div>
         </div>
         `;
