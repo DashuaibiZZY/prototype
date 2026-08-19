@@ -2906,7 +2906,7 @@
                 </div>
             </div>
             <div class="space-y-1.5">
-                <label id="modal-close-qty-label" class="text-[10px] font-bold text-gray-500">平仓数量 (USDC)</label>
+                <label id="modal-close-qty-label" class="text-[10px] font-bold text-gray-500">平仓数量</label>
                 <input type="text" id="modal-close-qty-input" class="w-full h-8 border border-gray-200 rounded-sm px-2 font-mono font-bold text-[11px] outline-none focus:border-blue-400" value="10,032.23">
                 <div class="pos-close-slider-wrap">
                     <div class="pos-close-slider-rail">
@@ -2921,6 +2921,7 @@
                             oninput="PositionClose.setModalCloseQtyPct(Number(this.value))">
                     </div>
                     <div class="pos-close-slider-labels"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+                    <div id="modal-close-slider-pos-hint" class="text-[9px] text-gray-500 mt-1 font-mono"></div>
                 </div>
             </div>
             <div class="space-y-1 text-[10px] text-gray-500">
@@ -3361,7 +3362,13 @@
     }
 
     function getQtyUsdt() {
-        const qty = parseInputNum(document.getElementById('qty-input')?.value);
+        const raw = (document.getElementById('qty-input')?.value || '').trim();
+        if (raw.endsWith('%')) {
+            const pct = parseFloat(raw.replace('%', '').trim()) / 100;
+            if (!Number.isFinite(pct)) return NaN;
+            return ORDER_QTY_MAX_USDC * pct;
+        }
+        const qty = parseInputNum(raw);
         if (!Number.isFinite(qty)) return NaN;
         const unit = document.getElementById('qty-unit')?.innerText || 'USDC';
         const ref = getOrderRefPrice();
@@ -4590,15 +4597,7 @@
         const slider = document.getElementById('order-qty-slider');
         const input = document.getElementById('qty-input');
         if (slider) slider.value = pct;
-        if (!input) return;
-        const unit = document.getElementById('qty-unit')?.innerText?.trim() || 'USDC';
-        const ref = getOrderRefPrice();
-        if (unit === 'BTC') {
-            const maxBtc = ORDER_QTY_MAX_USDC / ref;
-            input.value = (maxBtc * pct / 100).toFixed(4);
-        } else {
-            input.value = (ORDER_QTY_MAX_USDC * pct / 100).toFixed(2);
-        }
+        if (input) input.value = pct + '%';
         updateTPSLEstimates();
     }
 
@@ -4776,7 +4775,11 @@
     window.addEventListener('DOMContentLoaded', function() {
         applyObLayoutMode();
         renderOrderBook();
+        setOrderQtyPct(25);
         switchDataTab('pos');
+        if (typeof PositionClose !== 'undefined') {
+            PositionClose.refreshCloseQtyDisplay();
+        }
     });
 </script>
 </body>

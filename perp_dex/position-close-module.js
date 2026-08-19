@@ -51,18 +51,31 @@
         return DEMO_POS.coinQty * (DEMO_POS.posQtyUsdc / DEMO_POS.valueUsdc);
     }
 
-    function formatCloseQtyDisplay(usdcAmount) {
+    function formatCloseQtyNumber(usdcAmount) {
         const unit = getOrderQtyUnit();
         if (unit === 'BTC') {
             const ratio = DEMO_POS.valueUsdc ? DEMO_POS.coinQty / DEMO_POS.valueUsdc : 0;
-            return (usdcAmount * ratio).toFixed(3) + ' ' + DEMO_POS.coin;
+            return (usdcAmount * ratio).toFixed(3);
         }
-        return fmtUsdt(usdcAmount) + ' USDC';
+        return fmtUsdt(usdcAmount);
+    }
+
+    function formatCloseQtyWithUnit(usdcAmount) {
+        const unit = getOrderQtyUnit();
+        return formatCloseQtyNumber(usdcAmount) + ' ' + (unit === 'BTC' ? DEMO_POS.coin : 'USDC');
+    }
+
+    function getPosQtyHintText() {
+        const unit = getOrderQtyUnit();
+        if (unit === 'BTC') {
+            return `持仓量 ${getPosCoinQty().toFixed(3)} ${DEMO_POS.coin}`;
+        }
+        return `持仓量 ${fmtUsdt(DEMO_POS.posQtyUsdc)} USDC`;
     }
 
     function getModalCloseQtyValue() {
         const val = DEMO_POS.closableUsdc * modalCloseQtyPct / 100;
-        return formatCloseQtyDisplay(val);
+        return formatCloseQtyNumber(val);
     }
 
     function getQuickClosePriceValue() {
@@ -74,14 +87,12 @@
 
     function getQuickCloseQtyValue() {
         const val = DEMO_POS.closableUsdc * quickQtyPct / 100;
-        return formatCloseQtyDisplay(val);
+        return formatCloseQtyNumber(val);
     }
 
     function updateModalCloseQtyLabel() {
         const label = document.getElementById('modal-close-qty-label');
-        if (!label) return;
-        const unit = getOrderQtyUnit();
-        label.textContent = unit === 'BTC' ? `平仓数量 (${DEMO_POS.coin})` : '平仓数量 (USDC)';
+        if (label) label.textContent = '平仓数量';
     }
 
     function refreshCloseQtyDisplay() {
@@ -90,8 +101,13 @@
         const quickQty = document.getElementById('quick-close-qty');
         const posQty = document.getElementById('modal-close-pos-qty');
         const closableQty = document.getElementById('modal-close-closable-qty');
+        const quickHint = document.getElementById('quick-close-pos-hint');
+        const modalSliderHint = document.getElementById('modal-close-slider-pos-hint');
+        const hintText = getPosQtyHintText();
         if (modalQty) modalQty.value = getModalCloseQtyValue();
         if (quickQty) quickQty.value = getQuickCloseQtyValue();
+        if (quickHint) quickHint.textContent = hintText;
+        if (modalSliderHint) modalSliderHint.textContent = hintText;
         const unit = getOrderQtyUnit();
         if (posQty) {
             posQty.textContent = unit === 'BTC'
@@ -215,6 +231,7 @@
                             value="${getQuickCloseQtyValue()}">
                         <div id="quick-qty-panel" class="absolute top-full left-0 mt-1 bg-white border border-gray-200 shadow-lg rounded-sm hidden z-[120] p-2 w-48">
                             ${renderQtySliderBlock('quick-close-qty-slider', quickQtyPct, 'PositionClose.setQuickCloseQtyPct(Number(this.value))')}
+                            <div id="quick-close-pos-hint" class="text-[9px] text-gray-500 mt-1 pt-1 border-t border-gray-50 font-mono">${getPosQtyHintText()}</div>
                         </div>
                     </div>
                     <button type="button" onclick="PositionClose.openQuickCloseConfirm()" class="pos-close-action-btn">平仓</button>
@@ -272,6 +289,7 @@
                 newTd.id = 'pos-close-action-cell';
             }
         }
+        refreshCloseQtyDisplay();
     }
 
     function shouldSkipMarketCloseConfirm() {
@@ -350,7 +368,8 @@
 
         openCloseOrderConfirm: function (source) {
             const price = source === 'quick' ? getQuickClosePriceValue() : getModalClosePriceValue();
-            const qty = source === 'quick' ? getQuickCloseQtyValue() + ' USDC' : getModalCloseQtyValue() + ' USDC';
+            const pct = source === 'quick' ? quickQtyPct : modalCloseQtyPct;
+            const qty = formatCloseQtyWithUnit(DEMO_POS.closableUsdc * pct / 100);
             const isMarket = price === '市价';
             if (typeof openOrderConfirm === 'function') {
                 if (isMarket) openOrderConfirm('close-long-market', { price: '市價', qty: qty });
@@ -402,7 +421,11 @@
 
         toggleQuickQtyPanel: function (e) {
             e.stopPropagation();
-            document.getElementById('quick-qty-panel')?.classList.toggle('hidden');
+            const panel = document.getElementById('quick-qty-panel');
+            if (panel?.classList.contains('hidden')) {
+                refreshCloseQtyDisplay();
+            }
+            panel?.classList.toggle('hidden');
             document.getElementById('quick-price-dropdown')?.classList.add('hidden');
         },
 
