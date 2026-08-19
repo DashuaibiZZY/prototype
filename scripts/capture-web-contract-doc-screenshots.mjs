@@ -111,11 +111,6 @@ const shots = [
     selector: '#transfer-modal > div',
   },
   {
-    file: 'web-float-unit-switch.png',
-    before: "document.getElementById('modal-unit-switch').style.display='flex'",
-    selector: '#modal-unit-switch > .bn-modal',
-  },
-  {
     file: 'web-float-cancel-order.png',
     before: "switchDataTab('order'); openCancelConfirm('OR_882910')",
     selector: '#modal-cancel-order > div.bg-white',
@@ -153,9 +148,15 @@ const shots = [
   },
   {
     file: 'web-contract-terminal-limit.png',
-    before: "switchOrderMode('limit')",
+    before: "(() => { switchOrderMode('limit'); setOrderQtyPct(25); })()",
     selector: 'aside.w-\\[300px\\]',
     clipHeight: 400,
+  },
+  {
+    file: 'web-float-order-qty-pct.png',
+    before: "(() => { switchOrderMode('limit'); setOrderQtyPct(50); })()",
+    selector: '.pos-close-slider-wrap--order',
+    clipExpand: { top: 44 },
   },
   {
     file: 'web-contract-terminal-market.png',
@@ -210,7 +211,11 @@ for (const shot of shots) {
   await page.goto(HTML, { waitUntil: 'networkidle0', timeout: 120000 });
   await new Promise((r) => setTimeout(r, 800));
   if (shot.before) {
-    await page.evaluate(shot.before);
+    try {
+      await page.evaluate(shot.before);
+    } catch (err) {
+      console.error('BEFORE_FAIL', shot.file, err.message);
+    }
     await new Promise((r) => setTimeout(r, 700));
   }
   let el = await page.$(shot.selector);
@@ -234,16 +239,20 @@ for (const shot of shots) {
   }
   await el.evaluate((n) => n.scrollIntoView({ block: 'center' }));
   const outPath = path.join(OUT, shot.file);
-  if (shot.clipHeight) {
+  if (shot.clipHeight || shot.clipExpand) {
     const box = await el.boundingBox();
     if (box) {
+      const expandTop = shot.clipExpand?.top || 0;
+      const expandBottom = shot.clipExpand?.bottom || 0;
       await page.screenshot({
         path: outPath,
         clip: {
           x: box.x,
-          y: box.y,
+          y: Math.max(0, box.y - expandTop),
           width: box.width,
-          height: Math.min(box.height, shot.clipHeight),
+          height: shot.clipHeight
+            ? Math.min(box.height + expandTop + expandBottom, shot.clipHeight)
+            : box.height + expandTop + expandBottom,
         },
       });
     } else await el.screenshot({ path: outPath, type: 'png' });
