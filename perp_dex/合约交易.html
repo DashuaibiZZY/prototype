@@ -2906,7 +2906,7 @@
                 </div>
             </div>
             <div class="space-y-1.5">
-                <label class="text-[10px] font-bold text-gray-500">平仓数量 (USDC)</label>
+                <label id="modal-close-qty-label" class="text-[10px] font-bold text-gray-500">平仓数量 (USDC)</label>
                 <input type="text" id="modal-close-qty-input" class="w-full h-8 border border-gray-200 rounded-sm px-2 font-mono font-bold text-[11px] outline-none focus:border-blue-400" value="10,032.23">
                 <div class="pos-close-slider-wrap">
                     <div class="pos-close-slider-rail">
@@ -3051,10 +3051,13 @@
     }
 
     function formatKMB(num) {
-        if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
-        if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
-        if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
-        return num.toFixed(3);
+        const trunc2 = function (n) {
+            return (Math.floor(n * 100) / 100).toFixed(2);
+        };
+        if (num >= 1e9) return trunc2(num / 1e9) + 'B';
+        if (num >= 1e6) return trunc2(num / 1e6) + 'M';
+        if (num >= 1e3) return trunc2(num / 1e3) + 'K';
+        return trunc2(num);
     }
 
     // ==================== 订单簿 ====================
@@ -3177,7 +3180,7 @@
             const div = document.createElement('div');
             div.className = 'flex justify-between px-3 py-0.5 order-book-gradient-sell';
             div.style.setProperty('--percent', percent + '%');
-            div.innerHTML = `<span class="text-red-500">${s.price.toFixed(1)}</span><span>${formatKMB(s.qty)}</span><span>${formatKMB(cum)} M</span>`;
+            div.innerHTML = `<span class="text-red-500">${s.price.toFixed(1)}</span><span>${formatKMB(s.qty)}</span><span>${formatKMB(cum)}</span>`;
             sellEl.appendChild(div);
         });
 
@@ -3197,7 +3200,7 @@
             const div = document.createElement('div');
             div.className = 'flex justify-between px-3 py-0.5 order-book-gradient-buy';
             div.style.setProperty('--percent', percent + '%');
-            div.innerHTML = `<span class="text-green-500">${b.price.toFixed(1)}</span><span>${formatKMB(b.qty)}</span><span>${formatKMB(cum)} M</span>`;
+            div.innerHTML = `<span class="text-green-500">${b.price.toFixed(1)}</span><span>${formatKMB(b.qty)}</span><span>${formatKMB(cum)}</span>`;
             buyEl.appendChild(div);
         });
     }
@@ -4576,7 +4579,10 @@
         document.getElementById('qty-unit').innerText = unit;
         document.getElementById('qty-unit-dropdown').classList.add('hidden');
         updateTPSLEstimates();
-        if (typeof PositionClose !== 'undefined') PositionClose.refreshPosQtyDisplay();
+        if (typeof PositionClose !== 'undefined') {
+            PositionClose.refreshPosQtyDisplay();
+            PositionClose.refreshCloseQtyDisplay();
+        }
     }
 
     const ORDER_QTY_MAX_USDC = 12450;

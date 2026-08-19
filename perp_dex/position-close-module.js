@@ -41,9 +41,28 @@
         return el?.value || String(DEMO_POS.markPrice);
     }
 
+    function getClosableCoinQty() {
+        if (!DEMO_POS.valueUsdc) return DEMO_POS.coinQty;
+        return DEMO_POS.coinQty * (DEMO_POS.closableUsdc / DEMO_POS.valueUsdc);
+    }
+
+    function getPosCoinQty() {
+        if (!DEMO_POS.valueUsdc) return DEMO_POS.coinQty;
+        return DEMO_POS.coinQty * (DEMO_POS.posQtyUsdc / DEMO_POS.valueUsdc);
+    }
+
+    function formatCloseQtyDisplay(usdcAmount) {
+        const unit = getOrderQtyUnit();
+        if (unit === 'BTC') {
+            const ratio = DEMO_POS.valueUsdc ? DEMO_POS.coinQty / DEMO_POS.valueUsdc : 0;
+            return (usdcAmount * ratio).toFixed(3) + ' ' + DEMO_POS.coin;
+        }
+        return fmtUsdt(usdcAmount) + ' USDC';
+    }
+
     function getModalCloseQtyValue() {
         const val = DEMO_POS.closableUsdc * modalCloseQtyPct / 100;
-        return fmtUsdt(val);
+        return formatCloseQtyDisplay(val);
     }
 
     function getQuickClosePriceValue() {
@@ -55,7 +74,35 @@
 
     function getQuickCloseQtyValue() {
         const val = DEMO_POS.closableUsdc * quickQtyPct / 100;
-        return fmtUsdt(val);
+        return formatCloseQtyDisplay(val);
+    }
+
+    function updateModalCloseQtyLabel() {
+        const label = document.getElementById('modal-close-qty-label');
+        if (!label) return;
+        const unit = getOrderQtyUnit();
+        label.textContent = unit === 'BTC' ? `平仓数量 (${DEMO_POS.coin})` : '平仓数量 (USDC)';
+    }
+
+    function refreshCloseQtyDisplay() {
+        updateModalCloseQtyLabel();
+        const modalQty = document.getElementById('modal-close-qty-input');
+        const quickQty = document.getElementById('quick-close-qty');
+        const posQty = document.getElementById('modal-close-pos-qty');
+        const closableQty = document.getElementById('modal-close-closable-qty');
+        if (modalQty) modalQty.value = getModalCloseQtyValue();
+        if (quickQty) quickQty.value = getQuickCloseQtyValue();
+        const unit = getOrderQtyUnit();
+        if (posQty) {
+            posQty.textContent = unit === 'BTC'
+                ? getPosCoinQty().toFixed(3) + ' ' + DEMO_POS.coin
+                : fmtUsdt(DEMO_POS.posQtyUsdc) + ' USDC';
+        }
+        if (closableQty) {
+            closableQty.textContent = unit === 'BTC'
+                ? getClosableCoinQty().toFixed(3) + ' ' + DEMO_POS.coin
+                : fmtUsdt(DEMO_POS.closableUsdc) + ' USDC';
+        }
     }
 
     function updateModalCloseEstPnl() {
@@ -266,6 +313,7 @@
         openPositionCloseModal: function () {
             modalCloseQtyPct = 100;
             applyModalCloseLimitPrice();
+            updateModalCloseQtyLabel();
             const qtyInput = document.getElementById('modal-close-qty-input');
             const slider = document.getElementById('modal-close-qty-slider');
             const label = document.getElementById('modal-close-contract-label');
@@ -274,10 +322,8 @@
             if (label) label.textContent = DEMO_POS.contractLabel;
             if (mark) mark.textContent = fmtUsdt(DEMO_POS.markPrice);
             if (open) open.textContent = fmtUsdt(DEMO_POS.openAvg);
-            if (qtyInput) qtyInput.value = getModalCloseQtyValue();
+            refreshCloseQtyDisplay();
             if (slider) slider.value = 100;
-            document.getElementById('modal-close-pos-qty').textContent = fmtUsdt(DEMO_POS.posQtyUsdc) + ' USDC';
-            document.getElementById('modal-close-closable-qty').textContent = fmtUsdt(DEMO_POS.closableUsdc) + ' USDC';
             updateModalCloseEstPnl();
             toggleModal('modal-position-close');
         },
@@ -366,6 +412,7 @@
         renderQtySliderBlock: renderQtySliderBlock,
         renderPosQtyCellInner: renderPosQtyCellInner,
         refreshPosQtyDisplay: refreshPosQtyDisplay,
+        refreshCloseQtyDisplay: refreshCloseQtyDisplay,
         refreshPosTableCloseColumn: refreshPosTableCloseColumn,
     };
 
