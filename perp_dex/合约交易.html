@@ -29,6 +29,21 @@
             min-width: 240px;
             max-width: 300px;
         }
+        .market-fav-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: #d1d5db;
+            border-radius: 2px;
+            line-height: 0;
+        }
+        .market-fav-btn:hover { background: #f3f4f6; color: #9ca3af; }
+        .market-fav-btn.is-fav { color: #f59e0b; }
+        .market-fav-btn.is-fav:hover { color: #d97706; }
         .ob-mid-mode-btn {
             display: inline-flex;
             align-items: center;
@@ -4410,7 +4425,7 @@
         const hours = Math.floor((klineCountdownRemaining % 86400) / 3600);
         const mins = Math.floor((klineCountdownRemaining % 3600) / 60);
         const secs = klineCountdownRemaining % 60;
-        return `${padCountdown(days)}天 ${padCountdown(hours)}:${padCountdown(mins)}:${padCountdown(secs)}`;
+        return `${days}天 ${padCountdown(hours)}:${padCountdown(mins)}:${padCountdown(secs)}`;
     }
 
     function renderKlineCountdown() {
@@ -4437,6 +4452,47 @@
         applyOrderBookEmptyState(isKlineCountdownMode);
         if (isKlineCountdownMode) renderKlineCountdown();
         switchView('kline');
+    }
+
+    const MARKET_PAIR_META = {
+        BTCUSDC: { letter: 'B', logoClass: 'bg-orange-100 text-orange-600' },
+        ETHUSDC: { letter: 'E', logoClass: 'bg-blue-100 text-blue-600' },
+        SOLHUSDC: { letter: 'S', logoClass: 'bg-purple-100 text-purple-600' },
+        PEPEUSDC: { letter: 'P', logoClass: 'bg-orange-100 text-orange-500' },
+    };
+    const marketFavorites = new Set(['BTCUSDC', 'ETHUSDC']);
+
+    function renderMarketPairCell(pair, leverage) {
+        const meta = MARKET_PAIR_META[pair] || { letter: pair.charAt(0), logoClass: 'bg-gray-100 text-gray-600' };
+        const fav = marketFavorites.has(pair);
+        return `
+            <div class="flex items-center gap-1 min-w-0">
+                <button type="button" class="market-fav-btn shrink-0${fav ? ' is-fav' : ''}" data-pair="${pair}" onclick="toggleMarketFavorite(event, '${pair}')" aria-label="收藏" aria-pressed="${fav}">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                </button>
+                <span class="market-pair-logo w-4 h-4 rounded-full ${meta.logoClass} text-[8px] font-black flex items-center justify-center shrink-0">${meta.letter}</span>
+                <span class="font-bold truncate">${pair}</span>
+                <span class="text-[8px] bg-gray-100 px-1 py-0.5 rounded shrink-0">${leverage}</span>
+            </div>`;
+    }
+
+    function syncMarketFavCategory(pair) {
+        const row = document.querySelector(`[data-market-pair="${pair}"]`);
+        if (!row) return;
+        const categories = (row.dataset.marketCategory || '').split(/\s+/).filter(c => c !== 'fav');
+        if (marketFavorites.has(pair)) categories.push('fav');
+        row.dataset.marketCategory = categories.join(' ');
+    }
+
+    function toggleMarketFavorite(e, pair) {
+        e.stopPropagation();
+        if (marketFavorites.has(pair)) marketFavorites.delete(pair);
+        else marketFavorites.add(pair);
+        const btn = e.currentTarget;
+        const fav = marketFavorites.has(pair);
+        btn.classList.toggle('is-fav', fav);
+        btn.setAttribute('aria-pressed', fav);
+        syncMarketFavCategory(pair);
     }
 
     function selectMarketPair(pair) {
@@ -4636,48 +4692,32 @@
         </div>
         <!-- 列表 -->
         <div class="flex-1 overflow-y-auto px-3" id="market-list-rows">
-            <div data-market-category="all hot" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('BTCUSDC')">
-                <div class="flex items-center space-x-1.5">
-                    <svg class="w-3 h-3 text-gray-300" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/></svg>
-                    <span class="font-bold">BTCUSDC</span>
-                    <span class="text-[8px] bg-gray-100 px-1 py-0.5 rounded">100x</span>
-                </div>
+            <div data-market-pair="BTCUSDC" data-market-category="all hot fav" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('BTCUSDC')">
+                ${renderMarketPairCell('BTCUSDC', '100x')}
                 <div class="text-right">65,432.10</div>
                 <div class="text-right text-red-500">-1.76%</div>
                 <div class="text-right">60.23M</div>
                 <div class="text-right">3.23M</div>
                 <div class="text-right text-blue-500">0.0001%</div>
             </div>
-            <div data-market-category="all hot" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('ETHUSDC')">
-                <div class="flex items-center space-x-1.5">
-                    <svg class="w-3 h-3 text-gray-300" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/></svg>
-                    <span class="font-bold">ETHUSDC</span>
-                    <span class="text-[8px] bg-gray-100 px-1 py-0.5 rounded">100x</span>
-                </div>
+            <div data-market-pair="ETHUSDC" data-market-category="all hot fav" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('ETHUSDC')">
+                ${renderMarketPairCell('ETHUSDC', '100x')}
                 <div class="text-right">2,432.10</div>
                 <div class="text-right text-red-500">-3.76%</div>
                 <div class="text-right">42.23M</div>
                 <div class="text-right">10.23M</div>
                 <div class="text-right text-blue-500">0.0001%</div>
             </div>
-            <div data-market-category="all" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('SOLHUSDC')">
-                <div class="flex items-center space-x-1.5">
-                    <svg class="w-3 h-3 text-gray-300" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/></svg>
-                    <span class="font-bold">SOLHUSDC</span>
-                    <span class="text-[8px] bg-gray-100 px-1 py-0.5 rounded">100x</span>
-                </div>
+            <div data-market-pair="SOLHUSDC" data-market-category="all" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('SOLHUSDC')">
+                ${renderMarketPairCell('SOLHUSDC', '100x')}
                 <div class="text-right">62.10</div>
                 <div class="text-right text-red-500">-4.76%</div>
                 <div class="text-right">12.23M</div>
                 <div class="text-right">10.23M</div>
                 <div class="text-right text-blue-500">0.0001%</div>
             </div>
-            <div data-market-category="all new" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-orange-50 cursor-pointer text-[10px]" onclick="selectMarketPair('PEPEUSDC')">
-                <div class="flex items-center space-x-1.5 min-w-0">
-                    <span class="w-3 h-3 rounded-full bg-orange-100 text-orange-500 text-[8px] font-black flex items-center justify-center shrink-0">P</span>
-                    <span class="font-bold truncate">PEPEUSDC</span>
-                    <span class="text-[8px] bg-gray-100 px-1 py-0.5 rounded shrink-0">50x</span>
-                </div>
+            <div data-market-pair="PEPEUSDC" data-market-category="all new" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-orange-50 cursor-pointer text-[10px]" onclick="selectMarketPair('PEPEUSDC')">
+                ${renderMarketPairCell('PEPEUSDC', '50x')}
                 <div class="col-span-5 flex items-center justify-end gap-2 text-right whitespace-nowrap">
                     <span class="text-orange-600 font-bold">即将上线</span>
                     <span id="market-list-pepe-countdown" class="font-mono text-orange-500 font-bold">${formatMarketListCountdown()}</span>
