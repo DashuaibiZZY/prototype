@@ -1096,6 +1096,9 @@
 
                 <!-- 止盈止损下单区 (默认隐藏) -->
                 <div id="tpsl-order-container" class="hidden space-y-2 mb-2">
+                    <p class="text-[8px] text-gray-400 font-bold">
+                        <span class="dashed-hint cursor-help" title="单向：预先设置触发价格和委托价格，当市场价格达到触发价格时，系统将按委托价格自动下单。&#10;双向：预先设置止盈止损的触发价格和委托价格，当市场价格达到止盈触发价格时，系统将按止盈的委托价格自动下单，止损则自动失效；反之止损亦然。">单向/双向</span>
+                    </p>
                     <!-- 单向/双向选择（全宽下拉） -->
                     <div class="relative" onclick="toggleTPSLModeDropdown(event)">
                         <div class="flex items-center justify-between bg-gray-50 border border-gray-100 h-8 px-2 cursor-pointer text-[9px] font-bold text-gray-500">
@@ -1171,8 +1174,8 @@
                 <div id="tpsl-section" class="border-t border-gray-50 pt-2 mb-3">
                     <div class="flex items-center cursor-pointer">
                         <input type="checkbox" id="check-tpsl" onchange="toggleTPSL()" class="w-3 h-3 accent-blue-600">
-                        <label class="text-[10px] font-bold text-gray-500 ml-1.5 border-b border-dashed border-gray-300 cursor-help"
-                               title="止盈止損是指下單時提前為該訂單預設止盈價及止損價，以鎖定利潤或控制損失。當訂單完全成交時，系統將自動進行止盈止損委託。">
+                        <label class="text-[10px] font-bold text-gray-500 ml-1.5 dashed-hint cursor-help"
+                               title="止盈止损是指下单时提前为该订单预设止盈价及止损价，以锁定利润或控制损失。当订单部分成交或完全成交时，系统将自动进行止盈止损委托。附带的分批止盈只有当主单完全成交时才会进行委托。">
                             止盈/止損
                         </label>
                     </div>
@@ -1225,7 +1228,14 @@
                         <div class="flex justify-between"><span class="text-gray-400">可開</span><span class="font-bold">0.00 USDC</span></div>
                         <div class="flex justify-between"><span class="text-gray-400">可開</span><span class="font-bold">0.00 USDC</span></div>
                     </div>
-                    <div class="pt-1 text-[8px] text-gray-400">手續費率: <span class="text-gray-700">吃單 0.045% / 掛單 0.03%</span></div>
+                    <div class="pt-1 text-[8px] text-gray-400">
+                        手續費率:
+                        <span class="market-hint-wrap dashed-hint cursor-pointer" onclick="openVipModal()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openVipModal();}">
+                            <span class="text-amber-600 font-black">VIP 2</span>
+                            <span class="text-gray-700 font-bold">吃單 0.034% / 掛單 0.010%</span>
+                            <div class="market-hint-tip" style="min-width:200px;">点击查看 ForX 合约交易 VIP 费率表</div>
+                        </span>
+                    </div>
                 </div>
             </div>
         </aside>
@@ -3002,6 +3012,44 @@
     </div>
 </div>
 
+<!-- VIP 費率詳情彈窗（与投资组合页一致） -->
+<div id="vip-modal" class="modal-overlay" style="display: none; background: rgba(0,0,0,0.6); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2100; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div class="bg-white w-[560px] rounded-lg overflow-hidden shadow-2xl border border-gray-100 animate-in zoom-in duration-200">
+        <div class="p-6 border-b border-gray-50 flex justify-between items-center">
+            <h2 class="text-base font-black uppercase tracking-tight italic">ForX 合約交易 VIP 費率表</h2>
+            <span class="cursor-pointer text-gray-400 text-xl hover:text-black" onclick="closeVipModal()">✕</span>
+        </div>
+        <div class="p-6">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                <tr class="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                    <th class="px-4 py-3 border-b border-gray-100">VIP 等級</th>
+                    <th class="px-4 py-3 border-b border-gray-100">14天交易量門檻 (USD)</th>
+                    <th class="px-4 py-3 border-b border-gray-100">Maker 費率</th>
+                    <th class="px-4 py-3 border-b border-gray-100 text-right">Taker 費率</th>
+                </tr>
+                </thead>
+                <tbody class="text-[11px] font-bold text-gray-700">
+                <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 0</td><td class="px-4 py-3 border-b border-gray-50">&lt; $5M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.015%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.045%</td></tr>
+                <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 1</td><td class="px-4 py-3 border-b border-gray-50">≥ $5M 且 &lt; $25M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.013%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.039%</td></tr>
+                <tr class="bg-yellow-50/50"><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">VIP 2</td><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">≥ $25M 且 &lt; $100M</td><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">0.010%</td><td class="px-4 py-3 border-b border-yellow-100 text-right font-black text-yellow-700">0.034%</td></tr>
+                <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 3</td><td class="px-4 py-3 border-b border-gray-50">≥ $100M 且 &lt; $500M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.006%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.029%</td></tr>
+                <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 4</td><td class="px-4 py-3 border-b border-gray-50">≥ $500M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.004%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.026%</td></tr>
+                </tbody>
+            </table>
+            <div class="mt-8 bg-gray-50 p-4 rounded-sm border border-gray-100">
+                <h4 class="text-[10px] font-black uppercase text-gray-500 mb-2">等級補充說明</h4>
+                <ul class="text-[10px] text-gray-500 space-y-1.5 list-disc list-inside leading-relaxed">
+                    <li>VIP等級根據用戶近14天合約交易量進行計算，達到對應等級門檻後，系統將在T+1日自動升級對應VIP等級。</li>
+                    <li>平台會定期更新用戶VIP等級，具體更新時間以系統計算結果為準。</li>
+                    <li>VIP等級更新後，新產生的合約交易將按對應等級費率計算手續費。</li>
+                    <li>VIP等級會根據用戶近14天合約交易量重新匹配，若交易量不滿足當前等級要求，系統將在T+1日內按平台規則調整至對應等級。</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="position-flow-module.js"></script>
 <script src="position-close-module.js"></script>
 <script>
@@ -3021,6 +3069,16 @@
         const modal = document.getElementById(id);
         if (!modal) return;
         modal.style.display = (modal.style.display === 'flex' || modal.style.display === '') ? 'none' : 'flex';
+    }
+
+    function openVipModal() {
+        const m = document.getElementById('vip-modal');
+        if (m) m.style.display = 'flex';
+    }
+
+    function closeVipModal() {
+        const m = document.getElementById('vip-modal');
+        if (m) m.style.display = 'none';
     }
 
     function openTransferModal() {
@@ -3980,9 +4038,9 @@
         filterIds.forEach(id => document.getElementById(id)?.classList.add('hidden'));
 
         if (tabId === 'pos') {
-            h.innerHTML = `<th class="px-3 py-2 font-medium">合約</th><th class="px-3 py-2 font-medium">數量</th><th class="px-3 py-2 font-medium">開倉均價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="最新标记价格，用于计算盈亏和强平">標記價格</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="持仓达到盈亏平衡时的价格">盈虧平衡價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="预估触发强平的价格">預估強平價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="当前保证金与持仓价值的比率，越高风险越高，接近100%有爆仓风险">風險率</th><th class="px-3 py-2 font-medium">保證金</th><th class="px-3 py-2 font-medium">盈虧 (ROE%)</th><th class="px-3 py-2 font-medium" id="pos-close-col-header">${PositionClose.renderCloseColHeaderInner()}</th><th class="px-3 py-2 font-medium">止盈/止損</th>`;
+            h.innerHTML = `<th class="px-3 py-2 font-medium">合約</th><th class="px-3 py-2 font-medium">數量</th><th class="px-3 py-2 font-medium">開倉均價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="最新标记价格，用于计算盈亏和强平">標記價格</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="持仓达到盈亏平衡时的价格">盈虧平衡價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="预估强平价数据仅供参考。实际强平价会根据账户权益、维持保证金和浮动收益的变化而产生差异。">預估強平價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="维持保证金率可衡量合约仓位的风险情况;维持保证金率越低，仓位风险越大;当维持保证金率≤100%时，会触发强减或强平。">联合保证金率</th><th class="px-3 py-2 font-medium">保證金</th><th class="px-3 py-2 font-medium">盈虧 (ROE%)</th><th class="px-3 py-2 font-medium" id="pos-close-col-header">${PositionClose.renderCloseColHeaderInner()}</th><th class="px-3 py-2 font-medium">止盈/止損</th>`;
             b.innerHTML = `<tr class="hover:bg-gray-50 transition-colors border-b border-gray-50">
-            <td class="px-3 py-2.5 whitespace-nowrap"><div class="font-bold text-black text-[10px]">BTCUSDC <span class="text-green-500 bg-green-50 px-1 rounded-[1px]">20x</span></div></td>
+            <td class="px-3 py-2.5 whitespace-nowrap"><div class="font-bold text-black text-[10px]">BTCUSDC <span class="text-gray-500 font-bold">逐仓</span> <span class="text-green-500 bg-green-50 px-1 rounded-[1px]">20x</span></div></td>
             <td class="px-3 py-2.5 whitespace-nowrap font-medium text-gray-900" id="pos-qty-cell">${PositionClose.renderPosQtyCellInner()}</td>
             <td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,100.5</td>
             <td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,432.1</td>
@@ -4006,18 +4064,24 @@
             if (currentOrderSubTab === 'base') {
                 h.innerHTML = '<th class="px-4 py-2">時間</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">方向</th><th class="px-4 py-2">成交均价</th><th class="px-4 py-2">價格</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發條件</th><th class="px-4 py-2 text-blue-600">止盈/止损</th><th class="px-4 py-2">生效时间</th><th class="px-4 py-2 cursor-pointer" onclick="openCancelAllConfirm()"><span class="flex items-center space-x-1 text-red-500"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>全部撤单</span></th>';
                 b.innerHTML = `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">
-                <td class="px-4 py-3 text-gray-400">2024-05-24 14:20:15</td><td class="px-4 py-3 font-black text-gray-900">BNBUSDC</td><td class="px-4 py-3 font-medium">限價單</td><td class="px-4 py-3 text-green-500 font-bold uppercase tracking-tighter text-[12px]">買入 / 開多</td>
+                <td class="px-4 py-3 text-gray-400">2024-05-24 14:20:15</td><td class="px-4 py-3 font-black text-gray-900">BNBUSDC <span class="text-gray-500 font-bold">逐仓</span> <span class="text-green-500 bg-green-50 px-1 rounded-[1px] text-[10px]">20x</span></td><td class="px-4 py-3 font-medium">限價單</td><td class="px-4 py-3 text-green-500 font-bold uppercase tracking-tighter text-[12px]">買入 / 開多</td>
                 <td class="px-4 py-3 text-gray-400 font-mono">--</td><td class="px-4 py-3 font-mono font-bold">620.00</td><td class="px-4 py-3 text-gray-400 font-mono">0.00</td><td class="px-4 py-3 font-mono font-bold">1.00</td>
                 <td class="px-4 py-3 text-gray-400">--</td><td class="px-4 py-3"><div class="flex items-center space-x-2"><span class="text-gray-300 italic">800.123 / 600.234</span><button onclick="toggleModal('modal-order-tpsl')" class="text-blue-500 hover:text-blue-700 flex items-center group"><svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>設置</button></div></td>
                 <td class="px-4 py-3 text-gray-400">--</td><td class="px-4 py-3 text-blue-600 font-black uppercase cursor-pointer" onclick="openCancelConfirm('OR_882910')"><span class="flex items-center space-x-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>撤单</span></td>
             </tr>`;
             } else {
-                h.innerHTML = '<th class="px-4 py-2">時間</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">方向</th><th class="px-4 py-2">成交均价</th><th class="px-4 py-2">價格</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發條件</th><th class="px-4 py-2 text-blue-600">止盈/止损</th><th class="px-4 py-2">生效时间</th><th class="px-4 py-2 cursor-pointer" onclick="openCancelAllConfirm()"><span class="flex items-center space-x-1 text-red-500"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>全部撤单</span></th>';
+                h.innerHTML = '<th class="px-4 py-2">時間</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">方向</th><th class="px-4 py-2">成交均价</th><th class="px-4 py-2">價格</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發條件</th><th class="px-4 py-2">生效时间</th><th class="px-4 py-2 cursor-pointer" onclick="openCancelAllConfirm()"><span class="flex items-center space-x-1 text-red-500"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>全部撤单</span></th>';
                 b.innerHTML = `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">
-                <td class="px-4 py-3 text-gray-400">2024-05-24 14:20:15</td><td class="px-4 py-3 font-black text-gray-900">BNBUSDC</td><td class="px-4 py-3 font-medium text-red-500">市价止盈</td><td class="px-4 py-3 text-green-500 font-bold uppercase tracking-tighter text-[12px]">平多</td>
+                <td class="px-4 py-3 text-gray-400">2024-05-24 14:20:15</td><td class="px-4 py-3 font-black text-gray-900">BNBUSDC <span class="text-gray-500 font-bold">逐仓</span> <span class="text-green-500 bg-green-50 px-1 rounded-[1px] text-[10px]">20x</span></td><td class="px-4 py-3 font-medium text-red-500">市价止盈</td><td class="px-4 py-3 text-green-500 font-bold uppercase tracking-tighter text-[12px]">平多</td>
                 <td class="px-4 py-3 text-gray-400 font-mono">--</td><td class="px-4 py-3 font-mono font-bold text-gray-500">市价</td><td class="px-4 py-3 text-gray-400 font-mono">--</td><td class="px-4 py-3 font-mono font-bold">全部平仓</td>
-                <td class="px-4 py-3 text-gray-700 font-bold">最新价格 >= 800.123</td><td class="px-4 py-3 text-gray-300">--</td><td class="px-4 py-3 text-gray-400">--</td>
+                <td class="px-4 py-3 text-gray-700 font-bold">最新价格 >= 800.123</td><td class="px-4 py-3 text-gray-400">--</td>
                 <td class="px-4 py-3 text-blue-600 font-black uppercase cursor-pointer" onclick="openCancelConfirm('TP_001')"><span class="flex items-center space-x-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>撤单</span></td>
+            </tr>
+            <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">
+                <td class="px-4 py-3 text-gray-400">2024-05-24 15:02:08</td><td class="px-4 py-3 font-black text-gray-900">BNBUSDC <span class="text-gray-500 font-bold">逐仓</span> <span class="text-green-500 bg-green-50 px-1 rounded-[1px] text-[10px]">20x</span></td><td class="px-4 py-3 font-medium text-red-500">限价止损</td><td class="px-4 py-3 text-green-500 font-bold uppercase tracking-tighter text-[12px]">平多</td>
+                <td class="px-4 py-3 text-gray-400 font-mono">--</td><td class="px-4 py-3 font-mono font-bold">600.00</td><td class="px-4 py-3 text-gray-400 font-mono">--</td><td class="px-4 py-3 font-mono font-bold">0.50</td>
+                <td class="px-4 py-3 text-gray-700 font-bold">标记价格 <= 600.234</td><td class="px-4 py-3 text-gray-400">--</td>
+                <td class="px-4 py-3 text-blue-600 font-black uppercase cursor-pointer" onclick="openCancelConfirm('SL_002')"><span class="flex items-center space-x-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>撤单</span></td>
             </tr>`;
             }
         } else if (tabId === 'hist-order') {
