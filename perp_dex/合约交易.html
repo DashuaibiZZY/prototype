@@ -9,7 +9,8 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #111827; font-size: 11px; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .dashed-hint { border-bottom: 1px dashed #9ca3af; cursor: help; }
+        .dashed-hint { border-bottom: 1px dashed #9ca3af; cursor: default; }
+        .market-hint-wrap.dashed-hint { cursor: default; }
         .realized-pnl-wrap { position: relative; z-index: 1; }
         .realized-pnl-wrap:hover { z-index: 200; }
         .realized-pnl-tip { position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); z-index: 200; min-width: 188px; background: #fff; border: 1px solid #e5e7eb; border-radius: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 10px 12px; font-size: 10px; line-height: 1.6; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity .15s, visibility .15s; }
@@ -59,6 +60,16 @@
         }
         .ob-mid-mode-btn:hover { color: #111827; background: #f3f4f6; }
         .market-hint-tip.ob-mid-mode-tip { min-width: 120px; left: auto; right: 0; }
+        .market-hint-tip.th-col-tip {
+            top: auto;
+            bottom: calc(100% + 8px);
+            left: 0;
+            min-width: 240px;
+            max-width: 320px;
+        }
+        .market-hint-tip.attach-tpsl-tip,
+        .market-hint-tip.tpsl-mode-tip { min-width: 280px; max-width: 360px; }
+        #data-header th { position: relative; overflow: visible; vertical-align: bottom; }
         #data-body td { overflow: visible; position: relative; }
         .pf-filter-bar { position: relative; z-index: 30; overflow: visible; }
         .date-range-picker-popover { z-index: 200; max-height: none; overflow: visible; }
@@ -1097,7 +1108,9 @@
                 <!-- 止盈止损下单区 (默认隐藏) -->
                 <div id="tpsl-order-container" class="hidden space-y-2 mb-2">
                     <p class="text-[8px] text-gray-400 font-bold">
-                        <span class="dashed-hint cursor-help" title="单向：预先设置触发价格和委托价格，当市场价格达到触发价格时，系统将按委托价格自动下单。&#10;双向：预先设置止盈止损的触发价格和委托价格，当市场价格达到止盈触发价格时，系统将按止盈的委托价格自动下单，止损则自动失效；反之止损亦然。">单向/双向</span>
+                        <span class="market-hint-wrap dashed-hint">单向/双向
+                            <div class="market-hint-tip tpsl-mode-tip"><strong>单向：</strong>预先设置触发价格和委托价格，当市场价格达到触发价格时，系统将按委托价格自动下单。<br><strong>双向：</strong>预先设置止盈止损的触发价格和委托价格，当市场价格达到止盈触发价格时，系统将按止盈的委托价格自动下单，止损则自动失效；反之止损亦然。</div>
+                        </span>
                     </p>
                     <!-- 单向/双向选择（全宽下拉） -->
                     <div class="relative" onclick="toggleTPSLModeDropdown(event)">
@@ -1174,10 +1187,9 @@
                 <div id="tpsl-section" class="border-t border-gray-50 pt-2 mb-3">
                     <div class="flex items-center cursor-pointer">
                         <input type="checkbox" id="check-tpsl" onchange="toggleTPSL()" class="w-3 h-3 accent-blue-600">
-                        <label class="text-[10px] font-bold text-gray-500 ml-1.5 dashed-hint cursor-help"
-                               title="止盈止损是指下单时提前为该订单预设止盈价及止损价，以锁定利润或控制损失。当订单部分成交或完全成交时，系统将自动进行止盈止损委托。附带的分批止盈只有当主单完全成交时才会进行委托。">
-                            止盈/止損
-                        </label>
+                        <span class="market-hint-wrap dashed-hint text-[10px] font-bold text-gray-500 ml-1.5">止盈/止損
+                            <div class="market-hint-tip attach-tpsl-tip">止盈止损是指下单时提前为该订单预设止盈价及止损价，以锁定利润或控制损失。当订单部分成交或完全成交时，系统将自动进行止盈止损委托。附带的分批止盈只有当主单完全成交时才会进行委托。</div>
+                        </span>
                     </div>
                     <div id="tpsl-inputs" class="mt-2 space-y-2" style="display: none;">
                         <!-- 止盈 -->
@@ -2465,36 +2477,32 @@
 
             <!-- 止盈设置 -->
             <div class="space-y-3">
-                <div class="flex justify-between items-center text-[10px]">
-                    <div class="flex items-center space-x-2">
-                        <span class="bg-gray-100 text-gray-600 px-2 py-0.5 font-bold rounded-sm">市價止盈平多</span>
-                    </div>
-                    <span class="text-gray-300 font-bold uppercase italic">未生效</span>
+                <div class="flex items-center space-x-2 text-[10px]">
+                    <span class="bg-gray-100 text-gray-600 px-2 py-0.5 font-bold rounded-sm">市價止盈平多</span>
                 </div>
                 <div class="flex items-center border border-gray-200 rounded-sm focus-within:border-black transition-all">
-                    <input type="number" placeholder="止盈觸發價格" class="flex-1 px-3 py-2 text-[12px] font-mono font-bold outline-none">
+                    <input type="number" id="order-modal-tp-price" value="800" placeholder="止盈觸發價格" class="flex-1 px-3 py-2 text-[12px] font-mono font-bold outline-none" oninput="updateTPSLEstimates()">
                     <select class="bg-gray-50 text-[10px] font-bold px-2 py-2 border-r border-gray-200 outline-none">
                         <option>標記價格</option>
                         <option>最新價格</option>
                     </select>
                 </div>
+                <div id="order-modal-tp-estimate" class="tpsl-estimate hidden"></div>
             </div>
 
             <!-- 止损设置 -->
             <div class="space-y-3 pt-2">
-                <div class="flex justify-between items-center text-[10px]">
-                    <div class="flex items-center space-x-2">
-                        <span class="bg-gray-100 text-gray-600 px-2 py-0.5 font-bold rounded-sm">市價止損平多</span>
-                    </div>
-                    <span class="text-gray-300 font-bold uppercase italic">未生效</span>
+                <div class="flex items-center space-x-2 text-[10px]">
+                    <span class="bg-gray-100 text-gray-600 px-2 py-0.5 font-bold rounded-sm">市價止損平多</span>
                 </div>
                 <div class="flex items-center border border-gray-200 rounded-sm focus-within:border-black transition-all">
-                    <input type="number" placeholder="止損觸發價格" class="flex-1 px-3 py-2 text-[12px] font-mono font-bold outline-none">
+                    <input type="number" id="order-modal-sl-price" value="600" placeholder="止損觸發價格" class="flex-1 px-3 py-2 text-[12px] font-mono font-bold outline-none" oninput="updateTPSLEstimates()">
                     <select class="bg-gray-50 text-[10px] font-bold px-2 py-2 border-r border-gray-200 outline-none">
                         <option>標記價格</option>
                         <option>最新價格</option>
                     </select>
                 </div>
+                <div id="order-modal-sl-estimate" class="tpsl-estimate hidden"></div>
             </div>
 
             <!-- 确认按钮 -->
@@ -3068,7 +3076,9 @@
     function toggleModal(id) {
         const modal = document.getElementById(id);
         if (!modal) return;
-        modal.style.display = (modal.style.display === 'flex' || modal.style.display === '') ? 'none' : 'flex';
+        const willOpen = modal.style.display !== 'flex';
+        modal.style.display = willOpen ? 'flex' : 'none';
+        if (willOpen && id === 'modal-order-tpsl') updateTPSLEstimates();
     }
 
     function openVipModal() {
@@ -3498,10 +3508,10 @@
         el.textContent = '';
     }
 
-    function updateEstimateContext(tpTriggerEl, slTriggerEl, tpEstEl, slEstEl, hintEl, refPrice) {
+    function updateEstimateContext(tpTriggerEl, slTriggerEl, tpEstEl, slEstEl, hintEl, refPrice, qtyUsdtOverride) {
         const tpTrigger = parseInputNum(tpTriggerEl?.value);
         const slTrigger = parseInputNum(slTriggerEl?.value);
-        const qtyUsdt = getQtyUsdt();
+        const qtyUsdt = qtyUsdtOverride ?? getQtyUsdt();
         const bracket = inferBracketSide(tpTrigger, slTrigger, refPrice);
 
         if (hintEl) {
@@ -3511,6 +3521,18 @@
 
         setEstimateEl(tpEstEl, formatEstPnlText('tp', tpTrigger, refPrice, qtyUsdt, bracket));
         setEstimateEl(slEstEl, formatEstPnlText('sl', slTrigger, refPrice, qtyUsdt, bracket));
+    }
+
+    function getOrderModalRefPrice() {
+        return 620;
+    }
+
+    function getOrderModalQtyUsdt() {
+        return 620;
+    }
+
+    function renderPosTableHintTh(label, tip) {
+        return `<th class="px-3 py-2 font-medium"><span class="market-hint-wrap dashed-hint">${label}<div class="market-hint-tip th-col-tip">${tip}</div></span></th>`;
     }
 
     function updateTPSLEstimates() {
@@ -3530,6 +3552,15 @@
             document.getElementById('attach-sl-estimate'),
             document.getElementById('attach-tpsl-conflict-hint'),
             orderRef
+        );
+        updateEstimateContext(
+            document.getElementById('order-modal-tp-price'),
+            document.getElementById('order-modal-sl-price'),
+            document.getElementById('order-modal-tp-estimate'),
+            document.getElementById('order-modal-sl-estimate'),
+            null,
+            getOrderModalRefPrice(),
+            getOrderModalQtyUsdt()
         );
     }
 
@@ -4038,7 +4069,7 @@
         filterIds.forEach(id => document.getElementById(id)?.classList.add('hidden'));
 
         if (tabId === 'pos') {
-            h.innerHTML = `<th class="px-3 py-2 font-medium">合約</th><th class="px-3 py-2 font-medium">數量</th><th class="px-3 py-2 font-medium">開倉均價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="最新标记价格，用于计算盈亏和强平">標記價格</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="持仓达到盈亏平衡时的价格">盈虧平衡價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="预估强平价数据仅供参考。实际强平价会根据账户权益、维持保证金和浮动收益的变化而产生差异。">預估強平價</th><th class="px-3 py-2 font-medium dashed-hint cursor-help" title="维持保证金率可衡量合约仓位的风险情况;维持保证金率越低，仓位风险越大;当维持保证金率≤100%时，会触发强减或强平。">联合保证金率</th><th class="px-3 py-2 font-medium">保證金</th><th class="px-3 py-2 font-medium">盈虧 (ROE%)</th><th class="px-3 py-2 font-medium" id="pos-close-col-header">${PositionClose.renderCloseColHeaderInner()}</th><th class="px-3 py-2 font-medium">止盈/止損</th>`;
+            h.innerHTML = `<th class="px-3 py-2 font-medium">合約</th><th class="px-3 py-2 font-medium">數量</th><th class="px-3 py-2 font-medium">開倉均價</th>${renderPosTableHintTh('標記價格', '最新标记价格，用于计算盈亏和强平')}${renderPosTableHintTh('盈虧平衡價', '持仓达到盈亏平衡时的价格')}${renderPosTableHintTh('預估強平價', '预估强平价数据仅供参考。实际强平价会根据账户权益、维持保证金和浮动收益的变化而产生差异。')}${renderPosTableHintTh('联合保证金率', '维持保证金率可衡量合约仓位的风险情况;维持保证金率越低，仓位风险越大;当维持保证金率≤100%时，会触发强减或强平。')}<th class="px-3 py-2 font-medium">保證金</th><th class="px-3 py-2 font-medium">盈虧 (ROE%)</th><th class="px-3 py-2 font-medium" id="pos-close-col-header">${PositionClose.renderCloseColHeaderInner()}</th><th class="px-3 py-2 font-medium">止盈/止損</th>`;
             b.innerHTML = `<tr class="hover:bg-gray-50 transition-colors border-b border-gray-50">
             <td class="px-3 py-2.5 whitespace-nowrap"><div class="font-bold text-black text-[10px]">BTCUSDC <span class="text-gray-500 font-bold">逐仓</span> <span class="text-green-500 bg-green-50 px-1 rounded-[1px]">20x</span></div></td>
             <td class="px-3 py-2.5 whitespace-nowrap font-medium text-gray-900" id="pos-qty-cell">${PositionClose.renderPosQtyCellInner()}</td>
