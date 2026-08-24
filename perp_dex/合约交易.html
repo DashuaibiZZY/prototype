@@ -69,16 +69,32 @@
             z-index: 500;
         }
         .market-hint-tip.attach-tpsl-tip { min-width: 280px; max-width: 360px; }
-        .tpsl-mode-hint-panel {
-            font-size: 8px;
-            line-height: 1.55;
-            color: #6b7280;
-            background: #f9fafb;
-            border: 1px solid #f3f4f6;
-            border-radius: 2px;
-            padding: 6px 8px;
+        .market-hint-tip.tpsl-mode-tip {
+            top: calc(100% + 6px);
+            bottom: auto;
+            left: 0;
+            min-width: 280px;
+            max-width: 360px;
+            z-index: 9999;
         }
         #tpsl-order-container { overflow: visible; }
+        #tpsl-order-container .tpsl-mode-label-row {
+            position: relative;
+            overflow: visible;
+            z-index: 1;
+            margin-bottom: 0;
+        }
+        #tpsl-order-container .tpsl-mode-label-row:hover {
+            z-index: 9999;
+        }
+        #tpsl-order-container .tpsl-mode-dropdown-wrap {
+            position: relative;
+            z-index: 0;
+        }
+        .trade-terminal {
+            overflow-x: visible;
+            overflow-y: auto;
+        }
         #data-header th { position: relative; overflow: visible; vertical-align: bottom; }
         #data-header th:hover { z-index: 100; }
         #data-container thead { z-index: 20; }
@@ -1073,7 +1089,7 @@
         </div>
 
         <!-- 交易終端 -->
-        <aside class="w-[300px] bg-white flex flex-col shrink-0 overflow-y-auto scrollbar-hide border-l border-gray-100">
+        <aside class="trade-terminal w-[300px] bg-white flex flex-col shrink-0 overflow-y-auto scrollbar-hide border-l border-gray-100">
             <div class="p-3">
                 <!-- 全仓 / 多空杠杆（合并按钮） -->
                 <div class="grid grid-cols-2 gap-1.5 mb-2">
@@ -1119,14 +1135,12 @@
 
                 <!-- 止盈止损下单区 (默认隐藏) -->
                 <div id="tpsl-order-container" class="hidden space-y-2 mb-2">
-                    <div class="space-y-1">
-                        <p class="text-[8px] text-gray-400 font-bold">单向/双向</p>
-                        <div class="tpsl-mode-hint-panel">
-                            <strong>单向：</strong>预先设置触发价格和委托价格，当市场价格达到触发价格时，系统将按委托价格自动下单。<br>
-                            <strong>双向：</strong>预先设置止盈止损的触发价格和委托价格，当市场价格达到止盈触发价格时，系统将按止盈的委托价格自动下单，止损则自动失效；反之止损亦然。
-                        </div>
-                    </div>
-                    <div class="relative" onclick="toggleTPSLModeDropdown(event)">
+                    <p class="tpsl-mode-label-row text-[8px] text-gray-400 font-bold">
+                        <span class="market-hint-wrap dashed-hint">单向/双向
+                            <div class="market-hint-tip tpsl-mode-tip"><strong>单向：</strong>预先设置触发价格和委托价格，当市场价格达到触发价格时，系统将按委托价格自动下单。<br><strong>双向：</strong>预先设置止盈止损的触发价格和委托价格，当市场价格达到止盈触发价格时，系统将按止盈的委托价格自动下单，止损则自动失效；反之止损亦然。</div>
+                        </span>
+                    </p>
+                    <div class="tpsl-mode-dropdown-wrap relative" onclick="toggleTPSLModeDropdown(event)">
                         <div class="flex items-center justify-between bg-gray-50 border border-gray-100 h-8 px-2 cursor-pointer text-[9px] font-bold text-gray-500">
                             <span id="tpsl-mode-value">单向委托</span>
                             <svg width="8" height="8" class="ml-1 shrink-0" viewBox="0 0 16 16"><path d="M8 11.2L3.2 6.4h9.6L8 11.2z" fill="currentColor"></path></svg>
