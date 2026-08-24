@@ -358,7 +358,7 @@
             <div class="mt-4 border-t-4 border-gray-50">
                 <div class="flex justify-between items-center px-4 py-3">
                     <div class="flex space-x-6">
-                        <button id="tab-positions" onclick="switchPositionTab('positions')" class="tab-active text-[13px] pb-1">當前持倉(1)</button>
+                        <button id="tab-positions" onclick="switchPositionTab('positions')" class="tab-active text-[13px] pb-1">當前持倉(2)</button>
                         <button id="tab-orders" onclick="switchPositionTab('orders')" class="text-gray-400 font-bold text-[13px] pb-1">當前委託(3)</button>
                     </div>
                     <a href="交易流水頁面.html"><svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg></a>
@@ -371,61 +371,122 @@
                         <button id="btn-close-all" onclick="openModal('close-all-modal')" class="bg-gray-100 px-3 py-1.5 rounded text-[11px] font-bold">一鍵平倉</button>
                     </div>
                     <div class="px-4 pb-20">
-                        <div id="positions-card" class="border border-gray-100 rounded-lg p-4 space-y-4 shadow-sm">
-                            <div class="flex justify-between items-start">
-                                <div class="flex items-center space-x-2">
-                                    <div class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">多</div>
-                                    <span class="font-black text-[13px]">BTCUSDT</span>
-                                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">20X</span>
+                        <div id="positions-cards" class="space-y-4">
+                            <div id="positions-card-cross" class="border border-gray-100 rounded-lg p-4 space-y-4 shadow-sm">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex items-center flex-wrap gap-1.5">
+                                        <span class="font-black text-[13px]">BNBUSDT</span>
+                                        <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">全仓</span>
+                                        <span class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">多</span>
+                                        <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">20X</span>
+                                    </div>
+                                    <button type="button" onclick="openSharePnl()" class="p-1 hover:bg-gray-100 rounded-full transition-colors shrink-0" title="分享收益">
+                                        <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                                    </button>
                                 </div>
-                                <button type="button" onclick="openSharePnl()" class="p-1 hover:bg-gray-100 rounded-full transition-colors shrink-0" title="分享收益">
-                                    <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-                                </button>
+                                <div class="flex justify-between items-end">
+                                    <div class="space-y-1">
+                                        <p class="text-[10px] text-gray-400 font-bold uppercase dashed-underline inline-block cursor-pointer active:opacity-70" onclick="openRealizedPnlSheet(REALIZED_PNL_BREAKDOWN.pos)">未實現盈虧(USDT)</p>
+                                        <p id="pos-pnl" class="text-lg font-black text-green-500">+125.42</p>
+                                    </div>
+                                    <div class="text-right space-y-1">
+                                        <p class="text-[10px] text-gray-400 font-bold uppercase">投資回報率</p>
+                                        <p id="pos-roi" class="text-sm font-black text-green-500">+12.35%</p>
+                                    </div>
+                                </div>
+                                <div class="space-y-3 py-2 border-t border-gray-50">
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <div class="space-y-1">
+                                            <p class="text-gray-400 text-[10px] font-bold">持倉數量</p>
+                                            <p id="pos-qty" class="text-[11px] font-black">5.80 BNB</p>
+                                        </div>
+                                        <div class="space-y-1">
+                                            <p class="text-gray-400 text-[10px] font-bold">保證金(USDT)</p>
+                                            <p id="pos-margin" class="text-[11px] font-black">1,240.00</p>
+                                        </div>
+                                        <div class="space-y-1 text-right">
+                                            <p class="text-gray-400 text-[10px] font-bold dashed-underline inline-block cursor-pointer active:opacity-70" onclick="openSheet('united-mmr-sheet')">联合保证金率</p>
+                                            <p id="pos-united-mmr" class="text-[11px] font-black">85.32%</p>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <div class="space-y-1">
+                                            <p class="text-gray-400 text-[10px] font-bold">开仓价格(USDT)</p>
+                                            <p id="pos-open-price" class="text-[11px] font-black font-mono">579.61</p>
+                                        </div>
+                                        <div class="space-y-1">
+                                            <p class="text-gray-400 text-[10px] font-bold">标记价格(USDT)</p>
+                                            <p id="pos-mark-price" class="text-[11px] font-black font-mono">579.773</p>
+                                        </div>
+                                        <div class="space-y-1 text-right">
+                                            <p class="text-gray-400 text-[10px] font-bold dashed-underline inline-block cursor-pointer active:opacity-70" onclick="openSheet('liq-price-detail-sheet')">强平价格(USDT)</p>
+                                            <p id="pos-liq" class="text-[11px] font-black font-mono text-gray-900">65,241.2</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2 pt-2">
+                                    <button onclick="openSheet('leverage-sheet')" class="flex-1 bg-gray-100 py-2 rounded text-[11px] font-bold">槓桿</button>
+                                    <button onclick="openPositionTPSLSheet('全仓')" class="flex-1 bg-gray-100 py-2 rounded text-[11px] font-bold">止盈止損</button>
+                                    <button onclick="openClosePositionSheet()" class="flex-1 bg-gray-100 py-2 rounded text-[11px] font-bold">平倉</button>
+                                </div>
                             </div>
-                            <div class="flex justify-between items-end">
-                                <div class="space-y-1">
-                                    <p class="text-[10px] text-gray-400 font-bold uppercase dashed-underline inline-block cursor-pointer active:opacity-70" onclick="openRealizedPnlSheet(REALIZED_PNL_BREAKDOWN.pos)">未實現盈虧(USDT)</p>
-                                    <p id="pos-pnl" class="text-lg font-black text-green-500">+125.42</p>
-                                </div>
-                                <div class="text-right space-y-1">
-                                    <p class="text-[10px] text-gray-400 font-bold uppercase">投資回報率</p>
-                                    <p id="pos-roi" class="text-sm font-black text-green-500">+12.35%</p>
-                                </div>
-                            </div>
-                            <div class="space-y-3 py-2 border-t border-gray-50">
-                                <div class="grid grid-cols-3 gap-2">
-                                    <div class="space-y-1">
-                                        <p class="text-gray-400 text-[10px] font-bold">持倉數量</p>
-                                        <p id="pos-qty" class="text-[11px] font-black">0.050 BTC</p>
+                            <div id="positions-card-iso" class="border border-gray-100 rounded-lg p-4 space-y-4 shadow-sm">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex items-center flex-wrap gap-1.5">
+                                        <span class="font-black text-[13px]">BNBUSDT</span>
+                                        <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">逐仓</span>
+                                        <span class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">多</span>
+                                        <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">20X</span>
                                     </div>
+                                    <button type="button" onclick="openSharePnl()" class="p-1 hover:bg-gray-100 rounded-full transition-colors shrink-0" title="分享收益">
+                                        <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                                    </button>
+                                </div>
+                                <div class="flex justify-between items-end">
                                     <div class="space-y-1">
-                                        <p class="text-gray-400 text-[10px] font-bold">保證金(USDT)</p>
-                                        <p id="pos-margin" class="text-[11px] font-black">1,240.00</p>
+                                        <p class="text-[10px] text-gray-400 font-bold uppercase dashed-underline inline-block cursor-pointer active:opacity-70" onclick="openRealizedPnlSheet(REALIZED_PNL_BREAKDOWN.pos)">未實現盈虧(USDT)</p>
+                                        <p id="pos-pnl-iso" class="text-lg font-black text-green-500">+125.42</p>
                                     </div>
-                                    <div class="space-y-1 text-right">
-                                        <p class="text-gray-400 text-[10px] font-bold dashed-underline inline-block cursor-pointer active:opacity-70" onclick="openSheet('united-mmr-sheet')">联合保证金率</p>
-                                        <p id="pos-united-mmr" class="text-[11px] font-black">85.32%</p>
+                                    <div class="text-right space-y-1">
+                                        <p class="text-[10px] text-gray-400 font-bold uppercase">投資回報率</p>
+                                        <p id="pos-roi-iso" class="text-sm font-black text-green-500">+12.35%</p>
                                     </div>
                                 </div>
-                                <div class="grid grid-cols-3 gap-2">
-                                    <div class="space-y-1">
-                                        <p class="text-gray-400 text-[10px] font-bold">开仓价格(USDT)</p>
-                                        <p id="pos-open-price" class="text-[11px] font-black font-mono">65,100.5</p>
+                                <div class="space-y-3 py-2 border-t border-gray-50">
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <div class="space-y-1">
+                                            <p class="text-gray-400 text-[10px] font-bold">持倉數量</p>
+                                            <p id="pos-qty-iso" class="text-[11px] font-black">5.80 BNB</p>
+                                        </div>
+                                        <div class="space-y-1">
+                                            <p class="text-gray-400 text-[10px] font-bold">保證金(USDT)</p>
+                                            <p id="pos-margin-iso" class="text-[11px] font-black">1,240.00</p>
+                                        </div>
+                                        <div class="space-y-1 text-right">
+                                            <p class="text-gray-400 text-[10px] font-bold dashed-underline inline-block cursor-pointer active:opacity-70" onclick="openSheet('united-mmr-sheet')">联合保证金率</p>
+                                            <p id="pos-united-mmr-iso" class="text-[11px] font-black">85.32%</p>
+                                        </div>
                                     </div>
-                                    <div class="space-y-1">
-                                        <p class="text-gray-400 text-[10px] font-bold">标记价格(USDT)</p>
-                                        <p id="pos-mark-price" class="text-[11px] font-black font-mono">65,432.1</p>
-                                    </div>
-                                    <div class="space-y-1 text-right">
-                                        <p class="text-gray-400 text-[10px] font-bold dashed-underline inline-block cursor-pointer active:opacity-70" onclick="openSheet('liq-price-detail-sheet')">强平价格(USDT)</p>
-                                        <p id="pos-liq" class="text-[11px] font-black font-mono text-gray-900">65,241.2</p>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <div class="space-y-1">
+                                            <p class="text-gray-400 text-[10px] font-bold">开仓价格(USDT)</p>
+                                            <p id="pos-open-price-iso" class="text-[11px] font-black font-mono">579.61</p>
+                                        </div>
+                                        <div class="space-y-1">
+                                            <p class="text-gray-400 text-[10px] font-bold">标记价格(USDT)</p>
+                                            <p id="pos-mark-price-iso" class="text-[11px] font-black font-mono">579.773</p>
+                                        </div>
+                                        <div class="space-y-1 text-right">
+                                            <p class="text-gray-400 text-[10px] font-bold dashed-underline inline-block cursor-pointer active:opacity-70" onclick="openSheet('liq-price-isolated-sheet')">强平价格(USDT)</p>
+                                            <p id="pos-liq-iso" class="text-[11px] font-black font-mono text-gray-900">65,241.2</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="flex space-x-2 pt-2">
-                                <button onclick="openSheet('leverage-sheet')" class="flex-1 bg-gray-100 py-2 rounded text-[11px] font-bold">槓桿</button>
-                                <button onclick="openPositionTPSLSheet()" class="flex-1 bg-gray-100 py-2 rounded text-[11px] font-bold">止盈止損</button>
-                                <button onclick="openClosePositionSheet()" class="flex-1 bg-gray-100 py-2 rounded text-[11px] font-bold">平倉</button>
+                                <div class="flex space-x-2 pt-2">
+                                    <button onclick="openSheet('leverage-sheet')" class="flex-1 bg-gray-100 py-2 rounded text-[11px] font-bold">槓桿</button>
+                                    <button onclick="openPositionTPSLSheet('逐仓')" class="flex-1 bg-gray-100 py-2 rounded text-[11px] font-bold">止盈止損</button>
+                                    <button onclick="openClosePositionSheet()" class="flex-1 bg-gray-100 py-2 rounded text-[11px] font-bold">平倉</button>
+                                </div>
                             </div>
                         </div>
                         <div id="positions-empty" class="hidden py-16 text-center">
@@ -1096,7 +1157,7 @@
             </div>
         </div>
 
-        <!-- ===== 底部弹层：强平价格详情 ===== -->
+        <!-- ===== 底部弹层：强平价格详情（全仓） ===== -->
         <div id="liq-price-detail-sheet" class="hidden absolute inset-0 z-[55] flex items-end rounded-[38px] overflow-hidden">
             <div class="absolute inset-0 bg-black/40" onclick="closeSheet('liq-price-detail-sheet')"></div>
             <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet">
@@ -1105,7 +1166,10 @@
                 </div>
                 <div class="p-5 space-y-4">
                     <div>
-                        <p class="text-[11px] font-black text-gray-900 mb-1">预估强平价</p>
+                        <div class="flex justify-between items-center mb-1">
+                            <p class="text-[11px] font-black text-gray-900">预估强平价</p>
+                            <p id="liq-sheet-cross-price" class="text-[11px] font-black font-mono text-gray-900">65,241.2</p>
+                        </div>
                         <p class="text-[11px] text-gray-500 leading-relaxed">预估强平价数据仅供参考。实际强平价会根据账户权益、维持保证金和浮动收益的变化而产生差异。</p>
                     </div>
                     <div class="border-t border-gray-100 pt-4 space-y-3">
@@ -1122,6 +1186,26 @@
                 </div>
                 <div class="p-4">
                     <button type="button" onclick="closeSheet('liq-price-detail-sheet')" class="w-full bg-black text-white py-3 rounded-xl text-[13px] font-black">确认</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 底部弹层：强平价格详情（逐仓） ===== -->
+        <div id="liq-price-isolated-sheet" class="hidden absolute inset-0 z-[55] flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('liq-price-isolated-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet">
+                <div class="py-4 px-5 border-b border-gray-50">
+                    <h3 class="text-[13px] font-black text-gray-900">强平价</h3>
+                </div>
+                <div class="p-5 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <p class="text-[11px] font-black text-gray-900">预估强平价</p>
+                        <p id="liq-sheet-iso-price" class="text-[11px] font-black font-mono text-gray-900">65,241.2</p>
+                    </div>
+                    <p class="text-[11px] text-gray-500 leading-relaxed">预估强平价数据仅供参考。实际强平价会根据账户权益、维持保证金和浮动收益的变化而产生差异。</p>
+                </div>
+                <div class="p-4">
+                    <button type="button" onclick="closeSheet('liq-price-isolated-sheet')" class="w-full bg-black text-white py-3 rounded-xl text-[13px] font-black">确认</button>
                 </div>
             </div>
         </div>
@@ -1239,11 +1323,11 @@
         closeShortQty: '0.000 BTC',
         posPnl: '+125.42',
         posRoi: '+12.35%',
-        posQty: '0.050 BTC',
+        posQty: '5.80 BNB',
         posMargin: '1,240.00',
         posUnitedMmr: '85.32%',
-        posOpenPrice: '65,100.5',
-        posMarkPrice: '65,432.1',
+        posOpenPrice: '579.61',
+        posMarkPrice: '579.773',
         posLiq: '65,241.2'
     };
 
@@ -1788,9 +1872,9 @@
         }
     }
 
-    function openPositionTPSLSheet() {
+    function openPositionTPSLSheet(marginMode) {
         document.getElementById('pos-tpsl-pair-tag').textContent = positionState.pair;
-        document.getElementById('pos-tpsl-margin-tag').textContent = positionState.marginMode;
+        document.getElementById('pos-tpsl-margin-tag').textContent = marginMode || positionState.marginMode;
         document.getElementById('pos-tpsl-lev-tag').textContent = positionState.leverage + 'X';
         document.getElementById('pos-tpsl-open-price').textContent = positionState.openPrice;
         document.getElementById('pos-tpsl-mark-price').textContent = positionState.markPrice;
@@ -1981,7 +2065,7 @@
     }
 
     function updatePositionTabLabels() {
-        const posCount = isGuestMode ? 0 : 1;
+        const posCount = isGuestMode ? 0 : 2;
         const ordCount = isGuestMode ? 0 : 3;
         const tabPos = document.getElementById('tab-positions');
         const tabOrd = document.getElementById('tab-orders');
@@ -2277,11 +2361,27 @@
         }
     }
 
+    function applyPositionCardData(s, suffix) {
+        const sfx = suffix || '';
+        setGuestText('pos-pnl' + sfx, s.posPnl);
+        setGuestText('pos-roi' + sfx, s.posRoi);
+        setGuestText('pos-qty' + sfx, s.posQty);
+        setGuestText('pos-margin' + sfx, s.posMargin);
+        setGuestText('pos-united-mmr' + sfx, s.posUnitedMmr);
+        setGuestText('pos-open-price' + sfx, s.posOpenPrice);
+        setGuestText('pos-mark-price' + sfx, s.posMarkPrice);
+        setGuestText('pos-liq' + sfx, s.posLiq);
+        const posPnl = document.getElementById('pos-pnl' + sfx);
+        const posRoi = document.getElementById('pos-roi' + sfx);
+        if (posPnl) posPnl.className = 'text-lg font-black text-green-500';
+        if (posRoi) posRoi.className = 'text-sm font-black text-green-500';
+    }
+
     function applyGuestUI() {
         const btn = document.getElementById('btn-toggle-guest');
         const plusBtn = document.getElementById('deposit-plus-btn');
         const closeAllBtn = document.getElementById('btn-close-all');
-        const positionsCard = document.getElementById('positions-card');
+        const positionsCards = document.getElementById('positions-cards');
         const positionsEmpty = document.getElementById('positions-empty');
         const positionsToolbar = document.querySelector('#positions-panel > .flex.justify-between');
         const s = loggedInSnapshot;
@@ -2290,7 +2390,7 @@
         plusBtn?.classList.toggle('hidden', isGuestMode);
         closeAllBtn?.classList.toggle('hidden', isGuestMode);
         positionsToolbar?.classList.toggle('hidden', isGuestMode);
-        positionsCard?.classList.toggle('hidden', isGuestMode);
+        positionsCards?.classList.toggle('hidden', isGuestMode);
         positionsEmpty?.classList.toggle('hidden', !isGuestMode);
         document.getElementById('order-secondary-tabs')?.classList.toggle('hidden', isGuestMode);
         document.getElementById('order-filter-bar')?.classList.toggle('hidden', isGuestMode);
@@ -2307,18 +2407,10 @@
             setGuestText('stat-close-long-qty', s.closeLongQty);
             setGuestText('stat-close-short-qty', s.closeShortQty);
             updateOpenStatsDisplay();
-            setGuestText('pos-pnl', s.posPnl);
-            setGuestText('pos-roi', s.posRoi);
-            setGuestText('pos-qty', s.posQty);
-            setGuestText('pos-margin', s.posMargin);
-            setGuestText('pos-united-mmr', s.posUnitedMmr);
-            setGuestText('pos-open-price', s.posOpenPrice);
-            setGuestText('pos-mark-price', s.posMarkPrice);
-            setGuestText('pos-liq', s.posLiq);
-            const posPnl = document.getElementById('pos-pnl');
-            const posRoi = document.getElementById('pos-roi');
-            if (posPnl) posPnl.className = 'text-lg font-black text-green-500';
-            if (posRoi) posRoi.className = 'text-sm font-black text-green-500';
+            applyPositionCardData(s, '');
+            applyPositionCardData(s, '-iso');
+            setGuestText('liq-sheet-cross-price', s.posLiq);
+            setGuestText('liq-sheet-iso-price', s.posLiq);
             if (currentPositionTab === 'orders') renderOrderList();
         }
         updateTradeButtonsVisibility();
