@@ -1053,6 +1053,8 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 
 ### 4\.2\.6 联合保证金率说明弹层
 
+页面截图：[**App · 联合保证金率说明弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-sheet-united-mmr.png)
+
 **触发：** 持仓卡片「联合保证金率」标签（虚线下划线处）。
 
 **弹层结构：**
@@ -1065,6 +1067,10 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 - 仅说明性弹层，无额外数值字段。
 
 ### 4\.2\.7 强平价说明弹层（按保证金模式区分）
+
+页面截图：[**App · 强平价说明弹层（全仓）**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-sheet-liq-cross.png)
+
+页面截图：[**App · 强平价说明弹层（逐仓）**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-sheet-liq-isolated.png)
 
 **触发：** 持仓卡片「强平价格(USDT)」标签（虚线下划线处）。**全仓持仓与逐仓持仓打开不同弹层**，内容与风控口径一致。
 
@@ -1100,7 +1106,9 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 
 ## 4\.3 当前委托
 
-页面截图：[**App · 当前委托列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-orders-panel.png)
+页面截图：[**App · 当前委托 · 基础单**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-orders-panel.png)
+
+页面截图：[**App · 当前委托 · 止盈止损单**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-orders-tpsl.png)
 
 ### 4\.3\.1 子 Tab
 
@@ -1124,6 +1132,8 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 - 筛选栏可横向滚动，避免小屏截断。
 
 ### 4\.3\.3 委托卡片（基础单）
+
+页面截图：[**App · 当前委托 · 基础单**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-orders-panel.png)
 
 每张卡片对应一笔**普通限价或市价挂单**（含开仓单、平仓单；不含独立止盈止损条件单）。
 
@@ -1169,11 +1179,13 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 |主单未设置跟随止盈/止损|不展示本行|
 |已设置|左侧标签「止盈/止损」；右侧为触发价组合（如 `500/600`）+ 蓝色编辑图标|
 
-- 点击编辑图标 → 打开委托关联「止盈止損設置」弹层（见 3\.7（5.1）、6\.19）。
+- 点击编辑图标 → 打开委托关联「止盈止損設置」弹层（见 3\.7（5.1）、6\.18）。
 
 - 本行与上方数量/价格行**无**顶部分隔线（`border-t`）。
 
 ### 4\.3\.4 委托卡片（止盈止损单）
+
+页面截图：[**App · 当前委托 · 止盈止损单**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-orders-tpsl.png)
 
 每张卡片对应一笔**止盈止损条件委托**（含单向/双向、开仓/平仓场景）。
 
@@ -1491,6 +1503,8 @@ APP 合约交易页是用户进行永续合约开仓、平仓、查看盘口与�
 见 4\.2\.7。全仓与逐仓为两套弹层内容，由持仓保证金模式决定打开哪一个。
 
 ## 6\.18 委托关联止盈止损设置弹层
+
+页面截图：[**App · 委托关联止盈止损设置弹层**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/合约交易-app/app-contract-sheet-order-attach-tpsl.png)
 
 **入口：**
 

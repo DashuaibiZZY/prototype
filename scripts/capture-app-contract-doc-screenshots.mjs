@@ -16,7 +16,32 @@ const shots = [
     selector: 'div.flex.px-4.py-3.space-x-4',
     clipHeight: 380,
   },
-  { file: 'app-contract-positions.png', selector: '#positions-card' },
+  {
+    file: 'app-contract-positions.png',
+    selector: '#positions-cards',
+    clipHeight: 780,
+  },
+  {
+    file: 'app-contract-sheet-united-mmr.png',
+    before: "openSheet('united-mmr-sheet')",
+    selector: '#united-mmr-sheet .app-sheet',
+  },
+  {
+    file: 'app-contract-sheet-liq-cross.png',
+    before: "openSheet('liq-price-detail-sheet')",
+    selector: '#liq-price-detail-sheet .app-sheet',
+  },
+  {
+    file: 'app-contract-sheet-liq-isolated.png',
+    before: "openSheet('liq-price-isolated-sheet')",
+    selector: '#liq-price-isolated-sheet .app-sheet',
+  },
+  {
+    file: 'app-contract-sheet-order-attach-tpsl.png',
+    before: 'openOrderAttachTPSLSheet()',
+    selector: '#order-attach-tpsl-sheet .app-sheet',
+    clipHeight: 560,
+  },
   { file: 'app-contract-sheet-pair.png', before: "openSheet('pair-sheet')", selector: '#pair-sheet .app-sheet' },
   { file: 'app-contract-sheet-leverage.png', before: "openSheet('leverage-sheet')", selector: '#leverage-sheet .app-sheet', clipHeight: 520 },
   { file: 'app-contract-sheet-margin.png', before: "openSheet('margin-sheet')", selector: '#margin-sheet .app-sheet' },
@@ -74,9 +99,15 @@ const shots = [
   },
   {
     file: 'app-contract-orders-panel.png',
-    before: "switchPositionTab('orders')",
+    before: "switchPositionTab('orders'); switchOrderSecondary('basic')",
     selector: '#orders-panel',
     clipHeight: 420,
+  },
+  {
+    file: 'app-contract-orders-tpsl.png',
+    before: "switchPositionTab('orders'); switchOrderSecondary('tpsl')",
+    selector: '#orders-panel',
+    clipHeight: 480,
   },
   // —— 局部功能区域 ——
   {
