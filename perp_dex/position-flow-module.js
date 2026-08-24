@@ -249,7 +249,7 @@
         },
 
         renderHistPosHeader: function () {
-            return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">倉位模式</th><th class="px-4 py-2">槓桿</th><th class="px-4 py-2">開倉均價</th><th class="px-4 py-2">平倉均價</th><th class="px-4 py-2">持倉數量</th><th class="px-4 py-2">已平倉數量</th><th class="px-4 py-2">已平仓盈虧</th><th class="px-4 py-2">狀態</th><th class="px-4 py-2">開倉時間</th><th class="px-4 py-2">最新平倉時間</th>';
+            return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">倉位模式</th><th class="px-4 py-2">槓桿</th><th class="px-4 py-2">開倉均價</th><th class="px-4 py-2">平倉均價</th><th class="px-4 py-2"><span class="market-hint-wrap dashed-hint">最大持仓量<div class="market-hint-tip th-col-tip">您的持仓曾达到的最大规模 (非累积计算)</div></span></th><th class="px-4 py-2">已平倉數量</th><th class="px-4 py-2">已平仓盈虧</th><th class="px-4 py-2">狀態</th><th class="px-4 py-2">開倉時間</th><th class="px-4 py-2">最新平倉時間</th>';
         },
 
         renderHistPosBody: function (helpers) {
