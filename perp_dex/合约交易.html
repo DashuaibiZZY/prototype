@@ -19,8 +19,8 @@
         .realized-pnl-tip-title { border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; margin-bottom: 6px; }
         .realized-pnl-tip-details { display: flex; flex-direction: column; gap: 4px; }
         .market-hint-wrap { position: relative; display: inline-block; z-index: 1; }
-        .market-hint-wrap:hover { z-index: 200; }
-        .market-hint-tip { position: absolute; top: calc(100% + 8px); left: 0; z-index: 200; min-width: 220px; max-width: 280px; background: #fff; border: 1px solid #e5e7eb; border-radius: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 10px 12px; font-size: 10px; line-height: 1.6; color: #4b5563; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity .15s, visibility .15s; }
+        .market-hint-wrap:hover { z-index: 500; }
+        .market-hint-tip { position: absolute; top: calc(100% + 8px); left: 0; z-index: 500; min-width: 220px; max-width: 280px; background: #fff; border: 1px solid #e5e7eb; border-radius: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 10px 12px; font-size: 10px; line-height: 1.6; color: #4b5563; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity .15s, visibility .15s; }
         .market-hint-wrap:hover .market-hint-tip { opacity: 1; visibility: visible; }
         .market-hint-tip.funding-tip { min-width: 260px; }
         .market-hint-tip.ob-mark-tip { min-width: 240px; max-width: 300px; }
@@ -61,15 +61,26 @@
         .ob-mid-mode-btn:hover { color: #111827; background: #f3f4f6; }
         .market-hint-tip.ob-mid-mode-tip { min-width: 120px; left: auto; right: 0; }
         .market-hint-tip.th-col-tip {
-            top: auto;
-            bottom: calc(100% + 8px);
+            top: calc(100% + 6px);
+            bottom: auto;
             left: 0;
             min-width: 240px;
             max-width: 320px;
+            z-index: 500;
         }
-        .market-hint-tip.attach-tpsl-tip,
-        .market-hint-tip.tpsl-mode-tip { min-width: 280px; max-width: 360px; }
+        .market-hint-tip.attach-tpsl-tip { min-width: 280px; max-width: 360px; }
+        .market-hint-tip.tpsl-mode-tip {
+            top: auto;
+            bottom: calc(100% + 6px);
+            left: 0;
+            min-width: 280px;
+            max-width: 360px;
+            z-index: 500;
+        }
+        #tpsl-order-container { overflow: visible; }
         #data-header th { position: relative; overflow: visible; vertical-align: bottom; }
+        #data-header th:hover { z-index: 100; }
+        #data-container thead { z-index: 20; }
         #data-body td { overflow: visible; position: relative; }
         .pf-filter-bar { position: relative; z-index: 30; overflow: visible; }
         .date-range-picker-popover { z-index: 200; max-height: none; overflow: visible; }
@@ -1107,16 +1118,14 @@
 
                 <!-- 止盈止损下单区 (默认隐藏) -->
                 <div id="tpsl-order-container" class="hidden space-y-2 mb-2">
-                    <p class="text-[8px] text-gray-400 font-bold">
-                        <span class="market-hint-wrap dashed-hint">单向/双向
-                            <div class="market-hint-tip tpsl-mode-tip"><strong>单向：</strong>预先设置触发价格和委托价格，当市场价格达到触发价格时，系统将按委托价格自动下单。<br><strong>双向：</strong>预先设置止盈止损的触发价格和委托价格，当市场价格达到止盈触发价格时，系统将按止盈的委托价格自动下单，止损则自动失效；反之止损亦然。</div>
-                        </span>
-                    </p>
-                    <!-- 单向/双向选择（全宽下拉） -->
+                    <!-- 单向/双向选择（全宽下拉，提示挂在标签上向上弹出） -->
                     <div class="relative" onclick="toggleTPSLModeDropdown(event)">
-                        <div class="flex items-center justify-between bg-gray-50 border border-gray-100 h-8 px-2 cursor-pointer text-[9px] font-bold text-gray-500">
-                            <span id="tpsl-mode-value">单向委托</span>
-                            <svg width="8" height="8" class="ml-1" viewBox="0 0 16 16"><path d="M8 11.2L3.2 6.4h9.6L8 11.2z" fill="currentColor"></path></svg>
+                        <div class="flex items-center justify-between bg-gray-50 border border-gray-100 h-8 px-2 cursor-pointer text-[9px] font-bold text-gray-500 gap-2">
+                            <span class="market-hint-wrap dashed-hint text-[8px] text-gray-400 shrink-0">单向/双向
+                                <div class="market-hint-tip tpsl-mode-tip"><strong>单向：</strong>预先设置触发价格和委托价格，当市场价格达到触发价格时，系统将按委托价格自动下单。<br><strong>双向：</strong>预先设置止盈止损的触发价格和委托价格，当市场价格达到止盈触发价格时，系统将按止盈的委托价格自动下单，止损则自动失效；反之止损亦然。</div>
+                            </span>
+                            <span id="tpsl-mode-value" class="flex-1 text-right truncate">单向委托</span>
+                            <svg width="8" height="8" class="ml-1 shrink-0" viewBox="0 0 16 16"><path d="M8 11.2L3.2 6.4h9.6L8 11.2z" fill="currentColor"></path></svg>
                         </div>
                         <div id="tpsl-mode-dropdown" class="absolute top-full left-0 w-full bg-white border border-gray-200 shadow rounded-sm text-[10px] hidden z-50">
                             <div class="px-3 py-2 hover:bg-gray-100 cursor-pointer" onclick="setTPSLMode('单向委托'); event.stopPropagation();">单向委托</div>
@@ -1997,7 +2006,7 @@
             <!-- 数据表格容器 -->
             <div class="flex-1 overflow-auto" id="data-container">
                 <table class="w-full text-left text-[9px] border-collapse min-w-[1000px]">
-                    <thead class="bg-gray-50 sticky top-0 text-gray-400 border-b border-gray-100 z-10">
+                    <thead class="bg-gray-50 sticky top-0 text-gray-400 border-b border-gray-100 z-30">
                     <tr id="data-header">
                         <!-- 动态由JS生成 -->
                     </tr>
