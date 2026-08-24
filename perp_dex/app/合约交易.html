@@ -388,22 +388,38 @@
                                     <p id="pos-pnl" class="text-lg font-black text-green-500">+125.42</p>
                                 </div>
                                 <div class="text-right space-y-1">
-                                    <p class="text-[10px] text-gray-400 font-bold dashed-underline inline-block">投資回報率</p>
+                                    <p class="text-[10px] text-gray-400 font-bold uppercase">投資回報率</p>
                                     <p id="pos-roi" class="text-sm font-black text-green-500">+12.35%</p>
                                 </div>
                             </div>
-                            <div class="grid grid-cols-3 gap-2 py-2 border-t border-gray-50">
-                                <div class="space-y-1">
-                                    <p class="text-gray-400 text-[10px] font-bold">持倉數量</p>
-                                    <p id="pos-qty" class="text-[11px] font-black">0.050 BTC</p>
+                            <div class="space-y-3 py-2 border-t border-gray-50">
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div class="space-y-1">
+                                        <p class="text-gray-400 text-[10px] font-bold">持倉數量</p>
+                                        <p id="pos-qty" class="text-[11px] font-black">0.050 BTC</p>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <p class="text-gray-400 text-[10px] font-bold">保證金(USDT)</p>
+                                        <p id="pos-margin" class="text-[11px] font-black">1,240.00</p>
+                                    </div>
+                                    <div class="space-y-1 text-right">
+                                        <p class="text-gray-400 text-[10px] font-bold dashed-underline inline-block cursor-pointer active:opacity-70" onclick="openSheet('united-mmr-sheet')">联合保证金率</p>
+                                        <p id="pos-united-mmr" class="text-[11px] font-black">85.32%</p>
+                                    </div>
                                 </div>
-                                <div class="space-y-1">
-                                    <p class="text-gray-400 text-[10px] font-bold">保證金</p>
-                                    <p id="pos-margin" class="text-[11px] font-black">1,240.00</p>
-                                </div>
-                                <div class="space-y-1 text-right">
-                                    <p class="text-gray-400 text-[10px] font-bold">強平價格</p>
-                                    <p id="pos-liq" class="text-[11px] font-black text-orange-500">65,241.2</p>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div class="space-y-1">
+                                        <p class="text-gray-400 text-[10px] font-bold">开仓价格(USDT)</p>
+                                        <p id="pos-open-price" class="text-[11px] font-black font-mono">65,100.5</p>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <p class="text-gray-400 text-[10px] font-bold">标记价格(USDT)</p>
+                                        <p id="pos-mark-price" class="text-[11px] font-black font-mono">65,432.1</p>
+                                    </div>
+                                    <div class="space-y-1 text-right">
+                                        <p class="text-gray-400 text-[10px] font-bold dashed-underline inline-block cursor-pointer active:opacity-70 text-orange-500" onclick="openSheet('liq-price-detail-sheet')">强平价格(USDT)</p>
+                                        <p id="pos-liq" class="text-[11px] font-black text-orange-500 font-mono">65,241.2</p>
+                                    </div>
                                 </div>
                             </div>
                             <div class="flex space-x-2 pt-2">
@@ -457,9 +473,18 @@
                     <h3 class="text-[13px] font-black text-gray-900">訂單類型</h3>
                 </div>
                 <div class="divide-y divide-gray-50">
-                    <div class="px-5 py-4 active:bg-gray-50 cursor-pointer" onclick="selectOrderMode('limit')"><span class="text-[13px] font-bold">限價委託</span></div>
-                    <div class="px-5 py-4 active:bg-gray-50 cursor-pointer" onclick="selectOrderMode('market')"><span class="text-[13px] font-bold">市價委託</span></div>
-                    <div class="px-5 py-4 active:bg-gray-50 cursor-pointer" onclick="selectOrderMode('profit-loss')"><span class="text-[13px] font-bold">止盈止損</span></div>
+                    <div class="sheet-option-rich" onclick="selectOrderMode('limit')">
+                        <div class="text-[13px] font-bold text-gray-900">限價委託</div>
+                        <div class="text-[10px] text-gray-400 mt-1 leading-snug">以指定或更优价格买入或卖出</div>
+                    </div>
+                    <div class="sheet-option-rich" onclick="selectOrderMode('market')">
+                        <div class="text-[13px] font-bold text-gray-900">市價委託</div>
+                        <div class="text-[10px] text-gray-400 mt-1 leading-snug">以可成交的最优价格快速买入或卖出</div>
+                    </div>
+                    <div class="sheet-option-rich" onclick="selectOrderMode('profit-loss')">
+                        <div class="text-[13px] font-bold text-gray-900">止盈止損</div>
+                        <div class="text-[10px] text-gray-400 mt-1 leading-snug">达到预设的目标价格时下单</div>
+                    </div>
                 </div>
                 <div class="p-4"><button onclick="closeSheet('order-type-sheet')" class="w-full py-3 text-[13px] font-bold text-gray-400 bg-gray-50 rounded-xl">取消</button></div>
             </div>
@@ -1058,6 +1083,98 @@
             </div>
         </div>
 
+        <!-- ===== 底部弹层：联合保证金率说明 ===== -->
+        <div id="united-mmr-sheet" class="hidden absolute inset-0 z-[55] flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('united-mmr-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet">
+                <div class="p-5 pb-4">
+                    <p class="text-[12px] text-gray-600 leading-relaxed">维持保证金率可衡量合约仓位的风险情况;维持保证金率越低，仓位风险越大;当维持保证金率≤100%时，会触发强减或强平。</p>
+                </div>
+                <div class="p-4 pt-0">
+                    <button type="button" onclick="closeSheet('united-mmr-sheet')" class="w-full bg-black text-white py-3 rounded-xl text-[13px] font-black">好的</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 底部弹层：强平价格详情 ===== -->
+        <div id="liq-price-detail-sheet" class="hidden absolute inset-0 z-[55] flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('liq-price-detail-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet">
+                <div class="py-4 px-5 border-b border-gray-50">
+                    <h3 class="text-[13px] font-black text-gray-900">强平价</h3>
+                </div>
+                <div class="p-5 space-y-4">
+                    <div>
+                        <p class="text-[11px] font-black text-gray-900 mb-1">预估强平价</p>
+                        <p class="text-[11px] text-gray-500 leading-relaxed">预估强平价数据仅供参考。实际强平价会根据账户权益、维持保证金和浮动收益的变化而产生差异。</p>
+                    </div>
+                    <div class="border-t border-gray-100 pt-4 space-y-3">
+                        <p class="text-[11px] text-gray-500 leading-relaxed">当您持有的USDT全仓仓位的维持保证金率低于或等于100%时，将触发强平。</p>
+                        <div class="flex justify-between items-center text-[12px]">
+                            <span class="text-gray-400 font-bold">MMR</span>
+                            <span class="font-black font-mono text-gray-900">233,545.04%</span>
+                        </div>
+                        <div class="flex justify-between items-center text-[12px]">
+                            <span class="text-gray-400 font-bold">维持保证金</span>
+                            <span class="font-black font-mono text-gray-900">0.2 USDT</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <button type="button" onclick="closeSheet('liq-price-detail-sheet')" class="w-full py-3 text-[13px] font-bold text-gray-400 bg-gray-50 rounded-xl">取消</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 底部弹层：委托关联止盈止损设置 ===== -->
+        <div id="order-attach-tpsl-sheet" class="hidden absolute inset-0 z-[56] flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('order-attach-tpsl-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet max-h-[90%] overflow-y-auto">
+                <div class="py-4 px-5 border-b border-gray-50 flex justify-between items-center sticky top-0 bg-white z-10">
+                    <h3 class="text-[13px] font-black text-gray-900">止盈止損設置</h3>
+                    <button type="button" onclick="closeSheet('order-attach-tpsl-sheet')" class="text-gray-400 text-lg leading-none">✕</button>
+                </div>
+                <div class="p-5 space-y-5 pb-8">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[12px] font-black text-gray-900">BNBUSDC</span>
+                        <span class="text-[10px] font-black text-green-500">開多</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-[10px] font-bold text-gray-400 border-b border-gray-50 pb-4">
+                        <div>
+                            <p class="mb-1">數量 (USDC / BNB)</p>
+                            <p class="text-[13px] font-black text-gray-900 font-mono">620 / 1</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="mb-1">委託價格</p>
+                            <p class="text-[13px] font-black text-gray-900 font-mono">620.00</p>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-gray-400 leading-relaxed bg-gray-50 rounded-lg p-3 border border-gray-100">温馨提示：主訂單完全成交後，系統將自動按以下觸發價格掛出相應的止盈止損單。</p>
+                    <div class="space-y-3">
+                        <p class="text-[11px] font-black text-gray-700">市價止盈平多</p>
+                        <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
+                            <input type="number" placeholder="止盈觸發價格" class="flex-1 px-3 py-2.5 text-[12px] font-bold outline-none font-mono min-w-0" value="500">
+                            <button type="button" onclick="openPickerSheet('trigger-type', 'order-att-tp')" class="picker-chip shrink-0 border-l border-gray-100 px-3 py-2.5">
+                                <span id="order-att-tp-trigger-label">標記價格</span>
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <p class="text-[11px] font-black text-gray-700">市價止損平多</p>
+                        <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
+                            <input type="number" placeholder="止損觸發價格" class="flex-1 px-3 py-2.5 text-[12px] font-bold outline-none font-mono min-w-0" value="600">
+                            <button type="button" onclick="openPickerSheet('trigger-type', 'order-att-sl')" class="picker-chip shrink-0 border-l border-gray-100 px-3 py-2.5">
+                                <span id="order-att-sl-trigger-label">標記價格</span>
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="button" onclick="confirmOrderAttachTPSL()" class="w-full bg-black text-white py-3 rounded-xl text-[13px] font-black">设置</button>
+                </div>
+            </div>
+        </div>
+
         <!-- ===== 底部弹层：通用选择器 ===== -->
         <div id="picker-sheet" class="hidden absolute inset-0 z-[70] flex items-end rounded-[38px] overflow-hidden">
             <div class="absolute inset-0 bg-black/40" onclick="closeSheet('picker-sheet')"></div>
@@ -1082,7 +1199,7 @@
     let currentSide = 'open';
     let currentOrderMode = 'limit';
     let currentTPSLMode = '单向';
-    const triggerTypeMap = { 'attach-tp': 'latest', 'attach-sl': 'latest', tp: 'latest', sl: 'latest', 'pos-tp': 'latest', 'pos-sl': 'latest' };
+    const triggerTypeMap = { 'attach-tp': 'latest', 'attach-sl': 'latest', tp: 'latest', sl: 'latest', 'pos-tp': 'latest', 'pos-sl': 'latest', 'order-att-tp': 'mark', 'order-att-sl': 'mark' };
     const orderDelegateMap = { 'tp-order': 'market', 'sl-order': 'market' };
     let pickerContext = { type: '', key: '' };
     let currentMarginMode = 'cross';
@@ -1116,6 +1233,9 @@
         posRoi: '+12.35%',
         posQty: '0.050 BTC',
         posMargin: '1,240.00',
+        posUnitedMmr: '85.32%',
+        posOpenPrice: '65,100.5',
+        posMarkPrice: '65,432.1',
         posLiq: '65,241.2'
     };
 
@@ -1307,7 +1427,7 @@
             <div class="order-card">
                 <div class="flex justify-between items-start mb-3">
                     <div class="flex items-center space-x-2">
-                        <span class="font-black text-[13px]">BNBUSDT</span>
+                        <span class="font-black text-[13px]">BNBUSDC</span>
                         <span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span>
                     </div>
                     <button onclick="alert('已撤銷該委託')" class="bg-gray-100 text-gray-900 text-[10px] font-black px-3 py-1 rounded-sm">撤單</button>
@@ -1317,8 +1437,17 @@
                     <span class="text-gray-300 font-medium">2026-06-11 18:58:25</span>
                 </div>
                 <div class="grid grid-cols-2 gap-y-2 text-[11px]">
-                    <div class="flex flex-col"><span class="text-gray-400 font-bold uppercase text-[9px]">成交數量 / 數量 (USDT)</span><span class="font-black">0.00 / 5.00</span></div>
-                    <div class="flex flex-col text-right"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black font-mono">500.00</span></div>
+                    <div class="flex flex-col"><span class="text-gray-400 font-bold uppercase text-[9px]">成交數量 / 數量 (USDC / BNB)</span><span class="font-black font-mono">0.00 / 620 / 1</span></div>
+                    <div class="flex flex-col text-right"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black font-mono">620.00</span></div>
+                </div>
+                <div class="flex justify-between items-center text-[11px] mt-3 pt-3 border-t border-gray-50">
+                    <span class="text-gray-400 font-bold uppercase text-[9px]">止盈/止損</span>
+                    <div class="flex items-center gap-1.5 font-black font-mono">
+                        <span id="order-basic-tpsl-display">500/600</span>
+                        <button type="button" onclick="openOrderAttachTPSLSheet()" class="text-blue-500 p-0.5 active:opacity-60" aria-label="设置止盈止损">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         `,
@@ -1494,7 +1623,7 @@
     }
 
     function getTriggerTypeLabel(value) {
-        return value === 'mark' ? '标记价格' : '最新价格';
+        return value === 'mark' ? '標記價格' : '最新成交价';
     }
 
     function renderPickerHeader(title) {
@@ -1518,9 +1647,9 @@
 
         if (type === 'trigger-type') {
             const current = triggerTypeMap[key] || 'latest';
-            html += renderPickerHeader('触发价格类型');
-            html += renderRichPickerOption('latest', '最新价格', '该合约最新成交价格', current === 'latest');
-            html += renderRichPickerOption('mark', '标记价格', '合约的预估公允价值，用于强制平仓计算。', current === 'mark');
+            html += renderPickerHeader('觸發價格类型');
+            html += renderRichPickerOption('latest', '最新成交价', '', current === 'latest');
+            html += renderRichPickerOption('mark', '标记价格', '', current === 'mark');
         } else if (type === 'tpsl-mode') {
             html += renderPickerHeader('委托模式');
             html += renderRichPickerOption('单向', '单向', '预设触发价与委托价，市价达触发价后按委托价下单。', currentTPSLMode === '单向');
@@ -1556,6 +1685,25 @@
             setClosePriceType(value);
         }
         closeSheet('picker-sheet');
+    }
+
+    function openOrderAttachTPSLSheet() {
+        const tpLabel = document.getElementById('order-att-tp-trigger-label');
+        const slLabel = document.getElementById('order-att-sl-trigger-label');
+        if (tpLabel) tpLabel.textContent = getTriggerTypeLabel(triggerTypeMap['order-att-tp'] || 'mark');
+        if (slLabel) slLabel.textContent = getTriggerTypeLabel(triggerTypeMap['order-att-sl'] || 'mark');
+        openSheet('order-attach-tpsl-sheet');
+    }
+
+    function confirmOrderAttachTPSL() {
+        const tpInput = document.querySelector('#order-attach-tpsl-sheet input[placeholder="止盈觸發價格"]');
+        const slInput = document.querySelector('#order-attach-tpsl-sheet input[placeholder="止損觸發價格"]');
+        const tp = tpInput?.value || '500';
+        const sl = slInput?.value || '600';
+        const display = document.getElementById('order-basic-tpsl-display');
+        if (display) display.textContent = tp + '/' + sl;
+        closeSheet('order-attach-tpsl-sheet');
+        showProtoToast('止盈止損已更新');
     }
 
     function setClosePriceType(type) {
@@ -2075,6 +2223,9 @@
             setGuestText('pos-roi', s.posRoi);
             setGuestText('pos-qty', s.posQty);
             setGuestText('pos-margin', s.posMargin);
+            setGuestText('pos-united-mmr', s.posUnitedMmr);
+            setGuestText('pos-open-price', s.posOpenPrice);
+            setGuestText('pos-mark-price', s.posMarkPrice);
             setGuestText('pos-liq', s.posLiq);
             const posPnl = document.getElementById('pos-pnl');
             const posRoi = document.getElementById('pos-roi');
