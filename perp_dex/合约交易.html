@@ -69,12 +69,14 @@
             z-index: 500;
         }
         .market-hint-tip.attach-tpsl-tip { min-width: 280px; max-width: 360px; }
-        .market-hint-tip.tpsl-mode-tip {
-            min-width: 280px;
-            max-width: 360px;
-        }
-        .market-hint-tip.tpsl-mode-tip.is-positioned {
-            z-index: 9999;
+        .tpsl-mode-hint-panel {
+            font-size: 8px;
+            line-height: 1.55;
+            color: #6b7280;
+            background: #f9fafb;
+            border: 1px solid #f3f4f6;
+            border-radius: 2px;
+            padding: 6px 8px;
         }
         #tpsl-order-container { overflow: visible; }
         #data-header th { position: relative; overflow: visible; vertical-align: bottom; }
@@ -1117,11 +1119,13 @@
 
                 <!-- 止盈止损下单区 (默认隐藏) -->
                 <div id="tpsl-order-container" class="hidden space-y-2 mb-2">
-                    <p class="text-[8px] text-gray-400 font-bold">
-                        <span id="tpsl-mode-hint-wrap" class="market-hint-wrap dashed-hint">单向/双向
-                            <div id="tpsl-mode-hint-tip" class="market-hint-tip tpsl-mode-tip"><strong>单向：</strong>预先设置触发价格和委托价格，当市场价格达到触发价格时，系统将按委托价格自动下单。<br><strong>双向：</strong>预先设置止盈止损的触发价格和委托价格，当市场价格达到止盈触发价格时，系统将按止盈的委托价格自动下单，止损则自动失效；反之止损亦然。</div>
-                        </span>
-                    </p>
+                    <div class="space-y-1">
+                        <p class="text-[8px] text-gray-400 font-bold">单向/双向</p>
+                        <div class="tpsl-mode-hint-panel">
+                            <strong>单向：</strong>预先设置触发价格和委托价格，当市场价格达到触发价格时，系统将按委托价格自动下单。<br>
+                            <strong>双向：</strong>预先设置止盈止损的触发价格和委托价格，当市场价格达到止盈触发价格时，系统将按止盈的委托价格自动下单，止损则自动失效；反之止损亦然。
+                        </div>
+                    </div>
                     <div class="relative" onclick="toggleTPSLModeDropdown(event)">
                         <div class="flex items-center justify-between bg-gray-50 border border-gray-100 h-8 px-2 cursor-pointer text-[9px] font-bold text-gray-500">
                             <span id="tpsl-mode-value">单向委托</span>
@@ -3586,40 +3590,6 @@
         updateTPSLEstimates();
     }
 
-    function bindTPSLModeHintTip() {
-        const wrap = document.getElementById('tpsl-mode-hint-wrap');
-        const tip = document.getElementById('tpsl-mode-hint-tip');
-        if (!wrap || !tip || wrap.dataset.hintBound) return;
-        wrap.dataset.hintBound = '1';
-
-        const resetTip = () => {
-            tip.classList.remove('is-positioned');
-            tip.style.position = '';
-            tip.style.top = '';
-            tip.style.left = '';
-            tip.style.width = '';
-            tip.style.maxWidth = '';
-            tip.style.zIndex = '';
-        };
-
-        const positionTip = () => {
-            const rect = wrap.getBoundingClientRect();
-            const maxW = 360;
-            let left = Math.min(rect.left, window.innerWidth - maxW - 8);
-            left = Math.max(8, left);
-            tip.classList.add('is-positioned');
-            tip.style.position = 'fixed';
-            tip.style.left = left + 'px';
-            tip.style.top = (rect.bottom + 6) + 'px';
-            tip.style.width = maxW + 'px';
-            tip.style.maxWidth = maxW + 'px';
-            tip.style.zIndex = '9999';
-        };
-
-        wrap.addEventListener('mouseenter', positionTip);
-        wrap.addEventListener('mouseleave', resetTip);
-    }
-
     // 订单模式切换扩展
     function switchOrderMode(mode) {
         currentOrderMode = mode;
@@ -4915,7 +4885,6 @@
         renderOrderBook();
         setOrderQtyPct(25);
         switchDataTab('pos');
-        bindTPSLModeHintTip();
         if (typeof PositionClose !== 'undefined') {
             PositionClose.refreshCloseQtyDisplay();
         }
