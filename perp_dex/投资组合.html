@@ -3,11 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ForX Portfolio - High Density Summary</title>
+    <title>ForX Web · 投资组合全状态原型</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #111827; }
+        body { font-family: 'Inter', sans-serif; color: #111827; }
+        body { background: #e5e7eb; margin: 0; padding: 32px 24px 64px; }
+        .gallery-header { max-width: 1240px; margin: 0 auto 28px; }
+        .gallery-header h1 { font-size: 22px; font-weight: 900; letter-spacing: -0.02em; }
+        .gallery-header p { font-size: 12px; color: #6b7280; margin-top: 6px; line-height: 1.6; }
+        .proto-grid { display: flex; flex-direction: column; gap: 48px; align-items: center; max-width: 1240px; margin: 0 auto; }
+        .proto-panel { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+        .proto-label { font-size: 14px; font-weight: 800; line-height: 1.45; }
+        .proto-label .desc { display: block; font-size: 11px; font-weight: 600; color: #6b7280; margin-top: 4px; }
+        .web-frame {
+            width: 100%; background: #fff; border: 1px solid #d1d5db; border-radius: 12px;
+            box-shadow: 0 20px 50px -12px rgba(0,0,0,0.12); overflow: hidden; position: relative;
+            min-height: 720px;
+        }
+        .web-chrome {
+            height: 36px; background: #f9fafb; border-bottom: 1px solid #e5e7eb;
+            display: flex; align-items: center; padding: 0 14px; gap: 6px;
+        }
+        .web-chrome .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; backdrop-filter: blur(4px); }
+
         .stats-card { background: white; border: 1px solid #f1f1f1; border-radius: 2px; }
         .tab-active { color: #000; border-bottom: 2px solid #000; font-weight: 800; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -23,8 +43,17 @@
         .copy-icon-btn:hover { color: #2563eb; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body>
 
+<div class="gallery-header">
+    <h1>Web 投资组合 · 全状态平铺原型</h1>
+    <p>桌面端采用<strong>纵向全宽画框</strong>平铺：每个画框含浏览器条 + 完整页面视口。含未登录占位态与已登录默认态，供 UI 对照。</p>
+</div>
+
+<div class="proto-grid" id="proto-grid"></div>
+
+<template id="tpl-portfolio-base">
+<div class="flex flex-col min-h-0 portfolio-page-root">
 <!-- 1. 導航欄 -->
 <nav class="h-10 border-b border-gray-100 flex items-center px-4 justify-between shrink-0">
     <div class="flex items-center space-x-6">
@@ -93,13 +122,13 @@
         </div>
 
         <!-- 未登录按钮 -->
-        <button id="btn-connect-wallet" onclick="openLoginModal()"
+        <button id="btn-connect-wallet" data-portfolio-nav-connect type="button"
                 class="bg-black text-white px-4 py-1.5 rounded-sm text-[11px] font-bold hover:bg-gray-800 transition">
             连接钱包
         </button>
 
         <!-- 已登录状态（初始隐藏） -->
-        <div id="user-account-wrapper" class="hidden relative group h-12 flex items-center">
+        <div id="user-account-wrapper" data-portfolio-nav-user class="hidden relative group h-12 flex items-center">
             <button class="bg-gray-50 px-3 py-1.5 rounded-sm flex items-center space-x-2 border border-gray-100 hover:bg-gray-100 transition">
                 <div class="w-3 h-3 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
                 <span id="nav-login-label" class="text-[11px] font-black text-gray-900">0xd593...2Dd2</span>
@@ -187,15 +216,18 @@
                 <div class="space-y-1">
                     <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">總淨資產價值</p>
                     <div class="flex items-baseline space-x-3">
-                        <span class="text-3xl font-black text-gray-900">12,450.50 <small class="text-sm font-bold text-gray-400 uppercase">USDT</small></span>
-                        <span class="text-[12px] font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-sm">今日盈虧 +420.15 (+3.42%)</span>
+                        <span class="text-3xl font-black text-gray-900" data-portfolio-equity-total>12,450.50 <small class="text-sm font-bold text-gray-400 uppercase">USDT</small></span>
+                        <span class="text-[12px] font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-sm" data-portfolio-equity-pnl>今日盈虧 +420.15 (+3.42%)</span>
                     </div>
                 </div>
                 <!-- 操作按鈕組 -->
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-2" data-portfolio-actions-logged>
                     <button onclick="openTransferModal()" class="px-6 py-2.5 bg-gray-900 text-white rounded-sm font-black text-[11px] hover:bg-black transition uppercase tracking-widest">劃轉</button>
                     <button onclick="openModal('withdraw')" class="px-6 py-2.5 border border-gray-200 rounded-sm font-black text-[11px] hover:bg-gray-50 transition uppercase tracking-widest">提現</button>
                     <button onclick="openModal('deposit')" class="px-6 py-2.5 bg-blue-600 text-white rounded-sm font-black text-[11px] hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition uppercase tracking-widest">充值</button>
+                </div>
+                <div class="flex items-center space-x-2 hidden" data-portfolio-actions-guest>
+                    <button class="px-6 py-2.5 bg-black text-white rounded-sm font-black text-[11px] hover:bg-gray-800 transition uppercase tracking-widest">連接錢包</button>
                 </div>
             </div>
 
@@ -206,12 +238,12 @@
                         <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-black text-[10px]">F</div>
                         <div>
                             <p class="text-[10px] font-black text-gray-400 uppercase">資金帳戶</p>
-                            <p class="text-sm font-black text-gray-800">2,450.50 <small class="text-[10px] font-medium text-gray-400 uppercase">USDT</small></p>
+                            <p class="text-sm font-black text-gray-800" data-portfolio-funding-total>2,450.50 <small class="text-[10px] font-medium text-gray-400 uppercase">USDT</small></p>
                         </div>
                     </div>
                     <div class="text-right">
                         <p class="text-[9px] font-bold text-gray-400 uppercase">可用餘額</p>
-                        <p class="text-[12px] font-black text-gray-900">2,450.50</p>
+                        <p class="text-[12px] font-black text-gray-900" data-portfolio-funding-available>2,450.50</p>
                     </div>
                 </div>
                 <div class="flex items-center justify-between px-4 py-3 bg-blue-50/20 rounded-sm border border-blue-50">
@@ -219,13 +251,13 @@
                         <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-black text-[10px]">T</div>
                         <div>
                             <p class="text-[10px] font-black text-blue-600 uppercase">交易帳戶</p>
-                            <p class="text-sm font-black text-gray-800">10,000.00 <small class="text-[10px] font-medium text-gray-400 uppercase">USDT</small></p>
+                            <p class="text-sm font-black text-gray-800" data-portfolio-trade-total>10,000.00 <small class="text-[10px] font-medium text-gray-400 uppercase">USDT</small></p>
                         </div>
                     </div>
                     <div class="flex space-x-6">
                         <div class="text-right">
                             <p class="text-[9px] font-bold text-gray-400 uppercase">保證金餘額</p>
-                            <p class="text-[12px] font-black text-blue-600">10,000.00</p>
+                            <p class="text-[12px] font-black text-blue-600" data-portfolio-trade-margin>10,000.00</p>
                         </div>
                     </div>
                 </div>
@@ -243,20 +275,20 @@
                         <div class="flex justify-between items-center mb-8">
                             <div class="flex items-center space-x-2">
                                 <span class="text-2xl">👑</span>
-                                <h3 class="text-xl font-black italic tracking-tighter text-yellow-500">VIP 2</h3>
+                                <h3 class="text-xl font-black italic tracking-tighter text-yellow-500" data-portfolio-vip-level>VIP 2</h3>
                             </div>
-                            <button onclick="openVipModal()" class="text-[10px] font-black text-gray-400 border border-gray-700 px-2 py-1 rounded-sm hover:text-yellow-500 hover:border-yellow-500 transition-colors uppercase">等級費率表</button>
+                            <button data-portfolio-vip-fee-btn onclick="void(0)" class="text-[10px] font-black text-gray-400 border border-gray-700 px-2 py-1 rounded-sm hover:text-yellow-500 hover:border-yellow-500 transition-colors uppercase">等級費率表</button>
                         </div>
                         <div class="space-y-6">
                             <div>
                                 <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">过去 14 天交易量</p>
-                                <p class="text-2xl font-black font-mono">$38,500,000.00</p>
+                                <p class="text-2xl font-black font-mono" data-portfolio-vip-14d>$38,500,000.00</p>
                             </div>
-                            <div class="grid grid-cols-2 gap-4 py-4 border-y border-white/10">
-                                <div><p class="text-[9px] text-gray-500 font-bold uppercase">Maker 費率</p><p class="text-sm font-black text-green-400">0.010%</p></div>
-                                <div><p class="text-[9px] text-gray-500 font-bold uppercase">Taker 費率</p><p class="text-sm font-black text-green-400">0.034%</p></div>
+                            <div class="grid grid-cols-2 gap-4 py-4 border-y border-white/10" data-portfolio-vip-fees>
+                                <div><p class="text-[9px] text-gray-500 font-bold uppercase">Maker 費率</p><p class="text-sm font-black text-green-400" data-portfolio-vip-maker>0.010%</p></div>
+                                <div><p class="text-[9px] text-gray-500 font-bold uppercase">Taker 費率</p><p class="text-sm font-black text-green-400" data-portfolio-vip-taker>0.034%</p></div>
                             </div>
-                            <div class="pt-2">
+                            <div class="pt-2" data-portfolio-vip-progress>
                                 <div class="flex justify-between items-end mb-2">
                                     <p class="text-[9px] text-gray-500 font-bold uppercase">升級進度 <span class="text-white ml-1">18%</span></p>
                                     <p class="text-[9px] text-gray-500 font-bold">下一等級: <span class="text-white">VIP 3</span></p>
@@ -309,7 +341,11 @@
                     </div>
 
                     <!-- 右側：週期分析與三色走勢圖 -->
-                    <div class="lg:col-span-8 p-6 flex flex-col">
+                    <div class="lg:col-span-8 p-6 flex flex-col relative" data-portfolio-chart-panel>
+                        <div class="hidden absolute inset-0 z-10 flex items-center justify-center bg-white" data-portfolio-guest-hint>
+                            <p class="text-[13px] font-bold text-gray-400">請先連接錢包</p>
+                        </div>
+
                         <!-- 頂部：標題、圖例與切換 -->
                         <div class="flex justify-between items-start mb-8">
                             <div class="space-y-4">
@@ -607,13 +643,13 @@
                 </div>
 
                 <!-- 非充提 Tab：跳转合约交易页说明 -->
-                <div id="data-referral-hint" class="flex-1 flex items-center justify-center px-6 py-16">
+                <div id="data-referral-hint" data-portfolio-referral-hint class="flex-1 flex items-center justify-center px-6 py-16">
                     <p class="text-[11px] text-gray-400 text-center leading-relaxed">
                         相关原型内容请查看<a href="合约交易.html" class="text-blue-600 hover:underline font-bold">合约交易页</a>下方的持仓&amp;流水管理
                     </p>
                 </div>
                 <!-- 充提记录 Tab：数据表格 -->
-                <div class="flex-1 overflow-auto hidden" id="data-table-wrap">
+                <div class="flex-1 overflow-auto hidden" id="data-table-wrap" data-portfolio-data-table>
                     <table class="w-full text-left text-[9px] border-collapse min-w-[1000px]">
                         <thead class="bg-gray-50 sticky top-0 text-gray-400 border-b border-gray-100 z-10">
                         <tr id="data-header">
@@ -629,123 +665,128 @@
         </div>
     </div>
 </main>
-
-<!-- 充提統一彈窗容器 -->
-<div id="finance-modal" class="modal-overlay" style="display: none; background: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; align-items: center; justify-content: center;">
-    <div class="bn-modal" style="background: #fff; width: 420px; border-radius: 8px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.15); border: 1px solid #f1f1f1;">
-        <!-- 動態內容區 -->
-        <div id="modal-dynamic-content"></div>
-    </div>
 </div>
+</template>
 
-<!-- VIP 費率詳情彈窗 -->
-<div id="vip-modal" class="modal-overlay" style="display: none; background: rgba(0,0,0,0.6); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
-    <div class="bg-white w-[560px] rounded-lg overflow-hidden shadow-2xl border border-gray-100 animate-in zoom-in duration-200">
-        <div class="p-6 border-b border-gray-50 flex justify-between items-center">
-            <h2 class="text-base font-black uppercase tracking-tight italic">ForX 合約交易 VIP 費率表</h2>
-            <span class="cursor-pointer text-gray-400 text-xl hover:text-black" onclick="closeVipModal()">✕</span>
-        </div>
 
-        <div class="p-6">
-            <div class="mb-4 pb-4 border-b border-gray-100 flex justify-between items-center gap-4">
-                <span class="text-[10px] font-bold text-gray-500">过去 14 天交易量</span>
-                <span id="vip-14d-volume" class="text-sm font-black font-mono text-gray-900 shrink-0">$38,500,000.00</span>
-            </div>
-            <table class="w-full text-left border-collapse">
-                <thead>
-                <tr class="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-wider">
-                    <th class="px-4 py-3 border-b border-gray-100">VIP 等級</th>
-                    <th class="px-4 py-3 border-b border-gray-100">14天交易量門檻 (USD)</th>
-                    <th class="px-4 py-3 border-b border-gray-100">Maker 費率</th>
-                    <th class="px-4 py-3 border-b border-gray-100 text-right">Taker 費率</th>
-                </tr>
-                </thead>
-                <tbody class="text-[11px] font-bold text-gray-700">
-                <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 0</td><td class="px-4 py-3 border-b border-gray-50">&lt; $5M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.015%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.045%</td></tr>
-                <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 1</td><td class="px-4 py-3 border-b border-gray-50">≥ $5M 且 &lt; $25M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.013%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.039%</td></tr>
-                <tr class="bg-yellow-50/50"><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">VIP 2</td><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">≥ $25M 且 &lt; $100M</td><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">0.010%</td><td class="px-4 py-3 border-b border-yellow-100 text-right font-black text-yellow-700">0.034%</td></tr>
-                <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 3</td><td class="px-4 py-3 border-b border-gray-50">≥ $100M 且 &lt; $500M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.006%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.029%</td></tr>
-                <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 4</td><td class="px-4 py-3 border-b border-gray-50">≥ $500M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.004%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.026%</td></tr>
-                </tbody>
-            </table>
+<script>
+function webChrome() {
+    return `<div class="web-chrome">
+        <span class="dot bg-red-400"></span>
+        <span class="dot bg-yellow-400"></span>
+        <span class="dot bg-green-400"></span>
+        <span class="text-[10px] text-gray-400 font-medium ml-2">forx.finance / 投資組合</span>
+    </div>`;
+}
 
-            <div class="mt-8 bg-gray-50 p-4 rounded-sm border border-gray-100">
-                <h4 class="text-[10px] font-black uppercase text-gray-500 mb-2">等級補充說明</h4>
-                <ul class="text-[10px] text-gray-500 space-y-1.5 list-disc list-inside leading-relaxed">
-                    <li>VIP等級根據用戶近14天合約交易量進行計算，達到對應等級門檻後，系統將在T+1日自動升級對應VIP等級。</li>
-                    <li>平台會定期更新用戶VIP等級，具體更新時間以系統計算結果為準。</li>
-                    <li>VIP等級更新後，新產生的合約交易將按對應等級費率計算手續費。</li>
-                    <li>VIP等級會根據用戶近14天合約交易量重新匹配，若交易量不滿足當前等級要求，系統將在T+1日內按平台規則調整至對應等級。</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
+function clonePortfolioBase() {
+    const tpl = document.getElementById('tpl-portfolio-base');
+    return tpl.content.querySelector('.portfolio-page-root').cloneNode(true);
+}
 
-<!-- 資金劃轉彈窗 -->
-<div id="transfer-modal" class="modal-overlay" style="display: none; background: rgba(0,0,0,0.6); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
-    <div class="bg-white w-[420px] rounded-lg overflow-hidden shadow-2xl animate-in zoom-in duration-200">
-        <div class="p-6 border-b border-gray-50 flex justify-between items-center bg-slate-50">
-            <h2 class="text-base font-black uppercase tracking-tight italic">資金劃轉</h2>
-            <span class="cursor-pointer text-gray-400 text-xl hover:text-black" onclick="closeTransferModal()">✕</span>
-        </div>
+function q(root, sel) { return root.querySelector(sel); }
 
-        <div class="p-8 space-y-6">
-            <!-- 劃轉方向 -->
-            <div class="relative space-y-2">
-                <!-- 從 -->
-                <div class="flex items-center justify-between p-4 bg-gray-50 border border-gray-100 rounded-md">
-                    <span class="text-[11px] font-bold text-gray-400 uppercase w-12">從</span>
-                    <span id="from-account" class="flex-1 font-black text-[13px] text-gray-900">資金帳戶</span>
-                </div>
+function applyGuestState(root) {
+    q(root, '[data-portfolio-nav-connect]')?.classList.remove('hidden');
+    q(root, '[data-portfolio-nav-user]')?.classList.add('hidden');
+    q(root, '[data-portfolio-actions-logged]')?.classList.add('hidden');
+    q(root, '[data-portfolio-actions-guest]')?.classList.remove('hidden');
+    const total = q(root, '[data-portfolio-equity-total]');
+    if (total) total.innerHTML = '-- <small class="text-sm font-bold text-gray-400 uppercase">USDT</small>';
+    const pnl = q(root, '[data-portfolio-equity-pnl]');
+    if (pnl) { pnl.textContent = '今日盈虧 --'; pnl.className = 'text-[12px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-sm'; }
+    const setText = (sel, text) => { const el = q(root, sel); if (el) el.textContent = text; };
+    const setHtml = (sel, html) => { const el = q(root, sel); if (el) el.innerHTML = html; };
+    setHtml('[data-portfolio-funding-total]', '-- <small class="text-[10px] font-medium text-gray-400 uppercase">USDT</small>');
+    setText('[data-portfolio-funding-available]', '--');
+    setHtml('[data-portfolio-trade-total]', '-- <small class="text-[10px] font-medium text-gray-400 uppercase">USDT</small>');
+    setText('[data-portfolio-trade-margin]', '--');
+    setText('[data-portfolio-vip-level]', '--');
+    setText('[data-portfolio-vip-14d]', '--');
+    setText('[data-portfolio-vip-maker]', '--');
+    setText('[data-portfolio-vip-taker]', '--');
+    q(root, '[data-portfolio-vip-progress]')?.classList.add('hidden');
+    const feeBtn = q(root, '[data-portfolio-vip-fee-btn]');
+    if (feeBtn) feeBtn.className = 'text-[10px] font-black text-gray-600 border border-gray-700 px-2 py-1 rounded-sm uppercase opacity-50 cursor-not-allowed';
+    q(root, '[data-portfolio-chart-panel]')?.classList.add('opacity-30');
+    q(root, '[data-portfolio-guest-hint]')?.classList.remove('hidden');
+    q(root, '[data-portfolio-referral-hint]')?.classList.remove('hidden');
+    q(root, '[data-portfolio-data-table]')?.classList.add('hidden');
+}
 
-                <!-- 切換按鈕 (絕對定位在中間) -->
-                <button onclick="swapTransferDirection()" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-md hover:border-blue-600 transition-colors">
-                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M7 16V4m0 0L3 8m4-4l4 4m6-4v12m0 0l4-4m-4 4l-4-4"/></svg>
-                </button>
+function applyLoggedInState(root, opts = {}) {
+    q(root, '[data-portfolio-nav-connect]')?.classList.add('hidden');
+    q(root, '[data-portfolio-nav-user]')?.classList.remove('hidden');
+    q(root, '[data-portfolio-actions-logged]')?.classList.remove('hidden');
+    q(root, '[data-portfolio-actions-guest]')?.classList.add('hidden');
+    q(root, '[data-portfolio-vip-progress]')?.classList.remove('hidden');
+    q(root, '[data-portfolio-chart-panel]')?.classList.remove('opacity-30');
+    q(root, '[data-portfolio-guest-hint]')?.classList.add('hidden');
+    const label = q(root, '#nav-login-label');
+    if (label && opts.email) label.textContent = opts.email;
+    const emailRow = q(root, '#menu-email-row');
+    const gaRow = q(root, '#menu-ga-row');
+    const exportRow = q(root, '#menu-export-wallet-row');
+    if (opts.email) {
+        emailRow?.classList.remove('hidden');
+        gaRow?.classList.remove('hidden');
+        exportRow?.classList.remove('hidden');
+        const es = q(root, '#menu-email-status');
+        if (es) es.textContent = opts.email;
+        const ws = q(root, '#menu-wallet-status');
+        if (ws) ws.textContent = '0x8b2e...4f1a';
+    } else {
+        emailRow?.classList.add('hidden');
+        gaRow?.classList.add('hidden');
+        exportRow?.classList.add('hidden');
+    }
+    if (opts.depositTab) {
+        q(root, '[data-portfolio-referral-hint]')?.classList.add('hidden');
+        q(root, '[data-portfolio-data-table]')?.classList.remove('hidden');
+        q(root, '#deposit-withdraw-filters')?.classList.remove('hidden');
+        root.querySelectorAll('[id^="tab-data-"]').forEach(el => {
+            el.classList.remove('tab-active');
+            el.classList.add('text-gray-400');
+        });
+        const dw = q(root, '#tab-data-deposit-withdraw');
+        if (dw) { dw.classList.add('tab-active'); dw.classList.remove('text-gray-400'); }
+        const h = q(root, '#data-header');
+        const b = q(root, '#data-body');
+        if (h) h.innerHTML = '<th class="px-4 py-2">時間</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">狀態</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">幣種</th><th class="px-4 py-2">手續費</th><th class="px-4 py-2">鏈</th><th class="px-4 py-2">Hash</th><th class="px-4 py-2">訂單號</th>';
+        if (b) b.innerHTML = `<tr class="border-b border-gray-50">
+            <td class="px-4 py-3 text-gray-400">2026-05-06 01:20:33</td>
+            <td class="px-4 py-3 font-bold">充值</td>
+            <td class="px-4 py-3 text-green-500">已完成</td>
+            <td class="px-4 py-3 font-mono">100.00 USDT</td>
+            <td class="px-4 py-3">USDT</td>
+            <td class="px-4 py-3 text-gray-500">0.00 USDT</td>
+            <td class="px-4 py-3 text-gray-600">BSC</td>
+            <td class="px-4 py-3 text-[10px] font-mono text-blue-500 underline">0xabc...123</td>
+            <td class="px-4 py-3 text-gray-500">DEP_20260506</td>
+        </tr>`;
+    }
+}
 
-                <!-- 到 -->
-                <div class="flex items-center justify-between p-4 bg-gray-50 border border-gray-100 rounded-md">
-                    <span class="text-[11px] font-bold text-gray-400 uppercase w-12">到</span>
-                    <span id="to-account" class="flex-1 font-black text-[13px] text-gray-900">交易帳戶</span>
-                </div>
-            </div>
+function buildFrame(innerHtml) {
+    return `<div class="web-frame">${webChrome()}<div class="flex flex-col min-h-[700px] relative">${innerHtml}</div></div>`;
+}
 
-            <!-- 資產選擇 -->
-            <div class="space-y-2">
-                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">選擇資產</label>
-                <div class="input-row">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-[10px] text-white font-black">S</div>
-                        <span class="font-black">USDT</span>
-                    </div>
-                    <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
-                </div>
-            </div>
+function renderPortfolio(opts = {}) {
+    const root = clonePortfolioBase();
+    if (opts.guest) applyGuestState(root);
+    else applyLoggedInState(root, opts);
+    let overlay = '';
+    if (opts.loginModal) overlay = LOGIN_MODAL_HTML;
+    if (opts.vipModal) overlay = VIP_MODAL_HTML;
+    return buildFrame(root.outerHTML + overlay);
+}
 
-            <!-- 數量輸入 -->
-            <div class="space-y-2">
-                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest flex justify-between">
-                    劃轉數量
-                    <span class="text-blue-600 font-bold">可用: 2,450.50 USDT</span>
-                </label>
-                <div class="relative">
-                    <input type="text" placeholder="0.00" class="w-full border border-gray-200 p-4 rounded-md outline-none focus:border-blue-600 font-black text-lg">
-                    <button class="absolute right-4 top-1/2 -translate-y-1/2 text-blue-600 font-black text-[11px] uppercase">全部</button>
-                </div>
-            </div>
-
-            <button onclick="handleTransferSubmit()" class="w-full bg-blue-600 text-white py-4 rounded-md font-black uppercase tracking-widest hover:bg-blue-700 transition shadow-xl shadow-blue-600/20 mt-4">確認劃轉</button>
-        </div>
-    </div>
-</div>
-
-<!-- 登录弹窗 -->
-<div id="modal-login" class="modal-overlay" style="display: none; background: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; align-items: center; justify-content: center;">
+const LOGIN_MODAL_HTML = `<!-- 登录弹窗 -->
+<div class="modal-overlay portfolio-login-modal" style="display: flex; background: rgba(0,0,0,0.5); z-index: 2000;">
     <div class="bg-white w-[420px] rounded-lg overflow-hidden shadow-2xl">
         <div class="p-6 border-b flex justify-between items-center bg-slate-50">
             <h2 id="login-modal-title" class="text-base font-black uppercase tracking-tight">登录 / 注册</h2>
-            <span class="cursor-pointer text-gray-400 text-xl hover:text-black" onclick="closeLoginModal()">✕</span>
+            <span class="cursor-pointer text-gray-400 text-xl hover:text-black" >✕</span>
         </div>
 
         <!-- 邮箱登录区（顶部） -->
@@ -787,1000 +828,89 @@
             <!-- 可继续添加其他钱包... -->
         </div>
     </div>
-</div>
-
-<!-- 身份验证器弹窗（Web 多步 Modal，对齐 App 绑定 / 修改 / 移除流程） -->
-<div id="modal-totp" class="modal-overlay" style="display:none; background:rgba(0,0,0,0.5); position:fixed; top:0; left:0; width:100%; height:100%; z-index:2000; align-items:center; justify-content:center;">
-    <div class="bg-white w-[420px] rounded-lg overflow-hidden shadow-2xl">
-        <div id="modal-totp-content"></div>
-    </div>
-</div>
-
-<!-- 导出邮箱钱包弹窗 -->
-<div id="modal-export-wallet" class="modal-overlay" style="display:none; background:rgba(0,0,0,0.5); position:fixed; top:0; left:0; width:100%; height:100%; z-index:2000; align-items:center; justify-content:center;">
-    <div class="bg-white w-[420px] rounded-lg overflow-hidden shadow-2xl">
-        <div id="modal-export-wallet-content"></div>
-    </div>
-</div>
-
-<div id="nav-toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[11px] font-bold px-4 py-2 rounded-full opacity-0 pointer-events-none transition-opacity z-[2100]">已复制</div>
-
-<!-- 提现二次确认 + 安全验证弹窗（动态内容容器，可重用） -->
-<div id="modal-withdraw-confirm" class="modal-overlay" style="display:none; background:rgba(0,0,0,0.5); position:fixed; top:0; left:0; width:100%; height:100%; z-index:2000; align-items:center; justify-content:center;">
-    <div class="bg-white w-[400px] rounded-lg p-6 shadow-2xl">
-        <div id="withdraw-confirm-content"></div>
-    </div>
-</div>
-
-<!-- 分享盈亏海报弹窗 -->
-<div id="modal-share-pnl" class="modal-overlay hidden" style="display: none; background: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; align-items: center; justify-content: center;">
-    <div class="bg-white w-full rounded-2xl overflow-hidden shadow-2xl flex flex-col max-w-[320px]">
-        <div id="pnl-poster" class="bg-white p-8 space-y-8 relative">
-            <div class="flex items-center space-x-2">
-                <div class="w-6 h-6 bg-black rounded flex items-center justify-center text-white font-black text-xs italic">F</div>
-                <span class="font-black text-base tracking-tighter">ForX</span>
-            </div>
-            <div class="flex justify-between items-start">
-                <div class="space-y-1">
-                    <h3 class="text-xl font-black text-gray-900">BTCUSDT</h3>
-                    <p class="text-[10px] font-black text-green-500 uppercase italic">開多 (Buy/Long)</p>
-                </div>
-                <div class="w-12 h-12 bg-yellow-50 rounded-full flex items-center justify-center"><span class="text-2xl">💰</span></div>
-            </div>
-            <div class="py-4 text-center">
-                <p class="text-5xl font-black text-green-500 tracking-tighter">+25.40%</p>
-                <p class="text-[10px] text-gray-400 font-bold uppercase mt-2 tracking-widest text-green-500/50">Return on Equity</p>
-            </div>
-            <div class="bg-gray-50 rounded-xl p-5 space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <p class="text-[9px] text-gray-400 font-bold uppercase">開倉均價</p>
-                        <p class="text-[13px] font-black text-gray-900 font-mono">65,100.5</p>
-                    </div>
-                    <div class="space-y-1 text-right">
-                        <p class="text-[9px] text-gray-400 font-bold uppercase">標記價格</p>
-                        <p class="text-[13px] font-black text-gray-900 font-mono">65,432.1</p>
-                    </div>
-                </div>
-                <div class="pt-3 border-t border-gray-200 flex justify-between items-center text-[9px] font-medium text-gray-400">
-                    <span>11/06/2026 21:35</span>
-                    <span class="text-blue-600 font-bold">forx.finance</span>
-                </div>
-            </div>
-            <div class="flex items-center justify-between gap-4 pt-2 border-t border-gray-100">
-                <div class="flex-1 min-w-0">
-                    <p class="text-[9px] text-gray-400 font-bold uppercase tracking-wider">我的邀請碼</p>
-                    <p class="text-lg font-black text-gray-900 font-mono tracking-wider mt-0.5">E6DL28G</p>
-                    <p class="text-[8px] text-gray-400 mt-1 truncate">掃碼註冊，一起交易</p>
-                </div>
-                <div class="w-[72px] h-[72px] bg-white border border-gray-200 rounded-lg p-1.5 shrink-0 flex items-center justify-center shadow-sm" title="邀請註冊二維碼">
-                    <svg class="w-full h-full text-gray-800" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true">
-                        <rect x="2" y="2" width="14" height="14" rx="1"/><rect x="6" y="6" width="6" height="6" fill="#fff"/>
-                        <rect x="34" y="2" width="14" height="14" rx="1"/><rect x="38" y="6" width="6" height="6" fill="#fff"/>
-                        <rect x="2" y="34" width="14" height="14" rx="1"/><rect x="6" y="38" width="6" height="6" fill="#fff"/>
-                        <rect x="20" y="2" width="4" height="4"/><rect x="26" y="2" width="4" height="4"/><rect x="20" y="8" width="4" height="4"/>
-                        <rect x="32" y="20" width="4" height="4"/><rect x="38" y="20" width="4" height="4"/><rect x="32" y="26" width="4" height="4"/>
-                        <rect x="20" y="20" width="4" height="4"/><rect x="26" y="26" width="4" height="4"/><rect x="20" y="32" width="4" height="4"/>
-                        <rect x="38" y="32" width="4" height="4"/><rect x="32" y="38" width="4" height="4"/><rect x="38" y="38" width="4" height="4"/>
-                    </svg>
-                </div>
-            </div>
-            <div class="text-center pt-1">
-                <p class="font-black text-sm tracking-tighter">ForX</p>
-                <p class="text-[9px] text-gray-400 font-bold uppercase tracking-tight">鏈上交易加密貨幣、黃金和股票</p>
-            </div>
+</div>`;
+const VIP_MODAL_HTML = `<!-- VIP 費率詳情彈窗 -->
+<div class="modal-overlay portfolio-vip-modal" style="display: flex; background: rgba(0,0,0,0.6); z-index: 2000;">
+    <div class="bg-white w-[560px] rounded-lg overflow-hidden shadow-2xl border border-gray-100 animate-in zoom-in duration-200">
+        <div class="p-6 border-b border-gray-50 flex justify-between items-center">
+            <h2 class="text-base font-black uppercase tracking-tight italic">ForX 合約交易 VIP 費率表</h2>
+            <span class="cursor-pointer text-gray-400 text-xl hover:text-black" >✕</span>
         </div>
-        <div class="p-4 bg-gray-50 flex space-x-3 border-t border-gray-100">
-            <button onclick="toggleModal('modal-share-pnl')" class="flex-1 py-3 border border-gray-200 bg-white rounded-xl font-black text-xs text-gray-400 uppercase">取消</button>
-            <button onclick="alert('海報已保存至相冊')" class="flex-1 py-3 bg-black text-white rounded-xl font-black text-xs shadow-lg uppercase">下载海報</button>
+
+        <div class="p-6">
+            <div class="mb-4 pb-4 border-b border-gray-100 flex justify-between items-center gap-4">
+                <span class="text-[10px] font-bold text-gray-500">过去 14 天交易量</span>
+                <span data-portfolio-vip-modal-14d class="text-sm font-black font-mono text-gray-900 shrink-0">$38,500,000.00</span>
+            </div>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                <tr class="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                    <th class="px-4 py-3 border-b border-gray-100">VIP 等級</th>
+                    <th class="px-4 py-3 border-b border-gray-100">14天交易量門檻 (USD)</th>
+                    <th class="px-4 py-3 border-b border-gray-100">Maker 費率</th>
+                    <th class="px-4 py-3 border-b border-gray-100 text-right">Taker 費率</th>
+                </tr>
+                </thead>
+                <tbody class="text-[11px] font-bold text-gray-700">
+                <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 0</td><td class="px-4 py-3 border-b border-gray-50">&lt; $5M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.015%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.045%</td></tr>
+                <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 1</td><td class="px-4 py-3 border-b border-gray-50">≥ $5M 且 &lt; $25M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.013%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.039%</td></tr>
+                <tr class="bg-yellow-50/50"><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">VIP 2</td><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">≥ $25M 且 &lt; $100M</td><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">0.010%</td><td class="px-4 py-3 border-b border-yellow-100 text-right font-black text-yellow-700">0.034%</td></tr>
+                <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 3</td><td class="px-4 py-3 border-b border-gray-50">≥ $100M 且 &lt; $500M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.006%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.029%</td></tr>
+                <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 4</td><td class="px-4 py-3 border-b border-gray-50">≥ $500M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.004%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.026%</td></tr>
+                </tbody>
+            </table>
+
+            <div class="mt-8 bg-gray-50 p-4 rounded-sm border border-gray-100">
+                <h4 class="text-[10px] font-black uppercase text-gray-500 mb-2">等級補充說明</h4>
+                <ul class="text-[10px] text-gray-500 space-y-1.5 list-disc list-inside leading-relaxed">
+                    <li>VIP等級根據用戶近14天合約交易量進行計算，達到對應等級門檻後，系統將在T+1日自動升級對應VIP等級。</li>
+                    <li>平台會定期更新用戶VIP等級，具體更新時間以系統計算結果為準。</li>
+                    <li>VIP等級更新後，新產生的合約交易將按對應等級費率計算手續費。</li>
+                    <li>VIP等級會根據用戶近14天合約交易量重新匹配，若交易量不滿足當前等級要求，系統將在T+1日內按平台規則調整至對應等級。</li>
+                </ul>
+            </div>
         </div>
     </div>
-</div>
+</div>`;
 
-<script>
-    // 彈窗內容模板庫
-    const financeTemplates = {
-        // --- 存款 ---
-    deposit_init: `
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-lg font-black uppercase">充值</h2>
-                <span class="cursor-pointer text-gray-400" onclick="closeFinanceModal()">✕</span>
-            </div>
-            <div class="space-y-3">
-                <button onclick="updateModal('deposit_wallet')" class="btn-step flex items-center justify-between">
-                    <div>
-                        <div class="font-bold text-[13px]">從已連接錢包充值</div>
-                        <div class="text-[11px] text-gray-400 mt-1">使用 MetaMask, OKX 或其他連接的錢包</div>
-                    </div>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
-                </button>
-                <div class="flex items-center py-2"><div class="flex-1 border-t border-dashed border-gray-100"></div><span class="px-4 text-[10px] text-gray-300 font-bold">OR</span><div class="flex-1 border-t border-dashed border-gray-100"></div></div>
-                <button onclick="updateModal('deposit_external')" class="btn-step flex items-center justify-between">
-                    <div>
-                        <div class="font-bold text-[13px]">從外部錢包/交易所充值</div>
-                        <div class="text-[11px] text-gray-400 mt-1">通過掃碼或複製地址從 Binance 等外部轉帳</div>
-                    </div>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
-                </button>
-            </div>
-        </div>
-    `,
-    deposit_wallet: `
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-6">
-                <div class="flex items-center"><span class="cursor-pointer mr-3 text-gray-400" onclick="updateModal('deposit_init')">←</span><h2 class="text-lg font-black">錢包充值</h2></div>
-                <span class="cursor-pointer text-gray-400" onclick="closeFinanceModal()">✕</span>
-            </div>
-            <div class="space-y-4">
-                <div class="input-row"><span class="text-[11px] font-bold text-gray-400">資產</span><span class="font-black text-[12px]">USDT</span></div>
-                <div class="input-row"><span class="text-[11px] font-bold text-gray-400">鏈</span><span class="font-black text-[12px]">Arbitrum</span></div>
-                <div class="bg-gray-50 p-3 rounded-md border border-gray-100">
-                    <div class="flex justify-between items-center mb-2"><input type="text" placeholder="數量" class="bg-transparent font-black outline-none w-1/2 text-sm"><span class="text-blue-600 font-bold text-[11px]">最大</span></div>
-                    <div class="flex justify-between text-[10px] text-gray-400 border-t border-gray-200/50 pt-2"><span>可用</span><span>0.00 USDT</span></div>
-                </div>
-                <div class="bg-orange-50 border border-orange-100 p-3 rounded-md flex gap-2">
-                    <span class="text-orange-500 text-sm">⚠️</span>
-                    <p class="text-[10px] text-orange-700 leading-tight">請勿使用無私鑰錢包進行充值，否則資金將無法找回。</p>
-                </div>
-                <div class="space-y-1.5 pt-2">
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400">到帳時間</span><span class="font-bold">5~15 分鐘</span></div>
-                </div>
-                <button class="w-full py-3 bg-blue-600 text-white font-black rounded-md shadow-lg">確認充值</button>
-            </div>
-        </div>
-    `,
-    deposit_external: `
-    <div class="p-6">
-        <div class="flex justify-between items-center mb-6">
-            <div class="flex items-center"><span class="cursor-pointer mr-3 text-gray-400" onclick="updateModal('deposit_init')">←</span><h2 class="text-lg font-black">外部充值</h2></div>
-            <span class="cursor-pointer text-gray-400" onclick="closeFinanceModal()">✕</span>
-        </div>
-        <div class="space-y-4">
-            <!-- 拆分為兩個獨立選擇框 -->
-            <div class="input-row"><span class="text-[11px] font-bold text-gray-400">資產</span><span class="font-black text-[12px]">USDT</span></div>
-            <div class="input-row"><span class="text-[11px] font-bold text-gray-400">鏈</span><span class="font-black text-[12px]">Arbitrum</span></div>
-
-            <div class="flex flex-col items-center py-4 bg-gray-50 rounded-md border border-dashed border-gray-200">
-                <div class="w-32 h-32 bg-white p-2 border border-gray-100 mb-3 flex items-center justify-center font-bold text-gray-300">QR CODE</div>
-                <div class="text-[11px] font-black text-gray-900 break-all px-6 text-center select-all">0xF235BE4440Cf7CDbDdd9f7F6Fc062B8297e37Eae</div>
-                <button class="mt-2 text-blue-600 font-bold text-[10px] uppercase">點擊複製地址</button>
-            </div>
-            <div class="bg-blue-50 border border-blue-100 p-3 rounded-md flex gap-2">
-                <span class="text-blue-500 text-sm">ℹ️</span>
-                <p class="text-[10px] text-blue-700 leading-tight">僅支援發送 <b class="text-blue-900">USDT (Arbitrum)</b> 資產到此地址。發送錯誤資產將無法找回。</p>
-            </div>
-            <div class="space-y-1.5 pt-2">
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400">到帳時間</span><span class="font-bold">5~15 分鐘</span></div>
-                </div>
-            <button class="w-full py-3 border border-gray-200 font-black rounded-md text-[12px]" onclick="closeFinanceModal()">完成</button>
-        </div>
-    </div>
-    `,
-        // --- 提現 ---
-    withdraw_init: `
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-lg font-black uppercase">提現</h2>
-                <span class="cursor-pointer text-gray-400" onclick="closeFinanceModal()">✕</span>
-            </div>
-            <div class="space-y-3">
-                <button onclick="updateModal('withdraw_wallet')" class="btn-step flex items-center justify-between">
-                    <div>
-                        <div class="font-bold text-[13px]">提現至已連接錢包</div>
-                        <div class="text-[11px] text-gray-400 mt-1">提現至當前登錄的 MetaMask 或其他錢包</div>
-                    </div>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
-                </button>
-                <div class="flex items-center py-2"><div class="flex-1 border-t border-dashed border-gray-100"></div><span class="px-4 text-[10px] text-gray-300 font-bold">OR</span><div class="flex-1 border-t border-dashed border-gray-100"></div></div>
-                <button onclick="updateModal('withdraw_external')" class="btn-step flex items-center justify-between">
-                    <div>
-                        <div class="font-bold text-[13px]">提現至外部帳戶</div>
-                        <div class="text-[11px] text-gray-400 mt-1">手動輸入接收地址 (交易所或第三方錢包)</div>
-                    </div>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
-                </button>
-            </div>
-        </div>
-    `,
-    withdraw_wallet: `
-    <div class="p-6">
-        <div class="flex justify-between items-center mb-6">
-            <div class="flex items-center"><span class="cursor-pointer mr-3 text-gray-400" onclick="updateModal('withdraw_init')">←</span><h2 class="text-lg font-black">提現至錢包</h2></div>
-            <span class="cursor-pointer text-gray-400" onclick="closeFinanceModal()">✕</span>
-        </div>
-        <div class="space-y-4">
-            <div class="input-row"><span class="text-[11px] font-bold text-gray-400">從</span><span class="font-black text-[12px]">合約帳戶</span></div>
-            <div class="input-row"><span class="text-[11px] font-bold text-gray-400">資產</span><span class="font-black text-[12px]">USDT</span></div>
-            <div class="input-row"><span class="text-[11px] font-bold text-gray-400">鏈</span><span class="font-black text-[12px]">Arbitrum</span></div>
-
-            <!-- 數量輸入區 -->
-            <div class="bg-gray-50 p-3 rounded-md border border-gray-100">
-                <div class="flex justify-between items-center mb-2">
-                    <input type="text" placeholder="數量" class="bg-transparent font-black outline-none w-1/2 text-sm">
-                    <span class="text-blue-600 font-bold text-[11px] cursor-pointer hover:text-blue-800">最大</span>
-                </div>
-                <div class="flex justify-between text-[10px] text-gray-400 border-t border-gray-200/50 pt-2">
-                    <span>可用餘額</span><span>12,450.00 USDT</span>
-                </div>
-            </div>
-
-            <!-- 提現細節 -->
-            <div class="space-y-1.5 pt-2 text-[11px]">
-                <div class="flex justify-between"><span class="text-gray-400">網絡手續費</span><span class="font-bold">0.00 USDT</span></div>
-                <div class="flex justify-between"><span class="text-gray-400">預計到帳</span><span class="font-black text-gray-900">0.00 USDT</span></div>
-                <div class="flex justify-between"><span class="text-gray-400">到帳速度</span><span class="text-green-600 font-bold">5~10 分鐘</span></div>
-            </div>
-
-            <div class="bg-gray-50 p-3 rounded-md border border-gray-100">
-                <p class="text-[10px] text-gray-400 leading-tight">
-                    資產將直接提取至您當前連接的錢包地址：<br>
-                    <b class="text-gray-900 break-all">0xF235BE4440Cf7CDbDdd9f7F6Fc062B8297e37Eae</b>
-                </p>
-            </div>
-
-            <button class="w-full py-3 bg-blue-600 text-white font-black rounded-md shadow-lg hover:bg-blue-700 transition">確認提現</button>
-        </div>
-    </div>
-    `,
-    withdraw_external: `
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-6">
-                <div class="flex items-center"><span class="cursor-pointer mr-3 text-gray-400" onclick="updateModal('withdraw_init')">←</span><h2 class="text-lg font-black">提現至外部地址</h2></div>
-                <span class="cursor-pointer text-gray-400" onclick="closeFinanceModal()">✕</span>
-            </div>
-            <div class="space-y-4">
-                <div class="input-row"><span class="text-[11px] font-bold text-gray-400">資產</span><span class="font-black text-[12px]">USDT</span></div>
-                <div class="input-row"><span class="text-[11px] font-bold text-gray-400">鏈</span><span class="font-black text-[12px]">Ethereum</span></div>
-                <div class="bg-gray-50 border border-gray-100 h-10 flex items-center px-3 rounded-md">
-                    <input type="text" placeholder="輸入接收地址" class="bg-transparent w-full outline-none font-bold text-[11px]">
-                </div>
-                <div class="bg-gray-50 p-3 rounded-md border border-gray-100">
-                    <div class="flex justify-between items-center mb-2"><input type="text" placeholder="提現數量" class="bg-transparent font-black outline-none w-1/2 text-sm"><span class="text-blue-600 font-bold text-[11px]">最大</span></div>
-                    <div class="flex justify-between text-[10px] text-gray-400 border-t border-gray-200/50 pt-2"><span>可用</span><span>12,000.00 USDT</span></div>
-                </div>
-                <div class="space-y-1.5 pt-2 text-[11px]">
-                    <div class="flex justify-between"><span class="text-gray-400">網絡手續費</span><span class="font-bold">2.50 USDT</span></div>
-                    <div class="flex justify-between"><span class="text-gray-400">預計到帳</span><span class="font-black text-gray-900">0.00 USDT</span></div>
-                    <div class="flex justify-between"><span class="text-gray-400">到帳速度</span><span class="text-green-600 font-bold">5~10 分鐘</span></div>
-                </div>
-                <button class="w-full py-3 bg-black text-white font-black rounded-md">確認提現申請</button>
-            </div>
-        </div>
-    `,
-    deposit_external_only: `
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-lg font-black">外部充值</h2>
-                <span class="cursor-pointer text-gray-400" onclick="closeFinanceModal()">✕</span>
-            </div>
-            <div class="space-y-4">
-                <div class="input-row"><span class="text-[11px] font-bold text-gray-400">资产</span><span class="font-black text-[12px]">USDT</span></div>
-                <div class="input-row"><span class="text-[11px] font-bold text-gray-400">链</span><span class="font-black text-[12px]">Arbitrum</span></div>
-                <div class="flex flex-col items-center py-4 bg-gray-50 rounded-md border border-dashed border-gray-200">
-                    <div class="w-32 h-32 bg-white p-2 border border-gray-100 mb-3 flex items-center justify-center font-bold text-gray-300">QR CODE</div>
-                    <div class="text-[11px] font-black text-gray-900 break-all px-6 text-center select-all">0xF235BE4440Cf7CDbDdd9f7F6Fc062B8297e37Eae</div>
-                    <button class="mt-2 text-blue-600 font-bold text-[10px] uppercase">点击复制地址</button>
-                </div>
-                <div class="bg-blue-50 border border-blue-100 p-3 rounded-md flex gap-2">
-                    <span class="text-blue-500 text-sm">ℹ️</span>
-                    <p class="text-[10px] text-blue-700 leading-tight">仅支持发送 <b class="text-blue-900">USDT (Arbitrum)</b> 资产到此地址。发送错误资产将无法找回。</p>
-                </div>
-                <div class="space-y-1.5 pt-2">
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400">到帐时间</span><span class="font-bold">5~15 分钟</span></div>
-                </div>
-                <button class="w-full py-3 border border-gray-200 font-black rounded-md text-[12px]" onclick="closeFinanceModal()">完成</button>
-            </div>
-        </div>
-    `,
-    withdraw_external_only: `
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-lg font-black">提现至外部地址</h2>
-                <span class="cursor-pointer text-gray-400" onclick="closeFinanceModal()">✕</span>
-            </div>
-            <div class="space-y-4">
-                <div class="input-row"><span class="text-[11px] font-bold text-gray-400">资产</span><span class="font-black text-[12px]">USDT</span></div>
-                <div class="input-row"><span class="text-[11px] font-bold text-gray-400">链</span><span class="font-black text-[12px]">Ethereum</span></div>
-                <div class="bg-gray-50 border border-gray-100 h-10 flex items-center px-3 rounded-md">
-                    <input type="text" placeholder="输入接收地址" class="bg-transparent w-full outline-none font-bold text-[11px]">
-                </div>
-                <div class="bg-gray-50 p-3 rounded-md border border-gray-100">
-                    <div class="flex justify-between items-center mb-2"><input type="text" placeholder="提现数量" class="bg-transparent font-black outline-none w-1/2 text-sm"><span class="text-blue-600 font-bold text-[11px]">最大</span></div>
-                    <div class="flex justify-between text-[10px] text-gray-400 border-t border-gray-200/50 pt-2"><span>可用</span><span>12,000.00 USDT</span></div>
-                </div>
-                <div class="space-y-1.5 pt-2 text-[11px]">
-                    <div class="flex justify-between"><span class="text-gray-400">网络手续费</span><span class="font-bold">2.50 USDT</span></div>
-                    <div class="flex justify-between"><span class="text-gray-400">预计到帐</span><span class="font-black text-gray-900">0.00 USDT</span></div>
-                </div>
-                <button class="w-full py-3 bg-black text-white font-black rounded-md" onclick="startWithdrawVerification()">确认提现申请</button>
-            </div>
-        </div>
-    `
-    };
-
-    function openModal(type) {
-        const content = document.getElementById('modal-dynamic-content');
-        const overlay = document.getElementById('finance-modal');
-        content.innerHTML = type === 'deposit' ? financeTemplates.deposit_init : financeTemplates.withdraw_init;
-        overlay.style.display = 'flex';
+const STATES = [
+    {
+        title: '① 未登录 · 默认',
+        desc: '总净资产/今日盈亏为 --；仅显示「连接钱包」；VIP 与周期图表区展示未登录占位；底部数据区引导查看合约交易页',
+        render: () => renderPortfolio({ guest: true })
+    },
+    {
+        title: '② 未登录 · 登录弹窗',
+        desc: '点击「连接钱包」后唤起登录/注册弹窗（邮箱 + 钱包列表）',
+        render: () => renderPortfolio({ guest: true, loginModal: true })
+    },
+    {
+        title: '③ 已登录 · 钱包用户默认',
+        desc: '完整投资组合页：资产看板 + VIP 权益 + 合约表现仪表盘 + 底部数据标签（默认引导至合约交易页）',
+        render: () => renderPortfolio({ guest: false })
+    },
+    {
+        title: '④ 已登录 · 充提记录 Tab',
+        desc: '底部切换到「充提記錄」标签，展示充值流水表格',
+        render: () => renderPortfolio({ guest: false, depositTab: true })
+    },
+    {
+        title: '⑤ 已登录 · VIP 费率弹窗',
+        desc: '点击「等級費率表」打开 VIP 费率详情弹窗',
+        render: () => renderPortfolio({ guest: false, vipModal: true })
     }
+];
 
-    function updateModal(templateKey) {
-        document.getElementById('modal-dynamic-content').innerHTML = financeTemplates[templateKey];
-    }
-
-    function closeFinanceModal() {
-        document.getElementById('finance-modal').style.display = 'none';
-    }
-
-    function openVipModal() {
-        document.getElementById('vip-modal').style.display = 'flex';
-    }
-
-    function closeVipModal() {
-        document.getElementById('vip-modal').style.display = 'none';
-    }
-
-    let isFundingToTrading = true;
-
-    function openTransferModal() {
-        document.getElementById('transfer-modal').style.display = 'flex';
-    }
-
-    function closeTransferModal() {
-        document.getElementById('transfer-modal').style.display = 'none';
-    }
-
-    function swapTransferDirection() {
-        isFundingToTrading = !isFundingToTrading;
-        const fromEl = document.getElementById('from-account');
-        const toEl = document.getElementById('to-account');
-
-        if (isFundingToTrading) {
-            fromEl.innerText = "資金帳戶";
-            toEl.innerText = "交易帳戶";
-        } else {
-            fromEl.innerText = "交易帳戶";
-            toEl.innerText = "資金帳戶";
-        }
-    }
-
-    function handleTransferSubmit() {
-        alert("劃轉成功！");
-        closeTransferModal();
-    }
-
-    function toggleModal(id) {
-        const modal = document.getElementById(id);
-        if (modal.style.display === 'flex') {
-            modal.style.display = 'none';
-        } else {
-            modal.style.display = 'flex';
-        }
-    }
-
-    // ========== 下半区表格渲染核心 ==========
-    let currentDataTab = 'pos';
-
-    function switchDataTab(tabId) {
-        const tabs = ['pos', 'order', 'hist-order', 'hist-trade', 'hist-pos', 'asset-log', 'funding-fee', 'deposit-withdraw'];
-        tabs.forEach(t => document.getElementById('tab-data-' + t).className = 'cursor-pointer h-8 flex items-center shrink-0');
-        document.getElementById('tab-data-' + tabId).className = 'tab-active cursor-pointer h-8 flex items-center shrink-0';
-        currentDataTab = tabId;
-        document.getElementById('order-subtabs').classList.add('hidden');
-        renderTableForTab(tabId);
-    }
-
-    function renderTableForTab(tabId) {
-        const h = document.getElementById('data-header');
-        const b = document.getElementById('data-body');
-        const referralEl = document.getElementById('data-referral-hint');
-        const tableWrap = document.getElementById('data-table-wrap');
-        // 隐藏所有筛选栏
-        document.getElementById('hist-order-filters').classList.add('hidden');
-        document.getElementById('hist-trade-filters').classList.add('hidden');
-        document.getElementById('hist-pos-filters').classList.add('hidden');
-        document.getElementById('asset-log-filters').classList.add('hidden');
-        document.getElementById('funding-fee-filters').classList.add('hidden');
-        document.getElementById('deposit-withdraw-filters').classList.add('hidden');
-
-        if (tabId !== 'deposit-withdraw') {
-            referralEl.classList.remove('hidden');
-            referralEl.classList.add('flex');
-            tableWrap.classList.add('hidden');
-            h.innerHTML = '';
-            b.innerHTML = '';
-            return;
-        }
-
-        referralEl.classList.add('hidden');
-        referralEl.classList.remove('flex');
-        tableWrap.classList.remove('hidden');
-        document.getElementById('deposit-withdraw-filters').classList.remove('hidden');
-        h.innerHTML = '<th class="px-4 py-2">時間</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">狀態</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">幣種</th><th class="px-4 py-2">手續費</th><th class="px-4 py-2">鏈</th><th class="px-4 py-2">Hash</th><th class="px-4 py-2">訂單號</th>';
-        b.innerHTML = `<tr class="border-b border-gray-50">
-                            <td class="px-4 py-3 text-gray-400">2026-05-06 01:20:33</td>
-                            <td class="px-4 py-3 font-bold">充值</td>
-                            <td class="px-4 py-3 text-green-500">已完成</td>
-                            <td class="px-4 py-3 font-mono">100.00 USDT</td>
-                            <td class="px-4 py-3">USDT</td>
-                            <td class="px-4 py-3 text-gray-500">0.00 USDT</td>
-                            <td class="px-4 py-3 text-gray-600">BSC</td>
-                            <td class="px-4 py-3 text-[10px] font-mono text-blue-500 underline">0xabc...123</td>
-                            <td class="px-4 py-3 text-gray-500">DEP_20260506</td>
-                        </tr>`;
-    }
-
-    // 撤单相关
-    let pendingCancelOrderId = null;
-    function openCancelConfirm(orderId) {
-        pendingCancelOrderId = orderId;
-        document.getElementById('cancel-order-info').innerText = '訂單號: ' + orderId;
-        toggleModal('modal-cancel-order');
-    }
-    function openCancelAllConfirm() {
-        toggleModal('modal-cancel-all');
-    }
-
-    // 日期选择器与多选下拉
-    function toggleDatePicker(pickerId) {
-        const el = document.getElementById(pickerId);
-        el.classList.toggle('hidden');
-    }
-    function toggleMultiSelect(dropdownId) {
-        const el = document.getElementById(dropdownId);
-        el.classList.toggle('hidden');
-    }
-    // 点击外部关闭浮窗
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('[onclick^="toggleDatePicker"]') && !e.target.closest('.absolute.top-full')) {
-            document.querySelectorAll('[id$="-picker"]').forEach(el => el.classList.add('hidden'));
-        }
-        if (!e.target.closest('[onclick^="toggleMultiSelect"]') && !e.target.closest('.absolute.top-full')) {
-            document.querySelectorAll('[id$="-dropdown"]').forEach(el => el.classList.add('hidden'));
-        }
-    });
-
-    // 初始化渲染
-    window.addEventListener('DOMContentLoaded', function() {
-        switchDataTab('pos');
-    });
-
-    // ================== 登录管理 ==================
-    let currentUser = null; // wallet: { loginMethod:'wallet', address } | email: { loginMethod:'email', email, privyAddress, gaBound }
-
-    const PRIVY_WALLET_DISPLAY = '0x8b2e...4f1a';
-    const PRIVY_WALLET_FULL = '0x8b2e1a4f5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c4f1a';
-    const WALLET_ADDRESS_DISPLAY = '0xd593...2Dd2';
-    const WALLET_ADDRESS_FULL = '0xd5938b2c9d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f2d';
-    const EXPORT_WALLET_DISPLAY = '0x972...0E79';
-    const EXPORT_WALLET_FULL = '0x9720a1b2c3d4e5f678901234567890abcdef0E79';
-    const MOCK_PRIVATE_KEY = '0x4f3c8e1a9b2d7c6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2';
-    const MOCK_SEED_PHRASE = 'apple river canyon orbit maple velvet prism harbor quiet ledger frost dawn';
-    const TOTP_MOCK_CODE = '123456';
-
-    function showNavToast(msg) {
-        const t = document.getElementById('nav-toast');
-        if (!t) return;
-        t.textContent = msg;
-        t.classList.remove('opacity-0');
-        clearTimeout(window._navToastTimer);
-        window._navToastTimer = setTimeout(() => t.classList.add('opacity-0'), 1800);
-    }
-
-    function copyText(text) {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(() => showNavToast('已复制')).catch(() => showNavToast('已复制'));
-        } else {
-            showNavToast('已复制');
-        }
-    }
-
-    function copyMenuField(field) {
-        if (!currentUser) return;
-        if (field === 'uid') {
-            copyText(currentUser.uid);
-            return;
-        }
-        if (field === 'email' && currentUser.email) {
-            copyText(currentUser.email);
-            return;
-        }
-        if (field === 'wallet') {
-            if (currentUser.loginMethod === 'wallet') {
-                copyText(currentUser.addressFull || currentUser.address);
-            } else {
-                copyText(currentUser.privyAddressFull || currentUser.privyAddress);
-            }
-        }
-    }
-
-    function openLoginModal() {
-        const modal = document.getElementById('modal-login');
-        document.getElementById('login-modal-title').innerText = '登录 / 注册';
-        document.getElementById('login-email-section').style.display = 'block';
-        document.getElementById('login-wallet-section').style.display = 'block';
-        document.getElementById('email-step1').classList.remove('hidden');
-        document.getElementById('email-step2').classList.add('hidden');
-        modal.style.display = 'flex';
-    }
-
-    function closeLoginModal() {
-        document.getElementById('modal-login').style.display = 'none';
-    }
-
-    function sendEmailCode() {
-        const email = document.getElementById('login-email-input').value.trim();
-        if (!email) { alert('请输入邮箱'); return; }
-        document.getElementById('email-step1').classList.add('hidden');
-        document.getElementById('email-step2').classList.remove('hidden');
-        window.loginEmail = email;
-    }
-
-    function emailLogin() {
-        const code = document.getElementById('login-code-input').value.trim();
-        if (code !== TOTP_MOCK_CODE) { alert('验证码错误（模拟：正确验证码 123456）'); return; }
-        const email = window.loginEmail || 'user@example.com';
-        currentUser = {
-            uid: '123456',
-            loginMethod: 'email',
-            email: email,
-            privyAddress: PRIVY_WALLET_DISPLAY,
-            privyAddressFull: PRIVY_WALLET_FULL,
-            gaBound: false
-        };
-        updateUIAfterLogin();
-        closeLoginModal();
-    }
-
-    function resendEmailCode() { sendEmailCode(); }
-
-    function mockWalletLogin(walletName) {
-        currentUser = {
-            uid: '123456',
-            loginMethod: 'wallet',
-            address: WALLET_ADDRESS_DISPLAY,
-            addressFull: WALLET_ADDRESS_FULL,
-            gaBound: false
-        };
-        updateUIAfterLogin();
-        closeLoginModal();
-    }
-
-    function logout() {
-        currentUser = null;
-        document.getElementById('btn-connect-wallet').classList.remove('hidden');
-        document.getElementById('user-account-wrapper').classList.add('hidden');
-        document.getElementById('nav-login-label').innerText = '0xd593...2Dd2';
-    }
-
-    function updateGaMenuEntry() {
-        const actionEl = document.getElementById('menu-ga-action');
-        if (!actionEl || !currentUser || currentUser.loginMethod !== 'email') return;
-        if (currentUser.gaBound) {
-            actionEl.innerHTML = '<span class="text-green-600 font-bold text-[10px]">已绑定</span><button type="button" onclick="openTotpModal(\'bound\')" class="text-blue-600 font-bold text-[10px] hover:underline ml-2">管理</button>';
-        } else {
-            actionEl.innerHTML = '<span class="text-amber-600 font-bold text-[10px]">未设置</span><button type="button" onclick="openTotpModal(\'not_set\')" class="text-blue-600 font-bold text-[10px] hover:underline ml-2">绑定</button>';
-        }
-    }
-
-    function updateUIAfterLogin() {
-        document.getElementById('btn-connect-wallet').classList.add('hidden');
-        document.getElementById('user-account-wrapper').classList.remove('hidden');
-
-        const label = document.getElementById('nav-login-label');
-        const emailRow = document.getElementById('menu-email-row');
-        const walletRow = document.getElementById('menu-wallet-row');
-        const gaRow = document.getElementById('menu-ga-row');
-        const exportRow = document.getElementById('menu-export-wallet-row');
-        const walletStatus = document.getElementById('menu-wallet-status');
-        const walletLabel = document.getElementById('menu-wallet-label');
-
-        document.getElementById('menu-uid').innerText = currentUser.uid;
-
-        if (currentUser.loginMethod === 'wallet') {
-            label.innerText = currentUser.address;
-            emailRow.classList.add('hidden');
-            walletRow.classList.remove('hidden');
-            gaRow.classList.add('hidden');
-            exportRow.classList.add('hidden');
-            walletLabel.innerText = '钱包';
-            walletStatus.innerText = currentUser.address;
-        } else {
-            label.innerText = currentUser.email;
-            emailRow.classList.remove('hidden');
-            walletRow.classList.remove('hidden');
-            gaRow.classList.remove('hidden');
-            exportRow.classList.remove('hidden');
-            document.getElementById('menu-email-status').innerText = currentUser.email;
-            walletLabel.innerText = '钱包';
-            walletStatus.innerText = currentUser.privyAddress;
-            updateGaMenuEntry();
-        }
-    }
-
-    // ================== 身份验证器（Web Modal 多步流程） ==================
-    const totpTemplates = {
-        not_set: `
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-lg font-black">身份验证器 App</h2>
-                <span class="cursor-pointer text-gray-400 hover:text-black" onclick="closeTotpModal()">✕</span>
-            </div>
-            <div class="text-center mb-6">
-                <div class="w-14 h-14 rounded-md bg-blue-50 border border-blue-100 flex items-center justify-center mx-auto mb-4 text-blue-600 text-xl">🔐</div>
-                <h3 class="font-black text-base text-gray-900">绑定身份验证器 App</h3>
-                <p class="text-[11px] text-gray-500 mt-2 leading-relaxed">绑定后可使用动态验证码保护账户安全。</p>
-                <p class="text-[10px] text-gray-400 mt-4">支持 Google Authenticator、Microsoft Authenticator 等标准 TOTP 应用</p>
-            </div>
-            <button type="button" onclick="updateTotpModal('setup_qr')" class="w-full py-3 bg-black text-white font-black text-sm rounded-md">立即绑定</button>
-        </div>`,
-        setup_qr: `
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-6">
-                <div class="flex items-center">
-                    <span class="cursor-pointer mr-3 text-gray-400 hover:text-black" onclick="updateTotpModal('not_set')">←</span>
-                    <h2 class="text-lg font-black">绑定验证器</h2>
-                </div>
-                <span class="cursor-pointer text-gray-400 hover:text-black" onclick="closeTotpModal()">✕</span>
-            </div>
-            <p class="text-[11px] text-gray-500 text-center leading-relaxed mb-4">使用身份验证器 App 扫描下方二维码，或手动输入密钥</p>
-            <div class="w-36 h-36 bg-gray-100 mx-auto flex items-center justify-center font-bold text-gray-400 border border-dashed border-gray-200 rounded-md mb-3">QR CODE</div>
-            <p class="text-[10px] font-bold text-gray-400 text-center uppercase tracking-wide">手动输入密钥</p>
-            <p class="text-[11px] font-mono font-bold bg-gray-50 border border-gray-100 rounded-md p-3 mt-2 text-center break-all">JBSW Y3DP EHPK 3PXP</p>
-            <button type="button" onclick="copyText('JBSWY3DPEHPK3PXP')" class="text-[10px] font-black text-blue-600 mx-auto block mt-2 hover:underline">复制密钥</button>
-            <button type="button" onclick="updateTotpModal('setup_verify')" class="w-full py-3 bg-black text-white font-black text-sm rounded-md mt-6">下一步</button>
-        </div>`,
-        setup_verify: `
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-6">
-                <div class="flex items-center">
-                    <span class="cursor-pointer mr-3 text-gray-400 hover:text-black" onclick="updateTotpModal('setup_qr')">←</span>
-                    <h2 class="text-lg font-black">验证绑定</h2>
-                </div>
-                <span class="cursor-pointer text-gray-400 hover:text-black" onclick="closeTotpModal()">✕</span>
-            </div>
-            <p class="text-sm font-black text-gray-900 text-center">输入验证器中的 6 位验证码</p>
-            <p class="text-[10px] text-gray-400 text-center mt-2">验证码每 30 秒更新一次（模拟码：123456）</p>
-            <input type="text" id="totp-setup-code" maxlength="6" placeholder="6 位动态码" class="w-full border border-gray-200 p-3 rounded-md text-center font-black text-lg mt-6 outline-none focus:border-black">
-            <p id="totp-setup-error" class="text-red-500 text-[10px] text-center mt-2 hidden">验证码错误，请重试</p>
-            <button type="button" onclick="confirmTotpBind()" class="w-full py-3 bg-blue-600 text-white font-black text-sm rounded-md mt-4">确认绑定</button>
-        </div>`,
-        bound: `
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-lg font-black">身份验证器 App</h2>
-                <span class="cursor-pointer text-gray-400 hover:text-black" onclick="closeTotpModal()">✕</span>
-            </div>
-            <div class="bg-gray-50 border border-gray-100 rounded-md p-5 text-center mb-6">
-                <div class="w-12 h-12 rounded-full bg-green-50 border border-green-100 flex items-center justify-center mx-auto mb-3 text-green-600 text-lg">✓</div>
-                <p class="font-black text-gray-900">已绑定身份验证器</p>
-                <p class="text-[10px] text-gray-400 mt-2">已启用动态验证码保护</p>
-                <span class="inline-block mt-3 text-[10px] font-black text-green-700 bg-green-50 px-3 py-1 rounded-full border border-green-100">安全等级：高</span>
-            </div>
-            <button type="button" onclick="updateTotpModal('modify')" class="w-full py-3 border border-gray-200 font-black text-sm rounded-md hover:bg-gray-50">修改验证器</button>
-            <p class="text-[10px] text-gray-400 text-center mt-2">更换手机或验证器 App 时需重新绑定</p>
-            <button type="button" onclick="updateTotpModal('remove')" class="w-full py-3 mt-3 bg-red-50 text-red-600 font-black text-sm rounded-md border border-red-100 hover:bg-red-100">移除验证器</button>
-            <p class="text-[10px] text-gray-400 text-center mt-2">移除后账户安全等级将降低</p>
-        </div>`,
-        modify: `
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-6">
-                <div class="flex items-center">
-                    <span class="cursor-pointer mr-3 text-gray-400 hover:text-black" onclick="updateTotpModal('bound')">←</span>
-                    <h2 class="text-lg font-black">修改验证器</h2>
-                </div>
-                <span class="cursor-pointer text-gray-400 hover:text-black" onclick="closeTotpModal()">✕</span>
-            </div>
-            <p class="text-sm font-black text-gray-900 text-center">验证当前身份验证器</p>
-            <p class="text-[10px] text-gray-400 text-center mt-2">请输入旧验证器中的 6 位动态码以继续</p>
-            <input type="text" id="totp-modify-code" maxlength="6" placeholder="6 位动态码" class="w-full border border-gray-200 p-3 rounded-md text-center font-black text-lg mt-6 outline-none focus:border-black">
-            <p id="totp-modify-error" class="text-red-500 text-[10px] text-center mt-2 hidden">验证码错误，请重试</p>
-            <button type="button" onclick="confirmTotpModify()" class="w-full py-3 bg-black text-white font-black text-sm rounded-md mt-4">下一步</button>
-        </div>`,
-        remove: `
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-6">
-                <div class="flex items-center">
-                    <span class="cursor-pointer mr-3 text-gray-400 hover:text-black" onclick="updateTotpModal('bound')">←</span>
-                    <h2 class="text-lg font-black">移除验证器</h2>
-                </div>
-                <span class="cursor-pointer text-gray-400 hover:text-black" onclick="closeTotpModal()">✕</span>
-            </div>
-            <div class="p-4 bg-red-50 border border-red-100 rounded-md mb-5">
-                <p class="text-[12px] font-black text-red-800">安全风险提示</p>
-                <p class="text-[10px] text-red-700 mt-1 leading-relaxed">移除后将无法使用验证器进行安全验证。建议仅在无法继续使用当前验证器时操作。</p>
-            </div>
-            <p class="text-sm font-black text-gray-900 text-center">输入验证器动态码确认移除</p>
-            <input type="text" id="totp-remove-code" maxlength="6" placeholder="6 位动态码" class="w-full border border-gray-200 p-3 rounded-md text-center font-black text-lg mt-6 outline-none focus:border-black">
-            <p id="totp-remove-error" class="text-red-500 text-[10px] text-center mt-2 hidden">验证码错误，请重试</p>
-            <button type="button" onclick="confirmTotpRemove()" class="w-full py-3 mt-4 bg-red-600 text-white font-black text-sm rounded-md">确认移除</button>
-            <button type="button" onclick="updateTotpModal('bound')" class="w-full py-3 mt-2 border border-gray-200 font-black text-sm rounded-md">取消</button>
-        </div>`
-    };
-
-    function openTotpModal(step) {
-        if (!currentUser || currentUser.loginMethod !== 'email') return;
-        const initial = step || (currentUser.gaBound ? 'bound' : 'not_set');
-        updateTotpModal(initial);
-        document.getElementById('modal-totp').style.display = 'flex';
-    }
-
-    function updateTotpModal(step) {
-        document.getElementById('modal-totp-content').innerHTML = totpTemplates[step] || totpTemplates.not_set;
-    }
-
-    function closeTotpModal() {
-        document.getElementById('modal-totp').style.display = 'none';
-    }
-
-    function confirmTotpBind() {
-        const code = (document.getElementById('totp-setup-code')?.value || '').trim();
-        const err = document.getElementById('totp-setup-error');
-        if (code !== TOTP_MOCK_CODE) {
-            if (err) err.classList.remove('hidden');
-            return;
-        }
-        currentUser.gaBound = true;
-        updateGaMenuEntry();
-        updateTotpModal('bound');
-    }
-
-    function confirmTotpModify() {
-        const code = (document.getElementById('totp-modify-code')?.value || '').trim();
-        const err = document.getElementById('totp-modify-error');
-        if (code !== TOTP_MOCK_CODE) {
-            if (err) err.classList.remove('hidden');
-            return;
-        }
-        updateTotpModal('setup_qr');
-    }
-
-    function confirmTotpRemove() {
-        const code = (document.getElementById('totp-remove-code')?.value || '').trim();
-        const err = document.getElementById('totp-remove-error');
-        if (code !== TOTP_MOCK_CODE) {
-            if (err) err.classList.remove('hidden');
-            return;
-        }
-        currentUser.gaBound = false;
-        updateGaMenuEntry();
-        updateTotpModal('not_set');
-    }
-
-    // ================== 导出邮箱钱包 ==================
-    const exportWalletTemplates = {
-        verify_email: `
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-lg font-black">安全验证</h2>
-                <span class="cursor-pointer text-gray-400 hover:text-black" onclick="closeExportWalletModal()">✕</span>
-            </div>
-            <p class="text-[11px] text-gray-500 leading-relaxed mb-4">导出钱包前需验证邮箱。验证码将发送至 <strong class="text-gray-900">__EMAIL__</strong></p>
-            <div id="export-email-step1" class="space-y-3">
-                <button type="button" onclick="sendExportEmailCode()" class="w-full py-3 bg-black text-white font-black text-sm rounded-md">发送验证码</button>
-            </div>
-            <div id="export-email-step2" class="hidden space-y-3">
-                <input type="text" id="export-email-code" maxlength="6" placeholder="输入 6 位邮箱验证码" class="w-full border border-gray-200 p-3 rounded-md text-sm outline-none focus:border-black">
-                <p id="export-email-error" class="text-red-500 text-[10px] hidden">验证码错误，请重试（模拟码：123456）</p>
-                <button type="button" onclick="confirmExportVerify()" class="w-full py-3 bg-blue-600 text-white font-black text-sm rounded-md">验证并继续</button>
-                <button type="button" onclick="sendExportEmailCode()" class="w-full text-[11px] text-gray-400 font-bold text-center hover:text-black">重新发送验证码</button>
-            </div>
-        </div>`,
-        verify_totp: `
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-lg font-black">安全验证</h2>
-                <span class="cursor-pointer text-gray-400 hover:text-black" onclick="closeExportWalletModal()">✕</span>
-            </div>
-            <p class="text-[11px] text-gray-500 leading-relaxed mb-4">导出钱包前需验证身份验证器动态码。</p>
-            <input type="text" id="export-totp-code" maxlength="6" placeholder="6 位动态码" class="w-full border border-gray-200 p-3 rounded-md text-center font-black text-lg outline-none focus:border-black">
-            <p id="export-totp-error" class="text-red-500 text-[10px] text-center mt-2 hidden">验证码错误，请重试（模拟码：123456）</p>
-            <button type="button" onclick="confirmExportVerify()" class="w-full py-3 bg-blue-600 text-white font-black text-sm rounded-md mt-4">验证并继续</button>
-        </div>`,
-        export_main: `
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-black">Export wallet</h2>
-                <span class="cursor-pointer text-gray-400 hover:text-black" onclick="closeExportWalletModal()">✕</span>
-            </div>
-            <p class="text-[11px] text-gray-600 leading-relaxed">
-                Copy either your private key or seed phrase to export your wallet.
-                <a href="#" class="text-blue-600 font-bold hover:underline" onclick="return false;">Learn more</a>
-            </p>
-            <div class="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-md">
-                <p class="text-[10px] text-amber-800 leading-relaxed font-medium">Never share your private key or seed phrase with anyone.</p>
-            </div>
-            <div class="mt-5">
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2">Your wallet</p>
-                <div class="flex items-center justify-between gap-2 bg-gray-50 border border-gray-100 rounded-md px-3 py-2.5">
-                    <span class="font-mono font-black text-[12px] text-gray-900">${EXPORT_WALLET_DISPLAY}</span>
-                    <button type="button" class="copy-icon-btn" onclick="copyText('${EXPORT_WALLET_FULL}')" title="复制钱包地址" aria-label="复制钱包地址">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                    </button>
-                </div>
-            </div>
-            <div class="grid grid-cols-2 gap-2 mt-5">
-                <button type="button" onclick="copyExportPrivateKey()" class="py-3 border border-gray-200 font-black text-[11px] rounded-md hover:bg-gray-50 uppercase tracking-wide">Copy key</button>
-                <button type="button" onclick="copyExportSeedPhrase()" class="py-3 border border-gray-200 font-black text-[11px] rounded-md hover:bg-gray-50 uppercase tracking-wide">Copy Phrase</button>
-            </div>
-        </div>`
-    };
-
-    function openExportWalletEntry() {
-        if (!currentUser || currentUser.loginMethod !== 'email') return;
-        updateExportWalletModal(currentUser.gaBound ? 'verify_totp' : 'verify_email');
-        document.getElementById('modal-export-wallet').style.display = 'flex';
-    }
-
-    function updateExportWalletModal(step) {
-        let html = exportWalletTemplates[step] || exportWalletTemplates.verify_email;
-        if (step === 'verify_email' && currentUser) {
-            html = html.replace('__EMAIL__', currentUser.email);
-        }
-        document.getElementById('modal-export-wallet-content').innerHTML = html;
-    }
-
-    function closeExportWalletModal() {
-        document.getElementById('modal-export-wallet').style.display = 'none';
-    }
-
-    function sendExportEmailCode() {
-        const step1 = document.getElementById('export-email-step1');
-        const step2 = document.getElementById('export-email-step2');
-        if (step1) step1.classList.add('hidden');
-        if (step2) step2.classList.remove('hidden');
-    }
-
-    function confirmExportVerify() {
-        if (!currentUser) return;
-        if (currentUser.gaBound) {
-            const code = (document.getElementById('export-totp-code')?.value || '').trim();
-            const err = document.getElementById('export-totp-error');
-            if (code !== TOTP_MOCK_CODE) {
-                if (err) err.classList.remove('hidden');
-                return;
-            }
-        } else {
-            const code = (document.getElementById('export-email-code')?.value || '').trim();
-            const err = document.getElementById('export-email-error');
-            if (code !== TOTP_MOCK_CODE) {
-                if (err) err.classList.remove('hidden');
-                return;
-            }
-        }
-        updateExportWalletModal('export_main');
-    }
-
-    function copyExportPrivateKey() {
-        copyText(MOCK_PRIVATE_KEY);
-    }
-
-    function copyExportSeedPhrase() {
-        copyText(MOCK_SEED_PHRASE);
-    }
-
-    // ================== 充值/提现权限控制 ==================
-    function openModal(type) {
-        if (!currentUser) { alert('请先登录'); return; }
-        const overlay = document.getElementById('finance-modal');
-        const content = document.getElementById('modal-dynamic-content');
-
-        if (type === 'deposit') {
-            if (currentUser.loginMethod === 'wallet') {
-                content.innerHTML = financeTemplates.deposit_init;
-            } else {
-                content.innerHTML = financeTemplates.deposit_external_only;
-            }
-        } else if (type === 'withdraw') {
-            if (currentUser.loginMethod === 'wallet') {
-                content.innerHTML = financeTemplates.withdraw_init;
-            } else {
-                content.innerHTML = financeTemplates.withdraw_external_only;
-            }
-        }
-        overlay.style.display = 'flex';
-    }
-
-    // ================== 提现安全验证流程 ==================
-    function startWithdrawVerification() {
-        // 这里只模拟流程，实际应从表单获取金额等
-        if (currentUser.loginMethod === 'wallet') {
-            // 钱包签名模拟
-            alert('唤起钱包签名 (模拟) 成功！');
-            proceedWithdrawConfirm();
-        } else { // 邮箱登录
-            if (!currentUser.gaBound) {
-                alert('请先绑定身份验证器 App');
-                openTotpModal('not_set');
-                return;
-            }
-            // 弹出GA+邮箱验证码窗口
-            document.getElementById('withdraw-confirm-content').innerHTML = `
-            <h3 class="font-black text-lg mb-4">安全验证</h3>
-            <div class="space-y-3">
-                <input type="text" id="ga-confirm-input" placeholder="身份验证器动态码" class="w-full border p-2 rounded">
-                <div class="flex space-x-2">
-                    <input type="text" id="email-code-confirm" placeholder="邮箱验证码" class="flex-1 border p-2 rounded">
-                    <button onclick="sendEmailCodeConfirm()" class="px-4 bg-black text-white rounded text-sm">获取</button>
-                </div>
-                <button onclick="verifyWithdrawEmailAndGa()" class="w-full py-2 bg-blue-600 text-white rounded">验证并确认提现</button>
-            </div>
-        `;
-            document.getElementById('modal-withdraw-confirm').style.display = 'flex';
-        }
-    }
-
-    function proceedWithdrawConfirm() {
-        // 模拟当前提现参数（实际可从表单取值，原型中硬编码）
-        const mockData = {
-            chain: 'Arbitrum',
-            address: currentUser.loginMethod === 'email'
-                ? (currentUser.privyAddress || PRIVY_WALLET_FULL)
-                : (currentUser.address || '0x1234...abcd'),
-            amount: '100.00',
-            fee: '2.50',
-            receive: '97.50',
-            eta: '5~10 分钟'
-        };
-
-        document.getElementById('withdraw-confirm-content').innerHTML = `
-        <h3 class="font-black text-lg mb-4">提现确认</h3>
-        <div class="space-y-3 text-sm border-b pb-4 mb-4">
-            <div class="flex justify-between"><span class="text-gray-400">链</span><span class="font-bold">${mockData.chain}</span></div>
-            <div class="flex justify-between"><span class="text-gray-400">接收地址</span><span class="font-mono text-[10px] break-all">${mockData.address}</span></div>
-            <div class="flex justify-between"><span class="text-gray-400">提现金额</span><span class="font-bold">${mockData.amount} USDT</span></div>
-            <div class="flex justify-between"><span class="text-gray-400">网络手续费</span><span class="font-bold">${mockData.fee} USDT</span></div>
-            <div class="flex justify-between"><span class="text-gray-400">预计到账</span><span class="font-black text-lg">${mockData.receive} USDT</span></div>
-            <div class="flex justify-between"><span class="text-gray-400">到账时间</span><span class="text-green-600 font-bold">${mockData.eta}</span></div>
-        </div>
-        <button onclick="finalizeWithdraw()" class="w-full py-2.5 bg-blue-600 text-white font-black rounded-md">确认提现</button>
-        <button onclick="closeWithdrawConfirm()" class="w-full mt-2 py-2.5 border border-gray-200 rounded-md font-bold">取消</button>
-    `;
-        document.getElementById('modal-withdraw-confirm').style.display = 'flex';
-    }
-
-    function closeWithdrawConfirm() {
-        document.getElementById('modal-withdraw-confirm').style.display = 'none';
-        closeFinanceModal();
-    }
-
-    function finalizeWithdraw() {
-        alert('提现已提交！');
-        closeWithdrawConfirm();
-        closeFinanceModal();
-    }
-
-    function sendEmailCodeConfirm() {
-        console.log('邮箱验证码已发送');
-        // 模拟
-    }
-
-    function verifyWithdrawEmailAndGa() {
-        const ga = document.getElementById('ga-confirm-input').value;
-        const emailCode = document.getElementById('email-code-confirm').value;
-        if (ga !== '123456' || emailCode !== '123456') {
-            alert('验证码错误，请重试');
-            return;
-        }
-        closeWithdrawConfirm();
-        proceedWithdrawConfirm();
-    }
-
-    // 原有 closeFinanceModal 覆盖一下，确保同时关闭确认弹窗
-    const origCloseFinanceModal = closeFinanceModal;
-    closeFinanceModal = function() {
-        origCloseFinanceModal();
-        document.getElementById('modal-withdraw-confirm').style.display = 'none';
-    };
-
-    // 更新 openTransferModal 也需要登录
-    const origOpenTransfer = openTransferModal;
-    openTransferModal = function() {
-        if (!currentUser) { alert('请先登录'); return; }
-        origOpenTransfer();
-    }
+const grid = document.getElementById('proto-grid');
+STATES.forEach(state => {
+    const panel = document.createElement('div');
+    panel.className = 'proto-panel';
+    panel.innerHTML = `
+        <div class="proto-label">${state.title}<span class="desc">${state.desc}</span></div>
+        ${state.render()}`;
+    grid.appendChild(panel);
+});
 </script>
+
 </body>
 </html>
