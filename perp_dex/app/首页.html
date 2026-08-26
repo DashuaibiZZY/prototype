@@ -61,6 +61,25 @@ const favListData = [
     { symbol: 'BTCUSDT', vol: '42億', price: '64,120.5', change: '+1.24%', up: true }
 ];
 
+const marketTabData = {
+    hot: favListData,
+    new: [
+        { symbol: 'NOTUSDT', vol: '2.5億', price: '0.0142', change: '+45.12%', up: true },
+        { symbol: 'JUPUSDT', vol: '1.1億', price: '1.084', change: '+2.15%', up: true },
+        { symbol: 'STRKUSDT', vol: '8,200萬', price: '1.241', change: '-5.40%', up: false }
+    ],
+    up: [
+        { symbol: 'WIFUSDT', vol: '4,200萬', price: '2.84', change: '+22.41%', up: true },
+        { symbol: 'BOMEUSDT', vol: '3,100萬', price: '0.012', change: '+18.52%', up: true },
+        { symbol: 'ORDIUSDT', vol: '6,800萬', price: '38.45', change: '+12.10%', up: true }
+    ],
+    down: [
+        { symbol: 'SATSUSDT', vol: '1,500萬', price: '0.0000002', change: '-15.42%', up: false },
+        { symbol: 'LDOUSDT', vol: '2,400萬', price: '1.85', change: '-9.12%', up: false },
+        { symbol: 'TIAUSDT', vol: '5,200萬', price: '8.42', change: '-7.55%', up: false }
+    ]
+};
+
 const favRecommend = [
     { symbol: 'BTCUSDT', price: '64,231.5', change: '+1.24%', up: true },
     { symbol: 'ETHUSDT', price: '3,452.1', change: '-0.82%', up: false },
@@ -77,6 +96,7 @@ const viewMoreHtml = `
     </a>`;
 
 function listRow(item) {
+    // 已收藏列表 & 熱門/新币/漲幅/跌幅 Tab 行式卡片：无勾选框
     const row = `
         <div class="flex justify-between items-center py-1">
             <div>
@@ -96,8 +116,9 @@ function listRow(item) {
 function favEmptyHtml() {
     const cards = favRecommend.map(c => `
         <div class="border border-gray-100 rounded-xl p-3 flex flex-col justify-between shadow-sm">
-            <div>
+            <div class="flex justify-between items-start">
                 <span class="font-black text-sm">${c.symbol}</span>
+                <input type="checkbox" checked class="accent-black">
             </div>
             <div class="mt-4">
                 <p class="text-lg font-black leading-none">${c.price}</p>
@@ -118,6 +139,11 @@ function favFilledHtml() {
     return `<div class="space-y-4">${favListData.map(i => listRow(i)).join('')}${viewMoreHtml}</div>`;
 }
 
+function listTabHtml(tabKey) {
+    const data = marketTabData[tabKey] || favListData;
+    return `<div class="space-y-4">${data.map(i => listRow(i)).join('')}${viewMoreHtml}</div>`;
+}
+
 function marketTabsHtml(activeTab) {
     const tabs = [
         { key: 'fav', label: '收藏' },
@@ -133,8 +159,11 @@ function marketTabsHtml(activeTab) {
     return `<div class="flex space-x-6 border-b border-gray-100 mb-4 overflow-x-auto whitespace-nowrap no-scrollbar">${btns}</div>`;
 }
 
-function marketContentHtml(favMode) {
-    return favMode === 'empty' ? favEmptyHtml() : favFilledHtml();
+function marketContentHtml(activeTab, favMode) {
+    if (activeTab === 'fav') {
+        return favMode === 'empty' ? favEmptyHtml() : favFilledHtml();
+    }
+    return listTabHtml(activeTab);
 }
 
 function heroLoggedOut() {
@@ -368,6 +397,7 @@ function homeScreenHtml(cfg) {
     const {
         loggedIn = false,
         assetHidden = false,
+        activeTab = 'fav',
         favMode = 'filled',
         showAnnouncements = true,
         netError = false
@@ -382,8 +412,8 @@ function homeScreenHtml(cfg) {
         const quick = loggedIn ? `<section class="mb-2">${quickEntryHtml()}</section>` : '';
         const market = `
             <section>
-                ${marketTabsHtml('fav')}
-                ${marketContentHtml(favMode)}
+                ${marketTabsHtml(activeTab)}
+                ${marketContentHtml(activeTab, favMode)}
             </section>`;
         scrollContent = `
             <section class="mb-6">${hero}</section>
@@ -412,27 +442,27 @@ const STATES = [
     {
         title: '② 首页 · 未登录',
         desc: '访客态：新人礼包 Hero + Banner + 收藏 Tab（默认无自选）+ 公告区',
-        render: () => homeScreenHtml({ loggedIn: false, favMode: 'empty' })
+        render: () => homeScreenHtml({ loggedIn: false, activeTab: 'fav', favMode: 'empty' })
     },
     {
         title: '③ 首页 · 已登录 · 资产可见',
         desc: '权益卡片展示金额与涨跌；快捷入口四宫格；收藏 Tab 已有自选列表',
-        render: () => homeScreenHtml({ loggedIn: true, favMode: 'filled' })
+        render: () => homeScreenHtml({ loggedIn: true, activeTab: 'fav', favMode: 'filled' })
     },
     {
         title: '④ 首页 · 已登录 · 资产已隐藏',
         desc: '点击眼睛图标后：金额显示 ******，涨跌行隐藏',
-        render: () => homeScreenHtml({ loggedIn: true, assetHidden: true, favMode: 'filled' })
+        render: () => homeScreenHtml({ loggedIn: true, assetHidden: true, activeTab: 'fav', favMode: 'filled' })
     },
     {
         title: '⑤ 收藏 · 无自选（推荐币对）',
-        desc: '已登录用户尚未收藏：2×3 推荐行情卡片（无勾选框）+ 底部「一鍵收藏」',
-        render: () => homeScreenHtml({ loggedIn: true, favMode: 'empty' })
+        desc: '尚未收藏：2×3 推荐卡片带勾选框 + 底部「一鍵收藏」；已收藏及熱門/新币/漲幅/跌幅等 Tab 的行式列表无勾选框',
+        render: () => homeScreenHtml({ loggedIn: true, activeTab: 'fav', favMode: 'empty' })
     },
     {
         title: '⑥ 收藏 · 已有自选（列表样式）',
-        desc: '一键收藏或手动添加后：行式行情列表 + 涨跌幅色块 + 查看更多',
-        render: () => homeScreenHtml({ loggedIn: true, favMode: 'filled' })
+        desc: '已收藏后：行式行情列表（无勾选框）+ 涨跌幅色块 + 查看更多',
+        render: () => homeScreenHtml({ loggedIn: true, activeTab: 'fav', favMode: 'filled' })
     },
     {
         title: '⑦ 网络异常',
