@@ -34,7 +34,7 @@
             </button>
             <div class="flex items-center space-x-2">
                 <div class="w-5 h-5 bg-orange-400 rounded-full flex items-center justify-center text-[10px] text-white font-black italic">B</div>
-                <h2 class="font-black text-base">BTCUSDT</h2>
+                <h2 id="symbol-title" class="font-black text-base">BTCUSDT</h2>
             </div>
             <div class="flex items-center space-x-3">
                 <!-- 分享按鈕 -->
@@ -48,7 +48,7 @@
         </header>
 
         <!-- 可滾動內容區 -->
-        <div class="flex-1 overflow-y-auto no-scrollbar pb-24">
+        <div id="market-detail-scroll" class="flex-1 overflow-y-auto no-scrollbar pb-24">
 
             <section class="flex px-4 py-3 space-x-2">
                 <!-- 左側價格 -->
@@ -141,7 +141,7 @@
             </section>
 
             <!-- 4. 訂單簿 + 最新成交 (帶切換邏輯) -->
-            <section class="mt-2">
+            <section id="section-market-tabs" class="mt-2">
                 <div class="flex px-4 border-b border-gray-100 overflow-x-auto no-scrollbar">
                     <button onclick="switchMarketTab('orderbook')" id="tab-btn-orderbook" class="py-3 mr-6 text-[13px] font-black border-b-2 border-black shrink-0">訂單簿</button>
                     <button onclick="switchMarketTab('trades')" id="tab-btn-trades" class="py-3 mr-6 text-[13px] font-bold text-gray-400 shrink-0">最新成交</button>
@@ -498,10 +498,17 @@
         if (params.get('tab') !== 'funding') return;
         const pair = params.get('pair');
         if (pair) {
-            const title = document.querySelector('header h2');
+            const title = document.getElementById('symbol-title') || document.querySelector('header h2');
             if (title) title.textContent = pair;
         }
         switchMarketTab('funding');
+        requestAnimationFrame(() => {
+            const section = document.getElementById('section-market-tabs');
+            const scrollRoot = document.getElementById('market-detail-scroll');
+            if (section && scrollRoot) {
+                scrollRoot.scrollTo({ top: Math.max(0, section.offsetTop - 8), behavior: 'smooth' });
+            }
+        });
     })();
 </script>
 
