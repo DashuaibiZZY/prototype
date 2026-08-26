@@ -220,14 +220,11 @@
                         <span class="text-[12px] font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-sm" data-portfolio-equity-pnl>今日盈虧 +420.15 (+3.42%)</span>
                     </div>
                 </div>
-                <!-- 操作按鈕組 -->
+                <!-- 操作按鈕組（未登录时隐藏，连接钱包见顶部导航栏） -->
                 <div class="flex items-center space-x-2" data-portfolio-actions-logged>
                     <button onclick="openTransferModal()" class="px-6 py-2.5 bg-gray-900 text-white rounded-sm font-black text-[11px] hover:bg-black transition uppercase tracking-widest">劃轉</button>
                     <button onclick="openModal('withdraw')" class="px-6 py-2.5 border border-gray-200 rounded-sm font-black text-[11px] hover:bg-gray-50 transition uppercase tracking-widest">提現</button>
                     <button onclick="openModal('deposit')" class="px-6 py-2.5 bg-blue-600 text-white rounded-sm font-black text-[11px] hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition uppercase tracking-widest">充值</button>
-                </div>
-                <div class="flex items-center space-x-2 hidden" data-portfolio-actions-guest>
-                    <button class="px-6 py-2.5 bg-black text-white rounded-sm font-black text-[11px] hover:bg-gray-800 transition uppercase tracking-widest">連接錢包</button>
                 </div>
             </div>
 
@@ -690,7 +687,6 @@ function applyGuestState(root) {
     q(root, '[data-portfolio-nav-connect]')?.classList.remove('hidden');
     q(root, '[data-portfolio-nav-user]')?.classList.add('hidden');
     q(root, '[data-portfolio-actions-logged]')?.classList.add('hidden');
-    q(root, '[data-portfolio-actions-guest]')?.classList.remove('hidden');
     const total = q(root, '[data-portfolio-equity-total]');
     if (total) total.textContent = '--';
     const pnl = q(root, '[data-portfolio-equity-pnl]');
@@ -724,7 +720,6 @@ function applyLoggedInState(root, opts = {}) {
     q(root, '[data-portfolio-nav-connect]')?.classList.add('hidden');
     q(root, '[data-portfolio-nav-user]')?.classList.remove('hidden');
     q(root, '[data-portfolio-actions-logged]')?.classList.remove('hidden');
-    q(root, '[data-portfolio-actions-guest]')?.classList.add('hidden');
     const total = q(root, '[data-portfolio-equity-total]');
     if (total) total.innerHTML = '12,450.50 <small class="text-sm font-bold text-gray-400 uppercase">USDT</small>';
     const pnl = q(root, '[data-portfolio-equity-pnl]');
@@ -851,7 +846,7 @@ const VIP_MODAL_HTML = `<!-- VIP 費率詳情彈窗 -->
 const STATES = [
     {
         title: '① 未登录 · 默认',
-        desc: '总净资产为 --，仅显示「连接钱包」；账户实时风险/累积统计左侧指标均为 --；周期图右侧「请先连接钱包」；VIP 与底部数据区为未登录占位',
+        desc: '总净资产为 --；顶部导航栏「连接钱包」（资产区无重复按钮）；账户实时风险/累积统计左侧均为 --；周期图右侧「请先连接钱包」；VIP 与底部数据区为未登录占位',
         render: () => renderPortfolio({ guest: true })
     },
     {
