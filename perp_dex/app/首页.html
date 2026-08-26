@@ -30,6 +30,10 @@
             position: absolute; inset: 0; background: rgba(0,0,0,0.4);
             display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(2px);
         }
+        .update-modal-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.45);
+            display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 100;
+        }
         .equity-card { background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 14px; padding: 14px 16px; color: #111827; }
         .equity-label { font-size: 10px; font-weight: 700; color: #9ca3af; letter-spacing: 0.02em; }
         .equity-amount { font-size: 22px; font-weight: 900; line-height: 1.2; color: #111827; }
@@ -379,6 +383,25 @@ function timeoutModalHtml() {
         </div>`;
 }
 
+function appUpdateModalHtml() {
+    return `
+        <div class="update-modal-overlay">
+            <div class="bg-white w-full max-w-[300px] rounded-2xl p-6 shadow-2xl">
+                <div class="w-12 h-12 bg-black rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <span class="text-white text-xl font-black italic">F</span>
+                </div>
+                <h3 class="text-base font-black text-center text-gray-900">发现新版本</h3>
+                <p class="text-xs text-gray-500 text-center mt-2 leading-relaxed">
+                    ForX <span class="font-black text-gray-800">v1.2.0</span> 已发布<br>建议立即更新以获得更好体验
+                </p>
+                <div class="flex gap-3 mt-6">
+                    <button type="button" class="flex-1 py-3 border border-gray-200 rounded-xl text-xs font-bold text-gray-500">稍后</button>
+                    <a href="设置.html" class="flex-1 py-3 bg-black text-white rounded-xl text-xs font-black text-center leading-[48px]">去更新</a>
+                </div>
+            </div>
+        </div>`;
+}
+
 function splashScreenHtml() {
     return `
         <div class="screen">
@@ -399,7 +422,8 @@ function homeScreenHtml(cfg) {
         activeTab = 'fav',
         favMode = 'filled',
         showAnnouncements = true,
-        netError = false
+        netError = false,
+        appUpdate = false
     } = cfg;
 
     let scrollContent = '';
@@ -429,6 +453,7 @@ function homeScreenHtml(cfg) {
             <div class="flex-1 overflow-y-auto no-scrollbar px-5 pb-20">${scrollContent}</div>
             ${bottomNavHtml()}
             ${netError ? timeoutModalHtml() : ''}
+            ${appUpdate ? appUpdateModalHtml() : ''}
         </div>`;
 }
 
@@ -464,7 +489,12 @@ const STATES = [
         render: () => homeScreenHtml({ loggedIn: true, activeTab: 'fav', favMode: 'filled' })
     },
     {
-        title: '⑦ 网络异常',
+        title: '⑦ 版本更新提示弹窗',
+        desc: 'App 检测到新版本时首页弹出「发现新版本」；可稍后或跳转设置页更新',
+        render: () => homeScreenHtml({ loggedIn: true, activeTab: 'fav', favMode: 'filled', appUpdate: true })
+    },
+    {
+        title: '⑧ 网络异常',
         desc: '顶部红色横幅 + 资产显示 -- + 行情区刷新失败 + 「請求超時」弹窗叠加',
         render: () => homeScreenHtml({ loggedIn: true, netError: true, showAnnouncements: false })
     }
