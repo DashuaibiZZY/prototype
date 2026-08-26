@@ -316,16 +316,16 @@
                             <div class="space-y-5">
                                 <div>
                                     <p class="text-[9px] text-gray-400 font-bold uppercase mb-1">维持保證金比例</p>
-                                    <p class="text-2xl font-black text-blue-600">0.00%</p>
+                                    <p class="text-2xl font-black text-blue-600" data-portfolio-margin-ratio>0.00%</p>
                                 </div>
                                 <div class="space-y-3">
                                     <div class="flex justify-between border-b border-gray-200/30 pb-2">
                                         <span class="text-[10px] text-gray-400 font-bold uppercase">未實現盈虧</span>
-                                        <span class="text-[11px] font-black text-gray-800">0.00 <small class="text-gray-400">USDT</small></span>
+                                        <span class="text-[11px] font-black text-gray-800" data-portfolio-unrealized-pnl>0.00 <small class="text-gray-400">USDT</small></span>
                                     </div>
                                     <div class="flex justify-between border-b border-gray-200/30 pb-2">
                                         <span class="text-[10px] text-gray-400 font-bold uppercase">維持保證金</span>
-                                        <span class="text-[11px] font-black text-gray-800">0.00 <small class="text-gray-400">USDT</small></span>
+                                        <span class="text-[11px] font-black text-gray-800" data-portfolio-maint-margin>0.00 <small class="text-gray-400">USDT</small></span>
                                     </div>
                                 </div>
                             </div>
@@ -335,7 +335,7 @@
                             <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">累積統計</p>
                             <div>
                                 <p class="text-[9px] text-gray-400 font-bold uppercase mb-1">總交易量 (Lifetime)</p>
-                                <p class="text-lg font-black text-gray-900 font-mono">$138,500,000.00</p>
+                                <p class="text-lg font-black text-gray-900 font-mono" data-portfolio-lifetime-volume>$138,500,000.00</p>
                             </div>
                         </div>
                     </div>
@@ -692,9 +692,9 @@ function applyGuestState(root) {
     q(root, '[data-portfolio-actions-logged]')?.classList.add('hidden');
     q(root, '[data-portfolio-actions-guest]')?.classList.remove('hidden');
     const total = q(root, '[data-portfolio-equity-total]');
-    if (total) total.innerHTML = '-- <small class="text-sm font-bold text-gray-400 uppercase">USDT</small>';
+    if (total) total.textContent = '--';
     const pnl = q(root, '[data-portfolio-equity-pnl]');
-    if (pnl) { pnl.textContent = '今日盈虧 --'; pnl.className = 'text-[12px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-sm'; }
+    if (pnl) pnl.classList.add('hidden');
     const setText = (sel, text) => { const el = q(root, sel); if (el) el.textContent = text; };
     const setHtml = (sel, html) => { const el = q(root, sel); if (el) el.innerHTML = html; };
     setHtml('[data-portfolio-funding-total]', '-- <small class="text-[10px] font-medium text-gray-400 uppercase">USDT</small>');
@@ -705,6 +705,12 @@ function applyGuestState(root) {
     setText('[data-portfolio-vip-14d]', '--');
     setText('[data-portfolio-vip-maker]', '--');
     setText('[data-portfolio-vip-taker]', '--');
+    setText('[data-portfolio-margin-ratio]', '--');
+    setText('[data-portfolio-unrealized-pnl]', '--');
+    setText('[data-portfolio-maint-margin]', '--');
+    setText('[data-portfolio-lifetime-volume]', '--');
+    const marginRatio = q(root, '[data-portfolio-margin-ratio]');
+    if (marginRatio) marginRatio.className = 'text-2xl font-black text-gray-400';
     q(root, '[data-portfolio-vip-progress]')?.classList.add('hidden');
     const feeBtn = q(root, '[data-portfolio-vip-fee-btn]');
     if (feeBtn) feeBtn.className = 'text-[10px] font-black text-gray-600 border border-gray-700 px-2 py-1 rounded-sm uppercase opacity-50 cursor-not-allowed';
@@ -719,6 +725,25 @@ function applyLoggedInState(root, opts = {}) {
     q(root, '[data-portfolio-nav-user]')?.classList.remove('hidden');
     q(root, '[data-portfolio-actions-logged]')?.classList.remove('hidden');
     q(root, '[data-portfolio-actions-guest]')?.classList.add('hidden');
+    const total = q(root, '[data-portfolio-equity-total]');
+    if (total) total.innerHTML = '12,450.50 <small class="text-sm font-bold text-gray-400 uppercase">USDT</small>';
+    const pnl = q(root, '[data-portfolio-equity-pnl]');
+    if (pnl) {
+        pnl.classList.remove('hidden');
+        pnl.textContent = '今日盈虧 +420.15 (+3.42%)';
+        pnl.className = 'text-[12px] font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-sm';
+    }
+    const marginRatio = q(root, '[data-portfolio-margin-ratio]');
+    if (marginRatio) {
+        marginRatio.textContent = '0.00%';
+        marginRatio.className = 'text-2xl font-black text-blue-600';
+    }
+    const unrealized = q(root, '[data-portfolio-unrealized-pnl]');
+    if (unrealized) unrealized.innerHTML = '0.00 <small class="text-gray-400">USDT</small>';
+    const maintMargin = q(root, '[data-portfolio-maint-margin]');
+    if (maintMargin) maintMargin.innerHTML = '0.00 <small class="text-gray-400">USDT</small>';
+    const lifetime = q(root, '[data-portfolio-lifetime-volume]');
+    if (lifetime) lifetime.textContent = '$138,500,000.00';
     q(root, '[data-portfolio-vip-progress]')?.classList.remove('hidden');
     q(root, '[data-portfolio-chart-panel]')?.classList.remove('opacity-30');
     q(root, '[data-portfolio-guest-hint]')?.classList.add('hidden');
@@ -826,7 +851,7 @@ const VIP_MODAL_HTML = `<!-- VIP 費率詳情彈窗 -->
 const STATES = [
     {
         title: '① 未登录 · 默认',
-        desc: '总净资产/今日盈亏为 --；仅显示「连接钱包」；VIP 与周期图表区展示未登录占位；底部数据区引导查看合约交易页',
+        desc: '总净资产为 --，仅显示「连接钱包」；账户实时风险/累积统计左侧指标均为 --；周期图右侧「请先连接钱包」；VIP 与底部数据区为未登录占位',
         render: () => renderPortfolio({ guest: true })
     },
     {
