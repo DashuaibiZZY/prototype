@@ -222,6 +222,7 @@
                 </div>
                 <!-- 操作按鈕組（未登录时隐藏，连接钱包见顶部导航栏） -->
                 <div class="flex items-center space-x-2" data-portfolio-actions-logged>
+                    <button type="button" class="px-6 py-2.5 border border-gray-200 rounded-sm font-black text-[11px] text-orange-500 hover:bg-orange-50 transition uppercase tracking-widest">待处理(5)</button>
                     <button onclick="openTransferModal()" class="px-6 py-2.5 bg-gray-900 text-white rounded-sm font-black text-[11px] hover:bg-black transition uppercase tracking-widest">劃轉</button>
                     <button onclick="openModal('withdraw')" class="px-6 py-2.5 border border-gray-200 rounded-sm font-black text-[11px] hover:bg-gray-50 transition uppercase tracking-widest">提現</button>
                     <button onclick="openModal('deposit')" class="px-6 py-2.5 bg-blue-600 text-white rounded-sm font-black text-[11px] hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition uppercase tracking-widest">充值</button>
@@ -639,6 +640,10 @@
                     <button class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm">重置</button>
                 </div>
 
+                <!-- 充提记录 Tab：Gary 原型占位 -->
+                <div id="deposit-withdraw-placeholder" data-portfolio-deposit-placeholder class="hidden flex-1 flex items-center justify-center px-6 py-16">
+                    <p class="text-[11px] text-gray-400 text-center leading-relaxed">这部分原型请查看 Gary 输出的为准。</p>
+                </div>
                 <!-- 非充提 Tab：跳转合约交易页说明 -->
                 <div id="data-referral-hint" data-portfolio-referral-hint class="flex-1 flex items-center justify-center px-6 py-16">
                     <p class="text-[11px] text-gray-400 text-center leading-relaxed">
@@ -762,28 +767,15 @@ function applyLoggedInState(root, opts = {}) {
     }
     if (opts.depositTab) {
         q(root, '[data-portfolio-referral-hint]')?.classList.add('hidden');
-        q(root, '[data-portfolio-data-table]')?.classList.remove('hidden');
-        q(root, '#deposit-withdraw-filters')?.classList.remove('hidden');
+        q(root, '[data-portfolio-data-table]')?.classList.add('hidden');
+        q(root, '#deposit-withdraw-filters')?.classList.add('hidden');
+        q(root, '[data-portfolio-deposit-placeholder]')?.classList.remove('hidden');
         root.querySelectorAll('[id^="tab-data-"]').forEach(el => {
             el.classList.remove('tab-active');
             el.classList.add('text-gray-400');
         });
         const dw = q(root, '#tab-data-deposit-withdraw');
         if (dw) { dw.classList.add('tab-active'); dw.classList.remove('text-gray-400'); }
-        const h = q(root, '#data-header');
-        const b = q(root, '#data-body');
-        if (h) h.innerHTML = '<th class="px-4 py-2">時間</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">狀態</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">幣種</th><th class="px-4 py-2">手續費</th><th class="px-4 py-2">鏈</th><th class="px-4 py-2">Hash</th><th class="px-4 py-2">訂單號</th>';
-        if (b) b.innerHTML = `<tr class="border-b border-gray-50">
-            <td class="px-4 py-3 text-gray-400">2026-05-06 01:20:33</td>
-            <td class="px-4 py-3 font-bold">充值</td>
-            <td class="px-4 py-3 text-green-500">已完成</td>
-            <td class="px-4 py-3 font-mono">100.00 USDT</td>
-            <td class="px-4 py-3">USDT</td>
-            <td class="px-4 py-3 text-gray-500">0.00 USDT</td>
-            <td class="px-4 py-3 text-gray-600">BSC</td>
-            <td class="px-4 py-3 text-[10px] font-mono text-blue-500 underline">0xabc...123</td>
-            <td class="px-4 py-3 text-gray-500">DEP_20260506</td>
-        </tr>`;
     }
 }
 
@@ -856,7 +848,7 @@ const STATES = [
     },
     {
         title: '③ 已登录 · 充提记录 Tab',
-        desc: '底部切换到「充提記錄」标签，展示充值流水表格',
+        desc: '底部切换到「充提記錄」标签，展示 Gary 原型占位说明（不展示表格与筛选）',
         render: () => renderPortfolio({ guest: false, depositTab: true })
     },
     {
