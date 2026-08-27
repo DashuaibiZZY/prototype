@@ -203,7 +203,15 @@
 
 **路由**：个人中心账户信息行进入。
 
-**原型**：[个人资料.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/个人资料.html)（手机框平铺；含钱包登录与邮箱登录等状态）
+**原型**：[个人资料.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/个人资料.html)
+
+**原型状态索引**（`个人资料.html`）：
+
+| 画框 | 对应需求 |
+|---|---|
+| ① 钱包登录 | §3\.3\.1 钱包地址卡片；无身份验证器入口 |
+| ② 邮箱登录 · 验证器未设置 | §3\.3\.2 邮箱卡片 → §3\.3\.3 UID → §3\.3\.4 身份验证器（未设置）→ §3\.3\.5 VIP |
+| ③ 邮箱登录 · 验证器已设置 | 同上；身份验证器为已绑定状态 |
 
 页面截图：[**App · 个人资料（钱包登录）**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-profile-detail-wallet.png)
 
