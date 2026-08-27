@@ -203,7 +203,7 @@
 
 **路由**：个人中心账户信息行进入。
 
-**原型**：[个人资料.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/个人资料.html)（全状态平铺：① 钱包登录 · ② 邮箱 + 验证器未设置 · ③ 邮箱 + 验证器已设置）
+**原型**：[个人资料.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/个人资料.html)
 
 页面截图：[**App · 个人资料（钱包登录）**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/个人中心-app/app-profile-detail-wallet.png)
 
