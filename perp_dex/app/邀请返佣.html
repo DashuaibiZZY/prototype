@@ -312,6 +312,51 @@ function infoModalHtml(text) {
         </div>`;
 }
 
+function tradePagePlaceholderHtml() {
+    return `
+        <div class="absolute inset-0 flex flex-col bg-slate-100 z-0">
+            <div class="px-5 pt-12 pb-3 bg-white border-b border-gray-100 shrink-0">
+                <div class="flex items-center justify-between">
+                    <span class="font-black text-base tracking-tight">BTCUSDT</span>
+                    <span class="text-[10px] font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded">+2.45%</span>
+                </div>
+            </div>
+            <div class="flex-1 flex items-center justify-center px-6">
+                <div class="text-center space-y-2 max-w-[280px]">
+                    <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest">Web 合约交易页</p>
+                    <p class="text-[10px] text-gray-400 leading-relaxed">背景示意：盘口、交易终端、持仓列表等区域省略，表示邀请链接落地至合约交易页</p>
+                </div>
+            </div>
+        </div>`;
+}
+
+function inviteLinkModalHtml() {
+    return `
+        <div class="absolute inset-0 z-[100] flex items-center justify-center p-5 bg-black/50">
+            <div class="bg-white rounded-2xl w-full shadow-2xl overflow-hidden">
+                <div class="p-6 space-y-5">
+                    <div class="text-center space-y-2">
+                        <p class="text-[10px] font-bold text-blue-600 uppercase tracking-widest">好友邀请您加入 ForX</p>
+                        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">邀请码</p>
+                        <p class="text-[32px] font-black font-mono tracking-[0.12em] text-gray-900 leading-none">E6DL28G</p>
+                    </div>
+                    <p class="text-[12px] text-gray-500 leading-relaxed text-center px-1">
+                        您正通过邀请链接访问 ForX 合约交易。连接钱包并完成注册后，即可开始交易，邀请关系将自动绑定。
+                    </p>
+                    <button type="button" class="w-full py-3.5 bg-gray-900 text-white rounded-xl text-[12px] font-black uppercase tracking-widest shadow-lg active:opacity-90">连接钱包</button>
+                </div>
+            </div>
+        </div>`;
+}
+
+function inviteLandingScreenHtml() {
+    return `
+        <div class="screen relative flex flex-col overflow-hidden">
+            ${tradePagePlaceholderHtml()}
+            ${inviteLinkModalHtml()}
+        </div>`;
+}
+
 function screenHtml(cfg) {
     const { role = 'normal', shareModal = false, infoType = null } = cfg;
     const tier = role === 'agent' ? agentTierHtml() : normalTierHtml();
@@ -356,6 +401,11 @@ const STATES = [
         title: '⑤ 说明浮窗 · 活跃好友',
         desc: '点击「活跃好友」虚线：说明活跃好友判定规则',
         render: () => screenHtml({ role: 'normal', infoType: 'active' })
+    },
+    {
+        title: '⑥ 邀请链接落地 · Web 交易页弹窗',
+        desc: 'Web：打开邀请链接进入合约交易页并弹出邀请码引导；背景为交易页示意，点击「连接钱包」进入注册流程',
+        render: () => inviteLandingScreenHtml()
     }
 ];
 
