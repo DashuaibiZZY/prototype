@@ -78,23 +78,13 @@ function walletBlockHtml() {
         </div>`;
 }
 
-function emailBlocksHtml() {
+function emailBlockHtml() {
     return `
         <div class="info-card">
             <div class="info-row">
                 <div class="min-w-0 flex-1">
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">邮箱地址</p>
                     <p class="text-[14px] font-black text-gray-900 mt-1 truncate">u***@forx.fi</p>
-                </div>
-                <button type="button" class="copy-btn">复制</button>
-            </div>
-        </div>
-        <div class="info-card">
-            <div class="info-row">
-                <div class="min-w-0 flex-1">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">钱包地址</p>
-                    <p class="text-[14px] font-black text-gray-900 mt-1 truncate">0x8b2e...4f1a</p>
-                    <p class="text-[9px] text-gray-400 mt-1">由 Privy 自动生成，无需关联外部钱包</p>
                 </div>
                 <button type="button" class="copy-btn">复制</button>
             </div>
@@ -167,7 +157,8 @@ function screenHtml(cfg) {
     const { loginType = 'wallet', authBound = false } = cfg;
     const identityBlocks = loginType === 'wallet'
         ? walletBlockHtml()
-        : `${emailBlocksHtml()}${authBlockHtml(authBound)}`;
+        : emailBlockHtml();
+    const authBlock = loginType === 'email' ? authBlockHtml(authBound) : '';
 
     return `
         <div class="screen flex flex-col bg-slate-50">
@@ -177,6 +168,7 @@ function screenHtml(cfg) {
                 <div class="px-5 space-y-3">
                     ${identityBlocks}
                     ${uidBlockHtml()}
+                    ${authBlock}
                     ${vipBlockHtml()}
                 </div>
             </div>
@@ -191,12 +183,12 @@ const STATES = [
     },
     {
         title: '② 邮箱登录 · 验证器未设置',
-        desc: '邮箱 + Privy 钱包 + UID + 身份验证器（未设置）+ VIP',
+        desc: '邮箱 + UID + 身份验证器（未设置，位于 UID 下方）+ VIP；不展示钱包地址',
         render: () => screenHtml({ loginType: 'email', authBound: false })
     },
     {
         title: '③ 邮箱登录 · 验证器已设置',
-        desc: '邮箱登录下身份验证器显示「已设置」绿色状态，可进入管理页',
+        desc: '邮箱 + UID + 身份验证器（已设置，位于 UID 下方）+ VIP；不展示钱包地址',
         render: () => screenHtml({ loginType: 'email', authBound: true })
     }
 ];
