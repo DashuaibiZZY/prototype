@@ -714,9 +714,10 @@ function applyGuestState(root) {
     setText('[data-portfolio-lifetime-volume]', '--');
     const marginRatio = q(root, '[data-portfolio-margin-ratio]');
     if (marginRatio) marginRatio.className = 'text-2xl font-black text-gray-400';
+    root.dataset.guest = 'true';
     q(root, '[data-portfolio-vip-progress]')?.classList.add('hidden');
     const feeBtn = q(root, '[data-portfolio-vip-fee-btn]');
-    if (feeBtn) feeBtn.className = 'text-[10px] font-black text-gray-600 border border-gray-700 px-2 py-1 rounded-sm uppercase opacity-50 cursor-not-allowed';
+    if (feeBtn) feeBtn.className = 'text-[10px] font-black text-gray-400 border border-gray-700 px-2 py-1 rounded-sm hover:text-yellow-500 hover:border-yellow-500 transition-colors uppercase cursor-pointer';
     q(root, '[data-portfolio-chart-panel]')?.classList.add('opacity-30');
     q(root, '[data-portfolio-guest-hint]')?.classList.remove('hidden');
     q(root, '[data-portfolio-referral-hint]')?.classList.remove('hidden');
@@ -724,6 +725,7 @@ function applyGuestState(root) {
 }
 
 function applyLoggedInState(root, opts = {}) {
+    root.dataset.guest = 'false';
     q(root, '[data-portfolio-nav-connect]')?.classList.add('hidden');
     q(root, '[data-portfolio-nav-user]')?.classList.remove('hidden');
     q(root, '[data-portfolio-actions-logged]')?.classList.remove('hidden');
@@ -747,6 +749,8 @@ function applyLoggedInState(root, opts = {}) {
     const lifetime = q(root, '[data-portfolio-lifetime-volume]');
     if (lifetime) lifetime.textContent = '$138,500,000.00';
     q(root, '[data-portfolio-vip-progress]')?.classList.remove('hidden');
+    const feeBtn = q(root, '[data-portfolio-vip-fee-btn]');
+    if (feeBtn) feeBtn.className = 'text-[10px] font-black text-gray-400 border border-gray-700 px-2 py-1 rounded-sm hover:text-yellow-500 hover:border-yellow-500 transition-colors uppercase cursor-pointer';
     q(root, '[data-portfolio-chart-panel]')?.classList.remove('opacity-30');
     q(root, '[data-portfolio-guest-hint]')?.classList.add('hidden');
     const label = q(root, '#nav-login-label');
@@ -789,22 +793,58 @@ function renderPortfolio(opts = {}) {
     const root = clonePortfolioBase();
     if (opts.guest) applyGuestState(root);
     else applyLoggedInState(root, opts);
-    const overlay = opts.vipModal ? VIP_MODAL_HTML : '';
+    const overlay = buildVipModalHtml({ guest: opts.guest, visible: !!opts.vipModal });
     return buildFrame(root.outerHTML + overlay);
 }
 
-const VIP_MODAL_HTML = `<!-- VIP 費率詳情彈窗 -->
-<div class="modal-overlay portfolio-vip-modal" style="display: flex; background: rgba(0,0,0,0.6); z-index: 2000;">
-    <div class="bg-white w-[560px] rounded-lg overflow-hidden shadow-2xl border border-gray-100 animate-in zoom-in duration-200">
-        <div class="p-6 border-b border-gray-50 flex justify-between items-center">
-            <h2 class="text-base font-black uppercase tracking-tight italic">ForX 合約交易 VIP 費率表</h2>
-            <span class="cursor-pointer text-gray-400 text-xl hover:text-black" >✕</span>
-        </div>
+function buildVipBenefitsHtml() {
+    return `
+        <div class="mt-6">
+            <h4 class="text-[10px] font-black uppercase text-gray-500 mb-3 tracking-wider">VIP 专属权益</h4>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="border border-gray-100 rounded-sm p-3 bg-white">
+                    <div class="text-sm mb-1.5 leading-none">📊</div>
+                    <p class="text-[11px] font-black text-gray-900">VIP 资讯研报</p>
+                    <p class="text-[10px] text-gray-500 mt-1 leading-relaxed">更早洞察、更优决策</p>
+                </div>
+                <div class="border border-gray-100 rounded-sm p-3 bg-white">
+                    <div class="text-sm mb-1.5 leading-none">🎁</div>
+                    <p class="text-[11px] font-black text-gray-900">VIP 礼物</p>
+                    <p class="text-[10px] text-gray-500 mt-1 leading-relaxed">尊享欢迎礼、节日定制礼物以及专属实物周边</p>
+                </div>
+                <div class="border border-gray-100 rounded-sm p-3 bg-white">
+                    <div class="text-sm mb-1.5 leading-none">🎫</div>
+                    <p class="text-[11px] font-black text-gray-900">VIP 会场</p>
+                    <p class="text-[10px] text-gray-500 mt-1 leading-relaxed">享优先线下会场专席机会</p>
+                </div>
+                <div class="border border-dashed border-gray-200 rounded-sm p-3 bg-white relative">
+                    <span class="absolute top-2 right-2 text-[8px] font-black uppercase tracking-wide bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded">展示型</span>
+                    <div class="text-sm mb-1.5 leading-none text-amber-500">✦</div>
+                    <p class="text-[11px] font-black text-gray-900">VIP 空投权益</p>
+                    <p class="text-[10px] text-gray-500 mt-1 leading-relaxed">优先获取 ForX 专属 NFT 与资产空投资格</p>
+                </div>
+            </div>
+        </div>`;
+}
 
+function buildVipModalHtml(opts = {}) {
+    const guest = !!opts.guest;
+    const display = opts.visible ? 'flex' : 'none';
+    const volRowClass = guest ? 'hidden' : '';
+    const vip2Row = guest
+        ? '<tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 2</td><td class="px-4 py-3 border-b border-gray-50">≥ $25M 且 &lt; $100M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.010%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.034%</td></tr>'
+        : '<tr class="bg-yellow-50/50" data-vip-current-row><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">VIP 2</td><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">≥ $25M 且 &lt; $100M</td><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">0.010%</td><td class="px-4 py-3 border-b border-yellow-100 text-right font-black text-yellow-700">0.034%</td></tr>';
+    return `<!-- VIP 費率詳情彈窗 -->
+<div class="modal-overlay portfolio-vip-modal" data-vip-modal-guest="${guest}" style="display: ${display}; background: rgba(0,0,0,0.6); z-index: 2000; position: absolute; inset: 0; align-items: center; justify-content: center;">
+    <div class="bg-white w-[560px] max-h-[90vh] overflow-y-auto rounded-lg shadow-2xl border border-gray-100 animate-in zoom-in duration-200">
+        <div class="p-6 border-b border-gray-50 flex justify-between items-center sticky top-0 bg-white z-10">
+            <h2 class="text-base font-black uppercase tracking-tight italic">ForX 合約交易 VIP 費率表</h2>
+            <span class="cursor-pointer text-gray-400 text-xl hover:text-black" onclick="this.closest('.portfolio-vip-modal').style.display='none'">✕</span>
+        </div>
         <div class="p-6">
-            <div class="mb-4 pb-4 border-b border-gray-100 flex justify-between items-center gap-4">
+            <div class="mb-4 pb-4 border-b border-gray-100 flex justify-between items-center gap-4 ${volRowClass}" data-vip-14d-row>
                 <span class="text-[10px] font-bold text-gray-500">过去 14 天交易量</span>
-                <span data-portfolio-vip-modal-14d class="text-sm font-black font-mono text-gray-900 shrink-0">$38,500,000.00</span>
+                <span class="text-sm font-black font-mono text-gray-900 shrink-0">$38,500,000.00</span>
             </div>
             <table class="w-full text-left border-collapse">
                 <thead>
@@ -818,13 +858,13 @@ const VIP_MODAL_HTML = `<!-- VIP 費率詳情彈窗 -->
                 <tbody class="text-[11px] font-bold text-gray-700">
                 <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 0</td><td class="px-4 py-3 border-b border-gray-50">&lt; $5M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.015%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.045%</td></tr>
                 <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 1</td><td class="px-4 py-3 border-b border-gray-50">≥ $5M 且 &lt; $25M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.013%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.039%</td></tr>
-                <tr class="bg-yellow-50/50"><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">VIP 2</td><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">≥ $25M 且 &lt; $100M</td><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">0.010%</td><td class="px-4 py-3 border-b border-yellow-100 text-right font-black text-yellow-700">0.034%</td></tr>
+                ${vip2Row}
                 <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 3</td><td class="px-4 py-3 border-b border-gray-50">≥ $100M 且 &lt; $500M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.006%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.029%</td></tr>
                 <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 4</td><td class="px-4 py-3 border-b border-gray-50">≥ $500M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.004%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.026%</td></tr>
                 </tbody>
             </table>
-
-            <div class="mt-8 bg-gray-50 p-4 rounded-sm border border-gray-100">
+            ${buildVipBenefitsHtml()}
+            <div class="mt-6 bg-gray-50 p-4 rounded-sm border border-gray-100">
                 <h4 class="text-[10px] font-black uppercase text-gray-500 mb-2">等級補充說明</h4>
                 <ul class="text-[10px] text-gray-500 space-y-1.5 list-disc list-inside leading-relaxed">
                     <li>VIP等級根據用戶近14天合約交易量進行計算，達到對應等級門檻後，系統將在T+1日自動升級對應VIP等級。</li>
@@ -836,12 +876,43 @@ const VIP_MODAL_HTML = `<!-- VIP 費率詳情彈窗 -->
         </div>
     </div>
 </div>`;
+}
+
+function openPortfolioVipModal(frame, guest) {
+    if (!frame) return;
+    let modal = frame.querySelector('.portfolio-vip-modal');
+    if (!modal) {
+        const host = frame.querySelector('.flex.flex-col.min-h-\\[700px\\]') || frame.querySelector('.flex.flex-col');
+        if (host) host.insertAdjacentHTML('beforeend', buildVipModalHtml({ guest, visible: false }));
+        modal = frame.querySelector('.portfolio-vip-modal');
+    }
+    if (!modal) return;
+    const volRow = modal.querySelector('[data-vip-14d-row]');
+    if (volRow) volRow.classList.toggle('hidden', guest);
+    modal.style.display = 'flex';
+}
+
+function wirePortfolioVipButtons() {
+    document.querySelectorAll('[data-portfolio-vip-fee-btn]').forEach(btn => {
+        btn.onclick = () => {
+            const frame = btn.closest('.web-frame');
+            const root = btn.closest('.portfolio-page-root');
+            const guest = root?.dataset.guest === 'true';
+            openPortfolioVipModal(frame, guest);
+        };
+    });
+}
 
 const STATES = [
     {
         title: '① 未登录 · 默认',
-        desc: '总净资产为 --；顶部导航栏「连接钱包」（资产区无重复按钮）；账户实时风险/累积统计左侧均为 --；周期图右侧「请先连接钱包」；VIP 与底部数据区为未登录占位',
+        desc: '总净资产为 --；顶部导航栏「连接钱包」；VIP 区可点击「等級費率表」查看弹窗（无14天交易量、不标记档位）',
         render: () => renderPortfolio({ guest: true })
+    },
+    {
+        title: '①b 未登录 · VIP 费率弹窗',
+        desc: '未登录点击「等級費率表」：弹窗不展示过去14天交易量，费率表不高亮用户档位',
+        render: () => renderPortfolio({ guest: true, vipModal: true })
     },
     {
         title: '② 已登录 · 钱包用户默认',
@@ -855,7 +926,7 @@ const STATES = [
     },
     {
         title: '④ 已登录 · VIP 费率弹窗',
-        desc: '点击「等級費率表」打开 VIP 费率详情弹窗',
+        desc: '点击「等級費率表」打开 VIP 费率详情弹窗（含专属权益与当前档位标记）',
         render: () => renderPortfolio({ guest: false, vipModal: true })
     }
 ];
@@ -869,6 +940,7 @@ STATES.forEach(state => {
         ${state.render()}`;
     grid.appendChild(panel);
 });
+wirePortfolioVipButtons();
 </script>
 
 </body>
