@@ -312,7 +312,7 @@
                         <thead class="bg-slate-50 border-b">
                             <tr>
                                 <th class="px-3 py-2 text-xs font-bold text-slate-500">UID</th>
-                                <th class="px-3 py-2 text-xs font-bold text-slate-500">钱包</th>
+                                <th class="px-3 py-2 text-xs font-bold text-slate-500">钱包/邮箱</th>
                                 <th class="px-3 py-2 text-xs font-bold text-slate-500">类型</th>
                                 <th class="px-3 py-2 text-xs font-bold text-slate-500 text-center">加成</th>
                                 <th class="px-3 py-2 text-xs font-bold text-slate-500 text-right">本周合计</th>
@@ -425,8 +425,8 @@
                 <div id="bonus-single-panel" class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">UID 或钱包地址</label>
-                            <input id="bonusSingleUser" type="text" placeholder="200112 或 0x..." class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">UID</label>
+                            <input id="bonusSingleUser" type="text" placeholder="200112" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-500 uppercase mb-2">新积分加成系数</label>
@@ -436,8 +436,9 @@
                 </div>
                 <div id="bonus-batch-panel" class="hidden space-y-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">UID 或钱包,加成系数（每行一个，英文逗号分隔）</label>
-                        <textarea id="bonusBatchInput" rows="6" placeholder="200112,1.5&#10;200445,1.8&#10;0xfeed...cdef,2.0" class="w-full border border-slate-200 rounded-lg p-3 text-sm font-mono outline-none"></textarea>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">UID,加成系数（每行一个，英文逗号分隔）</label>
+                        <textarea id="bonusBatchInput" rows="6" placeholder="200112,1.5&#10;200445,1.8" class="w-full border border-slate-200 rounded-lg p-3 text-sm font-mono outline-none"></textarea>
+                        <p class="text-[10px] text-slate-400 font-bold mt-2">单次最多批量配置 <strong>1000</strong> 条；提交时将校验 UID，无效行单独提示，有效名单正常进入审批。</p>
                     </div>
                 </div>
                 <div class="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-3 text-[11px] text-blue-900 leading-relaxed">
@@ -462,15 +463,17 @@
                 </div>
                 <div id="manual-lines-panel" class="space-y-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">UID 或钱包,积分（每行一个，英文逗号分隔）</label>
-                        <textarea id="manualBatchInput" rows="6" placeholder="200445,50&#10;0xfeed...cdef,100" class="w-full border border-slate-200 rounded-lg p-3 text-sm font-mono outline-none"></textarea>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">UID,积分（每行一个，英文逗号分隔）</label>
+                        <textarea id="manualBatchInput" rows="6" placeholder="200445,50&#10;200112,100" class="w-full border border-slate-200 rounded-lg p-3 text-sm font-mono outline-none"></textarea>
+                        <p class="text-[10px] text-slate-400 font-bold mt-2">单次最多批量配置 <strong>1000</strong> 条；提交时将校验 UID，无效行单独提示，有效名单正常进入审批。</p>
                     </div>
                 </div>
                 <div id="manual-file-panel" class="hidden py-12 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center">
                     <p class="text-sm text-slate-500 font-bold mb-1">拖拽 Excel / CSV 文件至此</p>
-                    <span class="text-[10px] text-slate-400">需包含列：uid_or_wallet, points</span>
+                    <span class="text-[10px] text-slate-400">表头须为：<strong>UID,积分</strong>（英文逗号分隔列名；也兼容 uid, points）</span>
+                    <p class="text-[10px] text-slate-400 mt-2">单次最多批量配置 <strong>1000</strong> 条；上传后提交时将校验 UID，无效行单独提示，有效名单正常进入审批。</p>
                     <button class="mt-3 bg-slate-100 px-4 py-2 rounded text-xs font-bold text-slate-600">选择文件</button>
-                    <p class="text-[10px] text-slate-400 mt-3">演示模式：上传后按示例名单解析（3 人 · 200 积分）</p>
+                    <p class="text-[10px] text-slate-400 mt-3">演示模式：上传后按示例名单解析（含 2 条无效 UID 演示校验）</p>
                 </div>
                 <div class="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-3 text-[11px] text-blue-900 leading-relaxed">
                     <b>奖励记录关联：</b>选择「自定义活动名称」后须配置四种语言的奖励名称；审批通过后将写入用户端活动中心「奖励记录」。
@@ -602,6 +605,38 @@
     </div>
 </div>
 
+<!-- 批量 UID 有效性检查 · 错误预览 -->
+<div id="modal-points-uid-errors" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-[640px] max-h-[85vh] overflow-hidden flex flex-col">
+        <div class="px-6 py-5 border-b">
+            <h3 id="pointsUidErrorTitle" class="text-lg font-bold text-amber-600">部分 UID 校验未通过</h3>
+            <p id="pointsUidErrorSummary" class="text-sm text-slate-500 mt-1"></p>
+            <p id="pointsUidValidSummary" class="text-sm text-green-700 font-bold mt-2 hidden"></p>
+        </div>
+        <div class="p-6 overflow-y-auto flex-1">
+            <div class="border border-red-100 rounded-lg overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead class="bg-red-50 border-b border-red-100 text-[10px] font-bold text-red-700 uppercase">
+                        <tr>
+                            <th class="px-4 py-2 text-left">行号</th>
+                            <th class="px-4 py-2 text-left">UID</th>
+                            <th id="pointsUidErrorValueHeader" class="px-4 py-2 text-right">数值</th>
+                            <th class="px-4 py-2 text-left">错误原因</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pointsUidErrorBody" class="divide-y divide-red-50"></tbody>
+                </table>
+            </div>
+            <div id="pointsUidErrorPagination" class="mt-3"></div>
+        </div>
+        <div class="p-5 bg-slate-50 flex flex-wrap gap-3 border-t">
+            <button type="button" onclick="downloadInvalidPointsUidsCsv()" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-700">下载错误 UID（CSV）</button>
+            <button type="button" onclick="document.getElementById('modal-points-uid-errors').classList.add('hidden')" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">返回修改</button>
+            <button type="button" id="pointsUidContinueBtn" onclick="continuePointsUidValidSubmit()" class="hidden flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold min-w-[200px]">继续提交有效名单</button>
+        </div>
+    </div>
+</div>
+
 <!-- 积分加成异常确认 -->
 <div id="modal-bonus-confirm" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-[640px] max-h-[90vh] overflow-hidden flex flex-col">
@@ -714,9 +749,9 @@
             shadowUserCount: 0,
             approvalId: 'APR20260710008',
             recipients: [
-                { uid: '200445', wallet: '0xfeed...cdef', userType: 'real', multiplier: '—', total: 50, manual: true },
-                { uid: '200112', wallet: '0xa1b2...abcd', userType: 'real', multiplier: '—', total: 100, manual: true },
-                { uid: '200891', wallet: '0x1234...5678', userType: 'real', multiplier: '—', total: 50, manual: true }
+                { uid: '200445', wallet: '0xfeed...cdef', email: '', userType: 'real', multiplier: '—', total: 50, manual: true },
+                { uid: '200112', wallet: '0xa1b2...abcd', email: '', userType: 'real', multiplier: '—', total: 100, manual: true },
+                { uid: '200891', wallet: '', email: 'user891@example.com', userType: 'real', multiplier: '—', total: 50, manual: true }
             ]
         }
     ];
@@ -875,16 +910,23 @@
         renderWeeklyDetailTable(batch);
     }
 
+    function weeklyContactCell(r) {
+        if (r.email) return r.email;
+        if (r.wallet) return r.wallet;
+        return '—';
+    }
+
     function renderWeeklyDetailTable(batch) {
         const isManual = batch.type === 'manual';
         const sliced = ptsSlice(filteredWeeklyDetailRows, weeklyDetailPage);
         weeklyDetailPage = sliced.page;
         document.getElementById('weeklyDetailTableBody').innerHTML = sliced.items.map(function (r) {
             const typeTag = r.userType === 'shadow' ? '<span class="status-tag tag-config">影子</span>' : '<span class="text-slate-500">真实</span>';
+            const contact = weeklyContactCell(r);
             if (isManual || r.manual) {
-                return '<tr class="hover:bg-slate-50"><td class="px-3 py-2 font-mono font-bold">' + r.uid + '</td><td class="px-3 py-2 font-mono">' + r.wallet + '</td><td class="px-3 py-2">' + typeTag + '</td><td class="px-3 py-2 text-center">—</td><td class="px-3 py-2 text-right font-bold text-green-600">+' + r.total + '</td><td colspan="6" class="px-3 py-2 text-slate-400">手动发放，无六维拆分</td></tr>';
+                return '<tr class="hover:bg-slate-50"><td class="px-3 py-2 font-mono font-bold">' + r.uid + '</td><td class="px-3 py-2 font-mono">' + contact + '</td><td class="px-3 py-2">' + typeTag + '</td><td class="px-3 py-2 text-center">—</td><td class="px-3 py-2 text-right font-bold text-green-600">+' + r.total + '</td><td colspan="6" class="px-3 py-2 text-slate-400">手动发放，无六维拆分</td></tr>';
             }
-            return '<tr class="hover:bg-slate-50' + (r.userType === 'shadow' ? ' bg-amber-50/40' : '') + '"><td class="px-3 py-2 font-mono font-bold">' + r.uid + '</td><td class="px-3 py-2 font-mono">' + r.wallet + '</td><td class="px-3 py-2">' + typeTag + '</td><td class="px-3 py-2 text-center font-bold">' + r.multiplier + '</td><td class="px-3 py-2 text-right font-bold">' + r.total + '</td>' +
+            return '<tr class="hover:bg-slate-50' + (r.userType === 'shadow' ? ' bg-amber-50/40' : '') + '"><td class="px-3 py-2 font-mono font-bold">' + r.uid + '</td><td class="px-3 py-2 font-mono">' + contact + '</td><td class="px-3 py-2">' + typeTag + '</td><td class="px-3 py-2 text-center font-bold">' + r.multiplier + '</td><td class="px-3 py-2 text-right font-bold">' + r.total + '</td>' +
                 DIM_META.map(function (m) { return '<td class="px-3 py-2 text-right text-slate-600">' + formatDimCell(r.dims[m.key]) + '</td>'; }).join('') + '</tr>';
         }).join('');
         ptsMountPag('weekly-detail-pagination', sliced.total, weeklyDetailPage, 'pts-weekly-detail');
@@ -897,7 +939,7 @@
         const type = document.getElementById('weeklyDetailFilterType').value;
         filteredWeeklyDetailRows = batch.recipients.filter(function (r) {
             if (type !== 'all' && r.userType !== type) return false;
-            if (userQ && r.uid.toLowerCase().indexOf(userQ) === -1 && r.wallet.toLowerCase().indexOf(userQ) === -1) return false;
+            if (userQ && r.uid.toLowerCase().indexOf(userQ) === -1 && weeklyContactCell(r).toLowerCase().indexOf(userQ) === -1) return false;
             return true;
         });
         weeklyDetailPage = 1;
@@ -907,14 +949,14 @@
     function exportWeeklyDetailCsv() {
         const batch = WEEKLY_BATCHES.find(function (b) { return b.id === currentWeeklyBatchId; });
         if (!batch) return;
-        const header = ['UID', '钱包', '用户类型', '积分加成', '本周所得积分', '交易原始', '交易占比', '交易积分', '持仓原始', '持仓占比', '持仓积分', '亏损原始', '亏损占比', '亏损积分', '盈利原始', '盈利占比', '盈利积分', '资沉原始', '资沉占比', '资沉积分', '邀请原始', '邀请占比', '邀请积分'];
+        const header = ['UID', '钱包/邮箱', '用户类型', '积分加成', '本周所得积分', '交易原始', '交易占比', '交易积分', '持仓原始', '持仓占比', '持仓积分', '亏损原始', '亏损占比', '亏损积分', '盈利原始', '盈利占比', '盈利积分', '资沉原始', '资沉占比', '资沉积分', '邀请原始', '邀请占比', '邀请积分'];
         const rows = [header];
         filteredWeeklyDetailRows.forEach(function (r) {
             if (r.manual) {
-                rows.push([r.uid, r.wallet, r.userType, '—', r.total]);
+                rows.push([r.uid, weeklyContactCell(r), r.userType, '—', r.total]);
                 return;
             }
-            const row = [r.uid, r.wallet, r.userType, r.multiplier, r.total];
+            const row = [r.uid, weeklyContactCell(r), r.userType, r.multiplier, r.total];
             DIM_META.forEach(function (m) {
                 const d = r.dims[m.key];
                 row.push(d ? d.raw : '', d ? d.pct : '', d ? d.points : '');
@@ -927,7 +969,7 @@
     let POINTS_USERS = [
         { uid: '200112', wallet: '0xa1b2c3d4e5f6789012345678901234567890abcd', balance: 12850, level: 3, multiplier: '1.2x', naturalMultiplier: 1.2, customBonus: null, bonusType: 'natural', umbrellaVolume: '$620M', lastWeek: { trade: 4200, position: 980, invite: 650, total: 5830 } },
         { uid: '200445', wallet: '0xfeedface1234567890abcdef1234567890abcdef', balance: 320, level: 1, multiplier: '1.5x', naturalMultiplier: 1.1, customBonus: 1.5, bonusType: 'custom', umbrellaVolume: '$128M', lastWeek: { trade: 180, position: 42, invite: 28, total: 250 } },
-        { uid: '200891', wallet: '0x1234567890abcdef1234567890abcdef12345678', balance: 45, level: 0, multiplier: '1.0x', naturalMultiplier: 1.0, customBonus: null, bonusType: 'natural', umbrellaVolume: '$12M', lastWeek: { trade: 0, position: 0, invite: 0, total: 15 } }
+        { uid: '200891', wallet: '', email: 'user891@example.com', balance: 45, level: 0, multiplier: '1.0x', naturalMultiplier: 1.0, customBonus: null, bonusType: 'natural', umbrellaVolume: '$12M', lastWeek: { trade: 0, position: 0, invite: 0, total: 15 } }
     ];
 
     const POINTS_HISTORY = {
@@ -1407,6 +1449,123 @@
     renderPointsProgramAdminUI();
 
     let manualInputMode = 'lines';
+    const POINTS_BATCH_MAX = 1000;
+    const VALID_POINTS_UIDS = new Set(POINTS_USERS.map(function (u) { return u.uid; }));
+    let pointsInvalidUidRows = [];
+    let pointsInvalidUidPage = 1;
+    const POINTS_UID_ERROR_PAGE_SIZE = 10;
+    let pointsUidErrorContext = null;
+    let pointsUidErrorValueLabel = '数值';
+    let pendingManualValidRecipients = null;
+    let pendingBonusValidItems = null;
+
+    function validatePointsUidBatch(rows, valueKey) {
+        const invalid = [];
+        rows.forEach(function (r) {
+            const uid = String(r.uid || '').trim();
+            const val = r[valueKey];
+            if (!uid) {
+                invalid.push({ line: r.line, uid: '—', value: val != null ? val : '—', reason: 'UID 不能为空' });
+                return;
+            }
+            if (!/^\d+$/.test(uid)) {
+                invalid.push({ line: r.line, uid: uid, value: val != null ? val : '—', reason: '格式错误，须为 UID' });
+                return;
+            }
+            if (!VALID_POINTS_UIDS.has(uid)) {
+                invalid.push({ line: r.line, uid: uid, value: val != null ? val : '—', reason: '用户不存在' });
+            }
+        });
+        return invalid;
+    }
+
+    function splitValidInvalidPointRows(rows, valueKey) {
+        const invalid = validatePointsUidBatch(rows, valueKey);
+        const invalidLineSet = {};
+        invalid.forEach(function (r) { invalidLineSet[r.line] = true; });
+        const valid = rows.filter(function (r) { return !invalidLineSet[r.line]; });
+        return { valid: valid, invalid: invalid };
+    }
+
+    function renderPointsUidErrorTable(validRows, valueKey, valueLabel) {
+        const tbody = document.getElementById('pointsUidErrorBody');
+        const total = pointsInvalidUidRows.length;
+        const totalPages = Math.max(1, Math.ceil(total / POINTS_UID_ERROR_PAGE_SIZE));
+        pointsInvalidUidPage = Math.max(1, Math.min(pointsInvalidUidPage, totalPages));
+        const start = (pointsInvalidUidPage - 1) * POINTS_UID_ERROR_PAGE_SIZE;
+        const pageRows = pointsInvalidUidRows.slice(start, start + POINTS_UID_ERROR_PAGE_SIZE);
+        document.getElementById('pointsUidErrorValueHeader').textContent = valueLabel || '数值';
+        tbody.innerHTML = pageRows.map(function (r) {
+            return '<tr><td class="px-4 py-2 text-slate-500">' + r.line + '</td><td class="px-4 py-2 font-mono font-bold">' + r.uid + '</td><td class="px-4 py-2 text-right">' + r.value + '</td><td class="px-4 py-2 text-red-600 font-bold">' + r.reason + '</td></tr>';
+        }).join('');
+
+        const validCount = validRows ? validRows.length : 0;
+        const titleEl = document.getElementById('pointsUidErrorTitle');
+        const summaryEl = document.getElementById('pointsUidErrorSummary');
+        const validSummaryEl = document.getElementById('pointsUidValidSummary');
+        const continueBtn = document.getElementById('pointsUidContinueBtn');
+
+        if (validCount > 0) {
+            titleEl.textContent = '部分 UID 校验未通过';
+            titleEl.className = 'text-lg font-bold text-amber-600';
+            summaryEl.textContent = '共 ' + total + ' 条无效 UID 已剔除，不会进入审批；有效名单将正常提交。';
+            if (pointsUidErrorContext === 'manual') {
+                let pts = 0;
+                validRows.forEach(function (r) { pts += parseInt(r.points, 10) || 0; });
+                validSummaryEl.textContent = '有效发放：' + validCount + ' 人 · ' + pts.toLocaleString() + ' 积分';
+            } else {
+                validSummaryEl.textContent = '有效配置：' + validCount + ' 人';
+            }
+            validSummaryEl.classList.remove('hidden');
+            continueBtn.classList.remove('hidden');
+            continueBtn.textContent = validCount > 0
+                ? ('继续提交有效名单（' + validCount + ' 人）')
+                : '继续提交有效名单';
+        } else {
+            titleEl.textContent = 'UID 校验未通过';
+            titleEl.className = 'text-lg font-bold text-red-600';
+            summaryEl.textContent = '共 ' + total + ' 条无效 UID，无有效名单可提交，请修正后重试。';
+            validSummaryEl.classList.add('hidden');
+            continueBtn.classList.add('hidden');
+        }
+
+        const pagEl = document.getElementById('pointsUidErrorPagination');
+        if (window.AdminPagination) {
+            AdminPagination.register('points-uid-errors', function (p) {
+                pointsInvalidUidPage = p;
+                renderPointsUidErrorTable(validRows, valueKey, valueLabel);
+            });
+            pagEl.innerHTML = AdminPagination.html(total, pointsInvalidUidPage, POINTS_UID_ERROR_PAGE_SIZE, 'points-uid-errors');
+        } else {
+            pagEl.innerHTML = '<p class="text-[11px] text-slate-500">第 ' + pointsInvalidUidPage + '/' + totalPages + ' 页</p>';
+        }
+    }
+
+    function showPointsUidErrorModal(invalidRows, validRows, context, valueLabel) {
+        pointsInvalidUidRows = invalidRows;
+        pointsInvalidUidPage = 1;
+        pointsUidErrorContext = context;
+        pointsUidErrorValueLabel = valueLabel || '数值';
+        renderPointsUidErrorTable(validRows, null, valueLabel);
+        document.getElementById('modal-points-uid-errors').classList.remove('hidden');
+    }
+
+    function downloadInvalidPointsUidsCsv() {
+        const rows = [['行号', 'UID', pointsUidErrorValueLabel, '错误原因']];
+        pointsInvalidUidRows.forEach(function (r) {
+            rows.push([r.line, r.uid, r.value, r.reason]);
+        });
+        downloadCsv('invalid_points_uids_' + Date.now() + '.csv', rows);
+    }
+
+    function continuePointsUidValidSubmit() {
+        document.getElementById('modal-points-uid-errors').classList.add('hidden');
+        if (pointsUidErrorContext === 'manual') {
+            openPointsApprovalModalWithRecipients(pendingManualValidRecipients);
+        } else if (pointsUidErrorContext === 'bonus') {
+            openBonusConfirmModalWithItems(pendingBonusValidItems);
+        }
+    }
 
     function switchManualTab(type) {
         manualInputMode = type;
@@ -1417,26 +1576,60 @@
         document.getElementById('manual-file-panel').classList.toggle('hidden', lines);
     }
 
-    function getManualRecipients() {
+    function getManualRecipientRows() {
         if (manualInputMode === 'file') {
             return [
-                { uid_or_wallet: '200445', points: '50' },
-                { uid_or_wallet: '200112', points: '100' },
-                { uid_or_wallet: '200891', points: '50' }
+                { line: 1, uid: '200445', points: '50' },
+                { line: 2, uid: '200112', points: '100' },
+                { line: 3, uid: '99990001', points: '120' },
+                { line: 4, uid: '88880002', points: '80' }
             ];
         }
         const text = document.getElementById('manualBatchInput').value.trim();
         if (!text) {
             return [
-                { uid_or_wallet: '200445', points: '50' },
-                { uid_or_wallet: '200112', points: '100' },
-                { uid_or_wallet: '200891', points: '50' }
+                { line: 1, uid: '200445', points: '50' },
+                { line: 2, uid: '200112', points: '100' },
+                { line: 3, uid: '99990001', points: '120' },
+                { line: 4, uid: '88880002', points: '80' }
             ];
         }
-        return text.split('\n').filter(function (l) { return l.trim(); }).map(function (l) {
+        return text.split('\n').filter(function (l) { return l.trim(); }).map(function (l, idx) {
             const p = l.split(',');
-            return { uid_or_wallet: (p[0] || '').trim(), points: (p[1] || '').trim() };
+            return { line: idx + 1, uid: (p[0] || '').trim(), points: (p[1] || '').trim() };
         });
+    }
+
+    function getManualRecipients() {
+        const rows = pendingManualValidRecipients && pendingManualValidRecipients.length
+            ? pendingManualValidRecipients
+            : getManualRecipientRows();
+        return rows.map(function (r) {
+            return { uid: r.uid, points: r.points, uid_or_wallet: r.uid };
+        });
+    }
+
+    function prepareManualRecipientsForSubmit() {
+        const rows = getManualRecipientRows();
+        if (!rows.length) {
+            alert('请录入至少 1 条发放名单');
+            return null;
+        }
+        if (rows.length > POINTS_BATCH_MAX) {
+            alert('单次最多批量配置 ' + POINTS_BATCH_MAX + ' 条，当前 ' + rows.length + ' 条');
+            return null;
+        }
+        const split = splitValidInvalidPointRows(rows, 'points');
+        if (!split.valid.length) {
+            showPointsUidErrorModal(split.invalid, null, 'manual', '积分');
+            return null;
+        }
+        pendingManualValidRecipients = split.valid;
+        if (split.invalid.length) {
+            showPointsUidErrorModal(split.invalid, split.valid, 'manual', '积分');
+            return { pending: true };
+        }
+        return { recipients: split.valid };
     }
 
     function parseManualBatch() {
@@ -1446,17 +1639,27 @@
         return { count: recipients.length, total: total, recipients: recipients };
     }
 
+    function openPointsApprovalModalWithRecipients(recipientRows) {
+        const rows = recipientRows || pendingManualValidRecipients || [];
+        let total = 0;
+        rows.forEach(function (r) { total += parseInt(r.points, 10) || 0; });
+        const act = getActivityPickerValue('points-act');
+        document.getElementById('ptsApprovalCount').innerText = rows.length + ' 人';
+        document.getElementById('ptsApprovalTotal').innerText = total.toLocaleString() + ' 积分';
+        document.getElementById('ptsApprovalActivity').innerText = act.displayLabel;
+        document.getElementById('pointsApprovalFlow').innerHTML = renderApprovalFlow('draft', true);
+        document.getElementById('modal-points-approval').classList.remove('hidden');
+    }
+
     function openPointsApprovalModal() {
         const act = getActivityPickerValue('points-act');
         const remark = document.getElementById('manualRemarkInput').value.trim();
         if (!act.valid) { alert(act.message); return; }
         if (!remark) { alert('请填写申请备注'); return; }
-        const batch = parseManualBatch();
-        document.getElementById('ptsApprovalCount').innerText = batch.count + ' 人';
-        document.getElementById('ptsApprovalTotal').innerText = batch.total.toLocaleString() + ' 积分';
-        document.getElementById('ptsApprovalActivity').innerText = act.displayLabel;
-        document.getElementById('pointsApprovalFlow').innerHTML = renderApprovalFlow('draft', true);
-        document.getElementById('modal-points-approval').classList.remove('hidden');
+        const prepared = prepareManualRecipientsForSubmit();
+        if (!prepared) return;
+        if (prepared.pending) return;
+        openPointsApprovalModalWithRecipients(prepared.recipients);
     }
 
     function closePtsApprovalModal() {
@@ -1492,13 +1695,12 @@
         alert('审批申请已提交，等待市场运营交叉审核 → 风控 → 老板审批');
         document.getElementById('manualBatchInput').value = '';
         document.getElementById('manualRemarkInput').value = '';
+        pendingManualValidRecipients = null;
     }
 
     function findPointsUser(key) {
-        const q = (key || '').trim().toLowerCase();
-        return POINTS_USERS.find(function (u) {
-            return u.uid === q || u.wallet.toLowerCase() === q || u.wallet.toLowerCase().indexOf(q) !== -1;
-        });
+        const q = (key || '').trim();
+        return POINTS_USERS.find(function (u) { return u.uid === q; });
     }
 
     function getNaturalMultiplierForUser(userOrKey) {
@@ -1516,44 +1718,77 @@
         document.getElementById('bonus-batch-panel').classList.toggle('hidden', single);
     }
 
+    function parseBonusBatchRows() {
+        const text = document.getElementById('bonusBatchInput').value.trim();
+        if (!text) {
+            return [
+                { line: 1, uid: '200112', multiplier: 1.5 },
+                { line: 2, uid: '200445', multiplier: 1.8 },
+                { line: 3, uid: '99990001', multiplier: 1.2 },
+                { line: 4, uid: '88880002', multiplier: 2.0 }
+            ];
+        }
+        return text.split('\n').filter(function (l) { return l.trim(); }).map(function (line, idx) {
+            const p = line.split(',');
+            return { line: idx + 1, uid: (p[0] || '').trim(), multiplier: parseFloat((p[1] || '').trim()) };
+        });
+    }
+
+    function bonusRowsToItems(rows) {
+        return rows.map(function (r) {
+            const user = findPointsUser(r.uid);
+            return {
+                uid: user ? user.uid : r.uid,
+                key: r.uid,
+                naturalMultiplier: getNaturalMultiplierForUser(user || { level: 0, naturalMultiplier: 1.0 }),
+                newMultiplier: r.multiplier
+            };
+        });
+    }
+
     function parseBonusItems() {
         if (bonusInputMode === 'single') {
             const key = document.getElementById('bonusSingleUser').value.trim();
             const mult = parseFloat(document.getElementById('bonusSingleMultiplier').value);
-            if (!key) return { error: '请填写 UID 或钱包地址' };
+            if (!key) return { error: '请填写 UID' };
+            if (!/^\d+$/.test(key)) return { error: 'UID 格式错误，须为数字 UID' };
             if (!mult || mult < 1) return { error: '请填写有效的加成系数' };
             const user = findPointsUser(key);
             const natural = getNaturalMultiplierForUser(user || { level: 0, naturalMultiplier: 1.0 });
             return { items: [{ uid: user ? user.uid : key, key: key, naturalMultiplier: natural, newMultiplier: mult }] };
         }
-        const text = document.getElementById('bonusBatchInput').value.trim();
-        if (!text) return { error: '请填写批量配置名单' };
-        const items = text.split('\n').filter(function (l) { return l.trim(); }).map(function (line) {
-            const p = line.split(',');
-            const key = (p[0] || '').trim();
-            const mult = parseFloat((p[1] || '').trim());
-            const user = findPointsUser(key);
-            return {
-                uid: user ? user.uid : key,
-                key: key,
-                naturalMultiplier: getNaturalMultiplierForUser(user || { level: 0, naturalMultiplier: 1.0 }),
-                newMultiplier: mult
-            };
-        });
-        if (items.some(function (i) { return !i.newMultiplier || i.newMultiplier < 1; })) {
+        const rows = parseBonusBatchRows();
+        if (!rows.length) return { error: '请填写批量配置名单' };
+        if (rows.some(function (r) { return !r.multiplier || r.multiplier < 1; })) {
             return { error: '批量名单中存在无效的加成系数' };
         }
-        return { items: items };
+        return { rows: rows };
     }
 
-    function openBonusConfirmModal() {
-        const act = getActivityPickerValue('bonus-act');
-        const remark = document.getElementById('bonusRemarkInput').value.trim();
-        if (!act.valid) { alert(act.message); return; }
-        if (!remark) { alert('请填写申请备注'); return; }
+    function prepareBonusBatchForSubmit() {
         const parsed = parseBonusItems();
-        if (parsed.error) { alert(parsed.error); return; }
-        pendingBonusItems = parsed.items;
+        if (parsed.error) { alert(parsed.error); return null; }
+        const rows = parsed.rows;
+        if (rows.length > POINTS_BATCH_MAX) {
+            alert('单次最多批量配置 ' + POINTS_BATCH_MAX + ' 条，当前 ' + rows.length + ' 条');
+            return null;
+        }
+        const split = splitValidInvalidPointRows(rows, 'multiplier');
+        if (!split.valid.length) {
+            showPointsUidErrorModal(split.invalid, null, 'bonus', '加成系数');
+            return null;
+        }
+        pendingBonusValidItems = bonusRowsToItems(split.valid);
+        if (split.invalid.length) {
+            showPointsUidErrorModal(split.invalid, split.valid, 'bonus', '加成系数');
+            return { pending: true };
+        }
+        return { items: pendingBonusValidItems };
+    }
+
+    function openBonusConfirmModalWithItems(items) {
+        pendingBonusItems = items;
+        const act = getActivityPickerValue('bonus-act');
         const anomalies = pendingBonusItems.filter(function (i) { return i.naturalMultiplier > i.newMultiplier; });
         const multSet = pendingBonusItems.map(function (i) { return i.newMultiplier; });
         const multLabel = multSet.length === 1 ? multSet[0] + 'x' : '多种';
@@ -1567,6 +1802,23 @@
         }).join('');
         document.getElementById('bonusApprovalFlow').innerHTML = renderApprovalFlow('draft', true);
         document.getElementById('modal-bonus-confirm').classList.remove('hidden');
+    }
+
+    function openBonusConfirmModal() {
+        const act = getActivityPickerValue('bonus-act');
+        const remark = document.getElementById('bonusRemarkInput').value.trim();
+        if (!act.valid) { alert(act.message); return; }
+        if (!remark) { alert('请填写申请备注'); return; }
+        if (bonusInputMode === 'single') {
+            const parsed = parseBonusItems();
+            if (parsed.error) { alert(parsed.error); return; }
+            openBonusConfirmModalWithItems(parsed.items);
+            return;
+        }
+        const prepared = prepareBonusBatchForSubmit();
+        if (!prepared) return;
+        if (prepared.pending) return;
+        openBonusConfirmModalWithItems(prepared.items);
     }
 
     function closeBonusConfirmModal() {
@@ -1614,6 +1866,7 @@
         else document.getElementById('bonusBatchInput').value = '';
         document.getElementById('bonusRemarkInput').value = '';
         pendingBonusItems = [];
+        pendingBonusValidItems = null;
     }
 
     renderPointsUserTable(POINTS_USERS);
