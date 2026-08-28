@@ -235,11 +235,6 @@
             walk(t.subPartners);
             walk(t.directClients);
         });
-        Object.keys(teamTreeAbnormalData).forEach(function (k) {
-            (teamTreeAbnormalData[k] || []).forEach(function (line) {
-                (line.nodes || []).forEach(ensure);
-            });
-        });
     })();
 
     const overviewBase = {
@@ -1093,9 +1088,6 @@
         expandAllTeamTrees: function () {
             const partnerId = window._teamTreeModalPartnerId;
             if (!partnerId) return;
-            (teamTreeAbnormalData[partnerId] || []).forEach(function (line) {
-                teamTreeExpanded[partnerId + '_' + line.id] = true;
-            });
             renderTeamTreeModalBody(partnerId);
         },
         openAdjustRatioModal: openAdjustRatioModal,
