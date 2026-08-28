@@ -650,24 +650,37 @@
         return hay.indexOf(q) >= 0;
     }
 
-    function userIdentityCell(row, masked) {
+    function partnerUidCell(row, masked) {
         const uid = row.uid || '—';
         if (masked) {
             let html = '<span class="text-gray-900 font-black font-mono">' + esc(uid) + '</span>';
-            if (row.wallet) html += '<span class="block text-[10px] text-gray-400 font-bold mt-0.5 font-mono">' + esc(row.wallet) + '</span>';
-            else if (row.email) html += '<span class="block text-[10px] text-gray-400 font-bold mt-0.5">' + esc(row.email) + '</span>';
+            if (row.remark) html += '<span class="block text-[10px] text-gray-400 font-bold mt-0.5">' + esc(row.remark) + '</span>';
             return html;
         }
         let html = '<div class="copy-chip"><span class="text-gray-900 font-black">' + esc(uid) + '</span>' + copyChipBtn(uid, 'UID') + '</div>';
-        if (row.wallet) {
-            html += '<div class="copy-chip mt-1"><span class="text-[10px] text-gray-500 font-bold font-mono">' + esc(row.wallet) + '</span>' + copyChipBtn(row.walletFull || row.wallet, '钱包地址') + '</div>';
-        } else if (row.email) {
-            html += '<div class="copy-chip mt-1"><span class="text-[10px] text-gray-500 font-bold">' + esc(row.email) + '</span>' + copyChipBtn(row.email, '邮箱') + '</div>';
-        }
         if (row.remark) {
             html += '<div class="copy-chip mt-1"><span class="text-[10px] text-gray-400 font-bold">' + esc(row.remark) + '</span>' + copyChipBtn(row.remark, '备注') + '</div>';
         }
         return html;
+    }
+
+    function partnerContactCell(row, masked) {
+        if (masked) {
+            if (row.wallet) return '<span class="text-[10px] text-gray-400 font-bold font-mono">' + esc(row.wallet) + '</span>';
+            if (row.email) return '<span class="text-[10px] text-gray-400 font-bold">' + esc(row.email) + '</span>';
+            return '<span class="text-gray-300">—</span>';
+        }
+        if (row.wallet) {
+            return '<div class="copy-chip"><span class="text-[10px] text-gray-500 font-bold font-mono">' + esc(row.wallet) + '</span>' + copyChipBtn(row.walletFull || row.wallet, '钱包地址') + '</div>';
+        }
+        if (row.email) {
+            return '<div class="copy-chip"><span class="text-[10px] text-gray-500 font-bold">' + esc(row.email) + '</span>' + copyChipBtn(row.email, '邮箱') + '</div>';
+        }
+        return '<span class="text-gray-300">—</span>';
+    }
+
+    function userIdentityCell(row, masked) {
+        return partnerUidCell(row, masked) + '<div class="mt-1">' + partnerContactCell(row, masked) + '</div>';
     }
 
     function walletRemarkCell(row, masked) {
@@ -713,11 +726,12 @@
         const sortFn = drill ? 'PartnerCenter.setDrillSubSort' : 'PartnerCenter.setSubPartnerSort';
         const thead = document.getElementById(headId);
         if (thead) {
-            const walletCol = masked ? '下级合伙人' : '下级合伙人 UID';
+            const partnerCol = masked ? '下级合伙人' : '下级合伙人 UID';
             thead.innerHTML =
                 '<tr>' +
                 '<th class="px-6 py-4">加入时间</th>' +
-                '<th class="px-6 py-4">' + walletCol + '</th>' +
+                '<th class="px-6 py-4">' + partnerCol + '</th>' +
+                '<th class="px-6 py-4">钱包 / 邮箱</th>' +
                 '<th class="px-6 py-4 text-center">设置比例</th>' +
                 '<th class="px-6 py-4 text-center">我的级差</th>' +
                 '<th class="px-6 py-4">结算状态</th>' +
@@ -752,7 +766,8 @@
 
             return '<tr class="' + rowClass + ' transition-colors">' +
                 '<td class="px-6 py-4 text-gray-400 font-bold">' + row.joinDate + '</td>' +
-                '<td class="px-6 py-4">' + walletRemarkCell(row, masked) + '</td>' +
+                '<td class="px-6 py-4">' + partnerUidCell(row, masked) + '</td>' +
+                '<td class="px-6 py-4">' + partnerContactCell(row, masked) + '</td>' +
                 '<td class="px-6 py-4 text-center ' + ratioClass + '">' + row.ratio + '%</td>' +
                 '<td class="px-6 py-4 text-center"><span class="' + gapClass + '">' + row.gap + '%</span></td>' +
                 '<td class="px-6 py-4">' + settlementStatusCell(row, scale, masked) + '</td>' +
@@ -796,6 +811,7 @@
             let header = '<tr>' +
                 '<th class="px-6 py-4">注册时间</th>' +
                 '<th class="px-6 py-4">直客 UID</th>' +
+                '<th class="px-6 py-4">钱包 / 邮箱</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'totalVol\')">累计交易额' + sortIconHtml('totalVol', sortState) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'totalFee\')">累计手续费' + sortIconHtml('totalFee', sortState) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'rebate\')">返佣金额' + sortIconHtml('rebate', sortState) + '</th>' +
@@ -811,7 +827,6 @@
         if (!tbody) return;
         tbody.innerHTML = sliced.items.map(function (row) {
             const netClass = row.netDeposit >= 0 ? 'text-green-500' : 'text-red-400';
-            const walletCell = userIdentityCell(row, masked);
             let actionCell = '';
             if (!masked) {
                 actionCell = '<td class="px-6 py-4 text-right">' +
@@ -820,7 +835,8 @@
             }
             return '<tr class="hover:bg-slate-50 transition-colors">' +
                 '<td class="px-6 py-4 text-gray-400 font-bold">' + row.joinDate + '</td>' +
-                '<td class="px-6 py-4">' + walletCell + '</td>' +
+                '<td class="px-6 py-4">' + partnerUidCell(row, masked) + '</td>' +
+                '<td class="px-6 py-4">' + partnerContactCell(row, masked) + '</td>' +
                 '<td class="px-6 py-4 text-right font-bold">' + fmtMoney(row.totalVol) + '</td>' +
                 '<td class="px-6 py-4 text-right font-bold">' + fmtMoney(row.totalFee) + '</td>' +
                 '<td class="px-6 py-4 text-right font-black text-blue-600">' + fmtMoney(row.rebate) + '</td>' +

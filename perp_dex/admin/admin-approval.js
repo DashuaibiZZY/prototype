@@ -227,6 +227,37 @@
                 ]
             },
             {
+                id: 'APR20260718005',
+                type: 'trial_issue',
+                title: '体验金批量发放',
+                applicant: 'Trial_Admin',
+                status: 'rejected',
+                createdAt: '2026-07-18 16:20',
+                remark: 'KOL 渠道补发体验金',
+                summary: '80 人 · 8,000 USDT · 社区 KOL 合作激励',
+                payload: {
+                    activityMode: 'custom',
+                    activityName: '社区 KOL 合作激励',
+                    cardGroup: 'KOL大额专属组',
+                    cardGroupId: 'g2',
+                    cardGroupDetails: {
+                        id: 'g2', name: 'KOL大额专属组', couponValidDays: 14, openValidDays: 60,
+                        lossEnabled: true, lossPct: 30, feeEnabled: true, feePct: 15
+                    },
+                    recipientCount: 80,
+                    totalAmount: '8,000 USDT',
+                    inputMode: 'excel',
+                    recipients: [
+                        { uid_or_wallet: '100234', amount: '100' },
+                        { uid_or_wallet: '99990088', amount: '120' }
+                    ]
+                },
+                timeline: [
+                    { at: '2026-07-18 16:20', actor: 'Trial_Admin', action: '提交申请', note: 'KOL 渠道补发体验金' },
+                    { at: '2026-07-18 17:05', actor: 'Mkt_Cross', action: '驳回', note: '名单含无效 UID，请修正后重新提交' }
+                ]
+            },
+            {
                 id: 'APR20260720004',
                 type: 'trial_issue',
                 title: '体验金批量发放',
@@ -976,6 +1007,40 @@
                 actor: opts.applicant || '市场运营',
                 action: '提交申请',
                 note: opts.remark || ''
+            }]
+        };
+        const apps = getApps();
+        apps.unshift(app);
+        saveApps(apps);
+        if (opts.onSubmit) opts.onSubmit(app);
+        return app;
+    };
+
+    window.resubmitApprovalApplication = function (id, opts) {
+        opts = opts || {};
+        seedIfEmpty();
+        const old = getApprovalAppById(id);
+        if (!old || old.status !== 'rejected') return null;
+        const payload = JSON.parse(JSON.stringify(old.payload || {}));
+        const profileKey = opts.flowProfile || old.flowProfile || TYPE_FLOW_PROFILE[old.type] || 'full';
+        const initialStatus = (profileKey === 'risk_boss' || profileKey === 'risk_only') ? 'pending_risk' : 'pending_cross';
+        const app = {
+            id: 'APR' + Date.now(),
+            type: old.type,
+            title: old.title,
+            summary: old.summary,
+            applicant: old.applicant,
+            status: initialStatus,
+            flowProfile: profileKey,
+            createdAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
+            remark: opts.remark || old.remark || '',
+            payload: payload,
+            resubmittedFrom: id,
+            timeline: [{
+                at: new Date().toISOString().slice(0, 16).replace('T', ' '),
+                actor: old.applicant,
+                action: '重新提交申请',
+                note: '基于 ' + id + ' 原内容重新发起'
             }]
         };
         const apps = getApps();

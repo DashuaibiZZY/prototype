@@ -62,7 +62,7 @@
                 kind: isTrial ? 'trial' : 'points',
                 title: isTrial ? '体验金发放名单' : '积分发放名单',
                 searchKey: 'uid_or_wallet',
-                headers: ['uid_or_wallet', isTrial ? 'amount' : 'points'],
+                headers: ['UID', isTrial ? '金额 (USDT)' : '积分'],
                 rows: p.recipients.map(function (r) {
                     return {
                         key: r.uid_or_wallet,
@@ -260,6 +260,31 @@
         return '<div class="col-span-2"><div class="border border-slate-200 rounded-lg px-4 py-2 text-sm">' + listHtml + '</div></div>';
     }
 
+    function renderTrialCardGroupDetailSection(app) {
+        const p = app.payload || {};
+        const g = p.cardGroupDetails || (window.TRIAL_CARD_GROUPS || []).find(function (x) { return x.id === p.cardGroupId; });
+        if (!g) return '';
+        const rows = [
+            ['卡组名称', g.name],
+            ['卡券激活有效期', g.couponValidDays + ' 天'],
+            ['开仓有效期', g.openValidDays + ' 天'],
+            ['亏损抵扣', g.lossEnabled ? '启用 · ' + g.lossPct + '%' : '未启用'],
+            ['手续费抵扣', g.feeEnabled ? '启用 · ' + g.feePct + '%' : '未启用']
+        ];
+        const body = rows.map(function (r) {
+            return '<div class="flex justify-between items-center py-2 border-b border-blue-100 last:border-0"><span class="text-slate-600">' + r[0] + '</span><span class="font-bold text-slate-800">' + r[1] + '</span></div>';
+        }).join('');
+        return '<div class="col-span-2 mt-2"><p class="text-[10px] font-bold text-slate-500 uppercase mb-2">本批次关联卡组</p><div class="border border-blue-100 bg-blue-50/50 rounded-lg px-4 py-2 text-sm">' + body + '</div></div>';
+    }
+
+    function canResubmitApplication(app, opts) {
+        if (!app || app.status !== 'rejected') return false;
+        opts = opts || {};
+        if (opts.allowResubmit === false) return false;
+        const viewer = opts.currentApplicant || app.applicant;
+        return app.applicant === viewer;
+    }
+
     function renderRecipientSection(rootId, app) {
         const dataset = getRecipientDataset(app);
         if (!dataset) return '';
@@ -279,7 +304,7 @@
         const start = (filter.page - 1) * RECIPIENT_PAGE_SIZE;
         const pageRows = rows.slice(start, start + RECIPIENT_PAGE_SIZE);
         const sectionId = recipientSectionId(rootId, app.id);
-        const searchPlaceholder = dataset.searchKey === 'uid' ? '按 UID 查询' : '按 uid_or_wallet 查询';
+        const searchPlaceholder = dataset.searchKey === 'uid' ? '按 UID 查询' : '按 UID 查询';
 
         let html = '<div id="' + sectionId + '" class="mt-4 col-span-2">';
         html += '<div class="flex flex-wrap justify-between items-center gap-3 mb-2">';
@@ -572,7 +597,17 @@
                         ? '<div class="text-sm">' + renderPartnerL1BindDetailSection(app) + '</div>'
                         : app.type === 'partner_ratio_change'
                             ? '<div class="text-sm">' + renderPartnerRatioChangeDetailSection(app) + '</div>'
-                            : '<div class="grid grid-cols-2 gap-3 text-sm">' + renderPayloadMeta(app, opts) + renderRecipientSection(rootId, app) + '</div>';
+                            : app.type === 'trial_issue'
+                                ? '<div class="grid grid-cols-2 gap-3 text-sm">' + renderPayloadMeta(app, opts) + renderTrialCardGroupDetailSection(app) + renderRecipientSection(rootId, app) + '</div>'
+                                : '<div class="grid grid-cols-2 gap-3 text-sm">' + renderPayloadMeta(app, opts) + renderRecipientSection(rootId, app) + '</div>';
+        const canResubmit = canResubmitApplication(app, opts);
+        const resubmitSection = canResubmit
+            ? '<section class="card p-6 border border-amber-200 bg-amber-50/60"><h3 class="font-bold text-amber-900 mb-2">重新提交审批</h3>' +
+            '<p class="text-sm text-amber-900/80 mb-3">已驳回的申请可由申请人基于<strong>原名单与卡组配置</strong>重新发起，审批流将从头开始。</p>' +
+            '<label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">申请备注</label>' +
+            '<textarea id="' + rootId + '-resubmit-remark" rows="2" class="w-full border border-slate-200 rounded-lg p-3 text-sm mb-3">' + (app.remark || '').replace(/</g, '&lt;') + '</textarea>' +
+            '<button type="button" onclick="moduleApprovalResubmit(\'' + rootId + '\',\'' + app.id + '\')" class="w-full py-2.5 bg-amber-600 text-white rounded-lg text-sm font-bold hover:bg-amber-700">基于原内容重新提交</button></section>'
+            : '';
         const typeBadge = state.types.length > 1
             ? '<span class="inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">' + getApprovalTypeLabel(app.type) + '</span>'
             : '';
@@ -589,6 +624,7 @@
             '<div class="space-y-6"><section class="card p-6"><h3 class="font-bold mb-4">审批进度</h3><div>' + renderApprovalFlow(app.status, false, app) + '</div>' + (app.lark ? renderLarkApprovalCard(app) : '') + '</section>' +
             (canAct ? '<section class="card p-6"><h3 class="font-bold mb-4">审批操作</h3><textarea id="' + rootId + '-note" rows="3" class="w-full border border-slate-200 rounded-lg p-3 text-sm mb-4" placeholder="审批意见（驳回时必填）"></textarea><div class="flex gap-2"><button type="button" onclick="moduleApprovalReject(\'' + rootId + '\',\'' + app.id + '\')" class="flex-1 py-2.5 border border-red-200 text-red-600 rounded-lg text-sm font-bold">驳回</button><button type="button" onclick="moduleApprovalApprove(\'' + rootId + '\',\'' + app.id + '\')" class="flex-1 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold">通过</button></div></section>' :
                 '<section class="card p-6"><p class="text-sm text-slate-500 text-center">' + readonlyHint + '</p></section>') +
+            resubmitSection +
             '</div></div>';
     };
 
@@ -637,6 +673,19 @@
         alert('已驳回');
         moduleApprovalShowDetail(rootId, id);
         moduleApprovalRenderList(rootId);
+    };
+
+    window.moduleApprovalResubmit = function (rootId, id) {
+        const state = instances[rootId];
+        const remarkEl = document.getElementById(rootId + '-resubmit-remark');
+        const remark = remarkEl ? remarkEl.value.trim() : '';
+        if (!remark) { alert('请填写申请备注'); return; }
+        const newApp = resubmitApprovalApplication(id, { remark: remark });
+        if (!newApp) { alert('重新提交失败'); return; }
+        alert('已基于原内容重新提交，审批单号 ' + newApp.id);
+        moduleApprovalOpenDetail(rootId, newApp.id);
+        moduleApprovalRenderList(rootId);
+        if (state && state.onResubmit) state.onResubmit(newApp, id);
     };
 
     window.moduleApprovalExportList = function (rootId) {
