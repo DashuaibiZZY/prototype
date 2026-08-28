@@ -4,7 +4,7 @@
 (function () {
     const STORAGE_KEY = 'forx_approval_applications';
     const ROLE_KEY = 'forx_approval_view_role';
-    const SEED_VERSION = '2026-08-28-trial-v1';
+    const SEED_VERSION = '2026-08-28-resubmit-v2';
     const SEED_VERSION_KEY = 'forx_approval_seed_v';
 
     const STEPS = [
@@ -776,6 +776,158 @@
                 timeline: [
                     { at: '2026-07-26 10:30', actor: 'Points_Admin', action: '提交申请', note: '暑期活动批量配置' },
                     { at: '2026-07-26 12:00', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '已与活动方确认' }
+                ]
+            },
+            {
+                id: 'APR20260723033',
+                type: 'points_bonus_config',
+                title: '积分加成配置',
+                applicant: 'Points_Admin',
+                status: 'rejected',
+                createdAt: '2026-07-23 14:10',
+                remark: '误配加成系数',
+                summary: '12 人 · 1.8x 加成 · 误操作批量',
+                payload: {
+                    activityMode: 'custom',
+                    activityName: '误操作批量',
+                    bonusMultiplier: 1.8,
+                    recipientCount: 12,
+                    anomalyCount: 0,
+                    items: [
+                        { uid: '200112', naturalBonus: '1.2x', newBonus: '1.8x', anomaly: false },
+                        { uid: '200445', naturalBonus: '1.1x', newBonus: '1.8x', anomaly: false }
+                    ]
+                },
+                timeline: [
+                    { at: '2026-07-23 14:10', actor: 'Points_Admin', action: '提交申请', note: '误配加成系数' },
+                    { at: '2026-07-23 15:00', actor: 'Mkt_Cross', action: '驳回', note: '加成系数与活动方案不符，请确认后重新提交' }
+                ]
+            },
+            {
+                id: 'APR20260721041',
+                type: 'points_pool_config',
+                title: '积分总池配置',
+                applicant: 'Points_Admin',
+                status: 'rejected',
+                flowProfile: 'cross_risk',
+                createdAt: '2026-07-21 11:20',
+                remark: '误调维度占比',
+                summary: '总池 800,000 · 交易 80% / 有效持仓 5%',
+                payload: {
+                    effectivePeriod: '2026-W29 (07/14 - 07/20)',
+                    before: {
+                        weeklyPool: 1000000,
+                        dimPct: { trade: 60, position: 15, loss: 8, profit: 2, balance: 5, invite: 10 },
+                        minHolding: { duration: 1, unit: 'hour' }
+                    },
+                    after: {
+                        weeklyPool: 800000,
+                        dimPct: { trade: 80, position: 5, loss: 5, profit: 2, balance: 3, invite: 5 },
+                        minHolding: { duration: 1, unit: 'hour' }
+                    },
+                    changes: [
+                        { field: '本周总池（积分）', before: '1,000,000', after: '800,000' },
+                        { field: '交易积分占比', before: '60%', after: '80%' },
+                        { field: '有效持仓积分占比', before: '15%', after: '5%' }
+                    ]
+                },
+                timeline: [
+                    { at: '2026-07-21 11:20', actor: 'Points_Admin', action: '提交申请', note: '误调维度占比' },
+                    { at: '2026-07-21 12:05', actor: 'Mkt_Cross', action: '驳回', note: '总池缩减幅度过大，请核对活动预算后重新提交' }
+                ]
+            },
+            {
+                id: 'APR20260720051',
+                type: 'points_program_switch',
+                title: '积分计划总开关',
+                applicant: 'Points_Admin',
+                status: 'rejected',
+                createdAt: '2026-07-20 16:40',
+                remark: '临时关闭积分计划',
+                summary: '关闭积分计划 · 待活动结束恢复',
+                payload: {
+                    beforeEnabled: true,
+                    afterEnabled: false,
+                    reason: '待活动结束恢复'
+                },
+                timeline: [
+                    { at: '2026-07-20 16:40', actor: 'Points_Admin', action: '提交申请', note: '临时关闭积分计划' },
+                    { at: '2026-07-20 17:10', actor: 'Mkt_Cross', action: '驳回', note: '关闭须附活动负责人确认，请补充说明后重新提交' }
+                ]
+            },
+            {
+                id: 'APR20260721024',
+                type: 'fee_config',
+                title: '用户费率配置',
+                applicant: 'Fee_Admin',
+                status: 'rejected',
+                createdAt: '2026-07-21 09:30',
+                remark: 'VIP1 费率申请',
+                summary: 'UID 10045201 · VIP 1 · 60 天有效',
+                payload: {
+                    activityMode: 'custom',
+                    activityName: 'VIP1 费率优惠',
+                    uid: '10045201',
+                    wallet: '0x9c4e...2b1a',
+                    feeMode: 'vip',
+                    vipLevel: 1,
+                    taker: '0.040%',
+                    maker: '0.015%',
+                    validDays: 60,
+                    attachments: ['VIP证明.png'],
+                    attachmentPreviews: { 'VIP证明.png': feeImg }
+                },
+                timeline: [
+                    { at: '2026-07-21 09:30', actor: 'Fee_Admin', action: '提交申请', note: 'VIP1 费率申请' },
+                    { at: '2026-07-21 10:15', actor: 'Mkt_Cross', action: '驳回', note: '附件不清晰，请重新上传证明后提交' }
+                ]
+            },
+            {
+                id: 'APR20260808092',
+                type: 'partner_l1_bind',
+                title: '一级合伙人绑定（超上限）',
+                applicant: 'Mkt_Allen',
+                status: 'rejected',
+                flowProfile: 'risk_boss',
+                createdAt: '2026-08-08 11:00',
+                remark: '渠道 KOL 83% 谈判',
+                summary: 'UID 100955 · 0xkol8...33ef · 83%',
+                payload: {
+                    uid: '100955',
+                    wallet: '0xkol8...33ef',
+                    ratio: 83,
+                    opsCap: 80,
+                    exceedsCap: true,
+                    attachments: ['KOL合作协议.png'],
+                    attachmentPreviews: { 'KOL合作协议.png': partnerImg1 }
+                },
+                timeline: [
+                    { at: '2026-08-08 11:00', actor: 'Mkt_Allen', action: '提交申请', note: '渠道 KOL 83% 谈判' },
+                    { at: '2026-08-08 12:20', actor: 'Risk_Control', action: '驳回', note: '协议有效期不足，请更新附件后重新提交' }
+                ]
+            },
+            {
+                id: 'APR20260812003',
+                type: 'partner_rebate_migrate',
+                title: '返佣关系迁移',
+                applicant: 'Mkt_Bob',
+                status: 'rejected',
+                flowProfile: 'risk_only',
+                createdAt: '2026-08-12 14:30',
+                remark: '整伞迁移至新一级',
+                summary: '0xMig...Fail → 0xTo...L1 · 62%',
+                payload: {
+                    subjectWallet: '0xMig...Fail',
+                    subjectUid: '200401',
+                    subjectType: 'partner',
+                    targetWallet: '0xTo...L1',
+                    targetUid: '200001',
+                    newRatio: 62,
+                    ratioFixes: [{ wallet: '0xMig...FailBL2', oldRatio: 48, newRatio: 55 }]
+                },
+                timeline: [
+                    { at: '2026-08-12 14:30', actor: 'Mkt_Bob', action: '提交申请', note: '整伞迁移至新一级' },
+                    { at: '2026-08-12 15:10', actor: 'Risk_Control', action: '驳回', note: '目标伞下存在倒挂分支未修正，请调整后重新提交' }
                 ]
             }
         ];
