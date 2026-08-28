@@ -2,6 +2,7 @@
  * 合伙人中心（用户侧）原型交互逻辑
  */
 (function () {
+    const DATA_VERSION = 'partner-user-24';
     const PERIOD_SCALE = { '1D': 0.14, '1W': 1, '1M': 4.2, '3M': 12 };
     const MY_MAX_RATIO = 70;
 
@@ -493,6 +494,7 @@
 
     function renderSettlementTable() {
         let filtered = settlementRecords.filter(function (row) {
+            if (row.status === 'rebate_stopped') return false;
             if (settlementDateFilter && row.date !== settlementDateFilter) return false;
             if (settlementStatusFilter !== 'all' && row.status !== settlementStatusFilter) return false;
             return true;
