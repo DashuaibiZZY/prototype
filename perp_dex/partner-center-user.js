@@ -84,48 +84,12 @@
 
     const subPartnersData = [
         { id: 'sp1', joinDate: '2024-05-12', wallet: '0x3f...12a', walletFull: '0x3f8a2b1c9d4e5f60718293a4b5c6d7e8f9012a', remark: '渠道-小王', ratio: 60, minSubRatio: 45, gap: 10, gapIncome: 1250, totalVol: 12500000, netDeposit: 500000, totalUsers: 3680, activeUsers: 1850, settlementStatus: 'normal', name: '合伙人-小王', hasTeam: true },
-        { id: 'sp2', joinDate: '2024-05-10', wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J', ratio: 50, minSubRatio: 55, gap: 20, gapIncome: 560, totalVol: 16200000, netDeposit: 820000, totalUsers: 850, activeUsers: 120, settlementStatus: 'team_tree_abnormal', abnormalLines: 5, unsettledPausedVol: 86800, name: 'KOL-J', hasTeam: true },
-        { id: 'sp3', joinDate: '2024-05-08', wallet: '0x5c...882', walletFull: '0x5c8821a0b9c8d7e6f504938271605948372618882', remark: '', ratio: 75, minSubRatio: 60, gap: -5, gapIncome: 0, totalVol: 2100000, netDeposit: -120000, totalUsers: 12, activeUsers: 0, settlementStatus: 'direct_inversion', name: '异常合伙人', hasTeam: true },
+        { id: 'sp2', joinDate: '2024-05-10', wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J', ratio: 50, minSubRatio: 40, gap: 20, gapIncome: 560, totalVol: 16200000, netDeposit: 820000, totalUsers: 850, activeUsers: 120, settlementStatus: 'normal', name: 'KOL-J', hasTeam: true },
+        { id: 'sp3', joinDate: '2024-05-08', wallet: '0x5c...882', walletFull: '0x5c8821a0b9c8d7e6f504938271605948372618882', remark: '', ratio: 55, minSubRatio: 40, gap: 15, gapIncome: 320, totalVol: 2100000, netDeposit: -120000, totalUsers: 12, activeUsers: 0, settlementStatus: 'normal', name: '合伙人-C', hasTeam: true },
         { id: 'sp4', joinDate: '2024-05-05', wallet: '0x2a...9f1', walletFull: '0x2a9f1e8d7c6b5a4938271605948372616059489f1', remark: '東南亞渠道', ratio: 55, minSubRatio: 40, gap: 15, gapIncome: 890, totalVol: 8900000, netDeposit: 320000, totalUsers: 620, activeUsers: 180, settlementStatus: 'normal', name: '东南亚渠道', hasTeam: true },
         { id: 'sp5', joinDate: '2024-04-28', wallet: '0x7b...4c2', walletFull: '0x7b4c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4c2', remark: '韓國KOL', ratio: 45, minSubRatio: 30, gap: 25, gapIncome: 2100, totalVol: 22400000, netDeposit: 980000, totalUsers: 1580, activeUsers: 510, settlementStatus: 'normal', name: '韩国KOL', hasTeam: true }
     ];
 
-    const teamTreeAbnormalData = {
-        sp2: [
-            { id: 'line1', title: '异常返佣线 1', summary: '0x8e...55c → 0xBc...4431 → 0x7a...E912', pausedVol: 22000, nodes: [
-                { wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J（直属下级）', ratio: '50%' },
-                { wallet: '0xBc...4431', walletFull: '0xBc4431a2098f7e6d5c4b3a291807f6e5d4c3b4431', remark: '下级合伙人-A', ratio: '55%' },
-                { wallet: '0x7a...E912', walletFull: '0x7aE912f6059483726180a9b8c7d6e5f4a3b2c1912', remark: '交易用户', ratio: '40%' }
-            ]},
-            { id: 'line2', title: '异常返佣线 2', summary: '0x8e...55c → 0xDe...8821 → 0xF1...009a', pausedVol: 18500, nodes: [
-                { wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J（直属下级）', ratio: '50%' },
-                { wallet: '0xDe...8821', walletFull: '0xDe8821a0b9c8d7e6f504938271605948372618821', remark: '下级合伙人-B', ratio: '52%' },
-                { wallet: '0xF1...009a', walletFull: '0xF1009a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3a', remark: '交易用户', ratio: '48%' }
-            ]},
-            { id: 'line3', title: '异常返佣线 3', summary: '0x8e...55c → 0xAa...1102 → 0x22...cc44', pausedVol: 15200, nodes: [
-                { wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J（直属下级）', ratio: '50%' },
-                { wallet: '0xAa...1102', walletFull: '0xAa1102b3c4d5e6f708192a3b4c5d6e7f8091a1102', remark: '下级合伙人-C', ratio: '58%' },
-                { wallet: '0x22...cc44', walletFull: '0x22cc44d5e6f708192a3b4c5d6e7f8091a2b3c4cc44', remark: '交易用户', ratio: '45%' }
-            ]},
-            { id: 'line4', title: '异常返佣线 4', summary: '0x8e...55c → 0x33...dd55 → 0x44...ee66', pausedVol: 12800, nodes: [
-                { wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J（直属下级）', ratio: '50%' },
-                { wallet: '0x33...dd55', walletFull: '0x33dd55e6f708192a3b4c5d6e7f8091a2b3c4d5dd55', remark: '下级合伙人-D', ratio: '54%' },
-                { wallet: '0x44...ee66', walletFull: '0x44ee66f708192a3b4c5d6e7f8091a2b3c4d5e6ee66', remark: '交易用户', ratio: '46%' }
-            ]},
-            { id: 'line5', title: '异常返佣线 5', summary: '0x8e...55c → 0x55...ff77 → 0x66...0088', pausedVol: 12300, nodes: [
-                { wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J（直属下级）', ratio: '50%' },
-                { wallet: '0x55...ff77', walletFull: '0x55ff7708192a3b4c5d6e7f8091a2b3c4d5e6f7ff77', remark: '下级合伙人-E', ratio: '53%' },
-                { wallet: '0x66...0088', walletFull: '0x660088192a3b4c5d6e7f8091a2b3c4d5e6f70880088', remark: '交易用户', ratio: '47%' }
-            ]}
-        ],
-        sp1_b: [
-            { id: 'line1', title: '异常返佣线 1', summary: '0x9c...a12 → 0x1d...b34 → 0x2e...c56', pausedVol: 280000, nodes: [
-                { wallet: '0x9c...a12', walletFull: '0x9ca12b34c56d78e90f1234567890abcdef9ca12', remark: '下级合伙人-X', ratio: '48%' },
-                { wallet: '0x1d...b34', walletFull: '0x1db34c56d78e90f1234567890abcdef1db34c56', remark: '下级合伙人-Y', ratio: '52%' },
-                { wallet: '0x2e...c56', walletFull: '0x2ec56d78e90f1234567890abcdef2ec56d78', remark: '交易用户', ratio: '44%' }
-            ]}
-        ]
-    };
 
     const directClientsData = [
         { joinDate: '2024-05-20', wallet: '0x99...F4d2', walletFull: '0x99F4d2a1b0c9d8e7f6059483726180a9b8c7d6e5', totalVol: 42500, totalFee: 42.50, rebate: 29.75, netDeposit: 5200 },
@@ -149,7 +113,7 @@
             abnormalText: null,
             subPartners: [
                 { id: 'sp1_a', joinDate: '2024-05-11', wallet: '0x4a...b21', walletFull: '0x4ab21c32d54e67f8091a2b3c4d5e6f70891a2b21', ratio: 45, gap: 15, gapIncome: 420, totalVol: 4200000, netDeposit: 180000, totalUsers: 920, activeUsers: 310, settlementStatus: 'normal', name: '二级-KOL', hasTeam: true },
-                { id: 'sp1_b', joinDate: '2024-05-09', wallet: '0x9c...a12', walletFull: '0x9ca12b34c56d78e90f1234567890abcdef9ca12', ratio: 50, gap: 10, gapIncome: 120, totalVol: 3100000, netDeposit: 95000, totalUsers: 480, activeUsers: 85, settlementStatus: 'team_tree_abnormal', abnormalLines: 1, unsettledPausedVol: 280000, name: '下级-X', hasTeam: true },
+                { id: 'sp1_b', joinDate: '2024-05-09', wallet: '0x9c...a12', walletFull: '0x9ca12b34c56d78e90f1234567890abcdef9ca12', ratio: 50, gap: 10, gapIncome: 120, totalVol: 3100000, netDeposit: 95000, totalUsers: 480, activeUsers: 85, settlementStatus: 'normal', name: '下级-X', hasTeam: true },
             ],
             directClients: [
                 { joinDate: '2024-05-19', wallet: '0x11...aa01', walletFull: '0x11aa01bb02cc03dd04ee05ff06gg07hh08ii01', totalVol: 52000, totalFee: 52.00, rebate: 36.40, netDeposit: 8000 },
@@ -186,9 +150,9 @@
             superiorWallet: myPartnerProfile.wallet,
             superiorWalletFull: myPartnerProfile.walletFull,
             overview: { teamVol: 16200000, totalRebate: 8400, selfRebate: 150, directRebate: 900, gapRebate: 6650, teamNetDeposit: 820000, totalUsers: 850, activeUsers: 120 },
-            abnormalText: '检测到 5 条异常返佣线，暂停结算交易额 $620,000。',
+            abnormalText: null,
             subPartners: [
-                { id: 'sp2_a', joinDate: '2024-05-06', wallet: '0xBc...4431', walletFull: '0xBc4431a2098f7e6d5c4b3a291807f6e5d4c3b4431', ratio: 40, gap: 10, gapIncome: 0, totalVol: 5200000, netDeposit: 210000, totalUsers: 380, activeUsers: 55, settlementStatus: 'team_tree_abnormal', abnormalLines: 2, unsettledPausedVol: 340000, name: '下级-A', hasTeam: false }
+                { id: 'sp2_a', joinDate: '2024-05-06', wallet: '0xBc...4431', walletFull: '0xBc4431a2098f7e6d5c4b3a291807f6e5d4c3b4431', ratio: 40, gap: 10, gapIncome: 0, totalVol: 5200000, netDeposit: 210000, totalUsers: 380, activeUsers: 55, settlementStatus: 'normal', name: '下级-A', hasTeam: false }
             ],
             directClients: [
                 { joinDate: '2024-05-13', wallet: '0x44...dd04', walletFull: '0x44dd04ee05ff06gg07hh08ii09jj10kk11ll04', totalVol: 72000, totalFee: 72.00, rebate: 50.40, netDeposit: 9800 }
@@ -594,17 +558,6 @@
         if (activeUserEl) activeUserEl.innerHTML = fmtNum(activeUsers) + ' <span class="text-base font-bold text-gray-600">交易用户</span>';
         set('drill-users-total', fmtNum(o.totalUsers) + ' 总用户');
 
-        const banner = document.getElementById('drill-abnormal-banner');
-        const bannerText = document.getElementById('drill-abnormal-text');
-        if (banner && bannerText) {
-            if (team.abnormalText) {
-                banner.classList.remove('hidden');
-                bannerText.textContent = team.abnormalText;
-            } else {
-                banner.classList.add('hidden');
-            }
-        }
-
         updatePeriodButtons('drill-period-btn', drillPeriod);
         renderPartnerIdentityBar('drill-my-superior', 'drill-my-ratio', {
             superiorLevel: team.superiorLevel || 2,
@@ -619,30 +572,15 @@
     }
 
     function settlementStatusCell(row, scale, masked) {
-        if (row.settlementStatus === 'direct_inversion') {
-            return '<span class="text-[10px] text-red-500 font-bold leading-snug">⚠️ 返佣比例已高于您，请立即调整</span>';
-        }
-        if (row.settlementStatus === 'team_tree_abnormal') {
-            const n = row.abnormalLines || 1;
-            const pausedVol = row.unsettledPausedVol ? fmtMoney(row.unsettledPausedVol * scale) : '';
-            const label = '⚠️ 返佣树异常 ' + n + '条' + (pausedVol ? ' · 交易额' + pausedVol + '停结' : '');
-            return '<button type="button" onclick="PartnerCenter.openTeamTreeModal(\'' + row.id + '\', ' + masked + ')" class="text-[10px] text-amber-700 font-bold underline hover:text-amber-900 text-left">' + label + '</button>';
-        }
         return '<span class="text-[10px] text-gray-400">—</span>';
     }
 
     function gapIncomeCell(row, scale) {
         const gapIncome = row.gapIncome * scale;
-        if (row.settlementStatus === 'direct_inversion' && !gapIncome) {
-            return '<span class="font-black text-slate-400 italic">-- 暂停结算</span>';
-        }
         if (gapIncome) {
             return '<span class="font-black text-blue-600">' + fmtMoney(gapIncome) + '</span>';
         }
-        if (row.settlementStatus === 'team_tree_abnormal') {
-            return '<span class="font-black text-slate-400 italic">-- 暂停结算</span>';
-        }
-        return '<span class="font-black text-slate-400 italic">-- 暂停结算</span>';
+        return '<span class="font-black text-slate-400 italic">—</span>';
     }
 
     function matchUserSearch(row, q) {
@@ -747,13 +685,12 @@
         if (!tbody) return;
 
         tbody.innerHTML = sliced.items.map(function (row) {
-            const isDirectBad = row.settlementStatus === 'direct_inversion';
             const activeUsers = Math.round(row.activeUsers * Math.min(scale, 1.2));
             const gapIncome = row.gapIncome * scale;
             const vol = row.totalVol * scale;
-            const rowClass = isDirectBad ? 'bg-red-50/30' : 'hover:bg-slate-50';
-            const ratioClass = isDirectBad ? 'text-red-600 underline font-black' : 'text-gray-700 font-bold';
-            const gapClass = row.gap < 0 ? 'bg-red-100 text-red-600 font-black px-2 py-0.5 rounded-sm' : 'gap-tag';
+            const rowClass = 'hover:bg-slate-50';
+            const ratioClass = 'text-gray-700 font-bold';
+            const gapClass = 'gap-tag';
 
             let actionHtml = '';
             if (masked) {
@@ -772,7 +709,7 @@
                 '<td class="px-6 py-4 text-center"><span class="' + gapClass + '">' + row.gap + '%</span></td>' +
                 '<td class="px-6 py-4">' + settlementStatusCell(row, scale, masked) + '</td>' +
                 '<td class="px-6 py-4 text-right">' + gapIncomeCell(row, scale) + '</td>' +
-                '<td class="px-6 py-4 text-right font-bold' + (isDirectBad ? ' text-gray-400' : '') + '">' + fmtMoney(vol) + '</td>' +
+                '<td class="px-6 py-4 text-right font-bold">' + fmtMoney(vol) + '</td>' +
                 '<td class="px-6 py-4 text-right font-bold text-green-500">' + fmtMoney(row.netDeposit, { signed: true }) + '</td>' +
                 '<td class="px-6 py-4 text-center">' + userScaleCell(activeUsers, row.totalUsers) + '</td>' +
                 '<td class="px-6 py-4 text-right">' + actionHtml + '</td>' +
@@ -888,7 +825,7 @@
                 totalUsers: row.totalUsers,
                 activeUsers: row.activeUsers
             },
-            abnormalText: row.settlementStatus === 'team_tree_abnormal' ? '团队存在异常返佣线，部分交易额暂停结算。' : null,
+            abnormalText: null,
             subPartners: [],
             directClients: [
                 { joinDate: row.joinDate, wallet: '0x' + partnerId.slice(-2) + '...d01', walletFull: '0x' + partnerId + 'demo01', totalVol: Math.round(row.totalVol * 0.08), totalFee: Math.round(row.totalVol * 0.00008), rebate: Math.round(row.gapIncome * 0.3), netDeposit: Math.round(row.netDeposit * 0.1) }
@@ -991,12 +928,9 @@
     }
 
     function renderTeamTreeModalBody(partnerId) {
-        const lines = teamTreeAbnormalData[partnerId] || [];
         const body = document.getElementById('team-tree-modal-body');
         if (!body) return;
-        body.innerHTML = lines.map(function (line) {
-            return renderTeamTreeLine(line, partnerId, teamTreeExpanded, teamTreeModalMasked);
-        }).join('');
+        body.innerHTML = '<p class="text-gray-400 text-center py-6">暂无团队树明细</p>';
     }
 
     function openTeamTreeModal(partnerId, masked) {
@@ -1005,7 +939,7 @@
         const subtitle = document.getElementById('team-tree-modal-subtitle');
         if (subtitle && partner) {
             const wallet = partner.wallet || '';
-            subtitle.textContent = wallet + ' · 共 ' + (partner.abnormalLines || linesCount(partnerId)) + ' 条异常线';
+            subtitle.textContent = wallet;
         }
         teamTreeExpanded = {};
         renderTeamTreeModalBody(partnerId);
@@ -1019,18 +953,12 @@
         return team.subPartners.find(function (r) { return r.id === id; });
     }
 
-    function linesCount(partnerId) {
-        return (teamTreeAbnormalData[partnerId] || []).length;
-    }
 
     function updateAdjustRatioWarning(ratio, partner) {
         const warn = document.getElementById('adjust-ratio-warning');
         if (!warn || !partner) return;
         const minSub = partner.minSubRatio || 0;
-        if (ratio < minSub) {
-            warn.classList.remove('hidden');
-            warn.innerHTML = '当前设置 <strong>' + ratio + '%</strong> 低于其下级最高比例 <strong>' + minSub + '%</strong>，将触发返佣倒挂并暂停相关交易额结算。请确认已与下级沟通后再调整。';
-        } else if (ratio > MY_MAX_RATIO) {
+        if (ratio > MY_MAX_RATIO) {
             warn.classList.remove('hidden');
             warn.textContent = '返佣比例不能超过您的最高比例 ' + MY_MAX_RATIO + '%。';
         } else {

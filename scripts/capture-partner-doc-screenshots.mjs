@@ -38,24 +38,6 @@ const shots = [
     clipHeight: 720,
   },
   {
-    file: 'admin-partner-detail-abnormal.png',
-    url: ADMIN_HTML,
-    hash: 'partner-detail',
-    before: 'PartnerPortal.showDetail("p_a1")',
-    selector: '#page-partner-detail',
-    viewport: { w: 1440, h: 900 },
-    clipHeight: 720,
-  },
-  {
-    file: 'admin-modal-abnormal-list.png',
-    url: ADMIN_HTML,
-    hash: 'partner-detail',
-    before: '(() => { PartnerPortal.showDetail("p_a1"); PartnerPortal.openAbnormalModal(); })()',
-    selector: '#modal-abnormal-list > div',
-    viewport: { w: 1440, h: 900 },
-    clipHeight: 520,
-  },
-  {
     file: 'admin-modal-team-tree.png',
     url: ADMIN_HTML,
     hash: 'partner-detail',
@@ -107,7 +89,7 @@ const shots = [
     url: ADMIN_HTML,
     hash: 'migrate',
     before:
-      '(() => { document.getElementById("migrate-subject-input").value = "0xMig...Abn"; document.getElementById("migrate-target-input").value = "0xTo...L1"; document.getElementById("migrate-ratio-input").value = 58; PartnerPortal.previewMigrate(); })()',
+      '(() => { document.getElementById("migrate-subject-input").value = "0xMig...Ok"; document.getElementById("migrate-target-input").value = "0xTo...L1"; document.getElementById("migrate-ratio-input").value = 52; PartnerPortal.previewMigrate(); })()',
     selector: '#migrate-preview-section',
     viewport: { w: 1440, h: 900 },
     clipHeight: 720,
