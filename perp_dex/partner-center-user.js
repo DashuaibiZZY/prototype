@@ -2,7 +2,7 @@
  * 合伙人中心（用户侧）原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-user-24';
+    const DATA_VERSION = 'partner-user-25';
     const PERIOD_SCALE = { '1D': 0.14, '1W': 1, '1M': 4.2, '3M': 12 };
     const MY_MAX_RATIO = 70;
 
@@ -56,7 +56,7 @@
         { date: '2024-05-22', vol: 1240000, rebate: 868, status: 'settled' },
         { date: '2024-05-21', vol: 980000, rebate: 686, status: 'settled' },
         { date: '2024-05-20', vol: 86800, rebate: 61, status: 'pending' },
-        { date: '2024-05-19', vol: 820000, rebate: 1345.23, violationDeduction: 342.23, status: 'settled' },
+        { date: '2024-05-19', vol: 820000, rebate: 1003, violationDeduction: 342.23, status: 'pending' },
         { date: '2024-05-18', vol: 650000, rebate: 455, status: 'settled' },
         { date: '2024-05-17', vol: 420000, rebate: 294, status: 'pending' },
         { date: '2024-05-16', vol: 380000, rebate: 266, status: 'settled' },
@@ -882,8 +882,10 @@
                 '<td class="px-6 py-4 text-right font-bold">' + fmtMoney(fee) + '</td>' +
                 '<td class="px-6 py-4 text-right font-black text-blue-600">' + fmtMoney(rebate) + '</td>' +
                 '<td class="px-6 py-4 text-right font-bold text-green-500">' + fmtMoney(row.netDeposit, { signed: true }) + '</td>' +
-                '<td class="px-6 py-4 text-right space-x-2">' +
+                '<td class="px-6 py-4 text-right space-x-2 whitespace-nowrap">' +
                 '<button type="button" onclick="PartnerCenter.copyText(\'' + jsEsc(linkUrl) + '\', \'邀请链接\')" class="text-blue-600 font-black hover:underline">複製連結</button>' +
+                '<button class="text-gray-300">|</button>' +
+                '<button type="button" onclick="openSharePoster(\'' + jsEsc(row.code) + '\')" class="text-gray-900 font-black hover:underline">分享海报</button>' +
                 '<button class="text-gray-300">|</button>' +
                 '<button type="button" onclick="openReferralModal(\'edit\', \'' + row.remark.replace(/'/g, "\\'") + '\', \'' + row.code + '\')" class="text-gray-400 hover:text-black">修改備註</button>' +
                 '</td></tr>';
