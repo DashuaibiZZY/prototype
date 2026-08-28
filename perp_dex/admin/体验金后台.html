@@ -105,14 +105,17 @@
             <div>
               <label class="block text-xs font-bold text-slate-500 uppercase mb-2">UID,金额（每行一个，英文逗号分隔）</label>
               <textarea id="issueManualInput" placeholder="10023456,100&#10;10023457,250" class="w-full h-40 border border-slate-200 rounded-lg p-3 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-              <p class="text-[10px] text-slate-400 font-bold mt-2">单次最多批量配置 <strong>1000</strong> 条；提交前将执行批量配置 UID 有效性检查。</p>
+              <p class="text-[10px] text-slate-400 font-bold mt-2">单次最多批量配置 <strong>1000</strong> 条；提交时将校验 UID，无效行单独提示，有效名单正常进入审批。</p>
             </div>
           </div>
           <div id="issue-excel" class="hidden py-16 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center">
             <p class="text-sm text-slate-500 font-bold mb-2">拖拽 Excel 文件至此或点击上传</p>
             <span class="text-[10px] text-slate-400">表头须为：<strong>UID,金额</strong>（英文逗号分隔列名；也兼容 uid, amount）</span>
-            <p class="text-[10px] text-slate-400 mt-2">单次最多批量配置 <strong>1000</strong> 条；上传后提交前将执行 UID 有效性检查。</p>
+            <p class="text-[10px] text-slate-400 mt-2">单次最多批量配置 <strong>1000</strong> 条；提交时将校验 UID，无效行单独提示，有效名单正常进入审批。</p>
             <button class="mt-4 bg-slate-100 px-4 py-2 rounded text-xs font-bold text-slate-600">选择文件</button>
+          </div>
+          <div class="rounded-lg border border-amber-100 bg-amber-50 p-3 text-[11px] text-amber-900 leading-relaxed">
+            <b>原型演示 · UID 校验模拟数据（方式 2 Excel）：</b>有效 <code class="font-mono">100891,250</code>、<code class="font-mono">100234,100</code>（合计 2 人 · 350 USDT）；无效 <code class="font-mono">99990001,120</code>、<code class="font-mono">88880002,80</code>（用户不存在）。提交后有效名单进入审批弹窗，无效行在错误预览弹窗展示并支持 CSV 下载。
           </div>
           <div class="rounded-lg border border-blue-100 bg-blue-50 p-3 text-[11px] text-blue-900 leading-relaxed">
             <b>奖励记录关联：</b>选择「自定义活动名称」后须配置四种语言奖励名称；发放到账后写入用户端「奖励记录」（奖励类型：体验金）。
@@ -300,7 +303,10 @@
     </div>
 
     <!-- 发放审批 -->
-    <div id="page-approval" class="hidden">
+    <div id="page-approval" class="hidden space-y-4">
+      <div class="rounded-lg border border-amber-100 bg-amber-50 p-3 text-[11px] text-amber-900 leading-relaxed max-w-5xl">
+        <b>原型演示 · 驳回重提：</b>列表默认筛选「已驳回」。打开 <code class="font-mono">APR20260718005</code> 可查看卡组快照与发放名单，底部支持申请人基于原内容重新提交（模拟交叉审核驳回：有效名单金额与活动预算不符）。
+      </div>
       <div id="trial-approval-root"></div>
     </div>
   </div>
@@ -362,8 +368,9 @@
 <div id="modal-issue-uid-errors" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
   <div class="bg-white rounded-2xl shadow-2xl w-[640px] max-h-[85vh] overflow-hidden flex flex-col">
     <div class="px-6 py-5 border-b">
-      <h3 class="text-lg font-bold text-red-600">批量配置 UID 有效性检查未通过</h3>
+      <h3 id="issueUidErrorTitle" class="text-lg font-bold text-red-600">部分 UID 校验未通过</h3>
       <p id="issueUidErrorSummary" class="text-sm text-slate-500 mt-1"></p>
+      <p id="issueUidValidSummary" class="text-sm text-green-700 font-bold mt-2 hidden"></p>
     </div>
     <div class="p-6 overflow-y-auto flex-1">
       <div class="border border-red-100 rounded-lg overflow-hidden">
@@ -381,9 +388,10 @@
       </div>
       <div id="issueUidErrorPagination" class="mt-3"></div>
     </div>
-    <div class="p-5 bg-slate-50 flex gap-3 border-t">
+    <div class="p-5 bg-slate-50 flex flex-wrap gap-3 border-t">
       <button type="button" onclick="downloadInvalidIssueUidsCsv()" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-700">下载错误 UID（CSV）</button>
-      <button type="button" onclick="closeModal('modal-issue-uid-errors')" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">返回修改</button>
+      <button type="button" onclick="closeModal('modal-issue-uid-errors')" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">返回修改</button>
+      <button type="button" id="issueUidContinueBtn" onclick="continueIssueWithValidRecipients()" class="hidden flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold min-w-[200px]">继续提交有效名单</button>
     </div>
   </div>
 </div>
@@ -860,6 +868,21 @@
   let issueInvalidUidPage = 1;
   const ISSUE_UID_ERROR_PAGE_SIZE = 10;
   let pendingIssueRecipients = [];
+  let pendingIssueAct = null;
+
+  function issueRecipientTotal(recipients) {
+    let total = 0;
+    recipients.forEach(function (r) { total += parseFloat(r.amount) || 0; });
+    return total;
+  }
+
+  function splitValidInvalidRecipients(recipients) {
+    const invalid = validateIssueUidBatch(recipients);
+    const invalidLineSet = {};
+    invalid.forEach(function (r) { invalidLineSet[r.line] = true; });
+    const valid = recipients.filter(function (r) { return !invalidLineSet[r.line]; });
+    return { valid: valid, invalid: invalid };
+  }
 
   function cardGroupSnapshot(group) {
     if (!group) return null;
@@ -917,7 +940,7 @@
     return invalid;
   }
 
-  function renderIssueUidErrorTable() {
+  function renderIssueUidErrorTable(validRecipients) {
     const tbody = document.getElementById('issueUidErrorBody');
     const total = issueInvalidUidRows.length;
     const totalPages = Math.max(1, Math.ceil(total / ISSUE_UID_ERROR_PAGE_SIZE));
@@ -927,12 +950,35 @@
     tbody.innerHTML = pageRows.map(function (r) {
       return '<tr><td class="px-4 py-2 text-slate-500">' + r.line + '</td><td class="px-4 py-2 font-mono font-bold">' + r.uid + '</td><td class="px-4 py-2 text-right">' + r.amount + '</td><td class="px-4 py-2 text-red-600 font-bold">' + r.reason + '</td></tr>';
     }).join('');
-    document.getElementById('issueUidErrorSummary').textContent = '共 ' + total + ' 条无效 UID，请修正后重新提交。';
+
+    const validCount = validRecipients ? validRecipients.length : 0;
+    const validTotal = validRecipients ? issueRecipientTotal(validRecipients) : 0;
+    const titleEl = document.getElementById('issueUidErrorTitle');
+    const summaryEl = document.getElementById('issueUidErrorSummary');
+    const validSummaryEl = document.getElementById('issueUidValidSummary');
+    const continueBtn = document.getElementById('issueUidContinueBtn');
+
+    if (validCount > 0) {
+      titleEl.textContent = '部分 UID 校验未通过';
+      titleEl.className = 'text-lg font-bold text-amber-600';
+      summaryEl.textContent = '共 ' + total + ' 条无效 UID 已剔除，不会进入审批；有效名单将正常提交。';
+      validSummaryEl.textContent = '有效发放：' + validCount + ' 人 · ' + validTotal.toLocaleString() + ' USDT';
+      validSummaryEl.classList.remove('hidden');
+      continueBtn.textContent = '继续提交有效名单（' + validCount + ' 人 · ' + validTotal.toLocaleString() + ' USDT）';
+      continueBtn.classList.remove('hidden');
+    } else {
+      titleEl.textContent = 'UID 校验未通过';
+      titleEl.className = 'text-lg font-bold text-red-600';
+      summaryEl.textContent = '共 ' + total + ' 条无效 UID，无有效名单可提交，请修正后重试。';
+      validSummaryEl.classList.add('hidden');
+      continueBtn.classList.add('hidden');
+    }
+
     const pagEl = document.getElementById('issueUidErrorPagination');
     if (window.AdminPagination) {
       AdminPagination.register('issue-uid-errors', function (p) {
         issueInvalidUidPage = p;
-        renderIssueUidErrorTable();
+        renderIssueUidErrorTable(validRecipients);
       });
       pagEl.innerHTML = AdminPagination.html(total, issueInvalidUidPage, ISSUE_UID_ERROR_PAGE_SIZE, 'issue-uid-errors');
     } else {
@@ -940,10 +986,10 @@
     }
   }
 
-  function showIssueInvalidUidModal(rows) {
-    issueInvalidUidRows = rows;
+  function showIssueInvalidUidModal(invalidRows, validRecipients) {
+    issueInvalidUidRows = invalidRows;
     issueInvalidUidPage = 1;
-    renderIssueUidErrorTable();
+    renderIssueUidErrorTable(validRecipients || null);
     openModal('modal-issue-uid-errors');
   }
 
@@ -983,27 +1029,23 @@
       alert('单次最多批量配置 ' + ISSUE_BATCH_MAX + ' 条，当前 ' + recipients.length + ' 条');
       return null;
     }
-    const invalid = validateIssueUidBatch(recipients);
-    if (invalid.length) {
-      showIssueInvalidUidModal(invalid);
+    const split = splitValidInvalidRecipients(recipients);
+    if (!split.valid.length) {
+      showIssueInvalidUidModal(split.invalid, null);
       return null;
     }
-    pendingIssueRecipients = recipients;
-    return { recipients: recipients, act: act };
+    pendingIssueRecipients = split.valid;
+    pendingIssueAct = act;
+    return { recipients: split.valid, act: act, invalid: split.invalid };
   }
 
   function getIssueRecipients() {
     return pendingIssueRecipients.length ? pendingIssueRecipients : parseIssueRecipients();
   }
 
-  function openIssueApprovalModal() {
-    const prepared = prepareIssueRecipientsForSubmit();
-    if (!prepared) return;
-    const recipients = prepared.recipients;
-    const act = prepared.act;
+  function openIssueApprovalModalWithData(recipients, act) {
     const g = CARD_GROUPS.find(function (x) { return x.id === selectedGroupId; });
-    let totalAmount = 0;
-    recipients.forEach(function (r) { totalAmount += parseFloat(r.amount) || 0; });
+    const totalAmount = issueRecipientTotal(recipients);
     document.getElementById('approvalRecipientCount').innerText = recipients.length + ' 人';
     document.getElementById('approvalTotalAmount').innerText = totalAmount.toLocaleString() + ' USDT';
     document.getElementById('approvalGroupName').innerText = g ? g.name : '-';
@@ -1011,6 +1053,27 @@
     document.getElementById('issueApprovalFlow').innerHTML = renderApprovalFlow('draft', true);
     document.getElementById('issueApprovalRemark').value = '';
     openModal('modal-issue-approval');
+  }
+
+  function openIssueApprovalModal() {
+    const prepared = prepareIssueRecipientsForSubmit();
+    if (!prepared) return;
+    if (prepared.invalid.length) {
+      showIssueInvalidUidModal(prepared.invalid, prepared.recipients);
+      return;
+    }
+    openIssueApprovalModalWithData(prepared.recipients, prepared.act);
+  }
+
+  function continueIssueWithValidRecipients() {
+    if (!pendingIssueRecipients.length) return;
+    const act = pendingIssueAct || getActivityPickerValue('issue-act');
+    if (!act.valid) {
+      alert(act.message);
+      return;
+    }
+    closeModal('modal-issue-uid-errors');
+    openIssueApprovalModalWithData(pendingIssueRecipients, act);
   }
 
   function submitIssueApproval() {
@@ -1021,8 +1084,7 @@
     const g = CARD_GROUPS.find(function (x) { return x.id === selectedGroupId; });
     const inputMode = document.getElementById('issue-excel').classList.contains('hidden') ? 'manual' : 'excel';
     const recipients = getIssueRecipients();
-    let totalAmount = 0;
-    recipients.forEach(function (r) { totalAmount += parseFloat(r.amount) || 0; });
+    const totalAmount = issueRecipientTotal(recipients);
     const totalStr = totalAmount.toLocaleString() + ' USDT';
     submitApprovalApplication({
       type: 'trial_issue',
@@ -1089,7 +1151,7 @@
   renderTrialUserTable(TRIAL_USERS);
   renderTrialLogs(TRIAL_LOGS);
   mountActivityPicker('issue-activity-picker', { prefix: 'issue-act', defaultMode: 'custom', defaultRewardNames: { 'zh-CN': 'KOL 合作体验金', 'zh-TW': 'KOL 合作體驗金', 'en': 'KOL Trial Bonus', 'ja': 'KOL 体験金' } });
-  initModuleApproval({ type: 'trial_issue', rootId: 'trial-approval-root', title: '体验金发放审批', showExportList: false, showExportDetail: true, currentApplicant: 'Trial_Admin', allowResubmit: true });
+  initModuleApproval({ type: 'trial_issue', rootId: 'trial-approval-root', title: '体验金发放审批', showExportList: false, showExportDetail: true, currentApplicant: 'Trial_Admin', allowResubmit: true, defaultViewMode: 'all', defaultStatusFilter: 'rejected' });
 </script>
 <script src="admin-permission-registry.js"></script>
 <script src="admin-permission-store.js"></script>

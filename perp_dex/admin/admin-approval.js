@@ -4,7 +4,7 @@
 (function () {
     const STORAGE_KEY = 'forx_approval_applications';
     const ROLE_KEY = 'forx_approval_view_role';
-    const SEED_VERSION = '2026-08-11-partner-v6';
+    const SEED_VERSION = '2026-08-28-trial-v1';
     const SEED_VERSION_KEY = 'forx_approval_seed_v';
 
     const STEPS = [
@@ -234,7 +234,7 @@
                 status: 'rejected',
                 createdAt: '2026-07-18 16:20',
                 remark: 'KOL 渠道补发体验金',
-                summary: '80 人 · 8,000 USDT · 社区 KOL 合作激励',
+                summary: '78 人 · 7,880 USDT · 社区 KOL 合作激励',
                 payload: {
                     activityMode: 'custom',
                     activityName: '社区 KOL 合作激励',
@@ -244,17 +244,22 @@
                         id: 'g2', name: 'KOL大额专属组', couponValidDays: 14, openValidDays: 60,
                         lossEnabled: true, lossPct: 30, feeEnabled: true, feePct: 15
                     },
-                    recipientCount: 80,
-                    totalAmount: '8,000 USDT',
+                    recipientCount: 78,
+                    totalAmount: '7,880 USDT',
                     inputMode: 'excel',
+                    invalidRecipientCount: 2,
+                    invalidRecipients: [
+                        { uid_or_wallet: '99990001', amount: '120', reason: '用户不存在' },
+                        { uid_or_wallet: '88880002', amount: '80', reason: '用户不存在' }
+                    ],
                     recipients: [
                         { uid_or_wallet: '100234', amount: '100' },
-                        { uid_or_wallet: '99990088', amount: '120' }
+                        { uid_or_wallet: '100891', amount: '250' }
                     ]
                 },
                 timeline: [
-                    { at: '2026-07-18 16:20', actor: 'Trial_Admin', action: '提交申请', note: 'KOL 渠道补发体验金' },
-                    { at: '2026-07-18 17:05', actor: 'Mkt_Cross', action: '驳回', note: '名单含无效 UID，请修正后重新提交' }
+                    { at: '2026-07-18 16:20', actor: 'Trial_Admin', action: '提交申请', note: 'KOL 渠道补发体验金（含 2 条无效 UID 已剔除）' },
+                    { at: '2026-07-18 17:05', actor: 'Mkt_Cross', action: '驳回', note: '有效名单金额与活动预算不符，请修正后重新提交' }
                 ]
             },
             {
