@@ -285,6 +285,22 @@
         return app.applicant === viewer;
     }
 
+    function getResubmitHint(app) {
+        if (app.type === 'trial_issue') {
+            return '已驳回的申请可由申请人基于<strong>原名单与卡组配置</strong>重新发起，审批流将从头开始；<strong>仅可修改申请备注</strong>。';
+        }
+        if (app.type === 'fee_config' || app.type === 'partner_l1_bind' || app.type === 'partner_ratio_change') {
+            return '已驳回的申请可由申请人基于<strong>原配置内容</strong>重新发起，审批流将从头开始；<strong>仅可修改申请备注</strong>。';
+        }
+        if (app.type === 'partner_rebate_migrate') {
+            return '已驳回的申请可由申请人基于<strong>原迁移方案</strong>重新发起，审批流将从头开始；<strong>仅可修改申请备注</strong>。';
+        }
+        if (app.type === 'points_pool_config' || app.type === 'points_program_switch') {
+            return '已驳回的申请可由申请人基于<strong>原配置变更</strong>重新发起，审批流将从头开始；<strong>仅可修改申请备注</strong>。';
+        }
+        return '已驳回的申请可由申请人基于<strong>原名单与配置</strong>重新发起，审批流将从头开始；<strong>仅可修改申请备注</strong>。';
+    }
+
     function renderRecipientSection(rootId, app) {
         const dataset = getRecipientDataset(app);
         if (!dataset) return '';
@@ -388,6 +404,7 @@
 
     window.initModuleApproval = function (options) {
         options = options || {};
+        if (options.allowResubmit !== false) options.allowResubmit = true;
         const types = resolveTypes(options);
         const rootId = options.rootId || 'module-approval-root';
         const title = options.title || '审批管理';
@@ -611,7 +628,7 @@
         const canResubmit = canResubmitApplication(app, opts);
         const resubmitSection = canResubmit
             ? '<section class="card p-6 border border-amber-200 bg-amber-50/60"><h3 class="font-bold text-amber-900 mb-2">重新提交审批</h3>' +
-            '<p class="text-sm text-amber-900/80 mb-3">已驳回的申请可由申请人基于<strong>原名单与卡组配置</strong>重新发起，审批流将从头开始。</p>' +
+            '<p class="text-sm text-amber-900/80 mb-3">' + getResubmitHint(app) + '</p>' +
             '<label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">申请备注</label>' +
             '<textarea id="' + rootId + '-resubmit-remark" rows="2" class="w-full border border-slate-200 rounded-lg p-3 text-sm mb-3">' + (app.remark || '').replace(/</g, '&lt;') + '</textarea>' +
             '<button type="button" onclick="moduleApprovalResubmit(\'' + rootId + '\',\'' + app.id + '\')" class="w-full py-2.5 bg-amber-600 text-white rounded-lg text-sm font-bold hover:bg-amber-700">基于原内容重新提交</button></section>'
