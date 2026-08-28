@@ -41,18 +41,25 @@
 <script>
 const FRIENDS = [
     {
-        addr: '0xd593...Dd2', reg: '2025-11-01',
+        uid: '10023456', addr: '0xd593...Dd2', reg: '2025-11-01',
         volTotal: '1,250,400.00', vol30: '50,400.00', commission: '+125.04', dim: false
     },
     {
-        addr: '0x882a...ba1', reg: '2025-10-28',
+        uid: '10023457', email: 'kol.demo@forx.io', reg: '2025-10-28',
         volTotal: '45,000.50', vol30: '12,000.50', commission: '+4.50', dim: false
     },
     {
-        addr: '0x4e21...9C11', reg: '2025-10-15',
+        uid: '10023458', addr: '0x4e21...9C11', reg: '2025-10-15',
         volTotal: '0.00', vol30: '0.00', commission: '+0.00', dim: true, commissionMuted: true
     }
 ];
+
+function friendIdentity(f) {
+    const secondary = f.addr
+        ? '<p class="text-[10px] text-gray-400 font-bold font-mono">' + f.addr + '</p>'
+        : (f.email ? '<p class="text-[10px] text-gray-400 font-bold">' + f.email + '</p>' : '');
+    return '<p class="text-[13px] font-black text-gray-900 tracking-tight">' + f.uid + '</p>' + secondary;
+}
 
 function friendRow(f) {
     const commissionCls = f.commissionMuted ? 'text-gray-400' : 'text-blue-600';
@@ -60,7 +67,7 @@ function friendRow(f) {
         <div class="p-5 flex flex-col active-tap transition-colors ${f.dim ? 'opacity-70' : ''}">
             <div class="flex justify-between items-start mb-4">
                 <div class="space-y-1">
-                    <p class="text-[13px] font-black text-gray-900 font-mono tracking-tight">${f.addr}</p>
+                    ${friendIdentity(f)}
                     <p class="text-[10px] text-gray-400 font-bold">註冊時間: <span class="text-gray-500">${f.reg}</span></p>
                 </div>
             </div>
@@ -130,7 +137,7 @@ function screenHtml(showSortSheet = false) {
                 <div class="flex items-center space-x-3">
                     <div class="flex-1 relative bg-gray-100 rounded-xl px-4 py-2.5 flex items-center">
                         <svg class="w-3.5 h-3.5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2.5"/></svg>
-                        <input type="text" placeholder="搜索錢包地址" class="bg-transparent border-none text-[11px] w-full focus:ring-0 outline-none placeholder-gray-400 font-bold" readonly>
+                        <input type="text" placeholder="搜索 UID / 錢包 / 郵箱" class="bg-transparent border-none text-[11px] w-full focus:ring-0 outline-none placeholder-gray-400 font-bold" readonly>
                     </div>
                     <button type="button" class="bg-gray-50 p-2.5 rounded-xl border border-gray-100 ${showSortSheet ? 'bg-gray-200' : ''}">
                         <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

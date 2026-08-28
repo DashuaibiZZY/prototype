@@ -55,9 +55,9 @@
 
 <script>
 const FRIENDS = [
-    { addr: '0xd593...Dd2', reg: '2025-11-01', volTotal: '1,250,400.00', vol30: '50,400.00', commission: '+125.04' },
-    { addr: '0x882a...ba1', reg: '2025-10-28', volTotal: '45,000.50', vol30: '12,000.50', commission: '+4.50' },
-    { addr: '0x4e21...9C11', reg: '2025-10-15', volTotal: '12,800.00', vol30: '0.00', commission: '+1.28' }
+    { uid: '10023456', addr: '0xd593...Dd2', reg: '2025-11-01', volTotal: '1,250,400.00', vol30: '50,400.00', commission: '+125.04' },
+    { uid: '10023457', email: 'kol.demo@forx.io', reg: '2025-10-28', volTotal: '45,000.50', vol30: '12,000.50', commission: '+4.50' },
+    { uid: '10023458', addr: '0x4e21...9C11', reg: '2025-10-15', volTotal: '12,800.00', vol30: '0.00', commission: '+1.28' }
 ];
 
 const FAQ_ITEMS = [
@@ -114,7 +114,11 @@ function friendTableHtml(sortField = null, sortOrder = 'desc', empty = false) {
 
     const rows = FRIENDS.map(f => `
         <tr class="hover:bg-gray-50/50 transition-colors">
-            <td class="px-6 py-4 font-black text-gray-900">${f.addr}</td>
+            <td class="px-6 py-4">
+                <div class="font-black text-gray-900">${f.uid}</div>
+                ${f.addr ? '<div class="text-[10px] text-gray-400 font-bold font-mono mt-0.5">' + f.addr + '</div>' : ''}
+                ${f.email ? '<div class="text-[10px] text-gray-400 font-bold mt-0.5">' + f.email + '</div>' : ''}
+            </td>
             <td class="px-6 py-4 text-gray-400 font-bold">${f.reg}</td>
             <td class="px-6 py-4 text-right font-bold text-gray-700">${f.volTotal}</td>
             <td class="px-6 py-4 text-right font-bold text-gray-700">${f.vol30}</td>
@@ -127,14 +131,14 @@ function friendTableHtml(sortField = null, sortOrder = 'desc', empty = false) {
                 <span class="text-[11px] font-black uppercase tracking-widest text-black border-b-2 border-black h-14 flex items-center">直邀好友明細</span>
                 <div class="relative flex items-center">
                     <svg class="w-3.5 h-3.5 text-gray-400 absolute left-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    <input type="text" placeholder="搜尋錢包地址" readonly class="bg-gray-50 border border-gray-100 text-[11px] font-bold rounded-sm py-1.5 pl-9 pr-3 w-64 outline-none placeholder-gray-400">
+                    <input type="text" placeholder="搜尋 UID / 錢包 / 郵箱" readonly class="bg-gray-50 border border-gray-100 text-[11px] font-bold rounded-sm py-1.5 pl-9 pr-3 w-64 outline-none placeholder-gray-400">
                 </div>
             </div>
             <div class="overflow-x-auto scrollbar-hide">
                 <table class="w-full text-left text-[11px]">
                     <thead class="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-tighter border-b border-gray-100">
                         <tr>
-                            <th class="px-6 py-4">錢包地址</th>
+                            <th class="px-6 py-4">UID</th>
                             <th class="px-6 py-4">註冊時間</th>
                             ${th('累計貢獻交易量 (USDT)', 'volume_total')}
                             ${th('過去30日交易量 (USDT)', 'volume_30d')}

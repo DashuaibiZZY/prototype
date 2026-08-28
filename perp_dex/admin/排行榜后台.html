@@ -42,8 +42,8 @@
         <section class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm space-y-3">
             <div class="grid grid-cols-12 gap-3 items-end">
                 <div class="col-span-2">
-                    <label class="input-label">地址模糊搜索</label>
-                    <input type="text" id="filter-address" placeholder="0x..." class="search-input w-full">
+                    <label class="input-label">UID / 钱包 / 邮箱</label>
+                    <input type="text" id="filter-address" placeholder="输入 UID、钱包或邮箱" class="search-input w-full">
                 </div>
                 <div class="col-span-2">
                     <label class="input-label">目标榜单</label>
@@ -122,7 +122,7 @@
             <table class="w-full text-left">
                 <thead class="bg-slate-50 text-slate-400 font-black text-[10px] uppercase border-b border-slate-100">
                 <tr>
-                    <th class="px-6 py-4">影子地址</th>
+                    <th class="px-6 py-4">UID / 影子地址</th>
                     <th class="px-6 py-4">目标榜单</th>
                     <th class="px-6 py-4 text-center">目标排名要求</th>
                     <th class="px-6 py-4 text-center">当前状态</th>
@@ -265,6 +265,7 @@
         {
             id: 1,
             address: '0x7a8b...C443',
+            uid: '10033401',
             targetType: 'platform',
             activityId: '',
             activityName: '',
@@ -284,6 +285,7 @@
         {
             id: 2,
             address: '0x3f21...9A12',
+            uid: '10033402',
             targetType: 'activity',
             activityId: 'act-001',
             activityName: 'ForX嘉年华交易大赛',
@@ -309,6 +311,7 @@
             var st = statuses[i % 3];
             shadowRows.push({
                 id: i,
+                uid: '10033' + String(400 + i),
                 address: '0xShad' + String(i).padStart(2, '0') + '...' + (1000 + i),
                 targetType: i % 2 === 0 ? 'activity' : 'platform',
                 activityId: i % 2 === 0 ? 'act-002' : '',
@@ -375,7 +378,10 @@
         const activityName = document.getElementById('filter-activity-name').value.trim().toLowerCase();
 
         const filtered = shadowRows.filter(row => {
-            if (address && !row.address.toLowerCase().includes(address)) return false;
+            if (address) {
+                const hay = [row.uid, row.address].filter(Boolean).join(' ').toLowerCase();
+                if (!hay.includes(address)) return false;
+            }
             if (targetType !== 'all' && row.targetType !== targetType) return false;
             if (targetType === 'activity' && activityName && !(row.activityName || '').toLowerCase().includes(activityName)) return false;
             return true;
@@ -407,7 +413,7 @@
 
         tbody.innerHTML = sliced.items.map(row => `
             <tr class="hover:bg-slate-50/50 transition-colors">
-                <td class="px-6 py-4">${window.AdminCopyChip ? AdminCopyChip.wallet(row.address) : '<span class="font-mono font-black text-slate-900 block text-[12px]">' + row.address + '</span>'}</td>
+                <td class="px-6 py-4">${window.AdminCopyChip ? AdminCopyChip.userIdentity({ uid: row.uid, wallet: row.address }) : '<span class="font-black text-slate-900 block text-[12px]">' + (row.uid || '—') + '</span><span class="font-mono text-[10px] text-slate-400 block">' + row.address + '</span>'}</td>
                 <td class="px-6 py-4">${renderTargetCell(row)}</td>
                 <td class="px-6 py-4 text-[10px] font-bold space-y-1">
                     <div class="flex justify-between"><span>PnL:</span><span class="text-blue-600">${row.pnl}</span></div>

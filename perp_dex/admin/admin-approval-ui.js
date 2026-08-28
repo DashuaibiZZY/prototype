@@ -395,11 +395,11 @@
         const gridCols = showTypeColumn ? 'grid-cols-6' : (singleUserConfig ? 'grid-cols-5' : 'grid-cols-5');
         const typeHeader = showTypeColumn ? '<th class="px-3 py-3 text-xs font-bold text-slate-500">类型</th>' : '';
         const walletUidHeaders = singleUserConfig
-            ? '<th class="px-3 py-3 text-xs font-bold text-slate-500">钱包地址</th><th class="px-3 py-3 text-xs font-bold text-slate-500">UID</th>'
+            ? '<th class="px-3 py-3 text-xs font-bold text-slate-500">UID</th><th class="px-3 py-3 text-xs font-bold text-slate-500">钱包 / 邮箱</th>'
             : '';
         const activityHeader = singleUserConfig ? '' : '<th class="px-3 py-3 text-xs font-bold text-slate-500">活动</th>';
         const activityFilter = singleUserConfig
-            ? '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID / 钱包地址</label><input id="' + rootId + '-filter-wallet-uid" type="text" placeholder="输入 UID 或钱包" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm" oninput="moduleApprovalRenderList(\'' + rootId + '\')"></div>'
+            ? '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID / 钱包 / 邮箱</label><input id="' + rootId + '-filter-wallet-uid" type="text" placeholder="输入 UID、钱包或邮箱" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm" oninput="moduleApprovalRenderList(\'' + rootId + '\')"></div>'
             : '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">活动名称</label><input id="' + rootId + '-filter-activity" type="text" placeholder="模糊匹配" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm" oninput="moduleApprovalRenderList(\'' + rootId + '\')"></div>';
 
         const roleTabsHtml = approvalRoles.map(function (r) {
@@ -513,7 +513,7 @@
             const walletCell = window.AdminCopyChip ? AdminCopyChip.wallet(su.wallet) : su.wallet;
             const uidCell = window.AdminCopyChip ? AdminCopyChip.uid(su.uid) : su.uid;
             const walletUidCells = state.options.singleUserConfig
-                ? '<td class="px-3 py-3">' + walletCell + '</td><td class="px-3 py-3">' + uidCell + '</td>'
+                ? '<td class="px-3 py-3">' + uidCell + '</td><td class="px-3 py-3">' + walletCell + '</td>'
                 : '';
             const activityCell = state.options.singleUserConfig ? '' : '<td class="px-3 py-3 max-w-[140px] truncate" title="' + formatApprovalActivity(app.payload) + '">' + formatApprovalActivity(app.payload) + '</td>';
             return '<tr class="hover:bg-slate-50"><td class="px-4 py-3 font-mono text-[11px] font-bold">' + app.id + '</td>' + typeCell +
