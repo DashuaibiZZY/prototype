@@ -135,8 +135,9 @@
     <div class="section-title">后台页面</div>
     <div id="permTables"></div>
     <div id="agentCapBox" class="hidden mt-3 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
-      <label class="text-sm font-bold text-blue-900">一级合伙人返佣比例上限（%）</label>
-      <input id="editAgentCap" type="number" min="1" max="100" class="mt-2 w-32 border border-blue-200 rounded-lg px-3 py-2 text-sm block">
+      <label class="text-sm font-bold text-blue-900">一级合伙人返佣比例上限（%）<span class="text-red-600">*</span></label>
+      <p class="text-[11px] text-blue-800/80 mt-1">勾选「合伙人管理 · 写」时必填；绑定一级合伙人时不得超过此上限。</p>
+      <input id="editAgentCap" type="number" min="1" max="100" required class="mt-2 w-32 border border-blue-200 rounded-lg px-3 py-2 text-sm block" placeholder="如 70">
     </div>
   </div>
   <div class="px-6 py-4 border-t border-slate-100 flex justify-end gap-2 shrink-0">
@@ -334,6 +335,11 @@
           if (w) w.checked = false;
         }
         $('agentCapBox').classList.toggle('hidden', !(editChecks['agent.mgmt'] && editChecks['agent.mgmt'].write));
+        if (editChecks['agent.mgmt'] && editChecks['agent.mgmt'].write) {
+          $('editAgentCap').required = true;
+        } else {
+          $('editAgentCap').required = false;
+        }
       });
     });
   }
@@ -360,6 +366,7 @@
     $('permTables').innerHTML = buildPermTables(superA);
     if (!superA) bindPermCheckboxes();
     $('agentCapBox').classList.toggle('hidden', superA || !(editChecks['agent.mgmt'] && editChecks['agent.mgmt'].write));
+    $('editAgentCap').required = !superA && !!(editChecks['agent.mgmt'] && editChecks['agent.mgmt'].write);
     $('drawer-backdrop').classList.add('open');
     $('drawer-edit').classList.add('open');
   }
@@ -390,7 +397,7 @@
       u.pagePerms = perms;
       if (editChecks['agent.mgmt'] && editChecks['agent.mgmt'].write) {
         var cap = parseInt($('editAgentCap').value, 10);
-        if (!cap || cap < 1) { alert('请填写一级合伙人返佣比例上限'); return; }
+        if (!cap || cap < 1 || cap > 100) { alert('已勾选「合伙人管理 · 写」，请填写一级合伙人返佣比例上限（1–100 的整数）'); return; }
         u.agentMaxRebate = cap;
       } else u.agentMaxRebate = null;
     }
