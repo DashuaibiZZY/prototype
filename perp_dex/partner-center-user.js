@@ -54,12 +54,12 @@
         { date: '2024-05-23', vol: 0, rebate: 0, status: 'pending' },
         { date: '2024-05-22', vol: 1240000, rebate: 868, status: 'settled' },
         { date: '2024-05-21', vol: 980000, rebate: 686, status: 'settled' },
-        { date: '2024-05-20', vol: 86800, rebate: 0, status: 'rebate_stopped' },
+        { date: '2024-05-20', vol: 86800, rebate: 61, status: 'pending' },
         { date: '2024-05-19', vol: 820000, rebate: 1345.23, violationDeduction: 342.23, status: 'settled' },
         { date: '2024-05-18', vol: 650000, rebate: 455, status: 'settled' },
         { date: '2024-05-17', vol: 420000, rebate: 294, status: 'pending' },
         { date: '2024-05-16', vol: 380000, rebate: 266, status: 'settled' },
-        { date: '2024-05-15', vol: 125000, rebate: 0, status: 'rebate_stopped' },
+        { date: '2024-05-15', vol: 125000, rebate: 88, status: 'settled' },
         { date: '2024-05-14', vol: 290000, rebate: 203, status: 'settled' },
         { date: '2024-05-13', vol: 510000, rebate: 357, status: 'settled' },
         { date: '2024-05-12', vol: 0, rebate: 0, status: 'pending' }
@@ -480,7 +480,6 @@
     function settlementStatusLabel(status) {
         if (status === 'pending') return '<span class="text-amber-600 font-bold">待结算</span>';
         if (status === 'settled') return '<span class="text-green-600 font-bold">已结算</span>';
-        if (status === 'rebate_stopped') return '<span class="text-red-500 font-bold">返佣异常停止结算</span>';
         return '<span class="text-gray-400">—</span>';
     }
 
@@ -514,7 +513,7 @@
         const tbody = document.getElementById('settlement-table-body');
         if (tbody) {
             tbody.innerHTML = sliced.items.map(function (row) {
-                const rowClass = row.status === 'rebate_stopped' ? 'bg-red-50/30' : (row.status === 'pending' ? 'bg-amber-50/30' : 'hover:bg-slate-50');
+                const rowClass = row.status === 'pending' ? 'bg-amber-50/30' : 'hover:bg-slate-50';
                 return '<tr class="' + rowClass + ' transition-colors">' +
                     '<td class="px-6 py-4 text-gray-900">' + row.date + '</td>' +
                     '<td class="px-6 py-4 text-right text-gray-700">' + fmtMoney(row.vol) + '</td>' +
