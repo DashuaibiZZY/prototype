@@ -2,7 +2,7 @@
  * 合伙人中心（用户侧）原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-user-25';
+    const DATA_VERSION = 'partner-user-26';
     const PERIOD_SCALE = { '1D': 0.14, '1W': 1, '1M': 4.2, '3M': 12 };
     const MY_MAX_RATIO = 70;
 
@@ -672,7 +672,9 @@
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'gapIncome\')">贡献级差收入' + sortIconHtml('gapIncome', sortState) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'totalVol\')">总交易额' + sortIconHtml('totalVol', sortState) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'netDeposit\')">总净入金' + sortIconHtml('netDeposit', sortState) + '</th>' +
-                '<th class="px-6 py-4 text-center cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'tradeUsers\')">用户规模' + sortIconHtml('tradeUsers', sortState) + '</th>' +
+                '<th class="px-6 py-4 text-center cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'tradeUsers\')">' +
+                (masked ? '用户规模' : '<span class="user-scale-hint" title="交易用户数据每天UTC+8 0点更新">用户规模</span>') +
+                sortIconHtml('tradeUsers', sortState) + '</th>' +
                 '<th class="px-6 py-4 text-right">操作</th>' +
                 '</tr>';
         }

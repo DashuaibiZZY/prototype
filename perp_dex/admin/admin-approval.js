@@ -1210,7 +1210,7 @@
             risk: '风控通过',
             boss: '老板审批通过'
         };
-        return updateApp(id, function (app) {
+        const result = updateApp(id, function (app) {
             const profile = getFlowProfile(app);
             app.timeline.push({
                 at: new Date().toISOString().slice(0, 16).replace('T', ' '),
@@ -1243,6 +1243,12 @@
                 }
             }
         });
+        if (result && result.status === 'approved' &&
+            (result.type === 'partner_l1_bind' || result.type === 'partner_ratio_change' || result.type === 'partner_rebate_migrate') &&
+            typeof window.applyPartnerApprovalEffect === 'function') {
+            window.applyPartnerApprovalEffect(result);
+        }
+        return result;
     };
 
     window.rejectApplication = function (id, role, note) {
@@ -1263,7 +1269,7 @@
     };
 
     window.simulateLarkApprove = function (id) {
-        return updateApp(id, function (app) {
+        const result = updateApp(id, function (app) {
             if (!app.lark || app.status !== 'pending_boss') return;
             app.lark.status = 'approved';
             app.status = 'approved';
@@ -1274,6 +1280,12 @@
                 note: '通过 Lark 审批完成'
             });
         });
+        if (result && result.status === 'approved' &&
+            (result.type === 'partner_l1_bind' || result.type === 'partner_ratio_change' || result.type === 'partner_rebate_migrate') &&
+            typeof window.applyPartnerApprovalEffect === 'function') {
+            window.applyPartnerApprovalEffect(result);
+        }
+        return result;
     };
 
     window.exportApprovalListCsv = function (list) {

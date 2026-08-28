@@ -255,7 +255,7 @@
             <section class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm space-y-4">
                 <div>
                     <h2 class="text-base font-black text-slate-900">迁移返佣关系</h2>
-                    <p class="text-[11px] text-slate-500 mt-1">输入待迁移用户后系统自动识别类型（普通用户 / 代理用户），填写目标上级与返佣比例后预览。</p>
+                    <p class="text-[11px] text-slate-500 mt-1">输入待迁移用户后系统自动识别类型（普通用户 / 代理用户）。普通用户须选择迁移后身份；仅「下级代理」须填写返佣比例。</p>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
@@ -266,11 +266,25 @@
                         <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">迁移到上级合伙人</label>
                         <input id="migrate-target-input" type="text" placeholder="目标上级 UID" class="border rounded px-3 py-2 w-full text-[11px] outline-none focus:ring-1 focus:ring-blue-600" oninput="PartnerPortal.previewMigrate()">
                     </div>
-                    <div>
+                    <div id="migrate-ratio-wrap">
                         <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">设置返佣比例 (%)</label>
                         <input id="migrate-ratio-input" type="number" min="1" max="80" step="1" class="border rounded px-3 py-2 w-full text-[11px] outline-none focus:ring-1 focus:ring-blue-600" oninput="PartnerPortal.previewMigrate()">
                         <p id="migrate-ratio-hint" class="text-[10px] text-slate-500 mt-1"></p>
                     </div>
+                </div>
+                <div id="migrate-plain-role-wrap" class="hidden rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-2">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase">迁移后身份（普通用户）</p>
+                    <div class="flex flex-wrap gap-4 text-[11px] font-bold text-slate-700">
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="migrate-plain-role" value="direct_client" checked class="accent-blue-600" onchange="PartnerPortal.previewMigrate()">
+                            成为下级直客
+                        </label>
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="migrate-plain-role" value="sub_partner" class="accent-blue-600" onchange="PartnerPortal.previewMigrate()">
+                            成为下级代理（合伙人）
+                        </label>
+                    </div>
+                    <p class="text-[10px] text-slate-500">选择「下级直客」无需配置返佣比例；选择「下级代理」须填写上方返佣比例。</p>
                 </div>
                 <div id="migrate-subject-card" class="hidden bg-slate-50 border border-slate-200 rounded-lg p-4 text-[11px]"></div>
                 <div class="text-[10px] text-slate-400 border-t pt-3 space-y-1">
@@ -321,7 +335,7 @@
             </div>
             <div id="tree-pending-bar" class="hidden"></div>
             <div class="bg-white rounded-lg border border-slate-200 p-4">
-                <p class="text-[11px] text-slate-600 mb-3 bg-slate-50 border border-slate-100 rounded p-3"><strong>运营操作：</strong>上级链已固定展示；下级默认只显示直属合伙人，点 <strong>+</strong> 展开下一层。下级返佣比例须低于其直属上级；多条修改后在树上方<strong>提交修改</strong>，权限内立即生效，超上限走审批。</p>
+                <p class="text-[11px] text-slate-600 mb-3 bg-slate-50 border border-slate-100 rounded p-3"><strong>运营操作：</strong>上级链已固定展示；下级默认只显示直属合伙人，点 <strong>+</strong> 展开下一层。下级返佣比例须低于其直属上级；多条修改后在树上方<strong>提交修改</strong>，权限内<strong>即刻生效</strong>，超上限走审批且<strong>审批通过后即刻生效</strong>。</p>
                 <div class="flex flex-wrap gap-2 items-center mb-3">
                     <input id="tree-search-input" type="text" placeholder="UID / 钱包 / 邮箱 快速定位" class="border border-slate-200 rounded-lg px-3 py-2 text-[11px] w-64 max-w-full outline-none focus:ring-1 focus:ring-blue-500" onkeydown="if(event.key==='Enter')PartnerPortal.searchRebateTree()">
                     <button type="button" onclick="PartnerPortal.searchRebateTree()" class="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-[11px]">定位</button>
@@ -744,7 +758,7 @@
 <script src="admin-sidebar.js"></script>
 <script src="admin-approval.js"></script>
 <script src="admin-approval-ui.js"></script>
-<script src="admin-partner-portal.js?v=partner-demo-23"></script>
+<script src="admin-partner-portal.js?v=partner-demo-24"></script>
 <script>
     initModuleApproval({
         types: ['partner_l1_bind', 'partner_ratio_change', 'partner_rebate_migrate'],

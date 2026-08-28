@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-23';
+    const DATA_VERSION = 'partner-demo-24';
     const RECONCILIATION_DOWNLOAD_COOLDOWN_MS = 10 * 60 * 1000;
     let lastReconciliationDownloadAt = 0;
 
@@ -527,7 +527,7 @@
                 '<th class="px-3 py-3 text-right">贡献级差收入</th>' +
                 '<th class="px-3 py-3 text-right">总交易额</th>' +
                 '<th class="px-3 py-3 text-right">总净入金</th>' +
-                '<th class="px-3 py-3 text-center">用户规模</th>' +
+                '<th class="px-3 py-3 text-center"><span class="border-b border-dashed border-slate-400 cursor-help" title="交易用户数据每天UTC+8 0点更新">用户规模</span></th>' +
                 '<th class="px-3 py-3 text-right">操作</th>' +
                 '</tr>';
         }
@@ -908,7 +908,7 @@
             '<div><p class="font-black text-sm">待提交修改 (' + pendingRatioChanges.length + ')</p>' +
             '<ul class="text-[10px] mt-2 space-y-1">' +
             pendingRatioChanges.map(function (c) {
-                const tag = c.newRatio > OPS_CAP ? '<span class="text-amber-300">[需审批]</span>' : '<span class="text-green-300">[立即生效]</span>';
+                const tag = c.newRatio > OPS_CAP ? '<span class="text-amber-300">[需审批]</span>' : '<span class="text-green-300">[即刻生效]</span>';
                 return '<li>' + chip(c.wallet, 'wallet') + ' ' + c.oldRatio + '% → ' + c.newRatio + '% ' + tag + '</li>';
             }).join('') +
             '</ul></div>' +
@@ -1222,7 +1222,7 @@
         pendingRatioChanges.forEach(function (c) {
             const tag = c.newRatio > OPS_CAP
                 ? '<span class="text-amber-700 font-bold">超权限 · 提交审批</span>'
-                : '<span class="text-green-700 font-bold">权限内 · 立即生效</span>';
+                : '<span class="text-green-700 font-bold">权限内 · 即刻生效</span>';
             html += '<li class="border-b border-slate-100 pb-2">' + chip(c.wallet, 'wallet') + '：' + c.oldRatio + '% → <b>' + c.newRatio + '%</b> <span class="block text-[10px] mt-0.5">' + tag + '</span></li>';
         });
         html += '</ul>';
@@ -1232,7 +1232,7 @@
         } else if (exceed.length) {
             html += '<p class="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded p-3">全部修改均超过运营权限上限 ' + OPS_CAP + '%，提交后将进入审批流程。</p>';
         } else {
-            html += '<p class="text-[11px] text-green-800 bg-green-50 border border-green-100 rounded p-3">全部修改在权限内，确认后将立即生效。</p>';
+            html += '<p class="text-[11px] text-green-800 bg-green-50 border border-green-100 rounded p-3">全部修改在权限内，确认后将<strong>即刻生效</strong>。</p>';
         }
         body.innerHTML = html;
         document.getElementById('modal-tree-confirm').classList.remove('hidden');
@@ -1379,8 +1379,8 @@
         if (hasBoth) {
             msg = '已提交 ' + exceed.length + ' 项超上限审批；' + within.length + ' 项权限内修改已放弃。';
         } else {
-            if (within.length) msg += within.length + ' 项已立即生效。';
-            if (exceed.length) msg += exceed.length + ' 项已提交审批。';
+            if (within.length) msg += within.length + ' 项已即刻生效。';
+            if (exceed.length) msg += exceed.length + ' 项已提交审批，审批通过后将即刻生效。';
         }
         alert(msg || '已提交');
         pendingRatioChanges = [];
@@ -1488,11 +1488,77 @@
                     attachmentPreviews: attachmentPreviews
                 }
             });
-            alert('已提交审批');
+            alert('已提交审批，审批通过后将即刻生效（演示）');
         } else {
-            alert('绑定成功（演示）' + (attachmentNames.length ? '，已附 ' + attachmentNames.length + ' 张图片' : ''));
+            applyL1BindPayload({
+                uid: uid || '—', wallet: wallet, ratio: ratio, opsCap: OPS_CAP, exceedsCap: false
+            });
+            alert('绑定成功，已即刻生效（演示）' + (attachmentNames.length ? '，已附 ' + attachmentNames.length + ' 张图片' : ''));
         }
         closeBindModal();
+    }
+
+    function findUserByWalletOrUid(wallet, uid) {
+        return USERS.find(function (u) {
+            return (wallet && wallet !== '—' && u.wallet === wallet) || (uid && uid !== '—' && u.uid === uid);
+        });
+    }
+
+    function applyL1BindPayload(p) {
+        if (!p) return;
+        const wallet = p.wallet && p.wallet !== '—' ? p.wallet : ('0xBind...' + String(p.uid || 'new').slice(-4));
+        let u = findUserByWalletOrUid(p.wallet, p.uid);
+        if (u) {
+            u.ratio = p.ratio;
+            if (u.level !== 1) {
+                u.level = 1;
+                u.parentWallet = null;
+                u.rootWallet = u.wallet;
+            }
+        } else {
+            USERS.push({
+                id: 'p_bind_' + Date.now(),
+                wallet: wallet,
+                uid: p.uid || '—',
+                note: '绑定·一级合伙人',
+                level: 1,
+                ratio: p.ratio,
+                parentWallet: null,
+                rootWallet: wallet,
+                operator: 'allen@forx.fi',
+                bindTime: new Date().toISOString().slice(0, 10),
+                settleStatus: 'normal',
+                vol: '$0', deposit: '+$0', usersTotal: 0, usersActive: 0,
+                net: '$0', netHint: '', rebateTotal: '$0', rebateSelf: '$0', rebateDirect: '$0', rebateGap: '$0',
+                activeSubPartners: 0, totalSubPartners: 0, childIds: [], directClients: [], settlements: []
+            });
+        }
+        renderPartnerList();
+        refreshTree();
+    }
+
+    function applyPartnerApprovalEffect(app) {
+        if (!app || app.status !== 'approved') return;
+        const p = app.payload || {};
+        if (app.type === 'partner_ratio_change') {
+            const u = findUserByWalletOrUid(p.wallet, p.uid);
+            if (u && p.newRatio != null) {
+                u.ratio = p.newRatio;
+                refreshTree();
+                renderPartnerList();
+                if (currentUserId) {
+                    const cu = getUser(currentUserId);
+                    if (cu && document.getElementById('page-partner-detail') && !document.getElementById('page-partner-detail').classList.contains('hidden')) {
+                        renderPartnerDetailMirror(cu);
+                    }
+                    if (cu && document.getElementById('page-partner-detail-drill') && !document.getElementById('page-partner-detail-drill').classList.contains('hidden')) {
+                        renderPartnerDrillMirror(cu);
+                    }
+                }
+            }
+        } else if (app.type === 'partner_l1_bind') {
+            applyL1BindPayload(p);
+        }
     }
 
     function getBatchRows(date) {
@@ -2144,6 +2210,34 @@
         return MIGRATE_PLAIN_USERS.find(function (p) { return matchWalletOrUid(q, p.wallet, p.uid); });
     }
 
+    function getMigratePlainRole() {
+        const el = document.querySelector('input[name="migrate-plain-role"]:checked');
+        return el ? el.value : 'direct_client';
+    }
+
+    function isMigratePlainAsPartner() {
+        return migrateState.preview && migrateState.preview.type === 'plain' && getMigratePlainRole() === 'sub_partner';
+    }
+
+    function needsMigrateRatio(preview) {
+        if (!preview) return true;
+        return !(preview.type === 'plain' && preview.plainRole === 'direct_client');
+    }
+
+    function getMigrateRatioInputValue(preview) {
+        if (!needsMigrateRatio(preview)) return null;
+        const ratioVal = parseFloat(document.getElementById('migrate-ratio-input') && document.getElementById('migrate-ratio-input').value);
+        return isNaN(ratioVal) ? null : ratioVal;
+    }
+
+    function updateMigratePlainRoleUI() {
+        const roleWrap = document.getElementById('migrate-plain-role-wrap');
+        const ratioWrap = document.getElementById('migrate-ratio-wrap');
+        const isPlain = migrateState.preview && migrateState.preview.type === 'plain';
+        if (roleWrap) roleWrap.classList.toggle('hidden', !isPlain);
+        if (ratioWrap) ratioWrap.classList.toggle('hidden', isPlain && !isMigratePlainAsPartner());
+    }
+
     function findMigrateAgentUser(key) {
         const q = (key || '').trim();
         if (!q) return null;
@@ -2232,8 +2326,9 @@
     function buildMigratePreview(subject) {
         if (subject.type === 'plain') {
             const plain = subject.plainUser;
+            const plainRole = getMigratePlainRole();
             return {
-                type: 'plain', label: subject.label, plainUser: plain,
+                type: 'plain', label: subject.label, plainUser: plain, plainRole: plainRole,
                 agentChain: [], directClients: (plain.directClients || []).map(function (c) {
                     return { wallet: c.wallet, uid: c.uid || '', owner: plain.wallet };
                 })
@@ -2272,14 +2367,16 @@
             return errors;
         }
         if (isNaN(ratioVal) || ratioVal <= 0) {
-            errors.push('请填写有效的返佣比例');
-            return errors;
-        }
-        if (ratioVal > target.ratio) {
-            errors.push('迁移用户比例 ' + ratioVal + '% 高于上级 ' + target.wallet + ' 的 ' + target.ratio + '%');
-        }
-        if (ratioVal > OPS_CAP) {
-            errors.push('返佣比例超过运营权限上限 ' + OPS_CAP + '%');
+            if (!(preview.type === 'plain' && getMigratePlainRole() === 'direct_client')) {
+                errors.push('请填写有效的返佣比例');
+            }
+        } else {
+            if (ratioVal > target.ratio) {
+                errors.push('迁移用户比例 ' + ratioVal + '% 高于上级 ' + target.wallet + ' 的 ' + target.ratio + '%');
+            }
+            if (ratioVal > OPS_CAP) {
+                errors.push('返佣比例超过运营权限上限 ' + OPS_CAP + '%');
+            }
         }
 
         if (preview.type === 'partner' && preview.partnerUser) {
@@ -2409,11 +2506,16 @@
         const target = findMigrateTargetPartner(targetKey);
         let html = '';
         if (target) {
-            html += '<p class="font-bold text-slate-800">新上级：' + chip(target.wallet, 'wallet') + ' (' + target.ratio + '%) · 迁移主体比例：' + (isNaN(ratioVal) ? '—' : ratioVal + '%') + '</p>';
+            const ratioText = (p.type === 'plain' && p.plainRole === 'direct_client')
+                ? '无需配置比例'
+                : (isNaN(ratioVal) ? '—' : ratioVal + '%');
+            html += '<p class="font-bold text-slate-800">新上级：' + chip(target.wallet, 'wallet') + ' (' + target.ratio + '%) · 迁移主体比例：' + ratioText + '</p>';
         } else if (targetKey) {
             html += '<p class="text-amber-700 font-bold">未找到目标上级，演示可试 0xTo...L1 或 0xTo...L2</p>';
         }
         if (p.type === 'plain') {
+            const roleLabel = p.plainRole === 'sub_partner' ? '下级代理（合伙人）' : '下级直客';
+            html += '<p class="text-slate-600 mt-2">迁移后身份：<strong>' + roleLabel + '</strong></p>';
             const clients = p.directClients;
             const clientPag = paginate(clients, migrateState.clientsPage || 1);
             migrateState.clientsPage = clientPag.page;
@@ -2482,6 +2584,9 @@
         document.getElementById('migrate-submit-footer').classList.add('hidden');
         const hint = document.getElementById('migrate-ratio-hint');
         if (hint) hint.textContent = '';
+        const roleDirect = document.querySelector('input[name="migrate-plain-role"][value="direct_client"]');
+        if (roleDirect) roleDirect.checked = true;
+        updateMigratePlainRoleUI();
         updateMigrateSubmitState();
     }
 
@@ -2497,8 +2602,10 @@
             '<span class="bg-slate-900 text-white px-2 py-0.5 rounded text-[10px] font-black">系统自动识别：' + subject.label + '</span></div>';
         if (preview.type === 'plain') {
             const p = preview.plainUser;
+            const roleLabel = preview.plainRole === 'sub_partner' ? '下级代理（合伙人）' : '下级直客';
             html += '<p class="font-black text-slate-800">' + chip(p.wallet, 'wallet') + ' · ' + chip(p.uid, 'uid') + '</p>' +
-                '<p class="text-slate-600 mt-1">' + p.note + ' · 直客 ' + preview.directClients.length + ' 人（将一并迁移）</p>';
+                '<p class="text-slate-600 mt-1">' + p.note + ' · 迁移后身份：<strong>' + roleLabel + '</strong></p>' +
+                '<p class="text-slate-500 mt-1">直客 ' + preview.directClients.length + ' 人（将一并迁移）</p>';
         } else {
             const u = preview.partnerUser;
             html += '<p class="font-black text-slate-800">' + chip(u.wallet, 'wallet') + ' · ' + chip(u.uid, 'uid') + migrateSystemLevelTag(u.level) + '</p>' +
@@ -2527,6 +2634,7 @@
             if (card) card.classList.add('hidden');
             if (previewSec) previewSec.classList.add('hidden');
             if (errSec) errSec.classList.add('hidden');
+            updateMigratePlainRoleUI();
             updateMigrateSubmitState();
             return;
         }
@@ -2548,6 +2656,7 @@
 
         migrateState.preview = buildMigratePreview(subject);
         renderMigrateSubjectCard(subject, migrateState.preview);
+        updateMigratePlainRoleUI();
         migrateState.validationErrors = checkMigrateValidation();
         if (previewSec) previewSec.classList.remove('hidden');
         renderMigratePreviewContent();
@@ -2567,7 +2676,9 @@
         const btn = document.getElementById('migrate-submit-btn');
         if (!btn) return;
         const targetOk = document.getElementById('migrate-target-input') && document.getElementById('migrate-target-input').value.trim();
-        const ratioOk = !isNaN(parseFloat(document.getElementById('migrate-ratio-input') && document.getElementById('migrate-ratio-input').value));
+        const ratioVal = parseFloat(document.getElementById('migrate-ratio-input') && document.getElementById('migrate-ratio-input').value);
+        const needsRatio = !migrateState.preview || migrateState.preview.type !== 'plain' || isMigratePlainAsPartner();
+        const ratioOk = !needsRatio || (!isNaN(ratioVal) && ratioVal > 0);
         const ok = migrateState.preview && migrateState.validationErrors.length === 0 && targetOk && ratioOk;
         btn.disabled = !ok;
         btn.textContent = '提交风控审核';
@@ -2637,14 +2748,23 @@
         }
         const p = migrateState.preview;
         const target = findMigrateTargetPartner(document.getElementById('migrate-target-input').value);
-        const ratioVal = parseFloat(document.getElementById('migrate-ratio-input').value);
-        if (!target || isNaN(ratioVal)) return;
+        const needsRatio = needsMigrateRatio(p);
+        const ratioVal = getMigrateRatioInputValue(p);
+        if (!target || (needsRatio && ratioVal == null)) return;
         const subjectWallet = p.type === 'plain' ? p.plainUser.wallet : p.partnerUser.wallet;
-        let body = '<p class="text-[11px] text-slate-600 mb-3">确认后将提交<strong>风控审核</strong>，包含以下迁移与比例修改：</p>';
+        let body = '<p class="text-[11px] text-slate-600 mb-3">确认后将提交<strong>风控审核</strong>，审批通过后将<strong>即刻生效</strong>：</p>';
         body += '<ul class="text-[11px] space-y-2 text-slate-800">';
         body += '<li><span class="text-slate-500">待迁移</span> <b>' + subjectWallet + '</b></li>';
         body += '<li><span class="text-slate-500">迁移到</span> <b>' + target.wallet + '</b></li>';
-        body += '<li><span class="text-slate-500">迁移后比例</span> <b>' + ratioVal + '%</b></li>';
+        if (p.type === 'plain') {
+            const roleLabel = p.plainRole === 'sub_partner' ? '下级代理（合伙人）' : '下级直客';
+            body += '<li><span class="text-slate-500">迁移后身份</span> <b>' + roleLabel + '</b></li>';
+        }
+        if (needsRatio) {
+            body += '<li><span class="text-slate-500">迁移后比例</span> <b>' + ratioVal + '%</b></li>';
+        } else {
+            body += '<li><span class="text-slate-500">返佣比例</span> <b>无需配置（下级直客）</b></li>';
+        }
         const remarkText = (document.getElementById('migrate-remark-input') && document.getElementById('migrate-remark-input').value.trim()) || '无';
         body += '<li><span class="text-slate-500">审核备注</span> ' + remarkText + '</li>';
         body += '<li><span class="text-slate-500">图片附件</span> ' + (migrateAttachments.length ? migrateAttachments.map(function (a) { return a.name; }).join('、') : '无') + '</li>';
@@ -2665,11 +2785,15 @@
         closeMigrateConfirmModal();
         if (!migrateState.preview || migrateState.validationErrors.length) return;
         const target = findMigrateTargetPartner(document.getElementById('migrate-target-input').value);
-        const ratioVal = parseFloat(document.getElementById('migrate-ratio-input').value);
-        if (!target || isNaN(ratioVal)) return;
         const p = migrateState.preview;
+        const needsRatio = needsMigrateRatio(p);
+        const ratioVal = getMigrateRatioInputValue(p);
+        if (!target || (needsRatio && ratioVal == null)) return;
         const subjectWallet = p.type === 'plain' ? p.plainUser.wallet : p.partnerUser.wallet;
         const subjectUid = p.type === 'plain' ? p.plainUser.uid : p.partnerUser.uid;
+        const plainRole = p.type === 'plain' ? p.plainRole : null;
+        const roleSummary = plainRole === 'direct_client' ? '下级直客' : (plainRole === 'sub_partner' ? '下级代理' : '');
+        const summarySuffix = needsRatio ? ratioVal + '%' : roleSummary;
         if (typeof submitApprovalApplication === 'function') {
             const remarkEl = document.getElementById('migrate-remark-input');
             const remark = (remarkEl && remarkEl.value.trim()) || '';
@@ -2682,20 +2806,22 @@
                 flowProfile: 'risk_only',
                 applicant: 'Mkt_Allen',
                 remark: remark || '返佣关系迁移申请',
-                summary: subjectWallet + ' → ' + target.wallet + ' · ' + ratioVal + '%',
+                summary: subjectWallet + ' → ' + target.wallet + ' · ' + summarySuffix,
                 payload: {
                     subjectWallet: subjectWallet,
                     subjectUid: subjectUid,
                     subjectType: p.type,
+                    plainRole: plainRole,
+                    migrateAsPartner: p.type === 'partner' || plainRole === 'sub_partner',
                     targetWallet: target.wallet,
                     targetUid: target.uid || '',
-                    newRatio: ratioVal,
+                    newRatio: needsRatio ? ratioVal : null,
                     opsCap: OPS_CAP,
                     attachments: attachmentNames,
                     attachmentPreviews: attachmentPreviews
                 }
             });
-            alert('已提交风控审核（演示）。审批通过后将执行迁移。');
+            alert('已提交风控审核（演示）。审批通过后将即刻生效。');
         } else {
             alert('审批模块未加载（演示）');
         }
@@ -2888,8 +3014,11 @@
         getCurrentUserId: function () { return currentUserId; },
         getDetailDrillStack: function () { return detailDrillStack.slice(); },
         downloadSettlementReconciliationPackage: downloadSettlementReconciliationPackage,
-        applyHashTree: applyHashTree, DATA_VERSION: DATA_VERSION
+        applyHashTree: applyHashTree, DATA_VERSION: DATA_VERSION,
+        applyPartnerApprovalEffect: applyPartnerApprovalEffect
     };
+
+    window.applyPartnerApprovalEffect = applyPartnerApprovalEffect;
 
     document.addEventListener('DOMContentLoaded', function () {
         if (window.AdminPagination) {

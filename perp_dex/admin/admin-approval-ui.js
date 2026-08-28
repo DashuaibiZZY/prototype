@@ -119,8 +119,11 @@
                 rows.push(['图片附件', p.attachments.join('、')]);
             }
         } else if (app.type === 'partner_rebate_migrate') {
+            const roleLabel = p.plainRole === 'sub_partner' ? '下级代理（合伙人）'
+                : (p.plainRole === 'direct_client' ? '下级直客' : (p.migrateAsPartner ? '下级代理（合伙人）' : '—'));
+            const ratioLabel = p.newRatio != null ? p.newRatio + '%' : (p.plainRole === 'direct_client' ? '无需配置' : '—');
             rows.push(['待迁移用户', p.subjectWallet || '—'], ['UID', p.subjectUid || '—'], ['类型', p.subjectType === 'plain' ? '普通用户' : '代理用户'],
-                ['迁移到上级', p.targetWallet || '—'], ['迁移后比例', p.newRatio + '%']);
+                ['迁移后身份', roleLabel], ['迁移到上级', p.targetWallet || '—'], ['迁移后比例', ratioLabel]);
             if (p.attachments && p.attachments.length) {
                 const previews = p.attachmentPreviews || {};
                 rows.push(['图片附件', p.attachments.map(function (name) {
@@ -193,13 +196,17 @@
         if (app.type !== 'partner_rebate_migrate') return '';
         const p = app.payload || {};
         const typeLabel = p.subjectType === 'plain' ? '普通用户' : '代理用户';
+        const roleLabel = p.plainRole === 'sub_partner' ? '下级代理（合伙人）'
+            : (p.plainRole === 'direct_client' ? '下级直客' : (p.migrateAsPartner ? '下级代理（合伙人）' : '—'));
+        const ratioLabel = p.newRatio != null ? p.newRatio + '%' : (p.plainRole === 'direct_client' ? '无需配置（下级直客）' : '—');
         const attachHtml = renderPartnerAttachmentThumbnails(p);
         return '<div class="col-span-2 border border-slate-200 rounded-lg p-4 bg-slate-50/50">' +
             '<p class="text-[10px] font-bold text-slate-500 uppercase mb-3">迁移申请内容</p>' +
             '<div class="grid grid-cols-2 gap-4 text-sm">' +
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">待迁移用户</p><p class="font-black mt-1">' + (window.AdminCopyChip ? AdminCopyChip.wallet(p.subjectWallet) : p.subjectWallet || '—') + '</p><p class="text-[10px] text-slate-400 mt-1">' + (p.subjectUid || '—') + ' · ' + typeLabel + '</p></div>' +
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">迁移到上级合伙人</p><p class="font-black mt-1">' + (window.AdminCopyChip ? AdminCopyChip.wallet(p.targetWallet) : p.targetWallet || '—') + '</p><p class="text-[10px] text-slate-400 mt-1">UID ' + (p.targetUid || '—') + '</p></div>' +
-            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">迁移后返佣比例</p><p class="font-black mt-1 text-blue-600 text-lg">' + (p.newRatio != null ? p.newRatio + '%' : '—') + '</p></div>' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">迁移后身份</p><p class="font-black mt-1 text-slate-800">' + roleLabel + '</p></div>' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">迁移后返佣比例</p><p class="font-black mt-1 text-blue-600 text-lg">' + ratioLabel + '</p></div>' +
             '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">图片附件</p>' + attachHtml + '</div>' +
             '</div></div>';
     }
