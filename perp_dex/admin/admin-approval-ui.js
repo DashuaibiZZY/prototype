@@ -459,6 +459,14 @@
 
         setApprovalViewRole(defaultRole);
         moduleApprovalSwitchRole(rootId, defaultRole);
+        if (options.defaultStatusFilter) {
+            const statusEl = document.getElementById(rootId + '-filter-status');
+            if (statusEl) statusEl.value = options.defaultStatusFilter;
+        }
+        if (options.defaultViewMode) {
+            const viewEl = document.getElementById(rootId + '-view-mode');
+            if (viewEl) viewEl.value = options.defaultViewMode;
+        }
         moduleApprovalRenderList(rootId);
 
         if (options.onReady) options.onReady(state);
