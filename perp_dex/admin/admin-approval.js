@@ -554,18 +554,17 @@
                 status: 'pending_risk',
                 flowProfile: 'risk_only',
                 createdAt: '2026-08-11 09:30',
-                remark: '含倒挂分支修正后迁移',
-                summary: '0xMig...Abn → 0xTo...L1 · 58%',
+                remark: '代理整伞迁移',
+                summary: '0xMig...Ok → 0xTo...L1 · 58%',
                 payload: {
-                    subjectWallet: '0xMig...Abn',
-                    subjectUid: '200301',
+                    subjectWallet: '0xMig...Ok',
+                    subjectUid: '200201',
                     subjectType: 'partner',
                     targetWallet: '0xTo...L1',
                     targetUid: '200001',
-                    newRatio: 58,
-                    ratioFixes: [{ wallet: '0xMig...AbnBL4', oldRatio: 42, newRatio: 38 }]
+                    newRatio: 58
                 },
-                timeline: [{ at: '2026-08-11 09:30', actor: 'Mkt_Allen', action: '提交申请', note: '含倒挂分支修正后迁移' }]
+                timeline: [{ at: '2026-08-11 09:30', actor: 'Mkt_Allen', action: '提交申请', note: '代理整伞迁移' }]
             },
             {
                 id: 'APR20260811002',
@@ -583,8 +582,7 @@
                     subjectType: 'partner',
                     targetWallet: '0xTo...L2',
                     targetUid: '200002',
-                    newRatio: 52,
-                    ratioFixes: []
+                    newRatio: 52
                 },
                 timeline: [{ at: '2026-08-11 10:15', actor: 'Mkt_Bob', action: '提交申请', note: '正常代理整伞迁移' }]
             },
@@ -604,8 +602,7 @@
                     subjectType: 'plain',
                     targetWallet: '0xTo...L1',
                     targetUid: '200001',
-                    newRatio: 45,
-                    ratioFixes: []
+                    newRatio: 45
                 },
                 timeline: [
                     { at: '2026-08-10 16:40', actor: 'Mkt_Allen', action: '提交申请', note: '普通用户引流迁移' },
@@ -922,12 +919,11 @@
                     subjectType: 'partner',
                     targetWallet: '0xTo...L1',
                     targetUid: '200001',
-                    newRatio: 62,
-                    ratioFixes: [{ wallet: '0xMig...FailBL2', oldRatio: 48, newRatio: 55 }]
+                    newRatio: 62
                 },
                 timeline: [
                     { at: '2026-08-12 14:30', actor: 'Mkt_Bob', action: '提交申请', note: '整伞迁移至新一级' },
-                    { at: '2026-08-12 15:10', actor: 'Risk_Control', action: '驳回', note: '目标伞下存在倒挂分支未修正，请调整后重新提交' }
+                    { at: '2026-08-12 15:10', actor: 'Risk_Control', action: '驳回', note: '目标上级信息不完整，请补充后重新提交' }
                 ]
             }
         ];

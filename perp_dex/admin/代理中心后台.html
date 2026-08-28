@@ -47,12 +47,11 @@
                         <select id="list-status-select" class="border p-2 rounded bg-white outline-none" onchange="PartnerPortal.setListFilter(this.value)">
                             <option value="all">全部</option>
                             <option value="normal">正常</option>
-                            <option value="abnormal">异常 / 分支异常</option>
                         </select>
                     </div>
                     <button onclick="PartnerPortal.openBindModal()" class="bg-blue-600 text-white px-5 py-2 rounded font-bold hover:bg-blue-700 shrink-0">+ 新增一级合伙人</button>
                 </div>
-                <p class="text-[10px] text-slate-400 mt-3">团队指标均为该用户<strong>向下整伞</strong>汇总；净收入 = 伞下净手续费 − 由伞下交易触发的<strong>全部返佣</strong>（含向上级级差）。异常仅暂停<strong>相关返佣分支</strong>，非整棵一级树。</p>
+                <p class="text-[10px] text-slate-400 mt-3">团队指标均为该用户<strong>向下整伞</strong>汇总；净收入 = 伞下净手续费 − 由伞下交易触发的<strong>全部返佣</strong>（含向上级级差）。</p>
                 <div class="flex flex-wrap items-center gap-2 mt-3">
                     <span class="text-[10px] font-bold text-slate-500 uppercase">统计周期</span>
                     <div id="list-period-tabs" class="flex gap-1">
@@ -78,8 +77,6 @@
                             <th class="px-3 py-3">钱包地址 / 邮箱</th>
                             <th class="px-3 py-3 text-center">返佣比例</th>
                             <th class="px-3 py-3 text-center">结算状态</th>
-                            <th class="px-3 py-3 text-right">异常暂停交易额</th>
-                            <th class="px-3 py-3 text-center">异常线</th>
                             <th class="px-3 py-3 text-right cursor-pointer hover:text-slate-800 select-none" onclick="PartnerPortal.setListSort('vol')">团队总交易额 <span id="list-sort-vol" class="text-slate-400"></span></th>
                             <th class="px-3 py-3 text-right cursor-pointer hover:text-slate-800 select-none" onclick="PartnerPortal.setListSort('fee')">手续费 <span id="list-sort-fee" class="text-slate-400"></span></th>
                             <th class="px-3 py-3 text-right cursor-pointer hover:text-slate-800 select-none" onclick="PartnerPortal.setListSort('rebate')">返佣 <span id="list-sort-rebate" class="text-slate-400"></span></th>
@@ -108,7 +105,6 @@
                     <p id="detail-partner-sub" class="text-slate-400 text-[11px] mt-0.5"></p>
                 </div>
                 <div class="ml-auto flex gap-2 flex-wrap">
-                    <button id="detail-abnormal-entry" onclick="PartnerPortal.openAbnormalModal()" class="hidden bg-amber-100 text-amber-900 border border-amber-300 px-4 py-2 rounded font-bold text-[11px] hover:bg-amber-200">查看异常返佣线</button>
                     <button onclick="PartnerPortal.showTree(PartnerPortal.getCurrentUserId(), 'expand')" class="bg-slate-900 text-white px-4 py-2 rounded font-bold text-[11px]">返佣树 / 修改比例</button>
                 </div>
             </div>
@@ -146,13 +142,6 @@
                 <div class="bg-white p-5 rounded-lg border shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">用户规模</p><p id="detail-users-active" class="text-2xl font-black"></p><p id="detail-users-total" class="text-[10px] text-slate-400 mt-2 font-bold"></p></div>
             </div>
 
-            <div id="detail-abnormal-banner" class="hidden bg-amber-50 border-l-4 border-amber-500 p-4 rounded shadow-sm">
-                <div class="flex items-start gap-3">
-                    <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                    <p id="detail-abnormal-text" class="text-amber-900 font-bold text-[12px] leading-relaxed"></p>
-                </div>
-            </div>
-
             <div class="bg-white rounded-lg border overflow-hidden shadow-sm">
                 <div class="p-4 border-b flex flex-wrap items-center justify-between gap-3">
                     <div class="flex gap-6">
@@ -163,8 +152,6 @@
                         <select id="detail-sub-status-filter" onchange="PartnerPortal.setDetailSubFilter(this.value)" class="border border-slate-200 rounded px-3 py-1.5 text-[10px] font-bold text-slate-700 outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer">
                             <option value="all">全部结算状态</option>
                             <option value="normal">正常</option>
-                            <option value="direct_inversion">返佣比例倒挂（直属下级）</option>
-                            <option value="team_tree_abnormal">团队返佣树异常</option>
                         </select>
                         <input type="text" id="detail-sub-search" placeholder="搜索 UID / 钱包 / 邮箱 / 备注..." class="border rounded px-3 py-1.5 text-[11px] w-56 outline-none focus:ring-1 focus:ring-blue-600" oninput="PartnerPortal.filterDetailTable(this.value)">
                     </div>
@@ -232,13 +219,6 @@
                 <div class="bg-white p-5 rounded-lg border shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">用户规模</p><p id="drill-users-active" class="text-2xl font-black"></p><p id="drill-users-total" class="text-[10px] text-slate-400 mt-2 font-bold"></p></div>
             </div>
 
-            <div id="drill-abnormal-banner" class="hidden bg-amber-50 border-l-4 border-amber-500 p-4 rounded shadow-sm">
-                <div class="flex items-start gap-3">
-                    <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                    <p id="drill-abnormal-text" class="text-amber-900 font-bold text-[12px] leading-relaxed"></p>
-                </div>
-            </div>
-
             <div class="bg-white rounded-lg border overflow-hidden shadow-sm">
                 <div class="p-4 border-b flex flex-wrap items-center justify-between gap-3">
                     <div class="flex gap-6">
@@ -249,8 +229,6 @@
                         <select id="drill-sub-status-filter" onchange="PartnerPortal.setDrillSubFilter(this.value)" class="border border-slate-200 rounded px-3 py-1.5 text-[10px] font-bold text-slate-700 outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer">
                             <option value="all">全部结算状态</option>
                             <option value="normal">正常</option>
-                            <option value="direct_inversion">返佣比例倒挂（直属下级）</option>
-                            <option value="team_tree_abnormal">团队返佣树异常</option>
                         </select>
                         <input type="text" id="drill-sub-search" placeholder="搜索 UID / 钱包 / 邮箱 / 备注..." class="border rounded px-3 py-1.5 text-[11px] w-56 outline-none focus:ring-1 focus:ring-blue-600" oninput="PartnerPortal.setDrillSubSearch(this.value)">
                     </div>
@@ -277,7 +255,7 @@
             <section class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm space-y-4">
                 <div>
                     <h2 class="text-base font-black text-slate-900">迁移返佣关系</h2>
-                    <p class="text-[11px] text-slate-500 mt-1">输入待迁移用户后系统自动识别类型（普通用户 / 代理用户），填写目标上级与返佣比例后预览。迁移代理用户时，若设置比例低于任一下级将触发倒挂校验。</p>
+                    <p class="text-[11px] text-slate-500 mt-1">输入待迁移用户后系统自动识别类型（普通用户 / 代理用户），填写目标上级与返佣比例后预览。</p>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
@@ -296,9 +274,8 @@
                 </div>
                 <div id="migrate-subject-card" class="hidden bg-slate-50 border border-slate-200 rounded-lg p-4 text-[11px]"></div>
                 <div class="text-[10px] text-slate-400 border-t pt-3 space-y-1">
-                    <p><strong>演示待迁移：</strong>普通 <code class="bg-slate-100 px-1">0xPlain...U1</code> · 正常代理 <code class="bg-slate-100 px-1">0xMig...Ok</code>（系统L2）· 链路倒挂 <code class="bg-slate-100 px-1">0xMig...Abn</code>（系统L6·B支深层倒挂）</p>
+                    <p><strong>演示待迁移：</strong>普通 <code class="bg-slate-100 px-1">0xPlain...U1</code> · 正常代理 <code class="bg-slate-100 px-1">0xMig...Ok</code>（系统L2）</p>
                     <p><strong>目标上级：</strong><code class="bg-slate-100 px-1">0xTo...L1</code> · <code class="bg-slate-100 px-1">0xTo...L2</code></p>
-                    <p><strong>倒挂修正：</strong>迁移 <code class="bg-slate-100 px-1">0xMig...Abn</code> 后在树中将 <code class="bg-slate-100 px-1">0xMig...AbnBL4</code> 比例调低至 38% 以下即可提交</p>
                 </div>
             </section>
 
@@ -326,8 +303,8 @@
             </section>
 
             <section id="migrate-errors-section" class="hidden bg-red-50 border border-red-200 rounded-lg p-5">
-                <p class="font-black text-red-800 text-sm mb-2">返佣倒挂校验未通过</p>
-                <p class="text-[11px] text-red-700 mb-3">可在下方代理链路树中修改倒挂节点比例，修正后自动重新校验。链路内深层倒挂（非迁移比例导致）也须修正后方可提交风控审核。</p>
+                <p class="font-black text-red-800 text-sm mb-2">迁移信息校验未通过</p>
+                <p class="text-[11px] text-red-700 mb-3">请检查目标上级、返佣比例等必填项后重新提交。</p>
                 <ul id="migrate-errors-list" class="text-[11px] text-red-800 space-y-1 list-disc pl-5"></ul>
             </section>
         </div>
@@ -342,7 +319,6 @@
                     <h2 id="tree-title" class="text-lg font-black">返佣关系树</h2>
                 </div>
             </div>
-            <div id="tree-abnormal-section"></div>
             <div id="tree-pending-bar" class="hidden"></div>
             <div class="bg-white rounded-lg border border-slate-200 p-4">
                 <p class="text-[11px] text-slate-600 mb-3 bg-slate-50 border border-slate-100 rounded p-3"><strong>运营操作：</strong>上级链已固定展示；下级默认只显示直属合伙人，点 <strong>+</strong> 展开下一层。下级返佣比例须低于其直属上级；多条修改后在树上方<strong>提交修改</strong>，权限内立即生效，超上限走审批。</p>
@@ -476,7 +452,6 @@
                         <button onclick="openModal('modal-approve')" class="bg-blue-600 text-white px-6 py-2 rounded font-black">审核通过并放款</button>
                     </div>
                 </div>
-                <div id="abnormal-banner" class="hidden bg-blue-50 border-l-4 border-blue-500 p-4 rounded text-[11px]"></div>
                 <div class="bg-white rounded-lg border overflow-hidden">
                     <div class="px-4 pt-4 border-b flex gap-6">
                         <button type="button" id="settlement-tab-detail" onclick="PartnerPortal.switchSettlementDetailTab('detail')" class="settlement-tab-active pb-2 text-[11px]">批次明细</button>
@@ -496,14 +471,6 @@
                                 <option value="3">L3</option>
                                 <option value="4">L4</option>
                                 <option value="5">L5</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">待修正返佣</label>
-                            <select id="settlement-filter-pending" class="border rounded px-2 py-1.5 text-[11px] bg-white" onchange="PartnerPortal.applySettlementDetailFilters()">
-                                <option value="all">全部</option>
-                                <option value="yes">是</option>
-                                <option value="no">否</option>
                             </select>
                         </div>
                         <div>
@@ -537,7 +504,6 @@
                                 <th class="px-4 py-4 text-center">层级</th>
                                 <th class="px-4 py-4 text-center">返佣比例</th>
                                 <th class="px-4 py-4 text-center">上级</th>
-                                <th class="px-4 py-4 text-center">待修正</th>
                                 <th class="px-4 py-4 text-right">成交额</th>
                                 <th class="px-4 py-4 text-right">原始佣金</th>
                                 <th class="px-4 py-4 text-right">实发</th>
@@ -573,7 +539,7 @@
                     <h2 id="batch-edit-title" class="text-lg font-black">批量修改实发佣金</h2>
                 </div>
                 <div class="bg-white rounded-lg border p-6 space-y-4 shadow-sm">
-                    <p id="batch-edit-hint" class="text-[11px] text-slate-600">每行一条：<strong>UID 或钱包,实发金额</strong>。也支持上传 CSV / TXT。实发不得高于原始佣金；待修正返佣后计算不可修改。</p>
+                    <p id="batch-edit-hint" class="text-[11px] text-slate-600">每行一条：<strong>UID 或钱包,实发金额</strong>。也支持上传 CSV / TXT。实发不得高于原始佣金。</p>
                     <div>
                         <label class="text-[10px] font-bold text-slate-400 uppercase">手动输入</label>
                         <textarea id="batch-edit-lines" rows="8" class="w-full border rounded p-3 mt-1 font-mono text-[11px] outline-none focus:ring-1 focus:ring-blue-600" placeholder="0xAbn...L1,6500&#10;100801,4200&#10;0xNorm...L3,1500"></textarea>
@@ -606,15 +572,6 @@
     </div>
 </div>
 
-<div id="modal-abnormal-list" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-2xl rounded-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
-        <div class="px-6 py-4 border-b flex justify-between items-center shrink-0">
-            <h3 class="font-bold text-slate-800">异常返佣线查询</h3>
-            <button onclick="PartnerPortal.closeAbnormalModal()" class="text-slate-400">✕</button>
-        </div>
-        <div class="p-6 overflow-y-auto flex-1" id="modal-abnormal-list-body"></div>
-    </div>
-</div>
 
 <div id="modal-bind-partner" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-lg shadow-2xl overflow-hidden">
@@ -692,7 +649,7 @@
         <div class="p-6">
             <label class="text-[10px] font-bold text-slate-400 uppercase">实发佣金 (USD)</label>
             <input id="edit-actual-input" type="number" step="0.01" min="0" class="w-full border rounded p-2 mt-1 outline-none focus:ring-1 focus:ring-blue-600">
-            <p class="text-[10px] text-slate-400 mt-2">待修正返佣后计算的记录不支持修改；实发不得高于原始佣金。</p>
+            <p class="text-[10px] text-slate-400 mt-2">实发不得高于原始佣金。</p>
         </div>
         <div class="px-6 py-4 bg-slate-50 flex gap-3">
             <button onclick="PartnerPortal.closeEditActualModal()" class="flex-1 py-2 border rounded font-bold text-slate-500">取消</button>
@@ -705,7 +662,7 @@
     <div class="bg-white w-full max-w-2xl rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
         <div class="px-5 py-4 border-b flex items-start justify-between gap-3 bg-amber-50">
             <div>
-                <h3 class="font-black text-amber-900 text-sm">团队返佣树异常明细</h3>
+                <h3 class="font-black text-amber-900 text-sm">团队返佣树明细</h3>
                 <p id="team-tree-modal-subtitle" class="text-[10px] text-amber-700 font-bold mt-0.5"></p>
             </div>
             <div class="flex items-center gap-3 shrink-0">
