@@ -3,7 +3,8 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-24';
+    const DATA_VERSION = 'partner-demo-25';
+    const USER_SCALE_TIP = '交易用户数据每天 UTC+8 0 点更新';
     const RECONCILIATION_DOWNLOAD_COOLDOWN_MS = 10 * 60 * 1000;
     let lastReconciliationDownloadAt = 0;
 
@@ -492,6 +493,13 @@
             ' <span class="text-slate-300">/ ' + totalUsers.toLocaleString() + '</span>';
     }
 
+    function userScaleHeaderHtml() {
+        return '<span class="user-scale-hint-wrap">' +
+            '<span class="user-scale-hint-label">用户规模</span>' +
+            '<span class="user-scale-hint-pop" role="tooltip">' + USER_SCALE_TIP + '</span>' +
+            '</span>';
+    }
+
     function renderMirrorSubTable(parent, opts) {
         opts = opts || {};
         const prefix = opts.prefix || 'detail';
@@ -527,7 +535,7 @@
                 '<th class="px-3 py-3 text-right">贡献级差收入</th>' +
                 '<th class="px-3 py-3 text-right">总交易额</th>' +
                 '<th class="px-3 py-3 text-right">总净入金</th>' +
-                '<th class="px-3 py-3 text-center"><span class="border-b border-dashed border-slate-400 cursor-help" title="交易用户数据每天UTC+8 0点更新">用户规模</span></th>' +
+                '<th class="px-3 py-3 text-center">' + userScaleHeaderHtml() + '</th>' +
                 '<th class="px-3 py-3 text-right">操作</th>' +
                 '</tr>';
         }
