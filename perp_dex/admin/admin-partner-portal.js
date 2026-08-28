@@ -569,14 +569,28 @@
         return '<span class="font-black text-slate-400 italic">-- 暂停结算</span>';
     }
 
-    function mirrorWalletRemarkCell(row) {
+    function mirrorPartnerUidCell(row, opts) {
+        opts = opts || {};
         let html = chip(row.uid, 'uid');
-        if (row.wallet) html += '<span class="block mt-0.5">' + chip(row.wallet, 'wallet') + '</span>';
-        else if (row.email) html += '<span class="block mt-0.5 text-[10px] text-slate-500 font-bold">' + escHtml(row.email) + '</span>';
+        if (opts.level != null) {
+            html += '<span class="block mt-0.5 text-[10px] font-bold text-slate-600">L' + opts.level + (opts.childCount != null ? ' · ' + opts.childCount + ' 直属' : '') + '</span>';
+        }
         if (row.note) {
             html += '<span class="block text-[10px] text-slate-400 mt-0.5 font-bold">' + escHtml(row.note) + '</span>';
+        } else if (row.remark) {
+            html += '<span class="block text-[10px] text-slate-400 mt-0.5 font-bold">' + escHtml(row.remark) + '</span>';
         }
         return html;
+    }
+
+    function mirrorPartnerContactCell(row) {
+        if (row.wallet) return chip(row.wallet, 'wallet');
+        if (row.email) return '<span class="text-[10px] text-slate-500 font-bold">' + escHtml(row.email) + '</span>';
+        return '<span class="text-slate-300">—</span>';
+    }
+
+    function mirrorWalletRemarkCell(row) {
+        return mirrorPartnerUidCell(row) + '<span class="block mt-1">' + mirrorPartnerContactCell(row) + '</span>';
     }
 
     function mirrorUserScaleCell(activeUsers, totalUsers) {
@@ -611,7 +625,8 @@
         if (thead) {
             thead.innerHTML = '<tr>' +
                 '<th class="px-4 py-3">加入时间</th>' +
-                '<th class="px-3 py-3">下级合伙人 (备注)</th>' +
+                '<th class="px-3 py-3">下级合伙人</th>' +
+                '<th class="px-3 py-3">钱包 / 邮箱</th>' +
                 '<th class="px-3 py-3 text-center">设置比例</th>' +
                 '<th class="px-3 py-3 text-center">上级级差</th>' +
                 '<th class="px-3 py-3">结算状态</th>' +
@@ -635,7 +650,8 @@
             const drillFn = isDrill ? 'PartnerPortal.openDrillTeam' : 'PartnerPortal.openDrillTeam';
             return '<tr class="' + rowClass + '">' +
                 '<td class="px-4 py-2 text-slate-400">' + row.time + '</td>' +
-                '<td class="px-3 py-2">' + mirrorWalletRemarkCell(row) + '</td>' +
+                '<td class="px-3 py-2">' + mirrorPartnerUidCell(row) + '</td>' +
+                '<td class="px-3 py-2">' + mirrorPartnerContactCell(row) + '</td>' +
                 '<td class="px-3 py-2 text-center ' + ratioClass + '">' + row.ratio + '%</td>' +
                 '<td class="px-3 py-2 text-center"><span class="' + gapClass + '">' + row.gap + '%</span></td>' +
                 '<td class="px-3 py-2">' + mirrorSettlementStatusCell(row, scale) + '</td>' +
@@ -646,7 +662,7 @@
                 '<td class="px-3 py-2 text-right">' +
                 '<button type="button" onclick="' + drillFn + '(\'' + row.id + '\')" class="text-blue-600 font-black hover:underline">查看团队</button>' +
                 '</td></tr>';
-        }).join('') : '<tr><td colspan="10" class="px-4 py-8 text-center text-slate-400">无直属下级合伙人</td></tr>';
+        }).join('') : '<tr><td colspan="11" class="px-4 py-8 text-center text-slate-400">无直属下级合伙人</td></tr>';
 
         const pageKey = opts.subPageKey === 'drill' ? 'detail-drill-sub' : 'detail-sub';
         mountListPagination(paginationId, sliced.total, sliced.page, pageKey);
@@ -673,7 +689,8 @@
         if (thead) {
             thead.innerHTML = '<tr>' +
                 '<th class="px-4 py-3">注册时间</th>' +
-                '<th class="px-3 py-3">直客 UID / 钱包 / 邮箱</th>' +
+                '<th class="px-3 py-3">直客 UID</th>' +
+                '<th class="px-3 py-3">钱包 / 邮箱</th>' +
                 '<th class="px-3 py-3 text-right">累计交易额</th>' +
                 '<th class="px-3 py-3 text-right">累计手续费</th>' +
                 '<th class="px-3 py-3 text-right text-blue-600">返佣金额</th>' +
@@ -684,14 +701,13 @@
         const tbody = document.getElementById(tbodyId);
         if (!tbody) return;
         tbody.innerHTML = sliced.items.length ? sliced.items.map(function (c) {
-            const walletCell = chip(c.uid, 'uid') +
-                (c.wallet ? '<span class="block mt-0.5">' + chip(c.wallet, 'wallet') + '</span>' : '') +
-                (c.email ? '<span class="block mt-0.5 text-[10px] text-slate-500 font-bold">' + escHtml(c.email) + '</span>' : '');
-            return '<tr><td class="px-4 py-2">' + c.time + '</td><td class="px-3 py-2">' + walletCell + '</td>' +
+            const uidCell = chip(c.uid, 'uid');
+            const contactCell = mirrorPartnerContactCell(c);
+            return '<tr><td class="px-4 py-2">' + c.time + '</td><td class="px-3 py-2">' + uidCell + '</td><td class="px-3 py-2">' + contactCell + '</td>' +
                 '<td class="px-3 py-2 text-right">' + c.vol + '</td><td class="px-3 py-2 text-right">' + c.fee + '</td>' +
                 '<td class="px-3 py-2 text-right font-black text-blue-600">' + c.rebate + '</td>' +
                 '<td class="px-3 py-2 text-center text-green-600 font-bold">' + c.status + '</td></tr>';
-        }).join('') : '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">暂无自邀直客</td></tr>';
+        }).join('') : '<tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">暂无自邀直客</td></tr>';
 
         const pageKey = opts.clientPageKey === 'drill' ? 'detail-drill-clients' : 'detail-clients';
         mountListPagination(paginationId, sliced.total, sliced.page, pageKey);
@@ -759,11 +775,9 @@
             const al = u.abnormalLines ? '<span class="text-red-600 font-black">' + u.abnormalLines + '</span>' : '<span class="text-slate-300">0</span>';
             const netDash = u.net === '--';
             return '<tr class="hover:bg-slate-50' + (u.settleStatus !== 'normal' ? ' bg-amber-50/20' : '') + '">' +
-                '<td class="px-4 py-3">' + chip(u.uid, 'uid') +
-                (u.wallet ? '<span class="block mt-1">' + chip(u.wallet, 'wallet') + '</span>' : '') +
-                (u.email ? '<span class="block mt-1 text-[10px] text-slate-500 font-bold">' + escHtml(u.email) + '</span>' : '') +
+                '<td class="px-4 py-3">' + mirrorPartnerUidCell(u, { level: u.level, childCount: childCount }) +
                 '<button type="button" onclick="PartnerPortal.showDetail(\'' + u.id + '\')" class="block mt-1 text-[10px] font-black text-blue-600 hover:underline">' + u.note + '</button></td>' +
-                '<td class="px-3 py-3 text-center font-bold">L' + u.level + ' · ' + childCount + ' 直属</td>' +
+                '<td class="px-3 py-3">' + mirrorPartnerContactCell(u) + '</td>' +
                 '<td class="px-3 py-3 text-center font-black">' + u.ratio + '%</td>' +
                 '<td class="px-3 py-3 text-center">' + settleLabel(u.settleStatus) + '</td>' +
                 '<td class="px-3 py-3 text-right">' + av + '</td>' +

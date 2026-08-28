@@ -105,11 +105,13 @@
             <div>
               <label class="block text-xs font-bold text-slate-500 uppercase mb-2">UID,金额（每行一个，英文逗号分隔）</label>
               <textarea id="issueManualInput" placeholder="10023456,100&#10;10023457,250" class="w-full h-40 border border-slate-200 rounded-lg p-3 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+              <p class="text-[10px] text-slate-400 font-bold mt-2">单次最多批量配置 <strong>1000</strong> 条；提交前将执行批量配置 UID 有效性检查。</p>
             </div>
           </div>
           <div id="issue-excel" class="hidden py-16 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center">
             <p class="text-sm text-slate-500 font-bold mb-2">拖拽 Excel 文件至此或点击上传</p>
-            <span class="text-[10px] text-slate-400">需包含列：uid, amount（也兼容 wallet_address）</span>
+            <span class="text-[10px] text-slate-400">表头须为：<strong>UID,金额</strong>（英文逗号分隔列名；也兼容 uid, amount）</span>
+            <p class="text-[10px] text-slate-400 mt-2">单次最多批量配置 <strong>1000</strong> 条；上传后提交前将执行 UID 有效性检查。</p>
             <button class="mt-4 bg-slate-100 px-4 py-2 rounded text-xs font-bold text-slate-600">选择文件</button>
           </div>
           <div class="rounded-lg border border-blue-100 bg-blue-50 p-3 text-[11px] text-blue-900 leading-relaxed">
@@ -356,14 +358,44 @@
   </div>
 </div>
 
+<!-- 批量 UID 有效性检查 · 错误预览 -->
+<div id="modal-issue-uid-errors" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-[640px] max-h-[85vh] overflow-hidden flex flex-col">
+    <div class="px-6 py-5 border-b">
+      <h3 class="text-lg font-bold text-red-600">批量配置 UID 有效性检查未通过</h3>
+      <p id="issueUidErrorSummary" class="text-sm text-slate-500 mt-1"></p>
+    </div>
+    <div class="p-6 overflow-y-auto flex-1">
+      <div class="border border-red-100 rounded-lg overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-red-50 border-b border-red-100 text-[10px] font-bold text-red-700 uppercase">
+            <tr>
+              <th class="px-4 py-2 text-left">行号</th>
+              <th class="px-4 py-2 text-left">UID</th>
+              <th class="px-4 py-2 text-right">金额</th>
+              <th class="px-4 py-2 text-left">错误原因</th>
+            </tr>
+          </thead>
+          <tbody id="issueUidErrorBody" class="divide-y divide-red-50"></tbody>
+        </table>
+      </div>
+      <div id="issueUidErrorPagination" class="mt-3"></div>
+    </div>
+    <div class="p-5 bg-slate-50 flex gap-3 border-t">
+      <button type="button" onclick="downloadInvalidIssueUidsCsv()" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-700">下载错误 UID（CSV）</button>
+      <button type="button" onclick="closeModal('modal-issue-uid-errors')" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">返回修改</button>
+    </div>
+  </div>
+</div>
+
 <!-- 发放审批 -->
 <div id="modal-issue-approval" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
   <div class="bg-white rounded-2xl shadow-2xl w-[520px] overflow-hidden">
     <div class="px-6 py-5 border-b"><h3 class="text-lg font-bold">提交体验金发放审批</h3></div>
     <div class="p-6 space-y-4 text-sm">
       <div class="bg-slate-50 rounded-lg p-4 space-y-2">
-        <div class="flex justify-between"><span class="text-slate-500">发放人数</span><span class="font-black">120 人</span></div>
-        <div class="flex justify-between"><span class="text-slate-500">发放总额</span><span class="font-black text-blue-600">12,540 USDT</span></div>
+        <div class="flex justify-between"><span class="text-slate-500">发放人数</span><span id="approvalRecipientCount" class="font-black">—</span></div>
+        <div class="flex justify-between"><span class="text-slate-500">发放总额</span><span id="approvalTotalAmount" class="font-black text-blue-600">—</span></div>
         <div class="flex justify-between"><span class="text-slate-500">关联卡组</span><span id="approvalGroupName" class="font-bold"></span></div>
         <div class="flex justify-between"><span class="text-slate-500">活动信息</span><span id="approvalActivityName" class="font-bold"></span></div>
       </div>
@@ -821,37 +853,164 @@
     });
   }
 
-  function openIssueApprovalModal() {
-    const act = getActivityPickerValue('issue-act');
-    if (!act.valid) { alert(act.message); return; }
-    const g = CARD_GROUPS.find(function (x) { return x.id === selectedGroupId; });
-    document.getElementById('approvalGroupName').innerText = g ? g.name : '-';
-    document.getElementById('approvalActivityName').innerText = act.displayLabel;
-    document.getElementById('issueApprovalFlow').innerHTML = renderApprovalFlow('draft', true);
-    document.getElementById('issueApprovalRemark').value = '';
-    openModal('modal-issue-approval');
+  window.TRIAL_CARD_GROUPS = CARD_GROUPS;
+  const ISSUE_BATCH_MAX = 1000;
+  const VALID_ISSUE_UIDS = new Set(TRIAL_USERS.map(function (u) { return u.uid; }).concat(['10023456', '10023457', '10023458', '10033401', '10033402']));
+  let issueInvalidUidRows = [];
+  let issueInvalidUidPage = 1;
+  const ISSUE_UID_ERROR_PAGE_SIZE = 10;
+  let pendingIssueRecipients = [];
+
+  function cardGroupSnapshot(group) {
+    if (!group) return null;
+    return {
+      id: group.id,
+      name: group.name,
+      couponValidDays: group.couponValidDays,
+      openValidDays: group.openValidDays,
+      lossEnabled: group.lossEnabled,
+      lossPct: group.lossPct,
+      feeEnabled: group.feeEnabled,
+      feePct: group.feePct
+    };
   }
 
-  function getIssueRecipients() {
+  function parseIssueRecipients() {
     const isExcel = !document.getElementById('issue-excel').classList.contains('hidden');
     if (isExcel) {
       return [
-        { uid_or_wallet: '100891', amount: '250' },
-        { uid_or_wallet: '100234', amount: '100' },
-        { uid_or_wallet: '0x8f3c12ab45cd6789ef0123456789abcdefdcba', amount: '250' }
+        { line: 1, uid_or_wallet: '100891', amount: '250' },
+        { line: 2, uid_or_wallet: '100234', amount: '100' },
+        { line: 3, uid_or_wallet: '99990001', amount: '120' },
+        { line: 4, uid_or_wallet: '88880002', amount: '80' }
       ];
     }
     const text = document.getElementById('issueManualInput').value.trim();
     if (!text) {
       return [
-        { uid_or_wallet: '100891', amount: '250' },
-        { uid_or_wallet: '100234', amount: '100' }
+        { line: 1, uid_or_wallet: '100891', amount: '250' },
+        { line: 2, uid_or_wallet: '100234', amount: '100' }
       ];
     }
-    return text.split('\n').filter(function (l) { return l.trim(); }).map(function (l) {
+    return text.split('\n').map(function (l, idx) {
       const p = l.split(',');
-      return { uid_or_wallet: (p[0] || '').trim(), amount: (p[1] || '').trim() };
+      return { line: idx + 1, uid_or_wallet: (p[0] || '').trim(), amount: (p[1] || '').trim() };
+    }).filter(function (r) { return r.uid_or_wallet || r.amount; });
+  }
+
+  function validateIssueUidBatch(recipients) {
+    const invalid = [];
+    recipients.forEach(function (r) {
+      const uid = String(r.uid_or_wallet || '').trim();
+      if (!uid) {
+        invalid.push({ line: r.line, uid: '—', amount: r.amount || '—', reason: 'UID 不能为空' });
+        return;
+      }
+      if (!/^\d+$/.test(uid)) {
+        invalid.push({ line: r.line, uid: uid, amount: r.amount || '—', reason: '格式错误，须为 UID' });
+        return;
+      }
+      if (!VALID_ISSUE_UIDS.has(uid)) {
+        invalid.push({ line: r.line, uid: uid, amount: r.amount || '—', reason: '用户不存在' });
+      }
     });
+    return invalid;
+  }
+
+  function renderIssueUidErrorTable() {
+    const tbody = document.getElementById('issueUidErrorBody');
+    const total = issueInvalidUidRows.length;
+    const totalPages = Math.max(1, Math.ceil(total / ISSUE_UID_ERROR_PAGE_SIZE));
+    issueInvalidUidPage = Math.max(1, Math.min(issueInvalidUidPage, totalPages));
+    const start = (issueInvalidUidPage - 1) * ISSUE_UID_ERROR_PAGE_SIZE;
+    const pageRows = issueInvalidUidRows.slice(start, start + ISSUE_UID_ERROR_PAGE_SIZE);
+    tbody.innerHTML = pageRows.map(function (r) {
+      return '<tr><td class="px-4 py-2 text-slate-500">' + r.line + '</td><td class="px-4 py-2 font-mono font-bold">' + r.uid + '</td><td class="px-4 py-2 text-right">' + r.amount + '</td><td class="px-4 py-2 text-red-600 font-bold">' + r.reason + '</td></tr>';
+    }).join('');
+    document.getElementById('issueUidErrorSummary').textContent = '共 ' + total + ' 条无效 UID，请修正后重新提交。';
+    const pagEl = document.getElementById('issueUidErrorPagination');
+    if (window.AdminPagination) {
+      AdminPagination.register('issue-uid-errors', function (p) {
+        issueInvalidUidPage = p;
+        renderIssueUidErrorTable();
+      });
+      pagEl.innerHTML = AdminPagination.html(total, issueInvalidUidPage, ISSUE_UID_ERROR_PAGE_SIZE, 'issue-uid-errors');
+    } else {
+      pagEl.innerHTML = '<p class="text-[11px] text-slate-500">第 ' + issueInvalidUidPage + '/' + totalPages + ' 页</p>';
+    }
+  }
+
+  function showIssueInvalidUidModal(rows) {
+    issueInvalidUidRows = rows;
+    issueInvalidUidPage = 1;
+    renderIssueUidErrorTable();
+    openModal('modal-issue-uid-errors');
+  }
+
+  function downloadInvalidIssueUidsCsv() {
+    const rows = [['行号', 'UID', '金额', '错误原因']];
+    issueInvalidUidRows.forEach(function (r) {
+      rows.push([r.line, r.uid, r.amount, r.reason]);
+    });
+    if (typeof downloadCsv === 'function') {
+      downloadCsv('invalid_issue_uids_' + Date.now() + '.csv', rows);
+      return;
+    }
+    const csv = rows.map(function (row) { return row.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'invalid_issue_uids_' + Date.now() + '.csv';
+    a.click();
+  }
+
+  function prepareIssueRecipientsForSubmit() {
+    if (!selectedGroupId) {
+      alert('请先选择关联卡组');
+      return null;
+    }
+    const act = getActivityPickerValue('issue-act');
+    if (!act.valid) {
+      alert(act.message);
+      return null;
+    }
+    const recipients = parseIssueRecipients();
+    if (!recipients.length) {
+      alert('请录入至少 1 条发放名单');
+      return null;
+    }
+    if (recipients.length > ISSUE_BATCH_MAX) {
+      alert('单次最多批量配置 ' + ISSUE_BATCH_MAX + ' 条，当前 ' + recipients.length + ' 条');
+      return null;
+    }
+    const invalid = validateIssueUidBatch(recipients);
+    if (invalid.length) {
+      showIssueInvalidUidModal(invalid);
+      return null;
+    }
+    pendingIssueRecipients = recipients;
+    return { recipients: recipients, act: act };
+  }
+
+  function getIssueRecipients() {
+    return pendingIssueRecipients.length ? pendingIssueRecipients : parseIssueRecipients();
+  }
+
+  function openIssueApprovalModal() {
+    const prepared = prepareIssueRecipientsForSubmit();
+    if (!prepared) return;
+    const recipients = prepared.recipients;
+    const act = prepared.act;
+    const g = CARD_GROUPS.find(function (x) { return x.id === selectedGroupId; });
+    let totalAmount = 0;
+    recipients.forEach(function (r) { totalAmount += parseFloat(r.amount) || 0; });
+    document.getElementById('approvalRecipientCount').innerText = recipients.length + ' 人';
+    document.getElementById('approvalTotalAmount').innerText = totalAmount.toLocaleString() + ' USDT';
+    document.getElementById('approvalGroupName').innerText = g ? g.name : '-';
+    document.getElementById('approvalActivityName').innerText = act.displayLabel;
+    document.getElementById('issueApprovalFlow').innerHTML = renderApprovalFlow('draft', true);
+    document.getElementById('issueApprovalRemark').value = '';
+    openModal('modal-issue-approval');
   }
 
   function submitIssueApproval() {
@@ -877,6 +1036,7 @@
         activityName: act.activityName,
         cardGroup: g ? g.name : '-',
         cardGroupId: selectedGroupId,
+        cardGroupDetails: cardGroupSnapshot(g),
         inputMode: inputMode,
         recipientCount: recipients.length,
         totalAmount: totalStr,
@@ -929,7 +1089,7 @@
   renderTrialUserTable(TRIAL_USERS);
   renderTrialLogs(TRIAL_LOGS);
   mountActivityPicker('issue-activity-picker', { prefix: 'issue-act', defaultMode: 'custom', defaultRewardNames: { 'zh-CN': 'KOL 合作体验金', 'zh-TW': 'KOL 合作體驗金', 'en': 'KOL Trial Bonus', 'ja': 'KOL 体験金' } });
-  initModuleApproval({ type: 'trial_issue', rootId: 'trial-approval-root', title: '体验金发放审批', showExportList: false, showExportDetail: true });
+  initModuleApproval({ type: 'trial_issue', rootId: 'trial-approval-root', title: '体验金发放审批', showExportList: false, showExportDetail: true, currentApplicant: 'Trial_Admin', allowResubmit: true });
 </script>
 <script src="admin-permission-registry.js"></script>
 <script src="admin-permission-store.js"></script>
