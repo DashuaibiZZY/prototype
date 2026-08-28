@@ -38,15 +38,6 @@ const shots = [
     clipHeight: 720,
   },
   {
-    file: 'admin-modal-team-tree.png',
-    url: ADMIN_HTML,
-    hash: 'partner-detail',
-    before: '(() => { PartnerPortal.showDetail("p_a1"); PartnerPortal.openDrillTeam("h_a2b"); PartnerPortal.openTeamTreeModal("h_a3"); })()',
-    selector: '#modal-team-tree > div',
-    viewport: { w: 1440, h: 900 },
-    clipHeight: 560,
-  },
-  {
     file: 'admin-partner-drill.png',
     url: ADMIN_HTML,
     hash: 'partner-detail-drill',
@@ -241,14 +232,6 @@ const shots = [
     before: '(() => { showMainPage("page-overview"); PartnerCenter.openAdjustRatioModal("sp2"); })()',
     selector: '#modal-adjust-ratio .modal-content, #modal-adjust-ratio > div',
     viewport: { w: 1440, h: 900 },
-  },
-  {
-    file: 'web-modal-team-tree.png',
-    url: WEB_HTML,
-    before: '(() => { showMainPage("page-overview"); PartnerCenter.openTeamTreeModal("sp2", false); })()',
-    selector: '#modal-team-tree .modal-content, #modal-team-tree > div',
-    viewport: { w: 1440, h: 900 },
-    clipHeight: 560,
   },
   {
     file: 'web-drill-overview.png',
