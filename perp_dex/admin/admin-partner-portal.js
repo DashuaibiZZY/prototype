@@ -487,13 +487,20 @@
             superiorEl.innerHTML = '<span class="text-blue-600 font-black">一级代理</span>';
         } else {
             const parent = getUserByWallet(u.parentWallet);
-            superiorEl.innerHTML = chip(u.parentWallet, 'wallet') +
-                (parent ? '<span class="block text-[10px] text-slate-400 mt-1 font-bold">' + chip(parent.uid, 'uid') + ' · ' + escHtml(parent.note) + '</span>' : '');
+            superiorEl.innerHTML = chip(parent ? parent.uid : '', 'uid') +
+                (parent ? '<span class="block text-[10px] text-slate-400 mt-1 font-bold">' +
+                (parent.wallet ? chip(u.parentWallet, 'wallet') + ' · ' : '') + escHtml(parent.note) + '</span>' : '');
         }
     }
 
     function escHtml(s) {
         return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function matchUserSearch(row, q) {
+        q = (q || '').toLowerCase();
+        const hay = [row.uid, row.wallet, row.email, row.note, row.remark].filter(Boolean).join(' ').toLowerCase();
+        return hay.indexOf(q) >= 0;
     }
 
     function renderPartnerAbnormalBanner(u, prefix) {
@@ -563,8 +570,9 @@
     }
 
     function mirrorWalletRemarkCell(row) {
-        let html = chip(row.wallet, 'wallet');
-        html += '<span class="block mt-0.5">' + chip(row.uid, 'uid') + '</span>';
+        let html = chip(row.uid, 'uid');
+        if (row.wallet) html += '<span class="block mt-0.5">' + chip(row.wallet, 'wallet') + '</span>';
+        else if (row.email) html += '<span class="block mt-0.5 text-[10px] text-slate-500 font-bold">' + escHtml(row.email) + '</span>';
         if (row.note) {
             html += '<span class="block text-[10px] text-slate-400 mt-0.5 font-bold">' + escHtml(row.note) + '</span>';
         }
@@ -652,7 +660,7 @@
         const clients = u.directClients || [];
         const filtered = clients.filter(function (c) {
             if (!search) return true;
-            return (c.wallet + (c.uid || '')).toLowerCase().indexOf(search) >= 0;
+            return matchUserSearch(c, search);
         });
         const sliced = paginate(filtered, page);
         if (opts.clientPageKey === 'drill') drillClientPage = sliced.page;
@@ -665,7 +673,7 @@
         if (thead) {
             thead.innerHTML = '<tr>' +
                 '<th class="px-4 py-3">注册时间</th>' +
-                '<th class="px-3 py-3">直客钱包 / UID</th>' +
+                '<th class="px-3 py-3">直客 UID / 钱包 / 邮箱</th>' +
                 '<th class="px-3 py-3 text-right">累计交易额</th>' +
                 '<th class="px-3 py-3 text-right">累计手续费</th>' +
                 '<th class="px-3 py-3 text-right text-blue-600">返佣金额</th>' +
@@ -676,7 +684,9 @@
         const tbody = document.getElementById(tbodyId);
         if (!tbody) return;
         tbody.innerHTML = sliced.items.length ? sliced.items.map(function (c) {
-            const walletCell = chip(c.wallet, 'wallet') + (c.uid ? '<span class="block mt-0.5">' + chip(c.uid, 'uid') + '</span>' : '');
+            const walletCell = chip(c.uid, 'uid') +
+                (c.wallet ? '<span class="block mt-0.5">' + chip(c.wallet, 'wallet') + '</span>' : '') +
+                (c.email ? '<span class="block mt-0.5 text-[10px] text-slate-500 font-bold">' + escHtml(c.email) + '</span>' : '');
             return '<tr><td class="px-4 py-2">' + c.time + '</td><td class="px-3 py-2">' + walletCell + '</td>' +
                 '<td class="px-3 py-2 text-right">' + c.vol + '</td><td class="px-3 py-2 text-right">' + c.fee + '</td>' +
                 '<td class="px-3 py-2 text-right font-black text-blue-600">' + c.rebate + '</td>' +
@@ -749,8 +759,9 @@
             const al = u.abnormalLines ? '<span class="text-red-600 font-black">' + u.abnormalLines + '</span>' : '<span class="text-slate-300">0</span>';
             const netDash = u.net === '--';
             return '<tr class="hover:bg-slate-50' + (u.settleStatus !== 'normal' ? ' bg-amber-50/20' : '') + '">' +
-                '<td class="px-4 py-3">' + chip(u.wallet, 'wallet') +
-                '<span class="block mt-1">' + chip(u.uid, 'uid') + '</span>' +
+                '<td class="px-4 py-3">' + chip(u.uid, 'uid') +
+                (u.wallet ? '<span class="block mt-1">' + chip(u.wallet, 'wallet') + '</span>' : '') +
+                (u.email ? '<span class="block mt-1 text-[10px] text-slate-500 font-bold">' + escHtml(u.email) + '</span>' : '') +
                 '<button type="button" onclick="PartnerPortal.showDetail(\'' + u.id + '\')" class="block mt-1 text-[10px] font-black text-blue-600 hover:underline">' + u.note + '</button></td>' +
                 '<td class="px-3 py-3 text-center font-bold">L' + u.level + ' · ' + childCount + ' 直属</td>' +
                 '<td class="px-3 py-3 text-center font-black">' + u.ratio + '%</td>' +

@@ -37,12 +37,14 @@
 
     const mySuperiorInfo = {
         level: 2,
+        parentUid: '10085088',
         parentWallet: '0x1a2b...3c4d',
         parentWalletFull: '0x1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d',
         myRatio: 70
     };
 
     const myPartnerProfile = {
+        uid: '10086000',
         wallet: '0x9f...8a1',
         walletFull: '0x9f8a1b2c3d4e5f60718293a4b5c6d7e8f9012a9f8',
         ratio: 70
@@ -128,7 +130,7 @@
     const directClientsData = [
         { joinDate: '2024-05-20', wallet: '0x99...F4d2', walletFull: '0x99F4d2a1b0c9d8e7f6059483726180a9b8c7d6e5', totalVol: 42500, totalFee: 42.50, rebate: 29.75, netDeposit: 5200 },
         { joinDate: '2024-05-18', wallet: '0xAb...12cd', walletFull: '0xAb12cd9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b12cd', totalVol: 128000, totalFee: 128.00, rebate: 89.60, netDeposit: 15000 },
-        { joinDate: '2024-05-15', wallet: '0xCd...88ef', walletFull: '0xCd88ef7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d88ef', totalVol: 8900, totalFee: 8.90, rebate: 6.23, netDeposit: -1200 },
+        { joinDate: '2024-05-15', email: 'demo.trader@forx.io', totalVol: 8900, totalFee: 8.90, rebate: 6.23, netDeposit: -1200 },
         { joinDate: '2024-05-12', wallet: '0xEf...33aa', walletFull: '0xEf33aa5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f33aa', totalVol: 256000, totalFee: 256.00, rebate: 179.20, netDeposit: 32000 }
     ];
 
@@ -247,6 +249,34 @@
             ]
         }
     };
+
+    (function bootstrapPartnerUserUids() {
+        let seq = 10086001;
+        function ensure(row) {
+            if (row && !row.uid) row.uid = String(seq++);
+        }
+        function walk(arr) {
+            if (!arr) return;
+            arr.forEach(function (row) {
+                ensure(row);
+                if (row.subPartners) walk(row.subPartners);
+                if (row.directClients) walk(row.directClients);
+            });
+        }
+        walk(subPartnersData);
+        walk(directClientsData);
+        Object.keys(drillTeams).forEach(function (k) {
+            const t = drillTeams[k];
+            ensure(t);
+            walk(t.subPartners);
+            walk(t.directClients);
+        });
+        Object.keys(teamTreeAbnormalData).forEach(function (k) {
+            (teamTreeAbnormalData[k] || []).forEach(function (line) {
+                (line.nodes || []).forEach(ensure);
+            });
+        });
+    })();
 
     const overviewBase = {
         teamVol: 52450000,
@@ -425,10 +455,15 @@
             if (info.superiorLevel <= 1) {
                 el.innerHTML = '<span class="text-blue-600 font-black">一级代理</span>';
             } else if (info.masked) {
-                el.innerHTML = '<span class="font-mono font-black text-gray-900">' + esc(info.superiorWallet) + '</span>';
+                el.innerHTML = '<span class="font-mono font-black text-gray-900">' + esc(info.superiorUid || info.superiorWallet) + '</span>';
             } else {
-                el.innerHTML = '<div class="copy-chip"><span class="font-mono">' + esc(info.superiorWallet) + '</span>' +
-                    copyChipBtn(info.superiorWalletFull || info.superiorWallet, '上级钱包地址') + '</div>';
+                let html = '<div class="copy-chip"><span class="font-mono font-black">' + esc(info.superiorUid || '—') + '</span>' +
+                    copyChipBtn(info.superiorUid || '', '上级 UID') + '</div>';
+                if (info.superiorWallet) {
+                    html += '<div class="copy-chip mt-1"><span class="text-[10px] text-gray-500 font-mono">' + esc(info.superiorWallet) + '</span>' +
+                        copyChipBtn(info.superiorWalletFull || info.superiorWallet, '上级钱包地址') + '</div>';
+                }
+                el.innerHTML = html;
             }
         }
         const ratioEl = document.getElementById(ratioElId);
@@ -438,6 +473,7 @@
     function renderMySuperior() {
         renderPartnerIdentityBar('overview-my-superior', 'overview-my-ratio', {
             superiorLevel: mySuperiorInfo.level,
+            superiorUid: mySuperiorInfo.parentUid,
             superiorWallet: mySuperiorInfo.parentWallet,
             superiorWalletFull: mySuperiorInfo.parentWalletFull,
             ratio: mySuperiorInfo.myRatio,
@@ -609,15 +645,33 @@
         return '<span class="font-black text-slate-400 italic">-- 暂停结算</span>';
     }
 
-    function walletRemarkCell(row, masked) {
+    function matchUserSearch(row, q) {
+        const hay = [row.uid, row.wallet, row.walletFull, row.email, row.remark, row.note].filter(Boolean).join(' ').toLowerCase();
+        return hay.indexOf(q) >= 0;
+    }
+
+    function userIdentityCell(row, masked) {
+        const uid = row.uid || '—';
         if (masked) {
-            return '<span class="text-gray-900 font-black font-mono">' + esc(row.wallet) + '</span>';
+            let html = '<span class="text-gray-900 font-black font-mono">' + esc(uid) + '</span>';
+            if (row.wallet) html += '<span class="block text-[10px] text-gray-400 font-bold mt-0.5 font-mono">' + esc(row.wallet) + '</span>';
+            else if (row.email) html += '<span class="block text-[10px] text-gray-400 font-bold mt-0.5">' + esc(row.email) + '</span>';
+            return html;
         }
-        let html = '<div class="copy-chip"><span class="text-gray-900 font-black">' + esc(row.wallet) + '</span>' + copyChipBtn(row.walletFull || row.wallet, '钱包地址') + '</div>';
+        let html = '<div class="copy-chip"><span class="text-gray-900 font-black">' + esc(uid) + '</span>' + copyChipBtn(uid, 'UID') + '</div>';
+        if (row.wallet) {
+            html += '<div class="copy-chip mt-1"><span class="text-[10px] text-gray-500 font-bold font-mono">' + esc(row.wallet) + '</span>' + copyChipBtn(row.walletFull || row.wallet, '钱包地址') + '</div>';
+        } else if (row.email) {
+            html += '<div class="copy-chip mt-1"><span class="text-[10px] text-gray-500 font-bold">' + esc(row.email) + '</span>' + copyChipBtn(row.email, '邮箱') + '</div>';
+        }
         if (row.remark) {
             html += '<div class="copy-chip mt-1"><span class="text-[10px] text-gray-400 font-bold">' + esc(row.remark) + '</span>' + copyChipBtn(row.remark, '备注') + '</div>';
         }
         return html;
+    }
+
+    function walletRemarkCell(row, masked) {
+        return userIdentityCell(row, masked);
     }
 
     function renderSubPartnersTable(opts) {
@@ -637,7 +691,7 @@
             if (filter !== 'all' && row.settlementStatus !== filter) return false;
             if (!search) return true;
             const q = search.toLowerCase();
-            return row.wallet.toLowerCase().includes(q);
+            return matchUserSearch(row, q);
         });
 
         const getters = {
@@ -659,7 +713,7 @@
         const sortFn = drill ? 'PartnerCenter.setDrillSubSort' : 'PartnerCenter.setSubPartnerSort';
         const thead = document.getElementById(headId);
         if (thead) {
-            const walletCol = masked ? '下级合伙人' : '下级合伙人 (备注)';
+            const walletCol = masked ? '下级合伙人' : '下级合伙人 UID';
             thead.innerHTML =
                 '<tr>' +
                 '<th class="px-6 py-4">加入时间</th>' +
@@ -741,7 +795,7 @@
         if (thead) {
             let header = '<tr>' +
                 '<th class="px-6 py-4">注册时间</th>' +
-                '<th class="px-6 py-4">直客钱包地址</th>' +
+                '<th class="px-6 py-4">直客 UID</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'totalVol\')">累计交易额' + sortIconHtml('totalVol', sortState) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'totalFee\')">累计手续费' + sortIconHtml('totalFee', sortState) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'rebate\')">返佣金额' + sortIconHtml('rebate', sortState) + '</th>' +
@@ -757,16 +811,11 @@
         if (!tbody) return;
         tbody.innerHTML = sliced.items.map(function (row) {
             const netClass = row.netDeposit >= 0 ? 'text-green-500' : 'text-red-400';
-            let walletCell;
-            if (masked) {
-                walletCell = '<span class="font-black text-gray-900 font-mono">' + esc(row.wallet) + '</span>';
-            } else {
-                walletCell = '<div class="copy-chip"><span class="font-black text-gray-900">' + esc(row.wallet) + '</span>' + copyChipBtn(row.walletFull || row.wallet, '钱包地址') + '</div>';
-            }
+            const walletCell = userIdentityCell(row, masked);
             let actionCell = '';
             if (!masked) {
                 actionCell = '<td class="px-6 py-4 text-right">' +
-                    '<button type="button" onclick="PartnerCenter.openAddSubPartnerModal(\'' + jsEsc(row.wallet) + '\')" class="text-blue-600 font-black hover:underline">设置为下级合伙人</button>' +
+                    '<button type="button" onclick="PartnerCenter.openAddSubPartnerModal(\'' + jsEsc(row.uid) + '\')" class="text-blue-600 font-black hover:underline">设置为下级合伙人</button>' +
                     '</td>';
             }
             return '<tr class="hover:bg-slate-50 transition-colors">' +
@@ -905,12 +954,12 @@
         if (isOpen) {
             nodesHtml = line.nodes.map(function (node, i) {
                 const pad = 12 + i * 16;
-                const walletLine = masked
-                    ? '<span class="font-mono font-black text-gray-900 text-[11px]">' + esc(node.wallet) + '</span>'
-                    : '<div class="copy-chip"><span class="font-mono font-black text-gray-900 text-[11px]">' + esc(node.wallet) + '</span>' + copyChipBtn(node.walletFull || node.wallet, '钱包地址') + '</div>';
+                const identityLine = masked
+                    ? '<span class="font-mono font-black text-gray-900 text-[11px]">' + esc(node.uid || node.wallet) + '</span>'
+                    : userIdentityCell(node, false);
                 const remarkLine = masked ? '' : '<div class="copy-chip mt-0.5"><span class="text-[10px] text-gray-500 font-bold">' + esc(node.remark) + '</span>' + copyChipBtn(node.remark, '备注') + '</div>';
                 return '<div class="flex items-center gap-2 py-2 border-l-2 border-amber-200 ml-3" style="padding-left:' + pad + 'px">' +
-                    '<div class="flex-1 min-w-0">' + walletLine + remarkLine + '</div>' +
+                    '<div class="flex-1 min-w-0">' + identityLine + remarkLine + '</div>' +
                     '<span class="text-[11px] font-black text-amber-700 shrink-0">' + esc(node.ratio) + '</span></div>';
             }).join('');
         }
@@ -1139,9 +1188,9 @@
             alert('返佣比例已更新为 ' + ratio + '%');
             renderSubPartnersTable({ masked: false });
         },
-        openAddSubPartnerModal: function (wallet) {
-            const input = document.getElementById('input-add-agent-wallet');
-            if (input) input.value = wallet || '';
+        openAddSubPartnerModal: function (uid) {
+            const input = document.getElementById('input-add-agent-uid');
+            if (input) input.value = uid || '';
             toggleModal('modal-add-agent');
         },
         addInviteLink: function (remark, code) {

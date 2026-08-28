@@ -82,12 +82,37 @@
         setTimeout(function () { btn.title = orig || '复制'; }, 1200);
     });
 
+    function userIdentity(user, opts) {
+        opts = opts || {};
+        user = user || {};
+        const uid = user.uid != null ? String(user.uid).trim() : '';
+        const wallet = user.wallet != null ? String(user.wallet).trim() : '';
+        const email = user.email != null ? String(user.email).trim() : '';
+        const secondary = wallet || email;
+        const secondaryType = wallet ? 'wallet' : (email ? 'email' : '');
+        const secondaryLabel = wallet ? '钱包地址' : (email ? '邮箱' : '');
+        const secondaryFull = wallet ? (user.walletFull || wallet) : email;
+        const stackCls = opts.stackClass || 'block mt-0.5';
+        if (!uid && !secondary) {
+            return '<span class="text-slate-400">—</span>';
+        }
+        let html = uid ? render(uid, { type: 'uid', className: opts.uidClass || 'font-black text-slate-900' }) : '';
+        if (secondary) {
+            const secHtml = secondaryType === 'wallet'
+                ? render(secondaryFull, { type: 'wallet', display: abbreviateWallet(secondary), className: opts.secondaryClass || 'text-[10px] text-slate-500' })
+                : '<span class="inline-flex items-center gap-0.5 admin-copy-chip ' + (opts.secondaryClass || 'text-[10px] text-slate-500') + '"><span class="leading-tight">' + secondary + '</span><button type="button" class="admin-copy-btn inline-flex items-center justify-center p-0.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 shrink-0" data-copy="' + escAttr(secondaryFull) + '" title="复制' + secondaryLabel + '">' + copySvg() + '</button></span>';
+            html += (html ? '<span class="' + stackCls + '">' + secHtml + '</span>' : secHtml);
+        }
+        return html;
+    }
+
     window.AdminCopyChip = {
         render: render,
         abbreviate: abbreviate,
         copy: copy,
         uid: function (v, className) { return render(v, { type: 'uid', className: className || '' }); },
         wallet: function (v, className) { return render(v, { type: 'wallet', className: className || '' }); },
+        userIdentity: userIdentity,
         enhanceTables: function (selector) {
             const root = selector ? document.querySelector(selector) : document.body;
             if (!root) return;

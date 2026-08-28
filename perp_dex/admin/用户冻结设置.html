@@ -50,14 +50,10 @@
 
     <div class="flex-1 overflow-y-auto p-8 space-y-6">
         <section class="card p-5">
-            <div class="grid grid-cols-4 gap-4 items-end">
+            <div class="grid grid-cols-3 gap-4 items-end">
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">钱包地址</label>
-                    <input id="filterWallet" type="text" placeholder="0x..." class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID</label>
-                    <input id="filterUid" type="text" placeholder="输入 UID" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID / 钱包 / 邮箱</label>
+                    <input id="filterUserKey" type="text" placeholder="输入 UID、钱包或邮箱" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">冻结状态</label>
@@ -244,12 +240,13 @@
     }
 
     function applyFilters() {
-        const wallet = document.getElementById('filterWallet').value.trim().toLowerCase();
-        const uid = document.getElementById('filterUid').value.trim();
+        const key = (document.getElementById('filterUserKey').value || '').trim().toLowerCase();
         const freeze = document.getElementById('filterFreeze').value;
         filteredUsers = users.filter(u => {
-            if (wallet && !u.wallet.toLowerCase().includes(wallet)) return false;
-            if (uid && !u.uid.includes(uid)) return false;
+            if (key) {
+                const hay = [u.uid, u.wallet, u.email].filter(Boolean).join(' ').toLowerCase();
+                if (!hay.includes(key)) return false;
+            }
             if (freeze !== 'all' && u.freezeStatus !== freeze) return false;
             return true;
         });
@@ -258,8 +255,7 @@
     }
 
     function resetFilters() {
-        document.getElementById('filterWallet').value = '';
-        document.getElementById('filterUid').value = '';
+        document.getElementById('filterUserKey').value = '';
         document.getElementById('filterFreeze').value = 'all';
         filteredUsers = [...users];
         freezeUserListPage = 1;
