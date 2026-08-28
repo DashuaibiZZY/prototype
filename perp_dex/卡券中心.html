@@ -17,6 +17,13 @@
         .status-tab:hover { color: #000; }
         .dropdown-content { display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #f1f1f1; box-shadow: 0 4px 12px rgba(0,0,0,0.05); min-width: 140px; z-index: 100; }
         .group:hover .dropdown-content { display: block; }
+        .web-pagination { display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap; }
+        .web-page-btn { min-width: 28px; height: 28px; padding: 0 8px; border: 1px solid #e5e7eb; background: #fff; border-radius: 4px; font-size: 10px; font-weight: 800; cursor: pointer; color: #6b7280; transition: all 0.15s; }
+        .web-page-btn:hover:not(:disabled) { border-color: #111827; color: #111827; }
+        .web-page-btn.active { background: #111827; color: #fff; border-color: #111827; }
+        .web-page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .web-page-ellipsis { padding: 0 4px; color: #9ca3af; font-size: 10px; font-weight: 700; user-select: none; }
+        .coupon-grid-pagination { margin-top: 2px; padding: 16px 20px; background: #fff; border: 1px solid #f1f1f1; border-radius: 4px; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col text-[12px]">
@@ -177,10 +184,10 @@
         </div>
 
         <!-- 4. 卡券列表矩陣 (Grid) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div id="coupon-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
             <!-- 卡片 1: 可使用 (待激活) -->
-            <div class="coupon-card p-6 flex flex-col justify-between min-h-[208px] shadow-sm border-l-4 border-l-blue-600 bg-white relative">
+            <div class="coupon-card p-6 flex flex-col justify-between min-h-[208px] shadow-sm border-l-4 border-l-blue-600 bg-white relative" data-coupon-card>
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-[10px] font-black text-gray-400 uppercase mb-1 tracking-wider">永續合約體驗金</p>
@@ -221,7 +228,7 @@
             </div>
 
             <!-- 卡片 2: 已使用 (去交易) -->
-            <div class="coupon-card p-6 flex flex-col justify-between min-h-[208px] shadow-sm border-l-4 border-l-green-500 bg-white">
+            <div class="coupon-card p-6 flex flex-col justify-between min-h-[208px] shadow-sm border-l-4 border-l-green-500 bg-white" data-coupon-card>
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-[10px] font-black text-gray-400 uppercase mb-1 tracking-wider">永續合約體驗金</p>
@@ -249,7 +256,7 @@
             </div>
 
             <!-- 卡片 3: 已過期 (置灰處理) -->
-            <div class="coupon-card p-6 flex flex-col justify-between min-h-[208px] opacity-60 grayscale border-l-4 border-l-gray-300 bg-gray-50/50">
+            <div class="coupon-card p-6 flex flex-col justify-between min-h-[208px] opacity-60 grayscale border-l-4 border-l-gray-300 bg-gray-50/50" data-coupon-card>
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-[10px] font-black text-gray-400 uppercase mb-1">永續合約體驗金</p>
@@ -275,7 +282,7 @@
             </div>
 
             <!-- 卡片 4: 已失效 (紅色警示感) -->
-            <div class="coupon-card p-6 flex flex-col justify-between min-h-[208px] border-l-4 border-l-red-200 bg-gray-50/50">
+            <div class="coupon-card p-6 flex flex-col justify-between min-h-[208px] border-l-4 border-l-red-200 bg-gray-50/50" data-coupon-card>
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-[10px] font-black text-gray-400 uppercase mb-1">永續合約體驗金</p>
@@ -300,6 +307,74 @@
                 </div>
             </div>
 
+            <!-- 卡片 5-8：分頁演示 -->
+            <div class="coupon-card p-6 flex flex-col justify-between min-h-[208px] shadow-sm border-l-4 border-l-blue-600 bg-white" data-coupon-card>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] font-black text-gray-400 uppercase mb-1 tracking-wider">永續合約體驗金</p>
+                        <h2 class="text-3xl font-black text-gray-900">30.00 <span class="text-sm font-medium text-gray-400 uppercase">USDT</span></h2>
+                    </div>
+                    <button class="px-4 py-1.5 bg-blue-600 text-white rounded-sm font-black text-[10px] hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">開啟使用</button>
+                </div>
+                <div class="space-y-1.5 py-3 mt-2">
+                    <div class="flex justify-between text-[11px] font-bold"><span class="text-gray-400">虧損抵扣上限</span><span class="text-gray-900">20% (6.00 USDT)</span></div>
+                    <div class="flex justify-between text-[11px] font-bold"><span class="text-gray-400">費用抵扣上限</span><span class="text-gray-900">10% (3.00 USDT)</span></div>
+                </div>
+                <div class="pt-3 border-t border-gray-50"><p class="text-[10px] font-bold text-gray-400 uppercase">激活截止時間：<span class="text-gray-700">2024-11-12 12:00</span></p></div>
+            </div>
+
+            <div class="coupon-card p-6 flex flex-col justify-between min-h-[208px] shadow-sm border-l-4 border-l-blue-600 bg-white" data-coupon-card>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] font-black text-gray-400 uppercase mb-1 tracking-wider">永續合約體驗金</p>
+                        <h2 class="text-3xl font-black text-gray-900">80.00 <span class="text-sm font-medium text-gray-400 uppercase">USDT</span></h2>
+                    </div>
+                    <button class="px-4 py-1.5 bg-blue-600 text-white rounded-sm font-black text-[10px] hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">開啟使用</button>
+                </div>
+                <div class="space-y-1.5 py-3 mt-2">
+                    <div class="flex justify-between text-[11px] font-bold"><span class="text-gray-400">虧損抵扣上限</span><span class="text-gray-900">20% (16.00 USDT)</span></div>
+                    <div class="flex justify-between text-[11px] font-bold"><span class="text-gray-400">費用抵扣上限</span><span class="text-gray-900">10% (8.00 USDT)</span></div>
+                </div>
+                <div class="pt-3 border-t border-gray-50"><p class="text-[10px] font-bold text-gray-400 uppercase">激活截止時間：<span class="text-gray-700">2024-11-14 12:00</span></p></div>
+            </div>
+
+            <div class="coupon-card p-6 flex flex-col justify-between min-h-[208px] shadow-sm border-l-4 border-l-green-500 bg-white" data-coupon-card>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] font-black text-gray-400 uppercase mb-1 tracking-wider">永續合約體驗金</p>
+                        <h2 class="text-3xl font-black text-gray-900">60.00 <span class="text-sm font-medium text-gray-400 uppercase">USDT</span></h2>
+                        <span class="inline-block mt-1 px-1.5 py-0.5 bg-green-50 text-green-600 text-[9px] font-black rounded-sm uppercase">正在使用中</span>
+                    </div>
+                    <button class="px-4 py-1.5 bg-black text-white rounded-sm font-black text-[10px] hover:bg-gray-800 transition uppercase tracking-tighter">去交易</button>
+                </div>
+                <div class="space-y-1.5 py-3 mt-2">
+                    <div class="flex justify-between text-[11px] font-bold"><span class="text-gray-400">虧損抵扣上限</span><span class="text-gray-900">20% (12.00 USDT)</span></div>
+                    <div class="flex justify-between text-[11px] font-bold"><span class="text-gray-400">費用抵扣上限</span><span class="text-gray-900">10% (6.00 USDT)</span></div>
+                </div>
+                <div class="pt-3 border-t border-gray-50"><p class="text-[10px] font-bold text-gray-400 uppercase">回收截止時間：<span class="text-gray-700">2024-11-18 18:00</span></p></div>
+            </div>
+
+            <div class="coupon-card p-6 flex flex-col justify-between min-h-[208px] opacity-60 grayscale border-l-4 border-l-gray-300 bg-gray-50/50" data-coupon-card>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] font-black text-gray-400 uppercase mb-1">永續合約體驗金</p>
+                        <h2 class="text-3xl font-black text-gray-400">15.00 <span class="text-sm font-medium uppercase">USDT</span></h2>
+                    </div>
+                    <span class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm font-black text-[9px] uppercase">已過期</span>
+                </div>
+                <div class="space-y-1.5 py-3 mt-2 opacity-50">
+                    <div class="flex justify-between text-[11px] font-bold text-gray-400"><span>虧損抵扣上限</span><span>20%</span></div>
+                    <div class="flex justify-between text-[11px] font-bold text-gray-400"><span>費用抵扣上限</span><span>10%</span></div>
+                </div>
+                <div class="pt-3 border-t border-gray-100"><p class="text-[10px] font-bold text-gray-400 uppercase">激活截止時間：<span class="text-gray-400 line-through">2024-10-18 00:00</span></p></div>
+            </div>
+
+        </div>
+
+        <!-- 4.1 卡券矩阵分页 -->
+        <div class="coupon-grid-pagination flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <span id="coupon-grid-summary" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider"></span>
+            <div id="coupon-grid-pagination" class="web-pagination"></div>
         </div>
 
         <!-- 5. 底部提示 -->
@@ -317,6 +392,55 @@
 
     </div>
 </main>
+
+<script>
+    const COUPON_GRID_PAGE_SIZE = 6;
+    let couponGridPage = 1;
+
+    function buildWebPaginationHtml(total, page, pageSize, handlerName) {
+        const pages = Math.max(1, Math.ceil(total / pageSize) || 1);
+        page = Math.max(1, Math.min(page, pages));
+        let html = '<button type="button" class="web-page-btn"' + (page <= 1 ? ' disabled' : '') + ' onclick="' + handlerName + '(' + (page - 1) + ')">&lt;</button>';
+        const nums = pages <= 7 ? Array.from({ length: pages }, (_, i) => i + 1) : [1, 2, '...', pages];
+        nums.forEach(function (item) {
+            if (item === '...') {
+                html += '<span class="web-page-ellipsis">...</span>';
+            } else {
+                html += '<button type="button" class="web-page-btn' + (item === page ? ' active' : '') + '" onclick="' + handlerName + '(' + item + ')">' + item + '</button>';
+            }
+        });
+        html += '<button type="button" class="web-page-btn"' + (page >= pages ? ' disabled' : '') + ' onclick="' + handlerName + '(' + (page + 1) + ')">&gt;</button>';
+        return html;
+    }
+
+    function renderCouponGridPage(page) {
+        couponGridPage = page;
+        const cards = Array.from(document.querySelectorAll('[data-coupon-card]'));
+        const total = cards.length;
+        const pages = Math.max(1, Math.ceil(total / COUPON_GRID_PAGE_SIZE));
+        couponGridPage = Math.max(1, Math.min(couponGridPage, pages));
+        const start = (couponGridPage - 1) * COUPON_GRID_PAGE_SIZE;
+        cards.forEach(function (card, index) {
+            card.classList.toggle('hidden', index < start || index >= start + COUPON_GRID_PAGE_SIZE);
+        });
+        const summary = document.getElementById('coupon-grid-summary');
+        if (summary) {
+            const from = total ? start + 1 : 0;
+            const to = Math.min(start + COUPON_GRID_PAGE_SIZE, total);
+            summary.textContent = '显示 ' + from + '-' + to + ' 张，共 ' + total + ' 张卡券';
+        }
+        const pager = document.getElementById('coupon-grid-pagination');
+        if (pager) pager.innerHTML = buildWebPaginationHtml(total, couponGridPage, COUPON_GRID_PAGE_SIZE, 'goCouponGridPage');
+    }
+
+    function goCouponGridPage(page) {
+        renderCouponGridPage(page);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        renderCouponGridPage(1);
+    });
+</script>
 
 </body>
 </html>

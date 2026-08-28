@@ -24,6 +24,12 @@
         .modal-overlay { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; align-items: center; justify-content: center; display: none; }
         .tier-progress-track { height: 8px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
         .tier-progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #2563eb, #3b82f6); }
+        .web-pagination { display: flex; align-items: center; justify-content: center; gap: 4px; }
+        .web-page-btn { min-width: 28px; height: 28px; padding: 0 8px; border: 1px solid #e5e7eb; background: #fff; border-radius: 4px; font-size: 10px; font-weight: 800; cursor: pointer; color: #6b7280; transition: all 0.15s; }
+        .web-page-btn:hover:not(:disabled) { border-color: #111827; color: #111827; }
+        .web-page-btn.active { background: #111827; color: #fff; border-color: #111827; }
+        .web-page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .web-page-ellipsis { padding: 0 4px; color: #9ca3af; font-size: 10px; font-weight: 700; user-select: none; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col text-[12px]">
@@ -373,14 +379,12 @@
                     <th class="px-6 py-3">活动详情</th>
                 </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-50">
-                <tr class="hover:bg-gray-50"><td class="px-6 py-4 font-black text-blue-600">+1,250.00</td><td class="px-6 py-4 text-gray-500">2024-05-22 12:00</td><td class="px-6 py-4 font-bold">每周行为瓜分奖励</td></tr>
-                <tr class="hover:bg-gray-50"><td class="px-6 py-4 font-black text-blue-600">+500.00</td><td class="px-6 py-4 text-gray-500">2024-05-20 09:15</td><td class="px-6 py-4 font-bold">邀请好友 (0x...2Dd2)</td></tr>
-                </tbody>
+                <tbody id="points-detail-tbody" class="divide-y divide-gray-50"></tbody>
             </table>
         </div>
-        <div class="p-4 bg-gray-50 text-center">
-            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">仅显示最近 50 条记录</span>
+        <div class="px-6 py-3 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <span id="points-detail-summary" class="text-[10px] text-gray-400 font-bold uppercase tracking-tighter"></span>
+            <div id="points-detail-pagination" class="web-pagination"></div>
         </div>
     </div>
 </div>
@@ -442,12 +446,80 @@
 </div>
 
 <script>
+    const POINTS_DETAIL_PAGE_SIZE = 10;
+    let pointsDetailPage = 1;
+    const POINTS_DETAIL_ROWS = [
+        { amount: '+1,250.00', time: '2024-05-22 12:00', activity: '每周行为瓜分奖励' },
+        { amount: '+500.00', time: '2024-05-20 09:15', activity: '邀请好友 (0x...2Dd2)' },
+        { amount: '+5.00', time: '2024-05-18 08:00', activity: '新人专属交易任务' },
+        { amount: '+10.00', time: '2024-05-17 14:30', activity: '新人专属推广先锋奖励' },
+        { amount: '+980.00', time: '2024-05-15 12:00', activity: '每周行为瓜分奖励' },
+        { amount: '+120.00', time: '2024-05-12 11:20', activity: '手动发放 · 活动补偿' },
+        { amount: '+860.00', time: '2024-05-08 12:00', activity: '每周行为瓜分奖励' },
+        { amount: '+45.00', time: '2024-05-06 16:45', activity: '邀请好友 (0x...8a1c)' },
+        { amount: '+720.00', time: '2024-05-01 12:00', activity: '每周行为瓜分奖励' },
+        { amount: '+300.00', time: '2024-04-28 09:00', activity: '手动发放 · 社群活动' },
+        { amount: '+640.00', time: '2024-04-24 12:00', activity: '每周行为瓜分奖励' },
+        { amount: '+88.00', time: '2024-04-20 18:10', activity: '邀请好友 (0x...3f9e)' },
+        { amount: '+510.00', time: '2024-04-17 12:00', activity: '每周行为瓜分奖励' },
+        { amount: '+25.00', time: '2024-04-14 10:05', activity: '有效持仓激励' },
+        { amount: '+430.00', time: '2024-04-10 12:00', activity: '每周行为瓜分奖励' },
+        { amount: '+190.00', time: '2024-04-06 13:40', activity: '平均资沉积分' },
+        { amount: '+380.00', time: '2024-04-03 12:00', activity: '每周行为瓜分奖励' },
+        { amount: '+60.00', time: '2024-03-29 17:22', activity: '邀请好友 (0x...1b7d)' },
+        { amount: '+290.00', time: '2024-03-25 12:00', activity: '每周行为瓜分奖励' },
+        { amount: '+15.00', time: '2024-03-22 09:18', activity: '持仓亏损激励' }
+    ];
+
+    function buildWebPaginationHtml(total, page, pageSize, handlerName) {
+        const pages = Math.max(1, Math.ceil(total / pageSize) || 1);
+        page = Math.max(1, Math.min(page, pages));
+        let html = '<button type="button" class="web-page-btn"' + (page <= 1 ? ' disabled' : '') + ' onclick="' + handlerName + '(' + (page - 1) + ')">&lt;</button>';
+        const nums = pages <= 7 ? Array.from({ length: pages }, (_, i) => i + 1) : [1, 2, 3, '...', pages];
+        nums.forEach(function (item) {
+            if (item === '...') {
+                html += '<span class="web-page-ellipsis">...</span>';
+            } else {
+                html += '<button type="button" class="web-page-btn' + (item === page ? ' active' : '') + '" onclick="' + handlerName + '(' + item + ')">' + item + '</button>';
+            }
+        });
+        html += '<button type="button" class="web-page-btn"' + (page >= pages ? ' disabled' : '') + ' onclick="' + handlerName + '(' + (page + 1) + ')">&gt;</button>';
+        return html;
+    }
+
+    function renderPointsDetailModal(page) {
+        pointsDetailPage = page;
+        const total = POINTS_DETAIL_ROWS.length;
+        const pages = Math.max(1, Math.ceil(total / POINTS_DETAIL_PAGE_SIZE));
+        pointsDetailPage = Math.max(1, Math.min(pointsDetailPage, pages));
+        const start = (pointsDetailPage - 1) * POINTS_DETAIL_PAGE_SIZE;
+        const rows = POINTS_DETAIL_ROWS.slice(start, start + POINTS_DETAIL_PAGE_SIZE);
+        const tbody = document.getElementById('points-detail-tbody');
+        if (!tbody) return;
+        tbody.innerHTML = rows.map(function (row) {
+            return '<tr class="hover:bg-gray-50"><td class="px-6 py-4 font-black text-blue-600">' + row.amount + '</td><td class="px-6 py-4 text-gray-500">' + row.time + '</td><td class="px-6 py-4 font-bold">' + row.activity + '</td></tr>';
+        }).join('');
+        const summary = document.getElementById('points-detail-summary');
+        if (summary) {
+            const from = total ? start + 1 : 0;
+            const to = Math.min(start + POINTS_DETAIL_PAGE_SIZE, total);
+            summary.textContent = '显示 ' + from + '-' + to + ' 条，共 ' + total + ' 条';
+        }
+        const pager = document.getElementById('points-detail-pagination');
+        if (pager) pager.innerHTML = buildWebPaginationHtml(total, pointsDetailPage, POINTS_DETAIL_PAGE_SIZE, 'goPointsDetailPage');
+    }
+
+    function goPointsDetailPage(page) {
+        renderPointsDetailModal(page);
+    }
+
     function toggleModal(id) {
         const modal = document.getElementById(id);
         if (modal.style.display === 'flex') {
             modal.style.display = 'none';
         } else {
             modal.style.display = 'flex';
+            if (id === 'modal-points-detail') renderPointsDetailModal(pointsDetailPage);
         }
     }
 
