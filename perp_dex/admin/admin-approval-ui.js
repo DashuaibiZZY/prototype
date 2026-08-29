@@ -99,6 +99,9 @@
         } else if (app.type === 'partner_l1_bind') {
             rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['当前身份', p.subjectLabel || '—'], ['升级范围', p.upgradeScope || '—'],
                 ['申请返佣比例', p.ratio + '%'], ['运营配置上限', p.opsCap + '%'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
+            if (p.crossBd) {
+                rows.push(['跨权限配置', '是，须风控+老板审批'], ['原归属 BD', p.originalBd || '—'], ['跨权限商务原因', p.crossBdReason || '—']);
+            }
             if (p.treeNodeCount) rows.push(['代理节点', String(p.treeNodeCount)]);
             if (p.directSubPartnerCount != null) rows.push(['直属下级合伙人', String(p.directSubPartnerCount)]);
             if (p.maxDirectSubRatio != null) rows.push(['直属下级最大返佣', p.maxDirectSubRatio + '%']);
@@ -114,6 +117,9 @@
             }
         } else if (app.type === 'partner_ratio_change') {
             rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['原返佣比例', p.oldRatio + '%'], ['新返佣比例', p.newRatio + '%'], ['运营配置上限', p.opsCap + '%'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
+            if (p.crossBd) {
+                rows.push(['跨权限配置', '是，须风控+老板审批'], ['原归属 BD', p.originalBd || '—'], ['跨权限商务原因', p.crossBdReason || '—']);
+            }
             if (opts && opts.detailImagePreview && p.attachments && p.attachments.length) {
                 const previews = p.attachmentPreviews || {};
                 rows.push(['图片附件', p.attachments.map(function (name) {
@@ -131,6 +137,9 @@
                 : (p.targetKind === 'l1' ? '一级代理' : (p.targetKind === 'n_partner' ? 'N 级代理' : '—'));
             rows.push(['待迁移用户', p.subjectWallet || '—'], ['UID', p.subjectUid || '—'], ['类型', p.subjectType === 'plain' ? '普通用户/直客' : '代理用户'],
                 ['迁移后身份', roleLabel], ['迁移到上级', p.targetWallet || '—'], ['目标类型', targetKindLabel], ['迁移后比例', ratioLabel]);
+            if (p.crossBd) {
+                rows.push(['跨权限配置', '是，须风控+老板审批'], ['原归属 BD', p.originalBd || '—'], ['跨权限商务原因', p.crossBdReason || '—']);
+            }
             if (p.attachments && p.attachments.length) {
                 const previews = p.attachmentPreviews || {};
                 rows.push(['图片附件', p.attachments.map(function (name) {
@@ -167,6 +176,9 @@
         if (app.type !== 'partner_l1_bind') return '';
         const p = app.payload || {};
         const exceedLabel = p.exceedsCap ? '是，须风控+老板审批' : '否';
+        const crossBdHtml = p.crossBd
+            ? '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">跨权限配置</p><p class="font-bold mt-1 text-amber-800">原归属 BD：' + (p.originalBd || '—') + '</p><p class="text-[11px] mt-1 text-slate-700">' + (p.crossBdReason || '—') + '</p></div>'
+            : '';
         const scopeHtml = p.upgradeScope
             ? '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">升级范围</p><p class="font-bold mt-1 text-slate-800">' + (p.subjectLabel || '—') + ' · ' + p.upgradeScope + '</p></div>'
             : '';
@@ -176,6 +188,7 @@
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">UID</p><p class="font-black mt-1">' + (window.AdminCopyChip ? AdminCopyChip.uid(p.uid || '—') : p.uid || '—') + '</p></div>' +
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">钱包</p><p class="font-black mt-1">' + (window.AdminCopyChip ? AdminCopyChip.wallet(p.wallet) : p.wallet || '—') + '</p></div>' +
             scopeHtml +
+            crossBdHtml +
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">申请返佣比例</p><p class="font-black mt-1 text-blue-600 text-lg">' + (p.ratio != null ? p.ratio + '%' : '—') + '</p></div>' +
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">运营配置上限 / 超上限</p><p class="font-black mt-1">' + (p.opsCap != null ? p.opsCap + '%' : '—') + ' · <span class="text-amber-700">' + exceedLabel + '</span></p></div>' +
             '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">图片附件</p>' + renderPartnerAttachmentThumbnails(p) + '</div>' +
@@ -186,6 +199,9 @@
         if (app.type !== 'partner_ratio_change') return '';
         const p = app.payload || {};
         const exceedLabel = p.exceedsCap ? '是，须风控+老板审批' : '否';
+        const crossBdHtml = p.crossBd
+            ? '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">跨权限配置</p><p class="font-bold mt-1 text-amber-800">原归属 BD：' + (p.originalBd || '—') + '</p><p class="text-[11px] mt-1 text-slate-700">' + (p.crossBdReason || '—') + '</p></div>'
+            : '';
         const remarkHtml = p.changeRemark
             ? '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">修改原因备注</p><p class="font-bold mt-1 text-slate-700 text-[11px]">' + p.changeRemark + '</p></div>'
             : '';
@@ -198,6 +214,7 @@
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">新返佣比例</p><p class="font-black mt-1 text-blue-600 text-lg">' + (p.newRatio != null ? p.newRatio + '%' : '—') + '</p></div>' +
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">运营配置上限</p><p class="font-black mt-1">' + (p.opsCap != null ? p.opsCap + '%' : '—') + '</p></div>' +
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">超上限</p><p class="font-black mt-1 text-amber-700">' + exceedLabel + '</p></div>' +
+            crossBdHtml +
             remarkHtml +
             '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">图片附件</p>' + renderPartnerAttachmentThumbnails(p) + '</div>' +
             '</div></div>';
