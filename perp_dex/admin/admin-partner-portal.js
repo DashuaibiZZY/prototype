@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-25';
+    const DATA_VERSION = 'partner-demo-26';
     const USER_SCALE_TIP = '交易用户数据每天 UTC+8 0 点更新';
     const RECONCILIATION_DOWNLOAD_COOLDOWN_MS = 10 * 60 * 1000;
     let lastReconciliationDownloadAt = 0;
@@ -268,6 +268,23 @@
         }
     ];
 
+    /** 3.1b 普通用户（可作迁移接收方 · 非合伙人） */
+    const MIGRATE_PLAIN_HOSTS = [
+        {
+            wallet: '0xPlain...Host', uid: '200102', note: '演示·普通用户（可作迁移接收方）',
+            directClients: [{ wallet: '0xPlain...Hc1', uid: '200121' }]
+        }
+    ];
+
+    /** 升级为 L1 演示：合伙人直客 */
+    const BIND_SUBJECT_DIRECT_CLIENTS = [
+        {
+            wallet: '0xde...55aa', uid: '100855', note: '演示·一级伞下直客',
+            parentPartnerWallet: '0xNorm...L1', parentPartnerUid: '100801',
+            directClients: [{ wallet: '0xde...55bb', uid: '100856' }]
+        }
+    ];
+
     /** 3.2 正常代理：系统 L2 · 3 条向下 5 层 */
     const MIGRATE_AGENT_OK_ROOT = migAgent('mig_ok_l1', '0xMig...Ok', '200201', 2, 58, '演示·正常代理（系统L2·4×5层）', null, '0xMig...Ok', ['mig_a_l2', 'mig_b_l2', 'mig_c_l2', 'mig_d_l2'], [
         { wallet: '0xMig...OkD1', uid: '200201d' }
@@ -293,6 +310,7 @@
     let migrateRatioOverrides = {};
     let migrateAttachments = [];
     let bindAttachments = [];
+    let bindState = { preview: null };
     let treeAttachments = [];
     const MIGRATE_TREE_PAGE_SIZE = 10;
     let treeFocusId = null;
@@ -1406,6 +1424,7 @@
     }
 
     function openBindModal() {
+        bindState = { preview: null };
         document.getElementById('bind-wallet').value = '';
         document.getElementById('bind-ratio').value = '';
         document.getElementById('bind-remark').value = '';
@@ -1413,7 +1432,13 @@
         renderBindAttachmentPreview();
         const fileEl = document.getElementById('bind-attachment-input');
         if (fileEl) fileEl.value = '';
-        document.getElementById('bind-cap-hint').textContent = '配置上限 ' + OPS_CAP + '%；超过须风控+老板审批';
+        document.getElementById('bind-cap-hint').textContent = '支持将普通用户 / 合伙人直客 / N 级代理升级为一级；配置上限 ' + OPS_CAP + '%，超过须风控+老板审批';
+        const card = document.getElementById('bind-subject-card');
+        const preview = document.getElementById('bind-preview-section');
+        if (card) card.classList.add('hidden');
+        if (preview) preview.classList.add('hidden');
+        const submitBtn = document.querySelector('#modal-bind-partner button[onclick="PartnerPortal.submitBindPartner()"]');
+        if (submitBtn) submitBtn.disabled = false;
         document.getElementById('modal-bind-partner').classList.remove('hidden');
     }
 
@@ -1479,29 +1504,43 @@
         const ratio = parseFloat(document.getElementById('bind-ratio').value);
         const remark = document.getElementById('bind-remark').value.trim();
         if (!walletInput || !ratio || !remark) { alert('请填写完整信息'); return; }
+        previewBindPartner();
+        const subject = bindState.preview;
+        if (subject && subject.kind === 'already_l1') {
+            alert('该用户已是一级代理');
+            return;
+        }
+        if (!subject) {
+            if (!confirm('未识别到演示身份，将按新 UID 绑定一级（演示）。继续？')) return;
+        }
         const isUid = /^\d+$/.test(walletInput);
-        const uid = isUid ? walletInput : '';
-        const wallet = isUid ? '—' : walletInput;
+        const uid = isUid ? walletInput : (subject && subject.user.uid) || '';
+        const wallet = isUid ? (subject && subject.user.wallet) || '—' : walletInput;
         const exceedsCap = ratio > OPS_CAP;
         const attachmentNames = bindAttachments.map(function (a) { return a.name; });
         const attachmentPreviews = {};
         bindAttachments.forEach(function (a) { attachmentPreviews[a.name] = a.dataUrl; });
+        const subjectKind = subject ? subject.kind : 'unknown';
+        const payloadBase = {
+            uid: uid || '—', wallet: wallet, ratio: ratio, opsCap: OPS_CAP, exceedsCap: exceedsCap,
+            subjectKind: subjectKind,
+            subjectLabel: subject ? subject.identityLabel : '未识别',
+            upgradeScope: subjectKind === 'partner_n' ? '整伞返佣树' : (subjectKind === 'plain' || subjectKind === 'direct_client' ? '直客一并迁移' : '—'),
+            directClientCount: subject ? (subject.directClients || []).length : 0,
+            treeNodeCount: subject ? subject.treeNodes || 0 : 0,
+            attachments: attachmentNames,
+            attachmentPreviews: attachmentPreviews
+        };
         if (exceedsCap && typeof submitApprovalApplication === 'function') {
             submitApprovalApplication({
                 type: 'partner_l1_bind', title: '一级合伙人绑定', applicant: 'Mkt_Allen', remark: remark,
-                summary: (uid ? 'UID ' + uid + ' · ' : wallet + ' · ') + ratio + '%',
-                payload: {
-                    uid: uid || '—', wallet: wallet, ratio: ratio, opsCap: OPS_CAP, exceedsCap: exceedsCap,
-                    attachments: attachmentNames,
-                    attachmentPreviews: attachmentPreviews
-                }
+                summary: (subject ? subject.identityLabel + ' · ' : '') + (uid ? 'UID ' + uid + ' · ' : wallet + ' · ') + ratio + '%',
+                payload: payloadBase
             });
             alert('已提交审批，审批通过后将即刻生效（演示）');
         } else {
-            applyL1BindPayload({
-                uid: uid || '—', wallet: wallet, ratio: ratio, opsCap: OPS_CAP, exceedsCap: false
-            });
-            alert('绑定成功，已即刻生效（演示）' + (attachmentNames.length ? '，已附 ' + attachmentNames.length + ' 张图片' : ''));
+            applyL1BindPayload(payloadBase);
+            alert('升级成功，已即刻生效（演示）' + (attachmentNames.length ? '，已附 ' + attachmentNames.length + ' 张图片' : ''));
         }
         closeBindModal();
     }
@@ -2205,11 +2244,188 @@
             w.indexOf(q) >= 0 || q.indexOf(w.replace(/\.\.\./g, '')) >= 0;
     }
 
-    function findMigrateTargetPartner(key) {
+    function identityKindLabel(kind) {
+        const map = {
+            plain: '普通用户',
+            direct_client: '合伙人直客',
+            partner_l1: '一级代理',
+            partner_n: 'N 级代理',
+            plain_host: '普通用户（非代理）',
+            already_l1: '已是一级代理'
+        };
+        return map[kind] || kind;
+    }
+
+    function isPlainHostTarget(t) {
+        return !!(t && t.isPlainHost);
+    }
+
+    function classifyMigrateTargetKind(target) {
+        if (!target) return null;
+        if (isPlainHostTarget(target)) return 'plain_host';
+        const level = target.level != null ? target.level : 1;
+        if (level === 1 && !target.parentWallet) return 'l1';
+        return 'n_partner';
+    }
+
+    function findPlainHostTarget(key) {
         const q = (key || '').trim();
         if (!q) return null;
+        return MIGRATE_PLAIN_HOSTS.find(function (p) { return matchWalletOrUid(q, p.wallet, p.uid); });
+    }
+
+    function findDirectClientSubject(key) {
+        const q = (key || '').trim();
+        if (!q) return null;
+        let found = BIND_SUBJECT_DIRECT_CLIENTS.find(function (p) { return matchWalletOrUid(q, p.wallet, p.uid); });
+        if (found) return found;
+        let i;
+        for (i = 0; i < USERS.length; i++) {
+            const u = USERS[i];
+            const hit = (u.directClients || []).find(function (c) { return matchWalletOrUid(q, c.wallet, c.uid); });
+            if (hit) {
+                return {
+                    wallet: hit.wallet, uid: hit.uid || '', note: '直客 · 归属 ' + u.wallet,
+                    parentPartnerWallet: u.wallet, parentPartnerUid: u.uid,
+                    directClients: hit.directClients || []
+                };
+            }
+        }
+        return null;
+    }
+
+    function findMigrateTarget(key) {
+        const q = (key || '').trim();
+        if (!q) return null;
+        const plainHost = findPlainHostTarget(q);
+        if (plainHost) return Object.assign({ isPlainHost: true, ratio: 0, level: 0 }, plainHost);
         return MIGRATE_TARGET_PARTNERS.find(function (p) { return matchWalletOrUid(q, p.wallet, p.uid); }) ||
-            USERS.find(function (u) { return matchWalletOrUid(q, u.wallet, u.uid); });
+            USERS.find(function (u) { return matchWalletOrUid(q, u.wallet, u.uid); }) ||
+            MIGRATE_AGENT_USERS.find(function (u) { return matchWalletOrUid(q, u.wallet, u.uid); });
+    }
+
+    function findMigrateTargetPartner(key) {
+        return findMigrateTarget(key);
+    }
+
+    function collectUserSubtree(userId) {
+        const result = [];
+        function walk(id) {
+            const u = getUser(id);
+            if (!u) return;
+            result.push(u);
+            (u.childIds || []).forEach(walk);
+        }
+        walk(userId);
+        return result;
+    }
+
+    function collectUserDirectClients(userId) {
+        const clients = [];
+        collectUserSubtree(userId).forEach(function (u) {
+            (u.directClients || []).forEach(function (c) {
+                clients.push({ owner: u.wallet, wallet: c.wallet, uid: c.uid || '' });
+            });
+        });
+        return clients;
+    }
+
+    function resolveBindSubject(key) {
+        const q = (key || '').trim();
+        if (!q) return null;
+        const plain = findMigratePlainUser(q);
+        if (plain) {
+            return {
+                kind: 'plain', identityLabel: identityKindLabel('plain'), user: plain,
+                directClients: plain.directClients || [], treeNodes: 0, currentParent: '—'
+            };
+        }
+        const dc = findDirectClientSubject(q);
+        if (dc) {
+            return {
+                kind: 'direct_client', identityLabel: identityKindLabel('direct_client'), user: dc,
+                directClients: dc.directClients || [], treeNodes: 0,
+                currentParent: dc.parentPartnerWallet || '—'
+            };
+        }
+        const agent = findMigrateAgentUser(q);
+        if (agent) {
+            if (agent.level === 1 && !agent.parentWallet) {
+                return { kind: 'already_l1', identityLabel: identityKindLabel('already_l1'), user: agent, directClients: [], treeNodes: 0, currentParent: '—' };
+            }
+            const subtree = collectMigrateSubtree(agent.id);
+            const clients = collectMigrateDirectClients(agent.id);
+            return {
+                kind: 'partner_n', identityLabel: identityKindLabel('partner_n') + ' · 系统 L' + agent.level,
+                user: agent, directClients: clients, treeNodes: subtree.length,
+                currentParent: agent.parentWallet || '—'
+            };
+        }
+        const user = findUserByWalletOrUid(q);
+        if (user) {
+            if (user.level === 1 && !user.parentWallet && LIST_IDS.indexOf(user.id) >= 0) {
+                return { kind: 'already_l1', identityLabel: identityKindLabel('already_l1'), user: user, directClients: [], treeNodes: 0, currentParent: '—' };
+            }
+            const subtree = collectUserSubtree(user.id);
+            const clients = collectUserDirectClients(user.id);
+            return {
+                kind: 'partner_n', identityLabel: identityKindLabel('partner_n') + ' · 系统 L' + user.level,
+                user: user, directClients: clients, treeNodes: subtree.length,
+                currentParent: user.parentWallet || '—'
+            };
+        }
+        return null;
+    }
+
+    function renderBindSubjectPreview(subject) {
+        const card = document.getElementById('bind-subject-card');
+        const preview = document.getElementById('bind-preview-section');
+        const submitBtn = document.querySelector('#modal-bind-partner button[onclick="PartnerPortal.submitBindPartner()"]');
+        if (!card || !preview) return;
+        if (!subject) {
+            card.classList.add('hidden');
+            preview.classList.add('hidden');
+            if (submitBtn) submitBtn.disabled = false;
+            return;
+        }
+        card.classList.remove('hidden');
+        preview.classList.remove('hidden');
+        let cardHtml = '<div class="flex flex-wrap items-center gap-2 mb-2">' +
+            '<span class="bg-slate-900 text-white px-2 py-0.5 rounded text-[10px] font-black">当前身份：' + subject.identityLabel + '</span></div>' +
+            '<p class="font-black text-slate-800">' + chip(subject.user.wallet, 'wallet') + ' · ' + chip(subject.user.uid, 'uid') + '</p>' +
+            '<p class="text-slate-600 mt-1">' + (subject.user.note || '') + '</p>';
+        if (subject.kind === 'already_l1') {
+            cardHtml += '<p class="text-red-700 font-bold mt-2">该用户已是一级代理，无需重复设置。</p>';
+            preview.classList.add('hidden');
+            if (submitBtn) submitBtn.disabled = true;
+        } else {
+            cardHtml += '<p class="text-slate-500 mt-1">原上级 ' + chip(subject.currentParent, 'wallet') + ' · 升级后原上级<strong>返佣人数不变</strong>，不再产生新的交易额与返佣。</p>';
+            if (submitBtn) submitBtn.disabled = false;
+        }
+        card.innerHTML = cardHtml;
+
+        let previewHtml = '';
+        if (subject.kind === 'plain' || subject.kind === 'direct_client') {
+            previewHtml += '<p class="font-bold text-slate-700 mb-2">升级范围 · 直客一并迁移</p>' +
+                '<p class="text-[10px] text-slate-500 mb-2">仅需配置<strong>一级合伙人返佣比例</strong>，无需为直客单独设比例。</p>' +
+                '<ul class="text-[11px] space-y-1 max-h-28 overflow-y-auto">';
+            (subject.directClients || []).slice(0, 8).forEach(function (c) {
+                previewHtml += '<li>' + chip(c.wallet, 'wallet') + (c.uid ? ' · ' + chip(c.uid, 'uid') : '') + '</li>';
+            });
+            if (!(subject.directClients || []).length) previewHtml += '<li class="text-slate-400">无直客</li>';
+            previewHtml += '</ul>';
+        } else if (subject.kind === 'partner_n') {
+            previewHtml += '<p class="font-bold text-slate-700 mb-2">升级范围 · 整伞返佣树迁移</p>' +
+                '<p class="text-[10px] text-slate-500 mb-2">该用户当前为 <strong>' + subject.identityLabel + '</strong>；升级为一级后，其<strong>全部下级代理与直客</strong>随主体一并挂到新 L1 伞下。仅需配置主体<strong>一级返佣比例</strong>。</p>' +
+                '<p class="text-[11px] text-slate-800">代理节点 <strong>' + subject.treeNodes + '</strong> 人 · 伞下直客 <strong>' + (subject.directClients || []).length + '</strong> 人</p>';
+        }
+        preview.innerHTML = previewHtml;
+    }
+
+    function previewBindPartner() {
+        const key = (document.getElementById('bind-wallet') && document.getElementById('bind-wallet').value || '').trim();
+        bindState.preview = key ? resolveBindSubject(key) : null;
+        renderBindSubjectPreview(bindState.preview);
     }
 
     function findMigratePlainUser(key) {
@@ -2229,7 +2445,11 @@
 
     function needsMigrateRatio(preview) {
         if (!preview) return true;
-        return !(preview.type === 'plain' && preview.plainRole === 'direct_client');
+        const targetKey = (document.getElementById('migrate-target-input') && document.getElementById('migrate-target-input').value || '').trim();
+        const target = findMigrateTarget(targetKey);
+        if (target && isPlainHostTarget(target)) return false;
+        if (preview.type === 'plain' && getMigratePlainRole() === 'direct_client') return false;
+        return true;
     }
 
     function getMigrateRatioInputValue(preview) {
@@ -2241,9 +2461,14 @@
     function updateMigratePlainRoleUI() {
         const roleWrap = document.getElementById('migrate-plain-role-wrap');
         const ratioWrap = document.getElementById('migrate-ratio-wrap');
+        const plainHostHint = document.getElementById('migrate-plain-target-hint');
+        const targetKey = (document.getElementById('migrate-target-input') && document.getElementById('migrate-target-input').value || '').trim();
+        const target = findMigrateTarget(targetKey);
+        const targetIsPlainHost = target && isPlainHostTarget(target);
         const isPlain = migrateState.preview && migrateState.preview.type === 'plain';
-        if (roleWrap) roleWrap.classList.toggle('hidden', !isPlain);
-        if (ratioWrap) ratioWrap.classList.toggle('hidden', isPlain && !isMigratePlainAsPartner());
+        if (plainHostHint) plainHostHint.classList.toggle('hidden', !targetIsPlainHost);
+        if (roleWrap) roleWrap.classList.toggle('hidden', !isPlain || targetIsPlainHost);
+        if (ratioWrap) ratioWrap.classList.toggle('hidden', migrateState.preview && !needsMigrateRatio(migrateState.preview));
     }
 
     function findMigrateAgentUser(key) {
@@ -2254,6 +2479,12 @@
 
     function getMigrateAgent(id) { return MIGRATE_AGENT_USERS.find(function (u) { return u.id === id; }); }
     function getMigrateAgentByWallet(w) { return MIGRATE_AGENT_USERS.find(function (u) { return u.wallet === w; }); }
+    function getMigrateNode(id) { return getMigrateAgent(id) || getUser(id); }
+    function getMigrateNodeByWallet(w) {
+        const a = getMigrateAgentByWallet(w);
+        if (a) return a;
+        return USERS.find(function (u) { return u.wallet === w; });
+    }
 
     function isMigrateDescendantOf(ancestorId, nodeId) {
         if (nodeId === ancestorId) return true;
@@ -2271,9 +2502,19 @@
 
     function resolveMigrateSubject(key) {
         const plain = findMigratePlainUser(key);
-        if (plain) return { type: 'plain', plainUser: plain, label: '普通用户' };
+        if (plain) return { type: 'plain', subtype: 'plain', plainUser: plain, label: '普通用户' };
+        const dc = findDirectClientSubject(key);
+        if (dc) return { type: 'plain', subtype: 'direct_client', plainUser: dc, label: '合伙人直客' };
         const agent = findMigrateAgentUser(key);
-        if (agent) return { type: 'partner', partnerUser: agent, label: '代理用户' };
+        if (agent) {
+            const label = (agent.level === 1 && !agent.parentWallet) ? '一级代理' : 'N 级代理';
+            return { type: 'partner', partnerUser: agent, label: label, partnerSource: 'migrate' };
+        }
+        const user = findUserByWalletOrUid(key);
+        if (user) {
+            const label = (user.level === 1 && !user.parentWallet) ? '一级代理' : 'N 级代理';
+            return { type: 'partner', partnerUser: user, label: label, partnerSource: 'users' };
+        }
         return null;
     }
 
@@ -2316,7 +2557,7 @@
     function getEffectiveMigrateRatio(agentId, rootId, rootEffectiveRatio) {
         if (agentId === rootId) return rootEffectiveRatio;
         if (migrateRatioOverrides[agentId] != null) return migrateRatioOverrides[agentId];
-        const a = getMigrateAgent(agentId);
+        const a = getMigrateNode(agentId);
         return a ? a.ratio : 0;
     }
 
@@ -2334,23 +2575,35 @@
     function buildMigratePreview(subject) {
         if (subject.type === 'plain') {
             const plain = subject.plainUser;
-            const plainRole = getMigratePlainRole();
+            const targetKey = (document.getElementById('migrate-target-input') && document.getElementById('migrate-target-input').value || '').trim();
+            const target = findMigrateTarget(targetKey);
+            const forceDirect = target && isPlainHostTarget(target);
+            const plainRole = forceDirect ? 'direct_client' : getMigratePlainRole();
             return {
-                type: 'plain', label: subject.label, plainUser: plain, plainRole: plainRole,
+                type: 'plain', label: subject.label, subtype: subject.subtype || 'plain',
+                plainUser: plain, plainRole: plainRole, targetIsPlainHost: forceDirect,
                 agentChain: [], directClients: (plain.directClients || []).map(function (c) {
                     return { wallet: c.wallet, uid: c.uid || '', owner: plain.wallet };
                 })
             };
         }
         const partner = subject.partnerUser;
-        const subtree = collectMigrateSubtree(partner.id);
-        const clients = collectMigrateDirectClients(partner.id);
+        let subtree;
+        let clients;
+        if (subject.partnerSource === 'users' || getUser(partner.id)) {
+            subtree = collectUserSubtree(partner.id);
+            clients = collectUserDirectClients(partner.id);
+        } else {
+            subtree = collectMigrateSubtree(partner.id);
+            clients = collectMigrateDirectClients(partner.id);
+        }
         return {
             type: 'partner', label: subject.label, partnerUser: partner,
             agentChain: subtree.map(function (u) {
+                const depth = u.id === partner.id ? 0 : Math.max(1, (u.level || 1) - (partner.level || 1));
                 return {
                     wallet: u.wallet, uid: u.uid, level: u.level, ratio: u.ratio, note: u.note, id: u.id,
-                    migrateDepth: getMigrateDepthFromRoot(partner.id, u.id)
+                    migrateDepth: subject.partnerSource === 'migrate' ? getMigrateDepthFromRoot(partner.id, u.id) : depth
                 };
             }),
             directClients: clients,
@@ -2366,32 +2619,35 @@
         if (!preview) return errors;
 
         if (!targetKey) {
-            errors.push('请填写迁移到上级合伙人');
+            errors.push('请填写迁移到上级');
             return errors;
         }
-        const target = findMigrateTargetPartner(targetKey);
+        const target = findMigrateTarget(targetKey);
         if (!target) {
-            errors.push('未找到目标上级合伙人：' + targetKey + '（演示可试 0xTo...L1 / 200001）');
+            errors.push('未找到目标上级：' + targetKey + '（演示：0xTo...L1 · 0xPlain...Host · 0xNorm...L3）');
             return errors;
         }
-        if (isNaN(ratioVal) || ratioVal <= 0) {
-            if (!(preview.type === 'plain' && getMigratePlainRole() === 'direct_client')) {
-                errors.push('请填写有效的返佣比例');
-            }
-        } else {
-            if (ratioVal > target.ratio) {
+        const targetKind = classifyMigrateTargetKind(target);
+        const needsRatio = needsMigrateRatio(preview);
+        if (needsRatio && (isNaN(ratioVal) || ratioVal <= 0)) {
+            errors.push('请填写有效的返佣比例');
+        } else if (needsRatio && !isNaN(ratioVal) && ratioVal > 0) {
+            if (!isPlainHostTarget(target) && ratioVal > target.ratio) {
                 errors.push('迁移用户比例 ' + ratioVal + '% 高于上级 ' + target.wallet + ' 的 ' + target.ratio + '%');
             }
             if (ratioVal > OPS_CAP) {
                 errors.push('返佣比例超过运营权限上限 ' + OPS_CAP + '%');
             }
         }
+        if (targetKind === 'plain_host' && preview.type === 'partner') {
+            errors.push('N 级 / 一级代理不可迁移到普通用户（非代理）下级');
+        }
 
         if (preview.type === 'partner' && preview.partnerUser) {
             const partner = preview.partnerUser;
-            const migTarget = findMigrateAgentUser(targetKey);
-            if (migTarget && (partner.id === migTarget.id || isMigrateDescendantOf(partner.id, migTarget.id))) {
-                errors.push('不能迁移到自身或自己的下级之下');
+            const migTarget = findMigrateTarget(targetKey);
+            if (migTarget && partner.wallet === migTarget.wallet) {
+                errors.push('不能迁移到自身之下');
             }
         }
         return errors;
@@ -2415,7 +2671,7 @@
 
 
     function renderMigrateTreeNode(agentId, rootId, rootEffectiveRatio, depth) {
-        const u = getMigrateAgent(agentId);
+        const u = getMigrateNode(agentId);
         if (!u) return '';
         const childIds = u.childIds || [];
         const hasKids = childIds.length > 0;
@@ -2511,18 +2767,25 @@
         const p = migrateState.preview;
         const targetKey = (document.getElementById('migrate-target-input') && document.getElementById('migrate-target-input').value || '').trim();
         const ratioVal = parseFloat(document.getElementById('migrate-ratio-input') && document.getElementById('migrate-ratio-input').value);
-        const target = findMigrateTargetPartner(targetKey);
+        const target = findMigrateTarget(targetKey);
+        const targetKind = classifyMigrateTargetKind(target);
         let html = '';
         if (target) {
-            const ratioText = (p.type === 'plain' && p.plainRole === 'direct_client')
-                ? '无需配置比例'
-                : (isNaN(ratioVal) ? '—' : ratioVal + '%');
-            html += '<p class="font-bold text-slate-800">新上级：' + chip(target.wallet, 'wallet') + ' (' + target.ratio + '%) · 迁移主体比例：' + ratioText + '</p>';
+            const targetLabel = targetKind === 'plain_host' ? '普通用户（非代理）'
+                : (targetKind === 'l1' ? '一级代理' : 'N 级代理');
+            const ratioText = !needsMigrateRatio(p) ? '无需配置比例' : (isNaN(ratioVal) ? '—' : ratioVal + '%');
+            const targetRatioText = isPlainHostTarget(target) ? '—' : (target.ratio + '%');
+            html += '<p class="font-bold text-slate-800">新上级：' + chip(target.wallet, 'wallet') + ' · ' + targetLabel +
+                (targetRatioText !== '—' ? ' (' + targetRatioText + ')' : '') + ' · 迁移主体比例：' + ratioText + '</p>';
+            if (targetKind === 'plain_host') {
+                html += '<p class="text-[10px] text-amber-800 bg-amber-50 border border-amber-100 rounded p-2 mt-2">目标为<strong>普通用户</strong>：主体固定为下级直客，不可选代理身份，不可配置返佣比例。</p>';
+            }
         } else if (targetKey) {
-            html += '<p class="text-amber-700 font-bold">未找到目标上级，演示可试 0xTo...L1 或 0xTo...L2</p>';
+            html += '<p class="text-amber-700 font-bold">未找到目标上级，演示可试 0xTo...L1 · 0xPlain...Host · 0xNorm...L3</p>';
         }
         if (p.type === 'plain') {
-            const roleLabel = p.plainRole === 'sub_partner' ? '下级代理（合伙人）' : '下级直客';
+            const roleLabel = p.targetIsPlainHost ? '下级直客（固定）'
+                : (p.plainRole === 'sub_partner' ? '下级代理（合伙人）' : '下级直客');
             html += '<p class="text-slate-600 mt-2">迁移后身份：<strong>' + roleLabel + '</strong></p>';
             const clients = p.directClients;
             const clientPag = paginate(clients, migrateState.clientsPage || 1);
@@ -2602,7 +2865,7 @@
         const card = document.getElementById('migrate-subject-card');
         if (!card) return;
         if (!subject) {
-            card.innerHTML = '<p class="text-red-700 font-bold">未找到待迁移用户。演示：普通 0xPlain...U1 · 正常代理 0xMig...Ok</p>';
+            card.innerHTML = '<p class="text-red-700 font-bold">未找到待迁移用户。演示：普通 0xPlain...U1 · 直客 0xde...55aa · N级 0xMig...Ok / 0xNorm...L3</p>';
             card.classList.remove('hidden');
             return;
         }
@@ -2610,7 +2873,8 @@
             '<span class="bg-slate-900 text-white px-2 py-0.5 rounded text-[10px] font-black">系统自动识别：' + subject.label + '</span></div>';
         if (preview.type === 'plain') {
             const p = preview.plainUser;
-            const roleLabel = preview.plainRole === 'sub_partner' ? '下级代理（合伙人）' : '下级直客';
+            const roleLabel = preview.targetIsPlainHost ? '下级直客（固定）'
+                : (preview.plainRole === 'sub_partner' ? '下级代理（合伙人）' : '下级直客');
             html += '<p class="font-black text-slate-800">' + chip(p.wallet, 'wallet') + ' · ' + chip(p.uid, 'uid') + '</p>' +
                 '<p class="text-slate-600 mt-1">' + p.note + ' · 迁移后身份：<strong>' + roleLabel + '</strong></p>' +
                 '<p class="text-slate-500 mt-1">直客 ' + preview.directClients.length + ' 人（将一并迁移）</p>';
@@ -2755,7 +3019,7 @@
             return;
         }
         const p = migrateState.preview;
-        const target = findMigrateTargetPartner(document.getElementById('migrate-target-input').value);
+        const target = findMigrateTarget(document.getElementById('migrate-target-input').value);
         const needsRatio = needsMigrateRatio(p);
         const ratioVal = getMigrateRatioInputValue(p);
         if (!target || (needsRatio && ratioVal == null)) return;
@@ -2765,7 +3029,8 @@
         body += '<li><span class="text-slate-500">待迁移</span> <b>' + subjectWallet + '</b></li>';
         body += '<li><span class="text-slate-500">迁移到</span> <b>' + target.wallet + '</b></li>';
         if (p.type === 'plain') {
-            const roleLabel = p.plainRole === 'sub_partner' ? '下级代理（合伙人）' : '下级直客';
+            const roleLabel = p.targetIsPlainHost ? '下级直客（固定）'
+                : (p.plainRole === 'sub_partner' ? '下级代理（合伙人）' : '下级直客');
             body += '<li><span class="text-slate-500">迁移后身份</span> <b>' + roleLabel + '</b></li>';
         }
         if (needsRatio) {
@@ -2792,7 +3057,7 @@
     function confirmMigrateSubmit() {
         closeMigrateConfirmModal();
         if (!migrateState.preview || migrateState.validationErrors.length) return;
-        const target = findMigrateTargetPartner(document.getElementById('migrate-target-input').value);
+        const target = findMigrateTarget(document.getElementById('migrate-target-input').value);
         const p = migrateState.preview;
         const needsRatio = needsMigrateRatio(p);
         const ratioVal = getMigrateRatioInputValue(p);
@@ -2823,6 +3088,7 @@
                     migrateAsPartner: p.type === 'partner' || plainRole === 'sub_partner',
                     targetWallet: target.wallet,
                     targetUid: target.uid || '',
+                    targetKind: classifyMigrateTargetKind(target),
                     newRatio: needsRatio ? ratioVal : null,
                     opsCap: OPS_CAP,
                     attachments: attachmentNames,
@@ -2991,7 +3257,7 @@
         stageRatioChange: stageRatioChange,
         clearPendingChanges: clearPendingChanges, submitPendingChanges: submitPendingChanges,
         openTreeConfirmModal: openTreeConfirmModal, closeTreeConfirmModal: closeTreeConfirmModal, confirmTreeSubmit: confirmTreeSubmit,
-        openBindModal: openBindModal, closeBindModal: closeBindModal, submitBindPartner: submitBindPartner,
+        openBindModal: openBindModal, closeBindModal: closeBindModal, submitBindPartner: submitBindPartner, previewBindPartner: previewBindPartner,
         filterSettlementBatches: filterSettlementBatches, showReviewDetail: showReviewDetail,
         backToSettlementList: backToSettlementList, renderPartnerList: renderPartnerList,
         openEditActual: openEditActual, openBatchEditPage: openBatchEditPage, closeBatchEditPage: closeBatchEditPage,
