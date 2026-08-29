@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-29';
+    const DATA_VERSION = 'partner-demo-30';
     const CURRENT_OPERATOR = 'allen@forx.fi';
     const USER_SCALE_TIP = '交易用户数据每天 UTC+8 0 点更新';
     const RECONCILIATION_DOWNLOAD_COOLDOWN_MS = 10 * 60 * 1000;
@@ -137,7 +137,7 @@
         {
             id: 'p_a4', wallet: '0xAbn...L4', uid: '100815', note: '四级返佣', level: 4, ratio: 50,
             parentWallet: '0xAbn...L3', rootWallet: '0xAbn...L1', bindTime: '2024-04-01',
-            settleStatus: 'normal', pendingSettlement: 640, freezeStatus: null,
+            settleStatus: 'normal', pendingSettlement: 0, freezeStatus: null,
             vol: '$1.6M', deposit: '+$28k', usersTotal: 48, usersActive: 12,
             net: '$8,200', netHint: '含向上级级差',
             rebateTotal: '$1,920', rebateSelf: '$0.02k', rebateDirect: '$0.1k', rebateGap: '$1.8k',
@@ -736,6 +736,8 @@
     }
 
     function matchesListFilter(u) {
+        if (listFilterStatus === 'normal' && hasPartnerFreeze(u.freezeStatus)) return false;
+        if (listFilterStatus === 'pending' && !hasPartnerFreeze(u.freezeStatus)) return false;
         if (!listSearchQ) return true;
         const q = listSearchQ.toLowerCase();
         return (u.wallet + u.uid + u.note).toLowerCase().indexOf(q) !== -1;

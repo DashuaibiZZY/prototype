@@ -20,4 +20,12 @@
 - `perp_dex/admin/admin-partner-portal.js`
 - `perp_dex/admin/代理中心后台.html`
 - `perp_dex/admin/admin-approval-ui.js`
+- `perp_dex/admin/admin-approval.js`（跨 BD 审批种子）
 - `document/web&后台/邀请合伙人无限层返佣系统.md`
+- `document/web&后台/用户风控冻结.md`（§1.2 冻结与返佣结算交叉引用）
+
+## 补充（第二轮）
+
+- 列表结算状态筛选支持「待结算累计」
+- 跨 BD 审批演示种子（绑定 / 迁移 / 比例调整）
+- 文档 §2.1.3 跨 BD 提交逻辑、§2.2 返佣树跨 BD 规则
