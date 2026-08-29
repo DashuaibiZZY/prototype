@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-32';
+    const DATA_VERSION = 'partner-demo-33';
     const CURRENT_OPERATOR = 'allen@forx.fi';
     const USER_SCALE_TIP = '交易用户数据每天 UTC+8 0 点更新';
     const RECONCILIATION_DOWNLOAD_COOLDOWN_MS = 10 * 60 * 1000;
@@ -59,6 +59,37 @@
             childIds: childIds || [], directClients: [], settlements: []
         };
     }
+
+    /** 用户端 §3.4 可见的每日结算流水（后台详情镜像展示） */
+    const DEFAULT_USER_VIEW_SETTLEMENT = {
+        summary: { pendingToday: 450.82, settledTotal: 124500, yesterdayPaid: 868, yesterdayStatus: 'success' },
+        records: [
+            { date: '2024-05-23', vol: 125000, rebate: 87.5, status: 'pending' },
+            { date: '2024-05-22', vol: 1240000, rebate: 868, status: 'settled' },
+            { date: '2024-05-21', vol: 980000, rebate: 686, status: 'settled' },
+            { date: '2024-05-20', vol: 86800, rebate: 61, status: 'pending' },
+            { date: '2024-05-19', vol: 820000, rebate: 1003, violationDeduction: 342.23, status: 'pending' },
+            { date: '2024-05-18', vol: 650000, rebate: 455, status: 'settled' },
+            { date: '2024-05-17', vol: 420000, rebate: 294, status: 'pending' },
+            { date: '2024-05-16', vol: 380000, rebate: 266, status: 'settled' },
+            { date: '2024-05-15', vol: 125000, rebate: 88, status: 'settled' },
+            { date: '2024-05-14', vol: 290000, rebate: 203, status: 'settled' },
+            { date: '2024-05-13', vol: 510000, rebate: 357, status: 'settled' },
+            { date: '2024-05-12', vol: 0, rebate: 0, status: 'pending' }
+        ]
+    };
+
+    const FROZEN_USER_VIEW_SETTLEMENT = {
+        summary: { pendingToday: 128.4, settledTotal: 84200, yesterdayPaid: 0, yesterdayStatus: 'pending' },
+        records: [
+            { date: '2024-05-23', vol: 98000, rebate: 44.1, status: 'pending' },
+            { date: '2024-05-22', vol: 420000, rebate: 189, status: 'pending' },
+            { date: '2024-05-21', vol: 380000, rebate: 171, status: 'pending' },
+            { date: '2024-05-20', vol: 420000, rebate: 1960, status: 'settled' },
+            { date: '2024-05-19', vol: 310000, rebate: 139.5, status: 'settled' },
+            { date: '2024-05-18', vol: 280000, rebate: 126, status: 'settled' }
+        ]
+    };
 
     const USERS = [
         {
@@ -161,37 +192,6 @@
     ];
 
     const PERIOD_SCALES = { '1D': 0.04, '1W': 0.22, '1M': 0.48, '3M': 0.78, 'ALL': 1 };
-
-    /** 用户端 §3.4 可见的每日结算流水（后台详情镜像展示） */
-    const DEFAULT_USER_VIEW_SETTLEMENT = {
-        summary: { pendingToday: 450.82, settledTotal: 124500, yesterdayPaid: 868, yesterdayStatus: 'success' },
-        records: [
-            { date: '2024-05-23', vol: 125000, rebate: 87.5, status: 'pending' },
-            { date: '2024-05-22', vol: 1240000, rebate: 868, status: 'settled' },
-            { date: '2024-05-21', vol: 980000, rebate: 686, status: 'settled' },
-            { date: '2024-05-20', vol: 86800, rebate: 61, status: 'pending' },
-            { date: '2024-05-19', vol: 820000, rebate: 1003, violationDeduction: 342.23, status: 'pending' },
-            { date: '2024-05-18', vol: 650000, rebate: 455, status: 'settled' },
-            { date: '2024-05-17', vol: 420000, rebate: 294, status: 'pending' },
-            { date: '2024-05-16', vol: 380000, rebate: 266, status: 'settled' },
-            { date: '2024-05-15', vol: 125000, rebate: 88, status: 'settled' },
-            { date: '2024-05-14', vol: 290000, rebate: 203, status: 'settled' },
-            { date: '2024-05-13', vol: 510000, rebate: 357, status: 'settled' },
-            { date: '2024-05-12', vol: 0, rebate: 0, status: 'pending' }
-        ]
-    };
-
-    const FROZEN_USER_VIEW_SETTLEMENT = {
-        summary: { pendingToday: 128.4, settledTotal: 84200, yesterdayPaid: 0, yesterdayStatus: 'pending' },
-        records: [
-            { date: '2024-05-23', vol: 98000, rebate: 44.1, status: 'pending' },
-            { date: '2024-05-22', vol: 420000, rebate: 189, status: 'pending' },
-            { date: '2024-05-21', vol: 380000, rebate: 171, status: 'pending' },
-            { date: '2024-05-20', vol: 420000, rebate: 1960, status: 'settled' },
-            { date: '2024-05-19', vol: 310000, rebate: 139.5, status: 'settled' },
-            { date: '2024-05-18', vol: 280000, rebate: 126, status: 'settled' }
-        ]
-    };
 
     function parseMoneyToNum(s) {
         if (!s || s === '--' || s === '—') return 0;
