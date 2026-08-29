@@ -736,7 +736,7 @@
             html += '<p class="font-bold">部分冻结：返佣暂停日结发放，手续费仍正常计算；累计计入待结算，解冻后次日 0 点统一发放。</p>';
         }
         if (pending) {
-            html += '<p class="mt-1">待结算累计：<strong>' + fmtMoney(pending) + '</strong></p>';
+            html += '<p class="mt-1">待结算金额：<strong>' + fmtMoney(pending) + '</strong></p>';
         }
         el.innerHTML = html;
         el.classList.remove('hidden');
