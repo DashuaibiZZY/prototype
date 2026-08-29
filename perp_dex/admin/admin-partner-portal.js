@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-26';
+    const DATA_VERSION = 'partner-demo-27';
     const USER_SCALE_TIP = '交易用户数据每天 UTC+8 0 点更新';
     const RECONCILIATION_DOWNLOAD_COOLDOWN_MS = 10 * 60 * 1000;
     let lastReconciliationDownloadAt = 0;
@@ -1439,6 +1439,10 @@
         if (preview) preview.classList.add('hidden');
         const submitBtn = document.querySelector('#modal-bind-partner button[onclick="PartnerPortal.submitBindPartner()"]');
         if (submitBtn) submitBtn.disabled = false;
+        const ratioHint = document.getElementById('bind-ratio-hint');
+        const ratioInput = document.getElementById('bind-ratio');
+        if (ratioHint) ratioHint.textContent = '';
+        if (ratioInput) ratioInput.removeAttribute('min');
         document.getElementById('modal-bind-partner').classList.remove('hidden');
     }
 
@@ -1510,6 +1514,10 @@
             alert('该用户已是一级代理');
             return;
         }
+        if (subject && subject.kind === 'partner_n' && subject.maxDirectSubRatio != null && ratio < subject.maxDirectSubRatio) {
+            alert('一级返佣比例不能低于直属下级合伙人最大返佣 ' + subject.maxDirectSubRatio + '%');
+            return;
+        }
         if (!subject) {
             if (!confirm('未识别到演示身份，将按新 UID 绑定一级（演示）。继续？')) return;
         }
@@ -1526,8 +1534,10 @@
             subjectKind: subjectKind,
             subjectLabel: subject ? subject.identityLabel : '未识别',
             upgradeScope: subjectKind === 'partner_n' ? '整伞返佣树' : (subjectKind === 'plain' || subjectKind === 'direct_client' ? '直客一并迁移' : '—'),
-            directClientCount: subject ? (subject.directClients || []).length : 0,
+            directClientCount: subject ? (subject.invitedDirectClientCount != null ? subject.invitedDirectClientCount : (subject.directClients || []).length) : 0,
             treeNodeCount: subject ? subject.treeNodes || 0 : 0,
+            directSubPartnerCount: subject ? subject.directSubPartnerCount || 0 : 0,
+            maxDirectSubRatio: subject && subject.maxDirectSubRatio != null ? subject.maxDirectSubRatio : null,
             attachments: attachmentNames,
             attachmentPreviews: attachmentPreviews
         };
@@ -2330,22 +2340,42 @@
         return clients;
     }
 
+    function getBindPartnerStats(partner, source) {
+        const childIds = partner.childIds || [];
+        let maxDirectSubRatio = 0;
+        childIds.forEach(function (cid) {
+            const c = source === 'users' ? getUser(cid) : getMigrateNode(cid);
+            if (c && c.ratio > maxDirectSubRatio) maxDirectSubRatio = c.ratio;
+        });
+        const subtree = source === 'users' ? collectUserSubtree(partner.id) : collectMigrateSubtree(partner.id);
+        const clients = source === 'users' ? collectUserDirectClients(partner.id) : collectMigrateDirectClients(partner.id);
+        return {
+            directSubPartnerCount: childIds.length,
+            treeNodes: subtree.length,
+            umbrellaDirectClientCount: clients.length,
+            maxDirectSubRatio: childIds.length ? maxDirectSubRatio : null
+        };
+    }
+
     function resolveBindSubject(key) {
         const q = (key || '').trim();
         if (!q) return null;
         const plain = findMigratePlainUser(q);
         if (plain) {
+            const invited = (plain.directClients || []).length;
             return {
                 kind: 'plain', identityLabel: identityKindLabel('plain'), user: plain,
-                directClients: plain.directClients || [], treeNodes: 0, currentParent: '—'
+                invitedDirectClientCount: invited, directClients: plain.directClients || [],
+                treeNodes: 0, currentParent: '—'
             };
         }
         const dc = findDirectClientSubject(q);
         if (dc) {
+            const invited = (dc.directClients || []).length;
             return {
                 kind: 'direct_client', identityLabel: identityKindLabel('direct_client'), user: dc,
-                directClients: dc.directClients || [], treeNodes: 0,
-                currentParent: dc.parentPartnerWallet || '—'
+                invitedDirectClientCount: invited, directClients: dc.directClients || [],
+                treeNodes: 0, currentParent: dc.parentPartnerWallet || '—'
             };
         }
         const agent = findMigrateAgentUser(q);
@@ -2353,12 +2383,14 @@
             if (agent.level === 1 && !agent.parentWallet) {
                 return { kind: 'already_l1', identityLabel: identityKindLabel('already_l1'), user: agent, directClients: [], treeNodes: 0, currentParent: '—' };
             }
-            const subtree = collectMigrateSubtree(agent.id);
-            const clients = collectMigrateDirectClients(agent.id);
+            const stats = getBindPartnerStats(agent, 'migrate');
             return {
                 kind: 'partner_n', identityLabel: identityKindLabel('partner_n') + ' · 系统 L' + agent.level,
-                user: agent, directClients: clients, treeNodes: subtree.length,
-                currentParent: agent.parentWallet || '—'
+                user: agent,
+                directSubPartnerCount: stats.directSubPartnerCount,
+                umbrellaDirectClientCount: stats.umbrellaDirectClientCount,
+                maxDirectSubRatio: stats.maxDirectSubRatio,
+                treeNodes: stats.treeNodes, currentParent: agent.parentWallet || '—'
             };
         }
         const user = findUserByWalletOrUid(q);
@@ -2366,12 +2398,14 @@
             if (user.level === 1 && !user.parentWallet && LIST_IDS.indexOf(user.id) >= 0) {
                 return { kind: 'already_l1', identityLabel: identityKindLabel('already_l1'), user: user, directClients: [], treeNodes: 0, currentParent: '—' };
             }
-            const subtree = collectUserSubtree(user.id);
-            const clients = collectUserDirectClients(user.id);
+            const stats = getBindPartnerStats(user, 'users');
             return {
                 kind: 'partner_n', identityLabel: identityKindLabel('partner_n') + ' · 系统 L' + user.level,
-                user: user, directClients: clients, treeNodes: subtree.length,
-                currentParent: user.parentWallet || '—'
+                user: user,
+                directSubPartnerCount: stats.directSubPartnerCount,
+                umbrellaDirectClientCount: stats.umbrellaDirectClientCount,
+                maxDirectSubRatio: stats.maxDirectSubRatio,
+                treeNodes: stats.treeNodes, currentParent: user.parentWallet || '—'
             };
         }
         return null;
@@ -2381,11 +2415,15 @@
         const card = document.getElementById('bind-subject-card');
         const preview = document.getElementById('bind-preview-section');
         const submitBtn = document.querySelector('#modal-bind-partner button[onclick="PartnerPortal.submitBindPartner()"]');
+        const ratioHint = document.getElementById('bind-ratio-hint');
+        const ratioInput = document.getElementById('bind-ratio');
         if (!card || !preview) return;
         if (!subject) {
             card.classList.add('hidden');
             preview.classList.add('hidden');
             if (submitBtn) submitBtn.disabled = false;
+            if (ratioHint) ratioHint.textContent = '';
+            if (ratioInput) ratioInput.removeAttribute('min');
             return;
         }
         card.classList.remove('hidden');
@@ -2398,6 +2436,8 @@
             cardHtml += '<p class="text-red-700 font-bold mt-2">该用户已是一级代理，无需重复设置。</p>';
             preview.classList.add('hidden');
             if (submitBtn) submitBtn.disabled = true;
+            if (ratioHint) ratioHint.textContent = '';
+            if (ratioInput) ratioInput.removeAttribute('min');
         } else {
             cardHtml += '<p class="text-slate-500 mt-1">原上级 ' + chip(subject.currentParent, 'wallet') + ' · 升级后原上级<strong>返佣人数不变</strong>，不再产生新的交易额与返佣。</p>';
             if (submitBtn) submitBtn.disabled = false;
@@ -2406,18 +2446,24 @@
 
         let previewHtml = '';
         if (subject.kind === 'plain' || subject.kind === 'direct_client') {
-            previewHtml += '<p class="font-bold text-slate-700 mb-2">升级范围 · 直客一并迁移</p>' +
-                '<p class="text-[10px] text-slate-500 mb-2">仅需配置<strong>一级合伙人返佣比例</strong>，无需为直客单独设比例。</p>' +
-                '<ul class="text-[11px] space-y-1 max-h-28 overflow-y-auto">';
-            (subject.directClients || []).slice(0, 8).forEach(function (c) {
-                previewHtml += '<li>' + chip(c.wallet, 'wallet') + (c.uid ? ' · ' + chip(c.uid, 'uid') : '') + '</li>';
-            });
-            if (!(subject.directClients || []).length) previewHtml += '<li class="text-slate-400">无直客</li>';
-            previewHtml += '</ul>';
+            previewHtml += '<p class="font-bold text-slate-700 mb-1">升级范围</p>' +
+                '<p class="text-[11px] text-slate-800">自邀直客人数：<strong>' + (subject.invitedDirectClientCount || 0) + '</strong> 人</p>' +
+                '<p class="text-[10px] text-slate-500 mt-2">仅需配置<strong>一级合伙人返佣比例</strong>，无需为直客单独设比例。</p>';
+            if (ratioHint) ratioHint.textContent = '';
+            if (ratioInput) ratioInput.removeAttribute('min');
         } else if (subject.kind === 'partner_n') {
-            previewHtml += '<p class="font-bold text-slate-700 mb-2">升级范围 · 整伞返佣树迁移</p>' +
-                '<p class="text-[10px] text-slate-500 mb-2">该用户当前为 <strong>' + subject.identityLabel + '</strong>；升级为一级后，其<strong>全部下级代理与直客</strong>随主体一并挂到新 L1 伞下。仅需配置主体<strong>一级返佣比例</strong>。</p>' +
-                '<p class="text-[11px] text-slate-800">代理节点 <strong>' + subject.treeNodes + '</strong> 人 · 伞下直客 <strong>' + (subject.directClients || []).length + '</strong> 人</p>';
+            previewHtml += '<p class="font-bold text-slate-700 mb-1">升级范围 · 整伞返佣树迁移</p>' +
+                '<p class="text-[11px] text-slate-800">直属下级合伙人 <strong>' + (subject.directSubPartnerCount || 0) + '</strong> 人 · 伞下直客 <strong>' + (subject.umbrellaDirectClientCount || 0) + '</strong> 人</p>';
+            if (subject.maxDirectSubRatio != null) {
+                previewHtml += '<p class="text-[11px] text-amber-800 mt-2">直属下级合伙人最大返佣：<strong>' + subject.maxDirectSubRatio + '%</strong></p>' +
+                    '<p class="text-[10px] text-slate-500 mt-1">配置一级返佣比例须 <strong>≥ ' + subject.maxDirectSubRatio + '%</strong>（不得低于直属下级已有比例）。</p>';
+                if (ratioHint) ratioHint.textContent = '不得低于直属下级最大返佣 ' + subject.maxDirectSubRatio + '%';
+                if (ratioInput) ratioInput.min = subject.maxDirectSubRatio;
+            } else {
+                if (ratioHint) ratioHint.textContent = '无直属下级合伙人，无最低比例约束';
+                if (ratioInput) ratioInput.removeAttribute('min');
+            }
+            previewHtml += '<p class="text-[10px] text-slate-500 mt-2">升级为一级后，整伞下级代理与直客随主体挂到新 L1 伞下；树内下级比例保留。</p>';
         }
         preview.innerHTML = previewHtml;
     }
