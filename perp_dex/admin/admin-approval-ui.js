@@ -97,7 +97,10 @@
                 rows.push(['附件', (p.attachments || []).join('、') || '—']);
             }
         } else if (app.type === 'partner_l1_bind') {
-            rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['申请返佣比例', p.ratio + '%'], ['运营配置上限', p.opsCap + '%'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
+            rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['当前身份', p.subjectLabel || '—'], ['升级范围', p.upgradeScope || '—'],
+                ['申请返佣比例', p.ratio + '%'], ['运营配置上限', p.opsCap + '%'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
+            if (p.treeNodeCount) rows.push(['代理节点', String(p.treeNodeCount)]);
+            if (p.directClientCount != null) rows.push(['直客数', String(p.directClientCount)]);
             if (opts && opts.detailImagePreview && p.attachments && p.attachments.length) {
                 const previews = p.attachmentPreviews || {};
                 rows.push(['图片附件', p.attachments.map(function (name) {
@@ -122,8 +125,10 @@
             const roleLabel = p.plainRole === 'sub_partner' ? '下级代理（合伙人）'
                 : (p.plainRole === 'direct_client' ? '下级直客' : (p.migrateAsPartner ? '下级代理（合伙人）' : '—'));
             const ratioLabel = p.newRatio != null ? p.newRatio + '%' : (p.plainRole === 'direct_client' ? '无需配置' : '—');
-            rows.push(['待迁移用户', p.subjectWallet || '—'], ['UID', p.subjectUid || '—'], ['类型', p.subjectType === 'plain' ? '普通用户' : '代理用户'],
-                ['迁移后身份', roleLabel], ['迁移到上级', p.targetWallet || '—'], ['迁移后比例', ratioLabel]);
+            const targetKindLabel = p.targetKind === 'plain_host' ? '普通用户（非代理）'
+                : (p.targetKind === 'l1' ? '一级代理' : (p.targetKind === 'n_partner' ? 'N 级代理' : '—'));
+            rows.push(['待迁移用户', p.subjectWallet || '—'], ['UID', p.subjectUid || '—'], ['类型', p.subjectType === 'plain' ? '普通用户/直客' : '代理用户'],
+                ['迁移后身份', roleLabel], ['迁移到上级', p.targetWallet || '—'], ['目标类型', targetKindLabel], ['迁移后比例', ratioLabel]);
             if (p.attachments && p.attachments.length) {
                 const previews = p.attachmentPreviews || {};
                 rows.push(['图片附件', p.attachments.map(function (name) {
@@ -160,11 +165,15 @@
         if (app.type !== 'partner_l1_bind') return '';
         const p = app.payload || {};
         const exceedLabel = p.exceedsCap ? '是，须风控+老板审批' : '否';
+        const scopeHtml = p.upgradeScope
+            ? '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">升级范围</p><p class="font-bold mt-1 text-slate-800">' + (p.subjectLabel || '—') + ' · ' + p.upgradeScope + '</p></div>'
+            : '';
         return '<div class="col-span-2 border border-slate-200 rounded-lg p-4 bg-slate-50/50">' +
             '<p class="text-[10px] font-bold text-slate-500 uppercase mb-3">一级合伙人绑定申请</p>' +
             '<div class="grid grid-cols-2 gap-4 text-sm">' +
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">UID</p><p class="font-black mt-1">' + (window.AdminCopyChip ? AdminCopyChip.uid(p.uid || '—') : p.uid || '—') + '</p></div>' +
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">钱包</p><p class="font-black mt-1">' + (window.AdminCopyChip ? AdminCopyChip.wallet(p.wallet) : p.wallet || '—') + '</p></div>' +
+            scopeHtml +
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">申请返佣比例</p><p class="font-black mt-1 text-blue-600 text-lg">' + (p.ratio != null ? p.ratio + '%' : '—') + '</p></div>' +
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">运营配置上限 / 超上限</p><p class="font-black mt-1">' + (p.opsCap != null ? p.opsCap + '%' : '—') + ' · <span class="text-amber-700">' + exceedLabel + '</span></p></div>' +
             '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">图片附件</p>' + renderPartnerAttachmentThumbnails(p) + '</div>' +

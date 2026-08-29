@@ -269,7 +269,7 @@
             <section class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm space-y-4">
                 <div>
                     <h2 class="text-base font-black text-slate-900">迁移返佣关系</h2>
-                    <p class="text-[11px] text-slate-500 mt-1">输入待迁移用户后系统自动识别类型（普通用户 / 代理用户）。普通用户须选择迁移后身份；仅「下级代理」须填写返佣比例。</p>
+                    <p class="text-[11px] text-slate-500 mt-1">输入待迁移用户与目标上级后系统自动识别类型。普通用户/直客迁移到<strong>合伙人</strong>下级时可选身份；迁移到<strong>普通用户</strong>下级时固定为直客且不可配比例。</p>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
@@ -277,14 +277,18 @@
                         <input id="migrate-subject-input" type="text" placeholder="待迁移用户 UID" class="border rounded px-3 py-2 w-full text-[11px] outline-none focus:ring-1 focus:ring-blue-600" oninput="PartnerPortal.previewMigrate()">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">迁移到上级合伙人</label>
-                        <input id="migrate-target-input" type="text" placeholder="目标上级 UID" class="border rounded px-3 py-2 w-full text-[11px] outline-none focus:ring-1 focus:ring-blue-600" oninput="PartnerPortal.previewMigrate()">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">迁移到上级</label>
+                        <input id="migrate-target-input" type="text" placeholder="合伙人或普通用户 UID / 钱包" class="border rounded px-3 py-2 w-full text-[11px] outline-none focus:ring-1 focus:ring-blue-600" oninput="PartnerPortal.previewMigrate()">
                     </div>
                     <div id="migrate-ratio-wrap">
                         <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">设置返佣比例 (%)</label>
                         <input id="migrate-ratio-input" type="number" min="1" max="80" step="1" class="border rounded px-3 py-2 w-full text-[11px] outline-none focus:ring-1 focus:ring-blue-600" oninput="PartnerPortal.previewMigrate()">
                         <p id="migrate-ratio-hint" class="text-[10px] text-slate-500 mt-1"></p>
                     </div>
+                </div>
+                <div id="migrate-plain-target-hint" class="hidden rounded-lg border border-amber-200 bg-amber-50 p-4 text-[11px] text-amber-900">
+                    <p class="font-bold">目标上级为普通用户（非代理）</p>
+                    <p class="mt-1 text-[10px]">迁移主体固定成为其<strong>下级直客</strong>，不支持选择代理身份，<strong>不可配置返佣比例</strong>。仅支持普通用户 / 合伙人直客作为迁移主体。</p>
                 </div>
                 <div id="migrate-plain-role-wrap" class="hidden rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-2">
                     <p class="text-[10px] font-bold text-slate-500 uppercase">迁移后身份（普通用户）</p>
@@ -302,8 +306,8 @@
                 </div>
                 <div id="migrate-subject-card" class="hidden bg-slate-50 border border-slate-200 rounded-lg p-4 text-[11px]"></div>
                 <div class="text-[10px] text-slate-400 border-t pt-3 space-y-1">
-                    <p><strong>演示待迁移：</strong>普通 <code class="bg-slate-100 px-1">0xPlain...U1</code> · 正常代理 <code class="bg-slate-100 px-1">0xMig...Ok</code>（系统L2）</p>
-                    <p><strong>目标上级：</strong><code class="bg-slate-100 px-1">0xTo...L1</code> · <code class="bg-slate-100 px-1">0xTo...L2</code></p>
+                    <p><strong>演示待迁移：</strong>普通 <code class="bg-slate-100 px-1">0xPlain...U1</code> · 直客 <code class="bg-slate-100 px-1">0xde...55aa</code> · N级 <code class="bg-slate-100 px-1">0xMig...Ok</code> / <code class="bg-slate-100 px-1">0xNorm...L3</code></p>
+                    <p><strong>目标上级：</strong>一级 <code class="bg-slate-100 px-1">0xTo...L1</code> · 普通用户 <code class="bg-slate-100 px-1">0xPlain...Host</code> · N级 <code class="bg-slate-100 px-1">0xTo...L2</code></p>
                 </div>
             </section>
 
@@ -602,16 +606,19 @@
 
 
 <div id="modal-bind-partner" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-md rounded-lg shadow-2xl overflow-hidden">
-        <div class="px-6 py-4 border-b flex justify-between items-center">
+    <div class="bg-white w-full max-w-lg rounded-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <div class="px-6 py-4 border-b flex justify-between items-center shrink-0">
             <h3 class="font-bold text-slate-800">新增一级合伙人</h3>
             <button onclick="PartnerPortal.closeBindModal()" class="text-slate-400">✕</button>
         </div>
-        <div class="p-6 space-y-4">
+        <div class="p-6 space-y-4 overflow-y-auto flex-1">
             <p id="bind-cap-hint" class="text-[11px] text-blue-800 bg-blue-50 p-3 rounded border border-blue-100"></p>
-            <div><label class="text-[10px] font-bold text-slate-400 uppercase">UID</label><input id="bind-wallet" type="text" placeholder="输入 UID" class="w-full border rounded p-2 mt-1 outline-none"></div>
-            <div><label class="text-[10px] font-bold text-slate-400 uppercase">返佣比例 (%)</label><input id="bind-ratio" type="number" class="w-full border rounded p-2 mt-1 outline-none"></div>
+            <div><label class="text-[10px] font-bold text-slate-400 uppercase">UID / 钱包</label><input id="bind-wallet" type="text" placeholder="输入 UID 或钱包，自动识别身份" class="w-full border rounded p-2 mt-1 outline-none" oninput="PartnerPortal.previewBindPartner()"></div>
+            <div id="bind-subject-card" class="hidden bg-slate-50 border border-slate-200 rounded-lg p-4 text-[11px]"></div>
+            <div id="bind-preview-section" class="hidden bg-white border border-slate-200 rounded-lg p-4 text-[11px]"></div>
+            <div><label class="text-[10px] font-bold text-slate-400 uppercase">一级合伙人返佣比例 (%)</label><input id="bind-ratio" type="number" class="w-full border rounded p-2 mt-1 outline-none" placeholder="仅此一项比例配置"></div>
             <div><label class="text-[10px] font-bold text-slate-400 uppercase">申请备注（必填）</label><textarea id="bind-remark" rows="2" class="w-full border rounded p-2 mt-1 outline-none" placeholder="说明绑定原因、渠道背景等"></textarea></div>
+            <p class="text-[10px] text-slate-400">演示账号：普通 <code class="bg-slate-100 px-1">0xPlain...U1</code> · 直客 <code class="bg-slate-100 px-1">0xde...55aa</code> · N级 <code class="bg-slate-100 px-1">0xNorm...L3</code></p>
             <div>
                 <label class="text-[10px] font-bold text-slate-400 uppercase">图片附件（最多 4 张）</label>
                 <input id="bind-attachment-input" type="file" accept="image/*" multiple class="mt-1 text-[11px] w-full" onchange="PartnerPortal.handleBindAttachmentFiles(this)">
@@ -619,7 +626,7 @@
                 <div id="bind-attachment-preview" class="flex flex-wrap gap-2 mt-2"></div>
             </div>
         </div>
-        <div class="px-6 py-4 bg-slate-50 flex gap-3">
+        <div class="px-6 py-4 bg-slate-50 flex gap-3 shrink-0">
             <button onclick="PartnerPortal.closeBindModal()" class="flex-1 py-2 border rounded font-bold text-slate-500">取消</button>
             <button onclick="PartnerPortal.submitBindPartner()" class="flex-1 py-2 bg-slate-900 text-white rounded font-bold">提交</button>
         </div>
@@ -772,7 +779,7 @@
 <script src="admin-sidebar.js"></script>
 <script src="admin-approval.js"></script>
 <script src="admin-approval-ui.js"></script>
-<script src="admin-partner-portal.js?v=partner-demo-25"></script>
+<script src="admin-partner-portal.js?v=partner-demo-26"></script>
 <script>
     initModuleApproval({
         types: ['partner_l1_bind', 'partner_ratio_change', 'partner_rebate_migrate'],
