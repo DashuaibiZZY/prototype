@@ -100,7 +100,9 @@
             rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['当前身份', p.subjectLabel || '—'], ['升级范围', p.upgradeScope || '—'],
                 ['申请返佣比例', p.ratio + '%'], ['运营配置上限', p.opsCap + '%'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
             if (p.treeNodeCount) rows.push(['代理节点', String(p.treeNodeCount)]);
-            if (p.directClientCount != null) rows.push(['直客数', String(p.directClientCount)]);
+            if (p.directSubPartnerCount != null) rows.push(['直属下级合伙人', String(p.directSubPartnerCount)]);
+            if (p.maxDirectSubRatio != null) rows.push(['直属下级最大返佣', p.maxDirectSubRatio + '%']);
+            if (p.directClientCount != null) rows.push(['自邀直客 / 伞下直客', String(p.directClientCount)]);
             if (opts && opts.detailImagePreview && p.attachments && p.attachments.length) {
                 const previews = p.attachmentPreviews || {};
                 rows.push(['图片附件', p.attachments.map(function (name) {
