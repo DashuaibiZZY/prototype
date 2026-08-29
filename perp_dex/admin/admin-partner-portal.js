@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-31';
+    const DATA_VERSION = 'partner-demo-32';
     const CURRENT_OPERATOR = 'allen@forx.fi';
     const USER_SCALE_TIP = '交易用户数据每天 UTC+8 0 点更新';
     const RECONCILIATION_DOWNLOAD_COOLDOWN_MS = 10 * 60 * 1000;
@@ -70,7 +70,8 @@
             rebateTotal: '$6,200', rebateSelf: '$0.3k', rebateDirect: '$2.1k', rebateGap: '$3.9k',
             activeSubPartners: 2, totalSubPartners: 2, childIds: ['h_n2a', 'h_n2b'],
             directClients: [{ time: '2024-05-17', wallet: '0xde...55aa', vol: '$92,000', fee: '$92', rebate: '$64.40', status: '交易中' }],
-            settlements: [{ date: '2024-05-20', vol: '$1.1M', rebate: '$4,820', originalRebate: '$4,820', status: '已发放', note: '' }]
+            settlements: [{ date: '2024-05-20', vol: '$1.1M', rebate: '$4,820', originalRebate: '$4,820', status: '已发放', note: '' }],
+            userViewSettlement: DEFAULT_USER_VIEW_SETTLEMENT
         },
         helperUser('h_n2a', '0xNorm...L2a', '100802', '华东渠道', 2, 55, '0xNorm...L1', '0xNorm...L1', ['p_n3', 'h_n3a']),
         helperUser('h_n2b', '0xNorm...L2b', '100802b', '华南渠道', 2, 53, '0xNorm...L1', '0xNorm...L1', ['h_n3b', 'h_n3c']),
@@ -83,7 +84,10 @@
             rebateTotal: '$8,420', rebateSelf: '$0.1k', rebateDirect: '$0.8k', rebateGap: '$7.5k',
             activeSubPartners: 2, totalSubPartners: 2, childIds: ['h_n4a', 'h_n4b'],
             directClients: [{ time: '2024-05-21', wallet: '0xcc...88ab', vol: '$125,000', fee: '$125', rebate: '$56.25', status: '交易中' }],
-            settlements: [{ date: '2024-05-20', vol: '$420k', rebate: '$1,960', originalRebate: '$1,960', status: '已发放', note: '' }]
+            settlements: [{ date: '2024-05-20', vol: '$420k', rebate: '$1,960', originalRebate: '$1,960', status: '已发放', note: '' }],
+            userViewSettlement: Object.assign({}, FROZEN_USER_VIEW_SETTLEMENT, {
+                summary: { pendingToday: 1268.4, settledTotal: 8420, yesterdayPaid: 0, yesterdayStatus: 'pending' }
+            })
         },
         helperUser('h_n3a', '0xNorm...L3a', '100803a', '华东-苏皖', 3, 42, '0xNorm...L2a', '0xNorm...L1', ['h_n4c']),
         helperUser('h_n3b', '0xNorm...L3b', '100803b', '华南-闽粤', 3, 40, '0xNorm...L2b', '0xNorm...L1', ['h_n4d']),
@@ -107,7 +111,16 @@
             settlements: [
                 { date: '2024-05-21', vol: '$3.2M', rebate: '$10,200', originalRebate: '$10,200', status: '已发放', note: '' },
                 { date: '2024-05-20', vol: '$3.8M', rebate: '$12,400', originalRebate: '$12,400', status: '已发放', note: '' }
-            ]
+            ],
+            userViewSettlement: Object.assign({}, FROZEN_USER_VIEW_SETTLEMENT, {
+                summary: { pendingToday: 3840, settledTotal: 12840, yesterdayPaid: 0, yesterdayStatus: 'pending' },
+                records: [
+                    { date: '2024-05-23', vol: 520000, rebate: 3536, status: 'pending' },
+                    { date: '2024-05-22', vol: 480000, rebate: 3264, status: 'pending' },
+                    { date: '2024-05-21', vol: 3200000, rebate: 10200, status: 'settled' },
+                    { date: '2024-05-20', vol: 3800000, rebate: 12400, status: 'settled' }
+                ]
+            })
         },
         helperUser('h_a2a', '0xAbn...L2a', '100812', '正常分支', 2, 50, '0xAbn...L1', '0xAbn...L1', ['h_a2a1', 'h_a2a2']),
         helperUser('h_a2a1', '0xAbn...L3a', '100812a', '正常分支-甲', 3, 46, '0xAbn...L2a', '0xAbn...L1', ['h_a4na']),
@@ -148,6 +161,37 @@
     ];
 
     const PERIOD_SCALES = { '1D': 0.04, '1W': 0.22, '1M': 0.48, '3M': 0.78, 'ALL': 1 };
+
+    /** 用户端 §3.4 可见的每日结算流水（后台详情镜像展示） */
+    const DEFAULT_USER_VIEW_SETTLEMENT = {
+        summary: { pendingToday: 450.82, settledTotal: 124500, yesterdayPaid: 868, yesterdayStatus: 'success' },
+        records: [
+            { date: '2024-05-23', vol: 125000, rebate: 87.5, status: 'pending' },
+            { date: '2024-05-22', vol: 1240000, rebate: 868, status: 'settled' },
+            { date: '2024-05-21', vol: 980000, rebate: 686, status: 'settled' },
+            { date: '2024-05-20', vol: 86800, rebate: 61, status: 'pending' },
+            { date: '2024-05-19', vol: 820000, rebate: 1003, violationDeduction: 342.23, status: 'pending' },
+            { date: '2024-05-18', vol: 650000, rebate: 455, status: 'settled' },
+            { date: '2024-05-17', vol: 420000, rebate: 294, status: 'pending' },
+            { date: '2024-05-16', vol: 380000, rebate: 266, status: 'settled' },
+            { date: '2024-05-15', vol: 125000, rebate: 88, status: 'settled' },
+            { date: '2024-05-14', vol: 290000, rebate: 203, status: 'settled' },
+            { date: '2024-05-13', vol: 510000, rebate: 357, status: 'settled' },
+            { date: '2024-05-12', vol: 0, rebate: 0, status: 'pending' }
+        ]
+    };
+
+    const FROZEN_USER_VIEW_SETTLEMENT = {
+        summary: { pendingToday: 128.4, settledTotal: 84200, yesterdayPaid: 0, yesterdayStatus: 'pending' },
+        records: [
+            { date: '2024-05-23', vol: 98000, rebate: 44.1, status: 'pending' },
+            { date: '2024-05-22', vol: 420000, rebate: 189, status: 'pending' },
+            { date: '2024-05-21', vol: 380000, rebate: 171, status: 'pending' },
+            { date: '2024-05-20', vol: 420000, rebate: 1960, status: 'settled' },
+            { date: '2024-05-19', vol: 310000, rebate: 139.5, status: 'settled' },
+            { date: '2024-05-18', vol: 280000, rebate: 126, status: 'settled' }
+        ]
+    };
 
     function parseMoneyToNum(s) {
         if (!s || s === '--' || s === '—') return 0;
@@ -329,6 +373,8 @@
     let drillSubPage = 1;
     let drillClientPage = 1;
     let detailSettlementPage = 1;
+    let detailSettlementDateFilter = '';
+    let detailSettlementStatusFilter = 'all';
     let detailEntryId = null;
     let detailDrillStack = [];
     let detailSubFilter = 'all';
@@ -435,7 +481,7 @@
 
     function settleLabel(s) {
         if (s === 'pending') {
-            return '<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold text-[10px]">待结算累计</span>';
+            return '<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold text-[10px]">冻结待结算</span>';
         }
         return '<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold text-[10px]">正常结算</span>';
     }
@@ -696,6 +742,82 @@
         el.classList.remove('hidden');
     }
 
+    function getUserViewSettlement(u) {
+        if (u && u.userViewSettlement) return u.userViewSettlement;
+        return DEFAULT_USER_VIEW_SETTLEMENT;
+    }
+
+    function userViewSettlementStatusLabel(status) {
+        if (status === 'pending') return '<span class="text-amber-700 font-bold">待结算</span>';
+        if (status === 'settled') return '<span class="text-green-700 font-bold">已结算</span>';
+        return '<span class="text-slate-400">—</span>';
+    }
+
+    function userViewRebateCell(row) {
+        let html = '<span class="font-black text-blue-600">' + fmtMoney(row.rebate) + '</span>';
+        if (row.violationDeduction) {
+            html += '<span class="block text-[9px] text-red-600 font-bold mt-0.5">违规 −' + fmtMoney(row.violationDeduction) + '</span>';
+        }
+        return html;
+    }
+
+    function renderDetailSettlementSection(u) {
+        const data = getUserViewSettlement(u);
+        const summary = data.summary || DEFAULT_USER_VIEW_SETTLEMENT.summary;
+        const pendingEl = document.getElementById('detail-settlement-pending-today');
+        const settledEl = document.getElementById('detail-settlement-settled-total');
+        const yesterdayEl = document.getElementById('detail-settlement-yesterday');
+        const yesterdayStatusEl = document.getElementById('detail-settlement-yesterday-status');
+        if (pendingEl) pendingEl.textContent = fmtMoney(summary.pendingToday);
+        if (settledEl) settledEl.textContent = fmtMoney(summary.settledTotal);
+        if (yesterdayEl) yesterdayEl.textContent = fmtMoney(summary.yesterdayPaid);
+        if (yesterdayStatusEl) {
+            yesterdayStatusEl.textContent = summary.yesterdayStatus === 'success'
+                ? 'Status: Success'
+                : (summary.yesterdayStatus === 'pending' ? 'Status: Pending' : 'Status: —');
+            yesterdayStatusEl.className = summary.yesterdayStatus === 'success'
+                ? 'text-[10px] text-green-700 mt-2 font-bold tracking-widest uppercase'
+                : 'text-[10px] text-amber-700 mt-2 font-bold tracking-widest uppercase';
+        }
+
+        const records = (data.records || []).slice();
+        const filtered = records.filter(function (row) {
+            if (detailSettlementDateFilter && row.date !== detailSettlementDateFilter) return false;
+            if (detailSettlementStatusFilter !== 'all' && row.status !== detailSettlementStatusFilter) return false;
+            return true;
+        });
+        const sliced = paginate(filtered, detailSettlementPage);
+        detailSettlementPage = sliced.page;
+
+        const tbody = document.getElementById('detail-settlement-body');
+        if (tbody) {
+            tbody.innerHTML = sliced.items.length ? sliced.items.map(function (row) {
+                const rowClass = row.status === 'pending' ? 'bg-amber-50/40' : 'hover:bg-slate-50';
+                return '<tr class="' + rowClass + '">' +
+                    '<td class="px-4 py-3 font-bold text-slate-800">' + row.date + '</td>' +
+                    '<td class="px-4 py-3 text-right font-bold text-slate-700">' + fmtMoney(row.vol) + '</td>' +
+                    '<td class="px-4 py-3 text-right">' + userViewRebateCell(row) + '</td>' +
+                    '<td class="px-4 py-3 text-right">' + userViewSettlementStatusLabel(row.status) + '</td>' +
+                    '</tr>';
+            }).join('') : '<tr><td colspan="4" class="px-4 py-10 text-center text-slate-400">暂无结算流水</td></tr>';
+        }
+        mountListPagination('detail-settlement-pagination', sliced.total, detailSettlementPage, 'detail-settlement');
+    }
+
+    function setDetailSettlementDateFilter(v) {
+        detailSettlementDateFilter = v || '';
+        detailSettlementPage = 1;
+        const u = getUser(currentUserId);
+        if (u) renderDetailSettlementSection(u);
+    }
+
+    function setDetailSettlementStatusFilter(v) {
+        detailSettlementStatusFilter = v || 'all';
+        detailSettlementPage = 1;
+        const u = getUser(currentUserId);
+        if (u) renderDetailSettlementSection(u);
+    }
+
     function renderPartnerDetailMirror(u) {
         renderPartnerFreezeBanner(u, 'detail');
         renderPartnerSuperiorBar(u, 'detail');
@@ -708,6 +830,7 @@
         renderMirrorClientTable(u, {
             prefix: 'detail', search: detailTableFilter, clientPage: detailClientPage, clientPageKey: 'detail'
         });
+        renderDetailSettlementSection(u);
     }
 
     function renderPartnerDrillMirror(u) {
@@ -1024,12 +1147,19 @@
         detailSubFilter = 'all';
         detailSubPage = 1;
         detailClientPage = 1;
+        detailSettlementPage = 1;
+        detailSettlementDateFilter = '';
+        detailSettlementStatusFilter = 'all';
         detailStatsPeriod = listStatsPeriod;
         updatePeriodTabUi('detail', detailStatsPeriod);
         const searchEl = document.getElementById('detail-sub-search');
         if (searchEl) searchEl.value = '';
         const filterEl = document.getElementById('detail-sub-status-filter');
         if (filterEl) filterEl.value = 'all';
+        const settlementDateEl = document.getElementById('detail-settlement-filter-date');
+        if (settlementDateEl) settlementDateEl.value = '';
+        const settlementStatusEl = document.getElementById('detail-settlement-filter-status');
+        if (settlementStatusEl) settlementStatusEl.value = 'all';
         window.PartnerPortal_showPage('page-partner-detail');
         document.getElementById('detail-partner-title').textContent = u.note;
         document.getElementById('detail-partner-sub').innerHTML = chip(u.wallet, 'wallet') + ' · ' + chip(u.uid, 'uid') + ' · L' + u.level + ' · ' + u.ratio + '%';
@@ -3539,6 +3669,8 @@
         filterDetailTable: filterDetailTable, setListFilter: setListFilter,
         applyListSearch: applyListSearch, setListSort: setListSort, setListStatsPeriod: setListStatsPeriod,
         setDetailStatsPeriod: setDetailStatsPeriod,
+        setDetailSettlementDateFilter: setDetailSettlementDateFilter,
+        setDetailSettlementStatusFilter: setDetailSettlementStatusFilter,
         stageRatioChange: stageRatioChange,
         clearPendingChanges: clearPendingChanges, submitPendingChanges: submitPendingChanges,
         openTreeConfirmModal: openTreeConfirmModal, closeTreeConfirmModal: closeTreeConfirmModal, confirmTreeSubmit: confirmTreeSubmit,
@@ -3611,6 +3743,11 @@
                 if (u) renderMirrorClientTable(u, {
                     prefix: 'drill', search: drillSubSearch, clientPage: drillClientPage, clientPageKey: 'drill'
                 });
+            });
+            AdminPagination.register('detail-settlement', function (p) {
+                detailSettlementPage = p;
+                const u = getUser(currentUserId);
+                if (u) renderDetailSettlementSection(u);
             });
             AdminPagination.register('settlement-batch', function (p) { settlementBatchPage = p; filterSettlementBatches(); });
             AdminPagination.register('settlement-detail', function (p) { settlementDetailPage = p; renderSettlementDetailRows(); });
