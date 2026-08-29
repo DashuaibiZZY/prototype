@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-30';
+    const DATA_VERSION = 'partner-demo-31';
     const CURRENT_OPERATOR = 'allen@forx.fi';
     const USER_SCALE_TIP = '交易用户数据每天 UTC+8 0 点更新';
     const RECONCILIATION_DOWNLOAD_COOLDOWN_MS = 10 * 60 * 1000;
@@ -421,10 +421,7 @@
     }
 
     function freezeStatusBadge(status) {
-        if (status === 'frozen') {
-            return '<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold text-[10px]">账户冻结</span>';
-        }
-        if (status === 'partial') {
+        if (hasPartnerFreeze(status)) {
             return '<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold text-[10px]">部分冻结</span>';
         }
         return '<span class="text-slate-300">—</span>';
@@ -690,8 +687,7 @@
         }
         let html = '';
         if (frozen) {
-            html += '<p class="font-bold">' + (u.freezeStatus === 'frozen' ? '账户冻结' : '部分冻结') +
-                '：返佣暂停日结发放，手续费仍正常计算；累计计入待结算，解冻后次日 0 点统一发放。</p>';
+            html += '<p class="font-bold">部分冻结：返佣暂停日结发放，手续费仍正常计算；累计计入待结算，解冻后次日 0 点统一发放。</p>';
         }
         if (pending) {
             html += '<p class="mt-1">待结算累计：<strong>' + fmtMoney(pending) + '</strong></p>';
@@ -1309,7 +1305,7 @@
     function updateBindCrossBdUI(subject) {
         const wrap = document.getElementById('bind-cross-bd-wrap');
         const ownerEl = document.getElementById('bind-cross-bd-owner');
-        const reasonEl = document.getElementById('bind-cross-bd-reason');
+        const remarkEl = document.getElementById('bind-remark');
         if (!wrap) return;
         const crossBd = subject && subject.user && getCrossBdInfo(subject.user);
         wrap.classList.toggle('hidden', !crossBd);
@@ -1318,7 +1314,11 @@
                 ? (crossBd.originalBd + ' · L1 UID ' + crossBd.originalRootUid + (crossBd.originalRootNote ? ' · ' + crossBd.originalRootNote : ''))
                 : '';
         }
-        if (!crossBd && reasonEl) reasonEl.value = '';
+        if (remarkEl) {
+            remarkEl.placeholder = crossBd
+                ? '请在此补充清晰的跨权限配置商务原因（必填），并说明绑定背景、渠道协商依据等'
+                : '说明绑定原因、渠道背景等';
+        }
     }
 
     function updateMigrateCrossBdUI() {
@@ -1601,9 +1601,9 @@
         if (ratioHint) ratioHint.textContent = '';
         if (ratioInput) ratioInput.removeAttribute('min');
         const crossWrap = document.getElementById('bind-cross-bd-wrap');
-        const crossReasonEl = document.getElementById('bind-cross-bd-reason');
+        const remarkEl = document.getElementById('bind-remark');
         if (crossWrap) crossWrap.classList.add('hidden');
-        if (crossReasonEl) crossReasonEl.value = '';
+        if (remarkEl) remarkEl.placeholder = '说明绑定原因、渠道背景等';
         document.getElementById('modal-bind-partner').classList.remove('hidden');
     }
 
@@ -1691,12 +1691,6 @@
         const wallet = (subject && subject.user.wallet) || '—';
         const exceedsCap = ratio > OPS_CAP;
         const crossBd = subject && subject.user && getCrossBdInfo(subject.user);
-        const crossBdReasonEl = document.getElementById('bind-cross-bd-reason');
-        const crossBdReason = crossBdReasonEl ? crossBdReasonEl.value.trim() : '';
-        if (crossBd && !crossBdReason) {
-            alert('请填写跨权限配置商务原因');
-            return;
-        }
         const attachmentNames = bindAttachments.map(function (a) { return a.name; });
         const attachmentPreviews = {};
         bindAttachments.forEach(function (a) { attachmentPreviews[a.name] = a.dataUrl; });
@@ -1705,7 +1699,7 @@
             uid: uid || '—', wallet: wallet, ratio: ratio, opsCap: OPS_CAP, exceedsCap: exceedsCap,
             crossBd: !!crossBd,
             originalBd: crossBd ? crossBd.originalBd : '',
-            crossBdReason: crossBd ? crossBdReason : '',
+            crossBdReason: crossBd ? remark : '',
             subjectKind: subjectKind,
             subjectLabel: subject ? subject.identityLabel : '未识别',
             upgradeScope: subjectKind === 'partner_n' ? '整伞返佣树' : (subjectKind === 'plain' || subjectKind === 'direct_client' ? '直客一并迁移' : '—'),
@@ -1718,8 +1712,8 @@
         };
         if ((exceedsCap || crossBd) && typeof submitApprovalApplication === 'function') {
             submitApprovalApplication({
-                type: 'partner_l1_bind',
-                title: crossBd ? '一级合伙人绑定（跨权限配置）' : '一级合伙人绑定（超上限）',
+                type: crossBd ? 'partner_l1_bind_cross' : 'partner_l1_bind',
+                title: crossBd ? '一级合伙人绑定（跨权限）' : '一级合伙人绑定（超上限）',
                 flowProfile: 'risk_boss',
                 applicant: 'Mkt_Allen', remark: remark,
                 summary: (subject ? subject.identityLabel + ' · ' : '') + (uid ? 'UID ' + uid + ' · ' : wallet + ' · ') + ratio + '%',
@@ -1791,7 +1785,7 @@
                     }
                 }
             }
-        } else if (app.type === 'partner_l1_bind') {
+        } else if (app.type === 'partner_l1_bind' || app.type === 'partner_l1_bind_cross') {
             applyL1BindPayload(p);
         }
     }
@@ -3392,9 +3386,10 @@
         showMigratePage();
     }
 
-    const PARTNER_APP_TYPES = ['partner_l1_bind', 'partner_ratio_change', 'partner_rebate_migrate'];
+    const PARTNER_APP_TYPES = ['partner_l1_bind', 'partner_l1_bind_cross', 'partner_ratio_change', 'partner_rebate_migrate'];
     const PARTNER_TYPE_LABELS = {
-        partner_l1_bind: '一级合伙人绑定',
+        partner_l1_bind: '一级合伙人绑定（超上限）',
+        partner_l1_bind_cross: '一级合伙人绑定（跨权限）',
         partner_ratio_change: '返佣比例调整（超出上限）',
         partner_rebate_migrate: '返佣关系迁移'
     };
@@ -3417,7 +3412,7 @@
         if (a.indexOf('交叉') >= 0 && a.indexOf('通过') >= 0) return 'cross_pass';
         if (a.indexOf('提交') >= 0) {
             if (appType === 'partner_rebate_migrate') return 'migrate';
-            if (appType === 'partner_l1_bind') return 'bind';
+            if (appType === 'partner_l1_bind' || appType === 'partner_l1_bind_cross') return 'bind';
             if (appType === 'partner_ratio_change') return 'ratio_change';
             return 'submit';
         }

@@ -4,7 +4,7 @@
 (function () {
     const STORAGE_KEY = 'forx_approval_applications';
     const ROLE_KEY = 'forx_approval_view_role';
-    const SEED_VERSION = '2026-08-29-partner-cross-bd-v1';
+    const SEED_VERSION = '2026-08-29-partner-271-polish-v1';
     const SEED_VERSION_KEY = 'forx_approval_seed_v';
 
     const STEPS = [
@@ -17,6 +17,7 @@
     const TYPE_FLOW_PROFILE = {
         points_pool_config: 'cross_risk',
         partner_l1_bind: 'risk_boss',
+        partner_l1_bind_cross: 'risk_boss',
         partner_ratio_change: 'risk_boss',
         partner_rebate_migrate: 'risk_only'
     };
@@ -67,6 +68,7 @@
         points_pool_config: '积分总池配置',
         points_program_switch: '积分计划总开关',
         partner_l1_bind: '一级合伙人绑定（超上限）',
+        partner_l1_bind_cross: '一级合伙人绑定（跨权限）',
         partner_ratio_change: '返佣比例调整（超出上限）',
         partner_rebate_migrate: '返佣关系迁移'
     };
@@ -611,13 +613,13 @@
             },
             {
                 id: 'APR20260829001',
-                type: 'partner_l1_bind',
-                title: '一级合伙人绑定（跨权限配置）',
+                type: 'partner_l1_bind_cross',
+                title: '一级合伙人绑定（跨权限）',
                 applicant: 'Mkt_Allen',
                 status: 'pending_risk',
                 flowProfile: 'risk_boss',
                 createdAt: '2026-08-29 10:00',
-                remark: '跨 BD 升级 bob 伞下四级代理',
+                remark: '原 BD 渠道交接至 Allen 团队，已与 bob 确认资源归属；华南线四级代理升级一级',
                 summary: 'N 级代理 · UID 100815 · 62%',
                 payload: {
                     uid: '100815',
@@ -627,7 +629,7 @@
                     exceedsCap: false,
                     crossBd: true,
                     originalBd: 'bob@forx.fi',
-                    crossBdReason: '原 BD 渠道交接至 Allen 团队，已与 bob 确认资源归属',
+                    crossBdReason: '原 BD 渠道交接至 Allen 团队，已与 bob 确认资源归属；华南线四级代理升级一级',
                     subjectKind: 'partner_n',
                     subjectLabel: 'N 级代理 · 系统 L4',
                     upgradeScope: '整伞返佣树',
@@ -1323,7 +1325,7 @@
             }
         });
         if (result && result.status === 'approved' &&
-            (result.type === 'partner_l1_bind' || result.type === 'partner_ratio_change' || result.type === 'partner_rebate_migrate') &&
+            (result.type === 'partner_l1_bind' || result.type === 'partner_l1_bind_cross' || result.type === 'partner_ratio_change' || result.type === 'partner_rebate_migrate') &&
             typeof window.applyPartnerApprovalEffect === 'function') {
             window.applyPartnerApprovalEffect(result);
         }
@@ -1360,7 +1362,7 @@
             });
         });
         if (result && result.status === 'approved' &&
-            (result.type === 'partner_l1_bind' || result.type === 'partner_ratio_change' || result.type === 'partner_rebate_migrate') &&
+            (result.type === 'partner_l1_bind' || result.type === 'partner_l1_bind_cross' || result.type === 'partner_ratio_change' || result.type === 'partner_rebate_migrate') &&
             typeof window.applyPartnerApprovalEffect === 'function') {
             window.applyPartnerApprovalEffect(result);
         }
@@ -1420,7 +1422,7 @@
             Object.keys(p).forEach(function (k) {
                 if (k !== 'recipients') rows.push([k, Array.isArray(p[k]) ? p[k].join('; ') : p[k]]);
             });
-        } else if (app.type === 'partner_l1_bind') {
+        } else if (app.type === 'partner_l1_bind' || app.type === 'partner_l1_bind_cross') {
             rows.push(['wallet', p.wallet], ['ratio', p.ratio], ['note', p.note], ['opsCap', p.opsCap]);
         }
         downloadCsv(app.id + '_detail.csv', rows);

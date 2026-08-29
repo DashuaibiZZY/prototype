@@ -33,7 +33,7 @@
 
     function getAppSubjectUser(app) {
         const p = app.payload || {};
-        if (app.type === 'fee_config' || app.type === 'partner_l1_bind' || app.type === 'partner_ratio_change' || app.type === 'partner_rebate_migrate') {
+        if (app.type === 'fee_config' || app.type === 'partner_l1_bind' || app.type === 'partner_l1_bind_cross' || app.type === 'partner_ratio_change' || app.type === 'partner_rebate_migrate') {
             return { wallet: p.subjectWallet || p.wallet || '—', uid: p.subjectUid || p.uid || '—' };
         }
         return { wallet: '—', uid: '—' };
@@ -96,7 +96,7 @@
             } else {
                 rows.push(['附件', (p.attachments || []).join('、') || '—']);
             }
-        } else if (app.type === 'partner_l1_bind') {
+        } else if (app.type === 'partner_l1_bind' || app.type === 'partner_l1_bind_cross') {
             rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['当前身份', p.subjectLabel || '—'], ['升级范围', p.upgradeScope || '—'],
                 ['申请返佣比例', p.ratio + '%'], ['运营配置上限', p.opsCap + '%'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
             if (p.crossBd) {
@@ -173,7 +173,7 @@
     }
 
     function renderPartnerL1BindDetailSection(app) {
-        if (app.type !== 'partner_l1_bind') return '';
+        if (app.type !== 'partner_l1_bind' && app.type !== 'partner_l1_bind_cross') return '';
         const p = app.payload || {};
         const exceedLabel = p.exceedsCap ? '是，须风控+老板审批' : '否';
         const crossBdHtml = p.crossBd
@@ -315,7 +315,7 @@
         if (app.type === 'trial_issue') {
             return '已驳回的申请可由申请人基于<strong>原名单与卡组配置</strong>重新发起，审批流将从头开始；<strong>仅可修改申请备注</strong>。';
         }
-        if (app.type === 'fee_config' || app.type === 'partner_l1_bind' || app.type === 'partner_ratio_change') {
+        if (app.type === 'fee_config' || app.type === 'partner_l1_bind' || app.type === 'partner_l1_bind_cross' || app.type === 'partner_ratio_change') {
             return '已驳回的申请可由申请人基于<strong>原配置内容</strong>重新发起，审批流将从头开始；<strong>仅可修改申请备注</strong>。';
         }
         if (app.type === 'partner_rebate_migrate') {
@@ -644,7 +644,7 @@
                 ? '<div class="text-sm">' + renderProgramSwitchDetailSection(app) + '</div>'
                 : app.type === 'partner_rebate_migrate'
                     ? '<div class="text-sm">' + renderMigrateDetailSection(app) + '</div>'
-                    : app.type === 'partner_l1_bind'
+                    : (app.type === 'partner_l1_bind' || app.type === 'partner_l1_bind_cross')
                         ? '<div class="text-sm">' + renderPartnerL1BindDetailSection(app) + '</div>'
                         : app.type === 'partner_ratio_change'
                             ? '<div class="text-sm">' + renderPartnerRatioChangeDetailSection(app) + '</div>'
