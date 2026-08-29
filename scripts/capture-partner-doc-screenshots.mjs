@@ -29,6 +29,15 @@ const shots = [
     viewport: { w: 1440, h: 900 },
   },
   {
+    file: 'admin-modal-bind-partner-cross.png',
+    url: ADMIN_HTML,
+    hash: 'agent',
+    before:
+      '(() => { PartnerPortal.openBindModal(); document.getElementById("bind-wallet").value = "100815"; PartnerPortal.previewBindPartner(); document.getElementById("bind-remark").value = "原 BD 渠道交接至 Allen 团队，已与 bob 确认资源归属"; })()',
+    selector: '#modal-bind-partner > div',
+    viewport: { w: 1440, h: 900 },
+  },
+  {
     file: 'admin-partner-detail-normal.png',
     url: ADMIN_HTML,
     hash: 'partner-detail',
@@ -36,6 +45,16 @@ const shots = [
     selector: '#page-partner-detail',
     viewport: { w: 1440, h: 900 },
     clipHeight: 720,
+  },
+  {
+    file: 'admin-partner-detail-settlement.png',
+    url: ADMIN_HTML,
+    hash: 'partner-detail',
+    before:
+      '(() => { PartnerPortal.showDetail("p_a1"); const el = document.querySelector("#page-partner-detail > section"); if (el) el.scrollIntoView({ block: "start" }); })()',
+    selector: '#page-partner-detail > section',
+    viewport: { w: 1440, h: 900 },
+    clipHeight: 560,
   },
   {
     file: 'admin-partner-drill.png',
@@ -112,6 +131,16 @@ const shots = [
     selector: '#partner-approval-root',
     viewport: { w: 1440, h: 900 },
     clipHeight: 680,
+  },
+  {
+    file: 'admin-approval-detail-cross-bind.png',
+    url: ADMIN_HTML,
+    hash: 'approval',
+    before:
+      '(() => { showApprovalPage(); moduleApprovalHandleHash("partner-approval-root", "approval-detail=APR20260829001", "approval", "approval-detail"); })()',
+    selector: '#partner-approval-root',
+    viewport: { w: 1440, h: 900 },
+    clipHeight: 720,
   },
   {
     file: 'admin-approval-detail-ratio.png',
@@ -253,6 +282,13 @@ const shots = [
 
 fs.mkdirSync(OUT, { recursive: true });
 
+const only = process.env.ONLY ? process.env.ONLY.split(',').map((s) => s.trim()).filter(Boolean) : null;
+const runShots = only ? shots.filter((s) => only.includes(s.file)) : shots;
+if (only && !runShots.length) {
+  console.error('ONLY 未匹配任何截图:', only.join(', '));
+  process.exit(1);
+}
+
 const browser = await puppeteer.launch({
   executablePath: CHROME,
   headless: true,
@@ -260,8 +296,9 @@ const browser = await puppeteer.launch({
   args: ['--no-sandbox', '--disable-setuid-sandbox'],
 });
 
-for (const shot of shots) {
+for (const shot of runShots) {
   const page = await browser.newPage();
+  const outPath = path.join(OUT, shot.file);
   const vp = shot.viewport || { w: 1440, h: 900 };
   await page.setViewport({ width: vp.w, height: vp.h });
   const targetUrl = shot.hash ? shot.url + '#' + shot.hash : shot.url;
