@@ -4,7 +4,7 @@
 (function () {
     const STORAGE_KEY = 'forx_approval_applications';
     const ROLE_KEY = 'forx_approval_view_role';
-    const SEED_VERSION = '2026-08-28-resubmit-v2';
+    const SEED_VERSION = '2026-08-29-partner-cross-bd-v1';
     const SEED_VERSION_KEY = 'forx_approval_seed_v';
 
     const STEPS = [
@@ -608,6 +608,85 @@
                     { at: '2026-08-10 16:40', actor: 'Mkt_Allen', action: '提交申请', note: '普通用户引流迁移' },
                     { at: '2026-08-10 17:20', actor: 'Risk_Control', action: '风控通过', note: '直客关系清晰' }
                 ]
+            },
+            {
+                id: 'APR20260829001',
+                type: 'partner_l1_bind',
+                title: '一级合伙人绑定（跨权限配置）',
+                applicant: 'Mkt_Allen',
+                status: 'pending_risk',
+                flowProfile: 'risk_boss',
+                createdAt: '2026-08-29 10:00',
+                remark: '跨 BD 升级 bob 伞下四级代理',
+                summary: 'N 级代理 · UID 100815 · 62%',
+                payload: {
+                    uid: '100815',
+                    wallet: '0xAbn...L4',
+                    ratio: 62,
+                    opsCap: 80,
+                    exceedsCap: false,
+                    crossBd: true,
+                    originalBd: 'bob@forx.fi',
+                    crossBdReason: '原 BD 渠道交接至 Allen 团队，已与 bob 确认资源归属',
+                    subjectKind: 'partner_n',
+                    subjectLabel: 'N 级代理 · 系统 L4',
+                    upgradeScope: '整伞返佣树',
+                    attachments: ['渠道交接说明.png'],
+                    attachmentPreviews: { '渠道交接说明.png': partnerImg1 }
+                },
+                timeline: [{ at: '2026-08-29 10:00', actor: 'Mkt_Allen', action: '提交申请', note: '跨 BD 升级 bob 伞下四级代理' }]
+            },
+            {
+                id: 'APR20260829002',
+                type: 'partner_rebate_migrate',
+                title: '返佣关系迁移（跨权限配置）',
+                applicant: 'Mkt_Allen',
+                status: 'pending_boss',
+                flowProfile: 'risk_boss',
+                createdAt: '2026-08-29 11:30',
+                remark: '跨 BD 整伞迁移至 Allen 负责一级',
+                summary: 'UID 100815 → 200001 · 50%',
+                payload: {
+                    subjectWallet: '0xAbn...L4',
+                    subjectUid: '100815',
+                    subjectType: 'partner',
+                    targetWallet: '0xTo...L1',
+                    targetUid: '200001',
+                    newRatio: 50,
+                    crossBd: true,
+                    originalBd: 'bob@forx.fi',
+                    crossBdReason: '华南线渠道整合，主体原归属 bob@forx.fi 伞下'
+                },
+                lark: { id: 'LARK-20260829-3301', status: 'pending', url: 'https://www.feishu.cn/approval/admin/preview/LARK-20260829-3301', syncedAt: '2026-08-29 14:00' },
+                timeline: [
+                    { at: '2026-08-29 11:30', actor: 'Mkt_Allen', action: '提交申请', note: '跨 BD 整伞迁移' },
+                    { at: '2026-08-29 13:10', actor: 'Risk_Control', action: '风控通过', note: '已核实原归属 BD 与商务原因' },
+                    { at: '2026-08-29 14:00', actor: 'System', action: '已同步 Lark 审批', note: '等待老板审批' }
+                ]
+            },
+            {
+                id: 'APR20260829003',
+                type: 'partner_ratio_change',
+                title: '返佣比例调整（跨权限配置）',
+                applicant: 'Mkt_Allen',
+                status: 'pending_risk',
+                flowProfile: 'risk_boss',
+                createdAt: '2026-08-29 15:00',
+                remark: '跨 BD 调整 bob 伞下代理比例',
+                summary: '0xAbn...L4 · 50% → 48%',
+                payload: {
+                    uid: '100815',
+                    wallet: '0xAbn...L4',
+                    oldRatio: 50,
+                    newRatio: 48,
+                    opsCap: 80,
+                    exceedsCap: false,
+                    crossBd: true,
+                    originalBd: 'bob@forx.fi',
+                    crossBdReason: '跨 BD 渠道协商下调，已与原 BD 确认',
+                    changeRemark: '跨 BD 渠道协商下调'
+                },
+                timeline: [{ at: '2026-08-29 15:00', actor: 'Mkt_Allen', action: '提交申请', note: '跨 BD 调整 bob 伞下代理比例' }]
             },
             {
                 id: 'APR20260727021',

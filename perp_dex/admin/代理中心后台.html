@@ -60,7 +60,8 @@
                         <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">结算状态</label>
                         <select id="list-status-select" class="border p-2 rounded bg-white outline-none" onchange="PartnerPortal.setListFilter(this.value)">
                             <option value="all">全部</option>
-                            <option value="normal">正常</option>
+                            <option value="normal">正常结算</option>
+                            <option value="pending">待结算累计</option>
                         </select>
                     </div>
                     <button onclick="PartnerPortal.openBindModal()" class="bg-blue-600 text-white px-5 py-2 rounded font-bold hover:bg-blue-700 shrink-0">+ 新增一级合伙人</button>
@@ -84,13 +85,15 @@
                     <span class="text-[10px] text-slate-400 italic">数据每 5 分钟校验级差 · 点击金额列头排序</span>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left min-w-[1280px]">
+                    <table class="w-full text-left min-w-[1380px]">
                         <thead class="bg-slate-50 text-slate-500 font-bold border-b uppercase text-[10px]">
                         <tr>
                             <th class="px-4 py-3">合伙人</th>
                             <th class="px-3 py-3">钱包地址 / 邮箱</th>
                             <th class="px-3 py-3 text-center">返佣比例</th>
                             <th class="px-3 py-3 text-center">结算状态</th>
+                            <th class="px-3 py-3 text-right">待结算金额</th>
+                            <th class="px-3 py-3 text-center">冻结状态</th>
                             <th class="px-3 py-3 text-right cursor-pointer hover:text-slate-800 select-none" onclick="PartnerPortal.setListSort('vol')">团队总交易额 <span id="list-sort-vol" class="text-slate-400"></span></th>
                             <th class="px-3 py-3 text-right cursor-pointer hover:text-slate-800 select-none" onclick="PartnerPortal.setListSort('fee')">手续费 <span id="list-sort-fee" class="text-slate-400"></span></th>
                             <th class="px-3 py-3 text-right cursor-pointer hover:text-slate-800 select-none" onclick="PartnerPortal.setListSort('rebate')">返佣 <span id="list-sort-rebate" class="text-slate-400"></span></th>
@@ -122,6 +125,8 @@
                     <button onclick="PartnerPortal.showTree(PartnerPortal.getCurrentUserId(), 'expand')" class="bg-slate-900 text-white px-4 py-2 rounded font-bold text-[11px]">返佣树 / 修改比例</button>
                 </div>
             </div>
+
+            <div id="detail-freeze-banner" class="hidden rounded-lg border border-amber-300 bg-amber-50 px-5 py-3 text-[11px] text-amber-900"></div>
 
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div class="flex flex-wrap items-center gap-2">
@@ -201,6 +206,8 @@
                     <button onclick="PartnerPortal.showTree(PartnerPortal.getCurrentUserId(), 'expand')" class="bg-slate-900 text-white px-4 py-2 rounded font-bold text-[11px]">返佣树 / 修改比例</button>
                 </div>
             </div>
+
+            <div id="drill-freeze-banner" class="hidden rounded-lg border border-amber-300 bg-amber-50 px-5 py-3 text-[11px] text-amber-900"></div>
 
             <div class="flex flex-wrap items-center gap-2">
                 <span class="text-[10px] font-bold text-slate-500 uppercase">统计周期</span>
@@ -306,8 +313,9 @@
                 </div>
                 <div id="migrate-subject-card" class="hidden bg-slate-50 border border-slate-200 rounded-lg p-4 text-[11px]"></div>
                 <div class="text-[10px] text-slate-400 border-t pt-3 space-y-1">
-                    <p><strong>演示待迁移：</strong>普通 <code class="bg-slate-100 px-1">0xPlain...U1</code> · 直客 <code class="bg-slate-100 px-1">0xde...55aa</code> · N级 <code class="bg-slate-100 px-1">0xMig...Ok</code> / <code class="bg-slate-100 px-1">0xNorm...L3</code></p>
+                    <p><strong>演示待迁移：</strong>普通 <code class="bg-slate-100 px-1">200101</code> · 直客 <code class="bg-slate-100 px-1">100855</code> · N级 <code class="bg-slate-100 px-1">100803</code> / <code class="bg-slate-100 px-1">200201</code></p>
                     <p><strong>目标上级 UID：</strong>一级 <code class="bg-slate-100 px-1">200001</code> · 普通用户 <code class="bg-slate-100 px-1">200102</code> · N级 <code class="bg-slate-100 px-1">200002</code></p>
+                    <p><strong>跨 BD 演示：</strong>待迁移 <code class="bg-slate-100 px-1">100815</code>（归属 bob@forx.fi 伞下）</p>
                 </div>
             </section>
 
@@ -315,6 +323,14 @@
                 <div class="px-5 py-3 border-b font-bold text-slate-700">迁移预览 · 代理链路</div>
                 <div id="migrate-preview-body" class="p-5 text-[11px] space-y-4"></div>
                 <div id="migrate-submit-footer" class="hidden border-t bg-slate-50 px-5 py-4 space-y-4">
+                    <div id="migrate-cross-bd-wrap" class="hidden rounded-lg border border-amber-300 bg-amber-50 p-3 text-[11px] text-amber-900 space-y-2">
+                        <p class="font-bold">跨权限配置提示</p>
+                        <p>迁移主体归属其他 BD 伞下（<span id="migrate-cross-bd-owner" class="font-black"></span>）。须补充跨权限配置商务原因；提交后将进入<strong>风控 + 老板</strong>审批。</p>
+                        <div>
+                            <label class="text-[10px] font-bold text-amber-800 uppercase">跨权限配置商务原因（必填）</label>
+                            <textarea id="migrate-cross-bd-reason" rows="2" class="w-full border border-amber-200 rounded p-2 mt-1 outline-none bg-white" placeholder="说明跨 BD 迁移的业务背景"></textarea>
+                        </div>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="text-[10px] font-bold text-slate-500 uppercase">审核备注说明</label>
@@ -614,11 +630,19 @@
         <div class="p-6 space-y-4 overflow-y-auto flex-1">
             <p id="bind-cap-hint" class="text-[11px] text-blue-800 bg-blue-50 p-3 rounded border border-blue-100"></p>
             <div><label class="text-[10px] font-bold text-slate-400 uppercase">UID</label><input id="bind-wallet" type="text" placeholder="输入 UID，自动识别身份" class="w-full border rounded p-2 mt-1 outline-none" oninput="PartnerPortal.previewBindPartner()"></div>
+            <div id="bind-cross-bd-wrap" class="hidden rounded-lg border border-amber-300 bg-amber-50 p-3 text-[11px] text-amber-900 space-y-2">
+                <p class="font-bold">跨权限配置提示</p>
+                <p>该用户归属其他 BD 伞下（<span id="bind-cross-bd-owner" class="font-black"></span>）。须补充清晰的跨权限配置商务原因，提交后将进入<strong>风控 + 老板</strong>审批；风控与老板可见原归属 BD。</p>
+                <div>
+                    <label class="text-[10px] font-bold text-amber-800 uppercase">跨权限配置商务原因（必填）</label>
+                    <textarea id="bind-cross-bd-reason" rows="2" class="w-full border border-amber-200 rounded p-2 mt-1 outline-none bg-white" placeholder="说明跨 BD 配置的业务背景、渠道协商依据等"></textarea>
+                </div>
+            </div>
             <div id="bind-subject-card" class="hidden bg-slate-50 border border-slate-200 rounded-lg p-4 text-[11px]"></div>
             <div id="bind-preview-section" class="hidden bg-white border border-slate-200 rounded-lg p-4 text-[11px]"></div>
             <div><label class="text-[10px] font-bold text-slate-400 uppercase">一级合伙人返佣比例 (%)</label><input id="bind-ratio" type="number" class="w-full border rounded p-2 mt-1 outline-none" placeholder="仅此一项比例配置" oninput="PartnerPortal.previewBindPartner()"><p id="bind-ratio-hint" class="text-[10px] text-amber-700 mt-1"></p></div>
             <div><label class="text-[10px] font-bold text-slate-400 uppercase">申请备注（必填）</label><textarea id="bind-remark" rows="2" class="w-full border rounded p-2 mt-1 outline-none" placeholder="说明绑定原因、渠道背景等"></textarea></div>
-            <p class="text-[10px] text-slate-400">演示 UID：普通 <code class="bg-slate-100 px-1">200101</code> · 直客 <code class="bg-slate-100 px-1">100855</code> · N级 <code class="bg-slate-100 px-1">100803</code></p>
+            <p class="text-[10px] text-slate-400">演示 UID：普通 <code class="bg-slate-100 px-1">200101</code> · 直客 <code class="bg-slate-100 px-1">100855</code> · N级 <code class="bg-slate-100 px-1">100803</code> · 跨 BD 示例 <code class="bg-slate-100 px-1">100815</code>（归属 bob@forx.fi）</p>
             <div>
                 <label class="text-[10px] font-bold text-slate-400 uppercase">图片附件（最多 4 张）</label>
                 <input id="bind-attachment-input" type="file" accept="image/*" multiple class="mt-1 text-[11px] w-full" onchange="PartnerPortal.handleBindAttachmentFiles(this)">
@@ -643,6 +667,14 @@
         <div class="px-6 pb-4">
             <label class="text-[10px] font-bold text-slate-500 uppercase">修改原因备注（必填）</label>
             <textarea id="tree-confirm-remark" rows="2" class="w-full border rounded p-2 mt-1 text-[11px] outline-none focus:ring-1 focus:ring-blue-500" placeholder="说明比例调整原因、渠道协商依据等"></textarea>
+            <div id="tree-cross-bd-wrap" class="hidden mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-[11px] text-amber-900 space-y-2">
+                <p class="font-bold">含跨权限配置项</p>
+                <p>部分调整对象归属其他 BD 伞下，须补充跨权限配置商务原因，提交后将进入<strong>风控 + 老板</strong>审批。</p>
+                <div>
+                    <label class="text-[10px] font-bold text-amber-800 uppercase">跨权限配置商务原因（必填）</label>
+                    <textarea id="tree-cross-bd-reason" rows="2" class="w-full border border-amber-200 rounded p-2 mt-1 outline-none bg-white" placeholder="说明跨 BD 调整的业务背景"></textarea>
+                </div>
+            </div>
             <div class="mt-4">
                 <label class="text-[10px] font-bold text-slate-500 uppercase">图片附件（最多 4 张 PNG）</label>
                 <input id="tree-attachment-input" type="file" accept="image/png,image/*" multiple class="mt-1 text-[11px] w-full" onchange="PartnerPortal.handleTreeAttachmentFiles(this)">
@@ -779,7 +811,7 @@
 <script src="admin-sidebar.js"></script>
 <script src="admin-approval.js"></script>
 <script src="admin-approval-ui.js"></script>
-<script src="admin-partner-portal.js?v=partner-demo-28"></script>
+<script src="admin-partner-portal.js?v=partner-demo-30"></script>
 <script>
     initModuleApproval({
         types: ['partner_l1_bind', 'partner_ratio_change', 'partner_rebate_migrate'],

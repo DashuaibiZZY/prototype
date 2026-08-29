@@ -3,7 +3,8 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-28';
+    const DATA_VERSION = 'partner-demo-30';
+    const CURRENT_OPERATOR = 'allen@forx.fi';
     const USER_SCALE_TIP = '交易用户数据每天 UTC+8 0 点更新';
     const RECONCILIATION_DOWNLOAD_COOLDOWN_MS = 10 * 60 * 1000;
     let lastReconciliationDownloadAt = 0;
@@ -51,7 +52,7 @@
         return {
             id: id, wallet: wallet, uid: uid, note: note, level: level, ratio: ratio,
             parentWallet: parentWallet, rootWallet: rootWallet, bindTime: '2024-04-10',
-            settleStatus: 'normal',
+            settleStatus: 'normal', pendingSettlement: 0, freezeStatus: null,
             vol: '$1.2M', deposit: '+$35k', usersTotal: 80, usersActive: 22,
             net: '$6,800', netHint: '', rebateTotal: '$420', rebateSelf: '$0.02k', rebateDirect: '$0.1k', rebateGap: '$0.3k',
             activeSubPartners: (childIds || []).length, totalSubPartners: (childIds || []).length,
@@ -63,7 +64,7 @@
         {
             id: 'p_n1', wallet: '0xNorm...L1', uid: '100801', note: '正常结算·一级返佣', level: 1, ratio: 70,
             parentWallet: null, rootWallet: '0xNorm...L1', operator: 'allen@forx.fi', bindTime: '2024-03-01',
-            settleStatus: 'normal',
+            settleStatus: 'normal', pendingSettlement: 0, freezeStatus: null,
             vol: '$18.2M', deposit: '+$620k', usersTotal: 680, usersActive: 210,
             net: '$84,200', netHint: '伞下净手续费 − 伞下触发的全部返佣',
             rebateTotal: '$6,200', rebateSelf: '$0.3k', rebateDirect: '$2.1k', rebateGap: '$3.9k',
@@ -76,7 +77,7 @@
         {
             id: 'p_n3', wallet: '0xNorm...L3', uid: '100803', note: '正常结算·三级返佣', level: 3, ratio: 45,
             parentWallet: '0xNorm...L2a', rootWallet: '0xNorm...L1', bindTime: '2024-04-02',
-            settleStatus: 'normal',
+            settleStatus: 'normal', pendingSettlement: 1268.4, freezeStatus: 'partial',
             vol: '$4.8M', deposit: '+$180k', usersTotal: 320, usersActive: 88,
             net: '$22,100', netHint: '含向上级级差',
             rebateTotal: '$8,420', rebateSelf: '$0.1k', rebateDirect: '$0.8k', rebateGap: '$7.5k',
@@ -96,8 +97,8 @@
         helperUser('h_n5c', '0xNorm...L5c', '100805c', '五级-D1', 5, 26, '0xNorm...L4d', '0xNorm...L1', []),
         {
             id: 'p_a1', wallet: '0xAbn...L1', uid: '100811', note: '演示·一级返佣（原异常演示位）', level: 1, ratio: 68,
-            parentWallet: null, rootWallet: '0xAbn...L1', operator: 'allen@forx.fi', bindTime: '2024-02-10',
-            settleStatus: 'normal',
+            parentWallet: null, rootWallet: '0xAbn...L1', operator: 'bob@forx.fi', bindTime: '2024-02-10',
+            settleStatus: 'normal', pendingSettlement: 3840, freezeStatus: 'frozen',
             vol: '$52.4M', deposit: '+$1.2M', usersTotal: 1420, usersActive: 420,
             net: '$312,400', netHint: '伞下净手续费 − 全部返佣',
             rebateTotal: '$12,840', rebateSelf: '$0.2k', rebateDirect: '$1.2k', rebateGap: '$11.6k',
@@ -136,7 +137,7 @@
         {
             id: 'p_a4', wallet: '0xAbn...L4', uid: '100815', note: '四级返佣', level: 4, ratio: 50,
             parentWallet: '0xAbn...L3', rootWallet: '0xAbn...L1', bindTime: '2024-04-01',
-            settleStatus: 'normal',
+            settleStatus: 'normal', pendingSettlement: 0, freezeStatus: null,
             vol: '$1.6M', deposit: '+$28k', usersTotal: 48, usersActive: 12,
             net: '$8,200', netHint: '含向上级级差',
             rebateTotal: '$1,920', rebateSelf: '$0.02k', rebateDirect: '$0.1k', rebateGap: '$1.8k',
@@ -393,7 +394,52 @@
         });
     }
 
+    function getRootPartner(user) {
+        if (!user) return null;
+        let u = user;
+        while (u.parentWallet) {
+            const p = getUserByWallet(u.parentWallet);
+            if (!p) break;
+            u = p;
+        }
+        return u;
+    }
+
+    function getCrossBdInfo(user) {
+        if (!user) return null;
+        const root = getRootPartner(user);
+        if (!root || !root.operator || root.operator === CURRENT_OPERATOR) return null;
+        return {
+            originalBd: root.operator,
+            originalRootUid: root.uid,
+            originalRootNote: root.note || ''
+        };
+    }
+
+    function hasPartnerFreeze(status) {
+        return status === 'partial' || status === 'frozen';
+    }
+
+    function freezeStatusBadge(status) {
+        if (status === 'frozen') {
+            return '<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold text-[10px]">账户冻结</span>';
+        }
+        if (status === 'partial') {
+            return '<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold text-[10px]">部分冻结</span>';
+        }
+        return '<span class="text-slate-300">—</span>';
+    }
+
+    function pendingSettlementCell(u) {
+        const amt = u.pendingSettlement != null ? u.pendingSettlement : 0;
+        if (!amt) return '<span class="text-slate-400">—</span>';
+        return '<span class="font-black text-amber-700" title="冻结期间累计、解冻后次日 0 点发放">' + fmtMoney(amt) + '</span>';
+    }
+
     function settleLabel(s) {
+        if (s === 'pending') {
+            return '<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold text-[10px]">待结算累计</span>';
+        }
         return '<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold text-[10px]">正常结算</span>';
     }
 
@@ -632,7 +678,30 @@
         mountListPagination(paginationId, sliced.total, sliced.page, pageKey);
     }
 
+    function renderPartnerFreezeBanner(u, prefix) {
+        const el = document.getElementById(prefix + '-freeze-banner');
+        if (!el) return;
+        const frozen = hasPartnerFreeze(u.freezeStatus);
+        const pending = u.pendingSettlement != null ? u.pendingSettlement : 0;
+        if (!frozen && !pending) {
+            el.classList.add('hidden');
+            el.innerHTML = '';
+            return;
+        }
+        let html = '';
+        if (frozen) {
+            html += '<p class="font-bold">' + (u.freezeStatus === 'frozen' ? '账户冻结' : '部分冻结') +
+                '：返佣暂停日结发放，手续费仍正常计算；累计计入待结算，解冻后次日 0 点统一发放。</p>';
+        }
+        if (pending) {
+            html += '<p class="mt-1">待结算累计：<strong>' + fmtMoney(pending) + '</strong></p>';
+        }
+        el.innerHTML = html;
+        el.classList.remove('hidden');
+    }
+
     function renderPartnerDetailMirror(u) {
+        renderPartnerFreezeBanner(u, 'detail');
         renderPartnerSuperiorBar(u, 'detail');
         renderPartnerMirrorMetrics(u, 'detail', detailStatsPeriod);
         renderMirrorSubTable(u, {
@@ -646,6 +715,7 @@
     }
 
     function renderPartnerDrillMirror(u) {
+        renderPartnerFreezeBanner(u, 'drill');
         renderPartnerSuperiorBar(u, 'drill');
         renderPartnerMirrorMetrics(u, 'drill', drillStatsPeriod);
         renderMirrorSubTable(u, {
@@ -666,6 +736,8 @@
     }
 
     function matchesListFilter(u) {
+        if (listFilterStatus === 'normal' && hasPartnerFreeze(u.freezeStatus)) return false;
+        if (listFilterStatus === 'pending' && !hasPartnerFreeze(u.freezeStatus)) return false;
         if (!listSearchQ) return true;
         const q = listSearchQ.toLowerCase();
         return (u.wallet + u.uid + u.note).toLowerCase().indexOf(q) !== -1;
@@ -692,7 +764,9 @@
                 '<button type="button" onclick="PartnerPortal.showDetail(\'' + u.id + '\')" class="block mt-1 text-[10px] font-black text-blue-600 hover:underline">' + u.note + '</button></td>' +
                 '<td class="px-3 py-3">' + mirrorPartnerContactCell(u) + '</td>' +
                 '<td class="px-3 py-3 text-center font-black">' + u.ratio + '%</td>' +
-                '<td class="px-3 py-3 text-center">' + settleLabel(u.settleStatus) + '</td>' +
+                '<td class="px-3 py-3 text-center">' + settleLabel(hasPartnerFreeze(u.freezeStatus) ? 'pending' : u.settleStatus) + '</td>' +
+                '<td class="px-3 py-3 text-right">' + pendingSettlementCell(u) + '</td>' +
+                '<td class="px-3 py-3 text-center">' + freezeStatusBadge(u.freezeStatus) + '</td>' +
                 '<td class="px-3 py-3 text-right font-bold">' + formatStatMoney(stats.vol) + '</td>' +
                 '<td class="px-3 py-3 text-right font-bold text-slate-700">' + formatStatMoney(stats.fee) + '</td>' +
                 '<td class="px-3 py-3 text-right font-bold text-amber-700">' + formatStatMoney(stats.rebate, u.rebateTotal === '--') + '</td>' +
@@ -1232,35 +1306,96 @@
         renderPendingChangesBar();
     }
 
+    function updateBindCrossBdUI(subject) {
+        const wrap = document.getElementById('bind-cross-bd-wrap');
+        const ownerEl = document.getElementById('bind-cross-bd-owner');
+        const reasonEl = document.getElementById('bind-cross-bd-reason');
+        if (!wrap) return;
+        const crossBd = subject && subject.user && getCrossBdInfo(subject.user);
+        wrap.classList.toggle('hidden', !crossBd);
+        if (ownerEl) {
+            ownerEl.textContent = crossBd
+                ? (crossBd.originalBd + ' · L1 UID ' + crossBd.originalRootUid + (crossBd.originalRootNote ? ' · ' + crossBd.originalRootNote : ''))
+                : '';
+        }
+        if (!crossBd && reasonEl) reasonEl.value = '';
+    }
+
+    function updateMigrateCrossBdUI() {
+        const wrap = document.getElementById('migrate-cross-bd-wrap');
+        const ownerEl = document.getElementById('migrate-cross-bd-owner');
+        const reasonEl = document.getElementById('migrate-cross-bd-reason');
+        const btn = document.getElementById('migrate-submit-btn');
+        if (!wrap) return;
+        const preview = migrateState.preview;
+        const subjectUser = preview && preview.type === 'partner' ? preview.partnerUser : null;
+        const crossBd = subjectUser && getCrossBdInfo(subjectUser);
+        wrap.classList.toggle('hidden', !crossBd);
+        if (ownerEl) {
+            ownerEl.textContent = crossBd
+                ? (crossBd.originalBd + ' · L1 UID ' + crossBd.originalRootUid)
+                : '';
+        }
+        if (!crossBd && reasonEl) reasonEl.value = '';
+        if (btn && migrateState.preview && migrateState.validationErrors.length === 0) {
+            btn.textContent = crossBd ? '提交风控+老板审批' : '提交风控审核';
+        }
+    }
+
+    function getRatioChangeCrossBdInfo(change) {
+        const u = getUser(change.userId);
+        return u ? getCrossBdInfo(u) : null;
+    }
+
     function openTreeConfirmModal() {
         if (!pendingRatioChanges.length) return;
         const body = document.getElementById('tree-confirm-body');
         const remarkEl = document.getElementById('tree-confirm-remark');
+        const crossWrap = document.getElementById('tree-cross-bd-wrap');
+        const crossReasonEl = document.getElementById('tree-cross-bd-reason');
         if (remarkEl) remarkEl.value = '';
+        if (crossReasonEl) crossReasonEl.value = '';
         treeAttachments = [];
         renderTreeAttachmentPreview();
         const fileEl = document.getElementById('tree-attachment-input');
         if (fileEl) fileEl.value = '';
         if (!body) { submitPendingChanges(true); return; }
-        const within = pendingRatioChanges.filter(function (c) { return c.newRatio <= OPS_CAP; });
+        const crossBdChanges = pendingRatioChanges.filter(function (c) { return getRatioChangeCrossBdInfo(c); });
+        const within = pendingRatioChanges.filter(function (c) { return c.newRatio <= OPS_CAP && !getRatioChangeCrossBdInfo(c); });
         const exceed = pendingRatioChanges.filter(function (c) { return c.newRatio > OPS_CAP; });
+        const crossWithin = pendingRatioChanges.filter(function (c) {
+            return c.newRatio <= OPS_CAP && getRatioChangeCrossBdInfo(c);
+        });
         let html = '<ul class="text-[11px] space-y-2 mb-4">';
         pendingRatioChanges.forEach(function (c) {
-            const tag = c.newRatio > OPS_CAP
-                ? '<span class="text-amber-700 font-bold">超权限 · 提交审批</span>'
-                : '<span class="text-green-700 font-bold">权限内 · 即刻生效</span>';
+            const crossBd = getRatioChangeCrossBdInfo(c);
+            let tag;
+            if (c.newRatio > OPS_CAP) {
+                tag = '<span class="text-amber-700 font-bold">超权限 · 提交审批</span>';
+            } else if (crossBd) {
+                tag = '<span class="text-amber-700 font-bold">跨 BD · 风控+老板审批</span>';
+            } else {
+                tag = '<span class="text-green-700 font-bold">权限内 · 即刻生效</span>';
+            }
             html += '<li class="border-b border-slate-100 pb-2">' + chip(c.wallet, 'wallet') + '：' + c.oldRatio + '% → <b>' + c.newRatio + '%</b> <span class="block text-[10px] mt-0.5">' + tag + '</span></li>';
         });
         html += '</ul>';
+        if (crossBdChanges.length) {
+            html += '<p class="text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded p-3">' +
+                '<b>含跨权限配置：</b>' + crossBdChanges.length + ' 项归属其他 BD 伞下，须补充商务原因并进入<strong>风控 + 老板</strong>审批。</p>';
+        }
         if (within.length && exceed.length) {
             html += '<p class="text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded p-3">' +
                 '<b>存在超上限调整：</b>仅超上限项将进入审批流程；<b>' + within.length + '</b> 项权限内修改将被<strong>自动放弃</strong>，不会生效。请先处理超上限申请。</p>';
-        } else if (exceed.length) {
+        } else if (exceed.length && !crossWithin.length) {
             html += '<p class="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded p-3">全部修改均超过运营权限上限 ' + OPS_CAP + '%，提交后将进入审批流程。</p>';
-        } else {
+        } else if (!crossBdChanges.length && within.length) {
             html += '<p class="text-[11px] text-green-800 bg-green-50 border border-green-100 rounded p-3">全部修改在权限内，确认后将<strong>即刻生效</strong>。</p>';
+        } else if (crossWithin.length && !exceed.length) {
+            html += '<p class="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded p-3">跨 BD 配置项提交后将进入<strong>风控 + 老板</strong>审批。</p>';
         }
         body.innerHTML = html;
+        if (crossWrap) crossWrap.classList.toggle('hidden', !crossBdChanges.length);
         document.getElementById('modal-tree-confirm').classList.remove('hidden');
     }
 
@@ -1269,6 +1404,10 @@
         if (modal) modal.classList.add('hidden');
         const remarkEl = document.getElementById('tree-confirm-remark');
         if (remarkEl) remarkEl.value = '';
+        const crossReasonEl = document.getElementById('tree-cross-bd-reason');
+        if (crossReasonEl) crossReasonEl.value = '';
+        const crossWrap = document.getElementById('tree-cross-bd-wrap');
+        if (crossWrap) crossWrap.classList.add('hidden');
         treeAttachments = [];
         renderTreeAttachmentPreview();
         const fileEl = document.getElementById('tree-attachment-input');
@@ -1350,13 +1489,26 @@
         }
         const remarkEl = document.getElementById('tree-confirm-remark');
         const changeRemark = remarkEl ? remarkEl.value.trim() : '';
+        const crossReasonEl = document.getElementById('tree-cross-bd-reason');
+        const crossBdReason = crossReasonEl ? crossReasonEl.value.trim() : '';
         if (!changeRemark) {
             alert('请填写修改原因备注');
             return;
         }
+        const crossBdChanges = pendingRatioChanges.filter(function (c) { return getRatioChangeCrossBdInfo(c); });
+        if (crossBdChanges.length && !crossBdReason) {
+            alert('请填写跨权限配置商务原因');
+            return;
+        }
         closeTreeConfirmModal();
-        const within = pendingRatioChanges.filter(function (c) { return c.newRatio <= OPS_CAP; });
+        const within = pendingRatioChanges.filter(function (c) {
+            return c.newRatio <= OPS_CAP && !getRatioChangeCrossBdInfo(c);
+        });
         const exceed = pendingRatioChanges.filter(function (c) { return c.newRatio > OPS_CAP; });
+        const crossWithin = pendingRatioChanges.filter(function (c) {
+            return c.newRatio <= OPS_CAP && getRatioChangeCrossBdInfo(c);
+        });
+        const approvalChanges = exceed.concat(crossWithin);
         const hasBoth = within.length && exceed.length;
 
         if (hasBoth) {
@@ -1373,15 +1525,17 @@
             revertTreeRatioInputs(within);
         }
 
-        if (exceed.length && typeof submitApprovalApplication === 'function') {
+        if (approvalChanges.length && typeof submitApprovalApplication === 'function') {
             const attachmentNames = treeAttachments.map(function (a) { return a.name; });
             const attachmentPreviews = {};
             treeAttachments.forEach(function (a) { attachmentPreviews[a.name] = a.dataUrl; });
-            exceed.forEach(function (c) {
+            approvalChanges.forEach(function (c) {
                 const u = getUser(c.userId);
+                const crossBd = getRatioChangeCrossBdInfo(c);
+                const exceedsCap = c.newRatio > OPS_CAP;
                 submitApprovalApplication({
                     type: 'partner_ratio_change',
-                    title: '返佣比例调整（超出上限）',
+                    title: crossBd ? '返佣比例调整（跨权限配置）' : '返佣比例调整（超出上限）',
                     flowProfile: 'risk_boss',
                     applicant: 'Mkt_Allen',
                     remark: changeRemark,
@@ -1392,7 +1546,10 @@
                         oldRatio: c.oldRatio,
                         newRatio: c.newRatio,
                         opsCap: OPS_CAP,
-                        exceedsCap: true,
+                        exceedsCap: exceedsCap,
+                        crossBd: !!crossBd,
+                        originalBd: crossBd ? crossBd.originalBd : '',
+                        crossBdReason: crossBd ? crossBdReason : '',
                         changeRemark: changeRemark,
                         attachments: attachmentNames,
                         attachmentPreviews: attachmentPreviews
@@ -1406,7 +1563,7 @@
             msg = '已提交 ' + exceed.length + ' 项超上限审批；' + within.length + ' 项权限内修改已放弃。';
         } else {
             if (within.length) msg += within.length + ' 项已即刻生效。';
-            if (exceed.length) msg += exceed.length + ' 项已提交审批，审批通过后将即刻生效。';
+            if (approvalChanges.length) msg += approvalChanges.length + ' 项已提交审批，审批通过后将即刻生效。';
         }
         alert(msg || '已提交');
         pendingRatioChanges = [];
@@ -1443,6 +1600,10 @@
         const ratioInput = document.getElementById('bind-ratio');
         if (ratioHint) ratioHint.textContent = '';
         if (ratioInput) ratioInput.removeAttribute('min');
+        const crossWrap = document.getElementById('bind-cross-bd-wrap');
+        const crossReasonEl = document.getElementById('bind-cross-bd-reason');
+        if (crossWrap) crossWrap.classList.add('hidden');
+        if (crossReasonEl) crossReasonEl.value = '';
         document.getElementById('modal-bind-partner').classList.remove('hidden');
     }
 
@@ -1529,12 +1690,22 @@
         const uid = uidInput;
         const wallet = (subject && subject.user.wallet) || '—';
         const exceedsCap = ratio > OPS_CAP;
+        const crossBd = subject && subject.user && getCrossBdInfo(subject.user);
+        const crossBdReasonEl = document.getElementById('bind-cross-bd-reason');
+        const crossBdReason = crossBdReasonEl ? crossBdReasonEl.value.trim() : '';
+        if (crossBd && !crossBdReason) {
+            alert('请填写跨权限配置商务原因');
+            return;
+        }
         const attachmentNames = bindAttachments.map(function (a) { return a.name; });
         const attachmentPreviews = {};
         bindAttachments.forEach(function (a) { attachmentPreviews[a.name] = a.dataUrl; });
         const subjectKind = subject ? subject.kind : 'unknown';
         const payloadBase = {
             uid: uid || '—', wallet: wallet, ratio: ratio, opsCap: OPS_CAP, exceedsCap: exceedsCap,
+            crossBd: !!crossBd,
+            originalBd: crossBd ? crossBd.originalBd : '',
+            crossBdReason: crossBd ? crossBdReason : '',
             subjectKind: subjectKind,
             subjectLabel: subject ? subject.identityLabel : '未识别',
             upgradeScope: subjectKind === 'partner_n' ? '整伞返佣树' : (subjectKind === 'plain' || subjectKind === 'direct_client' ? '直客一并迁移' : '—'),
@@ -1545,9 +1716,12 @@
             attachments: attachmentNames,
             attachmentPreviews: attachmentPreviews
         };
-        if (exceedsCap && typeof submitApprovalApplication === 'function') {
+        if ((exceedsCap || crossBd) && typeof submitApprovalApplication === 'function') {
             submitApprovalApplication({
-                type: 'partner_l1_bind', title: '一级合伙人绑定', applicant: 'Mkt_Allen', remark: remark,
+                type: 'partner_l1_bind',
+                title: crossBd ? '一级合伙人绑定（跨权限配置）' : '一级合伙人绑定（超上限）',
+                flowProfile: 'risk_boss',
+                applicant: 'Mkt_Allen', remark: remark,
                 summary: (subject ? subject.identityLabel + ' · ' : '') + (uid ? 'UID ' + uid + ' · ' : wallet + ' · ') + ratio + '%',
                 payload: payloadBase
             });
@@ -1588,7 +1762,7 @@
                 rootWallet: wallet,
                 operator: 'allen@forx.fi',
                 bindTime: new Date().toISOString().slice(0, 10),
-                settleStatus: 'normal',
+                settleStatus: 'normal', pendingSettlement: 0, freezeStatus: null,
                 vol: '$0', deposit: '+$0', usersTotal: 0, usersActive: 0,
                 net: '$0', netHint: '', rebateTotal: '$0', rebateSelf: '$0', rebateDirect: '$0', rebateGap: '$0',
                 activeSubPartners: 0, totalSubPartners: 0, childIds: [], directClients: [], settlements: []
@@ -2471,6 +2645,7 @@
             if (submitBtn) submitBtn.disabled = true;
             if (ratioHint) ratioHint.textContent = '';
             if (ratioInput) ratioInput.removeAttribute('min');
+            updateBindCrossBdUI(null);
             return;
         }
         let cardHtml = '<div class="flex flex-wrap items-center gap-2 mb-2">' +
@@ -2511,12 +2686,14 @@
             previewHtml += '<p class="text-[10px] text-slate-500 mt-2">升级为一级后，整伞下级代理与直客随主体挂到新 L1 伞下；树内下级比例保留。</p>';
         }
         preview.innerHTML = previewHtml;
+        updateBindCrossBdUI(subject);
     }
 
     function previewBindPartner() {
         const key = (document.getElementById('bind-wallet') && document.getElementById('bind-wallet').value || '').trim();
         bindState.preview = key ? resolveBindSubject(key) : null;
         renderBindSubjectPreview(bindState.preview);
+        if (!bindState.preview) updateBindCrossBdUI(null);
     }
 
     function findMigratePlainUser(key) {
@@ -2952,6 +3129,10 @@
         if (hint) hint.textContent = '';
         const roleDirect = document.querySelector('input[name="migrate-plain-role"][value="direct_client"]');
         if (roleDirect) roleDirect.checked = true;
+        const crossWrap = document.getElementById('migrate-cross-bd-wrap');
+        const crossReasonEl = document.getElementById('migrate-cross-bd-reason');
+        if (crossWrap) crossWrap.classList.add('hidden');
+        if (crossReasonEl) crossReasonEl.value = '';
         updateMigratePlainRoleUI();
         updateMigrateSubmitState();
     }
@@ -3036,6 +3217,7 @@
         const footer = document.getElementById('migrate-submit-footer');
         if (footer) footer.classList.toggle('hidden', !migrateState.preview);
 
+        updateMigrateCrossBdUI();
         updateMigrateSubmitState();
     }
 
@@ -3048,7 +3230,9 @@
         const ratioOk = !needsRatio || (!isNaN(ratioVal) && ratioVal > 0);
         const ok = migrateState.preview && migrateState.validationErrors.length === 0 && targetOk && ratioOk;
         btn.disabled = !ok;
-        btn.textContent = '提交风控审核';
+        const subjectUser = migrateState.preview && migrateState.preview.type === 'partner' ? migrateState.preview.partnerUser : null;
+        const crossBd = subjectUser && getCrossBdInfo(subjectUser);
+        btn.textContent = crossBd ? '提交风控+老板审批' : '提交风控审核';
         btn.className = ok ? 'bg-blue-600 text-white px-6 py-2 rounded font-black text-[11px]' :
             'bg-blue-600 text-white px-6 py-2 rounded font-black text-[11px] opacity-50 cursor-not-allowed';
     }
@@ -3165,13 +3349,21 @@
         if (typeof submitApprovalApplication === 'function') {
             const remarkEl = document.getElementById('migrate-remark-input');
             const remark = (remarkEl && remarkEl.value.trim()) || '';
+            const crossBdReasonEl = document.getElementById('migrate-cross-bd-reason');
+            const subjectUser = p.type === 'partner' ? p.partnerUser : null;
+            const crossBd = subjectUser && getCrossBdInfo(subjectUser);
+            const crossBdReason = crossBdReasonEl ? crossBdReasonEl.value.trim() : '';
+            if (crossBd && !crossBdReason) {
+                alert('请填写跨权限配置商务原因');
+                return;
+            }
             const attachmentNames = migrateAttachments.map(function (a) { return a.name; });
             const attachmentPreviews = {};
             migrateAttachments.forEach(function (a) { attachmentPreviews[a.name] = a.dataUrl; });
             submitApprovalApplication({
                 type: 'partner_rebate_migrate',
-                title: '返佣关系迁移',
-                flowProfile: 'risk_only',
+                title: crossBd ? '返佣关系迁移（跨权限配置）' : '返佣关系迁移',
+                flowProfile: crossBd ? 'risk_boss' : 'risk_only',
                 applicant: 'Mkt_Allen',
                 remark: remark || '返佣关系迁移申请',
                 summary: subjectWallet + ' → ' + target.wallet + ' · ' + summarySuffix,
@@ -3186,11 +3378,14 @@
                     targetKind: classifyMigrateTargetKind(target),
                     newRatio: needsRatio ? ratioVal : null,
                     opsCap: OPS_CAP,
+                    crossBd: !!crossBd,
+                    originalBd: crossBd ? crossBd.originalBd : '',
+                    crossBdReason: crossBd ? crossBdReason : '',
                     attachments: attachmentNames,
                     attachmentPreviews: attachmentPreviews
                 }
             });
-            alert('已提交风控审核（演示）。审批通过后将即刻生效。');
+            alert(crossBd ? '已提交风控+老板审批（演示）。审批通过后将即刻生效。' : '已提交风控审核（演示）。审批通过后将即刻生效。');
         } else {
             alert('审批模块未加载（演示）');
         }
