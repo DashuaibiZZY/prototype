@@ -119,6 +119,7 @@
             netDeposit: 8500,
             inviteNetDeposit: 12000,
             status: 'rejected',
+            rejectReason: '社群规模与推广经验资料不足，建议补充渠道证明后重新申请。',
             appliedAt: '2026-08-20 11:00'
         }
     ];
@@ -127,6 +128,7 @@
     let appListFilters = { q: '', contact: '', x: '', youtube: '' };
     let currentApplicationId = null;
     let appBindState = { applicationId: null, operatorSearch: '', operatorOpen: false };
+    let appRejectState = { applicationId: null };
 
     function fmtNum(n) {
         if (n == null || isNaN(n)) return '—';
@@ -200,17 +202,35 @@
     }
 
     function canShowSetL1Button(app) {
-        return app && app.status !== 'approved' && !isMultiLevelPartner(app.partnerIdentity);
+        return app && (app.status === 'pending' || app.status === 'reviewing') && !isMultiLevelPartner(app.partnerIdentity);
+    }
+
+    function canRejectApplication(app) {
+        return app && (app.status === 'pending' || app.status === 'reviewing');
     }
 
     function renderSetL1Action(app, className) {
-        if (app.status === 'approved') {
-            return '<span class="text-slate-400 text-[10px]">已绑定</span>';
-        }
-        if (isMultiLevelPartner(app.partnerIdentity)) {
-            return '<span class="text-slate-400 text-[10px]">已是合伙人</span>';
-        }
+        if (!canShowSetL1Button(app)) return '';
         return '<button type="button" onclick="PartnerApplications.openSetL1Modal(\'' + app.id + '\')" class="' + className + '">设置成一级代理</button>';
+    }
+
+    function renderRejectAction(app, className) {
+        if (!canRejectApplication(app)) return '';
+        return '<button type="button" onclick="PartnerApplications.openRejectModal(\'' + app.id + '\')" class="' + className + '">驳回申请</button>';
+    }
+
+    function renderListActions(app) {
+        const parts = [
+            '<button type="button" onclick="PartnerApplications.showApplicationDetail(\'' + app.id + '\')" class="text-blue-600 font-bold hover:underline">查看详情</button>'
+        ];
+        const setL1 = renderSetL1Action(app, 'text-slate-900 font-bold hover:underline');
+        const reject = renderRejectAction(app, 'text-red-600 font-bold hover:underline');
+        if (setL1) parts.push(setL1);
+        if (reject) parts.push(reject);
+        if (app.status === 'approved') parts.push('<span class="text-slate-400 text-[10px]">已绑定</span>');
+        else if (isMultiLevelPartner(app.partnerIdentity) && !setL1 && !reject) parts.push('<span class="text-slate-400 text-[10px]">已是合伙人</span>');
+        else if (app.status === 'rejected') parts.push('<span class="text-slate-400 text-[10px]">已驳回</span>');
+        return parts.join('<span class="text-slate-300 mx-2">|</span>');
     }
 
     function renderAttachments(attachments) {
@@ -270,11 +290,12 @@
         if (!tbody) return;
 
         if (!pageItems.length) {
-            tbody.innerHTML = '<tr><td colspan="15" class="px-4 py-12 text-center text-slate-400 font-bold">暂无申请记录</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="16" class="px-4 py-12 text-center text-slate-400 font-bold">暂无申请记录</td></tr>';
         } else {
             tbody.innerHTML = pageItems.map(function (a) {
                 return '<tr class="hover:bg-slate-50 border-b">' +
-                    '<td class="px-4 py-3">' + chip(a.uid, 'uid') + '</td>' +
+                    '<td class="px-4 py-3 whitespace-nowrap font-bold text-slate-700">' + (a.appliedAt || '—') + '</td>' +
+                    '<td class="px-3 py-3">' + chip(a.uid, 'uid') + '</td>' +
                     '<td class="px-3 py-3">' + formatPartnerIdentity(a.partnerIdentity) + '</td>' +
                     '<td class="px-3 py-3">' + formatAdminOperator(a.adminOperator) + '</td>' +
                     '<td class="px-3 py-3">' + chip(a.wallet, 'wallet') + '</td>' +
@@ -288,10 +309,7 @@
                     '<td class="px-3 py-3 text-right font-bold">' + fmtMoney(a.vol30d) + '</td>' +
                     '<td class="px-3 py-3 text-right font-bold">' + fmtNum(a.inviteCount) + '</td>' +
                     '<td class="px-3 py-3 text-right font-bold">' + fmtMoney(a.inviteVol30d) + '</td>' +
-                    '<td class="px-3 py-3 whitespace-nowrap">' +
-                    '<button type="button" onclick="PartnerApplications.showApplicationDetail(\'' + a.id + '\')" class="text-blue-600 font-bold hover:underline mr-3">查看详情</button>' +
-                    renderSetL1Action(a, 'text-slate-900 font-bold hover:underline') +
-                    '</td></tr>';
+                    '<td class="px-3 py-3 whitespace-nowrap">' + renderListActions(a) + '</td></tr>';
             }).join('');
         }
 
@@ -312,7 +330,19 @@
         set('app-detail-title', '合伙人申请 · UID ' + a.uid);
         set('app-detail-sub', '申请单 ' + a.id + ' · 提交于 ' + a.appliedAt + ' · ' + statusBadge(a.status));
 
+        const rejectBanner = document.getElementById('app-detail-reject-banner');
+        if (rejectBanner) {
+            if (a.status === 'rejected' && a.rejectReason) {
+                rejectBanner.classList.remove('hidden');
+                rejectBanner.innerHTML = '<p class="text-[10px] font-bold text-red-500 uppercase mb-1">驳回原因</p><p class="text-[12px] text-red-800 leading-relaxed">' + a.rejectReason + '</p>';
+            } else {
+                rejectBanner.classList.add('hidden');
+                rejectBanner.innerHTML = '';
+            }
+        }
+
         renderFieldGrid('app-detail-apply-grid', [
+            ['申请时间', a.appliedAt || '—'],
             ['社交账号粉丝数', fmtNum(a.socialFollowers)],
             ['社区管理人数', fmtNum(a.communitySize)],
             ['团队月交易额预估', fmtMoney(a.monthlyVolEstimate)],
@@ -344,13 +374,22 @@
 
         const btnWrap = document.getElementById('app-detail-actions');
         if (btnWrap) {
-            if (a.status === 'approved') {
-                btnWrap.innerHTML = '<span class="text-green-700 font-bold text-[11px]">该申请已绑定为一级合伙人</span>';
+            const actions = [];
+            if (canShowSetL1Button(a)) {
+                actions.push('<button type="button" onclick="PartnerApplications.openSetL1Modal(\'' + a.id + '\')" class="bg-blue-600 text-white px-5 py-2 rounded font-bold hover:bg-blue-700">设置成一级代理</button>');
+            } else if (a.status === 'approved') {
+                actions.push('<span class="text-green-700 font-bold text-[11px]">该申请已绑定为一级合伙人</span>');
             } else if (isMultiLevelPartner(a.partnerIdentity)) {
-                btnWrap.innerHTML = '<span class="text-slate-500 font-bold text-[11px]">该用户已是多层合伙人，无需设置一级代理</span>';
-            } else {
-                btnWrap.innerHTML = '<button type="button" onclick="PartnerApplications.openSetL1Modal(\'' + a.id + '\')" class="bg-blue-600 text-white px-5 py-2 rounded font-bold hover:bg-blue-700">设置成一级代理</button>';
+                actions.push('<span class="text-slate-500 font-bold text-[11px]">该用户已是多层合伙人，无需设置一级代理</span>');
             }
+            if (canRejectApplication(a)) {
+                actions.push('<button type="button" onclick="PartnerApplications.openRejectModal(\'' + a.id + '\')" class="border border-red-200 text-red-600 px-5 py-2 rounded font-bold hover:bg-red-50">驳回申请</button>');
+            } else if (a.status === 'rejected') {
+                actions.push('<span class="text-red-600 font-bold text-[11px]">该申请已驳回</span>');
+            }
+            btnWrap.innerHTML = actions.length
+                ? '<div class="flex flex-wrap gap-2">' + actions.join('') + '</div>'
+                : '';
         }
     }
 
@@ -527,6 +566,44 @@
         else renderApplicationList();
     }
 
+    function openRejectModal(applicationId) {
+        const app = getApplication(applicationId);
+        if (!app || !canRejectApplication(app)) return;
+        appRejectState = { applicationId: applicationId };
+        const previewEl = document.getElementById('app-reject-preview');
+        const reasonEl = document.getElementById('app-reject-reason');
+        if (previewEl) {
+            previewEl.innerHTML =
+                '<div class="grid grid-cols-2 gap-3">' +
+                '<div><span class="text-slate-400 font-bold">申请人 UID</span><p class="font-black mt-0.5">' + app.uid + '</p></div>' +
+                '<div><span class="text-slate-400 font-bold">申请时间</span><p class="font-black mt-0.5">' + (app.appliedAt || '—') + '</p></div>' +
+                '<div><span class="text-slate-400 font-bold">即时联系方式</span><p class="font-black mt-0.5">' + formatContactDisplay(app) + '</p></div>' +
+                '<div><span class="text-slate-400 font-bold">审核状态</span><p class="font-black mt-0.5">' + (app.status === 'reviewing' ? '审核中' : '待审核') + '</p></div>' +
+                '</div>';
+        }
+        if (reasonEl) reasonEl.value = '';
+        document.getElementById('modal-app-reject').classList.remove('hidden');
+    }
+
+    function closeRejectModal() {
+        document.getElementById('modal-app-reject').classList.add('hidden');
+        appRejectState = { applicationId: null };
+    }
+
+    function submitReject() {
+        const app = getApplication(appRejectState.applicationId);
+        const reasonEl = document.getElementById('app-reject-reason');
+        const reason = reasonEl ? reasonEl.value.trim() : '';
+        if (!app) { alert('申请不存在'); return; }
+        if (!reason) { alert('请填写驳回原因'); return; }
+        app.status = 'rejected';
+        app.rejectReason = reason;
+        alert('演示：已驳回 UID ' + app.uid + ' 的合伙人计划申请');
+        closeRejectModal();
+        if (currentApplicationId) renderApplicationDetail(currentApplicationId);
+        else renderApplicationList();
+    }
+
     window.PartnerApplications = {
         showApplicationList: showApplicationList,
         showApplicationDetail: showApplicationDetail,
@@ -539,6 +616,9 @@
         selectOperator: selectOperator,
         filterOperatorDropdown: filterOperatorDropdown,
         submitSetL1: submitSetL1,
+        openRejectModal: openRejectModal,
+        closeRejectModal: closeRejectModal,
+        submitReject: submitReject,
         getApplication: getApplication,
         getCurrentId: function () { return currentApplicationId; },
         markApproved: function (applicationId) {
