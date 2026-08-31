@@ -84,9 +84,15 @@
         return meta.dimensions.map(function (d) { return DIMENSION_KEYS[d]; });
     }
 
+    var VIEW_IDS = ['view-list', 'view-config', 'view-batch'];
+
     function showView(id) {
-        document.querySelectorAll('.subpage').forEach(function (el) { el.classList.remove('active'); });
-        document.getElementById(id).classList.add('active');
+        VIEW_IDS.forEach(function (vid) {
+            var el = document.getElementById(vid);
+            if (!el) return;
+            if (vid === id) el.classList.remove('hidden');
+            else el.classList.add('hidden');
+        });
         closeAllComboboxes();
     }
 
