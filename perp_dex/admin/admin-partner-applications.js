@@ -31,6 +31,7 @@
             vol30d: 1850000,
             inviteCount: 42,
             inviteVol30d: 620000,
+            inviteVolTotal: 1850000,
             accountEquity: 98500,
             netDeposit: 125000,
             inviteNetDeposit: 480000,
@@ -55,6 +56,7 @@
             vol30d: 420000,
             inviteCount: 18,
             inviteVol30d: 185000,
+            inviteVolTotal: 520000,
             accountEquity: 15200,
             netDeposit: 28000,
             inviteNetDeposit: 95000,
@@ -83,6 +85,7 @@
             vol30d: 4100000,
             inviteCount: 156,
             inviteVol30d: 1280000,
+            inviteVolTotal: 4200000,
             accountEquity: 245000,
             netDeposit: 380000,
             inviteNetDeposit: 920000,
@@ -107,6 +110,7 @@
             vol30d: 85000,
             inviteCount: 5,
             inviteVol30d: 22000,
+            inviteVolTotal: 68000,
             accountEquity: 3200,
             netDeposit: 8500,
             inviteNetDeposit: 12000,
@@ -118,7 +122,7 @@
     let appListPage = 1;
     let appListFilters = { q: '', telegram: '', x: '', youtube: '' };
     let currentApplicationId = null;
-    let appBindState = { applicationId: null, operatorSearch: '' };
+    let appBindState = { applicationId: null, operatorSearch: '', operatorOpen: false };
 
     function fmtNum(n) {
         if (n == null || isNaN(n)) return '—';
@@ -160,6 +164,32 @@
     function formatAdminOperator(op) {
         if (!op) return '<span class="text-slate-400">—</span>';
         return '<span class="font-bold text-slate-700">' + op + '</span>';
+    }
+
+    function formatWalletEmail(wallet, email) {
+        const parts = [];
+        if (wallet) parts.push(chip(wallet, 'wallet'));
+        if (email) parts.push(chip(email, 'email'));
+        if (!parts.length) return '<span class="text-slate-400">—</span>';
+        return parts.join('<span class="text-slate-300 mx-1">/</span>');
+    }
+
+    function isMultiLevelPartner(identity) {
+        return identity && identity !== '普通用户';
+    }
+
+    function canShowSetL1Button(app) {
+        return app && app.status !== 'approved' && !isMultiLevelPartner(app.partnerIdentity);
+    }
+
+    function renderSetL1Action(app, className) {
+        if (app.status === 'approved') {
+            return '<span class="text-slate-400 text-[10px]">已绑定</span>';
+        }
+        if (isMultiLevelPartner(app.partnerIdentity)) {
+            return '<span class="text-slate-400 text-[10px]">已是合伙人</span>';
+        }
+        return '<button type="button" onclick="PartnerApplications.openSetL1Modal(\'' + app.id + '\')" class="' + className + '">设置成一级代理</button>';
     }
 
     function renderAttachments(attachments) {
@@ -239,7 +269,7 @@
                     '<td class="px-3 py-3 text-right font-bold">' + fmtMoney(a.inviteVol30d) + '</td>' +
                     '<td class="px-3 py-3 whitespace-nowrap">' +
                     '<button type="button" onclick="PartnerApplications.showApplicationDetail(\'' + a.id + '\')" class="text-blue-600 font-bold hover:underline mr-3">查看详情</button>' +
-                    (a.status !== 'approved' ? '<button type="button" onclick="PartnerApplications.openSetL1Modal(\'' + a.id + '\')" class="text-slate-900 font-bold hover:underline">设置成一级代理</button>' : '<span class="text-slate-400 text-[10px]">已绑定</span>') +
+                    renderSetL1Action(a, 'text-slate-900 font-bold hover:underline') +
                     '</td></tr>';
             }).join('');
         }
@@ -262,11 +292,6 @@
         set('app-detail-sub', '申请单 ' + a.id + ' · 提交于 ' + a.appliedAt + ' · ' + statusBadge(a.status));
 
         renderFieldGrid('app-detail-apply-grid', [
-            ['UID', chip(a.uid, 'uid')],
-            ['钱包地址', chip(a.wallet, 'wallet')],
-            ['邮箱', a.email ? chip(a.email, 'email') : '—'],
-            ['合伙人身份', formatPartnerIdentity(a.partnerIdentity)],
-            ['后台操作人员', formatAdminOperator(a.adminOperator)],
             ['社交账号粉丝数', fmtNum(a.socialFollowers)],
             ['社区管理人数', fmtNum(a.communitySize)],
             ['团队月交易额预估', fmtMoney(a.monthlyVolEstimate)],
@@ -276,9 +301,14 @@
         ]);
 
         renderFieldGrid('app-detail-data-grid', [
+            ['UID', chip(a.uid, 'uid')],
+            ['钱包/邮箱地址', formatWalletEmail(a.wallet, a.email)],
+            ['合伙人身份', formatPartnerIdentity(a.partnerIdentity)],
+            ['后台管理人员', formatAdminOperator(a.adminOperator)],
             ['近 30 日交易额', fmtMoney(a.vol30d)],
             ['下级邀请人数', fmtNum(a.inviteCount)],
             ['近 30 日下级邀请交易额', fmtMoney(a.inviteVol30d)],
+            ['累计下级邀请交易额', fmtMoney(a.inviteVolTotal)],
             ['账户总权益', fmtMoney(a.accountEquity)],
             ['资产净充值金额', fmtMoney(a.netDeposit)],
             ['下级邀请好友净充值', fmtMoney(a.inviteNetDeposit)]
@@ -292,9 +322,13 @@
 
         const btnWrap = document.getElementById('app-detail-actions');
         if (btnWrap) {
-            btnWrap.innerHTML = a.status !== 'approved'
-                ? '<button type="button" onclick="PartnerApplications.openSetL1Modal(\'' + a.id + '\')" class="bg-blue-600 text-white px-5 py-2 rounded font-bold hover:bg-blue-700">设置成一级代理</button>'
-                : '<span class="text-green-700 font-bold text-[11px]">该申请已绑定为一级合伙人</span>';
+            if (a.status === 'approved') {
+                btnWrap.innerHTML = '<span class="text-green-700 font-bold text-[11px]">该申请已绑定为一级合伙人</span>';
+            } else if (isMultiLevelPartner(a.partnerIdentity)) {
+                btnWrap.innerHTML = '<span class="text-slate-500 font-bold text-[11px]">该用户已是多层合伙人，无需设置一级代理</span>';
+            } else {
+                btnWrap.innerHTML = '<button type="button" onclick="PartnerApplications.openSetL1Modal(\'' + a.id + '\')" class="bg-blue-600 text-white px-5 py-2 rounded font-bold hover:bg-blue-700">设置成一级代理</button>';
+            }
         }
     }
 
@@ -317,36 +351,98 @@
         renderApplicationList();
     }
 
+    function getOperatorLabel(email) {
+        if (!email) return '';
+        const op = ADMIN_OPERATORS.find(function (item) { return item.email === email; });
+        return op ? op.label + ' · ' + op.email : email;
+    }
+
+    function updateOperatorTriggerLabel(email) {
+        const labelEl = document.getElementById('app-bind-operator-trigger-label');
+        if (!labelEl) return;
+        if (!email) {
+            labelEl.textContent = '请选择负责运营';
+            labelEl.className = 'truncate text-slate-500';
+            return;
+        }
+        labelEl.textContent = getOperatorLabel(email);
+        labelEl.className = 'truncate text-slate-900';
+    }
+
+    function setOperatorDropdownOpen(open) {
+        appBindState.operatorOpen = !!open;
+        const panel = document.getElementById('app-bind-operator-panel');
+        const trigger = document.getElementById('app-bind-operator-trigger');
+        if (panel) panel.classList.toggle('hidden', !open);
+        if (trigger) trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (open) {
+            const searchEl = document.getElementById('app-bind-operator-search');
+            if (searchEl) {
+                searchEl.value = appBindState.operatorSearch || '';
+                setTimeout(function () { searchEl.focus(); }, 0);
+            }
+        }
+    }
+
     function renderOperatorOptions(search) {
         const q = (search || '').trim().toLowerCase();
+        appBindState.operatorSearch = search || '';
         const list = ADMIN_OPERATORS.filter(function (op) {
             if (!q) return true;
             return op.email.toLowerCase().indexOf(q) >= 0 || op.label.toLowerCase().indexOf(q) >= 0;
         });
-        const sel = document.getElementById('app-bind-operator');
-        if (!sel) return;
-        const current = sel.value;
-        sel.innerHTML = '<option value="">请选择负责运营</option>' +
-            list.map(function (op) {
-                return '<option value="' + op.email + '"' + (current === op.email ? ' selected' : '') + '>' + op.label + ' · ' + op.email + '</option>';
-            }).join('');
+        const hiddenEl = document.getElementById('app-bind-operator');
+        const optionsEl = document.getElementById('app-bind-operator-options');
+        const current = hiddenEl ? hiddenEl.value : '';
+        if (!optionsEl) return;
+        if (!list.length) {
+            optionsEl.innerHTML = '<p class="px-3 py-2 text-[11px] text-slate-400">无匹配运营人员</p>';
+            return;
+        }
+        optionsEl.innerHTML = list.map(function (op) {
+            const selected = current === op.email;
+            return '<button type="button" onclick="PartnerApplications.selectOperator(\'' + op.email + '\')" class="app-operator-combobox-option w-full text-left px-3 py-2 text-[11px] font-bold ' +
+                (selected ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50') + '">' +
+                op.label + ' · ' + op.email + '</button>';
+        }).join('');
+    }
+
+    function toggleOperatorDropdown() {
+        setOperatorDropdownOpen(!appBindState.operatorOpen);
+    }
+
+    function selectOperator(email) {
+        const hiddenEl = document.getElementById('app-bind-operator');
+        if (hiddenEl) hiddenEl.value = email || '';
+        updateOperatorTriggerLabel(email);
+        appBindState.operatorSearch = '';
+        renderOperatorOptions('');
+        setOperatorDropdownOpen(false);
+    }
+
+    function closeOperatorDropdown() {
+        if (appBindState.operatorOpen) setOperatorDropdownOpen(false);
     }
 
     function openSetL1Modal(applicationId) {
         const app = getApplication(applicationId);
         if (!app) return;
-        appBindState = { applicationId: applicationId, operatorSearch: '' };
+        if (!canShowSetL1Button(app)) return;
+        appBindState = { applicationId: applicationId, operatorSearch: '', operatorOpen: false };
 
         const uidEl = document.getElementById('app-bind-uid');
         const ratioEl = document.getElementById('app-bind-ratio');
         const remarkEl = document.getElementById('app-bind-remark');
-        const searchEl = document.getElementById('app-bind-operator-search');
+        const operatorEl = document.getElementById('app-bind-operator');
         const previewEl = document.getElementById('app-bind-subject-preview');
 
         if (uidEl) { uidEl.value = app.uid; uidEl.readOnly = true; }
         if (ratioEl) ratioEl.value = '';
         if (remarkEl) remarkEl.value = '合伙人计划申请通过 · ' + (app.telegram || app.uid);
-        if (searchEl) searchEl.value = '';
+        if (operatorEl) operatorEl.value = '';
+        updateOperatorTriggerLabel('');
+        renderOperatorOptions('');
+        setOperatorDropdownOpen(false);
 
         if (previewEl) {
             previewEl.innerHTML =
@@ -367,8 +463,9 @@
     }
 
     function closeSetL1Modal() {
+        closeOperatorDropdown();
         document.getElementById('modal-app-set-l1').classList.add('hidden');
-        appBindState = { applicationId: null, operatorSearch: '' };
+        appBindState = { applicationId: null, operatorSearch: '', operatorOpen: false };
     }
 
     function filterOperatorDropdown() {
@@ -416,6 +513,8 @@
         resetAppFilters: resetAppFilters,
         openSetL1Modal: openSetL1Modal,
         closeSetL1Modal: closeSetL1Modal,
+        toggleOperatorDropdown: toggleOperatorDropdown,
+        selectOperator: selectOperator,
         filterOperatorDropdown: filterOperatorDropdown,
         submitSetL1: submitSetL1,
         getApplication: getApplication,
@@ -433,5 +532,10 @@
                 renderApplicationList();
             });
         }
+        document.addEventListener('click', function (e) {
+            const combobox = document.getElementById('app-bind-operator-combobox');
+            if (!combobox || combobox.contains(e.target)) return;
+            closeOperatorDropdown();
+        });
     });
 })();
