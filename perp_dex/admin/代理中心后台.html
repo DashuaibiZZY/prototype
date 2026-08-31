@@ -32,6 +32,10 @@
             border: 5px solid transparent; border-bottom-color: #111827;
         }
         .user-scale-hint-wrap:hover .user-scale-hint-pop { opacity: 1; visibility: visible; }
+        .app-operator-combobox-panel { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 120; background: #fff; border: 1px solid #e2e8f0; border-radius: 0.375rem; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12); overflow: hidden; }
+        .app-operator-option { display: block; width: 100%; text-align: left; padding: 0.5rem 0.75rem; font-size: 11px; font-weight: 600; color: #334155; }
+        .app-operator-option:hover { background: #f8fafc; }
+        .app-operator-option-selected { background: #eff6ff; color: #1d4ed8; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -147,7 +151,7 @@
                         <tr>
                             <th class="px-4 py-3">UID</th>
                             <th class="px-3 py-3">合伙人身份</th>
-                            <th class="px-3 py-3">后台操作人员</th>
+                            <th class="px-3 py-3">后台管理人员</th>
                             <th class="px-3 py-3">钱包地址</th>
                             <th class="px-3 py-3">邮箱地址</th>
                             <th class="px-3 py-3 text-right">社交粉丝数</th>
@@ -184,17 +188,17 @@
             <section class="bg-slate-50 border border-slate-200 rounded-lg p-5">
                 <h3 class="text-[11px] font-black text-slate-500 uppercase tracking-wider mb-4">用户申请信息</h3>
                 <div id="app-detail-apply-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-            </section>
-            <section class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-                <h3 class="text-[11px] font-black text-slate-500 uppercase tracking-wider mb-3">社区与推广经验</h3>
-                <p id="app-detail-experience" class="text-[12px] text-slate-700 leading-relaxed whitespace-pre-wrap"></p>
-            </section>
-            <section class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-                <h3 class="text-[11px] font-black text-slate-500 uppercase tracking-wider mb-3">附件</h3>
-                <div id="app-detail-attachments" class="flex flex-wrap gap-2"></div>
+                <div class="mt-5 pt-5 border-t border-slate-200">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">社区与推广经验</p>
+                    <p id="app-detail-experience" class="text-[12px] text-slate-700 leading-relaxed whitespace-pre-wrap bg-white border rounded-lg p-4"></p>
+                </div>
+                <div class="mt-5 pt-5 border-t border-slate-200">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">附件 <span class="text-slate-400 font-normal normal-case">（最多 4 个）</span></p>
+                    <div id="app-detail-attachments" class="flex flex-wrap gap-2"></div>
+                </div>
             </section>
             <section class="bg-slate-50 border border-slate-200 rounded-lg p-5">
-                <h3 class="text-[11px] font-black text-slate-500 uppercase tracking-wider mb-4">用户数据信息</h3>
+                <h3 class="text-[11px] font-black text-slate-500 uppercase tracking-wider mb-4">用户平台数据</h3>
                 <div id="app-detail-data-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </section>
         </div>
@@ -771,9 +775,20 @@
             <div><label class="text-[10px] font-bold text-slate-400 uppercase">一级合伙人返佣比例 (%)</label><input id="app-bind-ratio" type="number" class="w-full border rounded p-2 mt-1 outline-none" placeholder="仅此一项比例配置"><p id="app-bind-ratio-hint" class="text-[10px] text-amber-700 mt-1"></p></div>
             <div>
                 <label class="text-[10px] font-bold text-slate-400 uppercase">配置运营（负责 BD）</label>
-                <input id="app-bind-operator-search" type="text" placeholder="搜索运营姓名或邮箱…" class="w-full border rounded p-2 mt-1 outline-none focus:ring-1 focus:ring-blue-600" oninput="PartnerApplications.filterOperatorDropdown()">
-                <select id="app-bind-operator" class="w-full border rounded p-2 mt-2 outline-none focus:ring-1 focus:ring-blue-600 bg-white"></select>
-                <p class="text-[10px] text-slate-400 mt-1">该一级合伙人将归属所选运营负责；影响列表「配置运营」列与跨 BD 审批判定。</p>
+                <div id="app-bind-operator-combobox" class="relative mt-1">
+                    <button type="button" id="app-bind-operator-trigger" onclick="PartnerApplications.toggleOperatorDropdown()" class="w-full border rounded p-2 text-left text-[11px] font-bold text-slate-700 bg-white outline-none focus:ring-1 focus:ring-blue-600 flex items-center justify-between gap-2">
+                        <span id="app-bind-operator-trigger-label" class="truncate text-slate-500">请选择负责运营</span>
+                        <span class="text-slate-400 shrink-0">▾</span>
+                    </button>
+                    <div id="app-bind-operator-panel" class="app-operator-combobox-panel hidden">
+                        <div class="p-2 border-b border-slate-100 bg-slate-50">
+                            <input id="app-bind-operator-search" type="text" placeholder="搜索姓名或邮箱…" class="w-full border rounded p-2 text-[11px] outline-none focus:ring-1 focus:ring-blue-600 bg-white" oninput="PartnerApplications.filterOperatorDropdown()">
+                        </div>
+                        <div id="app-bind-operator-options" class="max-h-44 overflow-y-auto py-1"></div>
+                    </div>
+                    <input type="hidden" id="app-bind-operator" value="">
+                </div>
+                <p class="text-[10px] text-slate-400 mt-1">点击展开下拉并搜索；该一级合伙人将归属所选运营负责。</p>
             </div>
             <div><label class="text-[10px] font-bold text-slate-400 uppercase">申请备注（必填）</label><textarea id="app-bind-remark" rows="2" class="w-full border rounded p-2 mt-1 outline-none" placeholder="说明绑定原因、渠道背景等"></textarea></div>
         </div>
@@ -974,8 +989,8 @@
 <script src="admin-sidebar.js"></script>
 <script src="admin-approval.js"></script>
 <script src="admin-approval-ui.js"></script>
-<script src="admin-partner-portal.js?v=partner-demo-35"></script>
-<script src="admin-partner-applications.js?v=partner-demo-35"></script>
+<script src="admin-partner-portal.js?v=partner-demo-36"></script>
+<script src="admin-partner-applications.js?v=partner-demo-36"></script>
 <script>
     initModuleApproval({
         types: ['partner_l1_bind', 'partner_l1_bind_cross', 'partner_ratio_change', 'partner_rebate_migrate'],
