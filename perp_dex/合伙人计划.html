@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX Web · 合伙人计划</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #e5e7eb; margin: 0; padding: 32px 24px 64px; color: #111827; }
+        .gallery-header { max-width: 1240px; margin: 0 auto 28px; }
+        .gallery-header h1 { font-size: 22px; font-weight: 900; letter-spacing: -0.02em; }
+        .gallery-header p { font-size: 12px; color: #6b7280; margin-top: 6px; line-height: 1.6; }
+        .proto-grid { display: flex; flex-direction: column; gap: 48px; align-items: center; max-width: 1240px; margin: 0 auto; }
+        .proto-panel { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+        .proto-label { font-size: 14px; font-weight: 800; line-height: 1.45; }
+        .proto-label .desc { display: block; font-size: 11px; font-weight: 600; color: #6b7280; margin-top: 4px; }
+        .web-frame {
+            width: 100%; background: #fff; border: 1px solid #d1d5db; border-radius: 12px;
+            box-shadow: 0 20px 50px -12px rgba(0,0,0,0.12); overflow: hidden; position: relative; min-height: 720px;
+        }
+        .web-chrome {
+            height: 36px; background: #f9fafb; border-bottom: 1px solid #e5e7eb;
+            display: flex; align-items: center; padding: 0 14px; gap: 6px;
+        }
+        .web-chrome .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .benefit-card { border: 1px solid #f3f4f6; border-radius: 8px; padding: 20px; background: #fff; }
+        .faq-item { border-bottom: 1px solid #f3f4f6; padding: 16px 0; }
+        .faq-item:last-child { border-bottom: none; }
+        .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; }
+        .field-error { border-color: #ef4444 !important; }
+        .field-hint { font-size: 10px; color: #9ca3af; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="gallery-header">
+    <h1>Web 合伙人计划 · 子页面原型</h1>
+    <p>从邀请返佣页「ForX 合伙人计划」卡片进入。含未登录 CTA、已登录申请表单、登录引导弹窗三种状态。</p>
+</div>
+
+<div class="proto-grid" id="proto-grid"></div>
+
+<script>
+const BENEFITS = [
+    { title: '行业顶级返佣水平', desc: '40% 返佣起，显著高于主流去中心化交易所的常规邀请比例，让每一份流量都更有价值。' },
+    { title: '1.5x 积分加成', desc: '合伙人专属 1.5 倍积分倍率；直属邀请好友的交易亦可享受加成，持续放大长期收益。' },
+    { title: '代币空投', desc: '优先参与 ForX 生态专属代币空投池，与核心贡献者共享生态增长红利。' },
+    { title: '现金奖金池', desc: '定期参与合伙人专属现金邀请激励，按贡献排名瓜分奖池。' },
+    { title: 'NFT 空投', desc: '优先获得 ForX 及生态合作伙伴限量 NFT，享收藏与权益双重价值。' },
+    { title: '线下会场席位', desc: '优先获得全球行业峰会及 ForX 线下活动合伙人专席，拓展高端资源网络。' }
+];
+
+const FAQ_ITEMS = [
+    { q: '什么是 ForX 合伙人？', a: 'ForX 合伙人是平台认证的优质渠道与社区主理人，享受高于普通邀请返佣的比例，以及积分加成、空投、现金奖池等专属权益。' },
+    { q: '与普通邀请返佣有什么区别？', a: '普通邀请返佣最高约 25%（Lv 3）；合伙人计划从 40% 起，并附带积分、代币、NFT 等额外激励，适合有规模社区或稳定交易量的申请者。' },
+    { q: '申请需要满足什么条件？', a: '无硬性门槛，但需具备一定社区影响力、交易社群运营经验，或伞下月交易额可观。填写真实资料有助于提高通过率。' },
+    { q: '审核需要多久？', a: '提交后 3–5 个工作日完成初审；通过后运营同学会联系您确认返佣比例与对接细节。' },
+    { q: '已经是合伙人还能申请吗？', a: '已是 ForX 一级/多级合伙人的账号无需重复申请，请直接在「合伙人管理中心」查看数据与配置。' }
+];
+
+function navHtml(loggedIn) {
+    const walletBtn = loggedIn
+        ? `<button class="bg-gray-50 px-3 py-1.5 rounded-sm flex items-center space-x-2 border border-gray-100 text-[11px] font-black"><span class="w-2 h-2 bg-green-500 rounded-full"></span><span>0xd593...2Dd2</span></button>`
+        : `<button class="bg-gray-900 text-white px-4 py-1.5 rounded-sm text-[11px] font-black uppercase">连接钱包</button>`;
+    return `
+        <nav class="h-10 border-b border-gray-100 flex items-center px-4 justify-between shrink-0 bg-white">
+            <div class="flex items-center space-x-6">
+                <span class="font-black text-lg tracking-tighter">ForX</span>
+                <div class="flex space-x-5 text-[12px] font-medium">
+                    <a href="合约交易.html" class="text-gray-400 hover:text-black">交易</a>
+                    <a href="投资组合.html" class="text-gray-400 hover:text-black">投资组合</a>
+                    <a href="邀请返佣.html" class="text-black font-bold relative">邀请返佣<span class="absolute -top-1 -right-5 bg-red-500 text-white px-1 text-[8px] rounded-sm scale-90">40%</span></a>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">${walletBtn}</div>
+        </nav>`;
+}
+
+function benefitsHtml() {
+    return `
+        <section class="space-y-6">
+            <h2 class="text-xl font-black text-gray-900">您可以获得什么？</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                ${BENEFITS.map(b => `
+                    <div class="benefit-card">
+                        <h3 class="text-[13px] font-black text-gray-900 mb-2">${b.title}</h3>
+                        <p class="text-[11px] text-gray-500 leading-relaxed">${b.desc}</p>
+                    </div>`).join('')}
+            </div>
+        </section>`;
+}
+
+function faqHtml() {
+    return `
+        <section class="bg-white border border-gray-100 rounded-sm p-8 shadow-sm">
+            <h2 class="text-xl font-black text-gray-900 mb-6">什么是 ForX 合伙人计划？</h2>
+            <div class="space-y-0">
+                ${FAQ_ITEMS.map(f => `
+                    <div class="faq-item">
+                        <p class="text-[13px] font-black text-gray-900 mb-2">${f.q}</p>
+                        <p class="text-[12px] text-gray-500 leading-relaxed">${f.a}</p>
+                    </div>`).join('')}
+            </div>
+        </section>`;
+}
+
+function heroHtml() {
+    return `
+        <div class="text-center space-y-4 mb-10">
+            <p class="text-[10px] font-black text-blue-600 uppercase tracking-[0.25em]">ForX Partner Program</p>
+            <h1 class="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">ForX 合伙人计划</h1>
+            <p class="text-[14px] text-gray-500 max-w-2xl mx-auto leading-relaxed">把社区影响力变成持续收益——为优质 KOL 与交易社区主理人开放更高返佣与专属权益。</p>
+            <p class="text-[13px] text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                无论您拥有内容影响力、活跃的交易社群，还是伞下月成交额可观的渠道资源，均可申请成为 ForX 合伙人。
+                通过后享受 <strong class="text-gray-900">40% 起</strong> 行业顶级返佣，以及现金奖励、代币与 NFT 空投优先资格，高效将影响力变现。
+            </p>
+        </div>`;
+}
+
+function guestApplyHtml() {
+    return `
+        <div class="bg-slate-50 border border-slate-200 rounded-sm p-10 text-center max-w-xl mx-auto mb-12">
+            <p class="text-[13px] text-gray-600 mb-6">登录后即可填写申请表，运营团队将在 3–5 个工作日内完成审核。</p>
+            <button type="button" class="bg-gray-900 text-white px-10 py-3 rounded-sm font-black text-[12px] uppercase tracking-widest hover:bg-black">立即申请</button>
+        </div>`;
+}
+
+function applicationFormHtml() {
+    return `
+        <form class="bg-white border border-gray-100 rounded-sm p-8 shadow-sm max-w-3xl mx-auto mb-12 space-y-6" onsubmit="return false;">
+            <h2 class="text-lg font-black text-gray-900 border-b border-gray-100 pb-4">合伙人申请表</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-wider">社交账号粉丝数</label>
+                    <input type="text" inputmode="numeric" placeholder="如 50000" class="w-full border border-gray-200 rounded-sm p-3 mt-1.5 text-[13px] outline-none focus:ring-1 focus:ring-gray-900" />
+                    <p class="field-hint">必填 · 仅支持整数</p>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-wider">社区管理人数</label>
+                    <input type="text" inputmode="numeric" placeholder="如 3000" class="w-full border border-gray-200 rounded-sm p-3 mt-1.5 text-[13px] outline-none focus:ring-1 focus:ring-gray-900" />
+                    <p class="field-hint">必填 · 您直接管理或运营的核心社群人数</p>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-wider">团队月交易额预估（USDT）</label>
+                    <input type="text" inputmode="numeric" placeholder="如 1500000" class="w-full border border-gray-200 rounded-sm p-3 mt-1.5 text-[13px] outline-none focus:ring-1 focus:ring-gray-900" />
+                    <p class="field-hint">必填 · 伞下或社群月成交总额估算</p>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-wider">Telegram</label>
+                    <input type="text" placeholder="@username 或 t.me/..." class="w-full border border-gray-200 rounded-sm p-3 mt-1.5 text-[13px] outline-none focus:ring-1 focus:ring-gray-900" />
+                    <p class="field-hint">必填 · 便于运营同学联系对接</p>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-wider">X（Twitter）</label>
+                    <input type="text" placeholder="@username（选填）" class="w-full border border-gray-200 rounded-sm p-3 mt-1.5 text-[13px] outline-none focus:ring-1 focus:ring-gray-900" />
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-wider">YouTube</label>
+                    <input type="text" placeholder="频道名或链接（选填）" class="w-full border border-gray-200 rounded-sm p-3 mt-1.5 text-[13px] outline-none focus:ring-1 focus:ring-gray-900" />
+                </div>
+            </div>
+            <div>
+                <label class="text-[10px] font-black text-gray-500 uppercase tracking-wider">社区与推广经验</label>
+                <textarea rows="4" placeholder="简要介绍您的社区类型、运营时长、擅长领域与过往推广成果…" class="w-full border border-gray-200 rounded-sm p-3 mt-1.5 text-[13px] outline-none focus:ring-1 focus:ring-gray-900 resize-none"></textarea>
+                <p class="field-hint">选填 · 填写真实经历有助于提高审核通过率</p>
+            </div>
+            <button type="button" class="w-full bg-blue-600 text-white py-3.5 rounded-sm font-black text-[12px] uppercase tracking-widest hover:bg-blue-700">立即申请</button>
+            <p class="text-[10px] text-gray-400 text-center">提交即表示您同意 ForX 合伙人计划相关条款；审核结果将通过站内通知告知。</p>
+        </form>`;
+}
+
+function loginModalHtml() {
+    return `
+        <div class="modal-overlay">
+            <div class="bg-white rounded-xl w-full max-w-[420px] shadow-2xl overflow-hidden">
+                <div class="p-8 space-y-5">
+                    <div class="text-center space-y-2">
+                        <p class="text-[11px] font-bold text-blue-600 uppercase tracking-widest">申请 ForX 合伙人计划</p>
+                        <p class="text-[15px] font-black text-gray-900">请先连接钱包</p>
+                    </div>
+                    <p class="text-[13px] text-gray-500 leading-relaxed text-center">
+                        连接 ForX 钱包后即可填写合伙人申请表。邀请关系与账户权益将在注册/登录完成后自动关联。
+                    </p>
+                    <button type="button" class="w-full py-3.5 bg-gray-900 text-white rounded-lg text-[13px] font-black uppercase tracking-widest">连接钱包</button>
+                    <button type="button" class="w-full py-2 text-[12px] font-bold text-gray-400">取消</button>
+                </div>
+            </div>
+        </div>`;
+}
+
+function pageContentHtml(cfg) {
+    const { loggedIn = false, showLoginModal = false } = cfg;
+    return `
+        <main class="flex-1 overflow-y-auto bg-white">
+            <div class="max-w-[960px] mx-auto px-6 py-10">
+                <a href="邀请返佣.html" class="inline-flex items-center text-[11px] font-bold text-gray-400 hover:text-gray-900 mb-6">← 返回邀请返佣</a>
+                ${heroHtml()}
+                ${loggedIn ? applicationFormHtml() : guestApplyHtml()}
+                ${benefitsHtml()}
+                <div class="mt-12">${faqHtml()}</div>
+            </div>
+        </main>
+        ${showLoginModal ? loginModalHtml() : ''}`;
+}
+
+function webFrameHtml(innerHtml, pathLabel) {
+    return `
+        <div class="web-chrome">
+            <span class="dot bg-red-400"></span>
+            <span class="dot bg-yellow-400"></span>
+            <span class="dot bg-green-400"></span>
+            <span class="text-[10px] text-gray-400 font-medium ml-2">${pathLabel || 'forx.finance / 合伙人计划'}</span>
+        </div>
+        <div class="flex flex-col min-h-[680px] relative">
+            ${innerHtml}
+        </div>`;
+}
+
+const STATES = [
+    {
+        title: '① 未登录 · 合伙人计划页',
+        desc: '展示计划介绍、权益说明与 FAQ；底部 CTA「立即申请」引导登录',
+        render: () => webFrameHtml(navHtml(false) + pageContentHtml({ loggedIn: false }), 'forx.finance / 合伙人计划')
+    },
+    {
+        title: '② 未登录 · 点击立即申请',
+        desc: '弹出连接钱包引导弹窗，完成登录后进入申请表单',
+        render: () => webFrameHtml(navHtml(false) + pageContentHtml({ loggedIn: false, showLoginModal: true }), 'forx.finance / 合伙人计划')
+    },
+    {
+        title: '③ 已登录 · 申请表单',
+        desc: '已连接钱包用户展示完整申请表；整数校验、Telegram 必填；提交后进入后台审核队列',
+        render: () => webFrameHtml(navHtml(true) + pageContentHtml({ loggedIn: true }), 'forx.finance / 合伙人计划 · 已登录')
+    }
+];
+
+const grid = document.getElementById('proto-grid');
+STATES.forEach(state => {
+    const panel = document.createElement('div');
+    panel.className = 'proto-panel';
+    panel.innerHTML = `
+        <div class="proto-label">${state.title}<span class="desc">${state.desc}</span></div>
+        <div class="web-frame">${state.render()}</div>`;
+    grid.appendChild(panel);
+});
+</script>
+</body>
+</html>
