@@ -957,6 +957,13 @@
         return (u.wallet + u.uid + u.note).toLowerCase().indexOf(q) !== -1;
     }
 
+    function formatAgentConfiguredTime(u) {
+        if (!u) return '<span class="text-slate-400">—</span>';
+        const t = u.agentConfiguredAt || u.bindTime;
+        if (!t) return '<span class="text-slate-400">—</span>';
+        return '<span class="text-slate-600 whitespace-nowrap font-bold">' + t + '</span>';
+    }
+
     function renderPartnerList() {
         const tbody = document.getElementById('partner-list-body');
         if (!tbody) return;
@@ -976,6 +983,7 @@
             return '<tr class="hover:bg-slate-50">' +
                 '<td class="px-4 py-3">' + mirrorPartnerUidCell(u, { level: u.level, childCount: childCount }) +
                 '<button type="button" onclick="PartnerPortal.showDetail(\'' + u.id + '\')" class="block mt-1 text-[10px] font-black text-blue-600 hover:underline">' + u.note + '</button></td>' +
+                '<td class="px-3 py-3">' + formatAgentConfiguredTime(u) + '</td>' +
                 '<td class="px-3 py-3">' + mirrorPartnerContactCell(u) + '</td>' +
                 '<td class="px-3 py-3 text-center font-black">' + u.ratio + '%</td>' +
                 '<td class="px-3 py-3 text-center">' + settleLabel(hasPartnerFreeze(u.freezeStatus) ? 'pending' : u.settleStatus) + '</td>' +
