@@ -15,6 +15,8 @@
             uid: '100920',
             wallet: '0xKol...Alpha',
             email: 'kol.alpha@forx.io',
+            partnerIdentity: '普通用户',
+            adminOperator: '',
             socialFollowers: 125000,
             communitySize: 8500,
             monthlyVolEstimate: 2500000,
@@ -22,6 +24,10 @@
             x: '@alpha_forx',
             youtube: 'AlphaTradingCN',
             experience: '运营 Telegram 合约交易社群 3 年，月活 8000+，专注华语合约教育与带单。',
+            attachments: [
+                { name: 'TG群成员截图.png', type: 'image' },
+                { name: '渠道介绍.pdf', type: 'pdf' }
+            ],
             vol30d: 1850000,
             inviteCount: 42,
             inviteVol30d: 620000,
@@ -33,9 +39,11 @@
         },
         {
             id: 'APP20260827002',
-            uid: '100921',
-            wallet: '0xKol...Beta',
+            uid: '100803',
+            wallet: '0xNorm...L3',
             email: '',
+            partnerIdentity: '三级合伙人',
+            adminOperator: 'bob@forx.fi',
             socialFollowers: 48000,
             communitySize: 2200,
             monthlyVolEstimate: 680000,
@@ -43,6 +51,7 @@
             x: '',
             youtube: '',
             experience: 'Discord 华语交易群 2200 人，以现货+合约混合推广为主。',
+            attachments: [],
             vol30d: 420000,
             inviteCount: 18,
             inviteVol30d: 185000,
@@ -57,6 +66,8 @@
             uid: '100922',
             wallet: '0xKol...Gamma',
             email: 'gamma.channel@forx.io',
+            partnerIdentity: '二级合伙人',
+            adminOperator: 'bob@forx.fi',
             socialFollowers: 320000,
             communitySize: 12000,
             monthlyVolEstimate: 5200000,
@@ -64,6 +75,11 @@
             x: '@gamma_perp',
             youtube: 'GammaPerp',
             experience: 'YouTube 合约频道 28 万订阅 + TG 付费群 1.2 万人，月推广成交额稳定 500 万 USDT 以上。',
+            attachments: [
+                { name: '频道数据截图.jpg', type: 'image' },
+                { name: '合作案例.docx', type: 'doc' },
+                { name: '月度流水.xlsx', type: 'excel' }
+            ],
             vol30d: 4100000,
             inviteCount: 156,
             inviteVol30d: 1280000,
@@ -78,6 +94,8 @@
             uid: '100923',
             wallet: '0xKol...Delta',
             email: 'delta@forx.io',
+            partnerIdentity: '普通用户',
+            adminOperator: '',
             socialFollowers: 8500,
             communitySize: 450,
             monthlyVolEstimate: 120000,
@@ -85,6 +103,7 @@
             x: '@delta_x',
             youtube: '',
             experience: '',
+            attachments: [],
             vol30d: 85000,
             inviteCount: 5,
             inviteVol30d: 22000,
@@ -133,6 +152,34 @@
         return true;
     }
 
+    function formatPartnerIdentity(identity) {
+        if (!identity || identity === '普通用户') return '<span class="text-slate-600 font-bold">普通用户</span>';
+        return '<span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold text-[10px]">' + identity + '</span>';
+    }
+
+    function formatAdminOperator(op) {
+        if (!op) return '<span class="text-slate-400">—</span>';
+        return '<span class="font-bold text-slate-700">' + op + '</span>';
+    }
+
+    function renderAttachments(attachments) {
+        const list = attachments || [];
+        if (!list.length) return '<span class="text-slate-400 text-[12px]">—（未上传）</span>';
+        return list.map(function (f) {
+            const icon = f.type === 'image' ? '🖼' : f.type === 'pdf' ? '📄' : f.type === 'excel' ? '📊' : '📝';
+            return '<a href="#" class="inline-flex items-center gap-1.5 px-3 py-2 rounded border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700 hover:bg-slate-100">' +
+                icon + ' ' + f.name + '</a>';
+        }).join('');
+    }
+
+    function renderFieldGrid(containerId, fields) {
+        const grid = document.getElementById(containerId);
+        if (!grid) return;
+        grid.innerHTML = fields.map(function (pair) {
+            return '<div class="bg-white border rounded-lg p-4"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">' + pair[0] + '</p><div class="text-[13px] font-bold text-slate-900">' + pair[1] + '</div></div>';
+        }).join('');
+    }
+
     function statusBadge(status) {
         const map = {
             pending: '<span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-bold text-[10px]">待审核</span>',
@@ -172,11 +219,13 @@
         if (!tbody) return;
 
         if (!pageItems.length) {
-            tbody.innerHTML = '<tr><td colspan="13" class="px-4 py-12 text-center text-slate-400 font-bold">暂无申请记录</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="15" class="px-4 py-12 text-center text-slate-400 font-bold">暂无申请记录</td></tr>';
         } else {
             tbody.innerHTML = pageItems.map(function (a) {
                 return '<tr class="hover:bg-slate-50 border-b">' +
                     '<td class="px-4 py-3">' + chip(a.uid, 'uid') + '</td>' +
+                    '<td class="px-3 py-3">' + formatPartnerIdentity(a.partnerIdentity) + '</td>' +
+                    '<td class="px-3 py-3">' + formatAdminOperator(a.adminOperator) + '</td>' +
                     '<td class="px-3 py-3">' + chip(a.wallet, 'wallet') + '</td>' +
                     '<td class="px-3 py-3">' + (a.email ? chip(a.email, 'email') : '<span class="text-slate-400">—</span>') + '</td>' +
                     '<td class="px-3 py-3 text-right font-bold">' + fmtNum(a.socialFollowers) + '</td>' +
@@ -212,33 +261,34 @@
         set('app-detail-title', '合伙人申请 · UID ' + a.uid);
         set('app-detail-sub', '申请单 ' + a.id + ' · 提交于 ' + a.appliedAt + ' · ' + statusBadge(a.status));
 
-        const fields = [
+        renderFieldGrid('app-detail-apply-grid', [
             ['UID', chip(a.uid, 'uid')],
             ['钱包地址', chip(a.wallet, 'wallet')],
             ['邮箱', a.email ? chip(a.email, 'email') : '—'],
+            ['合伙人身份', formatPartnerIdentity(a.partnerIdentity)],
+            ['后台操作人员', formatAdminOperator(a.adminOperator)],
             ['社交账号粉丝数', fmtNum(a.socialFollowers)],
             ['社区管理人数', fmtNum(a.communitySize)],
             ['团队月交易额预估', fmtMoney(a.monthlyVolEstimate)],
             ['Telegram', a.telegram || '—'],
             ['X 账号', a.x || '—'],
-            ['YouTube', a.youtube || '—'],
+            ['YouTube', a.youtube || '—']
+        ]);
+
+        renderFieldGrid('app-detail-data-grid', [
             ['近 30 日交易额', fmtMoney(a.vol30d)],
             ['下级邀请人数', fmtNum(a.inviteCount)],
             ['近 30 日下级邀请交易额', fmtMoney(a.inviteVol30d)],
             ['账户总权益', fmtMoney(a.accountEquity)],
             ['资产净充值金额', fmtMoney(a.netDeposit)],
             ['下级邀请好友净充值', fmtMoney(a.inviteNetDeposit)]
-        ];
-
-        const grid = document.getElementById('app-detail-grid');
-        if (grid) {
-            grid.innerHTML = fields.map(function (pair) {
-                return '<div class="bg-white border rounded-lg p-4"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">' + pair[0] + '</p><div class="text-[13px] font-bold text-slate-900">' + pair[1] + '</div></div>';
-            }).join('');
-        }
+        ]);
 
         const expEl = document.getElementById('app-detail-experience');
         if (expEl) expEl.textContent = a.experience || '—（未填写）';
+
+        const attachEl = document.getElementById('app-detail-attachments');
+        if (attachEl) attachEl.innerHTML = renderAttachments(a.attachments);
 
         const btnWrap = document.getElementById('app-detail-actions');
         if (btnWrap) {
