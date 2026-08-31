@@ -27,7 +27,6 @@
         .benefit-card { border: 1px solid #f3f4f6; border-radius: 8px; padding: 20px; background: #fff; }
         .faq-item { border-bottom: 1px solid #f3f4f6; padding: 16px 0; }
         .faq-item:last-child { border-bottom: none; }
-        .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; }
         .field-hint { font-size: 10px; color: #9ca3af; margin-top: 4px; }
     </style>
 </head>
@@ -35,7 +34,7 @@
 
 <div class="gallery-header">
     <h1>Web 合伙人计划 · 子页面原型</h1>
-    <p>从邀请返佣页「ForX 合伙人计划」卡片进入。未登录点击「立即申请」在当前页弹出登录引导（无独立画框状态）；已是合伙人不可提交。</p>
+    <p>从邀请返佣页「ForX 合伙人计划」卡片进入。未登录仅展示「立即申请」按钮（点击走全站连接钱包流程，无独立弹窗画框）；已是合伙人不可提交。</p>
 </div>
 
 <div class="proto-grid" id="proto-grid"></div>
@@ -55,7 +54,7 @@ const FAQ_ITEMS = [
     { q: '与普通邀请返佣有什么区别？', a: '普通邀请返佣最高约 25%（Lv 3）；合伙人计划从 40% 起，并附带积分、代币、NFT 等额外激励，适合有规模社区或稳定交易量的申请者。' },
     { q: '申请需要满足什么条件？', a: '无硬性门槛，但需具备一定社区影响力、交易社群运营经验，或伞下月交易额可观。填写真实资料有助于提高通过率。' },
     { q: '审核需要多久？', a: '提交后 3–5 个工作日完成初审；通过后运营同学会联系您确认返佣比例与对接细节。' },
-    { q: '已经是合伙人还能申请吗？', a: '不可以。已是 ForX 合伙人（含任意层级代理）的账号无法重复提交申请，请直接在「合伙人管理中心」查看数据与配置。' }
+    { q: '已经是合伙人还能申请吗？', a: '不可以。合伙人账号无法重复提交申请，请直接在「合伙人管理中心」查看数据与配置。' }
 ];
 
 function navHtml(loggedIn) {
@@ -122,7 +121,7 @@ function guestApplyHtml() {
         <div class="bg-slate-50 border border-slate-200 rounded-sm p-10 text-center max-w-xl mx-auto mb-12">
             <p class="text-[13px] text-gray-600 mb-6">登录后即可填写申请表，运营团队将在 3–5 个工作日内完成审核。</p>
             <button type="button" class="bg-gray-900 text-white px-10 py-3 rounded-sm font-black text-[12px] uppercase tracking-widest hover:bg-black">立即申请</button>
-            <p class="text-[10px] text-gray-400 mt-4">点击后将弹出连接钱包引导（同全站登录流程）</p>
+            <p class="text-[10px] text-gray-400 mt-4">点击后触发全站连接钱包流程（同导航栏「连接钱包」）</p>
         </div>`;
 }
 
@@ -130,7 +129,7 @@ function partnerBlockedHtml() {
     return `
         <div class="bg-amber-50 border border-amber-200 rounded-sm p-8 max-w-xl mx-auto mb-12 text-center space-y-4">
             <p class="text-[13px] font-black text-amber-900">您已是 ForX 合伙人（二级代理）</p>
-            <p class="text-[12px] text-amber-800 leading-relaxed">合伙人账号（含任意层级代理）无法重复提交合伙人计划申请。邀请与团队数据请在合伙人管理中心查看。</p>
+            <p class="text-[12px] text-amber-800 leading-relaxed">合伙人账号无法重复提交合伙人计划申请。邀请与团队数据请在合伙人管理中心查看。</p>
             <a href="代理中心.html" class="inline-block bg-blue-600 text-white px-6 py-2.5 rounded-sm font-black text-[11px] uppercase">前往合伙人管理中心 →</a>
         </div>`;
 }
@@ -194,25 +193,6 @@ function applicationFormHtml() {
         </form>`;
 }
 
-function loginModalHtml() {
-    return `
-        <div class="modal-overlay">
-            <div class="bg-white rounded-xl w-full max-w-[420px] shadow-2xl overflow-hidden">
-                <div class="p-8 space-y-5">
-                    <div class="text-center space-y-2">
-                        <p class="text-[11px] font-bold text-blue-600 uppercase tracking-widest">申请 ForX 合伙人计划</p>
-                        <p class="text-[15px] font-black text-gray-900">请先连接钱包</p>
-                    </div>
-                    <p class="text-[13px] text-gray-500 leading-relaxed text-center">
-                        连接 ForX 钱包后即可填写合伙人申请表。邀请关系与账户权益将在注册/登录完成后自动关联。
-                    </p>
-                    <button type="button" class="w-full py-3.5 bg-gray-900 text-white rounded-lg text-[13px] font-black uppercase tracking-widest">连接钱包</button>
-                    <button type="button" class="w-full py-2 text-[12px] font-bold text-gray-400">取消</button>
-                </div>
-            </div>
-        </div>`;
-}
-
 function pageContentHtml(cfg) {
     const { loggedIn = false, partnerBlocked = false } = cfg;
     let applyBlock = guestApplyHtml();
@@ -230,7 +210,7 @@ function pageContentHtml(cfg) {
         </main>`;
 }
 
-function webFrameHtml(innerHtml, pathLabel, overlayHtml) {
+function webFrameHtml(innerHtml, pathLabel) {
     return `
         <div class="web-chrome">
             <span class="dot bg-red-400"></span>
@@ -240,18 +220,16 @@ function webFrameHtml(innerHtml, pathLabel, overlayHtml) {
         </div>
         <div class="flex flex-col min-h-[680px] relative">
             ${innerHtml}
-            ${overlayHtml || ''}
         </div>`;
 }
 
 const STATES = [
     {
         title: '① 未登录 · 合伙人计划页',
-        desc: '展示计划介绍与 CTA；点击「立即申请」在当前页弹出连接钱包引导（见右侧示意层，非独立画框）',
+        desc: '展示计划介绍与 CTA；仅「立即申请」按钮，点击走全站连接钱包（无独立弹窗画框）',
         render: () => webFrameHtml(
             navHtml(false) + pageContentHtml({ loggedIn: false }),
-            'forx.finance / 合伙人计划',
-            loginModalHtml()
+            'forx.finance / 合伙人计划'
         )
     },
     {
@@ -261,7 +239,7 @@ const STATES = [
     },
     {
         title: '③ 已是合伙人 · 不可申请',
-        desc: '任意层级合伙人（一级 / 二级 / 三级…）登录后不可提交，引导前往合伙人管理中心',
+        desc: '合伙人账号登录后不可提交，引导前往合伙人管理中心',
         render: () => webFrameHtml(navHtml(true) + pageContentHtml({ partnerBlocked: true }), 'forx.finance / 合伙人计划 · 合伙人身份')
     }
 ];
