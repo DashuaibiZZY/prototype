@@ -40,7 +40,7 @@
         {
             title: '排行榜',
             items: [
-                { key: 'leaderboard', label: '排行榜影子配置', href: '排行榜后台.html' }
+                { key: 'leaderboard', label: '排行榜用户数据配置', href: '排行榜后台.html' }
             ]
         },
         {

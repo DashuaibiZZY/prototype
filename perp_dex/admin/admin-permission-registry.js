@@ -14,7 +14,7 @@
         { id: 'trial.logs', module: '体验金', label: '操作记录', writeHint: '审计只读' },
         { id: 'freeze.settings', module: '风控冻结', label: '用户冻结设置', writeHint: '配置/解除冻结' },
         { id: 'freeze.log', module: '风控冻结', label: '冻结操作记录', writeHint: '审计只读' },
-        { id: 'leaderboard', module: '排行榜', label: '排行榜影子配置', writeHint: '影子账户配置' },
+        { id: 'leaderboard', module: '排行榜', label: '排行榜用户数据配置', writeHint: '配置用户与榜单指标' },
         { id: 'fee.settings', module: '费率', label: '用户费率设置', writeHint: '提交费率审批' },
         { id: 'fee.approval', module: '费率', label: '费率审批', writeHint: '只读查看；审批走敏感组' },
         { id: 'fee.log', module: '费率', label: '费率操作记录', writeHint: '审计只读' },
