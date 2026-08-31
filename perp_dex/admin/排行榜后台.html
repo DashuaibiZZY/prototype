@@ -13,7 +13,6 @@
         .status-offline { background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
         .target-badge-platform { background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; }
         .target-badge-activity { background: #f5f3ff; color: #6d28d9; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; }
-        .period-badge { background: #f1f5f9; color: #334155; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; }
         .modal-overlay { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; align-items: center; justify-content: center; display: none; }
         .input-label { display: block; font-size: 10px; font-weight: 900; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.05em; }
         .search-input { border: 1px solid #e2e8f0; border-radius: 4px; padding: 6px 10px; font-size: 11px; outline: none; transition: border-color 0.2s; }
@@ -22,10 +21,12 @@
         .scope-type-btn { flex: 1; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; font-weight: 800; color: #64748b; background: #fff; transition: all 0.15s; }
         .scope-type-btn.active { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; box-shadow: inset 0 0 0 1px #2563eb; }
         .scope-type-btn.activity.active { border-color: #7c3aed; background: #f5f3ff; color: #6d28d9; box-shadow: inset 0 0 0 1px #7c3aed; }
-        .period-btn { padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; font-weight: 800; color: #64748b; background: #fff; }
-        .period-btn.active { border-color: #0f172a; background: #0f172a; color: #fff; }
         .hint-box { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 4px; padding: 8px 10px; font-size: 10px; color: #64748b; line-height: 1.5; }
         .readonly-box { background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 4px; padding: 10px 12px; font-size: 10px; color: #5b21b6; }
+        .activity-combobox-panel { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 120; background: #fff; border: 1px solid #e2e8f0; border-radius: 0.375rem; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12); overflow: hidden; }
+        .activity-option { display: block; width: 100%; text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 700; color: #334155; }
+        .activity-option:hover { background: #f8fafc; }
+        .activity-option.selected { background: #f5f3ff; color: #6d28d9; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -36,7 +37,7 @@
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
         <div>
             <h1 class="text-lg font-bold text-slate-800 italic uppercase">排行榜用户数据配置</h1>
-            <p class="text-[10px] text-slate-400 mt-0.5">生成用户并配置交易额、收益率、收益金额；支持全平台与活动子榜、日/周/月周期</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">生成用户并配置榜单指标；后端按数据时间写入，在 7D / 30D 等周期视图中可见</p>
         </div>
     </header>
 
@@ -44,7 +45,7 @@
 
         <section class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm space-y-3">
             <div class="grid grid-cols-12 gap-3 items-end">
-                <div class="col-span-2">
+                <div class="col-span-3">
                     <label class="input-label">UID / 钱包 / 邮箱</label>
                     <input type="text" id="filter-address" placeholder="输入 UID、钱包或邮箱" class="search-input w-full">
                 </div>
@@ -56,18 +57,9 @@
                         <option value="activity">平台活动</option>
                     </select>
                 </div>
-                <div class="col-span-2">
+                <div class="col-span-3">
                     <label class="input-label">活动名称</label>
                     <input type="text" id="filter-activity-name" placeholder="输入活动名关键词" class="search-input w-full" disabled>
-                </div>
-                <div class="col-span-2">
-                    <label class="input-label">周期类型</label>
-                    <select id="filter-period" class="search-input w-full bg-white font-bold">
-                        <option value="all">全部</option>
-                        <option value="daily">日榜</option>
-                        <option value="weekly">周榜</option>
-                        <option value="monthly">月榜</option>
-                    </select>
                 </div>
                 <div class="col-span-2">
                     <label class="input-label">配置状态</label>
@@ -83,7 +75,7 @@
                     <button onclick="resetFilters()" class="px-6 border border-slate-200 text-slate-400 font-bold py-1.5 rounded hover:bg-slate-50 transition-all">重置</button>
                 </div>
             </div>
-            <p class="text-[10px] text-slate-400">提示：活动范围会只读展示该活动排行榜是否开启及排序维度；数据按日/周/月窗口写入当前周期。</p>
+            <p class="text-[10px] text-slate-400">提示：活动下拉仅展示<strong>进行中</strong>且<strong>已开启排行榜</strong>的活动；数据按写入时间参与 7D / 30D 统计，无需选择周期类型。</p>
         </section>
 
         <section class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
@@ -101,11 +93,10 @@
                 <tr>
                     <th class="px-6 py-4">UID / 用户标识</th>
                     <th class="px-6 py-4">榜单范围</th>
-                    <th class="px-6 py-4 text-center">周期</th>
                     <th class="px-6 py-4 text-right">配置指标</th>
-                    <th class="px-6 py-4 text-center">活动榜</th>
+                    <th class="px-6 py-4 text-center">活动排序维度</th>
                     <th class="px-6 py-4 text-center">状态</th>
-                    <th class="px-6 py-4">生效时间</th>
+                    <th class="px-6 py-4">数据时间</th>
                     <th class="px-6 py-4 text-right">操作</th>
                 </tr>
                 </thead>
@@ -144,52 +135,50 @@
                 </div>
                 <div id="modal-activity-wrap" class="hidden space-y-2">
                     <label class="input-label">选择活动</label>
-                    <select id="modal-activity-select" class="w-full border border-slate-200 rounded p-2.5 font-bold text-violet-700 bg-violet-50 outline-none focus:border-violet-500" onchange="onActivitySelectChange()">
-                        <option value="">请选择活动</option>
-                        <option value="act-001">ForX嘉年华交易大赛</option>
-                        <option value="act-002">BTC 永续交易量冲榜</option>
-                        <option value="act-003">Q3 ROI 争霸赛</option>
-                        <option value="act-004">新春积分排位赛</option>
-                    </select>
+                    <div id="activity-combobox" class="relative">
+                        <button type="button" id="activity-combobox-trigger" onclick="toggleActivityDropdown()" class="w-full border border-slate-200 rounded p-2.5 text-left font-bold text-violet-700 bg-violet-50 outline-none focus:border-violet-500 flex items-center justify-between gap-2">
+                            <span id="activity-combobox-label" class="truncate text-slate-500 font-bold">搜索并选择活动…</span>
+                            <span class="text-slate-400 shrink-0">▾</span>
+                        </button>
+                        <div id="activity-combobox-panel" class="activity-combobox-panel hidden">
+                            <div class="p-2 border-b border-slate-100 bg-slate-50">
+                                <input id="activity-combobox-search" type="text" placeholder="搜索活动名称…" class="search-input w-full bg-white" oninput="filterActivityOptions()">
+                            </div>
+                            <div id="activity-combobox-options" class="max-h-44 overflow-y-auto py-1"></div>
+                        </div>
+                        <input type="hidden" id="modal-activity-id" value="">
+                    </div>
+                    <p class="text-[9px] text-slate-400 italic">仅展示<strong>进行中</strong>且<strong>已开启排行榜</strong>的活动。</p>
                     <div id="modal-activity-readonly" class="readonly-box hidden">
                         <p class="font-black mb-1">活动排行榜配置（只读）</p>
-                        <p id="activity-rank-enabled">—</p>
                         <p id="activity-rank-dimension">—</p>
                     </div>
                 </div>
             </section>
 
             <section class="space-y-3">
-                <h4 class="text-slate-900 font-black border-b pb-2 uppercase tracking-tighter">3. 周期类型</h4>
-                <div class="flex gap-2">
-                    <button type="button" class="period-btn active" data-period="daily" onclick="setModalPeriod('daily', this)">日榜</button>
-                    <button type="button" class="period-btn" data-period="weekly" onclick="setModalPeriod('weekly', this)">周榜</button>
-                    <button type="button" class="period-btn" data-period="monthly" onclick="setModalPeriod('monthly', this)">月榜</button>
-                </div>
-                <div class="hint-box">保存后指标写入<strong>当前时间</strong>所在的日/周/月统计窗口（后端聚合）。</div>
-            </section>
-
-            <section class="space-y-3">
-                <h4 class="text-slate-900 font-black border-b pb-2 uppercase tracking-tighter">4. 配置指标</h4>
-                <div class="grid grid-cols-3 gap-4">
+                <h4 class="text-slate-900 font-black border-b pb-2 uppercase tracking-tighter">3. 配置指标</h4>
+                <div id="modal-metrics-platform" class="grid grid-cols-3 gap-4">
                     <div>
                         <label class="input-label">收益金额 PnL (USDT)</label>
-                        <input type="number" id="modal-pnl" step="0.01" placeholder="如 86420.50" class="search-input w-full font-black text-green-700">
+                        <input type="number" id="modal-pnl" step="0.01" value="0" class="search-input w-full font-black text-green-700">
                     </div>
                     <div>
                         <label class="input-label">收益率 ROI (%)</label>
-                        <input type="number" id="modal-roi" step="0.01" placeholder="如 42.18" class="search-input w-full font-black">
+                        <input type="number" id="modal-roi" step="0.01" value="0" class="search-input w-full font-black">
                     </div>
                     <div>
                         <label class="input-label">交易额 Volume (USDT)</label>
-                        <input type="number" id="modal-volume" step="0.01" placeholder="如 5200000" class="search-input w-full font-black text-amber-700">
+                        <input type="number" id="modal-volume" step="0.01" value="0" class="search-input w-full font-black text-amber-700">
                     </div>
                 </div>
+                <div id="modal-metrics-activity" class="grid gap-4 hidden"></div>
+                <div class="hint-box" id="metrics-hint">全平台默认展示三项指标，初始值均为 <strong>0</strong>；保存时按<strong>数据写入时间</strong>参与 7D / 30D 等周期统计。</div>
             </section>
 
             <section class="space-y-3">
-                <h4 class="text-slate-900 font-black border-b pb-2 uppercase tracking-tighter">5. 生效策略</h4>
-                <div class="flex gap-4 items-center">
+                <h4 class="text-slate-900 font-black border-b pb-2 uppercase tracking-tighter">4. 生效策略</h4>
+                <div class="flex gap-4 items-center flex-wrap">
                     <label class="flex items-center gap-2 cursor-pointer font-bold text-slate-700">
                         <input type="radio" name="effective-mode" value="now" checked onchange="onEffectiveModeChange()"> 立即生效
                     </label>
@@ -198,7 +187,7 @@
                     </label>
                     <input type="date" id="modal-effective-date" disabled class="search-input">
                 </div>
-                <p class="text-[9px] text-slate-400 italic">指定日期须 ≥ 今天；到达该日 00:00 后写入该日所属周期并变为「生效中」。默认推荐立即生效。</p>
+                <p class="text-[9px] text-slate-400 italic">指定日期须 ≥ 今天；到达该日 00:00 后写入数据并变为「生效中」。默认推荐立即生效。</p>
             </section>
         </div>
 
@@ -211,64 +200,38 @@
 
 <script src="admin-pagination.js"></script>
 <script>
-    const ACTIVITY_META = {
-        'act-001': { name: 'ForX嘉年华交易大赛', rankEnabled: true, dimensions: ['交易额', '收益率', '收益金额'] },
-        'act-002': { name: 'BTC 永续交易量冲榜', rankEnabled: true, dimensions: ['交易额'] },
-        'act-003': { name: 'Q3 ROI 争霸赛', rankEnabled: true, dimensions: ['收益率'] },
-        'act-004': { name: '新春积分排位赛', rankEnabled: false, dimensions: [] }
+    var DIMENSION_KEYS = { '收益金额': 'pnl', '收益率': 'roi', '交易额': 'volume' };
+    var DIMENSION_LABELS = { pnl: '收益金额 PnL (USDT)', roi: '收益率 ROI (%)', volume: '交易额 Volume (USDT)' };
+
+    var ACTIVITY_META = {
+        'act-001': { name: 'ForX嘉年华交易大赛', ongoing: true, rankEnabled: true, dimensions: ['交易额', '收益率', '收益金额'] },
+        'act-002': { name: 'BTC 永续交易量冲榜', ongoing: true, rankEnabled: true, dimensions: ['交易额'] },
+        'act-003': { name: 'Q3 ROI 争霸赛', ongoing: true, rankEnabled: true, dimensions: ['收益率', '收益金额'] },
+        'act-004': { name: '新春积分排位赛', ongoing: false, rankEnabled: false, dimensions: [] },
+        'act-005': { name: 'ETH 周度交易赛', ongoing: true, rankEnabled: false, dimensions: [] }
     };
 
-    const PERIOD_LABEL = { daily: '日榜', weekly: '周榜', monthly: '月榜' };
-    const STATUS_LABEL = { active: '生效中', pending: '待生效', offline: '已停用' };
+    var STATUS_LABEL = { active: '生效中', pending: '待生效', offline: '已停用' };
 
-    let configRows = [
+    var configRows = [
         {
-            id: 1,
-            uid: '10088001',
-            wallet: '0x7a8b...C443',
-            scopeType: 'platform',
-            activityId: '',
-            activityName: '',
-            period: 'weekly',
-            pnl: 1240000,
-            roi: 124.52,
-            volume: 12800000,
-            rankEnabled: null,
-            rankDimensions: [],
-            status: 'active',
-            effectiveAt: '2026-08-31 14:20（立即）'
+            id: 1, uid: '10088001', wallet: '0x7a8b...C443', scopeType: 'platform',
+            activityId: '', activityName: '', dimensions: ['pnl', 'roi', 'volume'],
+            pnl: 1240000, roi: 124.52, volume: 12800000,
+            status: 'active', dataTime: '2026-08-31 14:20', effectiveAt: '立即生效'
         },
         {
-            id: 2,
-            uid: '10088002',
-            wallet: '0x3f21...9A12',
-            scopeType: 'activity',
-            activityId: 'act-001',
-            activityName: 'ForX嘉年华交易大赛',
-            period: 'daily',
-            pnl: 86420.5,
-            roi: 42.18,
-            volume: 5200000,
-            rankEnabled: true,
-            rankDimensions: ['交易额', '收益率', '收益金额'],
-            status: 'active',
-            effectiveAt: '2026-08-31 09:00（立即）'
+            id: 2, uid: '10088002', wallet: '0x3f21...9A12', scopeType: 'activity',
+            activityId: 'act-001', activityName: 'ForX嘉年华交易大赛',
+            dimensions: ['volume', 'roi', 'pnl'],
+            pnl: 86420.5, roi: 42.18, volume: 5200000,
+            status: 'active', dataTime: '2026-08-31 09:00', effectiveAt: '立即生效'
         },
         {
-            id: 3,
-            uid: '10088003',
-            wallet: '0xAb12...77E0',
-            scopeType: 'activity',
-            activityId: 'act-002',
-            activityName: 'BTC 永续交易量冲榜',
-            period: 'monthly',
-            pnl: 12000,
-            roi: 8.5,
-            volume: 980000,
-            rankEnabled: true,
-            rankDimensions: ['交易额'],
-            status: 'pending',
-            effectiveAt: '2026-09-05 00:00（预约）'
+            id: 3, uid: '10088003', wallet: '0xAb12...77E0', scopeType: 'activity',
+            activityId: 'act-002', activityName: 'BTC 永续交易量冲榜',
+            dimensions: ['volume'], pnl: null, roi: null, volume: 980000,
+            status: 'pending', dataTime: '—', effectiveAt: '2026-09-05 00:00'
         }
     ];
 
@@ -277,6 +240,7 @@
             var isActivity = i % 2 === 0;
             var actId = isActivity ? 'act-003' : '';
             var meta = actId ? ACTIVITY_META[actId] : null;
+            var dims = meta ? meta.dimensions.map(function (d) { return DIMENSION_KEYS[d]; }) : ['pnl', 'roi', 'volume'];
             configRows.push({
                 id: i,
                 uid: '10088' + String(100 + i),
@@ -284,26 +248,35 @@
                 scopeType: isActivity ? 'activity' : 'platform',
                 activityId: actId,
                 activityName: meta ? meta.name : '',
-                period: ['daily', 'weekly', 'monthly'][i % 3],
-                pnl: i * 12500,
-                roi: i * 3.2,
-                volume: i * 420000,
-                rankEnabled: meta ? meta.rankEnabled : null,
-                rankDimensions: meta ? meta.dimensions : [],
+                dimensions: dims,
+                pnl: dims.indexOf('pnl') >= 0 ? i * 12500 : null,
+                roi: dims.indexOf('roi') >= 0 ? i * 3.2 : null,
+                volume: dims.indexOf('volume') >= 0 ? i * 420000 : null,
                 status: i % 5 === 0 ? 'offline' : (i % 4 === 0 ? 'pending' : 'active'),
-                effectiveAt: i % 4 === 0 ? '2026-09-0' + (i % 9 + 1) + ' 00:00（预约）' : '2026-08-31（立即）'
+                dataTime: i % 4 === 0 ? '—' : '2026-08-' + String(10 + (i % 20)).padStart(2, '0') + ' 12:00',
+                effectiveAt: i % 4 === 0 ? '2026-09-0' + (i % 9 + 1) + ' 00:00' : '立即生效'
             });
         }
     })();
 
-    let modalScope = 'platform';
-    let modalPeriod = 'daily';
-    let editingId = null;
-    let filteredRows = configRows.slice();
-    let listPage = 1;
-    let nextUidSeed = 10088100;
+    var modalScope = 'platform';
+    var editingId = null;
+    var filteredRows = configRows.slice();
+    var listPage = 1;
+    var nextUidSeed = 10088100;
+    var activityDropdownOpen = false;
+
+    function getSelectableActivities() {
+        return Object.keys(ACTIVITY_META)
+            .filter(function (id) {
+                var m = ACTIVITY_META[id];
+                return m.ongoing && m.rankEnabled;
+            })
+            .map(function (id) { return { id: id, name: ACTIVITY_META[id].name }; });
+    }
 
     function formatMoney(n) {
+        if (n == null) return '—';
         if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
         if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
         return '$' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
@@ -325,6 +298,7 @@
     function toggleModal(id) {
         var modal = document.getElementById(id);
         modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
+        if (id === 'modal-edit-config' && modal.style.display === 'none') closeActivityDropdown();
     }
 
     function onFilterScopeChange() {
@@ -338,7 +312,6 @@
         document.getElementById('filter-address').value = '';
         document.getElementById('filter-scope-type').value = 'all';
         document.getElementById('filter-activity-name').value = '';
-        document.getElementById('filter-period').value = 'all';
         document.getElementById('filter-status').value = 'all';
         onFilterScopeChange();
         filteredRows = configRows.slice();
@@ -350,7 +323,6 @@
         var address = document.getElementById('filter-address').value.trim().toLowerCase();
         var scopeType = document.getElementById('filter-scope-type').value;
         var activityName = document.getElementById('filter-activity-name').value.trim().toLowerCase();
-        var period = document.getElementById('filter-period').value;
         var status = document.getElementById('filter-status').value;
 
         filteredRows = configRows.filter(function (row) {
@@ -360,7 +332,6 @@
             }
             if (scopeType !== 'all' && row.scopeType !== scopeType) return false;
             if (scopeType === 'activity' && activityName && (row.activityName || '').toLowerCase().indexOf(activityName) === -1) return false;
-            if (period !== 'all' && row.period !== period) return false;
             if (status !== 'all' && row.status !== status) return false;
             return true;
         });
@@ -369,16 +340,29 @@
     }
 
     function renderScopeCell(row) {
-        if (row.scopeType === 'platform') {
-            return '<span class="target-badge-platform">全平台</span>';
-        }
+        if (row.scopeType === 'platform') return '<span class="target-badge-platform">全平台</span>';
         return '<div class="space-y-1"><span class="target-badge-activity">平台活动</span><p class="text-[10px] font-bold text-violet-700 leading-tight">' + row.activityName + '</p></div>';
     }
 
-    function renderActivityRankCell(row) {
+    function renderMetricsCell(row) {
+        var lines = [];
+        if (row.dimensions.indexOf('pnl') >= 0 && row.pnl != null) {
+            lines.push('<p class="text-green-600 font-black">' + (row.pnl >= 0 ? '+' : '') + formatMoney(row.pnl) + '</p>');
+        }
+        if (row.dimensions.indexOf('roi') >= 0 && row.roi != null) {
+            lines.push('<p class="font-bold">' + row.roi.toFixed(2) + '%</p>');
+        }
+        if (row.dimensions.indexOf('volume') >= 0 && row.volume != null) {
+            lines.push('<p class="text-amber-700 font-bold">' + formatMoney(row.volume) + '</p>');
+        }
+        return lines.length ? lines.join('') : '<span class="text-slate-300">—</span>';
+    }
+
+    function renderActivityDimCell(row) {
         if (row.scopeType !== 'activity') return '<span class="text-slate-300">—</span>';
-        if (!row.rankEnabled) return '<span class="text-amber-600 font-bold">未开启</span>';
-        return '<span class="text-violet-700 font-bold">' + row.rankDimensions.join(' / ') + '</span>';
+        var meta = ACTIVITY_META[row.activityId];
+        if (!meta) return '<span class="text-slate-300">—</span>';
+        return '<span class="text-violet-700 font-bold">' + meta.dimensions.join(' / ') + '</span>';
     }
 
     function renderTable() {
@@ -388,25 +372,19 @@
         document.getElementById('filter-result-hint').textContent = '共 ' + filteredRows.length + ' 条';
 
         if (!filteredRows.length) {
-            tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-10 text-center text-slate-400 font-bold">暂无匹配的配置用户</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-10 text-center text-slate-400 font-bold">暂无匹配的配置用户</td></tr>';
             configMountPag('config-table-pagination', 0, 1, 'config-list');
             return;
         }
 
         tbody.innerHTML = sliced.items.map(function (row) {
-            var pnlStr = (row.pnl >= 0 ? '+' : '') + formatMoney(row.pnl);
             return '<tr class="hover:bg-slate-50/50 transition-colors">' +
                 '<td class="px-6 py-4">' + (window.AdminCopyChip ? AdminCopyChip.userIdentity({ uid: row.uid, wallet: row.wallet }) : '<span class="font-black">' + row.uid + '</span>') + '</td>' +
                 '<td class="px-6 py-4">' + renderScopeCell(row) + '</td>' +
-                '<td class="px-6 py-4 text-center"><span class="period-badge">' + PERIOD_LABEL[row.period] + '</span></td>' +
-                '<td class="px-6 py-4 text-right space-y-0.5">' +
-                    '<p class="text-green-600 font-black">' + pnlStr + '</p>' +
-                    '<p class="font-bold">' + row.roi.toFixed(2) + '%</p>' +
-                    '<p class="text-amber-700 font-bold">' + formatMoney(row.volume) + '</p>' +
-                '</td>' +
-                '<td class="px-6 py-4 text-center text-[10px]">' + renderActivityRankCell(row) + '</td>' +
+                '<td class="px-6 py-4 text-right space-y-0.5">' + renderMetricsCell(row) + '</td>' +
+                '<td class="px-6 py-4 text-center text-[10px]">' + renderActivityDimCell(row) + '</td>' +
                 '<td class="px-6 py-4 text-center"><span class="status-' + (row.status === 'pending' ? 'pending' : row.status) + '">' + STATUS_LABEL[row.status] + '</span></td>' +
-                '<td class="px-6 py-4 text-[10px] text-slate-500">' + row.effectiveAt + '</td>' +
+                '<td class="px-6 py-4 text-[10px] text-slate-500"><div>' + row.dataTime + '</div><div class="text-slate-400">' + row.effectiveAt + '</div></td>' +
                 '<td class="px-6 py-4 text-right space-x-3">' +
                     '<button onclick="openConfigModal(' + row.id + ')" class="text-blue-600 font-black hover:underline">编辑</button>' +
                     (row.status !== 'offline' ? '<button onclick="deactivateConfig(' + row.id + ')" class="text-red-500 font-bold hover:underline">停用</button>' : '') +
@@ -415,31 +393,121 @@
         configMountPag('config-table-pagination', sliced.total, listPage, 'config-list');
     }
 
+    function toggleActivityDropdown() {
+        activityDropdownOpen = !activityDropdownOpen;
+        document.getElementById('activity-combobox-panel').classList.toggle('hidden', !activityDropdownOpen);
+        if (activityDropdownOpen) {
+            document.getElementById('activity-combobox-search').value = '';
+            filterActivityOptions();
+            document.getElementById('activity-combobox-search').focus();
+        }
+    }
+
+    function closeActivityDropdown() {
+        activityDropdownOpen = false;
+        document.getElementById('activity-combobox-panel').classList.add('hidden');
+    }
+
+    function filterActivityOptions() {
+        var q = document.getElementById('activity-combobox-search').value.trim().toLowerCase();
+        var selected = document.getElementById('modal-activity-id').value;
+        var options = getSelectableActivities().filter(function (a) {
+            return !q || a.name.toLowerCase().indexOf(q) >= 0;
+        });
+        var container = document.getElementById('activity-combobox-options');
+        if (!options.length) {
+            container.innerHTML = '<p class="px-3 py-4 text-center text-slate-400 text-[10px]">无匹配活动</p>';
+            return;
+        }
+        container.innerHTML = options.map(function (a) {
+            return '<button type="button" class="activity-option' + (a.id === selected ? ' selected' : '') + '" onclick="selectActivity(\'' + a.id + '\')">' + a.name + '</button>';
+        }).join('');
+    }
+
+    function selectActivity(id) {
+        document.getElementById('modal-activity-id').value = id;
+        document.getElementById('activity-combobox-label').textContent = ACTIVITY_META[id].name;
+        document.getElementById('activity-combobox-label').classList.remove('text-slate-500');
+        document.getElementById('activity-combobox-label').classList.add('text-violet-700');
+        closeActivityDropdown();
+        onActivitySelectChange();
+    }
+
+    function clearActivitySelection() {
+        document.getElementById('modal-activity-id').value = '';
+        document.getElementById('activity-combobox-label').textContent = '搜索并选择活动…';
+        document.getElementById('activity-combobox-label').classList.add('text-slate-500');
+        document.getElementById('activity-combobox-label').classList.remove('text-violet-700');
+        document.getElementById('modal-activity-readonly').classList.add('hidden');
+    }
+
+    function renderActivityMetricFields(dimensions, values) {
+        var container = document.getElementById('modal-metrics-activity');
+        container.innerHTML = dimensions.map(function (dimName) {
+            var key = DIMENSION_KEYS[dimName];
+            var val = values && values[key] != null ? values[key] : 0;
+            var color = key === 'pnl' ? ' text-green-700' : (key === 'volume' ? ' text-amber-700' : '');
+            return '<div><label class="input-label">' + DIMENSION_LABELS[key] + '</label>' +
+                '<input type="number" id="modal-act-' + key + '" step="0.01" value="' + val + '" class="search-input w-full font-black' + color + '"></div>';
+        }).join('');
+        container.className = 'grid gap-4 grid-cols-' + Math.min(dimensions.length, 3);
+    }
+
+    function getActivityMetricValues() {
+        var id = document.getElementById('modal-activity-id').value;
+        if (!id) return null;
+        var meta = ACTIVITY_META[id];
+        var out = {};
+        meta.dimensions.forEach(function (dimName) {
+            var key = DIMENSION_KEYS[dimName];
+            var el = document.getElementById('modal-act-' + key);
+            out[key] = el ? parseFloat(el.value) : 0;
+        });
+        return out;
+    }
+
+    function updateMetricsPanel() {
+        var platformPanel = document.getElementById('modal-metrics-platform');
+        var activityPanel = document.getElementById('modal-metrics-activity');
+        var hint = document.getElementById('metrics-hint');
+        if (modalScope === 'platform') {
+            platformPanel.classList.remove('hidden');
+            activityPanel.classList.add('hidden');
+            hint.innerHTML = '全平台展示<strong>三项指标</strong>，默认值均为 <strong>0</strong>；保存时按数据写入时间参与 7D / 30D 统计。';
+        } else {
+            platformPanel.classList.add('hidden');
+            activityPanel.classList.remove('hidden');
+            var id = document.getElementById('modal-activity-id').value;
+            if (id && ACTIVITY_META[id]) {
+                renderActivityMetricFields(ACTIVITY_META[id].dimensions, null);
+                hint.innerHTML = '活动榜仅展示该活动<strong>已启用</strong>的排序维度对应输入框。';
+            } else {
+                activityPanel.innerHTML = '<p class="text-[10px] text-slate-400 italic">请先选择活动</p>';
+                hint.innerHTML = '选择活动后，仅显示该活动支持的排行榜指标输入框。';
+            }
+        }
+    }
+
     function setModalScope(type) {
         modalScope = type;
         document.getElementById('modal-scope-platform').classList.toggle('active', type === 'platform');
         document.getElementById('modal-scope-activity').classList.toggle('active', type === 'activity');
         document.getElementById('modal-activity-wrap').classList.toggle('hidden', type !== 'activity');
-        if (type === 'activity') onActivitySelectChange();
-        else document.getElementById('modal-activity-readonly').classList.add('hidden');
-    }
-
-    function setModalPeriod(period, btn) {
-        modalPeriod = period;
-        document.querySelectorAll('.period-btn').forEach(function (b) { b.classList.remove('active'); });
-        btn.classList.add('active');
+        if (type !== 'activity') {
+            clearActivitySelection();
+            closeActivityDropdown();
+        }
+        updateMetricsPanel();
     }
 
     function onActivitySelectChange() {
-        var id = document.getElementById('modal-activity-select').value;
+        var id = document.getElementById('modal-activity-id').value;
         var box = document.getElementById('modal-activity-readonly');
-        if (!id) { box.classList.add('hidden'); return; }
+        if (!id) { box.classList.add('hidden'); updateMetricsPanel(); return; }
         var meta = ACTIVITY_META[id];
         box.classList.remove('hidden');
-        document.getElementById('activity-rank-enabled').textContent = '排行榜：' + (meta.rankEnabled ? '已开启' : '未开启');
-        document.getElementById('activity-rank-dimension').textContent = meta.rankEnabled
-            ? '排序维度：' + meta.dimensions.join('、')
-            : '该活动未启用交易大赛模块，配置用户暂不参与活动子榜';
+        document.getElementById('activity-rank-dimension').textContent = '排序维度：' + meta.dimensions.join('、');
+        updateMetricsPanel();
     }
 
     function onEffectiveModeChange() {
@@ -459,35 +527,37 @@
         document.getElementById('modal-uid').value = String(nextUidSeed);
     }
 
+    function setPlatformMetricValues(row) {
+        document.getElementById('modal-pnl').value = row && row.pnl != null ? row.pnl : 0;
+        document.getElementById('modal-roi').value = row && row.roi != null ? row.roi : 0;
+        document.getElementById('modal-volume').value = row && row.volume != null ? row.volume : 0;
+    }
+
     function openConfigModal(id) {
         editingId = id || null;
         document.getElementById('modal-title').textContent = id ? '编辑配置用户' : '新增配置用户';
         document.getElementById('btn-generate-user').disabled = !!id;
+        closeActivityDropdown();
 
         if (id) {
             var row = configRows.find(function (r) { return r.id === id; });
             document.getElementById('modal-uid').value = row.uid;
             setModalScope(row.scopeType);
-            document.getElementById('modal-activity-select').value = row.activityId || '';
-            onActivitySelectChange();
-            document.querySelectorAll('.period-btn').forEach(function (b) {
-                b.classList.toggle('active', b.getAttribute('data-period') === row.period);
-            });
-            modalPeriod = row.period;
-            document.getElementById('modal-pnl').value = row.pnl;
-            document.getElementById('modal-roi').value = row.roi;
-            document.getElementById('modal-volume').value = row.volume;
+            if (row.activityId) selectActivity(row.activityId);
+            else clearActivitySelection();
+            if (row.scopeType === 'platform') {
+                setPlatformMetricValues(row);
+            } else if (row.activityId) {
+                renderActivityMetricFields(ACTIVITY_META[row.activityId].dimensions, row);
+            }
             document.querySelector('input[name="effective-mode"][value="now"]').checked = row.status !== 'pending';
             document.querySelector('input[name="effective-mode"][value="scheduled"]').checked = row.status === 'pending';
             onEffectiveModeChange();
         } else {
             document.getElementById('modal-uid').value = '';
             setModalScope('platform');
-            document.getElementById('modal-activity-select').value = '';
-            setModalPeriod('daily', document.querySelector('.period-btn[data-period="daily"]'));
-            document.getElementById('modal-pnl').value = '';
-            document.getElementById('modal-roi').value = '';
-            document.getElementById('modal-volume').value = '';
+            clearActivitySelection();
+            setPlatformMetricValues(null);
             document.querySelector('input[name="effective-mode"][value="now"]').checked = true;
             onEffectiveModeChange();
         }
@@ -497,15 +567,17 @@
     function saveConfig() {
         var uid = document.getElementById('modal-uid').value.trim();
         if (!uid) { alert('请先生成新用户'); return; }
-        if (modalScope === 'activity' && !document.getElementById('modal-activity-select').value) {
+        if (modalScope === 'activity' && !document.getElementById('modal-activity-id').value) {
             alert('请选择活动'); return;
         }
-        var pnl = document.getElementById('modal-pnl').value;
-        var roi = document.getElementById('modal-roi').value;
-        var volume = document.getElementById('modal-volume').value;
-        if (pnl === '' || roi === '' || volume === '') { alert('请填写完整的交易额、收益率、收益金额'); return; }
+        if (modalScope === 'platform') {
+            /* defaults 0 are valid */
+        } else {
+            var vals = getActivityMetricValues();
+            if (!vals) { alert('请选择活动'); return; }
+        }
 
-        alert('配置已保存，数据将写入当前' + PERIOD_LABEL[modalPeriod] + '统计窗口');
+        alert('配置已保存；数据将按写入时间参与 7D / 30D 排行榜统计');
         toggleModal('modal-edit-config');
     }
 
@@ -515,6 +587,11 @@
         if (row) row.status = 'offline';
         applyFilters();
     }
+
+    document.addEventListener('click', function (e) {
+        var combobox = document.getElementById('activity-combobox');
+        if (combobox && !combobox.contains(e.target)) closeActivityDropdown();
+    });
 
     renderTable();
     if (window.AdminPagination) {
