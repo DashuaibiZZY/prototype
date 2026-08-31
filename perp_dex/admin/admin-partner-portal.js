@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-33';
+    const DATA_VERSION = 'partner-demo-34';
     const CURRENT_OPERATOR = 'allen@forx.fi';
     const USER_SCALE_TIP = '交易用户数据每天 UTC+8 0 点更新';
     const RECONCILIATION_DOWNLOAD_COOLDOWN_MS = 10 * 60 * 1000;
@@ -1857,6 +1857,89 @@
         closeBindModal();
     }
 
+    function applyL1BindFromApplication(opts) {
+        if (!opts || !opts.uid) return;
+        const uid = String(opts.uid).trim();
+        const ratio = parseFloat(opts.ratio);
+        const remark = (opts.remark || '').trim();
+        const operator = (opts.operator || '').trim();
+        if (!ratio || !remark || !operator) return;
+
+        const subject = resolveBindSubject(uid);
+        if (subject && subject.kind === 'already_l1') {
+            alert('该用户已是一级代理');
+            return;
+        }
+        if (subject && subject.kind === 'partner_n' && subject.maxDirectSubRatio != null && ratio < subject.maxDirectSubRatio) {
+            alert('一级返佣比例不能低于直属下级合伙人最大返佣 ' + subject.maxDirectSubRatio + '%');
+            return;
+        }
+
+        const wallet = (subject && subject.user && subject.user.wallet) || '—';
+        const exceedsCap = ratio > OPS_CAP;
+        const crossBd = subject && subject.user && getCrossBdInfo(subject.user);
+        const payloadBase = {
+            uid: uid, wallet: wallet, ratio: ratio, opsCap: OPS_CAP, exceedsCap: exceedsCap,
+            operator: operator,
+            crossBd: !!crossBd,
+            originalBd: crossBd ? crossBd.originalBd : '',
+            crossBdReason: crossBd ? remark : '',
+            subjectKind: subject ? subject.kind : 'unknown',
+            subjectLabel: subject ? subject.identityLabel : '合伙人计划申请',
+            upgradeScope: subject && subject.kind === 'partner_n' ? '整伞返佣树' : '直客一并迁移',
+            attachments: [], attachmentPreviews: {}
+        };
+
+        if ((exceedsCap || crossBd) && typeof submitApprovalApplication === 'function') {
+            submitApprovalApplication({
+                type: crossBd ? 'partner_l1_bind_cross' : 'partner_l1_bind',
+                title: crossBd ? '一级合伙人绑定（跨权限）' : '一级合伙人绑定（超上限）',
+                flowProfile: 'risk_boss',
+                applicant: 'Mkt_Allen', remark: remark,
+                summary: '合伙人计划 · UID ' + uid + ' · ' + ratio + '% · 运营 ' + operator,
+                payload: payloadBase
+            });
+            alert('已提交审批，审批通过后将即刻生效（演示）');
+        } else {
+            applyL1BindPayload(payloadBase);
+            if (!LIST_IDS.some(function (id) {
+                const u = getUser(id);
+                return u && u.uid === uid;
+            })) {
+                const nu = findUserByWalletOrUid(wallet, uid);
+                if (nu && LIST_IDS.indexOf(nu.id) < 0) LIST_IDS.push(nu.id);
+            }
+            alert('已设置为一级合伙人（' + ratio + '%），负责运营 ' + operator + '（演示）');
+        }
+        if (window.PartnerApplications && opts.applicationId) {
+            PartnerApplications.markApproved(opts.applicationId);
+        }
+    }
+
+    function previewBindPartnerFromUid(uid, cardId, ratioHintId) {
+        const subject = uid ? resolveBindSubject(uid) : null;
+        const card = document.getElementById(cardId || 'bind-subject-card');
+        const ratioHint = document.getElementById(ratioHintId || 'bind-ratio-hint');
+        const ratioInput = document.getElementById('app-bind-ratio') || document.getElementById('bind-ratio');
+        if (!card) return;
+        if (!subject) {
+            card.classList.add('hidden');
+            if (ratioHint) ratioHint.textContent = '';
+            return;
+        }
+        card.classList.remove('hidden');
+        card.innerHTML =
+            '<p class="font-black text-slate-800 mb-2">' + subject.identityLabel + '</p>' +
+            '<p class="text-slate-600">UID ' + (subject.user.uid || '—') + ' · ' + (subject.user.wallet || '—') + '</p>' +
+            (subject.currentParent && subject.currentParent !== '—' ? '<p class="text-slate-500 mt-1">原上级：' + subject.currentParent + '</p>' : '');
+        if (ratioHint && subject.kind === 'partner_n' && subject.maxDirectSubRatio != null) {
+            ratioHint.textContent = '须 ≥ 直属下级最大返佣 ' + subject.maxDirectSubRatio + '%';
+            if (ratioInput) ratioInput.min = String(subject.maxDirectSubRatio);
+        } else if (ratioHint) {
+            ratioHint.textContent = subject.kind === 'already_l1' ? '该用户已是一级代理，不可重复设置' : '';
+        }
+    }
+
     function findUserByWalletOrUid(wallet, uid) {
         return USERS.find(function (u) {
             return (wallet && wallet !== '—' && u.wallet === wallet) || (uid && uid !== '—' && u.uid === uid);
@@ -1869,6 +1952,7 @@
         let u = findUserByWalletOrUid(p.wallet, p.uid);
         if (u) {
             u.ratio = p.ratio;
+            if (p.operator) u.operator = p.operator;
             if (u.level !== 1) {
                 u.level = 1;
                 u.parentWallet = null;
@@ -1884,7 +1968,7 @@
                 ratio: p.ratio,
                 parentWallet: null,
                 rootWallet: wallet,
-                operator: 'allen@forx.fi',
+                operator: p.operator || 'allen@forx.fi',
                 bindTime: new Date().toISOString().slice(0, 10),
                 settleStatus: 'normal', pendingSettlement: 0, freezeStatus: null,
                 vol: '$0', deposit: '+$0', usersTotal: 0, usersActive: 0,
@@ -3706,7 +3790,9 @@
         getDetailDrillStack: function () { return detailDrillStack.slice(); },
         downloadSettlementReconciliationPackage: downloadSettlementReconciliationPackage,
         applyHashTree: applyHashTree, DATA_VERSION: DATA_VERSION,
-        applyPartnerApprovalEffect: applyPartnerApprovalEffect
+        applyPartnerApprovalEffect: applyPartnerApprovalEffect,
+        applyL1BindFromApplication: applyL1BindFromApplication,
+        previewBindPartnerFromUid: previewBindPartnerFromUid
     };
 
     window.applyPartnerApprovalEffect = applyPartnerApprovalEffect;

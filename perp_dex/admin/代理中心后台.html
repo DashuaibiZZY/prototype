@@ -111,6 +111,84 @@
             </section>
         </div>
 
+        <!-- 合伙人申请管理 -->
+        <div id="page-partner-applications" class="hidden space-y-6">
+            <section class="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">UID / 钱包 / 邮箱</label>
+                        <input id="app-filter-q" type="text" placeholder="模糊搜索" class="border p-2 rounded w-full outline-none focus:ring-1 focus:ring-blue-600" oninput="PartnerApplications.applyAppFilters()">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Telegram</label>
+                        <input id="app-filter-telegram" type="text" placeholder="@username" class="border p-2 rounded w-full outline-none focus:ring-1 focus:ring-blue-600" oninput="PartnerApplications.applyAppFilters()">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">X 账号</label>
+                        <input id="app-filter-x" type="text" placeholder="@username" class="border p-2 rounded w-full outline-none focus:ring-1 focus:ring-blue-600" oninput="PartnerApplications.applyAppFilters()">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">YouTube</label>
+                        <input id="app-filter-youtube" type="text" placeholder="频道名" class="border p-2 rounded w-full outline-none focus:ring-1 focus:ring-blue-600" oninput="PartnerApplications.applyAppFilters()">
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-3">
+                    <button type="button" onclick="PartnerApplications.resetAppFilters()" class="px-4 py-2 border rounded font-bold text-slate-500 text-[11px]">重置</button>
+                </div>
+            </section>
+            <section class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+                <div class="px-4 py-3 border-b border-slate-100 flex justify-between items-center">
+                    <span class="font-bold text-slate-700">合伙人计划申请列表</span>
+                    <span class="text-[10px] text-slate-400">来源：用户 Web「ForX 合伙人计划」申请表</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left min-w-[1600px] text-[11px]">
+                        <thead class="bg-slate-50 text-slate-500 font-bold border-b uppercase text-[10px]">
+                        <tr>
+                            <th class="px-4 py-3">UID</th>
+                            <th class="px-3 py-3">钱包地址</th>
+                            <th class="px-3 py-3">邮箱地址</th>
+                            <th class="px-3 py-3 text-right">社交粉丝数</th>
+                            <th class="px-3 py-3 text-right">社区人数</th>
+                            <th class="px-3 py-3 text-right">月交易额预估</th>
+                            <th class="px-3 py-3">Telegram</th>
+                            <th class="px-3 py-3">X 账号</th>
+                            <th class="px-3 py-3">YouTube</th>
+                            <th class="px-3 py-3 text-right">近30日交易额</th>
+                            <th class="px-3 py-3 text-right">下级邀请人数</th>
+                            <th class="px-3 py-3 text-right">近30日下级邀请交易额</th>
+                            <th class="px-3 py-3">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody id="partner-app-list-body" class="divide-y divide-slate-50"></tbody>
+                    </table>
+                </div>
+                <div id="partner-app-list-pagination" class="p-4"></div>
+            </section>
+        </div>
+
+        <!-- 合伙人申请详情 -->
+        <div id="page-partner-application-detail" class="hidden space-y-6">
+            <div class="flex items-center gap-4 flex-wrap">
+                <button type="button" onclick="PartnerApplications.showApplicationList()" class="p-2 bg-white border border-slate-200 rounded hover:bg-slate-50">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
+                </button>
+                <div>
+                    <h2 id="app-detail-title" class="text-lg font-black text-slate-900">合伙人申请详情</h2>
+                    <p id="app-detail-sub" class="text-slate-400 text-[11px] mt-0.5"></p>
+                </div>
+                <div id="app-detail-actions" class="ml-auto"></div>
+            </div>
+            <section class="bg-slate-50 border border-slate-200 rounded-lg p-5">
+                <h3 class="text-[11px] font-black text-slate-500 uppercase tracking-wider mb-4">申请资料</h3>
+                <div id="app-detail-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </section>
+            <section class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
+                <h3 class="text-[11px] font-black text-slate-500 uppercase tracking-wider mb-3">社区与推广经验</h3>
+                <p id="app-detail-experience" class="text-[12px] text-slate-700 leading-relaxed whitespace-pre-wrap"></p>
+            </section>
+        </div>
+
         <!-- 合伙人详情（镜像 Web 合伙人管理 · 全量敏感信息可复制） -->
         <div id="page-partner-detail" class="hidden space-y-6">
             <div class="flex items-center gap-4 flex-wrap">
@@ -668,6 +746,33 @@
     </div>
 </div>
 
+<!-- 设置成一级代理（来自合伙人申请） -->
+<div id="modal-app-set-l1" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <div class="px-6 py-4 border-b flex justify-between items-center shrink-0">
+            <h3 class="font-bold text-slate-800">设置成一级代理</h3>
+            <button type="button" onclick="PartnerApplications.closeSetL1Modal()" class="text-slate-400">✕</button>
+        </div>
+        <div class="p-6 space-y-4 overflow-y-auto flex-1">
+            <p class="text-[11px] text-blue-800 bg-blue-50 p-3 rounded border border-blue-100">字段与「新增一级合伙人」一致；额外指定该合伙人由哪位后台运营负责管理。</p>
+            <div id="app-bind-subject-preview" class="bg-slate-50 border border-slate-200 rounded-lg p-4 text-[11px]"></div>
+            <div id="app-bind-subject-card" class="hidden"></div>
+            <div><label class="text-[10px] font-bold text-slate-400 uppercase">UID</label><input id="app-bind-uid" type="text" readonly class="w-full border rounded p-2 mt-1 outline-none bg-slate-50 text-slate-600"></div>
+            <div><label class="text-[10px] font-bold text-slate-400 uppercase">一级合伙人返佣比例 (%)</label><input id="app-bind-ratio" type="number" class="w-full border rounded p-2 mt-1 outline-none" placeholder="仅此一项比例配置"><p id="app-bind-ratio-hint" class="text-[10px] text-amber-700 mt-1"></p></div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase">配置运营（负责 BD）</label>
+                <input id="app-bind-operator-search" type="text" placeholder="搜索运营姓名或邮箱…" class="w-full border rounded p-2 mt-1 outline-none focus:ring-1 focus:ring-blue-600" oninput="PartnerApplications.filterOperatorDropdown()">
+                <select id="app-bind-operator" class="w-full border rounded p-2 mt-2 outline-none focus:ring-1 focus:ring-blue-600 bg-white"></select>
+                <p class="text-[10px] text-slate-400 mt-1">该一级合伙人将归属所选运营负责；影响列表「配置运营」列与跨 BD 审批判定。</p>
+            </div>
+            <div><label class="text-[10px] font-bold text-slate-400 uppercase">申请备注（必填）</label><textarea id="app-bind-remark" rows="2" class="w-full border rounded p-2 mt-1 outline-none" placeholder="说明绑定原因、渠道背景等"></textarea></div>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 flex gap-3 shrink-0">
+            <button type="button" onclick="PartnerApplications.closeSetL1Modal()" class="flex-1 py-2 border rounded font-bold text-slate-500">取消</button>
+            <button type="button" onclick="PartnerApplications.submitSetL1()" class="flex-1 py-2 bg-slate-900 text-white rounded font-bold">确认设置</button>
+        </div>
+    </div>
+</div>
 
 <div id="modal-bind-partner" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-lg rounded-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
@@ -804,6 +909,8 @@
 <script>
     const PAGE_TITLES = {
         'page-agent-mgmt': '合伙人管理',
+        'page-partner-applications': '合伙人申请管理',
+        'page-partner-application-detail': '合伙人申请详情',
         'page-partner-detail': '合伙人详情',
         'page-partner-detail-drill': '团队穿透',
         'page-rebate-tree': '返佣关系树',
@@ -814,6 +921,8 @@
     };
     const PAGE_HASH = {
         'page-agent-mgmt': 'agent',
+        'page-partner-applications': 'partner-applications',
+        'page-partner-application-detail': 'partner-application-detail',
         'page-partner-detail': 'partner-detail',
         'page-partner-detail-drill': 'partner-detail-drill',
         'page-rebate-tree': 'rebate-tree',
@@ -824,7 +933,7 @@
     };
 
     function hideAllPartnerPages() {
-        ['page-agent-mgmt', 'page-partner-detail', 'page-partner-detail-drill', 'page-rebate-tree', 'page-rebate-migrate', 'page-agent-approval', 'page-partner-logs', 'page-settlement'].forEach(function (id) {
+        ['page-agent-mgmt', 'page-partner-applications', 'page-partner-application-detail', 'page-partner-detail', 'page-partner-detail-drill', 'page-rebate-tree', 'page-rebate-migrate', 'page-agent-approval', 'page-partner-logs', 'page-settlement'].forEach(function (id) {
             document.getElementById(id).classList.add('hidden');
         });
     }
@@ -855,7 +964,8 @@
 <script src="admin-sidebar.js"></script>
 <script src="admin-approval.js"></script>
 <script src="admin-approval-ui.js"></script>
-<script src="admin-partner-portal.js?v=partner-demo-33"></script>
+<script src="admin-partner-portal.js?v=partner-demo-34"></script>
+<script src="admin-partner-applications.js?v=partner-demo-34"></script>
 <script>
     initModuleApproval({
         types: ['partner_l1_bind', 'partner_l1_bind_cross', 'partner_ratio_change', 'partner_rebate_migrate'],
@@ -878,6 +988,13 @@
     initAdminSidebar('agent-mgmt', '登录身份: 市场运营');
     initAdminHashRouter({
         agent: function () { PartnerPortal.showList(); initAdminSidebar('agent-mgmt'); },
+        'partner-applications': function () { PartnerApplications.showApplicationList(); initAdminSidebar('agent-applications'); },
+        'partner-application-detail': function () {
+            const id = PartnerApplications.getCurrentId ? PartnerApplications.getCurrentId() : null;
+            if (id) PartnerApplications.showApplicationDetail(id);
+            else PartnerApplications.showApplicationList();
+            initAdminSidebar('agent-applications');
+        },
         'partner-detail': function () { PartnerPortal.showDetail(PartnerPortal.getCurrentUserId() || 'p_n1'); initAdminSidebar('agent-mgmt'); },
         'partner-detail-drill': function () {
             if (PartnerPortal.getDetailDrillStack().length) PartnerPortal.showDetailDrill();
@@ -895,6 +1012,8 @@
         logs: function () { PartnerPortal.showPartnerLogsPage(); initAdminSidebar('agent-logs'); }
     }, 'agent', {
         agent: 'agent-mgmt',
+        'partner-applications': 'agent-applications',
+        'partner-application-detail': 'agent-applications',
         'partner-detail': 'agent-mgmt',
         'partner-detail-drill': 'agent-mgmt',
         'rebate-tree': 'agent-mgmt',
