@@ -919,8 +919,14 @@
     }
 
     function weeklyContactCell(r) {
-        if (r.email) return r.email;
-        if (r.wallet) return r.wallet;
+        if (window.AdminCopyChip && AdminCopyChip.loginContact) {
+            return AdminCopyChip.loginContact(r);
+        }
+        const method = String(r.loginMethod || r.login_method || '').toLowerCase();
+        if (method === 'email' && r.email) return r.email;
+        if ((method === 'wallet' || !method) && r.wallet) return r.wallet;
+        if (r.email && !r.wallet) return r.email;
+        if (r.wallet && !r.email) return r.wallet;
         return '—';
     }
 
