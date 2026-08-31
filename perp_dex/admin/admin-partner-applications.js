@@ -20,7 +20,8 @@
             socialFollowers: 125000,
             communitySize: 8500,
             monthlyVolEstimate: 2500000,
-            telegram: '@alpha_kol',
+            contactChannel: 'Telegram',
+            contactAccount: '@alpha_kol',
             x: '@alpha_forx',
             youtube: 'AlphaTradingCN',
             experience: '运营 Telegram 合约交易社群 3 年，月活 8000+，专注华语合约教育与带单。',
@@ -48,7 +49,8 @@
             socialFollowers: 48000,
             communitySize: 2200,
             monthlyVolEstimate: 680000,
-            telegram: '@beta_trade',
+            contactChannel: 'Discord',
+            contactAccount: 'beta_trade#1024',
             x: '',
             youtube: '',
             experience: 'Discord 华语交易群 2200 人，以现货+合约混合推广为主。',
@@ -73,7 +75,8 @@
             socialFollowers: 320000,
             communitySize: 12000,
             monthlyVolEstimate: 5200000,
-            telegram: '@gamma_official',
+            contactChannel: 'Telegram',
+            contactAccount: '@gamma_official',
             x: '@gamma_perp',
             youtube: 'GammaPerp',
             experience: 'YouTube 合约频道 28 万订阅 + TG 付费群 1.2 万人，月推广成交额稳定 500 万 USDT 以上。',
@@ -102,7 +105,8 @@
             socialFollowers: 8500,
             communitySize: 450,
             monthlyVolEstimate: 120000,
-            telegram: '@delta_small',
+            contactChannel: 'Line',
+            contactAccount: 'delta_small',
             x: '@delta_x',
             youtube: '',
             experience: '',
@@ -120,7 +124,7 @@
     ];
 
     let appListPage = 1;
-    let appListFilters = { q: '', telegram: '', x: '', youtube: '' };
+    let appListFilters = { q: '', contact: '', x: '', youtube: '' };
     let currentApplicationId = null;
     let appBindState = { applicationId: null, operatorSearch: '', operatorOpen: false };
 
@@ -150,7 +154,10 @@
             const hay = [app.uid, app.wallet, app.email, app.id].join(' ').toLowerCase();
             if (hay.indexOf(q) < 0) return false;
         }
-        if (appListFilters.telegram && (app.telegram || '').toLowerCase().indexOf(appListFilters.telegram.trim().toLowerCase()) < 0) return false;
+        if (appListFilters.contact) {
+            const contactHay = formatContactText(app).toLowerCase();
+            if (contactHay.indexOf(appListFilters.contact.trim().toLowerCase()) < 0) return false;
+        }
         if (appListFilters.x && (app.x || '').toLowerCase().indexOf(appListFilters.x.trim().toLowerCase()) < 0) return false;
         if (appListFilters.youtube && (app.youtube || '').toLowerCase().indexOf(appListFilters.youtube.trim().toLowerCase()) < 0) return false;
         return true;
@@ -164,6 +171,20 @@
     function formatAdminOperator(op) {
         if (!op) return '<span class="text-slate-400">—</span>';
         return '<span class="font-bold text-slate-700">' + op + '</span>';
+    }
+
+    function formatContactText(app) {
+        if (!app) return '';
+        const channel = app.contactChannel || '';
+        const account = app.contactAccount || '';
+        if (channel && account) return channel + ' · ' + account;
+        return channel || account || '';
+    }
+
+    function formatContactDisplay(app) {
+        const text = formatContactText(app);
+        if (!text) return '—';
+        return text;
     }
 
     function formatWalletEmail(wallet, email) {
@@ -261,7 +282,7 @@
                     '<td class="px-3 py-3 text-right font-bold">' + fmtNum(a.socialFollowers) + '</td>' +
                     '<td class="px-3 py-3 text-right font-bold">' + fmtNum(a.communitySize) + '</td>' +
                     '<td class="px-3 py-3 text-right font-bold">' + fmtMoney(a.monthlyVolEstimate) + '</td>' +
-                    '<td class="px-3 py-3">' + (a.telegram || '—') + '</td>' +
+                    '<td class="px-3 py-3">' + formatContactDisplay(a) + '</td>' +
                     '<td class="px-3 py-3">' + (a.x || '—') + '</td>' +
                     '<td class="px-3 py-3">' + (a.youtube || '—') + '</td>' +
                     '<td class="px-3 py-3 text-right font-bold">' + fmtMoney(a.vol30d) + '</td>' +
@@ -295,7 +316,8 @@
             ['社交账号粉丝数', fmtNum(a.socialFollowers)],
             ['社区管理人数', fmtNum(a.communitySize)],
             ['团队月交易额预估', fmtMoney(a.monthlyVolEstimate)],
-            ['Telegram', a.telegram || '—'],
+            ['即时联系渠道', a.contactChannel || '—'],
+            ['联系账号', a.contactAccount || '—'],
             ['X 账号', a.x || '—'],
             ['YouTube', a.youtube || '—']
         ]);
@@ -335,18 +357,18 @@
     function applyAppFilters() {
         appListPage = 1;
         appListFilters.q = (document.getElementById('app-filter-q') || {}).value || '';
-        appListFilters.telegram = (document.getElementById('app-filter-telegram') || {}).value || '';
+        appListFilters.contact = (document.getElementById('app-filter-contact') || {}).value || '';
         appListFilters.x = (document.getElementById('app-filter-x') || {}).value || '';
         appListFilters.youtube = (document.getElementById('app-filter-youtube') || {}).value || '';
         renderApplicationList();
     }
 
     function resetAppFilters() {
-        ['app-filter-q', 'app-filter-telegram', 'app-filter-x', 'app-filter-youtube'].forEach(function (id) {
+        ['app-filter-q', 'app-filter-contact', 'app-filter-x', 'app-filter-youtube'].forEach(function (id) {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
-        appListFilters = { q: '', telegram: '', x: '', youtube: '' };
+        appListFilters = { q: '', contact: '', x: '', youtube: '' };
         appListPage = 1;
         renderApplicationList();
     }
@@ -438,7 +460,7 @@
 
         if (uidEl) { uidEl.value = app.uid; uidEl.readOnly = true; }
         if (ratioEl) ratioEl.value = '';
-        if (remarkEl) remarkEl.value = '合伙人计划申请通过 · ' + (app.telegram || app.uid);
+        if (remarkEl) remarkEl.value = '合伙人计划申请通过 · ' + (formatContactText(app) || app.uid);
         if (operatorEl) operatorEl.value = '';
         updateOperatorTriggerLabel('');
         renderOperatorOptions('');
@@ -448,7 +470,7 @@
             previewEl.innerHTML =
                 '<div class="grid grid-cols-2 gap-3 text-[11px]">' +
                 '<div><span class="text-slate-400 font-bold">申请人 UID</span><p class="font-black mt-0.5">' + app.uid + '</p></div>' +
-                '<div><span class="text-slate-400 font-bold">Telegram</span><p class="font-black mt-0.5">' + (app.telegram || '—') + '</p></div>' +
+                '<div><span class="text-slate-400 font-bold">即时联系方式</span><p class="font-black mt-0.5">' + formatContactDisplay(app) + '</p></div>' +
                 '<div><span class="text-slate-400 font-bold">粉丝数</span><p class="font-black mt-0.5">' + fmtNum(app.socialFollowers) + '</p></div>' +
                 '<div><span class="text-slate-400 font-bold">月交易额预估</span><p class="font-black mt-0.5">' + fmtMoney(app.monthlyVolEstimate) + '</p></div>' +
                 '</div>';
