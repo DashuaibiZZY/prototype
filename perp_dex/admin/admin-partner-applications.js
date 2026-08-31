@@ -190,11 +190,9 @@
     }
 
     function formatWalletEmail(wallet, email) {
-        const parts = [];
-        if (wallet) parts.push(chip(wallet, 'wallet'));
-        if (email) parts.push(chip(email, 'email'));
-        if (!parts.length) return '<span class="text-slate-400">—</span>';
-        return parts.join('<span class="text-slate-300 mx-1">/</span>');
+        if (wallet) return chip(wallet, 'wallet');
+        if (email) return chip(email, 'email');
+        return '<span class="text-slate-400">—</span>';
     }
 
     function isMultiLevelPartner(identity) {
@@ -290,7 +288,7 @@
         if (!tbody) return;
 
         if (!pageItems.length) {
-            tbody.innerHTML = '<tr><td colspan="16" class="px-4 py-12 text-center text-slate-400 font-bold">暂无申请记录</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="15" class="px-4 py-12 text-center text-slate-400 font-bold">暂无申请记录</td></tr>';
         } else {
             tbody.innerHTML = pageItems.map(function (a) {
                 return '<tr class="hover:bg-slate-50 border-b">' +
@@ -298,8 +296,7 @@
                     '<td class="px-3 py-3">' + chip(a.uid, 'uid') + '</td>' +
                     '<td class="px-3 py-3">' + formatPartnerIdentity(a.partnerIdentity) + '</td>' +
                     '<td class="px-3 py-3">' + formatAdminOperator(a.adminOperator) + '</td>' +
-                    '<td class="px-3 py-3">' + chip(a.wallet, 'wallet') + '</td>' +
-                    '<td class="px-3 py-3">' + (a.email ? chip(a.email, 'email') : '<span class="text-slate-400">—</span>') + '</td>' +
+                    '<td class="px-3 py-3">' + formatWalletEmail(a.wallet, a.email) + '</td>' +
                     '<td class="px-3 py-3 text-right font-bold">' + fmtNum(a.socialFollowers) + '</td>' +
                     '<td class="px-3 py-3 text-right font-bold">' + fmtNum(a.communitySize) + '</td>' +
                     '<td class="px-3 py-3 text-right font-bold">' + fmtMoney(a.monthlyVolEstimate) + '</td>' +
@@ -354,7 +351,7 @@
 
         renderFieldGrid('app-detail-data-grid', [
             ['UID', chip(a.uid, 'uid')],
-            ['钱包/邮箱地址', formatWalletEmail(a.wallet, a.email)],
+            ['钱包地址 / 邮箱', formatWalletEmail(a.wallet, a.email)],
             ['合伙人身份', formatPartnerIdentity(a.partnerIdentity)],
             ['后台管理人员', formatAdminOperator(a.adminOperator)],
             ['近 30 日交易额', fmtMoney(a.vol30d)],
