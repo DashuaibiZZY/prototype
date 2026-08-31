@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-39';
+    const DATA_VERSION = 'partner-demo-40';
     /** 原型：从权限配置 u_ops（运营小王）读取合伙人管理数据范围 */
     const DEMO_PERM_USER_ID = 'u_ops';
     const CURRENT_OPERATOR = 'allen@forx.fi';
@@ -377,6 +377,9 @@
     let detailSettlementPage = 1;
     let detailSettlementDateFilter = '';
     let detailSettlementStatusFilter = 'all';
+    let drillSettlementPage = 1;
+    let drillSettlementDateFilter = '';
+    let drillSettlementStatusFilter = 'all';
     let detailEntryId = null;
     let detailDrillStack = [];
     let detailSubFilter = 'all';
@@ -816,13 +819,18 @@
         return html;
     }
 
-    function renderDetailSettlementSection(u) {
+    function renderPartnerSettlementSection(u, prefix) {
+        prefix = prefix || 'detail';
         const data = getUserViewSettlement(u);
         const summary = data.summary || DEFAULT_USER_VIEW_SETTLEMENT.summary;
-        const pendingEl = document.getElementById('detail-settlement-pending-today');
-        const settledEl = document.getElementById('detail-settlement-settled-total');
-        const yesterdayEl = document.getElementById('detail-settlement-yesterday');
-        const yesterdayStatusEl = document.getElementById('detail-settlement-yesterday-status');
+        const dateFilter = prefix === 'drill' ? drillSettlementDateFilter : detailSettlementDateFilter;
+        const statusFilter = prefix === 'drill' ? drillSettlementStatusFilter : detailSettlementStatusFilter;
+        let page = prefix === 'drill' ? drillSettlementPage : detailSettlementPage;
+
+        const pendingEl = document.getElementById(prefix + '-settlement-pending-today');
+        const settledEl = document.getElementById(prefix + '-settlement-settled-total');
+        const yesterdayEl = document.getElementById(prefix + '-settlement-yesterday');
+        const yesterdayStatusEl = document.getElementById(prefix + '-settlement-yesterday-status');
         if (pendingEl) pendingEl.textContent = fmtMoney(summary.pendingToday);
         if (settledEl) settledEl.textContent = fmtMoney(summary.settledTotal);
         if (yesterdayEl) yesterdayEl.textContent = fmtMoney(summary.yesterdayPaid);
@@ -837,14 +845,15 @@
 
         const records = (data.records || []).slice();
         const filtered = records.filter(function (row) {
-            if (detailSettlementDateFilter && row.date !== detailSettlementDateFilter) return false;
-            if (detailSettlementStatusFilter !== 'all' && row.status !== detailSettlementStatusFilter) return false;
+            if (dateFilter && row.date !== dateFilter) return false;
+            if (statusFilter !== 'all' && row.status !== statusFilter) return false;
             return true;
         });
-        const sliced = paginate(filtered, detailSettlementPage);
-        detailSettlementPage = sliced.page;
+        const sliced = paginate(filtered, page);
+        if (prefix === 'drill') drillSettlementPage = sliced.page;
+        else detailSettlementPage = sliced.page;
 
-        const tbody = document.getElementById('detail-settlement-body');
+        const tbody = document.getElementById(prefix + '-settlement-body');
         if (tbody) {
             tbody.innerHTML = sliced.items.length ? sliced.items.map(function (row) {
                 const rowClass = row.status === 'pending' ? 'bg-amber-50/40' : 'hover:bg-slate-50';
@@ -856,21 +865,51 @@
                     '</tr>';
             }).join('') : '<tr><td colspan="4" class="px-4 py-10 text-center text-slate-400">暂无结算流水</td></tr>';
         }
-        mountListPagination('detail-settlement-pagination', sliced.total, detailSettlementPage, 'detail-settlement');
+        mountListPagination(prefix + '-settlement-pagination', sliced.total, sliced.page, prefix + '-settlement');
+    }
+
+    function renderDetailSettlementSection(u) {
+        renderPartnerSettlementSection(u, 'detail');
+    }
+
+    function setPartnerSettlementDateFilter(prefix, v) {
+        if (prefix === 'drill') {
+            drillSettlementDateFilter = v || '';
+            drillSettlementPage = 1;
+        } else {
+            detailSettlementDateFilter = v || '';
+            detailSettlementPage = 1;
+        }
+        const u = getUser(currentUserId);
+        if (u) renderPartnerSettlementSection(u, prefix);
+    }
+
+    function setPartnerSettlementStatusFilter(prefix, v) {
+        if (prefix === 'drill') {
+            drillSettlementStatusFilter = v || 'all';
+            drillSettlementPage = 1;
+        } else {
+            detailSettlementStatusFilter = v || 'all';
+            detailSettlementPage = 1;
+        }
+        const u = getUser(currentUserId);
+        if (u) renderPartnerSettlementSection(u, prefix);
     }
 
     function setDetailSettlementDateFilter(v) {
-        detailSettlementDateFilter = v || '';
-        detailSettlementPage = 1;
-        const u = getUser(currentUserId);
-        if (u) renderDetailSettlementSection(u);
+        setPartnerSettlementDateFilter('detail', v);
     }
 
     function setDetailSettlementStatusFilter(v) {
-        detailSettlementStatusFilter = v || 'all';
-        detailSettlementPage = 1;
-        const u = getUser(currentUserId);
-        if (u) renderDetailSettlementSection(u);
+        setPartnerSettlementStatusFilter('detail', v);
+    }
+
+    function setDrillSettlementDateFilter(v) {
+        setPartnerSettlementDateFilter('drill', v);
+    }
+
+    function setDrillSettlementStatusFilter(v) {
+        setPartnerSettlementStatusFilter('drill', v);
     }
 
     function renderPartnerDetailMirror(u) {
@@ -900,6 +939,7 @@
         renderMirrorClientTable(u, {
             prefix: 'drill', search: drillSubSearch, clientPage: drillClientPage, clientPageKey: 'drill'
         });
+        renderPartnerSettlementSection(u, 'drill');
     }
 
     function getSubPartnerRows(u) {
@@ -1248,10 +1288,17 @@
         drillClientPage = 1;
         drillSubFilter = 'all';
         drillSubSearch = '';
+        drillSettlementPage = 1;
+        drillSettlementDateFilter = '';
+        drillSettlementStatusFilter = 'all';
         const searchEl = document.getElementById('drill-sub-search');
         if (searchEl) searchEl.value = '';
         const filterEl = document.getElementById('drill-sub-status-filter');
         if (filterEl) filterEl.value = 'all';
+        const settlementDateEl = document.getElementById('drill-settlement-filter-date');
+        if (settlementDateEl) settlementDateEl.value = '';
+        const settlementStatusEl = document.getElementById('drill-settlement-filter-status');
+        if (settlementStatusEl) settlementStatusEl.value = 'all';
         showDetailDrill();
     }
 
@@ -3810,6 +3857,8 @@
         setDetailStatsPeriod: setDetailStatsPeriod,
         setDetailSettlementDateFilter: setDetailSettlementDateFilter,
         setDetailSettlementStatusFilter: setDetailSettlementStatusFilter,
+        setDrillSettlementDateFilter: setDrillSettlementDateFilter,
+        setDrillSettlementStatusFilter: setDrillSettlementStatusFilter,
         stageRatioChange: stageRatioChange,
         clearPendingChanges: clearPendingChanges, submitPendingChanges: submitPendingChanges,
         openTreeConfirmModal: openTreeConfirmModal, closeTreeConfirmModal: closeTreeConfirmModal, confirmTreeSubmit: confirmTreeSubmit,
@@ -3888,7 +3937,12 @@
             AdminPagination.register('detail-settlement', function (p) {
                 detailSettlementPage = p;
                 const u = getUser(currentUserId);
-                if (u) renderDetailSettlementSection(u);
+                if (u) renderPartnerSettlementSection(u, 'detail');
+            });
+            AdminPagination.register('drill-settlement', function (p) {
+                drillSettlementPage = p;
+                const u = getUser(currentUserId);
+                if (u) renderPartnerSettlementSection(u, 'drill');
             });
             AdminPagination.register('settlement-batch', function (p) { settlementBatchPage = p; filterSettlementBatches(); });
             AdminPagination.register('settlement-detail', function (p) { settlementDetailPage = p; renderSettlementDetailRows(); });
