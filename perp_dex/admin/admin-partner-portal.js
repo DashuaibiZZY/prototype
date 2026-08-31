@@ -586,6 +586,9 @@
     }
 
     function mirrorPartnerContactCell(row) {
+        if (window.AdminCopyChip && AdminCopyChip.loginContact) {
+            return AdminCopyChip.loginContact(row);
+        }
         if (row.wallet) return chip(row.wallet, 'wallet');
         if (row.email) return '<span class="text-[10px] text-slate-500 font-bold">' + escHtml(row.email) + '</span>';
         return '<span class="text-slate-300">—</span>';

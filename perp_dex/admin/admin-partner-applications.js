@@ -15,6 +15,7 @@
             uid: '100920',
             wallet: '0xKol...Alpha',
             email: 'kol.alpha@forx.io',
+            loginMethod: 'wallet',
             partnerIdentity: '普通用户',
             adminOperator: '',
             socialFollowers: 125000,
@@ -44,6 +45,7 @@
             uid: '100803',
             wallet: '0xNorm...L3',
             email: '',
+            loginMethod: 'wallet',
             partnerIdentity: '三级合伙人',
             adminOperator: 'bob@forx.fi',
             socialFollowers: 48000,
@@ -70,6 +72,7 @@
             uid: '100922',
             wallet: '0xKol...Gamma',
             email: 'gamma.channel@forx.io',
+            loginMethod: 'email',
             partnerIdentity: '二级合伙人',
             adminOperator: 'bob@forx.fi',
             socialFollowers: 320000,
@@ -100,6 +103,7 @@
             uid: '100923',
             wallet: '0xKol...Delta',
             email: 'delta@forx.io',
+            loginMethod: 'email',
             partnerIdentity: '普通用户',
             adminOperator: '',
             socialFollowers: 8500,
@@ -189,9 +193,14 @@
         return text;
     }
 
-    function formatWalletEmail(wallet, email) {
-        if (wallet) return chip(wallet, 'wallet');
-        if (email) return chip(email, 'email');
+    function formatWalletEmail(user) {
+        if (window.AdminCopyChip && AdminCopyChip.loginContact) {
+            return AdminCopyChip.loginContact(user);
+        }
+        const cred = user || {};
+        const method = String(cred.loginMethod || cred.login_method || '').toLowerCase();
+        if (method === 'email' && cred.email) return chip(cred.email, 'email');
+        if ((method === 'wallet' || !method) && cred.wallet) return chip(cred.wallet, 'wallet');
         return '<span class="text-slate-400">—</span>';
     }
 
@@ -296,7 +305,7 @@
                     '<td class="px-3 py-3">' + chip(a.uid, 'uid') + '</td>' +
                     '<td class="px-3 py-3">' + formatPartnerIdentity(a.partnerIdentity) + '</td>' +
                     '<td class="px-3 py-3">' + formatAdminOperator(a.adminOperator) + '</td>' +
-                    '<td class="px-3 py-3">' + formatWalletEmail(a.wallet, a.email) + '</td>' +
+                    '<td class="px-3 py-3">' + formatWalletEmail(a) + '</td>' +
                     '<td class="px-3 py-3 text-right font-bold">' + fmtNum(a.socialFollowers) + '</td>' +
                     '<td class="px-3 py-3 text-right font-bold">' + fmtNum(a.communitySize) + '</td>' +
                     '<td class="px-3 py-3 text-right font-bold">' + fmtMoney(a.monthlyVolEstimate) + '</td>' +
@@ -351,7 +360,7 @@
 
         renderFieldGrid('app-detail-data-grid', [
             ['UID', chip(a.uid, 'uid')],
-            ['钱包地址 / 邮箱', formatWalletEmail(a.wallet, a.email)],
+            ['钱包地址 / 邮箱', formatWalletEmail(a)],
             ['合伙人身份', formatPartnerIdentity(a.partnerIdentity)],
             ['后台管理人员', formatAdminOperator(a.adminOperator)],
             ['近 30 日交易额', fmtMoney(a.vol30d)],
