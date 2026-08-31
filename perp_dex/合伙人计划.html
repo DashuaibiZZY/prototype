@@ -28,7 +28,6 @@
         .faq-item { border-bottom: 1px solid #f3f4f6; padding: 16px 0; }
         .faq-item:last-child { border-bottom: none; }
         .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; }
-        .field-error { border-color: #ef4444 !important; }
         .field-hint { font-size: 10px; color: #9ca3af; margin-top: 4px; }
     </style>
 </head>
@@ -36,7 +35,7 @@
 
 <div class="gallery-header">
     <h1>Web 合伙人计划 · 子页面原型</h1>
-    <p>从邀请返佣页「ForX 合伙人计划」卡片进入。含未登录 CTA、已登录申请表单、登录引导弹窗三种状态。</p>
+    <p>从邀请返佣页「ForX 合伙人计划」卡片进入。未登录点击「立即申请」在当前页弹出登录引导（无独立画框状态）；已是合伙人不可提交。</p>
 </div>
 
 <div class="proto-grid" id="proto-grid"></div>
@@ -56,7 +55,7 @@ const FAQ_ITEMS = [
     { q: '与普通邀请返佣有什么区别？', a: '普通邀请返佣最高约 25%（Lv 3）；合伙人计划从 40% 起，并附带积分、代币、NFT 等额外激励，适合有规模社区或稳定交易量的申请者。' },
     { q: '申请需要满足什么条件？', a: '无硬性门槛，但需具备一定社区影响力、交易社群运营经验，或伞下月交易额可观。填写真实资料有助于提高通过率。' },
     { q: '审核需要多久？', a: '提交后 3–5 个工作日完成初审；通过后运营同学会联系您确认返佣比例与对接细节。' },
-    { q: '已经是合伙人还能申请吗？', a: '已是 ForX 一级/多级合伙人的账号无需重复申请，请直接在「合伙人管理中心」查看数据与配置。' }
+    { q: '已经是合伙人还能申请吗？', a: '不可以。已是 ForX 合伙人（含任意层级代理）的账号无法重复提交申请，请直接在「合伙人管理中心」查看数据与配置。' }
 ];
 
 function navHtml(loggedIn) {
@@ -123,6 +122,16 @@ function guestApplyHtml() {
         <div class="bg-slate-50 border border-slate-200 rounded-sm p-10 text-center max-w-xl mx-auto mb-12">
             <p class="text-[13px] text-gray-600 mb-6">登录后即可填写申请表，运营团队将在 3–5 个工作日内完成审核。</p>
             <button type="button" class="bg-gray-900 text-white px-10 py-3 rounded-sm font-black text-[12px] uppercase tracking-widest hover:bg-black">立即申请</button>
+            <p class="text-[10px] text-gray-400 mt-4">点击后将弹出连接钱包引导（同全站登录流程）</p>
+        </div>`;
+}
+
+function partnerBlockedHtml() {
+    return `
+        <div class="bg-amber-50 border border-amber-200 rounded-sm p-8 max-w-xl mx-auto mb-12 text-center space-y-4">
+            <p class="text-[13px] font-black text-amber-900">您已是 ForX 合伙人（二级代理）</p>
+            <p class="text-[12px] text-amber-800 leading-relaxed">合伙人账号（含任意层级代理）无法重复提交合伙人计划申请。邀请与团队数据请在合伙人管理中心查看。</p>
+            <a href="代理中心.html" class="inline-block bg-blue-600 text-white px-6 py-2.5 rounded-sm font-black text-[11px] uppercase">前往合伙人管理中心 →</a>
         </div>`;
 }
 
@@ -165,6 +174,13 @@ function applicationFormHtml() {
                 <textarea rows="4" placeholder="简要介绍您的社区类型、运营时长、擅长领域与过往推广成果…" class="w-full border border-gray-200 rounded-sm p-3 mt-1.5 text-[13px] outline-none focus:ring-1 focus:ring-gray-900 resize-none"></textarea>
                 <p class="field-hint">选填 · 填写真实经历有助于提高审核通过率</p>
             </div>
+            <div>
+                <label class="text-[10px] font-black text-gray-500 uppercase tracking-wider">补充材料</label>
+                <div class="mt-1.5 border border-dashed border-gray-200 rounded-sm p-4 bg-gray-50/50">
+                    <input type="file" accept=".png,.jpg,.jpeg,.doc,.docx,.pdf,.xls,.xlsx" multiple class="text-[12px] w-full" />
+                    <p class="field-hint mt-2">选填 · 上传渠道证明、社群截图等材料，可加速审核；支持 PNG / JPG、Word、PDF、Excel</p>
+                </div>
+            </div>
             <button type="button" class="w-full bg-blue-600 text-white py-3.5 rounded-sm font-black text-[12px] uppercase tracking-widest hover:bg-blue-700">立即申请</button>
             <p class="text-[10px] text-gray-400 text-center">提交即表示您同意 ForX 合伙人计划相关条款；审核结果将通过站内通知告知。</p>
         </form>`;
@@ -190,21 +206,23 @@ function loginModalHtml() {
 }
 
 function pageContentHtml(cfg) {
-    const { loggedIn = false, showLoginModal = false } = cfg;
+    const { loggedIn = false, partnerBlocked = false } = cfg;
+    let applyBlock = guestApplyHtml();
+    if (partnerBlocked) applyBlock = partnerBlockedHtml();
+    else if (loggedIn) applyBlock = applicationFormHtml();
+
     return `
         <main class="flex-1 overflow-y-auto bg-white">
             <div class="max-w-[960px] mx-auto px-6 py-10">
-                <a href="邀请返佣.html" class="inline-flex items-center text-[11px] font-bold text-gray-400 hover:text-gray-900 mb-6">← 返回邀请返佣</a>
                 ${heroHtml()}
-                ${loggedIn ? applicationFormHtml() : guestApplyHtml()}
+                ${applyBlock}
                 ${benefitsHtml()}
                 <div class="mt-12">${faqHtml()}</div>
             </div>
-        </main>
-        ${showLoginModal ? loginModalHtml() : ''}`;
+        </main>`;
 }
 
-function webFrameHtml(innerHtml, pathLabel) {
+function webFrameHtml(innerHtml, pathLabel, overlayHtml) {
     return `
         <div class="web-chrome">
             <span class="dot bg-red-400"></span>
@@ -214,24 +232,29 @@ function webFrameHtml(innerHtml, pathLabel) {
         </div>
         <div class="flex flex-col min-h-[680px] relative">
             ${innerHtml}
+            ${overlayHtml || ''}
         </div>`;
 }
 
 const STATES = [
     {
         title: '① 未登录 · 合伙人计划页',
-        desc: '展示计划介绍、权益说明与 FAQ；底部 CTA「立即申请」引导登录',
-        render: () => webFrameHtml(navHtml(false) + pageContentHtml({ loggedIn: false }), 'forx.finance / 合伙人计划')
+        desc: '展示计划介绍与 CTA；点击「立即申请」在当前页弹出连接钱包引导（见右侧示意层，非独立画框）',
+        render: () => webFrameHtml(
+            navHtml(false) + pageContentHtml({ loggedIn: false }),
+            'forx.finance / 合伙人计划',
+            loginModalHtml()
+        )
     },
     {
-        title: '② 未登录 · 点击立即申请',
-        desc: '弹出连接钱包引导弹窗，完成登录后进入申请表单',
-        render: () => webFrameHtml(navHtml(false) + pageContentHtml({ loggedIn: false, showLoginModal: true }), 'forx.finance / 合伙人计划')
-    },
-    {
-        title: '③ 已登录 · 申请表单',
-        desc: '已连接钱包用户展示完整申请表；整数校验、Telegram 必填；提交后进入后台审核队列',
+        title: '② 已登录 · 申请表单',
+        desc: '普通用户已连接钱包，展示完整申请表（含选填补充材料上传）；提交后进入后台审核队列',
         render: () => webFrameHtml(navHtml(true) + pageContentHtml({ loggedIn: true }), 'forx.finance / 合伙人计划 · 已登录')
+    },
+    {
+        title: '③ 已是合伙人 · 不可申请',
+        desc: '任意层级合伙人（一级 / 二级 / 三级…）登录后不可提交，引导前往合伙人管理中心',
+        render: () => webFrameHtml(navHtml(true) + pageContentHtml({ partnerBlocked: true }), 'forx.finance / 合伙人计划 · 合伙人身份')
     }
 ];
 
