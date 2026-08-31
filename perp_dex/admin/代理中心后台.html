@@ -410,6 +410,53 @@
                     <div id="drill-clients-pagination"></div>
                 </div>
             </div>
+
+            <section class="bg-white rounded-lg border overflow-hidden shadow-sm">
+                <div class="p-4 border-b">
+                    <h3 class="font-black text-slate-800 text-sm">佣金结算与发放</h3>
+                    <p class="text-[10px] text-slate-400 mt-1">当前焦点合伙人的结算数据；向下穿透时随焦点切换（同 §2.1.4）</p>
+                </div>
+                <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-4 border-b bg-slate-50/50">
+                    <div class="bg-slate-900 text-white rounded-lg p-4">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">待结算佣金（今日预估）</p>
+                        <p id="drill-settlement-pending-today" class="text-2xl font-black">—</p>
+                    </div>
+                    <div class="bg-white border rounded-lg p-4">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">已结算总额（累计）</p>
+                        <p id="drill-settlement-settled-total" class="text-2xl font-black text-slate-900">—</p>
+                    </div>
+                    <div class="bg-white border rounded-lg p-4">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">昨日发放佣金</p>
+                        <p id="drill-settlement-yesterday" class="text-2xl font-black text-green-600">—</p>
+                        <p id="drill-settlement-yesterday-status" class="text-[10px] text-slate-400 mt-2 font-bold tracking-widest uppercase">Status: —</p>
+                    </div>
+                </div>
+                <div class="p-4 border-b flex flex-wrap items-center justify-between gap-3">
+                    <span class="font-bold text-slate-700 text-[11px]">每日结算流水</span>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <input type="date" id="drill-settlement-filter-date" onchange="PartnerPortal.setDrillSettlementDateFilter(this.value)" class="border rounded px-3 py-1.5 text-[11px] outline-none focus:ring-1 focus:ring-blue-600">
+                        <select id="drill-settlement-filter-status" onchange="PartnerPortal.setDrillSettlementStatusFilter(this.value)" class="border rounded px-3 py-1.5 text-[10px] font-bold bg-white outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer">
+                            <option value="all">全部状态</option>
+                            <option value="pending">待结算</option>
+                            <option value="settled">已结算</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-[11px] min-w-[640px]">
+                        <thead class="bg-slate-50 border-b text-[10px] uppercase text-slate-500 font-bold">
+                        <tr>
+                            <th class="px-4 py-3">结算日期</th>
+                            <th class="px-4 py-3 text-right">交易额</th>
+                            <th class="px-4 py-3 text-right text-blue-600">返佣金额</th>
+                            <th class="px-4 py-3 text-right">结算状态</th>
+                        </tr>
+                        </thead>
+                        <tbody id="drill-settlement-body" class="divide-y divide-slate-50"></tbody>
+                    </table>
+                </div>
+                <div id="drill-settlement-pagination"></div>
+            </section>
         </div>
 
         <!-- 迁移返佣关系 -->
@@ -1013,8 +1060,8 @@
 <script src="admin-sidebar.js"></script>
 <script src="admin-approval.js"></script>
 <script src="admin-approval-ui.js"></script>
-<script src="admin-partner-portal.js?v=partner-demo-39"></script>
-<script src="admin-partner-applications.js?v=partner-demo-39"></script>
+<script src="admin-partner-portal.js?v=partner-demo-40"></script>
+<script src="admin-partner-applications.js?v=partner-demo-40"></script>
 <script>
     initModuleApproval({
         types: ['partner_l1_bind', 'partner_l1_bind_cross', 'partner_ratio_change', 'partner_rebate_migrate'],
