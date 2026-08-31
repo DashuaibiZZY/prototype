@@ -2,26 +2,30 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>ForX Admin - 排行榜影子调度中心 V3</title>
+    <title>ForX Admin - 排行榜用户数据配置</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #111827; }
         .sidebar-item-active { background-color: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
         .status-active { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
-        .status-decay { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+        .status-pending { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
         .status-offline { background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
         .target-badge-platform { background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; }
         .target-badge-activity { background: #f5f3ff; color: #6d28d9; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; }
+        .period-badge { background: #f1f5f9; color: #334155; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; }
         .modal-overlay { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; align-items: center; justify-content: center; display: none; }
         .input-label { display: block; font-size: 10px; font-weight: 900; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.05em; }
         .search-input { border: 1px solid #e2e8f0; border-radius: 4px; padding: 6px 10px; font-size: 11px; outline: none; transition: border-color 0.2s; }
         .search-input:focus { border-color: #3b82f6; }
         .search-input:disabled { background: #f8fafc; color: #94a3b8; cursor: not-allowed; }
-        .target-type-btn { flex: 1; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; font-weight: 800; color: #64748b; background: #fff; transition: all 0.15s; }
-        .target-type-btn.active { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; box-shadow: inset 0 0 0 1px #2563eb; }
-        .target-type-btn.activity.active { border-color: #7c3aed; background: #f5f3ff; color: #6d28d9; box-shadow: inset 0 0 0 1px #7c3aed; }
+        .scope-type-btn { flex: 1; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; font-weight: 800; color: #64748b; background: #fff; transition: all 0.15s; }
+        .scope-type-btn.active { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; box-shadow: inset 0 0 0 1px #2563eb; }
+        .scope-type-btn.activity.active { border-color: #7c3aed; background: #f5f3ff; color: #6d28d9; box-shadow: inset 0 0 0 1px #7c3aed; }
+        .period-btn { padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; font-weight: 800; color: #64748b; background: #fff; }
+        .period-btn.active { border-color: #0f172a; background: #0f172a; color: #fff; }
         .hint-box { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 4px; padding: 8px 10px; font-size: 10px; color: #64748b; line-height: 1.5; }
+        .readonly-box { background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 4px; padding: 10px 12px; font-size: 10px; color: #5b21b6; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -31,14 +35,13 @@
 <main class="flex-1 flex flex-col overflow-hidden">
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
         <div>
-            <h1 class="text-lg font-bold text-slate-800 italic uppercase">排行榜影子配置</h1>
-            <p class="text-[10px] text-slate-400 mt-0.5">支持全平台榜单与活动报名用户榜单两套影子排名目标</p>
+            <h1 class="text-lg font-bold text-slate-800 italic uppercase">排行榜用户数据配置</h1>
+            <p class="text-[10px] text-slate-400 mt-0.5">生成用户并配置交易额、收益率、收益金额；支持全平台与活动子榜、日/周/月周期</p>
         </div>
     </header>
 
     <div class="flex-1 overflow-y-auto p-8 space-y-4">
 
-        <!-- 搜索与过滤条 -->
         <section class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm space-y-3">
             <div class="grid grid-cols-12 gap-3 items-end">
                 <div class="col-span-2">
@@ -46,8 +49,8 @@
                     <input type="text" id="filter-address" placeholder="输入 UID、钱包或邮箱" class="search-input w-full">
                 </div>
                 <div class="col-span-2">
-                    <label class="input-label">目标榜单</label>
-                    <select id="filter-target-type" class="search-input w-full bg-white font-bold" onchange="onFilterTargetTypeChange()">
+                    <label class="input-label">榜单范围</label>
+                    <select id="filter-scope-type" class="search-input w-full bg-white font-bold" onchange="onFilterScopeChange()">
                         <option value="all">全部</option>
                         <option value="platform">全平台</option>
                         <option value="activity">平台活动</option>
@@ -58,441 +61,464 @@
                     <input type="text" id="filter-activity-name" placeholder="输入活动名关键词" class="search-input w-full" disabled>
                 </div>
                 <div class="col-span-2">
-                    <label class="input-label">PnL 目标排名</label>
-                    <div class="flex items-center space-x-1">
-                        <input type="number" placeholder="Min" class="search-input w-full text-center">
-                        <span class="text-slate-300">-</span>
-                        <input type="number" placeholder="Max" class="search-input w-full text-center">
-                    </div>
-                </div>
-                <div class="col-span-2">
-                    <label class="input-label">ROI 目标排名</label>
-                    <div class="flex items-center space-x-1">
-                        <input type="number" placeholder="Min" class="search-input w-full text-center">
-                        <span class="text-slate-300">-</span>
-                        <input type="number" placeholder="Max" class="search-input w-full text-center">
-                    </div>
-                </div>
-                <div class="col-span-2">
-                    <label class="input-label">交易额目标排名</label>
-                    <div class="flex items-center space-x-1">
-                        <input type="number" placeholder="Min" class="search-input w-full text-center">
-                        <span class="text-slate-300">-</span>
-                        <input type="number" placeholder="Max" class="search-input w-full text-center">
-                    </div>
-                </div>
-            </div>
-            <div class="grid grid-cols-12 gap-3 items-end">
-                <div class="col-span-2">
-                    <label class="input-label">积分目标排名</label>
-                    <div class="flex items-center space-x-1">
-                        <input type="number" placeholder="Min" class="search-input w-full text-center">
-                        <span class="text-slate-300">-</span>
-                        <input type="number" placeholder="Max" class="search-input w-full text-center">
-                    </div>
-                </div>
-                <div class="col-span-2">
-                    <label class="input-label">账户状态</label>
-                    <select class="search-input w-full bg-white font-bold">
-                        <option>全部</option>
-                        <option>活跃 (Active)</option>
-                        <option>衰退 (Decay)</option>
-                        <option>下线 (Offline)</option>
+                    <label class="input-label">周期类型</label>
+                    <select id="filter-period" class="search-input w-full bg-white font-bold">
+                        <option value="all">全部</option>
+                        <option value="daily">日榜</option>
+                        <option value="weekly">周榜</option>
+                        <option value="monthly">月榜</option>
                     </select>
                 </div>
-                <div class="col-span-8 flex justify-end space-x-2">
+                <div class="col-span-2">
+                    <label class="input-label">配置状态</label>
+                    <select id="filter-status" class="search-input w-full bg-white font-bold">
+                        <option value="all">全部</option>
+                        <option value="active">生效中</option>
+                        <option value="pending">待生效</option>
+                        <option value="offline">已停用</option>
+                    </select>
+                </div>
+                <div class="col-span-2 flex justify-end space-x-2">
                     <button onclick="applyFilters()" class="px-6 bg-slate-900 text-white font-bold py-1.5 rounded hover:bg-black transition-all">筛选</button>
                     <button onclick="resetFilters()" class="px-6 border border-slate-200 text-slate-400 font-bold py-1.5 rounded hover:bg-slate-50 transition-all">重置</button>
                 </div>
             </div>
-            <p class="text-[10px] text-slate-400">提示：选择「平台活动」后可按活动名称模糊查询；目标榜单决定影子账户超越的是全站排名还是某活动报名用户排名。</p>
+            <p class="text-[10px] text-slate-400">提示：活动范围会只读展示该活动排行榜是否开启及排序维度；数据按日/周/月窗口写入当前周期。</p>
         </section>
 
-        <!-- 影子账户池列表 -->
         <section class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
             <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
                 <div class="flex items-center space-x-4">
-                    <h2 class="font-black text-slate-700 uppercase tracking-tighter">影子账户池</h2>
-                    <span id="filter-result-hint" class="text-[10px] text-slate-400 font-bold">共 2 条</span>
+                    <h2 class="font-black text-slate-700 uppercase tracking-tighter">配置用户列表</h2>
+                    <span id="filter-result-hint" class="text-[10px] text-slate-400 font-bold">共 0 条</span>
                 </div>
-                <button onclick="openShadowModal()" class="bg-blue-600 text-white px-4 py-2 rounded-sm font-black hover:bg-blue-700 transition-all uppercase">
-                    + 新增影子账户
+                <button onclick="openConfigModal()" class="bg-blue-600 text-white px-4 py-2 rounded-sm font-black hover:bg-blue-700 transition-all uppercase">
+                    + 新增配置用户
                 </button>
             </div>
             <table class="w-full text-left">
                 <thead class="bg-slate-50 text-slate-400 font-black text-[10px] uppercase border-b border-slate-100">
                 <tr>
-                    <th class="px-6 py-4">UID / 影子地址</th>
-                    <th class="px-6 py-4">目标榜单</th>
-                    <th class="px-6 py-4 text-center">目标排名要求</th>
-                    <th class="px-6 py-4 text-center">当前状态</th>
-                    <th class="px-6 py-4">生命周期</th>
-                    <th class="px-6 py-4 text-right">当前数据 (PnL / ROI / Volume / Points)</th>
+                    <th class="px-6 py-4">UID / 用户标识</th>
+                    <th class="px-6 py-4">榜单范围</th>
+                    <th class="px-6 py-4 text-center">周期</th>
+                    <th class="px-6 py-4 text-right">配置指标</th>
+                    <th class="px-6 py-4 text-center">活动榜</th>
+                    <th class="px-6 py-4 text-center">状态</th>
+                    <th class="px-6 py-4">生效时间</th>
                     <th class="px-6 py-4 text-right">操作</th>
                 </tr>
                 </thead>
-                <tbody id="shadow-table-body" class="divide-y divide-slate-50 text-[11px] font-medium">
-                </tbody>
+                <tbody id="config-table-body" class="divide-y divide-slate-50 text-[11px] font-medium"></tbody>
             </table>
-            <div id="shadow-table-pagination"></div>
+            <div id="config-table-pagination"></div>
         </section>
     </div>
 </main>
 
-<!-- 弹窗: 新增/编辑影子账户 -->
-<div id="modal-edit-shadow" class="modal-overlay">
-    <div class="bg-white w-[700px] rounded-sm shadow-2xl overflow-hidden animate-in zoom-in duration-200 max-h-[92vh] flex flex-col">
+<div id="modal-edit-config" class="modal-overlay">
+    <div class="bg-white w-[720px] rounded-sm shadow-2xl overflow-hidden animate-in zoom-in duration-200 max-h-[92vh] flex flex-col">
         <div class="px-8 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-900 shrink-0">
-            <h3 class="text-white font-black italic uppercase tracking-widest">影子交易员全量参数配置</h3>
-            <button onclick="toggleModal('modal-edit-shadow')" class="text-slate-400 hover:text-white">✕</button>
+            <h3 class="text-white font-black italic uppercase tracking-widest" id="modal-title">新增配置用户</h3>
+            <button onclick="toggleModal('modal-edit-config')" class="text-slate-400 hover:text-white">✕</button>
         </div>
 
-        <div class="p-8 overflow-y-auto space-y-8">
-            <!-- 0. 目标榜单 -->
-            <section class="space-y-4">
-                <h4 class="text-slate-900 font-black border-b pb-2 uppercase tracking-tighter">0. 目标榜单</h4>
+        <div class="p-8 overflow-y-auto space-y-6">
+            <section class="space-y-3">
+                <h4 class="text-slate-900 font-black border-b pb-2 uppercase tracking-tighter">1. 用户</h4>
+                <div class="flex items-end gap-3">
+                    <div class="flex-1">
+                        <label class="input-label">UID</label>
+                        <input type="text" id="modal-uid" readonly placeholder="点击右侧生成" class="search-input w-full bg-slate-50 font-black text-slate-800">
+                    </div>
+                    <button type="button" id="btn-generate-user" onclick="generateUser()" class="px-4 py-2 bg-slate-900 text-white font-black rounded-sm hover:bg-black uppercase shrink-0">生成新用户</button>
+                </div>
+                <p class="text-[9px] text-slate-400 italic">编辑已有配置时不可重新生成；系统同时分配钱包占位用于榜单展示。</p>
+            </section>
+
+            <section class="space-y-3">
+                <h4 class="text-slate-900 font-black border-b pb-2 uppercase tracking-tighter">2. 榜单范围</h4>
                 <div class="flex gap-3">
-                    <button type="button" id="modal-target-platform" class="target-type-btn active" onclick="setModalTargetType('platform')">全平台</button>
-                    <button type="button" id="modal-target-activity" class="target-type-btn activity" onclick="setModalTargetType('activity')">平台活动</button>
+                    <button type="button" id="modal-scope-platform" class="scope-type-btn active" onclick="setModalScope('platform')">全平台</button>
+                    <button type="button" id="modal-scope-activity" class="scope-type-btn activity" onclick="setModalScope('activity')">平台活动</button>
                 </div>
                 <div id="modal-activity-wrap" class="hidden space-y-2">
-                    <label class="input-label">选择交易排名活动</label>
-                    <select id="modal-activity-select" class="w-full border border-slate-200 rounded p-2.5 font-bold text-violet-700 bg-violet-50 outline-none focus:border-violet-500">
+                    <label class="input-label">选择活动</label>
+                    <select id="modal-activity-select" class="w-full border border-slate-200 rounded p-2.5 font-bold text-violet-700 bg-violet-50 outline-none focus:border-violet-500" onchange="onActivitySelectChange()">
                         <option value="">请选择活动</option>
                         <option value="act-001">ForX嘉年华交易大赛</option>
                         <option value="act-002">BTC 永续交易量冲榜</option>
                         <option value="act-003">Q3 ROI 争霸赛</option>
                         <option value="act-004">新春积分排位赛</option>
                     </select>
-                    <p class="text-[9px] text-slate-400 italic">仅统计已报名该活动的用户排名，影子账户将在此活动榜单内竞争目标名次</p>
-                </div>
-                <div class="hint-box" id="modal-target-hint">
-                    当前目标：<strong>全平台榜单</strong>。影子账户将超越全站 PnL / ROI / 交易额 / 积分综合排名中的目标区间用户。
+                    <div id="modal-activity-readonly" class="readonly-box hidden">
+                        <p class="font-black mb-1">活动排行榜配置（只读）</p>
+                        <p id="activity-rank-enabled">—</p>
+                        <p id="activity-rank-dimension">—</p>
+                    </div>
                 </div>
             </section>
 
-            <div class="grid grid-cols-2 gap-10">
-                <!-- 左侧：多维度目标排名 -->
-                <div class="space-y-6">
-                    <h4 class="text-slate-900 font-black border-b pb-2 uppercase tracking-tighter">1. 维度排名区间目标</h4>
-                    <div class="space-y-5">
-                        <div class="space-y-2">
-                            <label class="input-label">收益金额 (PnL Amount) 目标区间</label>
-                            <select class="w-full border-b-2 border-slate-200 bg-slate-50 p-2 font-black text-blue-600 outline-none focus:border-blue-600">
-                                <option value="1-3">Top 1 - 3 (名额: 3)</option>
-                                <option value="4-10">Top 4 - 10 (名额: 7)</option>
-                                <option value="11-20">Top 11 - 20 (名额: 10)</option>
-                                <option value="21-50">Top 21 - 50 (名额: 30)</option>
-                                <option value="51-100">Top 51 - 100 (名额: 50)</option>
-                                <option value="101-200">Top 101 - 200 (名额: 100)</option>
-                                <option value="201-500">Top 201 - 500 (名额: 300)</option>
-                            </select>
-                            <p class="text-[9px] text-slate-400 italic">系统将自动校验区间余量，避免重叠</p>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="input-label">收益率 (ROI %) 目标区间</label>
-                            <select class="w-full border-b-2 border-slate-200 bg-slate-50 p-2 font-black text-slate-700 outline-none focus:border-blue-600">
-                                <option value="1-3">Top 1 - 3 (名额: 3)</option>
-                                <option value="4-10">Top 4 - 10 (名额: 7)</option>
-                                <option value="11-20">Top 11 - 20 (名额: 10)</option>
-                                <option value="21-50">Top 21 - 50 (名额: 30)</option>
-                                <option value="51-100">Top 51 - 100 (名额: 50)</option>
-                                <option value="101-200">Top 101 - 200 (名额: 100)</option>
-                                <option value="201-500">Top 201 - 500 (名额: 300)</option>
-                            </select>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="input-label">交易额 (Volume) 目标区间</label>
-                            <select class="w-full border-b-2 border-slate-200 bg-slate-50 p-2 font-black text-amber-700 outline-none focus:border-amber-600">
-                                <option value="1-3">Top 1 - 3 (名额: 3)</option>
-                                <option value="4-10">Top 4 - 10 (名额: 7)</option>
-                                <option value="11-20">Top 11 - 20 (名额: 10)</option>
-                                <option value="21-50">Top 21 - 50 (名额: 30)</option>
-                                <option value="51-100">Top 51 - 100 (名额: 50)</option>
-                                <option value="101-200">Top 101 - 200 (名额: 100)</option>
-                                <option value="201-500">Top 201 - 500 (名额: 300)</option>
-                            </select>
-                            <p class="text-[9px] text-slate-400 italic">按合约成交额（USDT 名义价值）统计排名</p>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="input-label">获得积分 (Points) 目标区间</label>
-                            <select class="w-full border-b-2 border-slate-200 bg-slate-50 p-2 font-black text-slate-700 outline-none focus:border-blue-600">
-                                <option value="1-3">Top 1 - 3 (名额: 3)</option>
-                                <option value="4-10">Top 4 - 10 (名额: 7)</option>
-                                <option value="11-20">Top 11 - 20 (名额: 10)</option>
-                                <option value="21-50">Top 21 - 50 (名额: 30)</option>
-                                <option value="51-100">Top 51 - 100 (名额: 50)</option>
-                                <option value="101-200">Top 101 - 200 (名额: 100)</option>
-                                <option value="201-500">Top 201 - 500 (名额: 300)</option>
-                            </select>
-                        </div>
-                    </div>
+            <section class="space-y-3">
+                <h4 class="text-slate-900 font-black border-b pb-2 uppercase tracking-tighter">3. 周期类型</h4>
+                <div class="flex gap-2">
+                    <button type="button" class="period-btn active" data-period="daily" onclick="setModalPeriod('daily', this)">日榜</button>
+                    <button type="button" class="period-btn" data-period="weekly" onclick="setModalPeriod('weekly', this)">周榜</button>
+                    <button type="button" class="period-btn" data-period="monthly" onclick="setModalPeriod('monthly', this)">月榜</button>
                 </div>
+                <div class="hint-box">保存后指标写入<strong>当前时间</strong>所在的日/周/月统计窗口（后端聚合）。</div>
+            </section>
 
-                <!-- 右侧：生命周期 -->
-                <div class="space-y-6">
-                    <h4 class="text-slate-900 font-black border-b pb-2 uppercase tracking-tighter">2. 生命周期与人设</h4>
-                    <div class="space-y-5">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><label class="input-label">活跃时长 (天)</label><input type="number" value="30" class="w-full border border-slate-200 rounded p-2 font-black"></div>
-                        </div>
-                        <div class="p-4 bg-blue-50 rounded-sm border border-blue-100 flex items-center justify-between">
-                            <div><p class="text-[10px] font-black text-blue-600 uppercase">自动继承者逻辑</p><p class="text-[8px] text-blue-400 italic">结束后自动生成新地址承接参数</p></div>
-                            <input type="checkbox" checked class="w-5 h-5 accent-blue-600">
-                        </div>
+            <section class="space-y-3">
+                <h4 class="text-slate-900 font-black border-b pb-2 uppercase tracking-tighter">4. 配置指标</h4>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="input-label">收益金额 PnL (USDT)</label>
+                        <input type="number" id="modal-pnl" step="0.01" placeholder="如 86420.50" class="search-input w-full font-black text-green-700">
+                    </div>
+                    <div>
+                        <label class="input-label">收益率 ROI (%)</label>
+                        <input type="number" id="modal-roi" step="0.01" placeholder="如 42.18" class="search-input w-full font-black">
+                    </div>
+                    <div>
+                        <label class="input-label">交易额 Volume (USDT)</label>
+                        <input type="number" id="modal-volume" step="0.01" placeholder="如 5200000" class="search-input w-full font-black text-amber-700">
                     </div>
                 </div>
-            </div>
+            </section>
+
+            <section class="space-y-3">
+                <h4 class="text-slate-900 font-black border-b pb-2 uppercase tracking-tighter">5. 生效策略</h4>
+                <div class="flex gap-4 items-center">
+                    <label class="flex items-center gap-2 cursor-pointer font-bold text-slate-700">
+                        <input type="radio" name="effective-mode" value="now" checked onchange="onEffectiveModeChange()"> 立即生效
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer font-bold text-slate-700">
+                        <input type="radio" name="effective-mode" value="scheduled" onchange="onEffectiveModeChange()"> 指定生效日期
+                    </label>
+                    <input type="date" id="modal-effective-date" disabled class="search-input">
+                </div>
+                <p class="text-[9px] text-slate-400 italic">指定日期须 ≥ 今天；到达该日 00:00 后写入该日所属周期并变为「生效中」。默认推荐立即生效。</p>
+            </section>
         </div>
 
         <div class="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-end space-x-3 shrink-0">
-            <button onclick="toggleModal('modal-edit-shadow')" class="px-6 py-2 font-bold text-slate-400 uppercase">取消</button>
-            <button onclick="saveShadow()" class="px-10 py-2 bg-blue-600 text-white font-black rounded-sm shadow-xl shadow-blue-600/20 uppercase tracking-widest">保存并应用</button>
+            <button onclick="toggleModal('modal-edit-config')" class="px-6 py-2 font-bold text-slate-400 uppercase">取消</button>
+            <button onclick="saveConfig()" class="px-10 py-2 bg-blue-600 text-white font-black rounded-sm shadow-xl shadow-blue-600/20 uppercase tracking-widest">保存</button>
         </div>
     </div>
 </div>
 
 <script src="admin-pagination.js"></script>
 <script>
-    const ACTIVITY_MAP = {
-        'act-001': 'ForX嘉年华交易大赛',
-        'act-002': 'BTC 永续交易量冲榜',
-        'act-003': 'Q3 ROI 争霸赛',
-        'act-004': '新春积分排位赛'
+    const ACTIVITY_META = {
+        'act-001': { name: 'ForX嘉年华交易大赛', rankEnabled: true, dimensions: ['交易额', '收益率', '收益金额'] },
+        'act-002': { name: 'BTC 永续交易量冲榜', rankEnabled: true, dimensions: ['交易额'] },
+        'act-003': { name: 'Q3 ROI 争霸赛', rankEnabled: true, dimensions: ['收益率'] },
+        'act-004': { name: '新春积分排位赛', rankEnabled: false, dimensions: [] }
     };
 
-    let shadowRows = [
+    const PERIOD_LABEL = { daily: '日榜', weekly: '周榜', monthly: '月榜' };
+    const STATUS_LABEL = { active: '生效中', pending: '待生效', offline: '已停用' };
+
+    let configRows = [
         {
             id: 1,
-            address: '0x7a8b...C443',
-            uid: '10033401',
-            targetType: 'platform',
+            uid: '10088001',
+            wallet: '0x7a8b...C443',
+            scopeType: 'platform',
             activityId: '',
             activityName: '',
-            pnl: 'Top 1-3',
-            roi: 'Top 5-10',
-            volume: 'Top 4-10',
-            points: 'Top 50-100',
+            period: 'weekly',
+            pnl: 1240000,
+            roi: 124.52,
+            volume: 12800000,
+            rankEnabled: null,
+            rankDimensions: [],
             status: 'active',
-            statusLabel: '活跃',
-            lifecycle: 'Day 10 / 30 (自动继承)',
-            lifecyclePct: 30,
-            pnlValue: '+$1,240,000',
-            roiValue: '124.52%',
-            volumeValue: '$12.8M',
-            pointsValue: '24,500 Pts'
+            effectiveAt: '2026-08-31 14:20（立即）'
         },
         {
             id: 2,
-            address: '0x3f21...9A12',
-            uid: '10033402',
-            targetType: 'activity',
+            uid: '10088002',
+            wallet: '0x3f21...9A12',
+            scopeType: 'activity',
             activityId: 'act-001',
             activityName: 'ForX嘉年华交易大赛',
-            pnl: 'Top 1-3',
-            roi: 'Top 4-10',
-            volume: 'Top 1-3',
-            points: 'Top 11-20',
+            period: 'daily',
+            pnl: 86420.5,
+            roi: 42.18,
+            volume: 5200000,
+            rankEnabled: true,
+            rankDimensions: ['交易额', '收益率', '收益金额'],
             status: 'active',
-            statusLabel: '活跃',
-            lifecycle: 'Day 5 / 14 (自动继承)',
-            lifecyclePct: 36,
-            pnlValue: '+$86,420',
-            roiValue: '42.18%',
-            volumeValue: '$5.2M',
-            pointsValue: '8,120 Pts'
+            effectiveAt: '2026-08-31 09:00（立即）'
+        },
+        {
+            id: 3,
+            uid: '10088003',
+            wallet: '0xAb12...77E0',
+            scopeType: 'activity',
+            activityId: 'act-002',
+            activityName: 'BTC 永续交易量冲榜',
+            period: 'monthly',
+            pnl: 12000,
+            roi: 8.5,
+            volume: 980000,
+            rankEnabled: true,
+            rankDimensions: ['交易额'],
+            status: 'pending',
+            effectiveAt: '2026-09-05 00:00（预约）'
         }
     ];
 
-    (function seedShadowDemoRows() {
-        var statuses = ['active', 'decay', 'offline'];
-        var statusLabels = { active: '活跃', decay: '衰减中', offline: '已下线' };
-        for (var i = 3; i <= 14; i++) {
-            var st = statuses[i % 3];
-            shadowRows.push({
+    (function seedDemoRows() {
+        for (var i = 4; i <= 14; i++) {
+            var isActivity = i % 2 === 0;
+            var actId = isActivity ? 'act-003' : '';
+            var meta = actId ? ACTIVITY_META[actId] : null;
+            configRows.push({
                 id: i,
-                uid: '10033' + String(400 + i),
-                address: '0xShad' + String(i).padStart(2, '0') + '...' + (1000 + i),
-                targetType: i % 2 === 0 ? 'activity' : 'platform',
-                activityId: i % 2 === 0 ? 'act-002' : '',
-                activityName: i % 2 === 0 ? '新手成长任务' : '',
-                pnl: 'Top ' + (i % 5 + 1) + '-' + (i % 5 + 4),
-                roi: 'Top ' + (i % 8 + 1) + '-' + (i % 8 + 5),
-                volume: 'Top ' + (i % 6 + 2) + '-' + (i % 6 + 8),
-                points: 'Top ' + (i * 3) + '-' + (i * 3 + 10),
-                status: st,
-                statusLabel: statusLabels[st],
-                lifecycle: 'Day ' + (i % 12 + 1) + ' / 30',
-                lifecyclePct: Math.min(95, i * 7),
-                pnlValue: '+$' + (i * 12500).toLocaleString(),
-                roiValue: (i * 3.2).toFixed(2) + '%',
-                volumeValue: '$' + (i * 0.42).toFixed(1) + 'M',
-                pointsValue: (i * 820).toLocaleString() + ' Pts'
+                uid: '10088' + String(100 + i),
+                wallet: '0xCfg' + String(i).padStart(2, '0') + '...' + (2000 + i),
+                scopeType: isActivity ? 'activity' : 'platform',
+                activityId: actId,
+                activityName: meta ? meta.name : '',
+                period: ['daily', 'weekly', 'monthly'][i % 3],
+                pnl: i * 12500,
+                roi: i * 3.2,
+                volume: i * 420000,
+                rankEnabled: meta ? meta.rankEnabled : null,
+                rankDimensions: meta ? meta.dimensions : [],
+                status: i % 5 === 0 ? 'offline' : (i % 4 === 0 ? 'pending' : 'active'),
+                effectiveAt: i % 4 === 0 ? '2026-09-0' + (i % 9 + 1) + ' 00:00（预约）' : '2026-08-31（立即）'
             });
         }
     })();
 
-    let modalTargetType = 'platform';
+    let modalScope = 'platform';
+    let modalPeriod = 'daily';
     let editingId = null;
-    let filteredShadowRows = shadowRows.slice();
-    let shadowListPage = 1;
+    let filteredRows = configRows.slice();
+    let listPage = 1;
+    let nextUidSeed = 10088100;
 
-    function shadowSlice(items, page) {
+    function formatMoney(n) {
+        if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+        if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
+        return '$' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
+    }
+
+    function configSlice(items, page) {
         if (window.AdminPagination) return AdminPagination.slice(items, page);
-        const pageSize = 10;
-        const total = items.length;
-        const p = Math.max(1, Math.min(page || 1, Math.max(1, Math.ceil(total / pageSize) || 1)));
-        const start = (p - 1) * pageSize;
+        var pageSize = 10;
+        var total = items.length;
+        var p = Math.max(1, Math.min(page || 1, Math.max(1, Math.ceil(total / pageSize) || 1)));
+        var start = (p - 1) * pageSize;
         return { items: items.slice(start, start + pageSize), page: p, total: total, pageSize: pageSize };
     }
 
-    function shadowMountPag(containerId, total, page, handlerId) {
+    function configMountPag(containerId, total, page, handlerId) {
         if (window.AdminPagination) AdminPagination.mount(containerId, total, page, handlerId);
     }
 
     function toggleModal(id) {
-        const modal = document.getElementById(id);
+        var modal = document.getElementById(id);
         modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
     }
 
-    function onFilterTargetTypeChange() {
-        const type = document.getElementById('filter-target-type').value;
-        const activityInput = document.getElementById('filter-activity-name');
+    function onFilterScopeChange() {
+        var type = document.getElementById('filter-scope-type').value;
+        var activityInput = document.getElementById('filter-activity-name');
         activityInput.disabled = type !== 'activity';
         if (type !== 'activity') activityInput.value = '';
     }
 
     function resetFilters() {
         document.getElementById('filter-address').value = '';
-        document.getElementById('filter-target-type').value = 'all';
+        document.getElementById('filter-scope-type').value = 'all';
         document.getElementById('filter-activity-name').value = '';
-        onFilterTargetTypeChange();
-        filteredShadowRows = shadowRows.slice();
-        shadowListPage = 1;
+        document.getElementById('filter-period').value = 'all';
+        document.getElementById('filter-status').value = 'all';
+        onFilterScopeChange();
+        filteredRows = configRows.slice();
+        listPage = 1;
         renderTable();
     }
 
     function applyFilters() {
-        const address = document.getElementById('filter-address').value.trim().toLowerCase();
-        const targetType = document.getElementById('filter-target-type').value;
-        const activityName = document.getElementById('filter-activity-name').value.trim().toLowerCase();
+        var address = document.getElementById('filter-address').value.trim().toLowerCase();
+        var scopeType = document.getElementById('filter-scope-type').value;
+        var activityName = document.getElementById('filter-activity-name').value.trim().toLowerCase();
+        var period = document.getElementById('filter-period').value;
+        var status = document.getElementById('filter-status').value;
 
-        const filtered = shadowRows.filter(row => {
+        filteredRows = configRows.filter(function (row) {
             if (address) {
-                const hay = [row.uid, row.address].filter(Boolean).join(' ').toLowerCase();
-                if (!hay.includes(address)) return false;
+                var hay = [row.uid, row.wallet].filter(Boolean).join(' ').toLowerCase();
+                if (hay.indexOf(address) === -1) return false;
             }
-            if (targetType !== 'all' && row.targetType !== targetType) return false;
-            if (targetType === 'activity' && activityName && !(row.activityName || '').toLowerCase().includes(activityName)) return false;
+            if (scopeType !== 'all' && row.scopeType !== scopeType) return false;
+            if (scopeType === 'activity' && activityName && (row.activityName || '').toLowerCase().indexOf(activityName) === -1) return false;
+            if (period !== 'all' && row.period !== period) return false;
+            if (status !== 'all' && row.status !== status) return false;
             return true;
         });
-
-        filteredShadowRows = filtered;
-        shadowListPage = 1;
+        listPage = 1;
         renderTable();
     }
 
-    function renderTargetCell(row) {
-        if (row.targetType === 'platform') {
+    function renderScopeCell(row) {
+        if (row.scopeType === 'platform') {
             return '<span class="target-badge-platform">全平台</span>';
         }
         return '<div class="space-y-1"><span class="target-badge-activity">平台活动</span><p class="text-[10px] font-bold text-violet-700 leading-tight">' + row.activityName + '</p></div>';
     }
 
+    function renderActivityRankCell(row) {
+        if (row.scopeType !== 'activity') return '<span class="text-slate-300">—</span>';
+        if (!row.rankEnabled) return '<span class="text-amber-600 font-bold">未开启</span>';
+        return '<span class="text-violet-700 font-bold">' + row.rankDimensions.join(' / ') + '</span>';
+    }
+
     function renderTable() {
-        const tbody = document.getElementById('shadow-table-body');
-        const sliced = shadowSlice(filteredShadowRows, shadowListPage);
-        shadowListPage = sliced.page;
-        document.getElementById('filter-result-hint').textContent = '共 ' + filteredShadowRows.length + ' 条';
+        var tbody = document.getElementById('config-table-body');
+        var sliced = configSlice(filteredRows, listPage);
+        listPage = sliced.page;
+        document.getElementById('filter-result-hint').textContent = '共 ' + filteredRows.length + ' 条';
 
-        if (!filteredShadowRows.length) {
-            tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-10 text-center text-slate-400 font-bold">暂无匹配的影子账户</td></tr>';
-            shadowMountPag('shadow-table-pagination', 0, 1, 'shadow-list');
+        if (!filteredRows.length) {
+            tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-10 text-center text-slate-400 font-bold">暂无匹配的配置用户</td></tr>';
+            configMountPag('config-table-pagination', 0, 1, 'config-list');
             return;
         }
 
-        tbody.innerHTML = sliced.items.map(row => `
-            <tr class="hover:bg-slate-50/50 transition-colors">
-                <td class="px-6 py-4">${window.AdminCopyChip ? AdminCopyChip.userIdentity({ uid: row.uid, wallet: row.address }) : '<span class="font-black text-slate-900 block text-[12px]">' + (row.uid || '—') + '</span><span class="font-mono text-[10px] text-slate-400 block">' + row.address + '</span>'}</td>
-                <td class="px-6 py-4">${renderTargetCell(row)}</td>
-                <td class="px-6 py-4 text-[10px] font-bold space-y-1">
-                    <div class="flex justify-between"><span>PnL:</span><span class="text-blue-600">${row.pnl}</span></div>
-                    <div class="flex justify-between"><span>ROI:</span><span class="text-slate-600">${row.roi}</span></div>
-                    <div class="flex justify-between"><span>Volume:</span><span class="text-amber-700">${row.volume}</span></div>
-                    <div class="flex justify-between"><span>Points:</span><span class="text-slate-600">${row.points}</span></div>
-                </td>
-                <td class="px-6 py-4 text-center"><span class="status-${row.status}">${row.statusLabel}</span></td>
-                <td class="px-6 py-4">
-                    <div class="w-24 h-1 bg-slate-100 rounded-full mb-1"><div class="bg-blue-500 h-full" style="width: ${row.lifecyclePct}%"></div></div>
-                    <span class="text-[9px] text-slate-400">${row.lifecycle}</span>
-                </td>
-                <td class="px-6 py-4 text-right space-y-1">
-                    <p class="text-green-600 font-black">${row.pnlValue}</p>
-                    <p class="text-slate-900 font-bold">${row.roiValue}</p>
-                    <p class="text-amber-700 font-bold">${row.volumeValue}</p>
-                    <p class="text-blue-500 font-bold uppercase">${row.pointsValue}</p>
-                </td>
-                <td class="px-6 py-4 text-right space-x-3">
-                    <button onclick="openShadowModal(${row.id})" class="text-blue-600 font-black hover:underline">编辑</button>
-                    <button onclick="offlineShadow(${row.id})" class="text-red-500 font-bold hover:underline">下线</button>
-                </td>
-            </tr>
-        `).join('');
-        shadowMountPag('shadow-table-pagination', sliced.total, shadowListPage, 'shadow-list');
+        tbody.innerHTML = sliced.items.map(function (row) {
+            var pnlStr = (row.pnl >= 0 ? '+' : '') + formatMoney(row.pnl);
+            return '<tr class="hover:bg-slate-50/50 transition-colors">' +
+                '<td class="px-6 py-4">' + (window.AdminCopyChip ? AdminCopyChip.userIdentity({ uid: row.uid, wallet: row.wallet }) : '<span class="font-black">' + row.uid + '</span>') + '</td>' +
+                '<td class="px-6 py-4">' + renderScopeCell(row) + '</td>' +
+                '<td class="px-6 py-4 text-center"><span class="period-badge">' + PERIOD_LABEL[row.period] + '</span></td>' +
+                '<td class="px-6 py-4 text-right space-y-0.5">' +
+                    '<p class="text-green-600 font-black">' + pnlStr + '</p>' +
+                    '<p class="font-bold">' + row.roi.toFixed(2) + '%</p>' +
+                    '<p class="text-amber-700 font-bold">' + formatMoney(row.volume) + '</p>' +
+                '</td>' +
+                '<td class="px-6 py-4 text-center text-[10px]">' + renderActivityRankCell(row) + '</td>' +
+                '<td class="px-6 py-4 text-center"><span class="status-' + (row.status === 'pending' ? 'pending' : row.status) + '">' + STATUS_LABEL[row.status] + '</span></td>' +
+                '<td class="px-6 py-4 text-[10px] text-slate-500">' + row.effectiveAt + '</td>' +
+                '<td class="px-6 py-4 text-right space-x-3">' +
+                    '<button onclick="openConfigModal(' + row.id + ')" class="text-blue-600 font-black hover:underline">编辑</button>' +
+                    (row.status !== 'offline' ? '<button onclick="deactivateConfig(' + row.id + ')" class="text-red-500 font-bold hover:underline">停用</button>' : '') +
+                '</td></tr>';
+        }).join('');
+        configMountPag('config-table-pagination', sliced.total, listPage, 'config-list');
     }
 
-    function setModalTargetType(type) {
-        modalTargetType = type;
-        document.getElementById('modal-target-platform').classList.toggle('active', type === 'platform');
-        document.getElementById('modal-target-activity').classList.toggle('active', type === 'activity');
+    function setModalScope(type) {
+        modalScope = type;
+        document.getElementById('modal-scope-platform').classList.toggle('active', type === 'platform');
+        document.getElementById('modal-scope-activity').classList.toggle('active', type === 'activity');
         document.getElementById('modal-activity-wrap').classList.toggle('hidden', type !== 'activity');
+        if (type === 'activity') onActivitySelectChange();
+        else document.getElementById('modal-activity-readonly').classList.add('hidden');
+    }
 
-        const hint = document.getElementById('modal-target-hint');
-        if (type === 'platform') {
-            hint.innerHTML = '当前目标：<strong>全平台榜单</strong>。影子账户将超越全站 PnL / ROI / 交易额 / 积分综合排名中的目标区间用户。';
-        } else {
-            const name = ACTIVITY_MAP[document.getElementById('modal-activity-select').value] || '（待选择活动）';
-            hint.innerHTML = '当前目标：<strong>平台活动榜单</strong> — ' + name + '。仅针对已报名该活动的用户进行排名竞争。';
+    function setModalPeriod(period, btn) {
+        modalPeriod = period;
+        document.querySelectorAll('.period-btn').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+    }
+
+    function onActivitySelectChange() {
+        var id = document.getElementById('modal-activity-select').value;
+        var box = document.getElementById('modal-activity-readonly');
+        if (!id) { box.classList.add('hidden'); return; }
+        var meta = ACTIVITY_META[id];
+        box.classList.remove('hidden');
+        document.getElementById('activity-rank-enabled').textContent = '排行榜：' + (meta.rankEnabled ? '已开启' : '未开启');
+        document.getElementById('activity-rank-dimension').textContent = meta.rankEnabled
+            ? '排序维度：' + meta.dimensions.join('、')
+            : '该活动未启用交易大赛模块，配置用户暂不参与活动子榜';
+    }
+
+    function onEffectiveModeChange() {
+        var scheduled = document.querySelector('input[name="effective-mode"]:checked').value === 'scheduled';
+        var dateInput = document.getElementById('modal-effective-date');
+        dateInput.disabled = !scheduled;
+        if (scheduled && !dateInput.value) {
+            var d = new Date();
+            d.setDate(d.getDate() + 3);
+            dateInput.value = d.toISOString().slice(0, 10);
         }
     }
 
-    function openShadowModal(id) {
+    function generateUser() {
+        if (editingId) { alert('编辑模式下不可重新生成用户'); return; }
+        nextUidSeed += 1;
+        document.getElementById('modal-uid').value = String(nextUidSeed);
+    }
+
+    function openConfigModal(id) {
         editingId = id || null;
+        document.getElementById('modal-title').textContent = id ? '编辑配置用户' : '新增配置用户';
+        document.getElementById('btn-generate-user').disabled = !!id;
+
         if (id) {
-            const row = shadowRows.find(r => r.id === id);
-            setModalTargetType(row.targetType);
+            var row = configRows.find(function (r) { return r.id === id; });
+            document.getElementById('modal-uid').value = row.uid;
+            setModalScope(row.scopeType);
             document.getElementById('modal-activity-select').value = row.activityId || '';
-            setModalTargetType(row.targetType);
+            onActivitySelectChange();
+            document.querySelectorAll('.period-btn').forEach(function (b) {
+                b.classList.toggle('active', b.getAttribute('data-period') === row.period);
+            });
+            modalPeriod = row.period;
+            document.getElementById('modal-pnl').value = row.pnl;
+            document.getElementById('modal-roi').value = row.roi;
+            document.getElementById('modal-volume').value = row.volume;
+            document.querySelector('input[name="effective-mode"][value="now"]').checked = row.status !== 'pending';
+            document.querySelector('input[name="effective-mode"][value="scheduled"]').checked = row.status === 'pending';
+            onEffectiveModeChange();
         } else {
-            setModalTargetType('platform');
+            document.getElementById('modal-uid').value = '';
+            setModalScope('platform');
             document.getElementById('modal-activity-select').value = '';
+            setModalPeriod('daily', document.querySelector('.period-btn[data-period="daily"]'));
+            document.getElementById('modal-pnl').value = '';
+            document.getElementById('modal-roi').value = '';
+            document.getElementById('modal-volume').value = '';
+            document.querySelector('input[name="effective-mode"][value="now"]').checked = true;
+            onEffectiveModeChange();
         }
-        toggleModal('modal-edit-shadow');
+        toggleModal('modal-edit-config');
     }
 
-    function saveShadow() {
-        if (modalTargetType === 'activity' && !document.getElementById('modal-activity-select').value) {
-            alert('请选择交易排名活动');
-            return;
+    function saveConfig() {
+        var uid = document.getElementById('modal-uid').value.trim();
+        if (!uid) { alert('请先生成新用户'); return; }
+        if (modalScope === 'activity' && !document.getElementById('modal-activity-select').value) {
+            alert('请选择活动'); return;
         }
-        alert('影子账号已配置成功，正在同步调度引擎');
-        toggleModal('modal-edit-shadow');
+        var pnl = document.getElementById('modal-pnl').value;
+        var roi = document.getElementById('modal-roi').value;
+        var volume = document.getElementById('modal-volume').value;
+        if (pnl === '' || roi === '' || volume === '') { alert('请填写完整的交易额、收益率、收益金额'); return; }
+
+        alert('配置已保存，数据将写入当前' + PERIOD_LABEL[modalPeriod] + '统计窗口');
+        toggleModal('modal-edit-config');
     }
 
-    function offlineShadow(id) {
-        if (confirm('确认下线？该账户将进入快速衰退并在周期结束时被继承。')) {
-            shadowRows = shadowRows.filter(r => r.id !== id);
-            applyFilters();
-        }
+    function deactivateConfig(id) {
+        if (!confirm('确认停用？该用户将从当前及后续周期榜单中移除。')) return;
+        var row = configRows.find(function (r) { return r.id === id; });
+        if (row) row.status = 'offline';
+        applyFilters();
     }
-
-    document.getElementById('modal-activity-select').addEventListener('change', () => {
-        if (modalTargetType === 'activity') setModalTargetType('activity');
-    });
 
     renderTable();
     if (window.AdminPagination) {
-        AdminPagination.register('shadow-list', function (p) { shadowListPage = p; renderTable(); });
+        AdminPagination.register('config-list', function (p) { listPage = p; renderTable(); });
     }
 </script>
 <script src="admin-permission-registry.js"></script>
