@@ -53,7 +53,8 @@
                 gaBound: true,
                 lastLogin: '2026-07-20 09:00',
                 pagePerms: fullWritePerms(),
-                agentMaxRebate: 100
+                agentMaxRebate: 100,
+                agentDataScope: 'global'
             },
             {
                 id: 'u_ops',
@@ -72,7 +73,8 @@
                     'points.manual': 'write', 'points.config': 'write', 'points.bonus': 'write', 'points.approval': 'read', 'points.overview': 'read', 'points.logs': 'read',
                     'agent.mgmt': 'write', 'agent.approval': 'read', 'agent.settlement': 'read'
                 }),
-                agentMaxRebate: 70
+                agentMaxRebate: 70,
+                agentDataScope: 'personal'
             },
             {
                 id: 'u_market',
@@ -131,7 +133,8 @@
                 lastLogin: '2026-07-17 11:20',
                 pagePerms: pageMap({
                     'agent.mgmt': 'write', 'agent.approval': 'read', 'agent.settlement': 'write', 'fee.settings': 'read', 'fee.approval': 'read', 'fee.log': 'read'
-                })
+                }),
+                agentDataScope: 'global'
             },
             {
                 id: 'u_security',
@@ -199,6 +202,8 @@
         if (u.gaBound === undefined) u.gaBound = false;
         if (!u.pagePerms || typeof u.pagePerms !== 'object') u.pagePerms = pageMap({});
         if (isSuperAdmin(u)) u.pagePerms = fullWritePerms();
+        if (isSuperAdmin(u)) u.agentDataScope = 'global';
+        if (u.agentDataScope !== 'global' && u.agentDataScope !== 'personal') u.agentDataScope = null;
         delete u.protected;
         return u;
     }

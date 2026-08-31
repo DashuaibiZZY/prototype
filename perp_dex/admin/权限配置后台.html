@@ -134,6 +134,14 @@
     </div>
     <div class="section-title">后台页面</div>
     <div id="permTables"></div>
+    <div id="agentDataScopeBox" class="hidden mt-3 rounded-lg border border-indigo-200 bg-indigo-50/50 p-4">
+      <label class="text-sm font-bold text-indigo-900">合伙人管理 · 数据权限范围<span class="text-red-600">*</span></label>
+      <p class="text-[11px] text-indigo-800/80 mt-1">勾选「合伙人管理 · 读」或「写」时必选。控制该人员在读/写合伙人管理页时可访问的数据范围。</p>
+      <select id="editAgentDataScope" class="mt-2 w-full max-w-md border border-indigo-200 rounded-lg px-3 py-2 text-sm bg-white">
+        <option value="personal">个人 — 仅本人负责的多层级合伙人数据</option>
+        <option value="global">全局 — 全部运营负责的多层级合伙人数据</option>
+      </select>
+    </div>
     <div id="agentCapBox" class="hidden mt-3 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
       <label class="text-sm font-bold text-blue-900">一级合伙人返佣比例上限（%）<span class="text-red-600">*</span></label>
       <p class="text-[11px] text-blue-800/80 mt-1">勾选「合伙人管理 · 写」时必填；绑定一级合伙人时不得超过此上限。</p>
@@ -317,6 +325,19 @@
     return html;
   }
 
+  function hasAgentMgmtAccess() {
+    return !!(editChecks['agent.mgmt'] && (editChecks['agent.mgmt'].read || editChecks['agent.mgmt'].write));
+  }
+
+  function updateAgentPartnerBoxesVisibility() {
+    var superA = $('superBanner') && !$('superBanner').classList.contains('hidden');
+    var hasAgent = hasAgentMgmtAccess();
+    $('agentDataScopeBox').classList.toggle('hidden', superA || !hasAgent);
+    $('agentCapBox').classList.toggle('hidden', superA || !(editChecks['agent.mgmt'] && editChecks['agent.mgmt'].write));
+    $('editAgentCap').required = !superA && !!(editChecks['agent.mgmt'] && editChecks['agent.mgmt'].write);
+    $('editAgentDataScope').required = !superA && hasAgent;
+  }
+
   function bindPermCheckboxes() {
     $('permTables').querySelectorAll('input[type=checkbox]').forEach(function (cb) {
       cb.addEventListener('change', function () {
@@ -334,12 +355,7 @@
           var w = $('permTables').querySelector('input[data-pid="' + pid + '"][data-kind="write"]');
           if (w) w.checked = false;
         }
-        $('agentCapBox').classList.toggle('hidden', !(editChecks['agent.mgmt'] && editChecks['agent.mgmt'].write));
-        if (editChecks['agent.mgmt'] && editChecks['agent.mgmt'].write) {
-          $('editAgentCap').required = true;
-        } else {
-          $('editAgentCap').required = false;
-        }
+        updateAgentPartnerBoxesVisibility();
       });
     });
   }
@@ -358,6 +374,7 @@
     $('editStatusCell').innerHTML = u.status === 'active' ? '<span class="status-tag status-on">启用</span>' : '<span class="status-tag status-off">停用</span>';
     $('editIdentityCell').innerHTML = isSuperAdmin(u) ? '<span class="text-violet-700 font-bold">超级管理员</span>' : '普通操作人员';
     $('editAgentCap').value = u.agentMaxRebate != null ? u.agentMaxRebate : '';
+    $('editAgentDataScope').value = u.agentDataScope === 'global' ? 'global' : 'personal';
     var superA = isSuperAdmin(u);
     $('superBanner').classList.toggle('hidden', !superA);
     ADMIN_PAGES.forEach(function (p) {
@@ -365,8 +382,7 @@
     });
     $('permTables').innerHTML = buildPermTables(superA);
     if (!superA) bindPermCheckboxes();
-    $('agentCapBox').classList.toggle('hidden', superA || !(editChecks['agent.mgmt'] && editChecks['agent.mgmt'].write));
-    $('editAgentCap').required = !superA && !!(editChecks['agent.mgmt'] && editChecks['agent.mgmt'].write);
+    updateAgentPartnerBoxesVisibility();
     $('drawer-backdrop').classList.add('open');
     $('drawer-edit').classList.add('open');
   }
@@ -388,6 +404,7 @@
     if (isSuperAdmin(u)) {
       u.pagePerms = fullWritePermsFallback();
       u.agentMaxRebate = 100;
+      u.agentDataScope = 'global';
     } else {
       var perms = {};
       ADMIN_PAGES.forEach(function (p) {
@@ -395,7 +412,19 @@
         perms[p.id] = checksToPerm(c.read, c.write);
       });
       u.pagePerms = perms;
-      if (editChecks['agent.mgmt'] && editChecks['agent.mgmt'].write) {
+      var agentRead = editChecks['agent.mgmt'] && editChecks['agent.mgmt'].read;
+      var agentWrite = editChecks['agent.mgmt'] && editChecks['agent.mgmt'].write;
+      if (agentRead || agentWrite) {
+        var scope = $('editAgentDataScope').value;
+        if (scope !== 'global' && scope !== 'personal') {
+          alert('已勾选「合伙人管理 · 读/写」，请选择数据权限范围（全局 / 个人）');
+          return;
+        }
+        u.agentDataScope = scope;
+      } else {
+        u.agentDataScope = null;
+      }
+      if (agentWrite) {
         var cap = parseInt($('editAgentCap').value, 10);
         if (!cap || cap < 1 || cap > 100) { alert('已勾选「合伙人管理 · 写」，请填写一级合伙人返佣比例上限（1–100 的整数）'); return; }
         u.agentMaxRebate = cap;

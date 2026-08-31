@@ -3,7 +3,9 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-38';
+    const DATA_VERSION = 'partner-demo-39';
+    /** 原型：从权限配置 u_ops（运营小王）读取合伙人管理数据范围 */
+    const DEMO_PERM_USER_ID = 'u_ops';
     const CURRENT_OPERATOR = 'allen@forx.fi';
     const USER_SCALE_TIP = '交易用户数据每天 UTC+8 0 点更新';
     const RECONCILIATION_DOWNLOAD_COOLDOWN_MS = 10 * 60 * 1000;
@@ -440,6 +442,56 @@
         });
     }
 
+    function getAgentDataScope() {
+        if (typeof loadPermissionStore === 'function') {
+            var store = loadPermissionStore();
+            var u = store.users.find(function (x) { return x.id === DEMO_PERM_USER_ID; });
+            if (u && typeof isSuperAdmin === 'function' && isSuperAdmin(u)) return 'global';
+            if (u && u.agentDataScope === 'global') return 'global';
+        }
+        return 'personal';
+    }
+
+    function getL1OperatorEmail(user) {
+        if (!user) return null;
+        var root = getRootPartner(user);
+        if (!root || root.level !== 1) return null;
+        return root.operator || null;
+    }
+
+    function isPartnerInDataScope(userId) {
+        if (getAgentDataScope() === 'global') return true;
+        var op = getL1OperatorEmail(getUser(userId));
+        return op === CURRENT_OPERATOR;
+    }
+
+    function renderAgentScopeBadge() {
+        var badge = document.getElementById('header-scope-badge');
+        var hint = document.getElementById('list-scope-hint');
+        var search = document.getElementById('list-search-input');
+        var scope = getAgentDataScope();
+        if (badge) {
+            if (scope === 'global') {
+                badge.textContent = '数据权限: 全局';
+                badge.className = 'bg-violet-50 text-violet-700 px-3 py-1 rounded-full font-bold text-[11px]';
+            } else {
+                badge.textContent = '数据权限: 个人';
+                badge.className = 'bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-bold text-[11px]';
+            }
+        }
+        if (hint) {
+            var base = '团队指标均为该用户<strong>向下整伞</strong>汇总；净收入 = 伞下净手续费 − 由伞下交易触发的<strong>全部返佣</strong>（含向上级级差）。';
+            if (scope === 'personal') {
+                hint.innerHTML = base + ' <span class="text-slate-500">· 当前为<strong>个人</strong>数据权限，仅展示本人为配置运营的一级伞及其向下层级。</span>';
+            } else {
+                hint.innerHTML = base + ' <span class="text-slate-500">· 当前为<strong>全局</strong>数据权限，可查看全部运营负责的一级伞及其向下层级。</span>';
+            }
+        }
+        if (search) {
+            search.placeholder = scope === 'global' ? '全站一级伞内搜索' : '本人负责一级伞内搜索';
+        }
+    }
+
     function getRootPartner(user) {
         if (!user) return null;
         let u = user;
@@ -870,7 +922,7 @@
         if (!tbody) return;
         let ids = LIST_IDS.filter(function (id) {
             const u = getUser(id);
-            return u && matchesListFilter(u);
+            return u && isPartnerInDataScope(id) && matchesListFilter(u);
         });
         ids = sortListIds(ids);
         const sliced = paginate(ids, listPage);
@@ -3847,10 +3899,15 @@
             AdminPagination.register('partner-logs', function (p) { partnerOpLogsPage = p; renderPartnerOpLogs(); });
         }
         updatePeriodTabUi('list', listStatsPeriod);
+        renderAgentScopeBadge();
         renderPartnerList();
         filterSettlementBatches();
         initSettlementDatePickers();
         applyHashTree();
+    });
+    window.addEventListener('admin-perm-store-change', function () {
+        renderAgentScopeBadge();
+        renderPartnerList();
     });
     window.addEventListener('hashchange', applyHashTree);
 })();
