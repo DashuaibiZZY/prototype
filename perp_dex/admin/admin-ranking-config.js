@@ -121,7 +121,7 @@
         }
         if (subtitleEl) {
             subtitleEl.textContent = id
-                ? '编辑时交易额、积分仅可上调；配置保存后不可停用'
+                ? '仅可修改指标数值；UID、范围、生效策略不可变更'
                 : '默认 1 条，可添加至最多 10 条；共享榜单范围与生效策略';
         }
         showView('view-batch');
@@ -139,6 +139,39 @@
         var activityBtn = document.getElementById('batch-scope-activity');
         if (platformBtn) platformBtn.disabled = locked;
         if (activityBtn) activityBtn.disabled = locked;
+    }
+
+    function setBatchEffectiveControlsLocked(locked) {
+        document.querySelectorAll('input[name="batch-effective"]').forEach(function (el) {
+            el.disabled = locked;
+        });
+        var dateInput = document.getElementById('batch-effective-date');
+        if (dateInput) dateInput.disabled = locked || !document.querySelector('input[name="batch-effective"][value="scheduled"]:checked');
+        var wrap = document.getElementById('batch-effective-wrap');
+        if (wrap) wrap.classList.toggle('pointer-events-none', locked);
+        if (wrap) wrap.classList.toggle('opacity-60', locked);
+        var effHint = document.getElementById('batch-effective-edit-hint');
+        if (effHint) {
+            if (locked) effHint.classList.remove('hidden');
+            else effHint.classList.add('hidden');
+        }
+    }
+
+    function setAddBatchRowUi(editMode) {
+        var btn = document.getElementById('btn-add-batch-row');
+        if (btn) {
+            if (editMode) btn.classList.add('hidden');
+            else btn.classList.remove('hidden');
+        }
+        var hint = document.getElementById('batch-count-hint');
+        if (hint) {
+            if (editMode) hint.classList.add('hidden');
+            else hint.classList.remove('hidden');
+        }
+        var title = document.getElementById('batch-detail-title');
+        if (title) {
+            title.textContent = editMode ? '配置明细（编辑）' : '配置明细（最多 10 条）';
+        }
     }
 
     function initBatchPage(editId) {
@@ -172,7 +205,8 @@
             }
             global.onBatchEffectiveChange();
             setBatchScopeControlsLocked(true);
-            document.getElementById('btn-add-batch-row').disabled = true;
+            setBatchEffectiveControlsLocked(true);
+            setAddBatchRowUi(true);
         } else {
             batchScope = 'platform';
             batchRows = [{ uidMode: 'generate', uid: '' }];
@@ -180,7 +214,8 @@
             document.querySelector('input[name="batch-effective"][value="now"]').checked = true;
             global.onBatchEffectiveChange();
             setBatchScopeControlsLocked(false);
-            document.getElementById('btn-add-batch-row').disabled = false;
+            setBatchEffectiveControlsLocked(false);
+            setAddBatchRowUi(false);
         }
         renderBatchTable();
     }
@@ -195,6 +230,7 @@
     };
 
     global.onBatchEffectiveChange = function () {
+        if (editingId) return;
         var scheduled = document.querySelector('input[name="batch-effective"]:checked').value === 'scheduled';
         var dateInput = document.getElementById('batch-effective-date');
         dateInput.disabled = !scheduled;
@@ -338,8 +374,6 @@
             var monoErr = validateMonotonicMetrics(metrics, keys, 1);
             if (monoErr) { alert(monoErr); return; }
             applyMetricsToRow(existing, keys, metrics);
-            existing.effectiveAt = scheduled ? effDate + ' 00:00' : '立即生效';
-            existing.dataTime = scheduled ? '—' : nowStr();
             alert('配置已更新；数据将按写入时间参与 7D / 30D 排行榜统计');
         } else {
             var usedUids = {};
