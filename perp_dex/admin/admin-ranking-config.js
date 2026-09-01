@@ -2,8 +2,12 @@
     'use strict';
 
     var DIMENSION_KEYS = { '收益金额': 'pnl', '收益率': 'roi', '交易额': 'volume' };
-    var DIMENSION_LABELS = { pnl: 'PnL (USDT)', roi: 'ROI (%)', volume: 'Volume (USDT)' };
-    var STATUS_LABEL = { active: '生效中', pending: '待生效', offline: '已停用' };
+    var DIMENSION_LABELS = {
+        pnl: 'PnL (USDT)',
+        roi: 'ROI (%)',
+        volume: 'Volume (USDT)',
+        points: 'Points'
+    };
 
     /** 平台真实注册用户 UID（不可配置排行榜数据） */
     var REAL_USER_UIDS = { '100803': 1, '100855': 1, '200101': 1, '100815': 1, '10033401': 1 };
@@ -17,9 +21,9 @@
     };
 
     var configRows = [
-        { id: 1, uid: '10088001', wallet: '0x7a8b...C443', isVirtual: true, scopeType: 'platform', activityId: '', activityName: '', dimensions: ['pnl', 'roi', 'volume'], pnl: 1240000, roi: 124.52, volume: 12800000, status: 'active', dataTime: '2026-08-31 14:20', effectiveAt: '立即生效' },
-        { id: 2, uid: '10088002', wallet: '0x3f21...9A12', isVirtual: true, scopeType: 'activity', activityId: 'act-001', activityName: 'ForX嘉年华交易大赛', dimensions: ['volume', 'roi', 'pnl'], pnl: 86420.5, roi: 42.18, volume: 5200000, status: 'active', dataTime: '2026-08-31 09:00', effectiveAt: '立即生效' },
-        { id: 3, uid: '10088003', wallet: '0xAb12...77E0', isVirtual: true, scopeType: 'activity', activityId: 'act-002', activityName: 'BTC 永续交易量冲榜', dimensions: ['volume'], pnl: null, roi: null, volume: 980000, status: 'pending', dataTime: '—', effectiveAt: '2026-09-05 00:00' }
+        { id: 1, uid: '10088001', wallet: '0x7a8b...C443', isVirtual: true, scopeType: 'platform', activityId: '', activityName: '', dimensions: ['pnl', 'roi', 'volume', 'points'], pnl: 1240000, roi: 124.52, volume: 12800000, points: 98500, dataTime: '2026-08-31 14:20', effectiveAt: '立即生效' },
+        { id: 2, uid: '10088002', wallet: '0x3f21...9A12', isVirtual: true, scopeType: 'activity', activityId: 'act-001', activityName: 'ForX嘉年华交易大赛', dimensions: ['volume', 'roi', 'pnl'], pnl: 86420.5, roi: 42.18, volume: 5200000, points: null, dataTime: '2026-08-31 09:00', effectiveAt: '立即生效' },
+        { id: 3, uid: '10088003', wallet: '0xAb12...77E0', isVirtual: true, scopeType: 'activity', activityId: 'act-002', activityName: 'BTC 永续交易量冲榜', dimensions: ['volume'], pnl: null, roi: null, volume: 980000, points: null, dataTime: '—', effectiveAt: '2026-09-05 00:00' }
     ];
 
     (function seedDemoRows() {
@@ -27,7 +31,7 @@
             var isActivity = i % 2 === 0;
             var actId = isActivity ? 'act-003' : '';
             var meta = actId ? ACTIVITY_META[actId] : null;
-            var dims = meta ? meta.dimensions.map(function (d) { return DIMENSION_KEYS[d]; }) : ['pnl', 'roi', 'volume'];
+            var dims = meta ? meta.dimensions.map(function (d) { return DIMENSION_KEYS[d]; }) : ['pnl', 'roi', 'volume', 'points'];
             configRows.push({
                 id: i, uid: '10088' + String(100 + i), wallet: '0xVirt' + String(i).padStart(2, '0') + '...' + (2000 + i), isVirtual: true,
                 scopeType: isActivity ? 'activity' : 'platform', activityId: actId, activityName: meta ? meta.name : '',
@@ -35,7 +39,7 @@
                 pnl: dims.indexOf('pnl') >= 0 ? i * 12500 : null,
                 roi: dims.indexOf('roi') >= 0 ? i * 3.2 : null,
                 volume: dims.indexOf('volume') >= 0 ? i * 420000 : null,
-                status: i % 5 === 0 ? 'offline' : (i % 4 === 0 ? 'pending' : 'active'),
+                points: dims.indexOf('points') >= 0 ? i * 8500 : null,
                 dataTime: i % 4 === 0 ? '—' : '2026-08-' + String(10 + (i % 20)).padStart(2, '0') + ' 12:00',
                 effectiveAt: i % 4 === 0 ? '2026-09-0' + (i % 9 + 1) + ' 00:00' : '立即生效'
             });
@@ -48,8 +52,7 @@
     var nextVirtualUid = 10088200;
 
     var editingId = null;
-    var uidMode = 'manual';
-    var configScope = 'platform';
+    var editOriginal = null;
     var batchScope = 'platform';
     var batchRows = [];
     var activeCombobox = null;
@@ -77,14 +80,19 @@
         return '$' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
     }
 
+    function formatPoints(n) {
+        if (n == null) return '—';
+        return Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
+    }
+
     function getMetricKeysForScope(scope, activityId) {
-        if (scope === 'platform') return ['pnl', 'roi', 'volume'];
+        if (scope === 'platform') return ['pnl', 'roi', 'volume', 'points'];
         var meta = ACTIVITY_META[activityId];
         if (!meta) return [];
         return meta.dimensions.map(function (d) { return DIMENSION_KEYS[d]; });
     }
 
-    var VIEW_IDS = ['view-list', 'view-config', 'view-batch'];
+    var VIEW_IDS = ['view-list', 'view-batch'];
 
     function showView(id) {
         VIEW_IDS.forEach(function (vid) {
@@ -97,272 +105,93 @@
     }
 
     global.showListPage = function () {
+        editingId = null;
+        editOriginal = null;
         showView('view-list');
         if (location.hash) location.hash = '';
     };
 
-    global.openConfigPage = function (id) {
+    global.openBatchPage = function (id) {
         editingId = id || null;
-        document.getElementById('config-page-title').textContent = id ? '编辑虚拟用户配置' : '新增虚拟用户配置';
-        showView('view-config');
-        try {
-            resetSingleForm(id);
-        } catch (err) {
-            console.error('[RankingAdmin] resetSingleForm failed', err);
+        editOriginal = null;
+        var titleEl = document.getElementById('batch-page-title');
+        var subtitleEl = document.getElementById('batch-page-subtitle');
+        if (titleEl) {
+            titleEl.textContent = id ? '编辑虚拟用户配置' : '新增虚拟用户配置';
         }
-        var hash = id ? '#edit=' + id : '#new';
-        if (location.hash !== hash) location.hash = hash;
-    };
-
-    global.openBatchPage = function () {
+        if (subtitleEl) {
+            subtitleEl.textContent = id
+                ? '编辑时交易额、积分仅可上调；配置保存后不可停用'
+                : '默认 1 条，可添加至最多 10 条；共享榜单范围与生效策略';
+        }
         showView('view-batch');
         try {
-            initBatchPage();
+            initBatchPage(id);
         } catch (err) {
             console.error('[RankingAdmin] initBatchPage failed', err);
         }
-        if (location.hash !== '#batch') location.hash = '#batch';
+        var hash = id ? '#edit=' + id : '#batch';
+        if (location.hash !== hash) location.hash = hash;
     };
 
-    function resetSingleForm(id) {
-        uidMode = 'manual';
-        configScope = 'platform';
-        global.setUidMode('manual');
-        global.setConfigScope('platform');
-        document.getElementById('uid-error').classList.add('hidden');
-        mountActivityCombobox('cfg-activity-combobox', 'cfg', '', onConfigActivityChange);
-        renderPlatformMetrics('cfg-metrics-platform', 'cfg', null);
-        document.getElementById('cfg-metrics-activity').classList.add('hidden');
-        document.getElementById('cfg-metrics-platform').classList.remove('hidden');
-        updateConfigMetricsHint();
-        document.querySelector('input[name="cfg-effective"][value="now"]').checked = true;
-        global.onCfgEffectiveChange();
-
-        if (id) {
-            var row = configRows.find(function (r) { return r.id === id; });
-            if (!row) return;
-            uidMode = 'manual';
-            global.setUidMode('manual');
-            document.getElementById('config-uid').value = row.uid;
-            document.getElementById('config-uid').readOnly = true;
-            document.getElementById('uid-mode-manual').disabled = true;
-            document.getElementById('uid-mode-generate').disabled = true;
-            global.setConfigScope(row.scopeType);
-            if (row.activityId) selectComboboxActivity('cfg', row.activityId);
-            fillMetrics('cfg', row.scopeType, row.activityId, row);
-            document.querySelector('input[name="cfg-effective"][value="now"]').checked = row.status !== 'pending';
-            document.querySelector('input[name="cfg-effective"][value="scheduled"]').checked = row.status === 'pending';
-            global.onCfgEffectiveChange();
-        } else {
-            document.getElementById('config-uid').readOnly = false;
-            document.getElementById('config-uid').value = '';
-            document.getElementById('uid-mode-manual').disabled = false;
-            document.getElementById('uid-mode-generate').disabled = false;
-        }
+    function setBatchScopeControlsLocked(locked) {
+        var platformBtn = document.getElementById('batch-scope-platform');
+        var activityBtn = document.getElementById('batch-scope-activity');
+        if (platformBtn) platformBtn.disabled = locked;
+        if (activityBtn) activityBtn.disabled = locked;
     }
 
-    global.setUidMode = function (mode) {
-        uidMode = mode;
-        document.getElementById('uid-mode-manual').classList.toggle('active', mode === 'manual');
-        document.getElementById('uid-mode-generate').classList.toggle('active', mode === 'generate');
-        var input = document.getElementById('config-uid');
-        var hint = document.getElementById('uid-hint');
-        document.getElementById('uid-error').classList.add('hidden');
-        if (editingId) return;
-        if (mode === 'generate') {
-            input.value = '';
-            input.readOnly = true;
-            input.placeholder = '保存成功后系统自动分配虚拟 UID';
-            hint.textContent = '已选择「保存时生成」：点击保存后才会创建虚拟用户并展示 UID。';
-        } else {
-            input.readOnly = false;
-            input.placeholder = '输入虚拟用户 UID';
-            hint.textContent = '手动输入虚拟 UID；不可填写真实注册用户 UID（如 100803、200101）。';
-        }
-    };
-
-    global.setConfigScope = function (scope) {
-        configScope = scope;
-        document.getElementById('cfg-scope-platform').classList.toggle('active', scope === 'platform');
-        document.getElementById('cfg-scope-activity').classList.toggle('active', scope === 'activity');
-        document.getElementById('cfg-activity-wrap').classList.toggle('hidden', scope !== 'activity');
-        if (scope !== 'activity') clearCombobox('cfg');
-        updateConfigMetricsPanel();
-    };
-
-    function updateConfigMetricsPanel() {
-        var actId = getComboboxValue('cfg');
-        if (configScope === 'platform') {
-            document.getElementById('cfg-metrics-platform').classList.remove('hidden');
-            document.getElementById('cfg-metrics-activity').classList.add('hidden');
-            renderPlatformMetrics('cfg-metrics-platform', 'cfg', null);
-        } else {
-            document.getElementById('cfg-metrics-platform').classList.add('hidden');
-            document.getElementById('cfg-metrics-activity').classList.remove('hidden');
-            if (actId) renderActivityMetrics('cfg-metrics-activity', 'cfg', actId, null);
-            else document.getElementById('cfg-metrics-activity').innerHTML = '<p class="text-slate-400 italic">请先选择活动</p>';
-        }
-        updateConfigMetricsHint();
-    }
-
-    function updateConfigMetricsHint() {
-        var hint = document.getElementById('cfg-metrics-hint');
-        if (configScope === 'platform') {
-            hint.innerHTML = '全平台展示三项指标，默认均为 <strong>0</strong>。';
-        } else {
-            hint.innerHTML = '活动榜仅展示该活动已启用的排序维度。';
-        }
-    }
-
-    function onConfigActivityChange(id) {
-        var box = document.getElementById('cfg-activity-readonly');
-        if (!id) { box.classList.add('hidden'); updateConfigMetricsPanel(); return; }
-        var meta = ACTIVITY_META[id];
-        box.classList.remove('hidden');
-        document.getElementById('cfg-activity-dim').textContent = '排序维度：' + meta.dimensions.join('、');
-        updateConfigMetricsPanel();
-    }
-
-    global.onCfgEffectiveChange = function () {
-        var scheduled = document.querySelector('input[name="cfg-effective"]:checked').value === 'scheduled';
-        var dateInput = document.getElementById('cfg-effective-date');
-        dateInput.disabled = !scheduled;
-        if (scheduled && !dateInput.value) {
-            var d = new Date(); d.setDate(d.getDate() + 3);
-            dateInput.value = d.toISOString().slice(0, 10);
-        }
-    };
-
-    function validateVirtualUid(uid, allowEmptyForGenerate) {
-        if (!uid) {
-            if (allowEmptyForGenerate) return null;
-            return '请填写虚拟用户 UID 或选择「保存时生成」';
-        }
-        if (isRealUser(uid)) return 'UID ' + uid + ' 为真实注册用户，不可配置排行榜数据';
-        var dup = configRows.find(function (r) { return r.uid === uid && r.id !== editingId && r.status !== 'offline'; });
-        if (dup) return '虚拟 UID ' + uid + ' 已有生效配置';
-        return null;
-    }
-
-    global.saveSingleConfig = function () {
-        var uid = document.getElementById('config-uid').value.trim();
-        var willGenerate = !editingId && uidMode === 'generate';
-        if (willGenerate) uid = allocateVirtualUid();
-        else {
-            var err = validateVirtualUid(uid, false);
-            if (err) {
-                document.getElementById('uid-error').textContent = err;
-                document.getElementById('uid-error').classList.remove('hidden');
+    function initBatchPage(editId) {
+        if (editId) {
+            var row = configRows.find(function (r) { return r.id === editId; });
+            if (!row) {
+                global.showListPage();
                 return;
             }
-        }
-
-        var actId = configScope === 'activity' ? getComboboxValue('cfg') : '';
-        if (configScope === 'activity' && !actId) { alert('请选择活动'); return; }
-
-        var keys = getMetricKeysForScope(configScope, actId);
-        var metrics = readMetrics('cfg', keys);
-        var scheduled = document.querySelector('input[name="cfg-effective"]:checked').value === 'scheduled';
-
-        if (editingId) {
-            var row = configRows.find(function (r) { return r.id === editingId; });
-            applyMetricsToRow(row, keys, metrics);
-            row.status = scheduled ? 'pending' : 'active';
-            row.effectiveAt = scheduled ? document.getElementById('cfg-effective-date').value + ' 00:00' : '立即生效';
-            row.dataTime = scheduled ? '—' : nowStr();
+            editOriginal = {
+                volume: row.volume != null ? row.volume : 0,
+                points: row.points != null ? row.points : 0
+            };
+            batchScope = row.scopeType;
+            batchRows = [{
+                uidMode: 'manual',
+                uid: row.uid,
+                pnl: row.pnl,
+                roi: row.roi,
+                volume: row.volume,
+                points: row.points
+            }];
+            global.setBatchScope(batchScope, true);
+            if (row.activityId) selectComboboxActivity('batch', row.activityId);
+            var isScheduled = row.dataTime === '—' && row.effectiveAt !== '立即生效';
+            document.querySelector('input[name="batch-effective"][value="now"]').checked = !isScheduled;
+            document.querySelector('input[name="batch-effective"][value="scheduled"]').checked = isScheduled;
+            if (isScheduled) {
+                var datePart = row.effectiveAt.split(' ')[0];
+                document.getElementById('batch-effective-date').value = datePart;
+            }
+            global.onBatchEffectiveChange();
+            setBatchScopeControlsLocked(true);
+            document.getElementById('btn-add-batch-row').disabled = true;
         } else {
-            nextId += 1;
-            var newRow = buildRow(nextId, uid, configScope, actId, keys, metrics, scheduled);
-            configRows.unshift(newRow);
+            batchScope = 'platform';
+            batchRows = [{ uidMode: 'generate', uid: '' }];
+            global.setBatchScope('platform', false);
+            document.querySelector('input[name="batch-effective"][value="now"]').checked = true;
+            global.onBatchEffectiveChange();
+            setBatchScopeControlsLocked(false);
+            document.getElementById('btn-add-batch-row').disabled = false;
         }
-
-        var msg = willGenerate ? ('已创建虚拟用户 UID：' + uid) : '配置已保存';
-        alert(msg + '；数据将按写入时间参与 7D / 30D 排行榜统计');
-        filteredRows = configRows.slice();
-        global.showListPage();
-        renderTable();
-    };
-
-    function nowStr() {
-        var d = new Date();
-        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + ' ' +
-            String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-    }
-
-    function buildRow(id, uid, scope, actId, keys, metrics, scheduled) {
-        var meta = actId ? ACTIVITY_META[actId] : null;
-        var row = {
-            id: id, uid: uid, wallet: '0xVirt' + uid.slice(-4) + '...' + uid.slice(-2), isVirtual: true,
-            scopeType: scope, activityId: actId || '', activityName: meta ? meta.name : '',
-            dimensions: keys.slice(), status: scheduled ? 'pending' : 'active',
-            dataTime: scheduled ? '—' : nowStr(),
-            effectiveAt: scheduled ? document.getElementById('cfg-effective-date').value + ' 00:00' : '立即生效',
-            pnl: null, roi: null, volume: null
-        };
-        applyMetricsToRow(row, keys, metrics);
-        return row;
-    }
-
-    function applyMetricsToRow(row, keys, metrics) {
-        row.pnl = keys.indexOf('pnl') >= 0 ? metrics.pnl : null;
-        row.roi = keys.indexOf('roi') >= 0 ? metrics.roi : null;
-        row.volume = keys.indexOf('volume') >= 0 ? metrics.volume : null;
-    }
-
-    function renderPlatformMetrics(containerId, prefix, row) {
-        var html = ['pnl', 'roi', 'volume'].map(function (key) {
-            var val = row && row[key] != null ? row[key] : 0;
-            var color = key === 'pnl' ? ' text-green-700' : (key === 'volume' ? ' text-amber-700' : '');
-            return '<div><label class="input-label">' + DIMENSION_LABELS[key] + '</label>' +
-                '<input type="number" id="' + prefix + '-m-' + key + '" step="0.01" value="' + val + '" class="search-input w-full font-black' + color + '"></div>';
-        }).join('');
-        document.getElementById(containerId).innerHTML = html;
-    }
-
-    function renderActivityMetrics(containerId, prefix, actId, row) {
-        var meta = ACTIVITY_META[actId];
-        var html = meta.dimensions.map(function (dimName) {
-            var key = DIMENSION_KEYS[dimName];
-            var val = row && row[key] != null ? row[key] : 0;
-            return '<div><label class="input-label">' + DIMENSION_LABELS[key] + '</label>' +
-                '<input type="number" id="' + prefix + '-m-' + key + '" step="0.01" value="' + val + '" class="search-input w-full font-black"></div>';
-        }).join('');
-        var el = document.getElementById(containerId);
-        el.innerHTML = html;
-        el.className = 'grid gap-4 grid-cols-' + Math.min(meta.dimensions.length, 3);
-    }
-
-    function fillMetrics(prefix, scope, actId, row) {
-        if (scope === 'platform') renderPlatformMetrics('cfg-metrics-platform', prefix, row);
-        else renderActivityMetrics('cfg-metrics-activity', prefix, actId, row);
-    }
-
-    function readMetrics(prefix, keys) {
-        var out = {};
-        keys.forEach(function (key) {
-            var el = document.getElementById(prefix + '-m-' + key);
-            out[key] = el ? parseFloat(el.value) || 0 : 0;
-        });
-        return out;
-    }
-
-    /* ---------- Batch ---------- */
-    function initBatchPage() {
-        batchScope = 'platform';
-        batchRows = [{ uidMode: 'generate', uid: '' }, { uidMode: 'generate', uid: '' }, { uidMode: 'manual', uid: '' }];
-        global.setBatchScope('platform');
-        document.querySelector('input[name="batch-effective"][value="now"]').checked = true;
-        global.onBatchEffectiveChange();
         renderBatchTable();
     }
 
-    global.setBatchScope = function (scope) {
+    global.setBatchScope = function (scope, skipRender) {
         batchScope = scope;
         document.getElementById('batch-scope-platform').classList.toggle('active', scope === 'platform');
         document.getElementById('batch-scope-activity').classList.toggle('active', scope === 'activity');
         document.getElementById('batch-activity-wrap').classList.toggle('hidden', scope !== 'activity');
-        if (scope === 'activity') mountActivityCombobox('batch-activity-combobox', 'batch', '', renderBatchTable);
-        else { clearCombobox('batch'); renderBatchTable(); }
+        if (scope === 'activity') mountActivityCombobox('batch-activity-combobox', 'batch', '', function () { if (!skipRender) renderBatchTable(); });
+        else { clearCombobox('batch'); if (!skipRender) renderBatchTable(); }
     };
 
     global.onBatchEffectiveChange = function () {
@@ -376,49 +205,66 @@
     };
 
     global.addBatchRow = function () {
-        if (batchRows.length >= 10) return;
+        if (editingId || batchRows.length >= 10) return;
         batchRows.push({ uidMode: 'generate', uid: '' });
         renderBatchTable();
     };
 
     global.removeBatchRow = function (idx) {
-        if (batchRows.length <= 1) return;
+        if (editingId || batchRows.length <= 1) return;
         batchRows.splice(idx, 1);
         renderBatchTable();
     };
 
     global.setBatchRowUidMode = function (idx, mode) {
+        if (editingId) return;
         batchRows[idx].uidMode = mode;
         if (mode === 'generate') batchRows[idx].uid = '';
         renderBatchTable();
     };
 
     global.updateBatchRowUid = function (idx, val) {
+        if (editingId) return;
         batchRows[idx].uid = val;
     };
+
+    function getMonotonicMin(key) {
+        if (!editingId || !editOriginal) return null;
+        if (key === 'volume' || key === 'points') return editOriginal[key];
+        return null;
+    }
+
+    function clampMonotonicMetric(key, val) {
+        var min = getMonotonicMin(key);
+        if (min != null && val < min) return min;
+        return val;
+    }
 
     function renderBatchTable() {
         var actId = batchScope === 'activity' ? getComboboxValue('batch') : '';
         var keys = getMetricKeysForScope(batchScope, actId);
         document.getElementById('batch-count-hint').textContent = batchRows.length + ' / 10 条';
-        document.getElementById('btn-add-batch-row').disabled = batchRows.length >= 10;
+        if (!editingId) document.getElementById('btn-add-batch-row').disabled = batchRows.length >= 10;
 
         var head = '<th class="px-4 py-3 w-10">#</th><th class="px-4 py-3 min-w-[200px]">虚拟 UID</th>';
         keys.forEach(function (key) {
-            head += '<th class="px-4 py-3">' + DIMENSION_LABELS[key] + '</th>';
+            var hint = (editingId && (key === 'volume' || key === 'points')) ? ' <span class="text-amber-600">↑</span>' : '';
+            head += '<th class="px-4 py-3">' + DIMENSION_LABELS[key] + hint + '</th>';
         });
-        head += '<th class="px-4 py-3 w-16"></th>';
+        if (!editingId) head += '<th class="px-4 py-3 w-16"></th>';
         document.getElementById('batch-table-head').innerHTML = head;
 
         if (batchScope === 'activity' && !actId) {
             document.getElementById('batch-table-body').innerHTML =
-                '<tr><td colspan="' + (keys.length + 3) + '" class="px-6 py-8 text-center text-slate-400">请先选择活动</td></tr>';
+                '<tr><td colspan="' + (keys.length + (editingId ? 2 : 3)) + '" class="px-6 py-8 text-center text-slate-400">请先选择活动</td></tr>';
             return;
         }
 
         document.getElementById('batch-table-body').innerHTML = batchRows.map(function (row, idx) {
             var uidCell;
-            if (row.uidMode === 'generate') {
+            if (editingId) {
+                uidCell = '<span class="font-black">' + row.uid + '</span><p class="text-[9px] text-slate-400 italic">编辑态不可修改 UID</p>';
+            } else if (row.uidMode === 'generate') {
                 uidCell = '<div class="space-y-1"><select class="search-input font-bold" onchange="setBatchRowUidMode(' + idx + ', this.value)">' +
                     '<option value="generate" selected>保存时生成</option><option value="manual">手动输入</option></select>' +
                     '<p class="text-[9px] text-slate-400 italic">保存后分配 UID</p></div>';
@@ -429,61 +275,122 @@
             }
             var metricCells = keys.map(function (key) {
                 var val = row[key] != null ? row[key] : 0;
-                return '<td class="px-4 py-3"><input type="number" step="0.01" value="' + val + '" class="search-input" data-batch-idx="' + idx + '" data-metric="' + key + '" onchange="updateBatchMetric(this)"></td>';
+                var minAttr = '';
+                var step = key === 'points' ? '1' : '0.01';
+                if (editingId && (key === 'volume' || key === 'points')) {
+                    var minVal = getMonotonicMin(key);
+                    if (minVal != null) minAttr = ' min="' + minVal + '"';
+                }
+                return '<td class="px-4 py-3"><input type="number" step="' + step + '" value="' + val + '"' + minAttr +
+                    ' class="search-input" data-batch-idx="' + idx + '" data-metric="' + key + '" onchange="updateBatchMetric(this)"></td>';
             }).join('');
+            var deleteCell = editingId ? '' :
+                '<td class="px-4 py-3"><button type="button" onclick="removeBatchRow(' + idx + ')" class="text-red-500 font-bold' +
+                (batchRows.length <= 1 ? ' opacity-30' : '') + '"' + (batchRows.length <= 1 ? ' disabled' : '') + '>删除</button></td>';
             return '<tr><td class="px-4 py-3 font-black text-slate-400">' + (idx + 1) + '</td><td class="px-4 py-3">' + uidCell + '</td>' +
-                metricCells +
-                '<td class="px-4 py-3"><button type="button" onclick="removeBatchRow(' + idx + ')" class="text-red-500 font-bold' + (batchRows.length <= 1 ? ' opacity-30' : '') + '"' + (batchRows.length <= 1 ? ' disabled' : '') + '>删除</button></td></tr>';
+                metricCells + deleteCell + '</tr>';
         }).join('');
     }
 
     global.updateBatchMetric = function (el) {
         var idx = parseInt(el.getAttribute('data-batch-idx'), 10);
         var key = el.getAttribute('data-metric');
-        batchRows[idx][key] = parseFloat(el.value) || 0;
+        var val = key === 'points' ? parseInt(el.value, 10) || 0 : parseFloat(el.value) || 0;
+        val = clampMonotonicMetric(key, val);
+        if (val !== parseFloat(el.value)) {
+            el.value = val;
+        }
+        batchRows[idx][key] = val;
     };
+
+    function validateVirtualUid(uid) {
+        if (!uid) return '请填写虚拟用户 UID 或选择「保存时生成」';
+        if (isRealUser(uid)) return 'UID ' + uid + ' 为真实注册用户，不可配置排行榜数据';
+        var dup = configRows.find(function (r) { return r.uid === uid && r.id !== editingId; });
+        if (dup) return '虚拟 UID ' + uid + ' 已有配置';
+        return null;
+    }
+
+    function validateMonotonicMetrics(metrics, keys, rowNum) {
+        if (!editingId || !editOriginal) return null;
+        if (keys.indexOf('volume') >= 0 && metrics.volume < editOriginal.volume) {
+            return '第 ' + rowNum + ' 行：交易额不可低于原值 ' + editOriginal.volume;
+        }
+        if (keys.indexOf('points') >= 0 && metrics.points < editOriginal.points) {
+            return '第 ' + rowNum + ' 行：积分不可低于原值 ' + editOriginal.points;
+        }
+        return null;
+    }
 
     global.saveBatchConfig = function () {
         var actId = batchScope === 'activity' ? getComboboxValue('batch') : '';
         if (batchScope === 'activity' && !actId) { alert('请选择活动'); return; }
         var keys = getMetricKeysForScope(batchScope, actId);
         var scheduled = document.querySelector('input[name="batch-effective"]:checked').value === 'scheduled';
-        var usedUids = {};
-        var created = 0;
+        var effDate = document.getElementById('batch-effective-date').value;
 
-        for (var i = 0; i < batchRows.length; i++) {
-            var br = batchRows[i];
-            var uid = br.uidMode === 'generate' ? allocateVirtualUid() : (br.uid || '').trim();
-            if (br.uidMode !== 'generate' && !uid) { alert('第 ' + (i + 1) + ' 行：请填写虚拟 UID 或选择保存时生成'); return; }
-            if (isRealUser(uid)) { alert('第 ' + (i + 1) + ' 行：UID ' + uid + ' 为真实用户，不可配置'); return; }
-            if (usedUids[uid]) { alert('第 ' + (i + 1) + ' 行：UID 与本批次重复'); return; }
-            usedUids[uid] = 1;
-            var err = validateVirtualUid(uid, false);
-            if (err && err.indexOf('已有生效') >= 0) { alert('第 ' + (i + 1) + ' 行：' + err); return; }
-
+        if (editingId) {
+            var existing = configRows.find(function (r) { return r.id === editingId; });
+            if (!existing) { alert('配置不存在'); return; }
+            var br = batchRows[0];
             var metrics = {};
             keys.forEach(function (key) { metrics[key] = br[key] != null ? br[key] : 0; });
-            nextId += 1;
-            configRows.unshift(buildRowFromBatch(nextId, uid, batchScope, actId, keys, metrics, scheduled));
-            created += 1;
+            var monoErr = validateMonotonicMetrics(metrics, keys, 1);
+            if (monoErr) { alert(monoErr); return; }
+            applyMetricsToRow(existing, keys, metrics);
+            existing.effectiveAt = scheduled ? effDate + ' 00:00' : '立即生效';
+            existing.dataTime = scheduled ? '—' : nowStr();
+            alert('配置已更新；数据将按写入时间参与 7D / 30D 排行榜统计');
+        } else {
+            var usedUids = {};
+            var created = 0;
+
+            for (var i = 0; i < batchRows.length; i++) {
+                var row = batchRows[i];
+                var uid = row.uidMode === 'generate' ? allocateVirtualUid() : (row.uid || '').trim();
+                if (row.uidMode !== 'generate' && !uid) { alert('第 ' + (i + 1) + ' 行：请填写虚拟 UID 或选择保存时生成'); return; }
+                if (isRealUser(uid)) { alert('第 ' + (i + 1) + ' 行：UID ' + uid + ' 为真实用户，不可配置'); return; }
+                if (usedUids[uid]) { alert('第 ' + (i + 1) + ' 行：UID 与本批次重复'); return; }
+                var err = validateVirtualUid(uid);
+                if (err) { alert('第 ' + (i + 1) + ' 行：' + err); return; }
+
+                var metrics = {};
+                keys.forEach(function (key) { metrics[key] = row[key] != null ? row[key] : 0; });
+                nextId += 1;
+                configRows.unshift(buildRowFromBatch(nextId, uid, batchScope, actId, keys, metrics, scheduled, effDate));
+                created += 1;
+            }
+
+            alert('已成功创建 ' + created + ' 条虚拟用户配置');
         }
 
-        alert('已成功批量创建 ' + created + ' 条虚拟用户配置');
         filteredRows = configRows.slice();
         global.showListPage();
         renderTable();
     };
 
-    function buildRowFromBatch(id, uid, scope, actId, keys, metrics, scheduled) {
-        var effDate = document.getElementById('batch-effective-date').value;
+    function nowStr() {
+        var d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + ' ' +
+            String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    }
+
+    function applyMetricsToRow(row, keys, metrics) {
+        row.pnl = keys.indexOf('pnl') >= 0 ? metrics.pnl : null;
+        row.roi = keys.indexOf('roi') >= 0 ? metrics.roi : null;
+        row.volume = keys.indexOf('volume') >= 0 ? metrics.volume : null;
+        row.points = keys.indexOf('points') >= 0 ? metrics.points : null;
+    }
+
+    function buildRowFromBatch(id, uid, scope, actId, keys, metrics, scheduled, effDate) {
         var meta = actId ? ACTIVITY_META[actId] : null;
         var row = {
             id: id, uid: uid, wallet: '0xVirt' + uid.slice(-4) + '...' + uid.slice(-2), isVirtual: true,
             scopeType: scope, activityId: actId || '', activityName: meta ? meta.name : '',
-            dimensions: keys.slice(), status: scheduled ? 'pending' : 'active',
+            dimensions: keys.slice(),
             dataTime: scheduled ? '—' : nowStr(),
             effectiveAt: scheduled ? effDate + ' 00:00' : '立即生效',
-            pnl: null, roi: null, volume: null
+            pnl: null, roi: null, volume: null, points: null
         };
         applyMetricsToRow(row, keys, metrics);
         return row;
@@ -499,10 +406,12 @@
             '<div class="p-2 border-b bg-slate-50"><input id="' + prefix + '-act-search" type="text" placeholder="搜索活动名称…" class="search-input w-full bg-white"></div>' +
             '<div id="' + prefix + '-act-options" class="max-h-44 overflow-y-auto py-1"></div></div>' +
             '<input type="hidden" id="' + prefix + '-act-value" value="' + (selectedId || '') + '">';
-        document.getElementById(prefix + '-act-trigger').onclick = function () { toggleCombobox(prefix); };
+        var trigger = document.getElementById(prefix + '-act-trigger');
+        if (trigger) trigger.onclick = function () { if (!editingId) toggleCombobox(prefix); };
         document.getElementById(prefix + '-act-search').oninput = function () { filterComboboxOptions(prefix); };
         if (selectedId) selectComboboxActivity(prefix, selectedId);
         comboboxCallbacks[prefix] = onChange || null;
+        if (editingId && trigger) trigger.disabled = true;
     }
 
     var comboboxCallbacks = {};
@@ -521,10 +430,8 @@
     }
 
     function closeAllComboboxes() {
-        ['cfg', 'batch'].forEach(function (p) {
-            var panel = document.getElementById(p + '-act-panel');
-            if (panel) panel.classList.add('hidden');
-        });
+        var panel = document.getElementById('batch-act-panel');
+        if (panel) panel.classList.add('hidden');
         activeCombobox = null;
     }
 
@@ -562,8 +469,6 @@
         label.textContent = '搜索并选择活动…';
         label.classList.add('text-slate-500');
         label.classList.remove('text-violet-700');
-        var ro = prefix === 'cfg' ? document.getElementById('cfg-activity-readonly') : null;
-        if (ro) ro.classList.add('hidden');
     }
 
     function getComboboxValue(prefix) {
@@ -573,7 +478,7 @@
 
     document.addEventListener('click', function (e) {
         if (!activeCombobox) return;
-        var wrap = document.getElementById(activeCombobox === 'cfg' ? 'cfg-activity-combobox' : 'batch-activity-combobox');
+        var wrap = document.getElementById('batch-activity-combobox');
         if (wrap && !wrap.contains(e.target)) closeAllComboboxes();
     });
 
@@ -589,7 +494,6 @@
         document.getElementById('filter-address').value = '';
         document.getElementById('filter-scope-type').value = 'all';
         document.getElementById('filter-activity-name').value = '';
-        document.getElementById('filter-status').value = 'all';
         global.onFilterScopeChange();
         filteredRows = configRows.slice();
         listPage = 1;
@@ -600,7 +504,6 @@
         var address = document.getElementById('filter-address').value.trim().toLowerCase();
         var scopeType = document.getElementById('filter-scope-type').value;
         var activityName = document.getElementById('filter-activity-name').value.trim().toLowerCase();
-        var status = document.getElementById('filter-status').value;
         filteredRows = configRows.filter(function (row) {
             if (address) {
                 var hay = [row.uid, row.wallet].join(' ').toLowerCase();
@@ -608,18 +511,10 @@
             }
             if (scopeType !== 'all' && row.scopeType !== scopeType) return false;
             if (scopeType === 'activity' && activityName && (row.activityName || '').toLowerCase().indexOf(activityName) === -1) return false;
-            if (status !== 'all' && row.status !== status) return false;
             return true;
         });
         listPage = 1;
         renderTable();
-    };
-
-    global.deactivateConfig = function (id) {
-        if (!confirm('确认停用？该虚拟用户将从榜单中移除。')) return;
-        var row = configRows.find(function (r) { return r.id === id; });
-        if (row) row.status = 'offline';
-        global.applyFilters();
     };
 
     function renderUidCell(row) {
@@ -636,7 +531,7 @@
         document.getElementById('filter-result-hint').textContent = '共 ' + filteredRows.length + ' 条';
 
         if (!filteredRows.length) {
-            tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-10 text-center text-slate-400 font-bold">暂无配置</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-10 text-center text-slate-400 font-bold">暂无配置</td></tr>';
             if (global.AdminPagination) global.AdminPagination.mount('config-table-pagination', 0, 1, 'config-list');
             return;
         }
@@ -652,11 +547,9 @@
                 '<td class="px-6 py-4">' + scope + '</td>' +
                 '<td class="px-6 py-4 text-right space-y-0.5">' + metrics + '</td>' +
                 '<td class="px-6 py-4 text-center text-[10px] text-violet-700 font-bold">' + dim + '</td>' +
-                '<td class="px-6 py-4 text-center"><span class="status-' + (row.status === 'pending' ? 'pending' : row.status) + '">' + STATUS_LABEL[row.status] + '</span></td>' +
                 '<td class="px-6 py-4 text-[10px] text-slate-500"><div>' + row.dataTime + '</div><div class="text-slate-400">' + row.effectiveAt + '</div></td>' +
-                '<td class="px-6 py-4 text-right space-x-3">' +
+                '<td class="px-6 py-4 text-right">' +
                 '<button type="button" data-ranking-action="edit" data-id="' + row.id + '" class="text-blue-600 font-black hover:underline">编辑</button>' +
-                (row.status !== 'offline' ? '<button type="button" data-ranking-action="deactivate" data-id="' + row.id + '" class="text-red-500 font-bold hover:underline">停用</button>' : '') +
                 '</td></tr>';
         }).join('');
         if (global.AdminPagination) global.AdminPagination.mount('config-table-pagination', sliced.total, listPage, 'config-list');
@@ -667,24 +560,16 @@
         if (row.dimensions.indexOf('pnl') >= 0 && row.pnl != null) lines.push('<p class="text-green-600 font-black">' + (row.pnl >= 0 ? '+' : '') + formatMoney(row.pnl) + '</p>');
         if (row.dimensions.indexOf('roi') >= 0 && row.roi != null) lines.push('<p class="font-bold">' + row.roi.toFixed(2) + '%</p>');
         if (row.dimensions.indexOf('volume') >= 0 && row.volume != null) lines.push('<p class="text-amber-700 font-bold">' + formatMoney(row.volume) + '</p>');
+        if (row.dimensions.indexOf('points') >= 0 && row.points != null) lines.push('<p class="text-slate-700 font-bold">' + formatPoints(row.points) + ' pts</p>');
         return lines.length ? lines.join('') : '—';
     }
 
     function parseHash() {
         var h = (location.hash || '').replace('#', '');
         if (h === 'batch') global.openBatchPage();
-        else if (h === 'new') global.openConfigPage();
-        else if (h.indexOf('edit=') === 0) global.openConfigPage(parseInt(h.split('=')[1], 10));
+        else if (h.indexOf('edit=') === 0) global.openBatchPage(parseInt(h.split('=')[1], 10));
         else global.showListPage();
     }
-
-    document.getElementById('config-uid').addEventListener('blur', function () {
-        if (uidMode !== 'manual' || editingId) return;
-        var err = validateVirtualUid(this.value.trim(), false);
-        var el = document.getElementById('uid-error');
-        if (err) { el.textContent = err; el.classList.remove('hidden'); }
-        else el.classList.add('hidden');
-    });
 
     function bindRankingUi() {
         var listView = document.getElementById('view-list');
@@ -695,9 +580,7 @@
                 var action = btn.getAttribute('data-ranking-action');
                 var id = parseInt(btn.getAttribute('data-id'), 10);
                 if (action === 'open-batch') global.openBatchPage();
-                else if (action === 'open-config') global.openConfigPage();
-                else if (action === 'edit') global.openConfigPage(id);
-                else if (action === 'deactivate') global.deactivateConfig(id);
+                else if (action === 'edit') global.openBatchPage(id);
             });
         }
         document.querySelectorAll('[data-ranking-action="back-list"]').forEach(function (btn) {
@@ -706,8 +589,6 @@
                 global.showListPage();
             });
         });
-        var saveSingle = document.querySelector('[data-ranking-action="save-config"]');
-        if (saveSingle) saveSingle.addEventListener('click', function () { global.saveSingleConfig(); });
         var saveBatch = document.querySelector('[data-ranking-action="save-batch"]');
         if (saveBatch) saveBatch.addEventListener('click', function () { global.saveBatchConfig(); });
         var addBatchRowBtn = document.querySelector('[data-ranking-action="add-batch-row"]');
