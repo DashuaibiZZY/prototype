@@ -7,9 +7,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #111827; }
-        .status-active { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
-        .status-pending { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
-        .status-offline { background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
         .target-badge-platform { background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; }
         .target-badge-activity { background: #f5f3ff; color: #6d28d9; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; }
         .virtual-badge { background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; }
@@ -20,8 +17,8 @@
         .scope-type-btn { flex: 1; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; font-weight: 800; color: #64748b; background: #fff; transition: all 0.15s; }
         .scope-type-btn.active { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; box-shadow: inset 0 0 0 1px #2563eb; }
         .scope-type-btn.activity.active { border-color: #7c3aed; background: #f5f3ff; color: #6d28d9; box-shadow: inset 0 0 0 1px #7c3aed; }
+        .scope-type-btn:disabled { opacity: 0.45; cursor: not-allowed; }
         .hint-box { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 4px; padding: 8px 10px; font-size: 10px; color: #64748b; line-height: 1.5; }
-        .readonly-box { background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 4px; padding: 10px 12px; font-size: 10px; color: #5b21b6; }
         .warn-box { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 4px; padding: 8px 10px; font-size: 10px; color: #9a3412; line-height: 1.5; }
         .activity-combobox-panel { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 120; background: #fff; border: 1px solid #e2e8f0; border-radius: 0.375rem; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12); overflow: hidden; }
         .activity-option { display: block; width: 100%; text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 700; color: #334155; }
@@ -35,198 +32,120 @@
 <aside id="admin-sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0"></aside>
 
 <main class="flex-1 flex flex-col overflow-hidden">
-    <!-- 列表页 -->
-    <div id="view-list" class="flex flex-col flex-1 overflow-hidden min-h-0">
-        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
-            <div>
-                <h1 class="text-lg font-bold text-slate-800 italic uppercase">排行榜虚拟用户数据配置</h1>
-                <p class="text-[10px] text-slate-400 mt-0.5">仅支持虚拟用户；数据按写入时间参与 7D / 30D 排行榜统计</p>
-            </div>
-            <div class="flex gap-2">
-                <button type="button" data-ranking-action="open-batch" class="px-4 py-2 border border-slate-300 text-slate-700 font-black rounded-sm hover:bg-slate-50 uppercase">批量配置</button>
-                <button type="button" data-ranking-action="open-config" class="bg-blue-600 text-white px-4 py-2 rounded-sm font-black hover:bg-blue-700 uppercase">+ 新增配置</button>
-            </div>
-        </header>
-        <div class="flex-1 overflow-y-auto p-8 space-y-4">
-            <section class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm space-y-3">
-                <div class="grid grid-cols-12 gap-3 items-end">
-                    <div class="col-span-3">
-                        <label class="input-label">UID / 钱包</label>
-                        <input type="text" id="filter-address" placeholder="输入 UID 或钱包" class="search-input w-full">
-                    </div>
-                    <div class="col-span-2">
-                        <label class="input-label">榜单范围</label>
-                        <select id="filter-scope-type" class="search-input w-full bg-white font-bold" onchange="onFilterScopeChange()">
-                            <option value="all">全部</option>
-                            <option value="platform">全平台</option>
-                            <option value="activity">平台活动</option>
-                        </select>
-                    </div>
-                    <div class="col-span-3">
-                        <label class="input-label">活动名称</label>
-                        <input type="text" id="filter-activity-name" placeholder="输入活动名关键词" class="search-input w-full" disabled>
-                    </div>
-                    <div class="col-span-2">
-                        <label class="input-label">配置状态</label>
-                        <select id="filter-status" class="search-input w-full bg-white font-bold">
-                            <option value="all">全部</option>
-                            <option value="active">生效中</option>
-                            <option value="pending">待生效</option>
-                            <option value="offline">已停用</option>
-                        </select>
-                    </div>
-                    <div class="col-span-2 flex justify-end space-x-2">
-                        <button onclick="applyFilters()" class="px-6 bg-slate-900 text-white font-bold py-1.5 rounded">筛选</button>
-                        <button onclick="resetFilters()" class="px-6 border border-slate-200 text-slate-400 font-bold py-1.5 rounded">重置</button>
-                    </div>
-                </div>
-            </section>
-            <section class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
-                <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
-                    <div class="flex items-center space-x-4">
-                        <h2 class="font-black text-slate-700 uppercase tracking-tighter">虚拟用户配置列表</h2>
-                        <span id="filter-result-hint" class="text-[10px] text-slate-400 font-bold">共 0 条</span>
-                    </div>
-                </div>
-                <table class="w-full text-left">
-                    <thead class="bg-slate-50 text-slate-400 font-black text-[10px] uppercase border-b border-slate-100">
-                    <tr>
-                        <th class="px-6 py-4">UID / 标识</th>
-                        <th class="px-6 py-4">榜单范围</th>
-                        <th class="px-6 py-4 text-right">配置指标</th>
-                        <th class="px-6 py-4 text-center">活动排序维度</th>
-                        <th class="px-6 py-4 text-center">状态</th>
-                        <th class="px-6 py-4">数据时间</th>
-                        <th class="px-6 py-4 text-right">操作</th>
-                    </tr>
-                    </thead>
-                    <tbody id="config-table-body" class="divide-y divide-slate-50 text-[11px] font-medium"></tbody>
-                </table>
-                <div id="config-table-pagination"></div>
-            </section>
+  <div id="view-list" class="flex flex-col flex-1 overflow-hidden min-h-0">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+      <div>
+        <h1 class="text-lg font-bold text-slate-800 italic uppercase">排行榜虚拟用户数据配置</h1>
+        <p class="text-[10px] text-slate-400 mt-0.5">仅虚拟用户；模拟数据配置后不可停用</p>
+      </div>
+      <button type="button" data-ranking-action="open-batch" class="bg-blue-600 text-white px-4 py-2 rounded-sm font-black hover:bg-blue-700 uppercase">+ 新增配置</button>
+    </header>
+    <div class="flex-1 overflow-y-auto p-8 space-y-4">
+      <section class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+        <div class="grid grid-cols-12 gap-3 items-end">
+          <div class="col-span-4">
+            <label class="input-label">UID / 钱包</label>
+            <input type="text" id="filter-address" placeholder="输入 UID 或钱包" class="search-input w-full">
+          </div>
+          <div class="col-span-3">
+            <label class="input-label">榜单范围</label>
+            <select id="filter-scope-type" class="search-input w-full bg-white font-bold" onchange="onFilterScopeChange()">
+              <option value="all">全部</option>
+              <option value="platform">全平台</option>
+              <option value="activity">平台活动</option>
+            </select>
+          </div>
+          <div class="col-span-3">
+            <label class="input-label">活动名称</label>
+            <input type="text" id="filter-activity-name" placeholder="输入活动名关键词" class="search-input w-full" disabled>
+          </div>
+          <div class="col-span-2 flex justify-end space-x-2">
+            <button onclick="applyFilters()" class="px-6 bg-slate-900 text-white font-bold py-1.5 rounded">筛选</button>
+            <button onclick="resetFilters()" class="px-6 border border-slate-200 text-slate-400 font-bold py-1.5 rounded">重置</button>
+          </div>
         </div>
-    </div>
-
-    <!-- 单条配置子页 -->
-    <div id="view-config" class="hidden flex flex-col flex-1 overflow-hidden min-h-0">
-        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
-            <div class="flex items-center gap-4">
-                <button type="button" data-ranking-action="back-list" class="text-slate-400 hover:text-slate-800 font-black">← 返回列表</button>
-                <div>
-                    <h1 class="text-lg font-bold text-slate-800 italic uppercase" id="config-page-title">新增虚拟用户配置</h1>
-                    <p class="text-[10px] text-slate-400 mt-0.5">仅虚拟用户可配置；真实注册用户不可选</p>
-                </div>
-            </div>
-            <div class="flex gap-2">
-                <button type="button" data-ranking-action="back-list" class="px-4 py-2 border border-slate-200 text-slate-500 font-bold rounded-sm">取消</button>
-                <button type="button" data-ranking-action="save-config" class="px-6 py-2 bg-blue-600 text-white font-black rounded-sm">保存配置</button>
-            </div>
-        </header>
-        <div class="flex-1 overflow-y-auto p-8">
-            <div class="max-w-3xl mx-auto space-y-6 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
-                <div class="warn-box">本模块<strong>仅支持虚拟用户</strong>（排行榜专用假数据账号）。不可为平台真实注册用户配置榜单数据。</div>
-
-                <section class="space-y-3">
-                    <h4 class="text-slate-900 font-black border-b pb-2 uppercase">1. 虚拟用户 UID</h4>
-                    <div class="flex gap-2 mb-2">
-                        <button type="button" id="uid-mode-manual" class="scope-type-btn active" onclick="setUidMode('manual')">手动输入 UID</button>
-                        <button type="button" id="uid-mode-generate" class="scope-type-btn" onclick="setUidMode('generate')">保存时生成</button>
-                    </div>
-                    <input type="text" id="config-uid" placeholder="输入虚拟用户 UID" class="search-input w-full font-black">
-                    <p id="uid-hint" class="text-[9px] text-slate-400 italic">可手动指定虚拟 UID，或选择「保存时生成」—— UID 在保存成功后才展示。</p>
-                    <p id="uid-error" class="text-[10px] text-red-600 font-bold hidden"></p>
-                </section>
-
-                <section class="space-y-3">
-                    <h4 class="text-slate-900 font-black border-b pb-2 uppercase">2. 榜单范围</h4>
-                    <div class="flex gap-3">
-                        <button type="button" id="cfg-scope-platform" class="scope-type-btn active" onclick="setConfigScope('platform')">全平台</button>
-                        <button type="button" id="cfg-scope-activity" class="scope-type-btn activity" onclick="setConfigScope('activity')">平台活动</button>
-                    </div>
-                    <div id="cfg-activity-wrap" class="hidden space-y-2">
-                        <label class="input-label">选择活动</label>
-                        <div id="cfg-activity-combobox" class="relative"></div>
-                        <div id="cfg-activity-readonly" class="readonly-box hidden"><p id="cfg-activity-dim">—</p></div>
-                    </div>
-                </section>
-
-                <section class="space-y-3">
-                    <h4 class="text-slate-900 font-black border-b pb-2 uppercase">3. 配置指标</h4>
-                    <div id="cfg-metrics-platform" class="grid grid-cols-3 gap-4"></div>
-                    <div id="cfg-metrics-activity" class="grid gap-4 hidden"></div>
-                    <div class="hint-box" id="cfg-metrics-hint"></div>
-                </section>
-
-                <section class="space-y-3">
-                    <h4 class="text-slate-900 font-black border-b pb-2 uppercase">4. 生效策略</h4>
-                    <div class="flex gap-4 items-center flex-wrap">
-                        <label class="flex items-center gap-2 cursor-pointer font-bold"><input type="radio" name="cfg-effective" value="now" checked onchange="onCfgEffectiveChange()"> 立即生效</label>
-                        <label class="flex items-center gap-2 cursor-pointer font-bold"><input type="radio" name="cfg-effective" value="scheduled" onchange="onCfgEffectiveChange()"> 指定生效日期</label>
-                        <input type="date" id="cfg-effective-date" disabled class="search-input">
-                    </div>
-                </section>
-            </div>
+      </section>
+      <section class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+        <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
+          <div class="flex items-center space-x-4">
+            <h2 class="font-black text-slate-700 uppercase tracking-tighter">虚拟用户配置列表</h2>
+            <span id="filter-result-hint" class="text-[10px] text-slate-400 font-bold">共 0 条</span>
+          </div>
         </div>
+        <table class="w-full text-left">
+          <thead class="bg-slate-50 text-slate-400 font-black text-[10px] uppercase border-b border-slate-100">
+          <tr>
+            <th class="px-6 py-4">UID / 标识</th>
+            <th class="px-6 py-4">榜单范围</th>
+            <th class="px-6 py-4 text-right">配置指标</th>
+            <th class="px-6 py-4 text-center">活动排序维度</th>
+            <th class="px-6 py-4">数据时间</th>
+            <th class="px-6 py-4 text-right">操作</th>
+          </tr>
+          </thead>
+          <tbody id="config-table-body" class="divide-y divide-slate-50 text-[11px] font-medium"></tbody>
+        </table>
+        <div id="config-table-pagination"></div>
+      </section>
     </div>
+  </div>
 
-    <!-- 批量配置子页 -->
-    <div id="view-batch" class="hidden flex flex-col flex-1 overflow-hidden min-h-0">
-        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
-            <div class="flex items-center gap-4">
-                <button type="button" data-ranking-action="back-list" class="text-slate-400 hover:text-slate-800 font-black">← 返回列表</button>
-                <div>
-                    <h1 class="text-lg font-bold text-slate-800 italic uppercase">批量配置虚拟用户</h1>
-                    <p class="text-[10px] text-slate-400 mt-0.5">单次最多 10 条；共享榜单范围与生效策略</p>
-                </div>
-            </div>
-            <div class="flex gap-2 items-center">
-                <span id="batch-count-hint" class="text-[10px] text-slate-400 font-bold mr-2">0 / 10 条</span>
-                <button type="button" data-ranking-action="back-list" class="px-4 py-2 border border-slate-200 text-slate-500 font-bold rounded-sm">取消</button>
-                <button type="button" data-ranking-action="save-batch" class="px-6 py-2 bg-blue-600 text-white font-black rounded-sm">保存全部</button>
-            </div>
-        </header>
-        <div class="flex-1 overflow-y-auto p-8 space-y-4">
-            <section class="bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-sm">
-                <div class="warn-box">批量配置<strong>仅支持虚拟用户</strong>。每行可手动输入虚拟 UID，或选择「保存时生成」。</div>
-                <div class="grid grid-cols-2 gap-6">
-                    <div>
-                        <label class="input-label">榜单范围</label>
-                        <div class="flex gap-2 mt-1">
-                            <button type="button" id="batch-scope-platform" class="scope-type-btn active" onclick="setBatchScope('platform')">全平台</button>
-                            <button type="button" id="batch-scope-activity" class="scope-type-btn activity" onclick="setBatchScope('activity')">平台活动</button>
-                        </div>
-                    </div>
-                    <div id="batch-activity-wrap" class="hidden">
-                        <label class="input-label">选择活动</label>
-                        <div id="batch-activity-combobox" class="relative mt-1"></div>
-                    </div>
-                    <div>
-                        <label class="input-label">生效策略</label>
-                        <div class="flex gap-3 items-center mt-1 flex-wrap">
-                            <label class="flex items-center gap-1 font-bold"><input type="radio" name="batch-effective" value="now" checked onchange="onBatchEffectiveChange()"> 立即</label>
-                            <label class="flex items-center gap-1 font-bold"><input type="radio" name="batch-effective" value="scheduled" onchange="onBatchEffectiveChange()"> 指定日期</label>
-                            <input type="date" id="batch-effective-date" disabled class="search-input">
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
-                <div class="p-4 border-b bg-slate-50/50 flex justify-between items-center">
-                    <h3 class="font-black text-slate-700 uppercase">配置明细（最多 10 条）</h3>
-                    <button type="button" data-ranking-action="add-batch-row" id="btn-add-batch-row" class="px-3 py-1.5 bg-slate-900 text-white font-black rounded-sm text-[10px] uppercase">+ 添加一行</button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left batch-table">
-                        <thead class="bg-slate-50 text-slate-400 font-black text-[10px] uppercase border-b">
-                        <tr id="batch-table-head"></tr>
-                        </thead>
-                        <tbody id="batch-table-body" class="divide-y text-[11px]"></tbody>
-                    </table>
-                </div>
-            </section>
+  <div id="view-batch" class="hidden flex flex-col flex-1 overflow-hidden min-h-0">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+      <div class="flex items-center gap-4">
+        <button type="button" data-ranking-action="back-list" class="text-slate-400 hover:text-slate-800 font-black">← 返回列表</button>
+        <div>
+          <h1 class="text-lg font-bold text-slate-800 italic uppercase" id="batch-page-title">新增虚拟用户配置</h1>
+          <p class="text-[10px] text-slate-400 mt-0.5" id="batch-page-subtitle">默认 1 条，可添加至最多 10 条；共享榜单范围与生效策略</p>
         </div>
+      </div>
+      <div class="flex gap-2 items-center">
+        <span id="batch-count-hint" class="text-[10px] text-slate-400 font-bold mr-2">0 / 10 条</span>
+        <button type="button" data-ranking-action="back-list" class="px-4 py-2 border border-slate-200 text-slate-500 font-bold rounded-sm">取消</button>
+        <button type="button" data-ranking-action="save-batch" class="px-6 py-2 bg-blue-600 text-white font-black rounded-sm">保存</button>
+      </div>
+    </header>
+    <div class="flex-1 overflow-y-auto p-8 space-y-4">
+      <section class="bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-sm">
+        <div class="warn-box">仅支持<strong>虚拟用户</strong>。配置保存后持续参与榜单，<strong>不可停用</strong>。编辑时<strong>交易额、积分</strong>仅可上调。</div>
+        <div class="grid grid-cols-2 gap-6">
+          <div>
+            <label class="input-label">榜单范围</label>
+            <div class="flex gap-2 mt-1">
+              <button type="button" id="batch-scope-platform" class="scope-type-btn active" onclick="setBatchScope('platform')">全平台</button>
+              <button type="button" id="batch-scope-activity" class="scope-type-btn activity" onclick="setBatchScope('activity')">平台活动</button>
+            </div>
+          </div>
+          <div id="batch-activity-wrap" class="hidden">
+            <label class="input-label">选择活动</label>
+            <div id="batch-activity-combobox" class="relative mt-1"></div>
+          </div>
+          <div>
+            <label class="input-label">生效策略</label>
+            <div class="flex gap-3 items-center mt-1 flex-wrap">
+              <label class="flex items-center gap-1 font-bold"><input type="radio" name="batch-effective" value="now" checked onchange="onBatchEffectiveChange()"> 立即</label>
+              <label class="flex items-center gap-1 font-bold"><input type="radio" name="batch-effective" value="scheduled" onchange="onBatchEffectiveChange()"> 指定日期</label>
+              <input type="date" id="batch-effective-date" disabled class="search-input">
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+        <div class="p-4 border-b bg-slate-50/50 flex justify-between items-center">
+          <h3 class="font-black text-slate-700 uppercase">配置明细（最多 10 条）</h3>
+          <button type="button" data-ranking-action="add-batch-row" id="btn-add-batch-row" class="px-3 py-1.5 bg-slate-900 text-white font-black rounded-sm text-[10px] uppercase">+ 添加一行</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left batch-table">
+            <thead class="bg-slate-50 text-slate-400 font-black text-[10px] uppercase border-b">
+            <tr id="batch-table-head"></tr>
+            </thead>
+            <tbody id="batch-table-body" class="divide-y text-[11px]"></tbody>
+          </table>
+        </div>
+      </section>
     </div>
+  </div>
 </main>
 
 <script src="admin-pagination.js"></script>
