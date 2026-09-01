@@ -290,6 +290,95 @@
             margin-top: 4px;
             text-transform: uppercase;
         }
+        /* K 线时段标星 */
+        .kline-period-bar { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+        .kline-period-btn {
+            padding: 0 8px;
+            height: 28px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #6b7280;
+            border-radius: 2px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: color .15s, background .15s;
+        }
+        .kline-period-btn:hover { color: #111827; }
+        .kline-period-btn.is-active { color: #2563eb; background: #eff6ff; }
+        .kline-period-more-wrap { position: relative; flex-shrink: 0; }
+        .kline-period-more-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 28px;
+            border: none;
+            background: transparent;
+            color: #9ca3af;
+            cursor: pointer;
+            border-radius: 2px;
+        }
+        .kline-period-more-btn:hover { color: #111827; background: #f3f4f6; }
+        .kline-period-more-btn.is-open { color: #2563eb; background: #eff6ff; }
+        .kline-period-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            z-index: 300;
+            min-width: 168px;
+            max-height: 320px;
+            overflow-y: auto;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            padding: 6px 0;
+        }
+        .kline-period-dropdown.hidden { display: none; }
+        .kline-period-group-label {
+            padding: 6px 12px 4px;
+            font-size: 9px;
+            font-weight: 800;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .kline-period-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 6px 10px 6px 12px;
+            cursor: pointer;
+            transition: background .12s;
+        }
+        .kline-period-option:hover { background: #f9fafb; }
+        .kline-period-option.is-active { background: #eff6ff; }
+        .kline-period-option-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #374151;
+            flex: 1;
+        }
+        .kline-period-option.is-active .kline-period-option-label { color: #2563eb; }
+        .kline-period-star-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border: none;
+            background: transparent;
+            color: #d1d5db;
+            cursor: pointer;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+        .kline-period-star-btn:hover { background: #f3f4f6; color: #9ca3af; }
+        .kline-period-star-btn.is-starred { color: #f59e0b; }
+        .kline-period-star-btn.is-starred:hover { color: #d97706; }
         .tpsl-estimate { font-size: 9px; font-weight: 700; line-height: 1.4; }
         .tpsl-estimate.hidden { display: none; }
         .tpsl-estimate.positive { color: #16a34a; }
@@ -486,7 +575,12 @@
             <span id="market-funding" class="text-blue-500 font-medium">0.0001% <span class="text-gray-400">00:25:13</span></span>
         </div>
         <div class="flex flex-col"><span class="text-gray-400">24h成交量 (USDC)</span><span id="market-volume" class="text-gray-900 font-medium">60.23 M</span></div>
-        <div class="flex flex-col"><span class="text-gray-400">未平倉合約 (USDC)</span><span id="market-oi" class="text-gray-900 font-medium">3.23 M</span></div>
+        <div class="flex flex-col">
+            <span class="market-hint-wrap text-gray-400 dashed-hint">未平倉合約 (USDC)
+                <div class="market-hint-tip">未平仓合约价值 = 持仓数量 × 最新成交价，每 200 毫秒动态更新一次。</div>
+            </span>
+            <span id="market-oi" class="text-gray-900 font-medium">3.23 M</span>
+        </div>
         <div class="flex flex-col"><span class="text-gray-400">24h 最高價</span><span id="market-high" class="text-gray-900">66,332.5</span></div>
         <div class="flex flex-col"><span class="text-gray-400">24h 最低價</span><span id="market-low" class="text-gray-900">61,332.5</span></div>
     </div>
@@ -504,17 +598,7 @@
 
                     <!-- 左側：週期切換 + 基礎工具圖標 -->
                     <div class="flex items-center space-x-0.5 overflow-x-auto no-scrollbar">
-                        <button class="px-2 h-7 text-[10px] font-bold text-blue-600 bg-blue-50 rounded-sm">15分</button>
-                        <div class="flex items-center space-x-0.5 text-gray-400">
-                            <button class="px-2 h-7 text-[10px] hover:text-black transition-colors font-bold">1分</button>
-                            <button class="px-2 h-7 text-[10px] hover:text-black transition-colors font-bold">5分</button>
-                            <button class="px-2 h-7 text-[10px] hover:text-black transition-colors font-bold">30分</button>
-                            <button class="px-2 h-7 text-[10px] hover:text-black transition-colors font-bold">1小時</button>
-                            <button class="px-2 h-7 text-[10px] hover:text-black transition-colors font-bold">4小時</button>
-                            <button class="px-2 h-7 text-[10px] hover:text-black transition-colors font-bold">天</button>
-                            <button class="px-2 h-7 text-[10px] hover:text-black transition-colors font-bold">周</button>
-                            <button class="px-2 h-7 text-[10px] hover:text-black transition-colors font-bold">月</button>
-                        </div>
+                        <div id="kline-period-bar" class="kline-period-bar"></div>
                         <div class="w-[1px] h-4 bg-gray-100 mx-1"></div>
                         <!-- 功能圖標 -->
                         <button class="p-1 text-gray-400 hover:text-black transition-colors">
@@ -4444,7 +4528,153 @@
         }
     }
 
-    // ==================== K線原型切換：正常圖表 / 新幣上線倒計時 ====================
+    // ==================== K 线时段标星 ====================
+    const KLINE_INTERVALS = [
+        { id: '1m', label: '1m', group: '分钟' },
+        { id: '3m', label: '3m', group: '分钟' },
+        { id: '5m', label: '5m', group: '分钟' },
+        { id: '15m', label: '15m', group: '分钟' },
+        { id: '30m', label: '30m', group: '分钟' },
+        { id: '1H', label: '1H', group: '小时' },
+        { id: '2H', label: '2H', group: '小时' },
+        { id: '4H', label: '4H', group: '小时' },
+        { id: '8H', label: '8H', group: '小时' },
+        { id: '12H', label: '12H', group: '小时' },
+        { id: '1D', label: '1D', group: '天' },
+        { id: '1W', label: '1W', group: '天' },
+        { id: '1M', label: '1M', group: '天' },
+    ];
+    const KLINE_DEFAULT_STARRED = ['5m', '15m', '1H', '4H', '1D', '1W'];
+    const KLINE_STARRED_STORAGE_KEY = 'forx_web_kline_starred_v1';
+    const KLINE_ACTIVE_STORAGE_KEY = 'forx_web_kline_active_v1';
+    let klineStarredIds = KLINE_DEFAULT_STARRED.slice();
+    let klineActiveId = '15m';
+    let klinePeriodDropdownOpen = false;
+
+    function loadKlinePeriodPrefs() {
+        try {
+            const savedStarred = localStorage.getItem(KLINE_STARRED_STORAGE_KEY);
+            if (savedStarred) {
+                const parsed = JSON.parse(savedStarred);
+                if (Array.isArray(parsed) && parsed.length) {
+                    klineStarredIds = parsed.filter(function (id) {
+                        return KLINE_INTERVALS.some(function (it) { return it.id === id; });
+                    });
+                }
+            }
+            const savedActive = localStorage.getItem(KLINE_ACTIVE_STORAGE_KEY);
+            if (savedActive && KLINE_INTERVALS.some(function (it) { return it.id === savedActive; })) {
+                klineActiveId = savedActive;
+            }
+        } catch (e) { /* ignore */ }
+        if (!klineStarredIds.length) klineStarredIds = KLINE_DEFAULT_STARRED.slice();
+        if (klineStarredIds.indexOf(klineActiveId) === -1) klineActiveId = klineStarredIds[0] || '15m';
+    }
+
+    function saveKlinePeriodPrefs() {
+        try {
+            localStorage.setItem(KLINE_STARRED_STORAGE_KEY, JSON.stringify(klineStarredIds));
+            localStorage.setItem(KLINE_ACTIVE_STORAGE_KEY, klineActiveId);
+        } catch (e) { /* ignore */ }
+    }
+
+    function closeKlinePeriodDropdown() {
+        klinePeriodDropdownOpen = false;
+        const dropdown = document.getElementById('kline-period-dropdown');
+        const btn = document.getElementById('kline-period-more-btn');
+        if (dropdown) dropdown.classList.add('hidden');
+        if (btn) btn.classList.remove('is-open');
+    }
+
+    function toggleKlinePeriodDropdown(e) {
+        if (e) e.stopPropagation();
+        klinePeriodDropdownOpen = !klinePeriodDropdownOpen;
+        const dropdown = document.getElementById('kline-period-dropdown');
+        const btn = document.getElementById('kline-period-more-btn');
+        if (!dropdown || !btn) return;
+        dropdown.classList.toggle('hidden', !klinePeriodDropdownOpen);
+        btn.classList.toggle('is-open', klinePeriodDropdownOpen);
+        if (klinePeriodDropdownOpen) renderKlinePeriodDropdown();
+    }
+
+    function selectKlinePeriod(id) {
+        klineActiveId = id;
+        saveKlinePeriodPrefs();
+        renderKlinePeriodBar();
+        closeKlinePeriodDropdown();
+    }
+
+    function toggleKlinePeriodStar(e, id) {
+        if (e) e.stopPropagation();
+        const idx = klineStarredIds.indexOf(id);
+        if (idx >= 0) {
+            if (klineStarredIds.length <= 1) return;
+            klineStarredIds.splice(idx, 1);
+            if (klineActiveId === id) klineActiveId = klineStarredIds[0];
+        } else {
+            klineStarredIds.push(id);
+            klineStarredIds.sort(function (a, b) {
+                const ia = KLINE_INTERVALS.findIndex(function (it) { return it.id === a; });
+                const ib = KLINE_INTERVALS.findIndex(function (it) { return it.id === b; });
+                return ia - ib;
+            });
+        }
+        saveKlinePeriodPrefs();
+        renderKlinePeriodBar();
+        if (klinePeriodDropdownOpen) renderKlinePeriodDropdown();
+    }
+
+    function renderKlinePeriodDropdown() {
+        const dropdown = document.getElementById('kline-period-dropdown');
+        if (!dropdown) return;
+        const groups = ['分钟', '小时', '天'];
+        let html = '';
+        groups.forEach(function (group) {
+            const items = KLINE_INTERVALS.filter(function (it) { return it.group === group; });
+            if (!items.length) return;
+            html += '<div class="kline-period-group-label">' + group + '</div>';
+            items.forEach(function (it) {
+                const starred = klineStarredIds.indexOf(it.id) >= 0;
+                const active = klineActiveId === it.id;
+                html += '<div class="kline-period-option' + (active ? ' is-active' : '') + '" onclick="selectKlinePeriod(\'' + it.id + '\')">' +
+                    '<span class="kline-period-option-label">' + it.label + '</span>' +
+                    '<button type="button" class="kline-period-star-btn' + (starred ? ' is-starred' : '') + '" onclick="toggleKlinePeriodStar(event, \'' + it.id + '\')" aria-label="' + (starred ? '取消固定' : '固定到图表') + '" title="' + (starred ? '取消固定' : '固定到图表') + '">' +
+                    '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' +
+                    '</button></div>';
+            });
+        });
+        dropdown.innerHTML = html;
+    }
+
+    function renderKlinePeriodBar() {
+        const bar = document.getElementById('kline-period-bar');
+        if (!bar) return;
+        let html = '';
+        klineStarredIds.forEach(function (id) {
+            const it = KLINE_INTERVALS.find(function (x) { return x.id === id; });
+            if (!it) return;
+            html += '<button type="button" class="kline-period-btn' + (klineActiveId === id ? ' is-active' : '') + '" onclick="selectKlinePeriod(\'' + id + '\')">' + it.label + '</button>';
+        });
+        html += '<div class="kline-period-more-wrap">' +
+            '<button type="button" id="kline-period-more-btn" class="kline-period-more-btn" onclick="toggleKlinePeriodDropdown(event)" aria-label="更多 K 线时段" title="自定义固定 K 线时段">' +
+            '<svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M19 9l-7 7-7-7"/></svg>' +
+            '</button>' +
+            '<div id="kline-period-dropdown" class="kline-period-dropdown hidden"></div>' +
+            '</div>';
+        bar.innerHTML = html;
+    }
+
+    function initKlinePeriodBar() {
+        loadKlinePeriodPrefs();
+        renderKlinePeriodBar();
+        document.addEventListener('click', function (e) {
+            if (!klinePeriodDropdownOpen) return;
+            const wrap = document.querySelector('.kline-period-more-wrap');
+            if (wrap && !wrap.contains(e.target)) closeKlinePeriodDropdown();
+        });
+    }
+
+    // ==================== K 线时段标星 ====================
     let isKlineCountdownMode = false;
     let klineCountdownRemaining = 2 * 86400 + 14 * 3600 + 35 * 60 + 22; // 原型演示用初始值
 
@@ -4489,6 +4719,26 @@
         obSpreadText: '--',
         obMidBarClass: 'py-2 text-center text-sm font-black text-gray-400 bg-gray-50 relative flex items-center justify-center min-h-[36px]'
     };
+
+    let marketOiBaseValue = 3230000;
+    let marketOiTick = 0;
+
+    function formatOiValue(val) {
+        if (val >= 1e9) return (Math.floor(val / 1e7) / 100).toFixed(2) + ' B';
+        if (val >= 1e6) return (Math.floor(val / 1e4) / 100).toFixed(2) + ' M';
+        if (val >= 1e3) return (Math.floor(val / 10) / 100).toFixed(2) + ' K';
+        return String(Math.floor(val));
+    }
+
+    function tickMarketOpenInterest() {
+        if (isKlineCountdownMode) return;
+        marketOiTick++;
+        const delta = Math.sin(marketOiTick * 0.17) * 12000 + Math.cos(marketOiTick * 0.09) * 8000;
+        const nextVal = Math.max(2800000, marketOiBaseValue + delta);
+        marketNormalSnapshot.oi = formatOiValue(nextVal);
+        const oiEl = document.getElementById('market-oi');
+        if (oiEl) oiEl.textContent = marketNormalSnapshot.oi;
+    }
 
     function applyMarketBarState(snapshot) {
         const setText = (id, val, isHtml) => {
@@ -4928,6 +5178,8 @@
         renderOrderBook();
         setOrderQtyPct(25);
         switchDataTab('pos');
+        initKlinePeriodBar();
+        setInterval(tickMarketOpenInterest, 200);
         if (typeof PositionClose !== 'undefined') {
             PositionClose.refreshCloseQtyDisplay();
         }
