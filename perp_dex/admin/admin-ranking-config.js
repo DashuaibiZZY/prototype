@@ -104,15 +104,24 @@
     global.openConfigPage = function (id) {
         editingId = id || null;
         document.getElementById('config-page-title').textContent = id ? '编辑虚拟用户配置' : '新增虚拟用户配置';
-        resetSingleForm(id);
         showView('view-config');
-        location.hash = id ? '#edit=' + id : '#new';
+        try {
+            resetSingleForm(id);
+        } catch (err) {
+            console.error('[RankingAdmin] resetSingleForm failed', err);
+        }
+        var hash = id ? '#edit=' + id : '#new';
+        if (location.hash !== hash) location.hash = hash;
     };
 
     global.openBatchPage = function () {
-        initBatchPage();
         showView('view-batch');
-        location.hash = '#batch';
+        try {
+            initBatchPage();
+        } catch (err) {
+            console.error('[RankingAdmin] initBatchPage failed', err);
+        }
+        if (location.hash !== '#batch') location.hash = '#batch';
     };
 
     function resetSingleForm(id) {
@@ -581,7 +590,7 @@
         document.getElementById('filter-scope-type').value = 'all';
         document.getElementById('filter-activity-name').value = '';
         document.getElementById('filter-status').value = 'all';
-        onFilterScopeChange();
+        global.onFilterScopeChange();
         filteredRows = configRows.slice();
         listPage = 1;
         renderTable();
@@ -621,14 +630,14 @@
 
     function renderTable() {
         var tbody = document.getElementById('config-table-body');
-        var sliced = window.AdminPagination ? AdminPagination.slice(filteredRows, listPage) :
+        var sliced = global.AdminPagination ? global.AdminPagination.slice(filteredRows, listPage) :
             { items: filteredRows, page: 1, total: filteredRows.length };
         listPage = sliced.page;
         document.getElementById('filter-result-hint').textContent = '共 ' + filteredRows.length + ' 条';
 
         if (!filteredRows.length) {
             tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-10 text-center text-slate-400 font-bold">暂无配置</td></tr>';
-            if (window.AdminPagination) AdminPagination.mount('config-table-pagination', 0, 1, 'config-list');
+            if (global.AdminPagination) global.AdminPagination.mount('config-table-pagination', 0, 1, 'config-list');
             return;
         }
 
@@ -646,11 +655,11 @@
                 '<td class="px-6 py-4 text-center"><span class="status-' + (row.status === 'pending' ? 'pending' : row.status) + '">' + STATUS_LABEL[row.status] + '</span></td>' +
                 '<td class="px-6 py-4 text-[10px] text-slate-500"><div>' + row.dataTime + '</div><div class="text-slate-400">' + row.effectiveAt + '</div></td>' +
                 '<td class="px-6 py-4 text-right space-x-3">' +
-                '<button onclick="openConfigPage(' + row.id + ')" class="text-blue-600 font-black hover:underline">编辑</button>' +
-                (row.status !== 'offline' ? '<button onclick="deactivateConfig(' + row.id + ')" class="text-red-500 font-bold hover:underline">停用</button>' : '') +
+                '<button type="button" data-ranking-action="edit" data-id="' + row.id + '" class="text-blue-600 font-black hover:underline">编辑</button>' +
+                (row.status !== 'offline' ? '<button type="button" data-ranking-action="deactivate" data-id="' + row.id + '" class="text-red-500 font-bold hover:underline">停用</button>' : '') +
                 '</td></tr>';
         }).join('');
-        if (window.AdminPagination) AdminPagination.mount('config-table-pagination', sliced.total, listPage, 'config-list');
+        if (global.AdminPagination) global.AdminPagination.mount('config-table-pagination', sliced.total, listPage, 'config-list');
     }
 
     function renderMetricsCell(row) {
@@ -677,9 +686,48 @@
         else el.classList.add('hidden');
     });
 
-    renderTable();
-    if (window.AdminPagination) AdminPagination.register('config-list', function (p) { listPage = p; renderTable(); });
-    window.addEventListener('hashchange', parseHash);
-    parseHash();
+    function bindRankingUi() {
+        var listView = document.getElementById('view-list');
+        if (listView) {
+            listView.addEventListener('click', function (e) {
+                var btn = e.target.closest('[data-ranking-action]');
+                if (!btn) return;
+                var action = btn.getAttribute('data-ranking-action');
+                var id = parseInt(btn.getAttribute('data-id'), 10);
+                if (action === 'open-batch') global.openBatchPage();
+                else if (action === 'open-config') global.openConfigPage();
+                else if (action === 'edit') global.openConfigPage(id);
+                else if (action === 'deactivate') global.deactivateConfig(id);
+            });
+        }
+        document.querySelectorAll('[data-ranking-action="back-list"]').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                global.showListPage();
+            });
+        });
+        var saveSingle = document.querySelector('[data-ranking-action="save-config"]');
+        if (saveSingle) saveSingle.addEventListener('click', function () { global.saveSingleConfig(); });
+        var saveBatch = document.querySelector('[data-ranking-action="save-batch"]');
+        if (saveBatch) saveBatch.addEventListener('click', function () { global.saveBatchConfig(); });
+        var addBatchRowBtn = document.querySelector('[data-ranking-action="add-batch-row"]');
+        if (addBatchRowBtn) addBatchRowBtn.addEventListener('click', function () { global.addBatchRow(); });
+    }
+
+    function bootRankingAdmin() {
+        bindRankingUi();
+        try {
+            renderTable();
+        } catch (err) {
+            console.error('[RankingAdmin] renderTable failed', err);
+        }
+        if (global.AdminPagination) {
+            global.AdminPagination.register('config-list', function (p) { listPage = p; renderTable(); });
+        }
+        window.addEventListener('hashchange', parseHash);
+        parseHash();
+    }
+
+    bootRankingAdmin();
 
 })(window);
