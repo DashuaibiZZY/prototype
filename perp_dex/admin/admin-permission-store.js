@@ -1,14 +1,27 @@
 /**
- * 权限配置持久化 v3.4
+ * 权限配置持久化 v3.5
  */
 (function () {
-    const STORE_KEY = 'forx_admin_permission_store_v3_4';
-    const LEGACY_KEYS = ['forx_admin_permission_store_v3_3', 'forx_admin_permission_store_v3_2', 'forx_admin_permission_store_v3_1'];
-    const SCHEMA = 4;
+    const STORE_KEY = 'forx_admin_permission_store_v3_5';
+    const LEGACY_KEYS = [
+        'forx_admin_permission_store_v3_4',
+        'forx_admin_permission_store_v3_3',
+        'forx_admin_permission_store_v3_2',
+        'forx_admin_permission_store_v3_1'
+    ];
+    const SCHEMA = 5;
     const REMOVED_GROUP_IDS = ['trial.approve.cross', 'points.approve.cross', 'fee.approve.cross'];
+
+    function registryVersion() {
+        return window.ADMIN_PERMISSION_REGISTRY_VERSION || '3.2-risk-boss';
+    }
 
     function allPageIds() {
         return (window.ADMIN_PAGES || []).map(function (p) { return p.id; });
+    }
+
+    function allowedGroupIds() {
+        return (window.ADMIN_SENSITIVE_GROUPS || []).map(function (g) { return g.id; });
     }
 
     function pad2(n) {
@@ -88,7 +101,7 @@
                 gaBound: true,
                 lastLogin: '2026-07-20 08:15',
                 pagePerms: pageMap({
-                    'trial.approval': 'read', 'fee.approval': 'read', 'points.approval': 'read'
+                    'trial.approval': 'read', 'fee.approval': 'read', 'points.approval': 'read', 'agent.approval': 'read'
                 })
             },
             {
@@ -105,7 +118,8 @@
                     'freeze.settings': 'write', 'freeze.log': 'read',
                     'trial.users': 'read', 'trial.approval': 'read', 'trial.logs': 'read',
                     'fee.settings': 'read', 'fee.approval': 'read', 'fee.log': 'read',
-                    'points.approval': 'read', 'points.logs': 'read'
+                    'points.approval': 'read', 'points.logs': 'read',
+                    'agent.approval': 'read', 'agent.logs': 'read'
                 })
             },
             {
@@ -119,7 +133,7 @@
                 gaBound: false,
                 lastLogin: '2026-07-18 14:00',
                 pagePerms: pageMap({
-                    'trial.approval': 'read', 'fee.approval': 'read', 'points.approval': 'read'
+                    'trial.approval': 'read', 'fee.approval': 'read', 'points.approval': 'read', 'agent.approval': 'read'
                 })
             },
             {
@@ -150,7 +164,7 @@
                 gaBound: true,
                 lastLogin: '2026-07-16 15:00',
                 pagePerms: pageMap({
-                    'freeze.log': 'read', 'trial.logs': 'read', 'points.logs': 'read', 'fee.log': 'read'
+                    'freeze.log': 'read', 'trial.logs': 'read', 'points.logs': 'read', 'fee.log': 'read', 'agent.logs': 'read'
                 })
             },
             {
@@ -197,15 +211,20 @@
     }
 
     function normalizeGroups(groups) {
-        var list = (groups || []).filter(function (g) {
-            return REMOVED_GROUP_IDS.indexOf(g.id) === -1;
+        var allowed = allowedGroupIds();
+        var byId = {};
+        (groups || []).forEach(function (g) {
+            if (!g || !g.id) return;
+            if (REMOVED_GROUP_IDS.indexOf(g.id) !== -1) return;
+            if (allowed.length && allowed.indexOf(g.id) === -1) return;
+            byId[g.id] = { id: g.id, memberIds: (g.memberIds || []).slice() };
         });
         defaultGroups().forEach(function (dg) {
-            if (!list.some(function (g) { return g.id === dg.id; })) {
-                list.push(JSON.parse(JSON.stringify(dg)));
-            }
+            if (!byId[dg.id]) byId[dg.id] = JSON.parse(JSON.stringify(dg));
         });
-        return list;
+        return allowed.length
+            ? allowed.map(function (id) { return byId[id] || { id: id, memberIds: [] }; })
+            : Object.keys(byId).map(function (id) { return byId[id]; });
     }
 
     function normalizeUser(u) {
@@ -215,6 +234,9 @@
         if (!u.status) u.status = 'active';
         if (u.gaBound === undefined) u.gaBound = false;
         if (!u.pagePerms || typeof u.pagePerms !== 'object') u.pagePerms = pageMap({});
+        allPageIds().forEach(function (id) {
+            if (u.pagePerms[id] === undefined) u.pagePerms[id] = 'none';
+        });
         if (isSuperAdmin(u)) u.pagePerms = fullWritePerms();
         if (isSuperAdmin(u)) u.agentDataScope = 'global';
         if (u.agentDataScope !== 'global' && u.agentDataScope !== 'personal') u.agentDataScope = null;
@@ -222,19 +244,47 @@
         return u;
     }
 
+    function groupsSignature(groups) {
+        return JSON.stringify((groups || []).map(function (g) {
+            return { id: g.id, memberIds: (g.memberIds || []).slice().sort() };
+        }).sort(function (a, b) { return a.id.localeCompare(b.id); }));
+    }
+
+    function upgradeStore(data, persist) {
+        var changed = false;
+        var beforeGroups = groupsSignature(data.groups);
+        data.schema = SCHEMA;
+        data.groups = normalizeGroups(data.groups);
+        if (groupsSignature(data.groups) !== beforeGroups) changed = true;
+        data.users = (data.users || []).map(function (u) {
+            var before = JSON.stringify(u.pagePerms || {});
+            var nu = normalizeUser(u);
+            if (!nu) return u;
+            if (JSON.stringify(nu.pagePerms || {}) !== before) changed = true;
+            return nu;
+        });
+        if (data.registryVersion !== registryVersion()) {
+            data.registryVersion = registryVersion();
+            changed = true;
+        }
+        if (!data.nextOperatorSeq) data.nextOperatorSeq = 10;
+        if (changed && persist !== false) savePermissionStore(data);
+        return data;
+    }
+
     function getDefaultStore() {
-        return {
+        return upgradeStore({
             schema: SCHEMA,
+            registryVersion: registryVersion(),
             users: defaultUsers(),
             groups: defaultGroups(),
             nextOperatorSeq: 10,
             updatedAt: new Date().toISOString()
-        };
+        }, false);
     }
 
     function isValidStore(data) {
-        if (!data || data.schema !== SCHEMA) return false;
-        if (!Array.isArray(data.users) || data.users.length < 3) return false;
+        if (!data || !Array.isArray(data.users) || data.users.length < 3) return false;
         if (!Array.isArray(data.groups) || data.groups.length < 4) return false;
         for (var i = 0; i < data.users.length; i++) {
             if (!normalizeUser(data.users[i])) return false;
@@ -261,11 +311,7 @@
             var raw = localStorage.getItem(STORE_KEY);
             if (!raw) {
                 var legacy = readLegacyStore();
-                if (legacy && isValidStore(Object.assign({}, legacy, { schema: SCHEMA }))) {
-                    legacy.schema = SCHEMA;
-                    savePermissionStore(legacy);
-                    return legacy;
-                }
+                if (legacy) return upgradeStore(legacy, true);
                 savePermissionStore(def);
                 return def;
             }
@@ -274,10 +320,7 @@
                 savePermissionStore(def);
                 return def;
             }
-            data.users = data.users.map(function (u) { return normalizeUser(u); });
-            data.groups = normalizeGroups(data.groups);
-            if (!data.nextOperatorSeq) data.nextOperatorSeq = def.nextOperatorSeq;
-            return data;
+            return upgradeStore(data, true);
         } catch (e) {
             savePermissionStore(def);
             return def;
@@ -286,6 +329,7 @@
 
     function savePermissionStore(store) {
         store.schema = SCHEMA;
+        store.registryVersion = registryVersion();
         store.updatedAt = new Date().toISOString();
         localStorage.setItem(STORE_KEY, JSON.stringify(store));
         try {
@@ -295,6 +339,9 @@
 
     function resetPermissionStore() {
         localStorage.removeItem(STORE_KEY);
+        LEGACY_KEYS.forEach(function (key) {
+            try { localStorage.removeItem(key); } catch (e) {}
+        });
         var def = getDefaultStore();
         savePermissionStore(def);
         return def;
@@ -311,7 +358,10 @@
 
     function setUserInGroup(store, userId, groupId, join) {
         var g = store.groups.find(function (x) { return x.id === groupId; });
-        if (!g) return;
+        if (!g) {
+            g = { id: groupId, memberIds: [] };
+            store.groups.push(g);
+        }
         if (!g.memberIds) g.memberIds = [];
         var i = g.memberIds.indexOf(userId);
         if (join && i === -1) g.memberIds.push(userId);
@@ -359,4 +409,7 @@
     window.allocOperatorId = allocOperatorId;
     window.generatePassword = generatePassword;
     window.removeUserFromAllGroups = removeUserFromAllGroups;
+    window.syncPermissionStoreWithRegistry = function () {
+        return upgradeStore(loadPermissionStore(), true);
+    };
 })();

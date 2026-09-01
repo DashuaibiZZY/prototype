@@ -209,8 +209,8 @@
   </div>
 </div>
 
-<script src="admin-permission-registry.js"></script>
-<script src="admin-permission-store.js"></script>
+<script src="admin-permission-registry.js?v=3.2-risk-boss"></script>
+<script src="admin-permission-store.js?v=3.5"></script>
 <script src="admin-permissions.js"></script>
 <script src="admin-copy-chip.js"></script>
 <script src="admin-pagination.js"></script>
@@ -265,7 +265,7 @@
     var store = loadPermissionStore();
     var tbody = $('staffTableBody');
     var activeCount = (store.users || []).filter(function (u) { return u.status === 'active'; }).length;
-    $('page-subtitle').textContent = '共 ' + (store.users || []).length + ' 人（启用 ' + activeCount + '）· 编辑页面读/写；敏感操作组独立维护';
+    $('page-subtitle').textContent = '共 ' + (store.users || []).length + ' 人（启用 ' + activeCount + '）· ' + (ADMIN_SENSITIVE_GROUPS || []).length + ' 个敏感组 · 编辑页面读/写';
     if (!store.users || !store.users.length) {
       tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-8 text-center text-slate-400">暂无人员，请点击右上角「恢复默认配置」加载模拟数据</td></tr>';
       permMountPag('staff-table-pagination', 0, 1, 'perm-staff');
@@ -639,12 +639,17 @@
 
   function boot() {
     try {
-    if (typeof initAdminSidebar === 'function') initAdminSidebar('sys-admin', '权限 v3.3 · 原型');
+    if (typeof initAdminSidebar === 'function') initAdminSidebar('sys-admin', '权限 v3.5 · 9 个敏感组');
     if (!window.ADMIN_PAGES || !window.ADMIN_SENSITIVE_GROUPS) {
       alert('权限清单脚本未加载，请通过 HTTP 服务打开本页（勿直接 file:// 打开），或刷新重试。');
       return;
     }
-    loadPermissionStore();
+    if (ADMIN_SENSITIVE_GROUPS.some(function (g) { return g.id.indexOf('.approve.cross') !== -1; })) {
+      alert('敏感组清单仍为旧版（含交叉审核），请强制刷新页面（Ctrl+Shift+R）后重试。');
+      return;
+    }
+    if (typeof syncPermissionStoreWithRegistry === 'function') syncPermissionStoreWithRegistry();
+    else loadPermissionStore();
     if (window.AdminPagination) {
       AdminPagination.register('perm-staff', function (p) { staffListPage = p; renderStaffTable(); });
     }
