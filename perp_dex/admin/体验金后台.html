@@ -33,6 +33,8 @@
     .risk-tag-warn { background: #fff7ed; color: #ea580c; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
     .log-tag-issue { background: #eff6ff; color: #2563eb; }
     .log-tag-recycle { background: #fef2f2; color: #dc2626; }
+    .log-tag-approval { background: #fef3c7; color: #b45309; }
+    .default-group-badge { background: #eff6ff; color: #1d4ed8; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; margin-left: 6px; }
   </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -179,15 +181,15 @@
           <table class="w-full text-left min-w-[1100px] text-sm">
             <thead class="bg-slate-50 border-b border-slate-200">
             <tr>
-              <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">UID / 钱包</th>
+              <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">UID</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">钱包地址 / 邮箱</th>
               <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">累计发放</th>
-              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">剩余体验金</th>
-              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-center">状态</th>
-              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">亏损抵扣</th>
-              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">费用抵扣</th>
-              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">风控标签</th>
-              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">活动</th>
-              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">发放时间</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">当前剩余总体验金</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">使用中体验金</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">待使用体验金</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">累计体验金亏损抵扣金额</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">累计体验金费用抵扣金额</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">用户风控标签</th>
               <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">操作</th>
             </tr>
             </thead>
@@ -200,13 +202,23 @@
 
     <!-- 用户卡券详情 -->
     <div id="page-user-detail" class="hidden space-y-6">
-      <div class="card p-5 flex items-center justify-between">
-        <div>
-          <p class="text-xs text-slate-400">UID <span id="detailUid" class="font-bold text-slate-700"></span></p>
-          <p id="detailWallet" class="text-sm font-mono font-bold text-slate-800 mt-1"></p>
-          <p class="text-xs text-slate-400 mt-2">累计发放 <span id="detailTotalIssued" class="font-bold text-slate-700"></span> · 剩余 <span id="detailRemaining" class="font-bold text-blue-600"></span></p>
+      <div class="card p-5 space-y-4">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p class="text-xs text-slate-400">UID <span id="detailUid" class="font-bold text-slate-700"></span></p>
+            <p id="detailWallet" class="text-sm font-mono font-bold text-slate-800 mt-1"></p>
+          </div>
+          <button onclick="recycleUserAll()" class="bg-red-50 text-red-600 px-5 py-2.5 rounded-lg text-sm font-bold border border-red-200 hover:bg-red-100 shrink-0">回收该用户全部可用卡券</button>
         </div>
-        <button onclick="recycleUserAll()" class="bg-red-50 text-red-600 px-5 py-2.5 rounded-lg text-sm font-bold border border-red-200 hover:bg-red-100">回收该用户全部可用卡券</button>
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 pt-3 border-t border-slate-100">
+          <div><p class="text-[10px] font-bold text-slate-400 uppercase">累计发放</p><p id="detailTotalIssued" class="text-sm font-black text-slate-800 mt-0.5">—</p></div>
+          <div><p class="text-[10px] font-bold text-slate-400 uppercase">当前剩余总体验金</p><p id="detailRemaining" class="text-sm font-black text-blue-600 mt-0.5">—</p></div>
+          <div><p class="text-[10px] font-bold text-slate-400 uppercase">使用中体验金</p><p id="detailInUse" class="text-sm font-black text-emerald-600 mt-0.5">—</p></div>
+          <div><p class="text-[10px] font-bold text-slate-400 uppercase">待使用体验金</p><p id="detailPending" class="text-sm font-black text-amber-600 mt-0.5">—</p></div>
+          <div><p class="text-[10px] font-bold text-slate-400 uppercase">累计亏损抵扣</p><p id="detailCumLoss" class="text-sm font-black text-slate-700 mt-0.5">—</p></div>
+          <div><p class="text-[10px] font-bold text-slate-400 uppercase">累计费用抵扣</p><p id="detailCumFee" class="text-sm font-black text-slate-700 mt-0.5">—</p></div>
+          <div><p class="text-[10px] font-bold text-slate-400 uppercase">历史风控回收金额</p><p id="detailRiskRecycle" class="text-sm font-black text-red-600 mt-0.5">—</p></div>
+        </div>
       </div>
       <div class="card overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 font-bold text-slate-700">卡券列表与使用记录</div>
@@ -273,6 +285,9 @@
             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">操作类型</label>
             <select id="logFilterType" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none bg-white">
               <option value="all">全部</option>
+              <option value="审批提交">审批提交</option>
+              <option value="审批通过">审批通过</option>
+              <option value="审批驳回">审批驳回</option>
               <option value="发放">发放体验金</option>
               <option value="回收">回收体验金</option>
             </select>
@@ -461,7 +476,8 @@
 <script src="admin-activity-picker.js"></script>
 <script src="admin-approval-ui.js"></script>
 <script>
-  const CARD_GROUPS = [
+  let CARD_GROUPS = [
+    { id: 'g0', name: '默认组', couponValidDays: 7, openValidDays: 7, lossEnabled: true, lossPct: 20, feeEnabled: true, feePct: 20, isDefault: true },
     { id: 'g1', name: '标准新人礼包组', couponValidDays: 7, openValidDays: 30, lossEnabled: true, lossPct: 20, feeEnabled: false, feePct: 0 },
     { id: 'g2', name: 'KOL大额专属组', couponValidDays: 14, openValidDays: 60, lossEnabled: true, lossPct: 30, feeEnabled: true, feePct: 15 },
     { id: 'g3', name: '交易大赛奖励组', couponValidDays: 10, openValidDays: 45, lossEnabled: true, lossPct: 25, feeEnabled: false, feePct: 0 },
@@ -470,7 +486,7 @@
     { id: 'g6', name: '限时拉新活动组', couponValidDays: 3, openValidDays: 14, lossEnabled: false, lossPct: 0, feeEnabled: false, feePct: 0 },
     { id: 'g7', name: '机构合作体验组', couponValidDays: 21, openValidDays: 60, lossEnabled: true, lossPct: 40, feeEnabled: true, feePct: 25 }
   ];
-  let selectedGroupId = 'g1';
+  let selectedGroupId = 'g0';
   let groupSearchPage = 1;
   const GROUP_PAGE_SIZE = 5;
 
@@ -496,9 +512,9 @@
   };
 
   const TRIAL_USERS = [
-    { uid: '100234', wallet: '0xd5a2b8c91f3e4d567890abcdef1234567890ab8f3c', totalIssued: 350, remaining: 200, couponStatus: 'used', lossUsed: 15, lossLimit: 50, feeUsed: 5, feeLimit: 10, riskTag: '套利嫌疑', riskWarn: true, activity: '社区 KOL 合作激励', issuedAt: '2026-07-18 14:30' },
-    { uid: '100891', wallet: '0x8f3c2a1b9e7d6543210fedcba9876543210fedcba', totalIssued: 500, remaining: 500, couponStatus: 'available', lossUsed: 0, lossLimit: 50, feeUsed: 0, feeLimit: 25, riskTag: '正常', riskWarn: false, activity: '新用户注册礼包', issuedAt: '2026-07-20 09:15' },
-    { uid: '101205', wallet: '0x1a2b3c4d5e6f7890abcdef1234567890abcdef12', totalIssued: 150, remaining: 0, couponStatus: 'expired', lossUsed: 0, lossLimit: 30, feeUsed: 0, feeLimit: 15, riskTag: '正常', riskWarn: false, activity: '交易大赛奖励', issuedAt: '2026-06-28 16:00' }
+    { uid: '100234', wallet: '0xd5a2b8c91f3e4d567890abcdef1234567890ab8f3c', email: '', totalIssued: 350, inUse: 120, pending: 80, totalRemaining: 200, cumLossDeduct: 45, cumFeeDeduct: 12, riskRecycleTotal: 0, riskTag: '套利嫌疑', riskWarn: true, activity: '社区 KOL 合作激励', issuedAt: '2026-07-18 14:30' },
+    { uid: '100891', wallet: '', email: 'kol.partner@forx.io', totalIssued: 500, inUse: 0, pending: 500, totalRemaining: 500, cumLossDeduct: 0, cumFeeDeduct: 0, riskRecycleTotal: 0, riskTag: '正常', riskWarn: false, activity: '新用户注册礼包', issuedAt: '2026-07-20 09:15' },
+    { uid: '101205', wallet: '0x1a2b3c4d5e6f7890abcdef1234567890abcdef12', email: '', totalIssued: 150, inUse: 0, pending: 0, totalRemaining: 0, cumLossDeduct: 28, cumFeeDeduct: 6, riskRecycleTotal: 150, riskTag: '正常', riskWarn: false, activity: '交易大赛奖励', issuedAt: '2026-06-28 16:00' }
   ];
 
   const USER_COUPONS = {
@@ -529,7 +545,11 @@
   };
 
   let TRIAL_LOGS = [
-    { time: '2026-07-20 09:15', operator: 'Trial_Admin', type: '发放', user: '100891 / 0x8f3c...dcba', detail: '新用户注册礼包 · CPN010（250 USDT）', amount: '250 USDT', remark: '审批单 #APR2026072001' },
+    { time: '2026-07-21 16:40', operator: 'Boss', type: '审批通过', user: '批量 2 人', detail: '体验金批量发放 · APR2026072001 · 老板终审通过', amount: '350 USDT', remark: '审批单已通过，系统将执行发放' },
+    { time: '2026-07-21 11:05', operator: 'Risk_Control', type: '审批通过', user: '批量 2 人', detail: '体验金批量发放 · APR2026072001 · 风控审核通过', amount: '350 USDT', remark: '名单与卡组规则校验通过' },
+    { time: '2026-07-20 09:20', operator: 'Trial_Admin', type: '审批提交', user: '批量 2 人', detail: '新用户注册礼包 · 默认组 · 待审批 APR2026072001', amount: '350 USDT', remark: 'KOL 渠道补发' },
+    { time: '2026-07-19 14:10', operator: 'Mkt_Cross', type: '审批驳回', user: '批量 120 人', detail: '体验金批量发放 · APR2026071805 · 交叉审核驳回', amount: '12,540 USDT', remark: '有效名单金额与活动预算不符' },
+    { time: '2026-07-20 09:15', operator: 'Trial_Admin', type: '发放', user: '100891 / kol.partner@forx.io', detail: '新用户注册礼包 · CPN010（250 USDT）', amount: '250 USDT', remark: '审批单 #APR2026072001 已生效' },
     { time: '2026-07-18 14:30', operator: 'Trial_Admin', type: '发放', user: '100234 / 0xd5a2...8f3c', detail: '社区 KOL 合作激励 · CPN002（50 USDT）', amount: '50 USDT', remark: '审批单 #APR2026071802' },
     { time: '2026-07-16 11:02', operator: 'Risk_Ops', type: '回收', user: '100567 / 0xabc1...ef23', detail: '回收 CPN088（剩余 120 USDT）', amount: '120 USDT', remark: '异常套利风控回收' }
   ];
@@ -638,13 +658,18 @@
     document.getElementById('riskBackBtn').classList.remove('hidden');
     if (window.AdminCopyChip) {
       AdminCopyChip.setField(document.getElementById('detailUid'), user.uid, 'uid');
-      AdminCopyChip.setField(document.getElementById('detailWallet'), user.wallet, 'wallet');
+      AdminCopyChip.setField(document.getElementById('detailWallet'), user.email || user.wallet, user.email ? 'uid' : 'wallet');
     } else {
       document.getElementById('detailUid').innerText = user.uid;
-      document.getElementById('detailWallet').innerText = user.wallet;
+      document.getElementById('detailWallet').innerText = user.email || user.wallet;
     }
-    document.getElementById('detailTotalIssued').innerText = user.totalIssued + ' USDT';
-    document.getElementById('detailRemaining').innerText = user.remaining + ' USDT';
+    document.getElementById('detailTotalIssued').innerText = fmtU(user.totalIssued);
+    document.getElementById('detailRemaining').innerText = fmtU(user.totalRemaining);
+    document.getElementById('detailInUse').innerText = fmtU(user.inUse);
+    document.getElementById('detailPending').innerText = fmtU(user.pending);
+    document.getElementById('detailCumLoss').innerText = fmtU(user.cumLossDeduct);
+    document.getElementById('detailCumFee').innerText = fmtU(user.cumFeeDeduct);
+    document.getElementById('detailRiskRecycle').innerText = fmtU(user.riskRecycleTotal || 0);
     renderUserCoupons(uid);
   }
 
@@ -658,9 +683,25 @@
     const sliced = trialSlice(list, trialConfigPage);
     trialConfigPage = sliced.page;
     document.getElementById('configTableBody').innerHTML = sliced.items.length ? sliced.items.map(function (g) {
-      return '<tr class="hover:bg-slate-50"><td class="px-6 py-4 font-bold">' + g.name + '</td><td class="px-6 py-4">' + g.couponValidDays + ' 天</td><td class="px-6 py-4">' + g.openValidDays + ' 天</td><td class="px-6 py-4 text-green-600 font-bold">' + (g.lossEnabled ? '开启 (' + g.lossPct + '%)' : '关闭') + '</td><td class="px-6 py-4">' + (g.feeEnabled ? '开启 (' + g.feePct + '%)' : '关闭') + '</td><td class="px-6 py-4 text-right"><button class="text-blue-600 font-bold">编辑</button></td></tr>';
+      const nameCell = g.name + (g.isDefault ? '<span class="default-group-badge">系统默认</span>' : '');
+      const deleteBtn = g.isDefault ? '' : ' <button type="button" onclick="deleteCardGroup(\'' + g.id + '\')" class="text-red-600 font-bold ml-2">删除</button>';
+      return '<tr class="hover:bg-slate-50"><td class="px-6 py-4 font-bold">' + nameCell + '</td><td class="px-6 py-4">' + g.couponValidDays + ' 天</td><td class="px-6 py-4">' + g.openValidDays + ' 天</td><td class="px-6 py-4 text-green-600 font-bold">' + (g.lossEnabled ? '开启 (' + g.lossPct + '%)' : '关闭') + '</td><td class="px-6 py-4">' + (g.feeEnabled ? '开启 (' + g.feePct + '%)' : '关闭') + '</td><td class="px-6 py-4 text-right"><button type="button" class="text-blue-600 font-bold">编辑</button>' + deleteBtn + '</td></tr>';
     }).join('') : '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">无匹配卡组</td></tr>';
     trialMountPag('trial-config-pagination', sliced.total, trialConfigPage, 'trial-config');
+  }
+
+  function deleteCardGroup(id) {
+    const g = CARD_GROUPS.find(function (x) { return x.id === id; });
+    if (!g) return;
+    if (g.isDefault) { alert('系统默认组不可删除'); return; }
+    if (!confirm('确认删除卡组「' + g.name + '」？删除后不可恢复。')) return;
+    const idx = CARD_GROUPS.findIndex(function (x) { return x.id === id; });
+    if (idx >= 0) CARD_GROUPS.splice(idx, 1);
+    window.TRIAL_CARD_GROUPS = CARD_GROUPS;
+    if (selectedGroupId === id) selectedGroupId = CARD_GROUPS[0] ? CARD_GROUPS[0].id : '';
+    renderConfigTable();
+    renderCardGroupSelector();
+    alert('卡组已删除');
   }
 
   function resetConfigFilter() {
@@ -703,11 +744,30 @@
     return { available: '可用', used: '使用中', expired: '已过期', recycled: '已失效', pending: '待激活' }[s] || s;
   }
 
-  function userChipCell(u) {
+  function userLoginLabel(u) {
+    if (u.email) return u.email;
+    return u.wallet && u.wallet.length > 14 ? u.wallet.slice(0, 6) + '...' + u.wallet.slice(-4) : (u.wallet || '—');
+  }
+
+  function userUidCell(u) {
     if (window.AdminCopyChip) {
-      return '<td class="px-4 py-3"><div>' + AdminCopyChip.uid(u.uid) + '</div><div class="mt-0.5">' + AdminCopyChip.wallet(u.wallet) + '</div></td>';
+      return '<td class="px-4 py-3">' + AdminCopyChip.uid(u.uid) + '</td>';
     }
-    return '<td class="px-4 py-3"><div class="font-bold">' + u.uid + '</div><div class="text-[10px] text-slate-400 font-mono">' + (u.wallet.length > 14 ? u.wallet.slice(0, 6) + '...' + u.wallet.slice(-4) : u.wallet) + '</div></td>';
+    return '<td class="px-4 py-3 font-bold">' + u.uid + '</td>';
+  }
+
+  function userLoginCell(u) {
+    if (window.AdminCopyChip) {
+      if (u.email) {
+        return '<td class="px-3 py-3 text-xs">' + AdminCopyChip.render(u.email, { className: 'text-slate-700' }) + '</td>';
+      }
+      return '<td class="px-3 py-3">' + AdminCopyChip.wallet(u.wallet) + '</td>';
+    }
+    return '<td class="px-3 py-3 font-mono text-xs text-slate-600">' + userLoginLabel(u) + '</td>';
+  }
+
+  function fmtU(n) {
+    return Number(n).toLocaleString() + ' U';
   }
 
   function renderTrialUserTable(list) {
@@ -720,10 +780,18 @@
       return;
     }
     tbody.innerHTML = sliced.items.map(function (u) {
-      const canRecycle = u.remaining > 0;
+      const canRecycle = u.totalRemaining > 0;
       const tagCls = u.riskWarn ? 'risk-tag-warn' : 'risk-tag-normal';
-      return '<tr class="hover:bg-slate-50">' + userChipCell(u) +
-        '<td class="px-3 py-3 text-right font-medium">' + u.totalIssued + ' U</td><td class="px-3 py-3 text-right font-bold text-blue-600">' + u.remaining + ' U</td><td class="px-3 py-3 text-center"><span class="status-tag status-' + u.couponStatus + '">' + statusText(u.couponStatus) + '</span></td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(u.lossUsed, u.lossLimit) + '</td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(u.feeUsed, u.feeLimit) + '</td><td class="px-3 py-3"><span class="' + tagCls + '">' + u.riskTag + '</span></td><td class="px-3 py-3">' + u.activity + '</td><td class="px-3 py-3 text-slate-500">' + u.issuedAt + '</td><td class="px-4 py-3 text-right space-x-2"><button onclick="showUserDetail(\'' + u.uid + '\')" class="text-blue-600 font-bold">查看详情</button>' + (canRecycle ? '<button onclick="recycleUserFromList(\'' + u.uid + '\')" class="text-red-600 font-bold">回收</button>' : '') + '</td></tr>';
+      return '<tr class="hover:bg-slate-50">' + userUidCell(u) + userLoginCell(u) +
+        '<td class="px-3 py-3 text-right font-medium">' + fmtU(u.totalIssued) + '</td>' +
+        '<td class="px-3 py-3 text-right font-bold text-blue-600">' + fmtU(u.totalRemaining) + '</td>' +
+        '<td class="px-3 py-3 text-right font-bold text-emerald-600">' + fmtU(u.inUse) + '</td>' +
+        '<td class="px-3 py-3 text-right font-bold text-amber-600">' + fmtU(u.pending) + '</td>' +
+        '<td class="px-3 py-3 text-right text-xs font-bold">' + fmtU(u.cumLossDeduct) + '</td>' +
+        '<td class="px-3 py-3 text-right text-xs font-bold">' + fmtU(u.cumFeeDeduct) + '</td>' +
+        '<td class="px-3 py-3"><span class="' + tagCls + '">' + u.riskTag + '</span></td>' +
+        '<td class="px-4 py-3 text-right space-x-2"><button type="button" onclick="showUserDetail(\'' + u.uid + '\')" class="text-blue-600 font-bold">查看详情</button>' +
+        (canRecycle ? '<button type="button" onclick="recycleUserFromList(\'' + u.uid + '\')" class="text-red-600 font-bold">回收</button>' : '') + '</td></tr>';
     }).join('');
     trialMountPag('trial-user-pagination', sliced.total, trialUserListPage, 'trial-users');
   }
@@ -759,10 +827,13 @@
     const status = document.getElementById('userFilterStatus').value;
     let list = TRIAL_USERS.filter(function (u) {
       if (uid && u.uid.indexOf(uid) === -1) return false;
-      if (wallet && u.wallet.toLowerCase().indexOf(wallet) === -1) return false;
+      if (wallet) {
+        const hay = [u.wallet, u.email, u.uid].join(' ').toLowerCase();
+        if (hay.indexOf(wallet) === -1) return false;
+      }
       if (activity && u.activity.indexOf(activity) === -1) return false;
-      if (status === 'has_balance' && u.remaining <= 0) return false;
-      if (status === 'in_use' && u.couponStatus !== 'used') return false;
+      if (status === 'has_balance' && u.totalRemaining <= 0) return false;
+      if (status === 'in_use' && u.inUse <= 0) return false;
       return true;
     });
     trialUserListPage = 1;
@@ -784,7 +855,7 @@
       logBody.innerHTML = '<tr><td colspan="7" class="px-4 py-12 text-center text-slate-400">暂无记录</td></tr>';
     } else {
       logBody.innerHTML = sliced.items.map(function (log) {
-        const tagCls = log.type === '发放' ? 'log-tag-issue' : 'log-tag-recycle';
+        var tagCls = log.type === '发放' ? 'log-tag-issue' : (log.type === '回收' ? 'log-tag-recycle' : 'log-tag-approval');
         return '<tr class="hover:bg-slate-50"><td class="px-4 py-3">' + log.time + '</td><td class="px-3 py-3">' + log.operator + '</td><td class="px-3 py-3"><span class="status-tag ' + tagCls + '">' + log.type + '</span></td><td class="px-3 py-3 font-mono text-xs">' + log.user + '</td><td class="px-3 py-3">' + log.detail + '</td><td class="px-3 py-3 text-right font-bold">' + log.amount + '</td><td class="px-4 py-3 text-slate-500">' + log.remark + '</td></tr>';
       }).join('');
     }
@@ -829,9 +900,9 @@
 
   function recycleUserFromList(uid) {
     const user = TRIAL_USERS.find(function (u) { return u.uid === uid; });
-    openRecycleConfirm('确认回收用户 <b>' + uid + '</b> 全部可用卡券（剩余 ' + user.remaining + ' USDT）？', function (remark) {
-      TRIAL_LOGS.unshift({ time: new Date().toISOString().slice(0, 16).replace('T', ' '), operator: 'Trial_Admin', type: '回收', user: uid + ' / ' + shortWallet(user.wallet), detail: '回收全部可用卡券', amount: user.remaining + ' USDT', remark: remark });
-      user.remaining = 0; user.couponStatus = 'recycled';
+    openRecycleConfirm('确认回收用户 <b>' + uid + '</b> 全部可用卡券（剩余 ' + user.totalRemaining + ' USDT）？', function (remark) {
+      TRIAL_LOGS.unshift({ time: new Date().toISOString().slice(0, 16).replace('T', ' '), operator: 'Trial_Admin', type: '回收', user: uid + ' / ' + userLoginLabel(user), detail: '回收全部可用卡券', amount: user.totalRemaining + ' USDT', remark: remark });
+      user.inUse = 0; user.pending = 0; user.totalRemaining = 0;
       (USER_COUPONS[uid] || []).forEach(function (c) { if (c.status === 'available' || c.status === 'used') { c.status = 'recycled'; c.balance = 0; } });
       renderTrialUserTable(TRIAL_USERS);
       renderTrialLogs(TRIAL_LOGS);
@@ -847,12 +918,20 @@
   function recycleSingleCoupon(couponId) {
     const coupons = USER_COUPONS[currentDetailUid] || [];
     const c = coupons.find(function (x) { return x.id === couponId; });
-    openRecycleConfirm('确认回收卡券 <b>' + couponId + '</b>（剩余 ' + c.balance + ' USDT）？', function (remark) {
-      TRIAL_LOGS.unshift({ time: new Date().toISOString().slice(0, 16).replace('T', ' '), operator: 'Trial_Admin', type: '回收', user: currentDetailUid, detail: '回收 ' + couponId, amount: c.balance + ' USDT', remark: remark });
+    const recycleAmount = c.balance;
+    const wasUsed = c.status === 'used';
+    const wasAvailable = c.status === 'available';
+    openRecycleConfirm('确认回收卡券 <b>' + couponId + '</b>（剩余 ' + recycleAmount + ' USDT）？', function (remark) {
+      TRIAL_LOGS.unshift({ time: new Date().toISOString().slice(0, 16).replace('T', ' '), operator: 'Trial_Admin', type: '回收', user: currentDetailUid, detail: '回收 ' + couponId, amount: recycleAmount + ' USDT', remark: remark });
       c.status = 'recycled'; c.balance = 0;
       const user = TRIAL_USERS.find(function (u) { return u.uid === currentDetailUid; });
-      if (user) user.remaining = Math.max(0, user.remaining - c.balance);
+      if (user) {
+        if (wasUsed) user.inUse = Math.max(0, user.inUse - recycleAmount);
+        if (wasAvailable) user.pending = Math.max(0, user.pending - recycleAmount);
+        user.totalRemaining = user.inUse + user.pending;
+      }
       renderUserCoupons(currentDetailUid);
+      showUserDetail(currentDetailUid);
       renderTrialLogs(TRIAL_LOGS);
       alert('回收成功');
     });
@@ -1102,7 +1181,7 @@
         recipients: recipients
       },
       onSubmit: function (app) {
-        TRIAL_LOGS.unshift({ time: app.createdAt, operator: 'Trial_Admin', type: '发放', user: '批量 ' + recipients.length + ' 人', detail: act.displayLabel + ' · ' + (g ? g.name : '-') + ' · 待审批 ' + app.id, amount: totalStr, remark: remark + '（审批中）' });
+        TRIAL_LOGS.unshift({ time: app.createdAt, operator: 'Trial_Admin', type: '审批提交', user: '批量 ' + recipients.length + ' 人', detail: act.displayLabel + ' · ' + (g ? g.name : '-') + ' · 待审批 ' + app.id, amount: totalStr, remark: remark });
         renderTrialLogs(TRIAL_LOGS);
       }
     });
@@ -1147,6 +1226,46 @@
   renderCardGroupSelector();
   renderTrialUserTable(TRIAL_USERS);
   renderTrialLogs(TRIAL_LOGS);
+  function appendTrialApprovalLog(app, logType, operator, remark) {
+    if (!app || app.type !== 'trial_issue') return;
+    const p = app.payload || {};
+    const count = p.recipientCount || (p.recipients ? p.recipients.length : 0);
+    const amount = p.totalAmount || '-';
+    const cardGroup = p.cardGroup || '-';
+    TRIAL_LOGS.unshift({
+      time: new Date().toISOString().slice(0, 16).replace('T', ' '),
+      operator: operator,
+      type: logType,
+      user: '批量 ' + count + ' 人',
+      detail: '体验金批量发放 · ' + app.id + ' · ' + cardGroup,
+      amount: amount,
+      remark: remark || ''
+    });
+    renderTrialLogs(TRIAL_LOGS);
+  }
+
+  (function hookTrialApprovalLogs() {
+    const origApprove = window.approveApplication;
+    const origReject = window.rejectApplication;
+    const actorMap = { cross: 'Mkt_Cross', risk: 'Risk_Control', boss: 'Boss' };
+    const approveRemark = { cross: '市场运营交叉审核通过', risk: '风控审核通过', boss: '老板终审通过' };
+    const rejectRemark = { cross: '交叉审核驳回', risk: '风控审核驳回', boss: '老板审批驳回' };
+    window.approveApplication = function (id, role, note) {
+      const result = origApprove(id, role, note);
+      if (result && result.type === 'trial_issue') {
+        appendTrialApprovalLog(result, '审批通过', actorMap[role] || role, note || approveRemark[role] || '审批通过');
+      }
+      return result;
+    };
+    window.rejectApplication = function (id, role, note) {
+      const result = origReject(id, role, note);
+      if (result && result.type === 'trial_issue') {
+        appendTrialApprovalLog(result, '审批驳回', actorMap[role] || role, note || rejectRemark[role] || '驳回');
+      }
+      return result;
+    };
+  })();
+
   mountActivityPicker('issue-activity-picker', { prefix: 'issue-act', defaultMode: 'custom', defaultRewardNames: { 'zh-CN': 'KOL 合作体验金', 'zh-TW': 'KOL 合作體驗金', 'en': 'KOL Trial Bonus', 'ja': 'KOL 体験金' } });
   initModuleApproval({ type: 'trial_issue', rootId: 'trial-approval-root', title: '体验金发放审批', showExportList: false, showExportDetail: true, currentApplicant: 'Trial_Admin', allowResubmit: true });
 </script>
