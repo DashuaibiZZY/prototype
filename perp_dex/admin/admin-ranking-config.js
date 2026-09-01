@@ -102,6 +102,7 @@
             else el.classList.add('hidden');
         });
         closeAllComboboxes();
+        if (id === 'view-batch') applyEditModeUi();
     }
 
     global.showListPage = function () {
@@ -112,25 +113,28 @@
     };
 
     global.openBatchPage = function (id) {
-        editingId = id || null;
+        var parsed = id != null && id !== '' ? parseInt(id, 10) : null;
+        editingId = parsed != null && !isNaN(parsed) ? parsed : null;
         editOriginal = null;
+        var isEdit = editingId != null;
         var titleEl = document.getElementById('batch-page-title');
         var subtitleEl = document.getElementById('batch-page-subtitle');
         if (titleEl) {
-            titleEl.textContent = id ? '编辑虚拟用户配置' : '新增虚拟用户配置';
+            titleEl.textContent = isEdit ? '编辑虚拟用户配置' : '新增虚拟用户配置';
         }
         if (subtitleEl) {
-            subtitleEl.textContent = id
+            subtitleEl.textContent = isEdit
                 ? '仅可修改指标数值；UID、范围、生效策略不可变更'
                 : '默认 1 条，可添加至最多 10 条；共享榜单范围与生效策略';
         }
         showView('view-batch');
         try {
-            initBatchPage(id);
+            initBatchPage();
         } catch (err) {
             console.error('[RankingAdmin] initBatchPage failed', err);
         }
-        var hash = id ? '#edit=' + id : '#batch';
+        applyEditModeUi();
+        var hash = isEdit ? '#edit=' + editingId : '#batch';
         if (location.hash !== hash) location.hash = hash;
     };
 
@@ -142,26 +146,49 @@
     }
 
     function setBatchEffectiveControlsLocked(locked) {
-        document.querySelectorAll('input[name="batch-effective"]').forEach(function (el) {
-            el.disabled = locked;
-        });
-        var dateInput = document.getElementById('batch-effective-date');
-        if (dateInput) dateInput.disabled = locked || !document.querySelector('input[name="batch-effective"][value="scheduled"]:checked');
-        var wrap = document.getElementById('batch-effective-wrap');
-        if (wrap) wrap.classList.toggle('pointer-events-none', locked);
-        if (wrap) wrap.classList.toggle('opacity-60', locked);
-        var effHint = document.getElementById('batch-effective-edit-hint');
-        if (effHint) {
-            if (locked) effHint.classList.remove('hidden');
-            else effHint.classList.add('hidden');
+        var controls = document.getElementById('batch-effective-controls');
+        var readonly = document.getElementById('batch-effective-readonly');
+        if (locked) {
+            if (controls) controls.classList.add('hidden');
+            if (readonly) readonly.classList.remove('hidden');
+            var row = editingId != null ? configRows.find(function (r) { return Number(r.id) === Number(editingId); }) : null;
+            var valEl = document.getElementById('batch-effective-readonly-value');
+            if (valEl && row) {
+                if (row.effectiveAt === '立即生效') {
+                    valEl.textContent = '立即生效（数据时间：' + row.dataTime + '）';
+                } else if (row.dataTime === '—') {
+                    valEl.textContent = '指定日期：' + row.effectiveAt + '（待写入）';
+                } else {
+                    valEl.textContent = '指定日期：' + row.effectiveAt + '（数据时间：' + row.dataTime + '）';
+                }
+            }
+        } else {
+            if (controls) controls.classList.remove('hidden');
+            if (readonly) readonly.classList.add('hidden');
+            document.querySelectorAll('input[name="batch-effective"]').forEach(function (el) {
+                el.disabled = false;
+            });
+            global.onBatchEffectiveChange();
         }
+    }
+
+    function applyEditModeUi() {
+        var isEdit = editingId != null && !isNaN(editingId);
+        setBatchScopeControlsLocked(isEdit);
+        setBatchEffectiveControlsLocked(isEdit);
+        setAddBatchRowUi(isEdit);
     }
 
     function setAddBatchRowUi(editMode) {
         var btn = document.getElementById('btn-add-batch-row');
         if (btn) {
-            if (editMode) btn.classList.add('hidden');
-            else btn.classList.remove('hidden');
+            if (editMode) {
+                btn.classList.add('hidden');
+                btn.style.display = 'none';
+            } else {
+                btn.classList.remove('hidden');
+                btn.style.display = '';
+            }
         }
         var hint = document.getElementById('batch-count-hint');
         if (hint) {
@@ -174,9 +201,10 @@
         }
     }
 
-    function initBatchPage(editId) {
-        if (editId) {
-            var row = configRows.find(function (r) { return r.id === editId; });
+    function initBatchPage() {
+        var isEdit = editingId != null && !isNaN(editingId);
+        if (isEdit) {
+            var row = configRows.find(function (r) { return Number(r.id) === Number(editingId); });
             if (!row) {
                 global.showListPage();
                 return;
@@ -196,26 +224,12 @@
             }];
             global.setBatchScope(batchScope, true);
             if (row.activityId) selectComboboxActivity('batch', row.activityId);
-            var isScheduled = row.dataTime === '—' && row.effectiveAt !== '立即生效';
-            document.querySelector('input[name="batch-effective"][value="now"]').checked = !isScheduled;
-            document.querySelector('input[name="batch-effective"][value="scheduled"]').checked = isScheduled;
-            if (isScheduled) {
-                var datePart = row.effectiveAt.split(' ')[0];
-                document.getElementById('batch-effective-date').value = datePart;
-            }
-            global.onBatchEffectiveChange();
-            setBatchScopeControlsLocked(true);
-            setBatchEffectiveControlsLocked(true);
-            setAddBatchRowUi(true);
         } else {
             batchScope = 'platform';
             batchRows = [{ uidMode: 'generate', uid: '' }];
             global.setBatchScope('platform', false);
             document.querySelector('input[name="batch-effective"][value="now"]').checked = true;
             global.onBatchEffectiveChange();
-            setBatchScopeControlsLocked(false);
-            setBatchEffectiveControlsLocked(false);
-            setAddBatchRowUi(false);
         }
         renderBatchTable();
     }
@@ -632,6 +646,7 @@
     global.refreshRankingAdminList = function () {
         try {
             renderTable();
+            applyEditModeUi();
         } catch (err) {
             console.error('[RankingAdmin] refreshRankingAdminList failed', err);
         }
