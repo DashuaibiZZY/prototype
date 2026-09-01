@@ -595,17 +595,21 @@
         if (addBatchRowBtn) addBatchRowBtn.addEventListener('click', function () { global.addBatchRow(); });
     }
 
-    function bootRankingAdmin() {
-        bindRankingUi();
+    global.refreshRankingAdminList = function () {
         try {
             renderTable();
         } catch (err) {
-            console.error('[RankingAdmin] renderTable failed', err);
+            console.error('[RankingAdmin] refreshRankingAdminList failed', err);
         }
+    };
+
+    function bootRankingAdmin() {
+        bindRankingUi();
+        global.refreshRankingAdminList();
         if (global.AdminPagination) {
             global.AdminPagination.register('config-list', function (p) { listPage = p; renderTable(); });
         }
-        window.addEventListener('hashchange', parseHash);
+        global.addEventListener('hashchange', parseHash);
         parseHash();
     }
 

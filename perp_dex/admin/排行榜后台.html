@@ -25,6 +25,17 @@
         .activity-option:hover { background: #f8fafc; }
         .activity-option.selected { background: #f5f3ff; color: #6d28d9; }
         .batch-table input { width: 100%; }
+        /* Tailwind flex 会覆盖 hidden，子页必须用 !important 隐藏 */
+        .admin-subview {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+        .admin-subview.hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -32,7 +43,7 @@
 <aside id="admin-sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0"></aside>
 
 <main class="flex-1 flex flex-col overflow-hidden">
-  <div id="view-list" class="flex flex-col flex-1 overflow-hidden min-h-0">
+  <div id="view-list" class="admin-subview">
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
       <div>
         <h1 class="text-lg font-bold text-slate-800 italic uppercase">排行榜虚拟用户数据配置</h1>
@@ -90,7 +101,7 @@
     </div>
   </div>
 
-  <div id="view-batch" class="hidden flex flex-col flex-1 overflow-hidden min-h-0">
+  <div id="view-batch" class="admin-subview hidden">
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
       <div class="flex items-center gap-4">
         <button type="button" data-ranking-action="back-list" class="text-slate-400 hover:text-slate-800 font-black">← 返回列表</button>
@@ -149,12 +160,15 @@
 </main>
 
 <script src="admin-pagination.js"></script>
+<script src="admin-copy-chip.js"></script>
 <script src="admin-ranking-config.js"></script>
 <script src="admin-permission-registry.js"></script>
 <script src="admin-permission-store.js"></script>
 <script src="admin-permissions.js"></script>
-<script src="admin-copy-chip.js"></script>
 <script src="admin-sidebar.js"></script>
-<script>initAdminSidebar('leaderboard', '登录身份: 运营管理员');</script>
+<script>
+  initAdminSidebar('leaderboard', '登录身份: 运营管理员');
+  if (typeof refreshRankingAdminList === 'function') refreshRankingAdminList();
+</script>
 </body>
 </html>
