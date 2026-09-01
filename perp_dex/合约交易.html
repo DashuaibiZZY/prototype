@@ -291,7 +291,9 @@
             text-transform: uppercase;
         }
         /* K 线时段标星 */
-        .kline-period-bar { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+        .kline-period-bar { display: flex; align-items: center; gap: 2px; flex-shrink: 0; min-width: 0; }
+        .kline-period-pinned { display: flex; align-items: center; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+        .kline-period-pinned::-webkit-scrollbar { display: none; }
         .kline-period-btn {
             padding: 0 8px;
             height: 28px;
@@ -326,7 +328,7 @@
             position: absolute;
             top: calc(100% + 4px);
             left: 0;
-            z-index: 300;
+            z-index: 500;
             min-width: 168px;
             max-height: 320px;
             overflow-y: auto;
@@ -337,6 +339,12 @@
             padding: 6px 0;
         }
         .kline-period-dropdown.hidden { display: none; }
+        .kline-period-dropdown.is-floating {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 500;
+        }
         .kline-period-group-label {
             padding: 6px 12px 4px;
             font-size: 9px;
@@ -594,10 +602,10 @@
             <div id="view-kline" class="flex-1 bg-white flex flex-col overflow-hidden text-[#1e2329] font-medium border-r border-gray-100 relative">
                 <!-- 正常 K 線狀態 -->
                 <div id="kline-state-normal" class="flex-1 flex flex-col overflow-hidden">
-                <div class="h-9 flex items-center px-2 border-b border-gray-50 shrink-0 bg-white justify-between">
+                <div class="h-9 flex items-center px-2 border-b border-gray-50 shrink-0 bg-white justify-between relative z-40">
 
                     <!-- 左側：週期切換 + 基礎工具圖標 -->
-                    <div class="flex items-center space-x-0.5 overflow-x-auto no-scrollbar">
+                    <div class="flex items-center space-x-0.5 min-w-0">
                         <div id="kline-period-bar" class="kline-period-bar"></div>
                         <div class="w-[1px] h-4 bg-gray-100 mx-1"></div>
                         <!-- 功能圖標 -->
@@ -4346,7 +4354,7 @@
                 resetDatePickerPosition(el);
             });
         }
-        if (!e.target.closest('[onclick^="toggleMultiSelect"]') && !e.target.closest('.absolute.top-full')) {
+        if (!e.target.closest('[onclick^="toggleMultiSelect"]') && !e.target.closest('.absolute.top-full') && !e.target.closest('.kline-period-more-wrap')) {
             document.querySelectorAll('[id$="-dropdown"]').forEach(el => el.classList.add('hidden'));
         }
         const gtcTrigger = document.getElementById('gtc-trigger');
@@ -4578,23 +4586,50 @@
         } catch (e) { /* ignore */ }
     }
 
+    function positionKlinePeriodPopover() {
+        const popover = document.getElementById('kline-period-popover');
+        const btn = document.getElementById('kline-period-more-btn');
+        if (!popover || !btn) return;
+        const rect = btn.getBoundingClientRect();
+        const width = popover.offsetWidth || 168;
+        const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+        popover.style.top = (rect.bottom + 4) + 'px';
+        popover.style.left = left + 'px';
+    }
+
     function closeKlinePeriodDropdown() {
         klinePeriodDropdownOpen = false;
-        const dropdown = document.getElementById('kline-period-dropdown');
+        const popover = document.getElementById('kline-period-popover');
         const btn = document.getElementById('kline-period-more-btn');
-        if (dropdown) dropdown.classList.add('hidden');
+        if (popover) {
+            popover.classList.add('hidden');
+            popover.classList.remove('is-floating');
+            popover.style.top = '';
+            popover.style.left = '';
+        }
         if (btn) btn.classList.remove('is-open');
     }
 
     function toggleKlinePeriodDropdown(e) {
-        if (e) e.stopPropagation();
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         klinePeriodDropdownOpen = !klinePeriodDropdownOpen;
-        const dropdown = document.getElementById('kline-period-dropdown');
+        const popover = document.getElementById('kline-period-popover');
         const btn = document.getElementById('kline-period-more-btn');
-        if (!dropdown || !btn) return;
-        dropdown.classList.toggle('hidden', !klinePeriodDropdownOpen);
+        if (!popover || !btn) return;
+        popover.classList.toggle('hidden', !klinePeriodDropdownOpen);
         btn.classList.toggle('is-open', klinePeriodDropdownOpen);
-        if (klinePeriodDropdownOpen) renderKlinePeriodDropdown();
+        if (klinePeriodDropdownOpen) {
+            popover.classList.add('is-floating');
+            renderKlinePeriodDropdown();
+            positionKlinePeriodPopover();
+        } else {
+            popover.classList.remove('is-floating');
+            popover.style.top = '';
+            popover.style.left = '';
+        }
     }
 
     function selectKlinePeriod(id) {
@@ -4625,8 +4660,8 @@
     }
 
     function renderKlinePeriodDropdown() {
-        const dropdown = document.getElementById('kline-period-dropdown');
-        if (!dropdown) return;
+        const popover = document.getElementById('kline-period-popover');
+        if (!popover) return;
         const groups = ['分钟', '小时', '天'];
         let html = '';
         groups.forEach(function (group) {
@@ -4643,25 +4678,32 @@
                     '</button></div>';
             });
         });
-        dropdown.innerHTML = html;
+        popover.innerHTML = html;
+        if (klinePeriodDropdownOpen) positionKlinePeriodPopover();
     }
 
     function renderKlinePeriodBar() {
         const bar = document.getElementById('kline-period-bar');
         if (!bar) return;
-        let html = '';
+        let pinnedHtml = '';
         klineStarredIds.forEach(function (id) {
             const it = KLINE_INTERVALS.find(function (x) { return x.id === id; });
             if (!it) return;
-            html += '<button type="button" class="kline-period-btn' + (klineActiveId === id ? ' is-active' : '') + '" onclick="selectKlinePeriod(\'' + id + '\')">' + it.label + '</button>';
+            pinnedHtml += '<button type="button" class="kline-period-btn' + (klineActiveId === id ? ' is-active' : '') + '" onclick="selectKlinePeriod(\'' + id + '\')">' + it.label + '</button>';
         });
-        html += '<div class="kline-period-more-wrap">' +
-            '<button type="button" id="kline-period-more-btn" class="kline-period-more-btn" onclick="toggleKlinePeriodDropdown(event)" aria-label="更多 K 线时段" title="自定义固定 K 线时段">' +
+        const popoverOpenClass = klinePeriodDropdownOpen ? ' is-floating' : ' hidden';
+        bar.innerHTML =
+            '<div id="kline-period-pinned" class="kline-period-pinned">' + pinnedHtml + '</div>' +
+            '<div class="kline-period-more-wrap">' +
+            '<button type="button" id="kline-period-more-btn" class="kline-period-more-btn' + (klinePeriodDropdownOpen ? ' is-open' : '') + '" onclick="toggleKlinePeriodDropdown(event)" aria-label="更多 K 线时段" title="自定义固定 K 线时段">' +
             '<svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M19 9l-7 7-7-7"/></svg>' +
             '</button>' +
-            '<div id="kline-period-dropdown" class="kline-period-dropdown hidden"></div>' +
+            '<div id="kline-period-popover" class="kline-period-dropdown' + popoverOpenClass + '"></div>' +
             '</div>';
-        bar.innerHTML = html;
+        if (klinePeriodDropdownOpen) {
+            renderKlinePeriodDropdown();
+            positionKlinePeriodPopover();
+        }
     }
 
     function initKlinePeriodBar() {
@@ -4669,8 +4711,13 @@
         renderKlinePeriodBar();
         document.addEventListener('click', function (e) {
             if (!klinePeriodDropdownOpen) return;
+            const popover = document.getElementById('kline-period-popover');
             const wrap = document.querySelector('.kline-period-more-wrap');
-            if (wrap && !wrap.contains(e.target)) closeKlinePeriodDropdown();
+            if ((wrap && wrap.contains(e.target)) || (popover && popover.contains(e.target))) return;
+            closeKlinePeriodDropdown();
+        });
+        window.addEventListener('resize', function () {
+            if (klinePeriodDropdownOpen) positionKlinePeriodPopover();
         });
     }
 
