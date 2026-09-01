@@ -118,8 +118,8 @@
     function resetSingleForm(id) {
         uidMode = 'manual';
         configScope = 'platform';
-        setUidMode('manual');
-        setConfigScope('platform');
+        global.setUidMode('manual');
+        global.setConfigScope('platform');
         document.getElementById('uid-error').classList.add('hidden');
         mountActivityCombobox('cfg-activity-combobox', 'cfg', '', onConfigActivityChange);
         renderPlatformMetrics('cfg-metrics-platform', 'cfg', null);
@@ -127,23 +127,23 @@
         document.getElementById('cfg-metrics-platform').classList.remove('hidden');
         updateConfigMetricsHint();
         document.querySelector('input[name="cfg-effective"][value="now"]').checked = true;
-        onCfgEffectiveChange();
+        global.onCfgEffectiveChange();
 
         if (id) {
             var row = configRows.find(function (r) { return r.id === id; });
             if (!row) return;
             uidMode = 'manual';
-            setUidMode('manual');
+            global.setUidMode('manual');
             document.getElementById('config-uid').value = row.uid;
             document.getElementById('config-uid').readOnly = true;
             document.getElementById('uid-mode-manual').disabled = true;
             document.getElementById('uid-mode-generate').disabled = true;
-            setConfigScope(row.scopeType);
+            global.setConfigScope(row.scopeType);
             if (row.activityId) selectComboboxActivity('cfg', row.activityId);
             fillMetrics('cfg', row.scopeType, row.activityId, row);
             document.querySelector('input[name="cfg-effective"][value="now"]').checked = row.status !== 'pending';
             document.querySelector('input[name="cfg-effective"][value="scheduled"]').checked = row.status === 'pending';
-            onCfgEffectiveChange();
+            global.onCfgEffectiveChange();
         } else {
             document.getElementById('config-uid').readOnly = false;
             document.getElementById('config-uid').value = '';
@@ -270,7 +270,7 @@
         var msg = willGenerate ? ('已创建虚拟用户 UID：' + uid) : '配置已保存';
         alert(msg + '；数据将按写入时间参与 7D / 30D 排行榜统计');
         filteredRows = configRows.slice();
-        showListPage();
+        global.showListPage();
         renderTable();
     };
 
@@ -341,9 +341,9 @@
     function initBatchPage() {
         batchScope = 'platform';
         batchRows = [{ uidMode: 'generate', uid: '' }, { uidMode: 'generate', uid: '' }, { uidMode: 'manual', uid: '' }];
-        setBatchScope('platform');
+        global.setBatchScope('platform');
         document.querySelector('input[name="batch-effective"][value="now"]').checked = true;
-        onBatchEffectiveChange();
+        global.onBatchEffectiveChange();
         renderBatchTable();
     }
 
@@ -461,7 +461,7 @@
 
         alert('已成功批量创建 ' + created + ' 条虚拟用户配置');
         filteredRows = configRows.slice();
-        showListPage();
+        global.showListPage();
         renderTable();
     };
 
@@ -610,7 +610,7 @@
         if (!confirm('确认停用？该虚拟用户将从榜单中移除。')) return;
         var row = configRows.find(function (r) { return r.id === id; });
         if (row) row.status = 'offline';
-        applyFilters();
+        global.applyFilters();
     };
 
     function renderUidCell(row) {
@@ -663,10 +663,10 @@
 
     function parseHash() {
         var h = (location.hash || '').replace('#', '');
-        if (h === 'batch') openBatchPage();
-        else if (h === 'new') openConfigPage();
-        else if (h.indexOf('edit=') === 0) openConfigPage(parseInt(h.split('=')[1], 10));
-        else showListPage();
+        if (h === 'batch') global.openBatchPage();
+        else if (h === 'new') global.openConfigPage();
+        else if (h.indexOf('edit=') === 0) global.openConfigPage(parseInt(h.split('=')[1], 10));
+        else global.showListPage();
     }
 
     document.getElementById('config-uid').addEventListener('blur', function () {
