@@ -21,6 +21,12 @@
     .perm-table th, .perm-table td { border: 1px solid #e2e8f0; padding: 8px 12px; }
     .perm-table th { background: #f8fafc; color: #64748b; font-weight: 700; font-size: 11px; text-align: left; }
     .perm-table .col-check { width: 72px; text-align: center; }
+    .perm-table tr.agent-mgmt-extra td { padding: 0; border-top: none; background: #fafafa; }
+    .perm-table tr.agent-mgmt-extra.hidden { display: none; }
+    .agent-mgmt-extra-inner { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 10px; }
+    .agent-mgmt-extra-block { border-radius: 8px; padding: 10px 12px; }
+    .agent-mgmt-extra-block.scope { border: 1px solid #c7d2fe; background: #eef2ff; }
+    .agent-mgmt-extra-block.cap { border: 1px solid #bfdbfe; background: #eff6ff; }
     .section-title { font-size: 13px; font-weight: 700; color: #334155; margin: 14px 0 8px; }
     .drawer-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 90; opacity: 0; pointer-events: none; transition: opacity .2s; }
     .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
@@ -134,19 +140,6 @@
     </div>
     <div class="section-title">后台页面</div>
     <div id="permTables"></div>
-    <div id="agentDataScopeBox" class="hidden mt-3 rounded-lg border border-indigo-200 bg-indigo-50/50 p-4">
-      <label class="text-sm font-bold text-indigo-900">合伙人管理 · 数据权限范围<span class="text-red-600">*</span></label>
-      <p class="text-[11px] text-indigo-800/80 mt-1">勾选「合伙人管理 · 读」或「写」时必选。控制该人员在读/写合伙人管理页时可访问的数据范围。</p>
-      <select id="editAgentDataScope" class="mt-2 w-full max-w-md border border-indigo-200 rounded-lg px-3 py-2 text-sm bg-white">
-        <option value="personal">个人 — 仅本人负责的多层级合伙人数据</option>
-        <option value="global">全局 — 全部运营负责的多层级合伙人数据</option>
-      </select>
-    </div>
-    <div id="agentCapBox" class="hidden mt-3 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
-      <label class="text-sm font-bold text-blue-900">一级合伙人返佣比例上限（%）<span class="text-red-600">*</span></label>
-      <p class="text-[11px] text-blue-800/80 mt-1">勾选「合伙人管理 · 写」时必填；绑定一级合伙人时不得超过此上限。</p>
-      <input id="editAgentCap" type="number" min="1" max="100" required class="mt-2 w-32 border border-blue-200 rounded-lg px-3 py-2 text-sm block" placeholder="如 70">
-    </div>
   </div>
   <div class="px-6 py-4 border-t border-slate-100 flex justify-end gap-2 shrink-0">
     <button type="button" onclick="closeEditDrawer()" class="px-4 py-2.5 border border-slate-200 rounded-lg font-bold text-slate-600">取消</button>
@@ -306,7 +299,27 @@
     permMountPag('staff-table-pagination', sliced.total, staffListPage, 'perm-staff');
   }
 
-  function buildPermTables(disableAll) {
+  function buildAgentMgmtExtras(disableAll, opts) {
+    opts = opts || {};
+    var scopeVal = opts.scope === 'global' ? 'global' : 'personal';
+    var capVal = opts.cap != null && opts.cap !== '' ? String(opts.cap) : '';
+    return '<tr class="agent-mgmt-extra"><td colspan="3">' +
+      '<div class="agent-mgmt-extra-inner">' +
+      '<div id="agentDataScopeBox" class="agent-mgmt-extra-block scope">' +
+      '<label class="text-sm font-bold text-indigo-900">数据权限范围<span class="text-red-600">*</span></label>' +
+      '<p class="text-[11px] text-indigo-800/80 mt-1">勾选「合伙人管理 · 读」或「写」时必选。控制该人员在合伙人管理页可访问的数据范围。</p>' +
+      '<select id="editAgentDataScope" class="mt-2 w-full max-w-md border border-indigo-200 rounded-lg px-3 py-2 text-sm bg-white"' + (disableAll ? ' disabled' : '') + '>' +
+      '<option value="personal"' + (scopeVal === 'personal' ? ' selected' : '') + '>个人 — 仅本人负责的多层级合伙人数据</option>' +
+      '<option value="global"' + (scopeVal === 'global' ? ' selected' : '') + '>全局 — 全部运营负责的多层级合伙人数据</option>' +
+      '</select></div>' +
+      '<div id="agentCapBox" class="agent-mgmt-extra-block cap">' +
+      '<label class="text-sm font-bold text-blue-900">一级合伙人返佣比例上限（%）<span class="text-red-600">*</span></label>' +
+      '<p class="text-[11px] text-blue-800/80 mt-1">勾选「合伙人管理 · 写」时必填；绑定一级合伙人时不得超过此上限。</p>' +
+      '<input id="editAgentCap" type="number" min="1" max="100" value="' + capVal.replace(/"/g, '&quot;') + '" class="mt-2 w-32 border border-blue-200 rounded-lg px-3 py-2 text-sm block" placeholder="如 70"' + (disableAll ? ' disabled' : '') + '>' +
+      '</div></div></td></tr>';
+  }
+
+  function buildPermTables(disableAll, agentOpts) {
     if (!window.ADMIN_PAGES) return '<p class="text-red-500">页面清单未加载</p>';
     var byMod = getAdminPagesByModule();
     var html = '';
@@ -319,6 +332,7 @@
         html += '<tr><td>' + p.label + '</td>' +
           '<td class="col-check"><input type="checkbox" data-pid="' + p.id + '" data-kind="read" ' + (c.read ? 'checked' : '') + (disableAll ? ' disabled' : '') + '></td>' +
           '<td class="col-check"><input type="checkbox" data-pid="' + p.id + '" data-kind="write" ' + (c.write ? 'checked' : '') + (disableAll ? ' disabled' : '') + '></td></tr>';
+        if (p.id === 'agent.mgmt') html += buildAgentMgmtExtras(disableAll, agentOpts);
       });
       html += '</tbody></table>';
     });
@@ -332,10 +346,17 @@
   function updateAgentPartnerBoxesVisibility() {
     var superA = $('superBanner') && !$('superBanner').classList.contains('hidden');
     var hasAgent = hasAgentMgmtAccess();
-    $('agentDataScopeBox').classList.toggle('hidden', superA || !hasAgent);
-    $('agentCapBox').classList.toggle('hidden', superA || !(editChecks['agent.mgmt'] && editChecks['agent.mgmt'].write));
-    $('editAgentCap').required = !superA && !!(editChecks['agent.mgmt'] && editChecks['agent.mgmt'].write);
-    $('editAgentDataScope').required = !superA && hasAgent;
+    var hasWrite = !!(editChecks['agent.mgmt'] && editChecks['agent.mgmt'].write);
+    var scopeBox = $('agentDataScopeBox');
+    var capBox = $('agentCapBox');
+    var capInput = $('editAgentCap');
+    var scopeSelect = $('editAgentDataScope');
+    if (scopeBox) scopeBox.classList.toggle('hidden', superA || !hasAgent);
+    if (capBox) capBox.classList.toggle('hidden', superA || !hasWrite);
+    if (capInput) capInput.required = !superA && hasWrite;
+    if (scopeSelect) scopeSelect.required = !superA && hasAgent;
+    var extraRow = $('permTables') && $('permTables').querySelector('.agent-mgmt-extra');
+    if (extraRow) extraRow.classList.toggle('hidden', superA || !hasAgent);
   }
 
   function bindPermCheckboxes() {
@@ -373,14 +394,15 @@
     $('editOperatorId').textContent = u.operatorId || '—';
     $('editStatusCell').innerHTML = u.status === 'active' ? '<span class="status-tag status-on">启用</span>' : '<span class="status-tag status-off">停用</span>';
     $('editIdentityCell').innerHTML = isSuperAdmin(u) ? '<span class="text-violet-700 font-bold">超级管理员</span>' : '普通操作人员';
-    $('editAgentCap').value = u.agentMaxRebate != null ? u.agentMaxRebate : '';
-    $('editAgentDataScope').value = u.agentDataScope === 'global' ? 'global' : 'personal';
     var superA = isSuperAdmin(u);
     $('superBanner').classList.toggle('hidden', !superA);
     ADMIN_PAGES.forEach(function (p) {
       editChecks[p.id] = permToChecks((u.pagePerms && u.pagePerms[p.id]) || 'none');
     });
-    $('permTables').innerHTML = buildPermTables(superA);
+    $('permTables').innerHTML = buildPermTables(superA, {
+      scope: u.agentDataScope === 'global' ? 'global' : 'personal',
+      cap: u.agentMaxRebate != null ? u.agentMaxRebate : ''
+    });
     if (!superA) bindPermCheckboxes();
     updateAgentPartnerBoxesVisibility();
     $('drawer-backdrop').classList.add('open');
