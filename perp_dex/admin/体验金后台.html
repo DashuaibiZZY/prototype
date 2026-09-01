@@ -62,7 +62,7 @@
           <h2 class="text-lg font-bold text-slate-700">卡组参数列表</h2>
           <p class="text-sm text-slate-400">设置合约体验金的生命周期与风险抵扣规则，发放时关联使用。</p>
         </div>
-        <button onclick="openModal('modal-new-config')" class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-lg hover:bg-blue-700">+ 新建卡组配置</button>
+        <button onclick="openConfigModal()" class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-lg hover:bg-blue-700">+ 新建卡组配置</button>
       </div>
       <section class="card p-5">
         <div class="grid grid-cols-4 gap-4 items-end">
@@ -149,11 +149,7 @@
         <div id="trialOverviewRecycleRow" class="pt-2 border-t border-slate-100"></div>
       </section>
       <section class="card p-5">
-        <div class="grid grid-cols-5 gap-4 items-end">
-          <div>
-            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID</label>
-            <input id="userFilterUid" type="text" placeholder="输入 UID" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
-          </div>
+        <div class="grid grid-cols-4 gap-4 items-end">
           <div>
             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID / 钱包 / 邮箱</label>
             <input id="userFilterWallet" type="text" placeholder="输入 UID、钱包或邮箱" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
@@ -324,54 +320,88 @@
   </div>
 </main>
 
-<!-- 新建卡组 -->
+<!-- 新建/编辑卡组 -->
 <div id="modal-new-config" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
   <div class="bg-white rounded-2xl shadow-2xl w-[600px] overflow-hidden">
     <div class="px-8 py-6 border-b flex justify-between items-center">
-      <h3 class="text-lg font-bold text-slate-800">新建卡组配置</h3>
+      <h3 id="configModalTitle" class="text-lg font-bold text-slate-800">新建卡组配置</h3>
       <button onclick="closeModal('modal-new-config')" class="text-slate-400 text-2xl">&times;</button>
     </div>
     <div class="p-8 space-y-6">
       <div>
         <label class="block text-xs font-bold text-slate-500 uppercase mb-2">卡组配置名称</label>
-        <input type="text" placeholder="例如：新人 100U 活动组" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
+        <input id="configFormName" type="text" placeholder="例如：新人 100U 活动组" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
       </div>
       <div class="grid grid-cols-2 gap-6">
         <div>
           <label class="block text-xs font-bold text-slate-500 uppercase mb-2">卡券有效期 (天)</label>
-          <input type="number" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
+          <input id="configFormCouponDays" type="number" min="1" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
         </div>
         <div>
           <label class="block text-xs font-bold text-slate-500 uppercase mb-2">开仓有效期 (天)</label>
-          <input type="number" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
+          <input id="configFormOpenDays" type="number" min="1" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
         </div>
       </div>
       <div class="p-4 bg-slate-50 rounded-xl space-y-3">
         <div class="flex justify-between items-center">
           <label class="text-sm font-bold text-slate-700">亏损抵扣上限</label>
-          <label class="switch"><input type="checkbox" checked onchange="toggleConfigInput(this, 'cfg-loss-limit')"><span class="slider"></span></label>
+          <label class="switch"><input id="configFormLossEnabled" type="checkbox" onchange="toggleConfigInput(this, 'cfg-loss-limit')"><span class="slider"></span></label>
         </div>
-        <div id="cfg-loss-limit" class="flex items-center gap-3">
+        <div id="cfg-loss-limit" class="hidden flex items-center gap-3">
           <span class="text-xs text-slate-500 whitespace-nowrap">累计亏损达面额的</span>
-          <div class="relative w-24"><input type="number" value="20" class="w-full border border-slate-200 rounded-lg p-2 text-sm pr-6 outline-none"><span class="absolute right-2 top-2 text-xs text-slate-400">%</span></div>
+          <div class="relative w-24"><input id="configFormLossPct" type="number" min="1" max="100" value="20" class="w-full border border-slate-200 rounded-lg p-2 text-sm pr-6 outline-none"><span class="absolute right-2 top-2 text-xs text-slate-400">%</span></div>
           <span class="text-xs text-slate-500">时强制回收</span>
         </div>
       </div>
       <div class="p-4 bg-slate-50 rounded-xl space-y-3">
         <div class="flex justify-between items-center">
           <label class="text-sm font-bold text-slate-700">费用抵扣上限</label>
-          <label class="switch"><input type="checkbox" onchange="toggleConfigInput(this, 'cfg-fee-limit')"><span class="slider"></span></label>
+          <label class="switch"><input id="configFormFeeEnabled" type="checkbox" onchange="toggleConfigInput(this, 'cfg-fee-limit')"><span class="slider"></span></label>
         </div>
         <div id="cfg-fee-limit" class="hidden flex items-center gap-3">
           <span class="text-xs text-slate-500 whitespace-nowrap">累计手续费/资金费达面额的</span>
-          <div class="relative w-24"><input type="number" value="10" class="w-full border border-slate-200 rounded-lg p-2 text-sm pr-6 outline-none"><span class="absolute right-2 top-2 text-xs text-slate-400">%</span></div>
+          <div class="relative w-24"><input id="configFormFeePct" type="number" min="1" max="100" value="20" class="w-full border border-slate-200 rounded-lg p-2 text-sm pr-6 outline-none"><span class="absolute right-2 top-2 text-xs text-slate-400">%</span></div>
           <span class="text-xs text-slate-500">时强制回收</span>
         </div>
       </div>
     </div>
     <div class="p-6 bg-slate-50 flex justify-end gap-3">
       <button onclick="closeModal('modal-new-config')" class="px-6 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-500">取消</button>
-      <button onclick="alert('配置保存成功'); closeModal('modal-new-config')" class="px-6 py-2 bg-blue-600 rounded-lg text-sm font-bold text-white">确认保存</button>
+      <button onclick="saveConfigGroup()" class="px-6 py-2 bg-blue-600 rounded-lg text-sm font-bold text-white">确认保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 删除卡组确认 -->
+<div id="modal-delete-config" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-[480px] overflow-hidden">
+    <div class="p-8">
+      <h3 class="text-xl font-bold mb-2 text-center">确认删除卡组？</h3>
+      <p id="deleteConfigConfirmText" class="text-sm text-slate-500 text-center mb-4"></p>
+      <div class="bg-amber-50 rounded-xl p-4 text-xs text-amber-700">
+        <p class="font-bold">删除后不可恢复，请确认该卡组未被活动发放关联。</p>
+      </div>
+    </div>
+    <div class="p-6 bg-slate-50 flex gap-3">
+      <button onclick="closeModal('modal-delete-config')" class="flex-1 py-3 bg-white border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+      <button id="deleteConfigConfirmBtn" class="flex-1 py-3 bg-red-600 text-white rounded-lg text-sm font-bold">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 卡组被活动关联 · 无法删除 -->
+<div id="modal-delete-config-blocked" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-[520px] max-h-[85vh] overflow-hidden flex flex-col">
+    <div class="px-6 py-5 border-b">
+      <h3 class="text-lg font-bold text-red-600">无法删除该卡组</h3>
+      <p id="deleteConfigBlockedText" class="text-sm text-slate-500 mt-1"></p>
+    </div>
+    <div class="p-6 overflow-y-auto flex-1">
+      <p class="text-xs font-bold text-slate-500 uppercase mb-2">关联活动 / 发放审批</p>
+      <ul id="deleteConfigBlockedList" class="space-y-2 text-sm"></ul>
+    </div>
+    <div class="p-5 bg-slate-50 border-t">
+      <button onclick="closeModal('modal-delete-config-blocked')" class="w-full py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">我知道了</button>
     </div>
   </div>
 </div>
@@ -486,6 +516,15 @@
     { id: 'g6', name: '限时拉新活动组', couponValidDays: 3, openValidDays: 14, lossEnabled: false, lossPct: 0, feeEnabled: false, feePct: 0 },
     { id: 'g7', name: '机构合作体验组', couponValidDays: 21, openValidDays: 60, lossEnabled: true, lossPct: 40, feeEnabled: true, feePct: 25 }
   ];
+  const CARD_GROUP_ACTIVITY_BINDINGS = {
+    g1: [{ type: 'platform', id: 'ACT202605001', name: '新用户注册礼包' }],
+    g2: [{ type: 'platform', id: 'ACT202605002', name: '社区 KOL 合作激励' }],
+    g3: [{ type: 'platform', id: 'ACT202604008', name: '交易大赛奖励' }],
+    g5: [{ type: 'platform', id: 'ACT202606015', name: 'VIP 召回活动' }],
+    g6: [{ type: 'platform', id: 'ACT202605003', name: '社群裂变' }]
+  };
+  let editingGroupId = null;
+  let pendingDeleteGroupId = null;
   let selectedGroupId = 'g0';
   let groupSearchPage = 1;
   const GROUP_PAGE_SIZE = 5;
@@ -684,24 +723,157 @@
     trialConfigPage = sliced.page;
     document.getElementById('configTableBody').innerHTML = sliced.items.length ? sliced.items.map(function (g) {
       const nameCell = g.name + (g.isDefault ? '<span class="default-group-badge">系统默认</span>' : '');
-      const deleteBtn = g.isDefault ? '' : ' <button type="button" onclick="deleteCardGroup(\'' + g.id + '\')" class="text-red-600 font-bold ml-2">删除</button>';
-      return '<tr class="hover:bg-slate-50"><td class="px-6 py-4 font-bold">' + nameCell + '</td><td class="px-6 py-4">' + g.couponValidDays + ' 天</td><td class="px-6 py-4">' + g.openValidDays + ' 天</td><td class="px-6 py-4 text-green-600 font-bold">' + (g.lossEnabled ? '开启 (' + g.lossPct + '%)' : '关闭') + '</td><td class="px-6 py-4">' + (g.feeEnabled ? '开启 (' + g.feePct + '%)' : '关闭') + '</td><td class="px-6 py-4 text-right"><button type="button" class="text-blue-600 font-bold">编辑</button>' + deleteBtn + '</td></tr>';
+      const deleteBtn = g.isDefault ? '' : ' <button type="button" onclick="openDeleteGroupConfirm(\'' + g.id + '\')" class="text-red-600 font-bold ml-2">删除</button>';
+      return '<tr class="hover:bg-slate-50"><td class="px-6 py-4 font-bold">' + nameCell + '</td><td class="px-6 py-4">' + g.couponValidDays + ' 天</td><td class="px-6 py-4">' + g.openValidDays + ' 天</td><td class="px-6 py-4 text-green-600 font-bold">' + (g.lossEnabled ? '开启 (' + g.lossPct + '%)' : '关闭') + '</td><td class="px-6 py-4">' + (g.feeEnabled ? '开启 (' + g.feePct + '%)' : '关闭') + '</td><td class="px-6 py-4 text-right"><button type="button" onclick="openConfigModal(\'' + g.id + '\')" class="text-blue-600 font-bold">编辑</button>' + deleteBtn + '</td></tr>';
     }).join('') : '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">无匹配卡组</td></tr>';
     trialMountPag('trial-config-pagination', sliced.total, trialConfigPage, 'trial-config');
   }
 
-  function deleteCardGroup(id) {
+  function approvalStatusLabel(status) {
+    return {
+      pending_cross: '待交叉审核',
+      pending_risk: '待风控',
+      pending_boss: '待老板',
+      approved: '已通过',
+      rejected: '已驳回'
+    }[status] || status;
+  }
+
+  function getCardGroupLinkedActivities(groupId) {
+    const g = CARD_GROUPS.find(function (x) { return x.id === groupId; });
+    if (!g) return [];
+    const linked = [];
+    const seen = {};
+    function push(item) {
+      const key = item.type + ':' + item.id;
+      if (seen[key]) return;
+      seen[key] = true;
+      linked.push(item);
+    }
+    (CARD_GROUP_ACTIVITY_BINDINGS[groupId] || []).forEach(push);
+    if (window.getApprovalApps) {
+      getApprovalApps().forEach(function (app) {
+        if (app.type !== 'trial_issue') return;
+        const p = app.payload || {};
+        if (p.cardGroupId !== groupId && p.cardGroup !== g.name) return;
+        push({
+          type: 'approval',
+          id: app.id,
+          name: p.activityName || app.summary,
+          status: app.status
+        });
+      });
+    }
+    return linked;
+  }
+
+  function formatLinkedActivityItem(item) {
+    if (item.type === 'platform') {
+      return '<li class="p-3 bg-slate-50 rounded-lg border border-slate-100"><span class="font-bold text-slate-800">' + item.name + '</span><span class="text-xs text-slate-400 ml-2">平台活动 · ' + item.id + '</span></li>';
+    }
+    return '<li class="p-3 bg-slate-50 rounded-lg border border-slate-100"><span class="font-bold text-slate-800">' + item.name + '</span><span class="text-xs text-slate-400 ml-2">发放审批 · ' + item.id + ' · ' + approvalStatusLabel(item.status) + '</span></li>';
+  }
+
+  function openConfigModal(groupId) {
+    editingGroupId = groupId || null;
+    const isEdit = !!groupId;
+    const g = isEdit ? CARD_GROUPS.find(function (x) { return x.id === groupId; }) : null;
+    document.getElementById('configModalTitle').innerText = isEdit ? '编辑卡组配置' : '新建卡组配置';
+    document.getElementById('configFormName').value = g ? g.name : '';
+    document.getElementById('configFormName').readOnly = !!(g && g.isDefault);
+    document.getElementById('configFormCouponDays').value = g ? g.couponValidDays : '';
+    document.getElementById('configFormOpenDays').value = g ? g.openValidDays : '';
+    const lossEnabled = document.getElementById('configFormLossEnabled');
+    lossEnabled.checked = g ? g.lossEnabled : true;
+    document.getElementById('configFormLossPct').value = g ? g.lossPct : 20;
+    toggleConfigInput(lossEnabled, 'cfg-loss-limit');
+    const feeEnabled = document.getElementById('configFormFeeEnabled');
+    feeEnabled.checked = g ? g.feeEnabled : false;
+    document.getElementById('configFormFeePct').value = g ? g.feePct : 20;
+    toggleConfigInput(feeEnabled, 'cfg-fee-limit');
+    openModal('modal-new-config');
+  }
+
+  function saveConfigGroup() {
+    const name = document.getElementById('configFormName').value.trim();
+    const couponValidDays = parseInt(document.getElementById('configFormCouponDays').value, 10);
+    const openValidDays = parseInt(document.getElementById('configFormOpenDays').value, 10);
+    const lossEnabled = document.getElementById('configFormLossEnabled').checked;
+    const lossPct = parseInt(document.getElementById('configFormLossPct').value, 10) || 0;
+    const feeEnabled = document.getElementById('configFormFeeEnabled').checked;
+    const feePct = parseInt(document.getElementById('configFormFeePct').value, 10) || 0;
+    if (!name) { alert('请填写卡组配置名称'); return; }
+    if (!couponValidDays || couponValidDays < 1) { alert('请填写有效的卡券有效期'); return; }
+    if (!openValidDays || openValidDays < 1) { alert('请填写有效的开仓有效期'); return; }
+    if (lossEnabled && (!lossPct || lossPct < 1 || lossPct > 100)) { alert('请填写有效的亏损抵扣比例（1-100）'); return; }
+    if (feeEnabled && (!feePct || feePct < 1 || feePct > 100)) { alert('请填写有效的费用抵扣比例（1-100）'); return; }
+    const payload = {
+      name: name,
+      couponValidDays: couponValidDays,
+      openValidDays: openValidDays,
+      lossEnabled: lossEnabled,
+      lossPct: lossEnabled ? lossPct : 0,
+      feeEnabled: feeEnabled,
+      feePct: feeEnabled ? feePct : 0
+    };
+    if (editingGroupId) {
+      const g = CARD_GROUPS.find(function (x) { return x.id === editingGroupId; });
+      if (!g) return;
+      Object.assign(g, payload);
+      if (g.isDefault) g.name = '默认组';
+    } else {
+      const nextId = 'g' + (CARD_GROUPS.reduce(function (max, item) {
+        const n = parseInt(String(item.id).replace(/\D/g, ''), 10);
+        return isNaN(n) ? max : Math.max(max, n);
+      }, 0) + 1);
+      CARD_GROUPS.push(Object.assign({ id: nextId }, payload));
+    }
+    window.TRIAL_CARD_GROUPS = CARD_GROUPS;
+    editingGroupId = null;
+    closeModal('modal-new-config');
+    renderConfigTable();
+    renderCardGroupSelector();
+    alert('配置保存成功');
+  }
+
+  function openDeleteGroupConfirm(id) {
     const g = CARD_GROUPS.find(function (x) { return x.id === id; });
     if (!g) return;
     if (g.isDefault) { alert('系统默认组不可删除'); return; }
-    if (!confirm('确认删除卡组「' + g.name + '」？删除后不可恢复。')) return;
+    pendingDeleteGroupId = id;
+    document.getElementById('deleteConfigConfirmText').innerHTML = '确认删除卡组 <b>「' + g.name + '」</b>？删除后不可恢复。';
+    document.getElementById('modal-delete-config').classList.remove('hidden');
+    const btn = document.getElementById('deleteConfigConfirmBtn');
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+    newBtn.addEventListener('click', confirmDeleteCardGroup);
+  }
+
+  function confirmDeleteCardGroup() {
+    const id = pendingDeleteGroupId;
+    const g = CARD_GROUPS.find(function (x) { return x.id === id; });
+    if (!g) return;
+    closeModal('modal-delete-config');
+    const linked = getCardGroupLinkedActivities(id);
+    if (linked.length) {
+      document.getElementById('deleteConfigBlockedText').innerText = '卡组「' + g.name + '」已被以下活动或发放审批关联，无法删除。请先解除关联后再试。';
+      document.getElementById('deleteConfigBlockedList').innerHTML = linked.map(formatLinkedActivityItem).join('');
+      document.getElementById('modal-delete-config-blocked').classList.remove('hidden');
+      pendingDeleteGroupId = null;
+      return;
+    }
     const idx = CARD_GROUPS.findIndex(function (x) { return x.id === id; });
     if (idx >= 0) CARD_GROUPS.splice(idx, 1);
     window.TRIAL_CARD_GROUPS = CARD_GROUPS;
     if (selectedGroupId === id) selectedGroupId = CARD_GROUPS[0] ? CARD_GROUPS[0].id : '';
+    pendingDeleteGroupId = null;
     renderConfigTable();
     renderCardGroupSelector();
     alert('卡组已删除');
+  }
+
+  function deleteCardGroup(id) {
+    openDeleteGroupConfirm(id);
   }
 
   function resetConfigFilter() {
@@ -821,14 +993,12 @@
   }
 
   function applyUserFilters() {
-    const uid = document.getElementById('userFilterUid').value.trim();
     const wallet = document.getElementById('userFilterWallet').value.trim().toLowerCase();
     const activity = document.getElementById('userFilterActivity').value.trim();
     const status = document.getElementById('userFilterStatus').value;
     let list = TRIAL_USERS.filter(function (u) {
-      if (uid && u.uid.indexOf(uid) === -1) return false;
       if (wallet) {
-        const hay = [u.wallet, u.email, u.uid].join(' ').toLowerCase();
+        const hay = [u.uid, u.wallet, u.email].join(' ').toLowerCase();
         if (hay.indexOf(wallet) === -1) return false;
       }
       if (activity && u.activity.indexOf(activity) === -1) return false;
@@ -841,7 +1011,7 @@
   }
 
   function resetUserFilters() {
-    ['userFilterUid', 'userFilterWallet', 'userFilterActivity'].forEach(function (id) { document.getElementById(id).value = ''; });
+    ['userFilterWallet', 'userFilterActivity'].forEach(function (id) { document.getElementById(id).value = ''; });
     document.getElementById('userFilterStatus').value = 'all';
     trialUserListPage = 1;
     renderTrialUserTable(TRIAL_USERS);
