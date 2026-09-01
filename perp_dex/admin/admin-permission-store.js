@@ -1,10 +1,11 @@
 /**
- * 权限配置持久化 v3.3
+ * 权限配置持久化 v3.4
  */
 (function () {
-    const STORE_KEY = 'forx_admin_permission_store_v3_3';
-    const LEGACY_KEYS = ['forx_admin_permission_store_v3_2', 'forx_admin_permission_store_v3_1'];
-    const SCHEMA = 3;
+    const STORE_KEY = 'forx_admin_permission_store_v3_4';
+    const LEGACY_KEYS = ['forx_admin_permission_store_v3_3', 'forx_admin_permission_store_v3_2', 'forx_admin_permission_store_v3_1'];
+    const SCHEMA = 4;
+    const REMOVED_GROUP_IDS = ['trial.approve.cross', 'points.approve.cross', 'fee.approve.cross'];
 
     function allPageIds() {
         return (window.ADMIN_PAGES || []).map(function (p) { return p.id; });
@@ -70,8 +71,8 @@
                     'trial.config': 'write', 'trial.issue': 'write', 'trial.users': 'read', 'trial.approval': 'read', 'trial.logs': 'read',
                     'leaderboard': 'write',
                     'fee.settings': 'write', 'fee.approval': 'read', 'fee.log': 'read',
-                    'points.manual': 'write', 'points.config': 'write', 'points.bonus': 'write', 'points.approval': 'read', 'points.overview': 'read', 'points.logs': 'read',
-                    'agent.mgmt': 'write', 'agent.approval': 'read', 'agent.settlement': 'read'
+                    'points.manual': 'write', 'points.config': 'write', 'points.bonus': 'write', 'points.approval': 'read', 'points.overview': 'read', 'points.logs': 'read', 'points.users': 'read',
+                    'agent.mgmt': 'write', 'agent.applications': 'write', 'agent.migrate': 'write', 'agent.approval': 'read', 'agent.settlement': 'read', 'agent.logs': 'read'
                 }),
                 agentMaxRebate: 70,
                 agentDataScope: 'personal'
@@ -132,8 +133,10 @@
                 gaBound: true,
                 lastLogin: '2026-07-17 11:20',
                 pagePerms: pageMap({
-                    'agent.mgmt': 'write', 'agent.approval': 'read', 'agent.settlement': 'write', 'fee.settings': 'read', 'fee.approval': 'read', 'fee.log': 'read'
+                    'agent.mgmt': 'write', 'agent.applications': 'read', 'agent.migrate': 'read', 'agent.approval': 'read', 'agent.settlement': 'write', 'agent.logs': 'read',
+                    'fee.settings': 'read', 'fee.approval': 'read', 'fee.log': 'read'
                 }),
+                agentMaxRebate: 80,
                 agentDataScope: 'global'
             },
             {
@@ -181,17 +184,28 @@
 
     function defaultGroups() {
         return [
-            { id: 'trial.approve.cross', memberIds: ['u_market'] },
+            { id: 'agent.approve.risk', memberIds: ['u_risk'] },
+            { id: 'agent.approve.boss', memberIds: ['u_ceo'] },
             { id: 'trial.approve.risk', memberIds: ['u_risk'] },
             { id: 'trial.approve.boss', memberIds: ['u_ceo'] },
             { id: 'trial.recycle', memberIds: ['u_risk'] },
-            { id: 'points.approve.cross', memberIds: ['u_market'] },
             { id: 'points.approve.risk', memberIds: ['u_risk'] },
             { id: 'points.approve.boss', memberIds: ['u_ceo'] },
-            { id: 'fee.approve.cross', memberIds: ['u_market'] },
             { id: 'fee.approve.risk', memberIds: ['u_risk'] },
             { id: 'fee.approve.boss', memberIds: ['u_ceo'] }
         ];
+    }
+
+    function normalizeGroups(groups) {
+        var list = (groups || []).filter(function (g) {
+            return REMOVED_GROUP_IDS.indexOf(g.id) === -1;
+        });
+        defaultGroups().forEach(function (dg) {
+            if (!list.some(function (g) { return g.id === dg.id; })) {
+                list.push(JSON.parse(JSON.stringify(dg)));
+            }
+        });
+        return list;
     }
 
     function normalizeUser(u) {
@@ -261,11 +275,7 @@
                 return def;
             }
             data.users = data.users.map(function (u) { return normalizeUser(u); });
-            defaultGroups().forEach(function (dg) {
-                if (!data.groups.some(function (g) { return g.id === dg.id; })) {
-                    data.groups.push(JSON.parse(JSON.stringify(dg)));
-                }
-            });
+            data.groups = normalizeGroups(data.groups);
             if (!data.nextOperatorSeq) data.nextOperatorSeq = def.nextOperatorSeq;
             return data;
         } catch (e) {

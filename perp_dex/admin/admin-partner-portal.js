@@ -3681,7 +3681,7 @@
             submitApprovalApplication({
                 type: 'partner_rebate_migrate',
                 title: crossBd ? '返佣关系迁移（跨权限配置）' : '返佣关系迁移',
-                flowProfile: crossBd ? 'risk_boss' : 'risk_only',
+                flowProfile: 'risk_boss',
                 applicant: 'Mkt_Allen',
                 remark: remark || '返佣关系迁移申请',
                 summary: subjectWallet + ' → ' + target.wallet + ' · ' + summarySuffix,
