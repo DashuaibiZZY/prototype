@@ -63,6 +63,7 @@
 
     window.ADMIN_PAGES = ADMIN_PAGES;
     window.ADMIN_SENSITIVE_GROUPS = SENSITIVE_GROUPS;
+    window.ADMIN_PERMISSION_REGISTRY_VERSION = '3.2-risk-boss';
     window.getAdminPagesByModule = getPagesByModule;
     window.getAdminGroupsByModule = getGroupsByModule;
 })();
