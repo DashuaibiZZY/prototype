@@ -1,10 +1,11 @@
 /**
- * 四级审批流：市场运营提交 → 市场运营交叉审核 → 风控审核 → 老板审批（可同步 Lark）
+ * 三级审批流：业务提交 → 风控审核 → 老板审批（可同步 Lark）
+ * 体验金 / 积分 / 费率 / 合伙人 统一为风控 + 老板两审，无市场运营交叉审核。
  */
 (function () {
     const STORAGE_KEY = 'forx_approval_applications';
     const ROLE_KEY = 'forx_approval_view_role';
-    const SEED_VERSION = '2026-08-29-partner-271-polish-v1';
+    const SEED_VERSION = '2026-09-01-approval-risk-boss-v1';
     const SEED_VERSION_KEY = 'forx_approval_seed_v';
 
     const STEPS = [
@@ -15,11 +16,16 @@
     ];
 
     const TYPE_FLOW_PROFILE = {
-        points_pool_config: 'cross_risk',
+        trial_issue: 'risk_boss',
+        points_manual: 'risk_boss',
+        points_bonus_config: 'risk_boss',
+        points_pool_config: 'risk_boss',
+        points_program_switch: 'risk_boss',
+        fee_config: 'risk_boss',
         partner_l1_bind: 'risk_boss',
         partner_l1_bind_cross: 'risk_boss',
         partner_ratio_change: 'risk_boss',
-        partner_rebate_migrate: 'risk_only'
+        partner_rebate_migrate: 'risk_boss'
     };
 
     const FLOW_PROFILES = {
@@ -80,12 +86,12 @@
     };
 
     function getFlowProfile(appOrKey) {
-        if (typeof appOrKey === 'string') return FLOW_PROFILES[appOrKey] || FLOW_PROFILES.full;
-        if (appOrKey && appOrKey.flowProfile) return FLOW_PROFILES[appOrKey.flowProfile] || FLOW_PROFILES.full;
+        if (typeof appOrKey === 'string') return FLOW_PROFILES[appOrKey] || FLOW_PROFILES.risk_boss;
+        if (appOrKey && appOrKey.flowProfile) return FLOW_PROFILES[appOrKey.flowProfile] || FLOW_PROFILES.risk_boss;
         if (appOrKey && appOrKey.type && TYPE_FLOW_PROFILE[appOrKey.type]) {
-            return FLOW_PROFILES[TYPE_FLOW_PROFILE[appOrKey.type]] || FLOW_PROFILES.full;
+            return FLOW_PROFILES[TYPE_FLOW_PROFILE[appOrKey.type]] || FLOW_PROFILES.risk_boss;
         }
-        return FLOW_PROFILES.full;
+        return FLOW_PROFILES.risk_boss;
     }
 
     function stepIndex(status, profile) {
@@ -136,10 +142,18 @@
     }
 
     function migrateLegacyStatus(app) {
-        if (app.status === 'pending_manager') app.status = 'pending_cross';
+        if (app.status === 'pending_manager') app.status = 'pending_risk';
+        if (TYPE_FLOW_PROFILE[app.type]) app.flowProfile = TYPE_FLOW_PROFILE[app.type];
+        if (app.flowProfile === 'full' || app.flowProfile === 'cross_risk' || app.flowProfile === 'risk_only') {
+            app.flowProfile = 'risk_boss';
+        }
+        if (app.flowProfile === 'risk_boss' && app.status === 'pending_cross') app.status = 'pending_risk';
         if (app.timeline) {
-            app.timeline.forEach(function (t) {
-                if (t.action === '运营负责人通过') t.action = '市场运营交叉审核通过';
+            app.timeline = app.timeline.filter(function (t) {
+                return t.action !== '市场运营交叉审核通过' && !(t.actor === 'Mkt_Cross');
+            }).map(function (t) {
+                if (t.action === '运营负责人通过') t.action = '风控通过';
+                return t;
             });
         }
         return app;
@@ -1016,7 +1030,7 @@
             if (apps.length) saveApps(apps);
             return;
         }
-        saveApps(buildSeedData());
+        saveApps(buildSeedData().map(migrateLegacyStatus));
         localStorage.setItem(SEED_VERSION_KEY, SEED_VERSION);
     }
 
@@ -1207,7 +1221,7 @@
     window.getApprovalAppById = getAppById;
 
     window.getApprovalViewRole = function () {
-        return sessionStorage.getItem(ROLE_KEY) || 'cross';
+        return sessionStorage.getItem(ROLE_KEY) || 'risk';
     };
 
     window.setApprovalViewRole = function (role) {
@@ -1223,8 +1237,8 @@
     window.submitApprovalApplication = function (opts) {
         opts = opts || {};
         seedIfEmpty();
-        const profileKey = opts.flowProfile || TYPE_FLOW_PROFILE[opts.type] || 'full';
-        const initialStatus = (profileKey === 'risk_boss' || profileKey === 'risk_only') ? 'pending_risk' : 'pending_cross';
+        const profileKey = opts.flowProfile || TYPE_FLOW_PROFILE[opts.type] || 'risk_boss';
+        const initialStatus = 'pending_risk';
         const app = {
             id: 'APR' + Date.now(),
             type: opts.type || 'other',
@@ -1256,8 +1270,8 @@
         const old = getApprovalAppById(id);
         if (!old || old.status !== 'rejected') return null;
         const payload = JSON.parse(JSON.stringify(old.payload || {}));
-        const profileKey = opts.flowProfile || old.flowProfile || TYPE_FLOW_PROFILE[old.type] || 'full';
-        const initialStatus = (profileKey === 'risk_boss' || profileKey === 'risk_only') ? 'pending_risk' : 'pending_cross';
+        const profileKey = opts.flowProfile || old.flowProfile || TYPE_FLOW_PROFILE[old.type] || 'risk_boss';
+        const initialStatus = 'pending_risk';
         const app = {
             id: 'APR' + Date.now(),
             type: old.type,

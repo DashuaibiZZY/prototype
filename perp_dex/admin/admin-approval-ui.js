@@ -438,7 +438,7 @@
         const showExportDetail = options.showExportDetail === true;
         const detailImagePreview = options.detailImagePreview === true;
         const singleUserConfig = options.singleUserConfig === true;
-        const approvalRoles = options.approvalRoles || ['cross', 'risk', 'boss'];
+        const approvalRoles = options.approvalRoles || ['risk', 'boss'];
         const defaultRole = approvalRoles[0] || 'risk';
         const showTypeColumn = types.length > 1;
         const root = document.getElementById(rootId);
@@ -483,7 +483,7 @@
             '</div></div>' +
             '<section class="card p-5"><div class="grid ' + gridCols + ' gap-4 items-end">' +
             '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">视图</label><select id="' + rootId + '-view-mode" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white" onchange="moduleApprovalRenderList(\'' + rootId + '\')"><option value="pending">待我审批</option><option value="all">全部审批</option></select></div>' +
-            '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">状态</label><select id="' + rootId + '-filter-status" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white" onchange="moduleApprovalRenderList(\'' + rootId + '\')"><option value="all">全部</option><option value="pending_cross">待交叉审核</option><option value="pending_risk">待风控</option><option value="pending_boss">待老板</option><option value="approved">已通过</option><option value="rejected">已驳回</option></select></div>' +
+            '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">状态</label><select id="' + rootId + '-filter-status" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white" onchange="moduleApprovalRenderList(\'' + rootId + '\')"><option value="all">全部</option><option value="pending_risk">待风控</option><option value="pending_boss">待老板</option><option value="approved">已通过</option><option value="rejected">已驳回</option></select></div>' +
             typeFilter +
             activityFilter +
             '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">审批单号</label><input id="' + rootId + '-filter-id" type="text" placeholder="APR..." class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm" oninput="moduleApprovalRenderList(\'' + rootId + '\')"></div>' +
@@ -629,8 +629,7 @@
         const canAct = canApproveApplication(app, role);
         const opts = state ? state.options : {};
         let readonlyHint = '当前审批已结束或无需您处理';
-        if (app.status === 'pending_cross' && role !== 'cross') readonlyHint = '等待市场运营交叉审核';
-        else if (app.status === 'pending_risk' && role !== 'risk') readonlyHint = '等待风控审核';
+        if (app.status === 'pending_risk' && role !== 'risk') readonlyHint = '等待风控审核';
         else if (app.status === 'pending_boss' && role !== 'boss') readonlyHint = '等待老板审批（可在 Lark 完成）';
 
         const isSimpleConfig = app.type === 'points_pool_config' || app.type === 'points_program_switch';

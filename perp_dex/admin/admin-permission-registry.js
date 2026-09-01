@@ -1,12 +1,15 @@
 /**
- * ForX Admin 页面清单与敏感操作组（权限模型 v3.1 — 按模块拆分审批组）
+ * ForX Admin 页面清单与敏感操作组（权限模型 v3.2 — 风控+老板审批，无交叉审核）
  */
 (function () {
     const ADMIN_PAGES = [
         { id: 'sys.admin', module: '系统', label: '权限与用户', writeHint: '维护人员、页面权限与敏感组' },
         { id: 'agent.mgmt', module: '合伙人中心', label: '合伙人管理', writeHint: '绑定/调整合伙人', needsAgentCap: true, needsAgentDataScope: true },
-        { id: 'agent.approval', module: '合伙人中心', label: '合伙人配置审批', writeHint: '超上限绑定等审批（只读；审批走敏感组）' },
+        { id: 'agent.applications', module: '合伙人中心', label: '合伙人申请管理', writeHint: '审核合伙人入驻申请' },
+        { id: 'agent.migrate', module: '合伙人中心', label: '迁移返佣关系', writeHint: '提交返佣关系迁移审批' },
+        { id: 'agent.approval', module: '合伙人中心', label: '合伙人审核', writeHint: '超上限绑定等审批（只读；审批走敏感组）' },
         { id: 'agent.settlement', module: '合伙人中心', label: '佣金对账与发放', writeHint: '对账与发放（返佣大版本后续更新）' },
+        { id: 'agent.logs', module: '合伙人中心', label: '操作记录', writeHint: '审计只读' },
         { id: 'trial.config', module: '体验金', label: '卡组配置', writeHint: '新建/编辑卡组' },
         { id: 'trial.issue', module: '体验金', label: '批量发放', writeHint: '提交体验金发放审批' },
         { id: 'trial.approval', module: '体验金', label: '发放审批', writeHint: '只读查看；审批走敏感组' },
@@ -27,16 +30,15 @@
         { id: 'points.logs', module: '积分', label: '操作记录', writeHint: '审计只读' }
     ];
 
-    /** 每个模块独立审批池，互不共用 */
+    /** 每个模块独立审批池；体验金/积分/费率/合伙人均为风控 + 老板两审 */
     const SENSITIVE_GROUPS = [
-        { id: 'trial.approve.cross', module: '体验金', type: 'approve', label: '体验金 · 交叉审核组', description: '体验金发放审批「待交叉审核」待办从此组纯随机派单。' },
+        { id: 'agent.approve.risk', module: '合伙人中心', type: 'approve', label: '合伙人 · 风控审核组', description: '合伙人配置审批「待风控审核」待办从此组纯随机派单。' },
+        { id: 'agent.approve.boss', module: '合伙人中心', type: 'approve', label: '合伙人 · BOSS 审核组', description: '合伙人「待老板审批」待办纯随机派单。' },
         { id: 'trial.approve.risk', module: '体验金', type: 'approve', label: '体验金 · 风控审核组', description: '体验金「待风控审核」待办纯随机派单。' },
         { id: 'trial.approve.boss', module: '体验金', type: 'approve', label: '体验金 · BOSS 审核组', description: '体验金「待老板审批」待办纯随机派单。' },
         { id: 'trial.recycle', module: '体验金', type: 'recycle', label: '体验金 · 强制回收组', description: '仅组内人员可执行体验金强制回收。' },
-        { id: 'points.approve.cross', module: '积分', type: 'approve', label: '积分 · 交叉审核组', description: '积分相关审批「待交叉审核」纯随机派单。' },
         { id: 'points.approve.risk', module: '积分', type: 'approve', label: '积分 · 风控审核组', description: '积分「待风控审核」纯随机派单。' },
-        { id: 'points.approve.boss', module: '积分', type: 'approve', label: '积分 · BOSS 审核组', description: '积分「待老板审批」纯随机派单（总池配置无此节点）。' },
-        { id: 'fee.approve.cross', module: '费率', type: 'approve', label: '费率 · 交叉审核组', description: '费率配置审批「待交叉审核」纯随机派单。' },
+        { id: 'points.approve.boss', module: '积分', type: 'approve', label: '积分 · BOSS 审核组', description: '积分「待老板审批」纯随机派单。' },
         { id: 'fee.approve.risk', module: '费率', type: 'approve', label: '费率 · 风控审核组', description: '费率「待风控审核」纯随机派单。' },
         { id: 'fee.approve.boss', module: '费率', type: 'approve', label: '费率 · BOSS 审核组', description: '费率「待老板审批」纯随机派单。' }
     ];
