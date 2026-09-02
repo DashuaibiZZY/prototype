@@ -1,7 +1,9 @@
 /**
  * 合约交易页 · 持仓管理+流水模块：演示数据与筛选交互
+ * @version 2026-09-02-tpsl-orders
  */
 (function () {
+    window.POSITION_FLOW_MODULE_VERSION = '2026-09-02-tpsl-orders';
     const DEMO_END = new Date('2026-06-15T12:00:00');
     const histPosExpanded = new Set();
 
@@ -315,6 +317,22 @@
 
         renderCurrentOrderTpslBody: function () {
             return renderCurrentOrderTpslRows();
+        },
+
+        /** 统一渲染当前/历史委托表格（基础单 + 止盈止损单） */
+        renderOrderTabTable: function (tabKind, subTab, headerEl, bodyEl) {
+            if (!headerEl || !bodyEl) return false;
+            if (tabKind === 'current' && subTab === 'tpsl') {
+                headerEl.innerHTML = this.renderCurrentOrderTpslHeader();
+                bodyEl.innerHTML = this.renderCurrentOrderTpslBody();
+                return true;
+            }
+            if (tabKind === 'hist' && subTab === 'tpsl') {
+                headerEl.innerHTML = this.renderHistOrderHeader('tpsl');
+                bodyEl.innerHTML = this.renderHistOrderBody('tpsl');
+                return true;
+            }
+            return false;
         },
 
         copyOrderId: function (orderId) {

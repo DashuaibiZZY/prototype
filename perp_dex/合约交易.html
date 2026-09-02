@@ -1398,8 +1398,8 @@
 
             <!-- 当前委托/历史委托 子标签（切换基础单/止盈止损单） -->
             <div id="order-subtabs" class="flex space-x-4 px-4 py-2 border-b border-gray-50 bg-white text-[10px] font-bold hidden shrink-0">
-                <button id="subtab-order-base" onclick="switchOrderSubTab('base')" class="tab-active cursor-pointer pb-1">基礎單 (1)</button>
-                <button id="subtab-order-tpsl" onclick="switchOrderSubTab('tpsl')" class="cursor-pointer pb-1 text-gray-400 hover:text-black">止盈止損單 (2)</button>
+                <button id="subtab-order-base" onclick="event.stopPropagation(); switchOrderSubTab('base')" class="tab-active cursor-pointer pb-1">基礎單 (1)</button>
+                <button id="subtab-order-tpsl" onclick="event.stopPropagation(); switchOrderSubTab('tpsl')" class="cursor-pointer pb-1 text-gray-400 hover:text-black">止盈止損單 (2)</button>
             </div>
 
             <!-- 历史委托筛选栏（基础单/止盈止损单共用容器，由JS控制内部显示） -->
@@ -3206,8 +3206,8 @@
     </div>
 </div>
 
-<script src="position-flow-module.js"></script>
-<script src="position-close-module.js"></script>
+<script src="position-flow-module.js?v=2026-09-02-tpsl-orders"></script>
+<script src="position-close-module.js?v=2026-09-02-tpsl-orders"></script>
 <script>
     // ==================== 通用工具 ====================
     // 底部公告轮播 - 鼠标悬停暂停
@@ -4213,6 +4213,20 @@
         renderTableForTab(currentDataTab);
     }
 
+    function renderCurrentOrderTpslTable(h, b) {
+        if (window.PositionFlow && typeof PositionFlow.renderOrderTabTable === 'function' &&
+            PositionFlow.renderOrderTabTable('current', 'tpsl', h, b)) {
+            return;
+        }
+        if (window.PositionFlow && typeof PositionFlow.renderCurrentOrderTpslHeader === 'function') {
+            h.innerHTML = PositionFlow.renderCurrentOrderTpslHeader();
+            b.innerHTML = PositionFlow.renderCurrentOrderTpslBody();
+            return;
+        }
+        h.innerHTML = '<th class="px-4 py-2" colspan="9"><span class="text-red-500">止盈止损模块未加载，请强制刷新页面 (Ctrl+Shift+R)</span></th>';
+        b.innerHTML = '';
+    }
+
     function renderTableForTab(tabId) {
         const h = document.getElementById('data-header');
         const b = document.getElementById('data-body');
@@ -4254,19 +4268,22 @@
                 <td class="px-4 py-3 text-gray-400">--</td><td class="px-4 py-3 text-blue-600 font-black uppercase cursor-pointer" onclick="openCancelConfirm('OR_882910')"><span class="flex items-center space-x-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>撤单</span></td>
             </tr>`;
             } else {
-                h.innerHTML = PositionFlow.renderCurrentOrderTpslHeader();
-                b.innerHTML = PositionFlow.renderCurrentOrderTpslBody();
+                renderCurrentOrderTpslTable(h, b);
             }
         } else if (tabId === 'hist-order') {
             document.getElementById('hist-order-filters')?.classList.remove('hidden');
             const extraFilters = document.getElementById('hist-order-extra-filters');
             if (currentOrderSubTab === 'base') {
                 if (extraFilters) extraFilters.style.display = 'flex';
+                h.innerHTML = PositionFlow.renderHistOrderHeader('base');
+                b.innerHTML = PositionFlow.renderHistOrderBody('base');
             } else {
                 if (extraFilters) extraFilters.style.display = 'none';
+                if (!PositionFlow.renderOrderTabTable('hist', 'tpsl', h, b)) {
+                    h.innerHTML = PositionFlow.renderHistOrderHeader('tpsl');
+                    b.innerHTML = PositionFlow.renderHistOrderBody('tpsl');
+                }
             }
-            h.innerHTML = PositionFlow.renderHistOrderHeader(currentOrderSubTab);
-            b.innerHTML = PositionFlow.renderHistOrderBody(currentOrderSubTab);
         } else if (tabId === 'hist-trade') {
             document.getElementById('hist-trade-filters')?.classList.remove('hidden');
             h.innerHTML = PositionFlow.renderHistTradeHeader();
