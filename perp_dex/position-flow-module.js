@@ -15,11 +15,56 @@
     ];
 
     const HIST_ORDER_TPSL = [
-        { time: '2026-06-15 13:55:00', symbol: 'BNBUSDT', type: '市價止盈', dir: '平多', dirClass: 'text-green-500', price: '市價', qty: '100.32 USDC', trigger: '最新價格 >= 616.20', eff: '2026-06-15 13:55:02', status: '已完成', statusClass: 'text-blue-600' },
-        { time: '2026-06-15 10:20:15', symbol: 'BTCUSDT', type: '市價止損', dir: '平空', dirClass: 'text-red-500', price: '市價', qty: '全部平倉', trigger: '最新價格 <= 64,200.0', eff: '2026-06-15 10:21:08', status: '已完成', statusClass: 'text-blue-600' },
-        { time: '2026-06-14 18:45:33', symbol: 'ETHUSDT', type: '限價止盈', dir: '平多', dirClass: 'text-green-500', price: '2,520.0', qty: '5.0 ETH', trigger: '最新價格 >= 2,520.0', eff: '--', status: '已取消', statusClass: 'text-gray-400', statusTip: '用户手动取消' },
-        { time: '2026-06-14 08:10:19', symbol: 'SOLUSDT', type: '限價止損', dir: '平空', dirClass: 'text-red-500', price: '138.5', qty: '80 SOL', trigger: '最新價格 <= 138.5', eff: '--', status: '已取消', statusClass: 'text-gray-400', statusTip: '仓位止盈订单触发，关联持仓已完全平仓', statusDashed: true },
-        { time: '2026-06-13 23:58:44', symbol: 'BNBUSDT', type: '市價止盈', dir: '平多', dirClass: 'text-green-500', price: '市價', qty: '50.00 USDC', trigger: '最新價格 >= 610.00', eff: '2026-06-13 23:59:01', status: '已完成', statusClass: 'text-blue-600' },
+        {
+            time: '2026-06-15 13:55:00', symbol: 'BNBUSDT', dir: '平多', dirClass: 'text-green-500', qty: '0.80 BNB',
+            triggerLines: ['800.23<span class="text-gray-400 font-normal">(最新)</span>', '600.48<span class="text-gray-400 font-normal">(最新)</span>'],
+            priceLines: ['<span class="text-green-600 font-bold">止盈</span> 市价', '<span class="text-red-500 font-bold">止损</span> 598.23'],
+            status: '完成', statusClass: 'text-green-600', orderId: 'TPSL_1041927385473',
+        },
+        {
+            time: '2026-06-15 10:20:15', symbol: 'BTCUSDT', dir: '平空', dirClass: 'text-red-500', qty: '0.35 BTC',
+            triggerLines: ['64,200.0<span class="text-gray-400 font-normal">(最新)</span>'],
+            priceLines: ['<span class="text-red-500 font-bold">止损</span> 市价'],
+            status: '完成', statusClass: 'text-green-600', orderId: 'TPSL_1041927385120',
+        },
+        {
+            time: '2026-06-14 18:45:33', symbol: 'ETHUSDT', dir: '平多', dirClass: 'text-green-500', qty: '2.00 ETH',
+            triggerLines: ['2,520.0<span class="text-gray-400 font-normal">(最新)</span>'],
+            priceLines: ['<span class="text-green-600 font-bold">止盈</span> 2,520.0'],
+            status: '未完成', statusClass: 'text-orange-500', orderId: 'TPSL_1041927384001', statusTip: '用户手动取消',
+        },
+        {
+            time: '2026-06-14 08:10:19', symbol: 'SOLUSDT', dir: '平空', dirClass: 'text-red-500', qty: '80 SOL',
+            triggerLines: ['138.5<span class="text-gray-400 font-normal">(标记)</span>'],
+            priceLines: ['<span class="text-red-500 font-bold">止损</span> 138.5'],
+            status: '未完成', statusClass: 'text-orange-500', orderId: 'TPSL_1041927383888',
+            statusTip: '仓位止盈订单触发，关联持仓已完全平仓', statusDashed: true,
+        },
+        {
+            time: '2026-06-13 23:58:44', symbol: 'BNBUSDT', dir: '平多', dirClass: 'text-green-500', qty: '0.50 BNB',
+            triggerLines: ['610.00<span class="text-gray-400 font-normal">(最新)</span>'],
+            priceLines: ['<span class="text-green-600 font-bold">止盈</span> 市价'],
+            status: '完成', statusClass: 'text-green-600', orderId: 'TPSL_1041927383777',
+        },
+    ];
+
+    const CURRENT_ORDER_TPSL = [
+        {
+            time: '2024-05-24 14:20:15',
+            symbol: 'BNBUSDC <span class="text-gray-500 font-bold">逐仓</span> <span class="text-green-500 bg-green-50 px-1 rounded-[1px] text-[10px]">20x</span>',
+            dir: '平多', dirClass: 'text-green-500', qty: '0.142 BNB',
+            triggerLines: ['800.23<span class="text-gray-400 font-normal">(最新)</span>', '600.48<span class="text-gray-400 font-normal">(最新)</span>'],
+            priceLines: ['<span class="text-green-600 font-bold">止盈</span> 市价', '<span class="text-red-500 font-bold">止损</span> 598.23'],
+            status: '未完成', statusClass: 'text-orange-500', orderId: 'TPSL_882910',
+        },
+        {
+            time: '2024-05-24 15:02:08',
+            symbol: 'BNBUSDC <span class="text-gray-500 font-bold">逐仓</span> <span class="text-green-500 bg-green-50 px-1 rounded-[1px] text-[10px]">20x</span>',
+            dir: '平多', dirClass: 'text-green-500', qty: '0.050 BNB',
+            triggerLines: ['620.00<span class="text-gray-400 font-normal">(标记)</span>'],
+            priceLines: ['<span class="text-green-600 font-bold">止盈</span> 625.00'],
+            status: '未完成', statusClass: 'text-orange-500', orderId: 'TPSL_882911',
+        },
     ];
 
     const HIST_TRADES = [
@@ -102,7 +147,43 @@
     function statusCellHtml(row) {
         const tip = row.statusTip ? ` title="${row.statusTip}"` : '';
         const dashed = row.statusDashed ? ' dashed-hint cursor-help' : '';
-        return `<span class="font-black uppercase ${row.statusClass}${dashed}"${tip}>${row.status}</span>`;
+        return `<span class="font-bold ${row.statusClass}${dashed}"${tip}>${row.status}</span>`;
+    }
+
+    function renderTpslStackCell(lines) {
+        if (!lines || !lines.length) return '--';
+        return lines.map(function (line) {
+            return `<div class="leading-5 whitespace-nowrap font-mono text-[11px]">${line}</div>`;
+        }).join('');
+    }
+
+    function renderOrderIdCopyCell(orderId) {
+        const esc = String(orderId).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        return '<span class="inline-flex items-center gap-1 font-mono text-[10px] text-gray-600">' + orderId +
+            '<button type="button" class="text-gray-400 hover:text-blue-600 p-0.5 leading-none" onclick="PositionFlow.copyOrderId(\'' + esc + '\')" title="复制订单编号">📋</button></span>';
+    }
+
+    function renderTpslOrderRow(row, opts) {
+        opts = opts || {};
+        const actions = opts.withActions ? (
+            '<td class="px-4 py-3 whitespace-nowrap">' +
+            '<div class="flex items-center gap-3">' +
+            '<button type="button" class="text-blue-600 font-bold hover:underline" onclick="openPositionTpslEdit()">修改</button>' +
+            '<button type="button" class="text-blue-600 font-black uppercase cursor-pointer" onclick="openCancelConfirm(\'' + row.orderId.replace(/'/g, "\\'") + '\')">' +
+            '<span class="flex items-center space-x-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>撤销</span></button>' +
+            '</div></td>'
+        ) : '';
+        return '<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">' +
+            '<td class="px-4 py-3 font-black text-gray-900 whitespace-nowrap">' + row.symbol + '</td>' +
+            '<td class="px-4 py-3 text-gray-400 whitespace-nowrap">' + row.time + '</td>' +
+            '<td class="px-4 py-3 font-bold uppercase tracking-tighter text-[12px] whitespace-nowrap ' + row.dirClass + '">' + row.dir + '</td>' +
+            '<td class="px-4 py-3 font-mono font-bold whitespace-nowrap">' + row.qty + '</td>' +
+            '<td class="px-4 py-3 align-top">' + renderTpslStackCell(row.triggerLines) + '</td>' +
+            '<td class="px-4 py-3 align-top">' + renderTpslStackCell(row.priceLines) + '</td>' +
+            '<td class="px-4 py-3 whitespace-nowrap">' + statusCellHtml(row) + '</td>' +
+            '<td class="px-4 py-3 whitespace-nowrap">' + renderOrderIdCopyCell(row.orderId) + '</td>' +
+            actions +
+            '</tr>';
     }
 
     function renderHistOrderBaseRows() {
@@ -124,19 +205,11 @@
     }
 
     function renderHistOrderTpslRows() {
-        return HIST_ORDER_TPSL.map(function (r) {
-            return `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">
-                <td class="px-4 py-3 text-gray-400 whitespace-nowrap">${r.time}</td>
-                <td class="px-4 py-3 font-black text-gray-900 whitespace-nowrap">${r.symbol}</td>
-                <td class="px-4 py-3 font-medium whitespace-nowrap">${r.type}</td>
-                <td class="px-4 py-3 font-bold whitespace-nowrap ${r.dirClass}">${r.dir}</td>
-                <td class="px-4 py-3 font-mono whitespace-nowrap">${r.price}</td>
-                <td class="px-4 py-3 font-mono whitespace-nowrap">${r.qty}</td>
-                <td class="px-4 py-3 font-bold whitespace-nowrap">${r.trigger}</td>
-                <td class="px-4 py-3 whitespace-nowrap">${r.eff}</td>
-                <td class="px-4 py-3 whitespace-nowrap">${statusCellHtml(r)}</td>
-            </tr>`;
-        }).join('');
+        return HIST_ORDER_TPSL.map(function (r) { return renderTpslOrderRow(r, { withActions: false }); }).join('');
+    }
+
+    function renderCurrentOrderTpslRows() {
+        return CURRENT_ORDER_TPSL.map(function (r) { return renderTpslOrderRow(r, { withActions: true }); }).join('');
     }
 
     function renderHistTradeRows() {
@@ -233,7 +306,25 @@
             if (subTab === 'base') {
                 return '<th class="px-4 py-2">時間</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">方向</th><th class="px-4 py-2">平均價格</th><th class="px-4 py-2">價格</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發條件</th><th class="px-4 py-2">生效时间</th><th class="px-4 py-2">狀態</th>';
             }
-            return '<th class="px-4 py-2">時間</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">方向</th><th class="px-4 py-2">價格</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發條件</th><th class="px-4 py-2">生效时间</th><th class="px-4 py-2">狀態</th>';
+            return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">委託時間</th><th class="px-4 py-2">交易方向</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發價格</th><th class="px-4 py-2">委託價格</th><th class="px-4 py-2">訂單狀態</th><th class="px-4 py-2">訂單編號</th>';
+        },
+
+        renderCurrentOrderTpslHeader: function () {
+            return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">委託時間</th><th class="px-4 py-2">交易方向</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發價格</th><th class="px-4 py-2">委託價格</th><th class="px-4 py-2">訂單狀態</th><th class="px-4 py-2">訂單編號</th><th class="px-4 py-2">操作</th>';
+        },
+
+        renderCurrentOrderTpslBody: function () {
+            return renderCurrentOrderTpslRows();
+        },
+
+        copyOrderId: function (orderId) {
+            if (!orderId) return;
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(orderId);
+                }
+            } catch (e) { /* ignore */ }
+            if (typeof showError === 'function') showError('订单编号已复制');
         },
 
         renderHistOrderBody: function (subTab) {

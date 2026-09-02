@@ -4049,6 +4049,11 @@
         if (slActive) slActive.classList.toggle('hidden', !hasOrders);
     }
 
+    function openPositionTpslEdit() {
+        simulateOrderState(true);
+        toggleModal('modal-tpsl');
+    }
+
     function cancelOrder(mode) {
         document.getElementById(`${mode}-view-active`)?.classList.add('hidden');
         document.getElementById(`${mode}-view-setup`)?.classList.remove('hidden');
@@ -4249,19 +4254,8 @@
                 <td class="px-4 py-3 text-gray-400">--</td><td class="px-4 py-3 text-blue-600 font-black uppercase cursor-pointer" onclick="openCancelConfirm('OR_882910')"><span class="flex items-center space-x-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>撤单</span></td>
             </tr>`;
             } else {
-                h.innerHTML = '<th class="px-4 py-2">時間</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">方向</th><th class="px-4 py-2">成交均价</th><th class="px-4 py-2">價格</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發條件</th><th class="px-4 py-2">生效时间</th><th class="px-4 py-2 cursor-pointer" onclick="openCancelAllConfirm()"><span class="flex items-center space-x-1 text-red-500"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>全部撤单</span></th>';
-                b.innerHTML = `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">
-                <td class="px-4 py-3 text-gray-400">2024-05-24 14:20:15</td><td class="px-4 py-3 font-black text-gray-900">BNBUSDC <span class="text-gray-500 font-bold">逐仓</span> <span class="text-green-500 bg-green-50 px-1 rounded-[1px] text-[10px]">20x</span></td><td class="px-4 py-3 font-medium text-red-500">市价止盈</td><td class="px-4 py-3 text-green-500 font-bold uppercase tracking-tighter text-[12px]">平多</td>
-                <td class="px-4 py-3 text-gray-400 font-mono">--</td><td class="px-4 py-3 font-mono font-bold text-gray-500">市价</td><td class="px-4 py-3 text-gray-400 font-mono">--</td><td class="px-4 py-3 font-mono font-bold">全部平仓</td>
-                <td class="px-4 py-3 text-gray-700 font-bold">最新价格 >= 800.123</td><td class="px-4 py-3 text-gray-400">--</td>
-                <td class="px-4 py-3 text-blue-600 font-black uppercase cursor-pointer" onclick="openCancelConfirm('TP_001')"><span class="flex items-center space-x-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>撤单</span></td>
-            </tr>
-            <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">
-                <td class="px-4 py-3 text-gray-400">2024-05-24 15:02:08</td><td class="px-4 py-3 font-black text-gray-900">BNBUSDC <span class="text-gray-500 font-bold">逐仓</span> <span class="text-green-500 bg-green-50 px-1 rounded-[1px] text-[10px]">20x</span></td><td class="px-4 py-3 font-medium text-red-500">限价止损</td><td class="px-4 py-3 text-green-500 font-bold uppercase tracking-tighter text-[12px]">平多</td>
-                <td class="px-4 py-3 text-gray-400 font-mono">--</td><td class="px-4 py-3 font-mono font-bold">600.00</td><td class="px-4 py-3 text-gray-400 font-mono">--</td><td class="px-4 py-3 font-mono font-bold">0.50</td>
-                <td class="px-4 py-3 text-gray-700 font-bold">标记价格 <= 600.234</td><td class="px-4 py-3 text-gray-400">--</td>
-                <td class="px-4 py-3 text-blue-600 font-black uppercase cursor-pointer" onclick="openCancelConfirm('SL_002')"><span class="flex items-center space-x-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>撤单</span></td>
-            </tr>`;
+                h.innerHTML = PositionFlow.renderCurrentOrderTpslHeader();
+                b.innerHTML = PositionFlow.renderCurrentOrderTpslBody();
             }
         } else if (tabId === 'hist-order') {
             document.getElementById('hist-order-filters')?.classList.remove('hidden');
