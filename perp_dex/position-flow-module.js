@@ -1,9 +1,9 @@
 /**
  * 合约交易页 · 持仓管理+流水模块：演示数据与筛选交互
- * @version 2026-09-02-tpsl-untriggered
+ * @version 2026-09-02-tpsl-action-btn
  */
 (function () {
-    window.POSITION_FLOW_MODULE_VERSION = '2026-09-02-tpsl-untriggered';
+    window.POSITION_FLOW_MODULE_VERSION = '2026-09-02-tpsl-action-btn';
     const DEMO_END = new Date('2026-06-15T12:00:00');
     const histPosExpanded = new Set();
 
@@ -40,7 +40,7 @@
             triggerLines: ['138.5<span class="text-gray-400 font-normal">(标记)</span>'],
             priceLines: ['<span class="text-red-500 font-bold">止损</span> 138.5'],
             status: '已取消', statusClass: 'text-gray-400', orderId: 'TPSL_1041927383888',
-            statusTip: '仓位止盈订单触发，关联持仓已完全平仓', statusDashed: true,
+            statusTip: '仓位止盈订单触发，关联持仓已完全平仓',
         },
         {
             time: '2026-06-13 23:58:44', symbol: 'BNBUSDT', dir: '平多', dirClass: 'text-green-500', qty: '0.50 BNB',
@@ -167,12 +167,13 @@
 
     function renderTpslOrderRow(row, opts) {
         opts = opts || {};
+        const btnBase = 'inline-flex items-center gap-0.5 border border-gray-200 px-2 py-0.5 rounded-sm text-[10px] font-bold hover:bg-gray-50 transition-colors';
         const actions = opts.withActions ? (
             '<td class="px-4 py-3 whitespace-nowrap">' +
-            '<div class="flex items-center gap-3">' +
-            '<button type="button" class="text-blue-600 font-bold hover:underline" onclick="openPositionTpslEdit()">修改</button>' +
-            '<button type="button" class="text-blue-600 font-black uppercase cursor-pointer" onclick="openCancelConfirm(\'' + row.orderId.replace(/'/g, "\\'") + '\')">' +
-            '<span class="flex items-center space-x-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>撤销</span></button>' +
+            '<div class="flex items-center gap-2">' +
+            '<button type="button" class="' + btnBase + ' text-blue-600" onclick="openPositionTpslEdit()">修改</button>' +
+            '<button type="button" class="' + btnBase + ' text-red-500" onclick="openCancelConfirm(\'' + row.orderId.replace(/'/g, "\\'") + '\')">' +
+            '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>撤销</button>' +
             '</div></td>'
         ) : '';
         return '<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">' +
