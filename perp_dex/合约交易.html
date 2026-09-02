@@ -1398,7 +1398,7 @@
 
             <!-- 当前委托/历史委托 子标签（切换基础单/止盈止损单） -->
             <div id="order-subtabs" class="flex space-x-4 px-4 py-2 border-b border-gray-50 bg-white text-[10px] font-bold hidden shrink-0">
-                <button id="subtab-order-base" onclick="event.stopPropagation(); switchOrderSubTab('base')" class="tab-active cursor-pointer pb-1">基礎單 (1)</button>
+                <button id="subtab-order-base" onclick="event.stopPropagation(); switchOrderSubTab('base')" class="tab-active cursor-pointer pb-1">基礎單 (2)</button>
                 <button id="subtab-order-tpsl" onclick="event.stopPropagation(); switchOrderSubTab('tpsl')" class="cursor-pointer pb-1 text-gray-400 hover:text-black">止盈止損單 (2)</button>
             </div>
 
@@ -1562,10 +1562,9 @@
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
                     </button>
                     <div id="hist-order-status-dropdown" class="absolute top-full mt-1 bg-white border border-gray-200 shadow-lg p-3 rounded-sm hidden z-50 text-[10px] space-y-1">
-                        <label class="flex items-center space-x-1"><input type="checkbox" checked> 完全成交</label>
-                        <label class="flex items-center space-x-1"><input type="checkbox"> 部分成交</label>
-                        <label class="flex items-center space-x-1"><input type="checkbox"> 已取消</label>
-                        <label class="flex items-center space-x-1"><input type="checkbox"> 已過期</label>
+                        <label class="flex items-center space-x-1"><input type="checkbox" checked> 全部成交</label>
+                        <label class="flex items-center space-x-1"><input type="checkbox" checked> 部分成交</label>
+                        <label class="flex items-center space-x-1"><input type="checkbox" checked> 已取消</label>
                     </div>
                 </div>
                 <button class="px-3 py-1 bg-black text-white rounded-sm">查詢</button>
@@ -2997,6 +2996,102 @@
     </div>
 </div>
 
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 弹窗：修改基础单委托参数 -->
+<div id="modal-modify-base-order" class="modal-overlay" style="display: none;">
+    <div class="bg-white w-[400px] rounded-sm shadow-2xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100">
+            <h3 class="text-sm font-black text-gray-900">修改参数</h3>
+        </div>
+        <div class="p-5 space-y-4 text-[11px]">
+            <div>
+                <p id="modify-base-order-title" class="font-black text-gray-900">BNBUSDC 买入开多 全仓 3x</p>
+                <p id="modify-base-order-last-price" class="text-gray-400 mt-1">最新价 606.31</p>
+            </div>
+            <div class="space-y-1">
+                <label class="text-gray-500 font-bold">委托价格</label>
+                <input id="modify-base-order-price" type="text" value="620.00" class="w-full border border-gray-200 rounded-sm px-3 py-2 font-mono font-bold outline-none focus:border-black">
+            </div>
+            <div class="space-y-1">
+                <label class="text-gray-500 font-bold">数量</label>
+                <div class="flex border border-gray-200 rounded-sm overflow-hidden">
+                    <input id="modify-base-order-qty" type="text" value="1.00" class="flex-1 px-3 py-2 font-mono font-bold outline-none">
+                    <select id="modify-base-order-qty-unit" class="bg-gray-50 border-l border-gray-200 px-2 text-[10px] font-bold text-gray-600 outline-none">
+                        <option>USDT</option>
+                        <option>BNB</option>
+                    </select>
+                </div>
+            </div>
+            <div class="pos-close-slider-wrap pos-close-slider-wrap--order">
+                <div class="pos-close-slider-rail">
+                    <div class="pos-close-slider-ticks" aria-hidden="true">
+                        <span class="pos-close-slider-tick"></span><span class="pos-close-slider-tick"></span><span class="pos-close-slider-tick"></span><span class="pos-close-slider-tick"></span><span class="pos-close-slider-tick"></span>
+                    </div>
+                    <input type="range" id="modify-base-order-qty-slider" class="pos-close-slider-input" min="0" max="100" step="25" value="25">
+                </div>
+                <div class="pos-close-slider-labels"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+            </div>
+            <p class="text-gray-400">最大可开 <span class="font-bold text-gray-700">1,397.50 USDT</span></p>
+            <div class="border-t border-gray-50 pt-3">
+                <label class="flex items-center cursor-pointer">
+                    <input type="checkbox" id="modify-base-order-tpsl-check" class="w-3 h-3 accent-blue-600" onchange="toggleModifyBaseOrderTpsl()">
+                    <span class="ml-1.5 font-bold text-gray-600">止盈止损</span>
+                </label>
+                <div id="modify-base-order-tpsl-inputs" class="mt-2 space-y-2" style="display:none;">
+                    <div class="space-y-0.5">
+                        <div class="text-[8px] text-gray-400">止盈</div>
+                        <div class="h-7 bg-gray-50 border border-gray-100 px-1.5 flex items-center">
+                            <input class="w-full bg-transparent font-bold text-[10px] outline-none" placeholder="价格" value="800.123">
+                            <select class="text-[8px] bg-transparent border-l border-gray-200 pl-1 text-gray-500 outline-none ml-1"><option>最新成交价</option><option>标记价格</option></select>
+                        </div>
+                    </div>
+                    <div class="space-y-0.5">
+                        <div class="text-[8px] text-gray-400">止损</div>
+                        <div class="h-7 bg-gray-50 border border-gray-100 px-1.5 flex items-center">
+                            <input class="w-full bg-transparent font-bold text-[10px] outline-none" placeholder="价格" value="600.234">
+                            <select class="text-[8px] bg-transparent border-l border-gray-200 pl-1 text-gray-500 outline-none ml-1"><option>最新成交价</option><option>标记价格</option></select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex space-x-3 pt-2">
+                <button type="button" onclick="toggleModal('modal-modify-base-order')" class="flex-1 border border-gray-200 py-2.5 rounded-sm font-bold text-xs text-gray-400 uppercase">取消</button>
+                <button type="button" onclick="confirmModifyBaseOrder()" class="flex-1 bg-black text-white py-2.5 rounded-sm font-bold text-xs uppercase">确认</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 弹窗：历史基础单流水详情 -->
+<div id="modal-order-fill-detail" class="modal-overlay" style="display: none;">
+    <div class="bg-white w-[640px] max-w-[95vw] rounded-sm shadow-2xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center">
+            <h3 id="fill-detail-title" class="text-sm font-black text-gray-900">BNBUSDC 买入开多 逐仓 20x</h3>
+            <button type="button" onclick="toggleModal('modal-order-fill-detail')" class="text-gray-400 hover:text-black text-lg leading-none">✕</button>
+        </div>
+        <div class="p-4 overflow-x-auto">
+            <table class="w-full text-left text-[10px]">
+                <thead class="text-gray-400 border-b border-gray-100">
+                    <tr>
+                        <th class="px-3 py-2 font-medium">成交时间</th>
+                        <th class="px-3 py-2 font-medium">数量</th>
+                        <th class="px-3 py-2 font-medium">价格</th>
+                        <th class="px-3 py-2 font-medium">成交金额</th>
+                        <th class="px-3 py-2 font-medium">角色</th>
+                        <th class="px-3 py-2 font-medium">手续费</th>
+                    </tr>
+                </thead>
+                <tbody id="fill-detail-body"></tbody>
+            </table>
+            <div id="fill-detail-pager" class="flex items-center justify-center gap-3 mt-4 text-[10px] font-bold"></div>
+        </div>
+    </div>
+</div>
+
 <!-- 一键平仓确认弹窗 -->
 <div id="modal-close-all" class="modal-overlay" style="display: none;">
     <div class="bg-white w-[360px] rounded-sm shadow-2xl overflow-hidden">
@@ -3206,8 +3301,8 @@
     </div>
 </div>
 
-<script src="position-flow-module.js?v=2026-09-02-tpsl-cancel-all-header"></script>
-<script src="position-close-module.js?v=2026-09-02-tpsl-cancel-all-header"></script>
+<script src="position-flow-module.js?v=2026-09-02-base-order-refactor"></script>
+<script src="position-close-module.js?v=2026-09-02-base-order-refactor"></script>
 <script>
     // ==================== 通用工具 ====================
     // 底部公告轮播 - 鼠标悬停暂停
@@ -4187,7 +4282,7 @@
             if (subtabsEl) subtabsEl.classList.remove('hidden');
             const baseBtn = document.getElementById('subtab-order-base');
             const tpslBtn = document.getElementById('subtab-order-tpsl');
-            if (baseBtn) baseBtn.innerText = tabId === 'order' ? '基礎單 (1)' : '基礎單';
+            if (baseBtn) baseBtn.innerText = tabId === 'order' ? '基礎單 (2)' : '基礎單';
             if (tpslBtn) tpslBtn.innerText = tabId === 'order' ? '止盈止損單 (2)' : '止盈止損單';
             switchOrderSubTab('base');
         } else {
@@ -4221,10 +4316,9 @@
             dropdown.innerHTML = '<label class="flex items-center space-x-1"><input type="checkbox" checked> 已完成</label>'
                 + '<label class="flex items-center space-x-1"><input type="checkbox" checked> 已取消</label>';
         } else {
-            dropdown.innerHTML = '<label class="flex items-center space-x-1"><input type="checkbox" checked> 完全成交</label>'
-                + '<label class="flex items-center space-x-1"><input type="checkbox"> 部分成交</label>'
-                + '<label class="flex items-center space-x-1"><input type="checkbox"> 已取消</label>'
-                + '<label class="flex items-center space-x-1"><input type="checkbox"> 已過期</label>';
+            dropdown.innerHTML = '<label class="flex items-center space-x-1"><input type="checkbox" checked> 全部成交</label>'
+                + '<label class="flex items-center space-x-1"><input type="checkbox" checked> 部分成交</label>'
+                + '<label class="flex items-center space-x-1"><input type="checkbox" checked> 已取消</label>';
         }
     }
 
@@ -4275,13 +4369,13 @@
         } else if (tabId === 'order') {
             document.getElementById('hist-order-filters')?.classList.add('hidden');
             if (currentOrderSubTab === 'base') {
-                h.innerHTML = '<th class="px-4 py-2">時間</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">方向</th><th class="px-4 py-2">成交均价</th><th class="px-4 py-2">價格</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發條件</th><th class="px-4 py-2 text-blue-600">止盈/止损</th><th class="px-4 py-2">生效时间</th><th class="px-4 py-2 cursor-pointer" onclick="openCancelAllConfirm(\'base\')"><span class="flex items-center space-x-1 text-red-500"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>全部撤单</span></th>';
-                b.innerHTML = `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">
-                <td class="px-4 py-3 text-gray-400">2024-05-24 14:20:15</td><td class="px-4 py-3 font-black text-gray-900">BNBUSDC <span class="text-gray-500 font-bold">逐仓</span> <span class="text-green-500 bg-green-50 px-1 rounded-[1px] text-[10px]">20x</span></td><td class="px-4 py-3 font-medium">限價單</td><td class="px-4 py-3 text-green-500 font-bold uppercase tracking-tighter text-[12px]">買入 / 開多</td>
-                <td class="px-4 py-3 text-gray-400 font-mono">--</td><td class="px-4 py-3 font-mono font-bold">620.00</td><td class="px-4 py-3 text-gray-400 font-mono">0.00</td><td class="px-4 py-3 font-mono font-bold">1.00</td>
-                <td class="px-4 py-3 text-gray-400">--</td><td class="px-4 py-3"><div class="flex items-center space-x-2"><span class="text-gray-300 italic">800.123 / 600.234</span><button onclick="toggleModal('modal-order-tpsl')" class="text-blue-500 hover:text-blue-700 flex items-center group"><svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>設置</button></div></td>
-                <td class="px-4 py-3 text-gray-400">--</td><td class="px-4 py-3 text-blue-600 font-black uppercase cursor-pointer" onclick="openCancelConfirm('OR_882910')"><span class="flex items-center space-x-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>撤单</span></td>
-            </tr>`;
+                if (window.PositionFlow && typeof PositionFlow.renderOrderTabTable === 'function' &&
+                    PositionFlow.renderOrderTabTable('current', 'base', h, b)) {
+                    /* rendered by module */
+                } else if (window.PositionFlow && typeof PositionFlow.renderCurrentOrderBaseHeader === 'function') {
+                    h.innerHTML = PositionFlow.renderCurrentOrderBaseHeader();
+                    b.innerHTML = PositionFlow.renderCurrentOrderBaseBody();
+                }
             } else {
                 renderCurrentOrderTpslTable(h, b);
             }
@@ -4318,6 +4412,27 @@
             document.getElementById('funding-fee-filters')?.classList.remove('hidden');
             h.innerHTML = PositionFlow.renderFundingFeeHeader();
             b.innerHTML = PositionFlow.renderFundingFeeBody();
+        }
+    }
+
+    function openModifyBaseOrder(orderId) {
+        if (window.PositionFlow && typeof PositionFlow.prepareModifyBaseOrder === 'function') {
+            PositionFlow.prepareModifyBaseOrder(orderId);
+        }
+        toggleModal('modal-modify-base-order');
+    }
+    function toggleModifyBaseOrderTpsl() {
+        const checked = document.getElementById('modify-base-order-tpsl-check')?.checked;
+        const panel = document.getElementById('modify-base-order-tpsl-inputs');
+        if (panel) panel.style.display = checked ? 'block' : 'none';
+    }
+    function confirmModifyBaseOrder() {
+        toggleModal('modal-modify-base-order');
+        showNotification('委托参数已更新');
+    }
+    function openOrderFillDetail(orderId) {
+        if (window.PositionFlow && typeof PositionFlow.openFillDetail === 'function') {
+            PositionFlow.openFillDetail(orderId);
         }
     }
 
