@@ -1,9 +1,9 @@
 /**
  * 合约交易页 · 持仓管理+流水模块：演示数据与筛选交互
- * @version 2026-09-02-tpsl-orders
+ * @version 2026-09-02-tpsl-status
  */
 (function () {
-    window.POSITION_FLOW_MODULE_VERSION = '2026-09-02-tpsl-orders';
+    window.POSITION_FLOW_MODULE_VERSION = '2026-09-02-tpsl-status';
     const DEMO_END = new Date('2026-06-15T12:00:00');
     const histPosExpanded = new Set();
 
@@ -27,26 +27,26 @@
             time: '2026-06-15 10:20:15', symbol: 'BTCUSDT', dir: '平空', dirClass: 'text-red-500', qty: '0.35 BTC',
             triggerLines: ['64,200.0<span class="text-gray-400 font-normal">(最新)</span>'],
             priceLines: ['<span class="text-red-500 font-bold">止损</span> 市价'],
-            status: '完成', statusClass: 'text-green-600', orderId: 'TPSL_1041927385120',
+            status: '已完成', statusClass: 'text-green-600', orderId: 'TPSL_1041927385120',
         },
         {
             time: '2026-06-14 18:45:33', symbol: 'ETHUSDT', dir: '平多', dirClass: 'text-green-500', qty: '2.00 ETH',
             triggerLines: ['2,520.0<span class="text-gray-400 font-normal">(最新)</span>'],
             priceLines: ['<span class="text-green-600 font-bold">止盈</span> 2,520.0'],
-            status: '未完成', statusClass: 'text-orange-500', orderId: 'TPSL_1041927384001', statusTip: '用户手动取消',
+            status: '已取消', statusClass: 'text-gray-400', orderId: 'TPSL_1041927384001', statusTip: '用户手动取消',
         },
         {
             time: '2026-06-14 08:10:19', symbol: 'SOLUSDT', dir: '平空', dirClass: 'text-red-500', qty: '80 SOL',
             triggerLines: ['138.5<span class="text-gray-400 font-normal">(标记)</span>'],
             priceLines: ['<span class="text-red-500 font-bold">止损</span> 138.5'],
-            status: '未完成', statusClass: 'text-orange-500', orderId: 'TPSL_1041927383888',
+            status: '已取消', statusClass: 'text-gray-400', orderId: 'TPSL_1041927383888',
             statusTip: '仓位止盈订单触发，关联持仓已完全平仓', statusDashed: true,
         },
         {
             time: '2026-06-13 23:58:44', symbol: 'BNBUSDT', dir: '平多', dirClass: 'text-green-500', qty: '0.50 BNB',
             triggerLines: ['610.00<span class="text-gray-400 font-normal">(最新)</span>'],
             priceLines: ['<span class="text-green-600 font-bold">止盈</span> 市价'],
-            status: '完成', statusClass: 'text-green-600', orderId: 'TPSL_1041927383777',
+            status: '已完成', statusClass: 'text-green-600', orderId: 'TPSL_1041927383777',
         },
     ];
 
@@ -57,7 +57,7 @@
             dir: '平多', dirClass: 'text-green-500', qty: '0.142 BNB',
             triggerLines: ['800.23<span class="text-gray-400 font-normal">(最新)</span>', '600.48<span class="text-gray-400 font-normal">(最新)</span>'],
             priceLines: ['<span class="text-green-600 font-bold">止盈</span> 市价', '<span class="text-red-500 font-bold">止损</span> 598.23'],
-            status: '未完成', statusClass: 'text-orange-500', orderId: 'TPSL_882910',
+            status: '--', statusClass: 'text-gray-400', orderId: 'TPSL_882910',
         },
         {
             time: '2024-05-24 15:02:08',
@@ -65,7 +65,7 @@
             dir: '平多', dirClass: 'text-green-500', qty: '0.050 BNB',
             triggerLines: ['620.00<span class="text-gray-400 font-normal">(标记)</span>'],
             priceLines: ['<span class="text-green-600 font-bold">止盈</span> 625.00'],
-            status: '未完成', statusClass: 'text-orange-500', orderId: 'TPSL_882911',
+            status: '--', statusClass: 'text-gray-400', orderId: 'TPSL_882911',
         },
     ];
 
