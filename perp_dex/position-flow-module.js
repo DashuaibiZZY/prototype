@@ -1,9 +1,9 @@
 /**
  * 合约交易页 · 持仓管理+流水模块：演示数据与筛选交互
- * @version 2026-09-02-tpsl-status
+ * @version 2026-09-02-tpsl-untriggered
  */
 (function () {
-    window.POSITION_FLOW_MODULE_VERSION = '2026-09-02-tpsl-status';
+    window.POSITION_FLOW_MODULE_VERSION = '2026-09-02-tpsl-untriggered';
     const DEMO_END = new Date('2026-06-15T12:00:00');
     const histPosExpanded = new Set();
 
@@ -21,7 +21,7 @@
             time: '2026-06-15 13:55:00', symbol: 'BNBUSDT', dir: '平多', dirClass: 'text-green-500', qty: '0.80 BNB',
             triggerLines: ['800.23<span class="text-gray-400 font-normal">(最新)</span>', '600.48<span class="text-gray-400 font-normal">(最新)</span>'],
             priceLines: ['<span class="text-green-600 font-bold">止盈</span> 市价', '<span class="text-red-500 font-bold">止损</span> 598.23'],
-            status: '完成', statusClass: 'text-green-600', orderId: 'TPSL_1041927385473',
+            status: '已完成', statusClass: 'text-green-600', orderId: 'TPSL_1041927385473',
         },
         {
             time: '2026-06-15 10:20:15', symbol: 'BTCUSDT', dir: '平空', dirClass: 'text-red-500', qty: '0.35 BTC',
@@ -57,7 +57,7 @@
             dir: '平多', dirClass: 'text-green-500', qty: '0.142 BNB',
             triggerLines: ['800.23<span class="text-gray-400 font-normal">(最新)</span>', '600.48<span class="text-gray-400 font-normal">(最新)</span>'],
             priceLines: ['<span class="text-green-600 font-bold">止盈</span> 市价', '<span class="text-red-500 font-bold">止损</span> 598.23'],
-            status: '--', statusClass: 'text-gray-400', orderId: 'TPSL_882910',
+            status: '未触发', statusClass: 'text-blue-600', orderId: 'TPSL_882910',
         },
         {
             time: '2024-05-24 15:02:08',
@@ -65,7 +65,7 @@
             dir: '平多', dirClass: 'text-green-500', qty: '0.050 BNB',
             triggerLines: ['620.00<span class="text-gray-400 font-normal">(标记)</span>'],
             priceLines: ['<span class="text-green-600 font-bold">止盈</span> 625.00'],
-            status: '--', statusClass: 'text-gray-400', orderId: 'TPSL_882911',
+            status: '未触发', statusClass: 'text-blue-600', orderId: 'TPSL_882911',
         },
     ];
 
