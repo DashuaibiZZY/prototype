@@ -1,9 +1,9 @@
 /**
  * 合约交易页 · 持仓管理+流水模块：演示数据与筛选交互
- * @version 2026-09-02-base-order-refactor
+ * @version 2026-09-02-base-order-polish
  */
 (function () {
-    window.POSITION_FLOW_MODULE_VERSION = '2026-09-02-base-order-refactor';
+    window.POSITION_FLOW_MODULE_VERSION = '2026-09-02-base-order-polish';
     const DEMO_END = new Date('2026-06-15T12:00:00');
     const histPosExpanded = new Set();
     const FILL_PAGE_SIZE = 10;
@@ -19,26 +19,28 @@
             time: '2024-05-24 14:20:15', symbol: SYMBOL_BNBUSDC_ISOLATED,
             dir: '買入 / 開多', dirClass: 'text-green-500',
             price: '620.00', qty: '1.00', avg: '--', filled: '0.00',
-            tpsl: '800.123 / 600.234',
+            tpslTp: '800.123', tpslSl: '600.234',
             status: '未成交', statusClass: 'text-blue-600', orderId: 'OR_882910',
-            modifyTitle: 'BNBUSDC 买入开多 全仓 3x', modifyLastPrice: '606.31',
+            titleSymbol: 'BNBUSDC', titleDir: '买入开多 全仓 3x', titleDirClass: 'text-green-500',
+            modifyLastPrice: '606.31',
         },
         {
             time: '2024-05-24 15:32:08', symbol: SYMBOL_BNBUSDC_ISOLATED,
             dir: '賣出 / 平多', dirClass: 'text-red-500',
             price: '625.50', qty: '0.80', avg: '624.20', filled: '0.35',
-            tpsl: '--',
+            tpslTp: null, tpslSl: null,
             status: '部分成交', statusClass: 'text-gray-600', orderId: 'OR_882911',
-            modifyTitle: 'BNBUSDC 卖出平多 逐仓 20x', modifyLastPrice: '606.31',
+            titleSymbol: 'BNBUSDC', titleDir: '卖出平多 逐仓 20x', titleDirClass: 'text-red-500',
+            modifyLastPrice: '606.31',
         },
     ];
 
     const HIST_ORDER_BASE = [
-        { time: '2026-06-15 14:20:15', symbol: SYMBOL_BNBUSDC_ISOLATED, dir: '買入 / 開多', dirClass: 'text-green-500', price: '620.00', qty: '1.00', avg: '618.50', filled: '1.00', tpsl: '800.00 / 590.00', status: '全部成交', statusClass: 'text-gray-900', orderId: 'OR_1041927385473' },
-        { time: '2026-06-15 11:05:42', symbol: SYMBOL_BTCUSDC_ISOLATED, dir: '賣出 / 平多', dirClass: 'text-red-500', price: '65,500.0', qty: '0.50', avg: '65,420.0', filled: '0.35', tpsl: '--', status: '部分成交', statusClass: 'text-gray-600', orderId: 'OR_1041927385120' },
-        { time: '2026-06-14 22:18:03', symbol: SYMBOL_BNBUSDC_ISOLATED, dir: '買入 / 平空', dirClass: 'text-green-500', price: '2,380.0', qty: '2.00', avg: '--', filled: '0.00', tpsl: '--', status: '已取消', statusClass: 'text-gray-400', statusTip: '用户手动取消', orderId: 'OR_1041927384001' },
-        { time: '2026-06-14 09:12:55', symbol: SYMBOL_BNBUSDC_ISOLATED, dir: '賣出 / 平多', dirClass: 'text-red-500', price: '635.00', qty: '0.80', avg: '--', filled: '0.00', tpsl: '640.00 / 620.00', status: '已取消', statusClass: 'text-gray-400', statusTip: '订单过期', statusDashed: true, orderId: 'OR_1041927383888' },
-        { time: '2026-06-13 20:33:28', symbol: SYMBOL_BTCUSDC_ISOLATED, dir: '買入 / 開多', dirClass: 'text-green-500', price: '64,900.0', qty: '0.20', avg: '64,980.0', filled: '0.12', tpsl: '--', status: '部分成交', statusClass: 'text-gray-600', orderId: 'OR_1041927383777' },
+        { time: '2026-06-15 14:20:15', symbol: SYMBOL_BNBUSDC_ISOLATED, dir: '買入 / 開多', dirClass: 'text-green-500', price: '620.00', qty: '1.00', avg: '618.50', filled: '1.00', status: '全部成交', statusClass: 'text-gray-900', orderId: 'OR_1041927385473' },
+        { time: '2026-06-15 11:05:42', symbol: SYMBOL_BTCUSDC_ISOLATED, dir: '賣出 / 平多', dirClass: 'text-red-500', price: '65,500.0', qty: '0.50', avg: '65,420.0', filled: '0.35', status: '部分成交', statusClass: 'text-gray-600', orderId: 'OR_1041927385120' },
+        { time: '2026-06-14 22:18:03', symbol: SYMBOL_BNBUSDC_ISOLATED, dir: '買入 / 平空', dirClass: 'text-green-500', price: '2,380.0', qty: '2.00', avg: '--', filled: '0.00', status: '已取消', statusClass: 'text-gray-400', statusTip: '用户手动取消', orderId: 'OR_1041927384001' },
+        { time: '2026-06-14 09:12:55', symbol: SYMBOL_BNBUSDC_ISOLATED, dir: '賣出 / 平多', dirClass: 'text-red-500', price: '635.00', qty: '0.80', avg: '--', filled: '0.00', status: '已取消', statusClass: 'text-gray-400', statusTip: '订单过期', statusDashed: true, orderId: 'OR_1041927383888' },
+        { time: '2026-06-13 20:33:28', symbol: SYMBOL_BTCUSDC_ISOLATED, dir: '買入 / 開多', dirClass: 'text-green-500', price: '64,900.0', qty: '0.20', avg: '64,980.0', filled: '0.12', status: '部分成交', statusClass: 'text-gray-600', orderId: 'OR_1041927383777' },
     ];
 
     function buildFillRows(count, basePrice, baseQty) {
@@ -47,6 +49,8 @@
             const price = (basePrice + i * 0.5).toFixed(2);
             const qty = (baseQty / count).toFixed(3);
             const amount = (Number(price) * Number(qty)).toFixed(2);
+            const pnlVal = i % 3 === 0 ? -Number(amount) * 0.002 : Number(amount) * 0.003;
+            const pnl = (pnlVal >= 0 ? '+' : '') + pnlVal.toFixed(2) + ' USDC';
             rows.push({
                 time: '2026-06-15 14:20:' + String(10 + i).padStart(2, '0'),
                 qty: qty + ' BNB',
@@ -54,6 +58,8 @@
                 amount: amount + ' USDC',
                 role: i % 2 === 0 ? '吃单方' : '挂单方',
                 fee: (Number(amount) * 0.001).toFixed(3) + ' USDC',
+                pnl: pnl,
+                pnlClass: pnlVal >= 0 ? 'text-green-500' : 'text-red-500',
             });
         }
         return rows;
@@ -61,22 +67,22 @@
 
     const ORDER_FILL_DETAILS = {
         OR_1041927385473: {
-            title: 'BNBUSDC 买入开多 逐仓 20x',
+            titleSymbol: 'BNBUSDC', titleDir: '买入开多 逐仓 20x', titleDirClass: 'text-green-500',
             fills: buildFillRows(12, 618.0, 1.0),
         },
         OR_1041927385120: {
-            title: 'BTCUSDC 卖出平多 逐仓 20x',
+            titleSymbol: 'BTCUSDC', titleDir: '卖出平多 逐仓 20x', titleDirClass: 'text-red-500',
             fills: [
-                { time: '2026-06-15 11:05:43', qty: '0.20 BTC', price: '65,420.0', amount: '13,084.00 USDC', role: '挂单方', fee: '6.542 USDC' },
-                { time: '2026-06-15 11:05:44', qty: '0.15 BTC', price: '65,418.0', amount: '9,812.70 USDC', role: '吃单方', fee: '4.906 USDC' },
+                { time: '2026-06-15 11:05:43', qty: '0.20 BTC', price: '65,420.0', amount: '13,084.00 USDC', role: '挂单方', fee: '6.542 USDC', pnl: '+42.18 USDC', pnlClass: 'text-green-500' },
+                { time: '2026-06-15 11:05:44', qty: '0.15 BTC', price: '65,418.0', amount: '9,812.70 USDC', role: '吃单方', fee: '4.906 USDC', pnl: '-8.32 USDC', pnlClass: 'text-red-500' },
             ],
         },
-        OR_1041927384001: { title: 'BNBUSDC 买入平空 逐仓 20x', fills: [] },
-        OR_1041927383888: { title: 'BNBUSDC 卖出平多 逐仓 20x', fills: [] },
+        OR_1041927384001: { titleSymbol: 'BNBUSDC', titleDir: '买入平空 逐仓 20x', titleDirClass: 'text-green-500', fills: [] },
+        OR_1041927383888: { titleSymbol: 'BNBUSDC', titleDir: '卖出平多 逐仓 20x', titleDirClass: 'text-red-500', fills: [] },
         OR_1041927383777: {
-            title: 'BTCUSDC 买入开多 逐仓 20x',
+            titleSymbol: 'BTCUSDC', titleDir: '买入开多 逐仓 20x', titleDirClass: 'text-green-500',
             fills: [
-                { time: '2026-06-13 20:33:29', qty: '0.12 BTC', price: '64,980.0', amount: '7,797.60 USDC', role: '挂单方', fee: '3.899 USDC' },
+                { time: '2026-06-13 20:33:29', qty: '0.12 BTC', price: '64,980.0', amount: '7,797.60 USDC', role: '挂单方', fee: '3.899 USDC', pnl: '+18.65 USDC', pnlClass: 'text-green-500' },
             ],
         },
     };
@@ -254,11 +260,31 @@
             '</tr>';
     }
 
-    function renderBaseOrderTpslCell(row) {
-        if (!row.tpsl || row.tpsl === '--') {
-            return '<span class="text-gray-400">--</span>';
+    function renderOrderSummaryTitleHtml(symbol, dir, dirClass) {
+        return '<span class="font-black text-gray-900">' + symbol + '</span> <span class="font-bold ' + dirClass + '">' + dir + '</span>';
+    }
+
+    const TPSL_SETUP_BTN = '<button type="button" onclick="toggleModal(\'modal-order-tpsl\')" class="text-blue-500 hover:text-blue-700 inline-flex items-center shrink-0 text-[10px] font-bold whitespace-nowrap">' +
+        '<svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>设置</button>';
+
+    function renderBaseOrderTpslCell(row, opts) {
+        opts = opts || {};
+        const hasTpsl = row.tpslTp || row.tpslSl;
+        let pricesHtml = '';
+        if (hasTpsl) {
+            pricesHtml = '<div class="leading-5">';
+            if (row.tpslTp) {
+                pricesHtml += '<div class="font-mono text-[10px] text-green-600 font-bold whitespace-nowrap">' + row.tpslTp + '</div>';
+            }
+            if (row.tpslSl) {
+                pricesHtml += '<div class="font-mono text-[10px] text-red-500 font-bold whitespace-nowrap">' + row.tpslSl + '</div>';
+            }
+            pricesHtml += '</div>';
+        } else {
+            pricesHtml = '<span class="text-gray-400">--</span>';
         }
-        return '<span class="text-gray-500 font-mono text-[10px] whitespace-nowrap">' + row.tpsl + '</span>';
+        if (!opts.withSetup) return pricesHtml;
+        return '<div class="flex items-start gap-2">' + pricesHtml + TPSL_SETUP_BTN + '</div>';
     }
 
     function renderBaseOrderActionCell(orderId) {
@@ -270,7 +296,8 @@
             '</div></td>';
     }
 
-    function renderBaseOrderCoreCells(row) {
+    function renderBaseOrderCoreCells(row, opts) {
+        opts = opts || {};
         return '<td class="px-4 py-3 font-black text-gray-900 whitespace-nowrap">' + row.symbol + '</td>' +
             '<td class="px-4 py-3 text-gray-400 whitespace-nowrap">' + row.time + '</td>' +
             '<td class="px-4 py-3 font-bold uppercase tracking-tighter text-[12px] whitespace-nowrap ' + row.dirClass + '">' + row.dir + '</td>' +
@@ -278,7 +305,7 @@
             '<td class="px-4 py-3 font-mono font-bold whitespace-nowrap">' + row.qty + '</td>' +
             '<td class="px-4 py-3 font-mono whitespace-nowrap">' + row.avg + '</td>' +
             '<td class="px-4 py-3 font-mono whitespace-nowrap">' + row.filled + '</td>' +
-            '<td class="px-4 py-3 whitespace-nowrap">' + renderBaseOrderTpslCell(row) + '</td>' +
+            (opts.includeTpsl ? '<td class="px-4 py-3 align-top whitespace-nowrap">' + renderBaseOrderTpslCell(row, { withSetup: opts.withTpslSetup }) + '</td>' : '') +
             '<td class="px-4 py-3 whitespace-nowrap">' + statusCellHtml(row) + '</td>' +
             '<td class="px-4 py-3 whitespace-nowrap">' + renderOrderIdCopyCell(row.orderId) + '</td>';
     }
@@ -286,7 +313,7 @@
     function renderCurrentOrderBaseRows() {
         return CURRENT_ORDER_BASE.map(function (r) {
             return '<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">' +
-                renderBaseOrderCoreCells(r) + renderBaseOrderActionCell(r.orderId) +
+                renderBaseOrderCoreCells(r, { includeTpsl: true, withTpslSetup: true }) + renderBaseOrderActionCell(r.orderId) +
                 '</tr>';
         }).join('');
     }
@@ -295,7 +322,7 @@
         return HIST_ORDER_BASE.map(function (r) {
             const esc = String(r.orderId).replace(/'/g, "\\'");
             return '<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">' +
-                renderBaseOrderCoreCells(r) +
+                renderBaseOrderCoreCells(r, { includeTpsl: false }) +
                 '<td class="px-4 py-3 whitespace-nowrap">' +
                 '<button type="button" class="' + BTN_BASE + ' text-blue-600" onclick="openOrderFillDetail(\'' + esc + '\')">查看详情</button>' +
                 '</td></tr>';
@@ -402,7 +429,7 @@
 
         renderHistOrderHeader: function (subTab) {
             if (subTab === 'base') {
-                return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">委託時間</th><th class="px-4 py-2">交易方向</th><th class="px-4 py-2">委託價</th><th class="px-4 py-2">委託數量</th><th class="px-4 py-2">成交均價</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2 text-blue-600">止盈止损</th><th class="px-4 py-2">訂單狀態</th><th class="px-4 py-2">訂單編號</th><th class="px-4 py-2">流水详情</th>';
+                return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">委託時間</th><th class="px-4 py-2">交易方向</th><th class="px-4 py-2">委託價</th><th class="px-4 py-2">委託數量</th><th class="px-4 py-2">成交均價</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">訂單狀態</th><th class="px-4 py-2">訂單編號</th><th class="px-4 py-2">流水详情</th>';
             }
             return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">委託時間</th><th class="px-4 py-2">交易方向</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發價格</th><th class="px-4 py-2">委託價格</th><th class="px-4 py-2">訂單狀態</th><th class="px-4 py-2">訂單編號</th>';
         },
@@ -557,13 +584,13 @@
             const priceHintEl = document.getElementById('modify-base-order-last-price');
             const priceInput = document.getElementById('modify-base-order-price');
             const qtyInput = document.getElementById('modify-base-order-qty');
-            if (titleEl) titleEl.textContent = row.modifyTitle || 'BNBUSDC 买入开多 全仓 3x';
+            if (titleEl) titleEl.innerHTML = renderOrderSummaryTitleHtml(row.titleSymbol, row.titleDir, row.titleDirClass);
             if (priceHintEl) priceHintEl.textContent = '最新价 ' + (row.modifyLastPrice || '606.31');
             if (priceInput) priceInput.value = row.price === '市价' ? '' : row.price.replace(/,/g, '');
             if (qtyInput) qtyInput.value = row.qty;
             const tpslCheck = document.getElementById('modify-base-order-tpsl-check');
             const tpslInputs = document.getElementById('modify-base-order-tpsl-inputs');
-            const hasTpsl = row.tpsl && row.tpsl !== '--';
+            const hasTpsl = row.tpslTp || row.tpslSl;
             if (tpslCheck) tpslCheck.checked = hasTpsl;
             if (tpslInputs) tpslInputs.style.display = hasTpsl ? 'block' : 'none';
         },
@@ -590,10 +617,10 @@
             const bodyEl = document.getElementById('fill-detail-body');
             const pagerEl = document.getElementById('fill-detail-pager');
             if (!data || !titleEl || !bodyEl) return;
-            titleEl.textContent = data.title;
+            titleEl.innerHTML = renderOrderSummaryTitleHtml(data.titleSymbol, data.titleDir, data.titleDirClass);
             const fills = data.fills || [];
             if (!fills.length) {
-                bodyEl.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-center text-gray-400">暂无成交记录</td></tr>';
+                bodyEl.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-center text-gray-400">暂无成交记录</td></tr>';
                 if (pagerEl) pagerEl.innerHTML = '';
                 return;
             }
@@ -601,6 +628,7 @@
             const start = (fillDetailState.page - 1) * FILL_PAGE_SIZE;
             const pageFills = fills.slice(start, start + FILL_PAGE_SIZE);
             bodyEl.innerHTML = pageFills.map(function (f) {
+                const pnlClass = f.pnlClass || (String(f.pnl || '').indexOf('-') === 0 ? 'text-red-500' : 'text-green-500');
                 return '<tr class="border-b border-gray-50 text-[11px]">' +
                     '<td class="px-3 py-2 text-gray-400 whitespace-nowrap">' + f.time + '</td>' +
                     '<td class="px-3 py-2 font-mono whitespace-nowrap">' + f.qty + '</td>' +
@@ -608,6 +636,7 @@
                     '<td class="px-3 py-2 font-mono whitespace-nowrap">' + f.amount + '</td>' +
                     '<td class="px-3 py-2 whitespace-nowrap">' + f.role + '</td>' +
                     '<td class="px-3 py-2 font-mono whitespace-nowrap">' + f.fee + '</td>' +
+                    '<td class="px-3 py-2 font-mono font-bold whitespace-nowrap ' + pnlClass + '">' + (f.pnl || '--') + '</td>' +
                     '</tr>';
             }).join('');
             if (!pagerEl) return;
