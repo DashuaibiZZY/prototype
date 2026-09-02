@@ -2987,7 +2987,7 @@
         <div class="p-5 space-y-4">
             <div class="text-xs text-gray-600 leading-relaxed">
                 <p class="font-bold text-gray-900 mb-2">確定要撤銷所有當前委託訂單嗎？</p>
-                <p class="text-gray-400">此操作將撤銷所有基礎單</p>
+                <p class="text-gray-400" id="cancel-all-order-type-hint">此操作將撤銷所有基礎單</p>
             </div>
             <div class="flex space-x-3 pt-2">
                 <button onclick="toggleModal('modal-cancel-all')" class="flex-1 border border-gray-200 py-2.5 rounded-sm font-bold text-xs text-gray-400 uppercase">取消</button>
@@ -3206,8 +3206,8 @@
     </div>
 </div>
 
-<script src="position-flow-module.js?v=2026-09-02-tpsl-action-btn"></script>
-<script src="position-close-module.js?v=2026-09-02-tpsl-action-btn"></script>
+<script src="position-flow-module.js?v=2026-09-02-tpsl-cancel-all-header"></script>
+<script src="position-close-module.js?v=2026-09-02-tpsl-cancel-all-header"></script>
 <script>
     // ==================== 通用工具 ====================
     // 底部公告轮播 - 鼠标悬停暂停
@@ -4275,7 +4275,7 @@
         } else if (tabId === 'order') {
             document.getElementById('hist-order-filters')?.classList.add('hidden');
             if (currentOrderSubTab === 'base') {
-                h.innerHTML = '<th class="px-4 py-2">時間</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">方向</th><th class="px-4 py-2">成交均价</th><th class="px-4 py-2">價格</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發條件</th><th class="px-4 py-2 text-blue-600">止盈/止损</th><th class="px-4 py-2">生效时间</th><th class="px-4 py-2 cursor-pointer" onclick="openCancelAllConfirm()"><span class="flex items-center space-x-1 text-red-500"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>全部撤单</span></th>';
+                h.innerHTML = '<th class="px-4 py-2">時間</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">方向</th><th class="px-4 py-2">成交均价</th><th class="px-4 py-2">價格</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發條件</th><th class="px-4 py-2 text-blue-600">止盈/止损</th><th class="px-4 py-2">生效时间</th><th class="px-4 py-2 cursor-pointer" onclick="openCancelAllConfirm(\'base\')"><span class="flex items-center space-x-1 text-red-500"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>全部撤单</span></th>';
                 b.innerHTML = `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">
                 <td class="px-4 py-3 text-gray-400">2024-05-24 14:20:15</td><td class="px-4 py-3 font-black text-gray-900">BNBUSDC <span class="text-gray-500 font-bold">逐仓</span> <span class="text-green-500 bg-green-50 px-1 rounded-[1px] text-[10px]">20x</span></td><td class="px-4 py-3 font-medium">限價單</td><td class="px-4 py-3 text-green-500 font-bold uppercase tracking-tighter text-[12px]">買入 / 開多</td>
                 <td class="px-4 py-3 text-gray-400 font-mono">--</td><td class="px-4 py-3 font-mono font-bold">620.00</td><td class="px-4 py-3 text-gray-400 font-mono">0.00</td><td class="px-4 py-3 font-mono font-bold">1.00</td>
@@ -4328,7 +4328,15 @@
         document.getElementById('cancel-order-info').innerText = '訂單號: ' + orderId;
         toggleModal('modal-cancel-order');
     }
-    function openCancelAllConfirm() { toggleModal('modal-cancel-all'); }
+    function openCancelAllConfirm(orderType) {
+        const hint = document.getElementById('cancel-all-order-type-hint');
+        if (hint) {
+            hint.textContent = orderType === 'tpsl'
+                ? '此操作將撤銷所有止盈止損單'
+                : '此操作將撤銷所有基礎單';
+        }
+        toggleModal('modal-cancel-all');
+    }
     function executeCancelOrder() {
         toggleModal('modal-cancel-order');
         showNotification('訂單已撤銷');

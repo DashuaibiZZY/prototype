@@ -1,9 +1,9 @@
 /**
  * 合约交易页 · 持仓管理+流水模块：演示数据与筛选交互
- * @version 2026-09-02-tpsl-action-btn
+ * @version 2026-09-02-tpsl-cancel-all-header
  */
 (function () {
-    window.POSITION_FLOW_MODULE_VERSION = '2026-09-02-tpsl-action-btn';
+    window.POSITION_FLOW_MODULE_VERSION = '2026-09-02-tpsl-cancel-all-header';
     const DEMO_END = new Date('2026-06-15T12:00:00');
     const histPosExpanded = new Set();
 
@@ -313,7 +313,8 @@
         },
 
         renderCurrentOrderTpslHeader: function () {
-            return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">委託時間</th><th class="px-4 py-2">交易方向</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發價格</th><th class="px-4 py-2">委託價格</th><th class="px-4 py-2">訂單狀態</th><th class="px-4 py-2">訂單編號</th><th class="px-4 py-2">操作</th>';
+            return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">委託時間</th><th class="px-4 py-2">交易方向</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發價格</th><th class="px-4 py-2">委託價格</th><th class="px-4 py-2">訂單狀態</th><th class="px-4 py-2">訂單編號</th>' +
+                '<th class="px-4 py-2 cursor-pointer" onclick="openCancelAllConfirm(\'tpsl\')"><span class="flex items-center space-x-1 text-red-500"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>全部撤销</span></th>';
         },
 
         renderCurrentOrderTpslBody: function () {
