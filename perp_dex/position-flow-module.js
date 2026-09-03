@@ -1,9 +1,9 @@
 /**
  * 合约交易页 · 持仓管理+流水模块：演示数据与筛选交互
- * @version 2026-09-03-hist-trade-pos
+ * @version 2026-09-03-id-abbrev-copy
  */
 (function () {
-    window.POSITION_FLOW_MODULE_VERSION = '2026-09-03-hist-trade-pos';
+    window.POSITION_FLOW_MODULE_VERSION = '2026-09-03-id-abbrev-copy';
     const DEMO_END = new Date('2026-06-15T12:00:00');
     const FILL_PAGE_SIZE = 10;
     const RELATED_ORDERS_PAGE_SIZE = 10;
@@ -262,10 +262,22 @@
         }).join('');
     }
 
+    function abbreviateId(id) {
+        const text = String(id || '');
+        if (text.length <= 14) return text;
+        return text.slice(0, 8) + '...' + text.slice(-4);
+    }
+
+    function renderIdCopyCell(id, copyLabel) {
+        const full = String(id || '');
+        const esc = full.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const label = copyLabel || '编号';
+        return '<span class="inline-flex items-center gap-1 font-mono text-[10px] text-gray-600">' + abbreviateId(full) +
+            '<button type="button" class="text-gray-400 hover:text-blue-600 p-0.5 leading-none" onclick="PositionFlow.copyId(\'' + esc + '\', \'' + label.replace(/'/g, "\\'") + '\')" title="复制' + label + '">📋</button></span>';
+    }
+
     function renderOrderIdCopyCell(orderId) {
-        const esc = String(orderId).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-        return '<span class="inline-flex items-center gap-1 font-mono text-[10px] text-gray-600">' + orderId +
-            '<button type="button" class="text-gray-400 hover:text-blue-600 p-0.5 leading-none" onclick="PositionFlow.copyOrderId(\'' + esc + '\')" title="复制订单编号">📋</button></span>';
+        return renderIdCopyCell(orderId, '订单编号');
     }
 
     function renderTpslOrderRow(row, opts) {
@@ -380,7 +392,7 @@
                 <td class="px-4 py-3 font-mono whitespace-nowrap">${r.amount}</td>
                 <td class="px-4 py-3 whitespace-nowrap">${r.role}</td>
                 <td class="px-4 py-3 text-gray-500 whitespace-nowrap">${r.fee}</td>
-                <td class="px-4 py-3 font-mono text-[10px] text-gray-600 whitespace-nowrap">${r.flowId}</td>
+                <td class="px-4 py-3 whitespace-nowrap">${renderIdCopyCell(r.flowId, '流水编号')}</td>
             </tr>`;
         }).join('');
     }
@@ -479,14 +491,19 @@
             return false;
         },
 
-        copyOrderId: function (orderId) {
-            if (!orderId) return;
+        copyId: function (id, label) {
+            if (!id) return;
             try {
                 if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(orderId);
+                    navigator.clipboard.writeText(id);
                 }
             } catch (e) { /* ignore */ }
-            if (typeof showError === 'function') showError('订单编号已复制');
+            const tip = (label || '编号') + '已复制';
+            if (typeof showError === 'function') showError(tip);
+        },
+
+        copyOrderId: function (orderId) {
+            this.copyId(orderId, '订单编号');
         },
 
         renderHistOrderBody: function (subTab) {
@@ -565,7 +582,7 @@
                     '<td class="px-3 py-2 font-mono font-bold whitespace-nowrap">' + o.price + '</td>' +
                     '<td class="px-3 py-2 font-mono font-bold whitespace-nowrap ' + pnlClass + '">' + (o.pnl || '--') + '</td>' +
                     '<td class="px-3 py-2 font-mono whitespace-nowrap">' + o.fee + '</td>' +
-                    '<td class="px-3 py-2 font-mono text-[10px] text-gray-600 whitespace-nowrap">' + o.orderId + '</td>' +
+                    '<td class="px-3 py-2 whitespace-nowrap">' + renderIdCopyCell(o.orderId, '订单编号') + '</td>' +
                     '<td class="px-3 py-2 text-gray-400 whitespace-nowrap">' + o.time + '</td>' +
                     '</tr>';
             }).join('');
