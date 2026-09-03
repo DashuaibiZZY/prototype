@@ -118,6 +118,12 @@
         .tpsl-estimate.positive { color: #16a34a; }
         .tpsl-estimate.negative { color: #dc2626; }
         .tpsl-conflict-hint { font-size: 9px; color: #b45309; font-weight: 600; line-height: 1.5; padding: 6px 8px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 4px; }
+        #tpsl-order-container .tpsl-mode-label-row { font-size: 8px; font-weight: 700; color: #9ca3af; }
+        #tpsl-order-container .tpsl-mode-dropdown-wrap { position: relative; }
+        #tpsl-order-container .tpsl-mode-dropdown { position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.08); z-index: 60; overflow: hidden; }
+        #tpsl-order-container .tpsl-mode-option { display: block; width: 100%; text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 700; color: #111827; background: none; border: none; cursor: pointer; }
+        #tpsl-order-container .tpsl-mode-option:active { background: #f9fafb; }
+        #tpsl-order-container .tpsl-mode-option + .tpsl-mode-option { border-top: 1px solid #f3f4f6; }
     </style>
 </head>
 <body>
@@ -254,9 +260,20 @@
 
                     <!-- 止盈止損下單區 -->
                     <div id="tpsl-order-container" class="hidden space-y-2 min-w-0 overflow-hidden">
-                        <div class="tpsl-inline-picker min-w-0" onclick="openPickerSheet('tpsl-mode')">
-                            <span id="tpsl-mode-value">单向</span>
-                            <svg class="w-2.5 h-2.5 ml-0.5 text-gray-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                        <div class="space-y-1 min-w-0">
+                            <div class="tpsl-mode-label-row">
+                                <span class="dashed-underline cursor-pointer active:opacity-70" onclick="openTpslModeHintModal()">单向/双向</span>
+                            </div>
+                            <div class="tpsl-mode-dropdown-wrap" id="tpsl-mode-dropdown-wrap">
+                                <div class="input-box flex justify-between items-center cursor-pointer py-2" onclick="toggleTPSLModeDropdown(event)">
+                                    <span id="tpsl-mode-value" class="text-[11px] font-bold text-gray-900">单向委托</span>
+                                    <svg class="w-3 h-3 text-gray-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                                </div>
+                                <div id="tpsl-mode-dropdown" class="tpsl-mode-dropdown hidden">
+                                    <button type="button" class="tpsl-mode-option" onclick="setTPSLMode('单向委托'); event.stopPropagation();">单向委托</button>
+                                    <button type="button" class="tpsl-mode-option" onclick="setTPSLMode('双向委托'); event.stopPropagation();">双向委托</button>
+                                </div>
+                            </div>
                         </div>
                         <div id="tpsl-triggers-container" class="space-y-2"></div>
                         <div id="tpsl-conflict-hint" class="tpsl-conflict-hint hidden"></div>
@@ -295,7 +312,7 @@
                     <div id="attach-tpsl-section" class="min-w-0 overflow-hidden">
                         <div class="flex items-center space-x-1">
                             <input type="checkbox" id="check-tpsl" onchange="toggleAttachTPSL()" class="w-3 h-3 rounded-sm accent-black shrink-0">
-                            <span class="text-[11px] font-bold text-gray-500 dashed-underline">止盈/止損</span>
+                            <span class="text-[11px] font-bold text-gray-500 dashed-underline cursor-pointer active:opacity-70" onclick="openAttachTpslHintModal()">止盈/止損</span>
                         </div>
                         <div id="attach-tpsl-inputs" class="hidden mt-2 space-y-2 min-w-0">
                             <div class="space-y-0.5">
@@ -363,7 +380,7 @@
                 <div class="flex justify-between items-center px-4 py-3">
                     <div class="flex space-x-6">
                         <button id="tab-positions" onclick="switchPositionTab('positions')" class="tab-active text-[13px] pb-1">當前持倉(2)</button>
-                        <button id="tab-orders" onclick="switchPositionTab('orders')" class="text-gray-400 font-bold text-[13px] pb-1">當前委託(3)</button>
+                        <button id="tab-orders" onclick="switchPositionTab('orders')" class="text-gray-400 font-bold text-[13px] pb-1">當前委託(4)</button>
                     </div>
                     <a href="交易流水頁面.html"><svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg></a>
                 </div>
@@ -503,7 +520,7 @@
                 <div id="orders-panel" class="hidden">
                     <div id="order-secondary-tabs" class="flex items-center justify-between px-4 py-2">
                         <div class="flex space-x-6">
-                            <button onclick="switchOrderSecondary('basic')" id="s-basic" class="tab-secondary active text-[14px]">基礎單 (1)</button>
+                            <button onclick="switchOrderSecondary('basic')" id="s-basic" class="tab-secondary active text-[14px]">基礎單 (2)</button>
                             <button onclick="switchOrderSecondary('tpsl')" id="s-tpsl" class="tab-secondary text-[14px]">止盈止損單 (2)</button>
                         </div>
                     </div>
@@ -529,6 +546,21 @@
             <a href="奖励.html"><div class="flex flex-col items-center space-y-1 px-3 text-gray-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12z"></path></svg><span class="text-[10px]">獎勵</span></div></a>
             <a href="资产.html"><div class="flex flex-col items-center space-y-1 px-3 text-gray-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg><span class="text-[10px]">资产</span></div></a>
         </nav>
+
+        <!-- ===== 居中弹窗：终端说明提示 ===== -->
+        <div id="terminal-hint-modal" class="hidden absolute inset-0 z-[65] flex items-center justify-center rounded-[38px] overflow-hidden px-6">
+            <div class="absolute inset-0 bg-black/40" onclick="closeModal('terminal-hint-modal')"></div>
+            <div class="relative w-full bg-white rounded-2xl shadow-2xl app-modal overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-50 flex justify-between items-center">
+                    <h3 id="terminal-hint-title" class="text-[13px] font-black">说明</h3>
+                    <button type="button" onclick="closeModal('terminal-hint-modal')" class="text-gray-400 text-lg leading-none">✕</button>
+                </div>
+                <div id="terminal-hint-body" class="p-5 text-[11px] text-gray-600 leading-relaxed space-y-3"></div>
+                <div class="px-5 pb-5">
+                    <button type="button" onclick="closeModal('terminal-hint-modal')" class="w-full bg-black text-white py-3 rounded-xl text-[12px] font-black">知道了</button>
+                </div>
+            </div>
+        </div>
 
         <!-- ===== 底部弹层：订单类型 ===== -->
         <div id="order-type-sheet" class="hidden absolute inset-0 z-50 flex items-end rounded-[38px] overflow-hidden">
@@ -1389,7 +1421,7 @@
 <script>
     let currentSide = 'open';
     let currentOrderMode = 'limit';
-    let currentTPSLMode = '单向';
+    let currentTPSLMode = '单向委托';
     const triggerTypeMap = { 'attach-tp': 'latest', 'attach-sl': 'latest', tp: 'latest', sl: 'latest', 'pos-tp': 'latest', 'pos-sl': 'latest', 'order-att-tp': 'mark', 'order-att-sl': 'mark' };
     const orderDelegateMap = { 'tp-order': 'market', 'sl-order': 'market' };
     let pickerContext = { type: '', key: '' };
@@ -1744,7 +1776,7 @@
                     </div>
                 </div>
                 <div class="flex items-center flex-wrap gap-1.5 mb-4">
-                    <span class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">平多</span>
+                    <span class="bg-red-100 text-red-600 text-[10px] px-1 font-black rounded-sm">卖出平多</span>
                     <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">全仓</span>
                     <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">3X</span>
                     <span class="text-gray-300 font-medium text-[10px]">06/11 18:59:34</span>
@@ -1752,6 +1784,39 @@
                 <div class="grid grid-cols-2 gap-y-2 text-[11px]">
                     <div class="flex flex-col"><span class="text-gray-400 font-bold uppercase text-[9px]">成交數量 / 數量 (USDC)</span><span class="font-black font-mono">0.00 / 620</span></div>
                     <div class="flex flex-col text-right"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black font-mono">620.00</span></div>
+                </div>
+                <div class="flex justify-between items-center text-[11px] mt-3">
+                    <span class="text-gray-400 font-bold uppercase text-[9px]">止盈/止損</span>
+                    <div class="flex items-center gap-1.5 font-black font-mono">
+                        <span id="order-basic-tpsl-display">500/600</span>
+                        <button type="button" onclick="openOrderAttachTPSLSheet()" class="text-blue-500 p-0.5 active:opacity-60" aria-label="设置止盈止损">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="order-card">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-black text-[13px]">ETHUSDT</span>
+                        <span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button type="button" onclick="openModifyBaseOrderSheet('OR_882912')" class="text-blue-500 p-1 active:opacity-60" aria-label="修改参数">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                        <button onclick="alert('已撤銷該委託')" class="bg-gray-100 text-gray-900 text-[10px] font-black px-3 py-1 rounded-sm">撤單</button>
+                    </div>
+                </div>
+                <div class="flex items-center flex-wrap gap-1.5 mb-4">
+                    <span class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">买入平空</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">逐仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">5X</span>
+                    <span class="text-gray-300 font-medium text-[10px]">06/11 19:05:12</span>
+                </div>
+                <div class="grid grid-cols-2 gap-y-2 text-[11px]">
+                    <div class="flex flex-col"><span class="text-gray-400 font-bold uppercase text-[9px]">成交數量 / 數量 (USDT)</span><span class="font-black font-mono">0.00 / 850</span></div>
+                    <div class="flex flex-col text-right"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black font-mono">2,380.00</span></div>
                 </div>
             </div>
         `,
@@ -1770,7 +1835,7 @@
                     </div>
                 </div>
                 <div class="flex items-center flex-wrap gap-1.5 mb-3">
-                    <span class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">平多</span>
+                    <span class="bg-red-100 text-red-600 text-[10px] px-1 font-black rounded-sm">卖出平多</span>
                     <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">全仓</span>
                     <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">3X</span>
                     <span class="text-gray-300 font-medium text-[10px]">06/11 18:59:34</span>
@@ -1804,7 +1869,7 @@
                     </div>
                 </div>
                 <div class="flex items-center flex-wrap gap-1.5 mb-3">
-                    <span class="bg-red-100 text-red-600 text-[10px] px-1 font-black rounded-sm">平空</span>
+                    <span class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">买入平空</span>
                     <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">逐仓</span>
                     <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">5X</span>
                     <span class="text-gray-300 font-medium text-[10px]">06/11 19:12:08</span>
@@ -1829,7 +1894,7 @@
 
     const MODIFY_BASE_ORDER_DATA = {
         OR_882910: {
-            titleHtml: 'BNBUSDC <span class="text-green-500">买入开多 全仓 3x</span>',
+            titleHtml: 'BNBUSDC <span class="text-red-500">卖出平多 全仓 3x</span>',
             lastPrice: '606.31',
             price: '620.00',
             qty: '620',
@@ -1838,7 +1903,7 @@
             tpslSl: '600',
         },
         OR_882912: {
-            titleHtml: 'ETHUSDT <span class="text-red-500">卖出开空 逐仓 5x</span>',
+            titleHtml: 'ETHUSDT <span class="text-green-500">买入平空 逐仓 5x</span>',
             lastPrice: '2,382.50',
             price: '2380.00',
             qty: '850',
@@ -2031,8 +2096,8 @@
             html += renderRichPickerOption('mark', '标记价格', '', current === 'mark');
         } else if (type === 'tpsl-mode') {
             html += renderPickerHeader('委托模式');
-            html += renderRichPickerOption('单向', '单向', '预设触发价与委托价，市价达触发价后按委托价下单。', currentTPSLMode === '单向');
-            html += renderRichPickerOption('双向', '双向', '预设止盈/止损触发价与委托价；一侧触发成交后，另一侧自动失效。', currentTPSLMode === '双向');
+            html += renderRichPickerOption('单向委托', '单向委托', '预设触发价与委托价，市价达触发价后按委托价下单。', currentTPSLMode === '单向委托');
+            html += renderRichPickerOption('双向委托', '双向委托', '预设止盈/止损触发价与委托价；一侧触发成交后，另一侧自动失效。', currentTPSLMode === '双向委托');
         } else if (type === 'order-delegate') {
             const current = orderDelegateMap[key] || 'market';
             html += renderPickerHeader('订单委托类型');
@@ -2298,14 +2363,14 @@
 
     function updatePositionTabLabels() {
         const posCount = isGuestMode ? 0 : 2;
-        const ordCount = isGuestMode ? 0 : 3;
+        const ordCount = isGuestMode ? 0 : 4;
         const tabPos = document.getElementById('tab-positions');
         const tabOrd = document.getElementById('tab-orders');
         const sBasic = document.getElementById('s-basic');
         const sTpsl = document.getElementById('s-tpsl');
         if (tabPos) tabPos.textContent = `當前持倉(${posCount})`;
         if (tabOrd) tabOrd.textContent = `當前委託(${ordCount})`;
-        if (sBasic) sBasic.textContent = `基礎單 (${isGuestMode ? 0 : 1})`;
+        if (sBasic) sBasic.textContent = `基礎單 (${isGuestMode ? 0 : 2})`;
         if (sTpsl) sTpsl.textContent = `止盈止損單 (${isGuestMode ? 0 : 2})`;
     }
 
@@ -2707,10 +2772,37 @@
         renderKlineCountdown();
     }
 
+    function openTerminalHintModal(title, bodyHtml) {
+        const titleEl = document.getElementById('terminal-hint-title');
+        const bodyEl = document.getElementById('terminal-hint-body');
+        if (titleEl) titleEl.textContent = title;
+        if (bodyEl) bodyEl.innerHTML = bodyHtml;
+        openModal('terminal-hint-modal');
+    }
+
+    function openAttachTpslHintModal() {
+        openTerminalHintModal('止盈/止損', '<p>止盈止损是指下单时提前为该订单预设止盈价及止损价，以锁定利润或控制损失。当订单部分成交或完全成交时，系统将自动进行止盈止损委托。附带的分批止盈只有当主单完全成交时才会进行委托。</p>');
+    }
+
+    function openTpslModeHintModal() {
+        openTerminalHintModal('单向/双向', '<p><strong>单向：</strong>预先设置触发价格和委托价格，当市场价格达到触发价格时，系统将按委托价格自动下单。</p><p><strong>双向：</strong>预先设置止盈止损的触发价格和委托价格，当市场价格达到止盈触发价格时，系统将按止盈的委托价格自动下单，止损则自动失效；反之止损亦然。</p>');
+    }
+
+    function toggleTPSLModeDropdown(event) {
+        if (event) event.stopPropagation();
+        const panel = document.getElementById('tpsl-mode-dropdown');
+        if (panel) panel.classList.toggle('hidden');
+    }
+
+    function closeTPSLModeDropdown() {
+        document.getElementById('tpsl-mode-dropdown')?.classList.add('hidden');
+    }
+
     function setTPSLMode(mode) {
         currentTPSLMode = mode;
         const modeEl = document.getElementById('tpsl-mode-value');
         if (modeEl) modeEl.innerText = mode;
+        closeTPSLModeDropdown();
         renderTPSLTriggers();
     }
 
@@ -2881,7 +2973,7 @@
     function getTPSLOrderTypeLabel(orderRole, priceType) {
         const isMarket = priceType === '市价';
         const isClose = currentSide === 'close';
-        const isBidirect = currentTPSLMode === '双向';
+        const isBidirect = String(currentTPSLMode).includes('双向');
         if (!isClose) return isMarket ? '市價委託' : '限價委託';
         if (isBidirect) {
             const prefix = orderRole === 'sl' ? '止損' : '止盈';
@@ -2894,7 +2986,7 @@
         const container = document.getElementById('tpsl-triggers-container');
         if (!container) return;
         const isClose = currentSide === 'close';
-        const isBidirect = currentTPSLMode === '双向';
+        const isBidirect = String(currentTPSLMode).includes('双向');
         let html = '';
 
         const renderRow = (label, placeholder, role) => {
@@ -3024,19 +3116,19 @@
         document.getElementById('confirm-tpsl').innerText = '--';
 
         if (direction === 'long') {
-            title.innerText = 'BTCUSDT 開多';
+            title.innerText = 'BTCUSDT 买入开多';
             title.className = 'text-[13px] font-black text-green-500';
             actionBtn.className = 'w-full bg-green-500 text-white py-3 rounded-xl text-[12px] font-black';
             priceEl.innerText = isMarket ? '市價' : (isTpsl ? '止盈止損' : '72,305.9 USDT');
             typeText.innerText = isTpsl ? '止盈止損單' : (isMarket ? '市價單' : '限價單');
         } else if (direction === 'short') {
-            title.innerText = 'BTCUSDT 開空';
+            title.innerText = 'BTCUSDT 卖出开空';
             title.className = 'text-[13px] font-black text-red-500';
             actionBtn.className = 'w-full bg-red-500 text-white py-3 rounded-xl text-[12px] font-black';
             priceEl.innerText = isMarket ? '市價' : (isTpsl ? '止盈止損' : '72,305.9 USDT');
             typeText.innerText = isTpsl ? '止盈止損單' : (isMarket ? '市價單' : '限價單');
         } else {
-            title.innerText = direction === 'close-long' ? 'BTCUSDT 平多' : 'BTCUSDT 平空';
+            title.innerText = direction === 'close-long' ? 'BTCUSDT 卖出平多' : 'BTCUSDT 买入平空';
             title.className = 'text-[13px] font-black text-orange-500';
             actionBtn.className = 'w-full bg-orange-500 text-white py-3 rounded-xl text-[12px] font-black';
             priceEl.innerText = isMarket || currentSide === 'close' ? '市價' : '72,305.9 USDT';
@@ -3058,12 +3150,16 @@
     setInterval(tickPremarketCountdown, 1000);
     updateQtyUnitDisplay();
     updateMoreMenuFavoriteUI();
+    updatePositionTabLabels();
     applyObLayoutMode();
     renderOrderBookDepth();
     setInterval(tickOrderBookDepth, 900);
     renderOrderList();
     renderPairList();
     updateBestPriceChecks();
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('#tpsl-mode-dropdown-wrap')) closeTPSLModeDropdown();
+    });
 </script>
 </body>
 </html>
