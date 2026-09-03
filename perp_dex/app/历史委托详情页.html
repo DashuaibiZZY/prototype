@@ -67,6 +67,8 @@
     }
 
     function filledInfoBlock(data) {
+        const roeClass = !data.pnlRoe || data.pnlRoe === '--' ? 'text-gray-400'
+            : (String(data.pnlRoe).indexOf('+') >= 0 ? 'text-green-500' : 'text-red-500');
         return `
             <div class="px-6 py-4 space-y-4 text-[12px]">
                 ${infoRow('委托类型', data.orderType)}
@@ -76,7 +78,8 @@
                 ${infoRow('成交均价', data.avgPrice, 'font-mono')}
                 ${infoRow('生效类型', data.timeInForce)}
                 ${infoRow('手续费', data.fee, 'font-mono text-red-500')}
-                ${infoRow('盈亏', data.pnl, data.pnlClass + ' font-mono')}
+                ${infoRow('平仓收益', data.pnl, (data.pnlClass || '') + ' font-mono')}
+                ${infoRow('平仓收益率', data.pnlRoe || '--', roeClass + ' font-mono')}
                 ${infoRow('委托时间', data.orderTime)}
                 ${copyOrderRow('订单编号', data.orderId)}
             </div>`;
@@ -138,6 +141,7 @@
             timeInForce: 'GTC',
             fee: '-2.87 USDT',
             pnl: '+12.45 USDT',
+            pnlRoe: '(+25.40%)',
             pnlClass: 'text-green-500',
             orderTime: '2026-06-11 18:58:20',
             orderId: '2938472941',
@@ -150,8 +154,9 @@
             filledQty: '123.24',
             avgPrice: '634.34',
             fee: '-0.62 USDT',
-            pnl: '--',
-            pnlClass: 'text-gray-400',
+            pnl: '+8.62 USDT',
+            pnlRoe: '(+12.15%)',
+            pnlClass: 'text-green-500',
             orderId: '2938472945',
         };
 
@@ -170,9 +175,10 @@
             price: '645.00',
             filledQty: '5000.00',
             avgPrice: '644.82',
-            timeInForce: 'IOC',
+            timeInForce: 'GTC',
             fee: '-5.12 USDT',
             pnl: '-124.50 USDT',
+            pnlRoe: '(-18.32%)',
             pnlClass: 'text-red-500',
             orderTime: '2026-06-10 12:20:00',
             orderId: 'LX-9283749',
