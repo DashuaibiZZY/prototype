@@ -100,6 +100,8 @@
         #data-container thead { z-index: 20; }
         #data-body td { overflow: visible; position: relative; }
         .pf-filter-bar { position: relative; z-index: 30; overflow: visible; }
+        .pf-contract-filter-root { position: relative; }
+        .pf-contract-filter-item.hidden { display: none; }
         .date-range-picker-popover { z-index: 200; max-height: none; overflow: visible; }
         .date-range-picker-popover.picker-fixed { position: fixed; }
         .date-range-picker-popover .picker-scroll { overflow: visible; }
@@ -935,9 +937,15 @@
                 <div class="flex-1 overflow-y-auto no-scrollbar pt-12 px-6 pb-10">
 
                     <!-- 標題 -->
-                    <div class="flex items-center justify-between mb-8">
-                        <h2 class="text-xl font-black italic tracking-tighter text-gray-900">BTCUSDC 永續</h2>
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 id="contract-details-title" class="text-xl font-black italic tracking-tighter text-gray-900">BTCUSDC 永續</h2>
                         <span class="text-[10px] font-black bg-blue-50 text-blue-600 px-2 py-1 rounded-sm uppercase">交易規則</span>
+                    </div>
+
+                    <!-- 交易币种项目介绍（后台配置） -->
+                    <div id="contract-asset-intro" class="mb-8 pb-6 border-b border-gray-100">
+                        <p id="contract-asset-intro-label" class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">项目介绍 · BTC</p>
+                        <p id="contract-asset-intro-text" class="text-[12px] text-gray-600 leading-relaxed"></p>
                     </div>
 
                     <!-- 基礎市場信息網格 -->
@@ -1530,11 +1538,7 @@
                     </div>
                 </div>
                 <!-- 合约 -->
-                <select class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]">
-                    <option>合約</option>
-                    <option>BTCUSDC</option>
-                    <option>BNBUSDC</option>
-                </select>
+                <div data-pf-contract-filter="hist-order-contract-filter"></div>
                 <!-- 基础单专属：订单类型、方向 -->
                 <span id="hist-order-extra-filters" class="flex items-center space-x-2">
                 <select id="hist-order-type-filter" class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]">
@@ -1696,7 +1700,7 @@
                         </div>
                     </div>
                 </div>
-                <select class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]"><option>合約</option><option>BNBUSDC</option></select>
+                <div data-pf-contract-filter="hist-trade-contract-filter"></div>
                 <select class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]"><option>方向</option><option>全部</option><option>買入</option><option>賣出</option></select>
                 <button class="px-3 py-1 bg-black text-white rounded-sm">查詢</button>
                 <button class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm">重置</button>
@@ -1827,7 +1831,7 @@
                         </div>
                     </div>
                 </div>
-                <select class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]"><option>合約</option><option>BTCUSDC</option></select>
+                <div data-pf-contract-filter="hist-pos-contract-filter"></div>
                 <select class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]"><option>倉位模式</option><option>全部</option><option>逐倉</option><option>全倉</option></select>
                 <div class="relative">
                     <button onclick="toggleMultiSelect('hist-pos-status-dropdown')" class="border border-gray-200 px-2 py-1 rounded-sm flex items-center space-x-1">
@@ -3328,7 +3332,7 @@
     </div>
 </div>
 
-<script src="position-flow-module.js?v=2026-09-03-hist-trade-pos"></script>
+<script src="position-flow-module.js?v=2026-09-03-contract-filter-intro"></script>
 <script src="position-close-module.js?v=2026-09-02-base-order-polish"></script>
 <script>
     // ==================== 通用工具 ====================
@@ -5134,9 +5138,45 @@
         syncMarketFavCategory(pair);
     }
 
+    /** 交易币种项目介绍（后台配置，按基础资产 key） */
+    const CONTRACT_ASSET_INTRO = {
+        BTC: '比特币（Bitcoin）是首个去中心化加密货币，由中本聪于 2009 年提出。BTC 采用工作量证明共识机制，总量上限 2100 万枚，常被用作数字价值存储与合约市场的核心标的。',
+        ETH: '以太坊（Ethereum）是支持智能合约的公链平台，ETH 为其原生代币，广泛用于 DeFi、NFT 及链上应用生态，也是主流永续合约的重要基础资产。',
+        BNB: 'BNB 是 BNB Chain 生态的原生代币，可用于链上 Gas、生态应用及平台权益；在 ForX 合约市场中常作为高流动性交易对的基础资产。',
+        SOL: 'Solana（SOL）是高性能公链原生代币，以低延迟与高吞吐著称，在 DeFi 与链上交易场景中增长迅速，亦是合约市场常见标的。',
+        PEPE: 'PEPE 是基于以太坊的 Meme 代币，社区驱动、流通量大；ForX 上线 PEPE 永续合约为用户提供该热门资产的价格敞口与对冲工具。',
+    };
+
+    function getBaseAssetFromPair(pair) {
+        if (!pair) return '';
+        return pair.replace(/USDC|USDT|HUSDC|BUSD/gi, '').toUpperCase();
+    }
+
+    function updateContractAssetIntro(pair) {
+        const symbol = pair || document.getElementById('market-pair-name')?.textContent?.trim() || 'BTCUSDC';
+        const base = getBaseAssetFromPair(symbol);
+        const titleEl = document.getElementById('contract-details-title');
+        const labelEl = document.getElementById('contract-asset-intro-label');
+        const textEl = document.getElementById('contract-asset-intro-text');
+        const blockEl = document.getElementById('contract-asset-intro');
+        if (titleEl) titleEl.textContent = symbol + ' 永续';
+        const intro = CONTRACT_ASSET_INTRO[base];
+        if (!blockEl || !labelEl || !textEl) return;
+        if (!intro) {
+            blockEl.classList.add('hidden');
+            return;
+        }
+        blockEl.classList.remove('hidden');
+        labelEl.textContent = '项目介绍 · ' + base;
+        textEl.textContent = intro;
+    }
+
     function selectMarketPair(pair) {
         const modal = document.getElementById('market-list-modal');
         if (modal) modal.remove();
+        const nameEl = document.getElementById('market-pair-name');
+        if (nameEl) nameEl.textContent = pair;
+        updateContractAssetIntro(pair);
         if (pair === 'PEPEUSDC') setKlineCountdownMode(true);
         else setKlineCountdownMode(false);
     }
@@ -5408,6 +5448,10 @@
         switchDataTab('pos');
         initKlinePeriodBar();
         setInterval(tickMarketOpenInterest, 200);
+        if (typeof PositionFlow !== 'undefined' && PositionFlow.initContractFilters) {
+            PositionFlow.initContractFilters();
+        }
+        updateContractAssetIntro('BTCUSDC');
         if (typeof PositionClose !== 'undefined') {
             PositionClose.refreshCloseQtyDisplay();
         }

@@ -1,9 +1,37 @@
 /**
  * 合约交易页 · 持仓管理+流水模块：演示数据与筛选交互
- * @version 2026-09-03-hist-trade-pos
+ * @version 2026-09-03-contract-filter-intro
  */
 (function () {
-    window.POSITION_FLOW_MODULE_VERSION = '2026-09-03-hist-trade-pos';
+    window.POSITION_FLOW_MODULE_VERSION = '2026-09-03-contract-filter-intro';
+    const PF_CONTRACT_OPTIONS = [
+        'BTCUSDC', 'BNBUSDC', 'ETHUSDC', 'SOLUSDC', 'PEPEUSDC',
+        'BTCUSDT', 'BNBUSDT', 'ETHUSDT', 'SOLUSDT',
+    ];
+
+    function buildContractFilterOptionsHtml(filterId) {
+        return PF_CONTRACT_OPTIONS.map(function (symbol) {
+            const esc = symbol.replace(/'/g, "\\'");
+            return '<button type="button" class="pf-contract-filter-item w-full text-left px-3 py-1.5 hover:bg-gray-50 font-mono" data-symbol="' + symbol + '" onclick="PositionFlow.selectContractFilter(\'' + filterId + '\', \'' + esc + '\')">' + symbol + '</button>';
+        }).join('');
+    }
+
+    function buildContractFilterHtml(filterId) {
+        return '<div class="relative pf-contract-filter-root" id="' + filterId + '" data-value="">' +
+            '<button type="button" class="pf-contract-filter-trigger border border-gray-200 rounded-sm px-2 py-1 bg-white text-[10px] font-bold flex items-center gap-1 min-w-[76px] hover:border-gray-400" onclick="PositionFlow.toggleContractFilter(\'' + filterId + '\')">' +
+            '<span class="pf-contract-filter-label text-gray-500">合约</span>' +
+            '<svg class="w-3 h-3 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>' +
+            '</button>' +
+            '<div class="pf-contract-filter-panel absolute top-full left-0 mt-1 bg-white border border-gray-200 shadow-lg rounded-sm hidden z-[250] w-[148px]">' +
+            '<div class="p-2 border-b border-gray-100">' +
+            '<input type="text" class="pf-contract-filter-search w-full border border-gray-200 rounded-sm px-2 py-1 text-[10px] outline-none focus:border-black" placeholder="搜索合约" oninput="PositionFlow.filterContractOptions(\'' + filterId + '\', this.value)" onclick="event.stopPropagation()">' +
+            '</div>' +
+            '<div class="pf-contract-filter-list max-h-[180px] overflow-y-auto py-1 text-[10px]">' +
+            '<button type="button" class="pf-contract-filter-item w-full text-left px-3 py-1.5 hover:bg-gray-50 text-gray-500" data-symbol="" onclick="PositionFlow.selectContractFilter(\'' + filterId + '\', \'\')">全部</button>' +
+            buildContractFilterOptionsHtml(filterId) +
+            '</div></div></div>';
+    }
+
     const DEMO_END = new Date('2026-06-15T12:00:00');
     const FILL_PAGE_SIZE = 10;
     const RELATED_ORDERS_PAGE_SIZE = 10;
@@ -704,6 +732,65 @@
                 pagerHtml += '<button type="button" class="px-2 py-1 border border-gray-200 rounded-sm" onclick="PositionFlow.setFillDetailPage(' + (fillDetailState.page + 1) + ')">下一页</button>';
             }
             pagerEl.innerHTML = pagerHtml;
+        },
+
+        initContractFilters: function () {
+            document.querySelectorAll('[data-pf-contract-filter]').forEach(function (slot, index) {
+                const filterId = slot.dataset.pfContractFilter || ('pf-contract-filter-' + index);
+                slot.dataset.pfContractFilter = filterId;
+                slot.innerHTML = buildContractFilterHtml(filterId);
+            });
+            if (this._contractFilterDocBound) return;
+            this._contractFilterDocBound = true;
+            document.addEventListener('click', function (e) {
+                if (e.target.closest('.pf-contract-filter-root')) return;
+                document.querySelectorAll('.pf-contract-filter-panel').forEach(function (panel) {
+                    panel.classList.add('hidden');
+                });
+            });
+        },
+
+        toggleContractFilter: function (filterId) {
+            const root = document.getElementById(filterId);
+            if (!root) return;
+            const panel = root.querySelector('.pf-contract-filter-panel');
+            if (!panel) return;
+            const willOpen = panel.classList.contains('hidden');
+            document.querySelectorAll('.pf-contract-filter-panel').forEach(function (p) { p.classList.add('hidden'); });
+            if (willOpen) {
+                panel.classList.remove('hidden');
+                const input = panel.querySelector('.pf-contract-filter-search');
+                if (input) {
+                    input.value = '';
+                    this.filterContractOptions(filterId, '');
+                    setTimeout(function () { input.focus(); }, 0);
+                }
+            }
+        },
+
+        filterContractOptions: function (filterId, query) {
+            const root = document.getElementById(filterId);
+            if (!root) return;
+            const q = String(query || '').trim().toUpperCase();
+            root.querySelectorAll('.pf-contract-filter-item').forEach(function (item) {
+                const symbol = (item.dataset.symbol || '').toUpperCase();
+                const label = item.textContent.trim().toUpperCase();
+                const match = !q || symbol.indexOf(q) >= 0 || label.indexOf(q) >= 0;
+                item.classList.toggle('hidden', !match);
+            });
+        },
+
+        selectContractFilter: function (filterId, symbol) {
+            const root = document.getElementById(filterId);
+            if (!root) return;
+            root.dataset.value = symbol || '';
+            const labelEl = root.querySelector('.pf-contract-filter-label');
+            if (labelEl) {
+                labelEl.textContent = symbol || '合约';
+                labelEl.className = 'pf-contract-filter-label ' + (symbol ? 'text-gray-900 font-mono' : 'text-gray-500');
+            }
+            const panel = root.querySelector('.pf-contract-filter-panel');
+            if (panel) panel.classList.add('hidden');
         },
     };
 })();
