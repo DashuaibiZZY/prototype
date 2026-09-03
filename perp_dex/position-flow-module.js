@@ -1,9 +1,9 @@
 /**
  * 合约交易页 · 持仓管理+流水模块：演示数据与筛选交互
- * @version 2026-09-02-base-order-polish
+ * @version 2026-09-03-hist-base-fee-pnl
  */
 (function () {
-    window.POSITION_FLOW_MODULE_VERSION = '2026-09-02-base-order-polish';
+    window.POSITION_FLOW_MODULE_VERSION = '2026-09-03-hist-base-fee-pnl';
     const DEMO_END = new Date('2026-06-15T12:00:00');
     const histPosExpanded = new Set();
     const FILL_PAGE_SIZE = 10;
@@ -36,11 +36,11 @@
     ];
 
     const HIST_ORDER_BASE = [
-        { time: '2026-06-15 14:20:15', symbol: SYMBOL_BNBUSDC_ISOLATED, dir: '買入 / 開多', dirClass: 'text-green-500', price: '620.00', qty: '1.00', avg: '618.50', filled: '1.00', status: '全部成交', statusClass: 'text-gray-900', orderId: 'OR_1041927385473' },
-        { time: '2026-06-15 11:05:42', symbol: SYMBOL_BTCUSDC_ISOLATED, dir: '賣出 / 平多', dirClass: 'text-red-500', price: '65,500.0', qty: '0.50', avg: '65,420.0', filled: '0.35', status: '部分成交', statusClass: 'text-gray-600', orderId: 'OR_1041927385120' },
-        { time: '2026-06-14 22:18:03', symbol: SYMBOL_BNBUSDC_ISOLATED, dir: '買入 / 平空', dirClass: 'text-green-500', price: '2,380.0', qty: '2.00', avg: '--', filled: '0.00', status: '已取消', statusClass: 'text-gray-400', statusTip: '用户手动取消', orderId: 'OR_1041927384001' },
-        { time: '2026-06-14 09:12:55', symbol: SYMBOL_BNBUSDC_ISOLATED, dir: '賣出 / 平多', dirClass: 'text-red-500', price: '635.00', qty: '0.80', avg: '--', filled: '0.00', status: '已取消', statusClass: 'text-gray-400', statusTip: '订单过期', statusDashed: true, orderId: 'OR_1041927383888' },
-        { time: '2026-06-13 20:33:28', symbol: SYMBOL_BTCUSDC_ISOLATED, dir: '買入 / 開多', dirClass: 'text-green-500', price: '64,900.0', qty: '0.20', avg: '64,980.0', filled: '0.12', status: '部分成交', statusClass: 'text-gray-600', orderId: 'OR_1041927383777' },
+        { time: '2026-06-15 14:20:15', symbol: SYMBOL_BNBUSDC_ISOLATED, dir: '買入 / 開多', dirClass: 'text-green-500', price: '620.00', qty: '1.00', avg: '618.50', filled: '1.00', fee: '0.619 USDC', pnl: '+124.52 USDC', pnlClass: 'text-green-500', status: '全部成交', statusClass: 'text-gray-900', orderId: 'OR_1041927385473' },
+        { time: '2026-06-15 11:05:42', symbol: SYMBOL_BTCUSDC_ISOLATED, dir: '賣出 / 平多', dirClass: 'text-red-500', price: '65,500.0', qty: '0.50', avg: '65,420.0', filled: '0.35', fee: '1.145 USDC', pnl: '+184.32 USDC', pnlClass: 'text-green-500', status: '部分成交', statusClass: 'text-gray-600', orderId: 'OR_1041927385120' },
+        { time: '2026-06-14 22:18:03', symbol: SYMBOL_BNBUSDC_ISOLATED, dir: '買入 / 平空', dirClass: 'text-green-500', price: '2,380.0', qty: '2.00', avg: '--', filled: '0.00', fee: '--', pnl: '--', pnlClass: 'text-gray-400', status: '已取消', statusClass: 'text-gray-400', statusTip: '用户手动取消', orderId: 'OR_1041927384001' },
+        { time: '2026-06-14 09:12:55', symbol: SYMBOL_BNBUSDC_ISOLATED, dir: '賣出 / 平多', dirClass: 'text-red-500', price: '635.00', qty: '0.80', avg: '--', filled: '0.00', fee: '--', pnl: '--', pnlClass: 'text-gray-400', status: '已取消', statusClass: 'text-gray-400', statusTip: '订单过期', statusDashed: true, orderId: 'OR_1041927383888' },
+        { time: '2026-06-13 20:33:28', symbol: SYMBOL_BTCUSDC_ISOLATED, dir: '買入 / 開多', dirClass: 'text-green-500', price: '64,900.0', qty: '0.20', avg: '64,980.0', filled: '0.12', fee: '0.390 USDC', pnl: '-8.15 USDC', pnlClass: 'text-red-500', status: '部分成交', statusClass: 'text-gray-600', orderId: 'OR_1041927383777' },
     ];
 
     function buildFillRows(count, basePrice, baseQty) {
@@ -49,8 +49,6 @@
             const price = (basePrice + i * 0.5).toFixed(2);
             const qty = (baseQty / count).toFixed(3);
             const amount = (Number(price) * Number(qty)).toFixed(2);
-            const pnlVal = i % 3 === 0 ? -Number(amount) * 0.002 : Number(amount) * 0.003;
-            const pnl = (pnlVal >= 0 ? '+' : '') + pnlVal.toFixed(2) + ' USDC';
             rows.push({
                 time: '2026-06-15 14:20:' + String(10 + i).padStart(2, '0'),
                 qty: qty + ' BNB',
@@ -58,8 +56,6 @@
                 amount: amount + ' USDC',
                 role: i % 2 === 0 ? '吃单方' : '挂单方',
                 fee: (Number(amount) * 0.001).toFixed(3) + ' USDC',
-                pnl: pnl,
-                pnlClass: pnlVal >= 0 ? 'text-green-500' : 'text-red-500',
             });
         }
         return rows;
@@ -73,8 +69,8 @@
         OR_1041927385120: {
             titleSymbol: 'BTCUSDC', titleDir: '卖出平多 逐仓 20x', titleDirClass: 'text-red-500',
             fills: [
-                { time: '2026-06-15 11:05:43', qty: '0.20 BTC', price: '65,420.0', amount: '13,084.00 USDC', role: '挂单方', fee: '6.542 USDC', pnl: '+42.18 USDC', pnlClass: 'text-green-500' },
-                { time: '2026-06-15 11:05:44', qty: '0.15 BTC', price: '65,418.0', amount: '9,812.70 USDC', role: '吃单方', fee: '4.906 USDC', pnl: '-8.32 USDC', pnlClass: 'text-red-500' },
+                { time: '2026-06-15 11:05:43', qty: '0.20 BTC', price: '65,420.0', amount: '13,084.00 USDC', role: '挂单方', fee: '6.542 USDC' },
+                { time: '2026-06-15 11:05:44', qty: '0.15 BTC', price: '65,418.0', amount: '9,812.70 USDC', role: '吃单方', fee: '4.906 USDC' },
             ],
         },
         OR_1041927384001: { titleSymbol: 'BNBUSDC', titleDir: '买入平空 逐仓 20x', titleDirClass: 'text-green-500', fills: [] },
@@ -82,7 +78,7 @@
         OR_1041927383777: {
             titleSymbol: 'BTCUSDC', titleDir: '买入开多 逐仓 20x', titleDirClass: 'text-green-500',
             fills: [
-                { time: '2026-06-13 20:33:29', qty: '0.12 BTC', price: '64,980.0', amount: '7,797.60 USDC', role: '挂单方', fee: '3.899 USDC', pnl: '+18.65 USDC', pnlClass: 'text-green-500' },
+                { time: '2026-06-13 20:33:29', qty: '0.12 BTC', price: '64,980.0', amount: '7,797.60 USDC', role: '挂单方', fee: '3.899 USDC' },
             ],
         },
     };
@@ -305,6 +301,8 @@
             '<td class="px-4 py-3 font-mono font-bold whitespace-nowrap">' + row.qty + '</td>' +
             '<td class="px-4 py-3 font-mono whitespace-nowrap">' + row.avg + '</td>' +
             '<td class="px-4 py-3 font-mono whitespace-nowrap">' + row.filled + '</td>' +
+            (opts.includeFeePnl ? '<td class="px-4 py-3 font-mono whitespace-nowrap">' + (row.fee || '--') + '</td>' +
+            '<td class="px-4 py-3 font-mono font-bold whitespace-nowrap ' + (row.pnlClass || 'text-gray-400') + '">' + (row.pnl || '--') + '</td>' : '') +
             (opts.includeTpsl ? '<td class="px-4 py-3 align-top whitespace-nowrap">' + renderBaseOrderTpslCell(row, { withSetup: opts.withTpslSetup }) + '</td>' : '') +
             '<td class="px-4 py-3 whitespace-nowrap">' + statusCellHtml(row) + '</td>' +
             '<td class="px-4 py-3 whitespace-nowrap">' + renderOrderIdCopyCell(row.orderId) + '</td>';
@@ -322,7 +320,7 @@
         return HIST_ORDER_BASE.map(function (r) {
             const esc = String(r.orderId).replace(/'/g, "\\'");
             return '<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">' +
-                renderBaseOrderCoreCells(r, { includeTpsl: false }) +
+                renderBaseOrderCoreCells(r, { includeTpsl: false, includeFeePnl: true }) +
                 '<td class="px-4 py-3 whitespace-nowrap">' +
                 '<button type="button" class="' + BTN_BASE + ' text-blue-600" onclick="openOrderFillDetail(\'' + esc + '\')">查看详情</button>' +
                 '</td></tr>';
@@ -429,7 +427,7 @@
 
         renderHistOrderHeader: function (subTab) {
             if (subTab === 'base') {
-                return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">委託時間</th><th class="px-4 py-2">交易方向</th><th class="px-4 py-2">委託價</th><th class="px-4 py-2">委託數量</th><th class="px-4 py-2">成交均價</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">訂單狀態</th><th class="px-4 py-2">訂單編號</th><th class="px-4 py-2">流水详情</th>';
+                return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">委託時間</th><th class="px-4 py-2">交易方向</th><th class="px-4 py-2">委託價</th><th class="px-4 py-2">委託數量</th><th class="px-4 py-2">成交均價</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">手續費</th><th class="px-4 py-2">平倉盈虧</th><th class="px-4 py-2">訂單狀態</th><th class="px-4 py-2">訂單編號</th><th class="px-4 py-2">流水详情</th>';
             }
             return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">委託時間</th><th class="px-4 py-2">交易方向</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發價格</th><th class="px-4 py-2">委託價格</th><th class="px-4 py-2">訂單狀態</th><th class="px-4 py-2">訂單編號</th>';
         },
@@ -620,7 +618,7 @@
             titleEl.innerHTML = renderOrderSummaryTitleHtml(data.titleSymbol, data.titleDir, data.titleDirClass);
             const fills = data.fills || [];
             if (!fills.length) {
-                bodyEl.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-center text-gray-400">暂无成交记录</td></tr>';
+                bodyEl.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-center text-gray-400">暂无成交记录</td></tr>';
                 if (pagerEl) pagerEl.innerHTML = '';
                 return;
             }
@@ -628,7 +626,6 @@
             const start = (fillDetailState.page - 1) * FILL_PAGE_SIZE;
             const pageFills = fills.slice(start, start + FILL_PAGE_SIZE);
             bodyEl.innerHTML = pageFills.map(function (f) {
-                const pnlClass = f.pnlClass || (String(f.pnl || '').indexOf('-') === 0 ? 'text-red-500' : 'text-green-500');
                 return '<tr class="border-b border-gray-50 text-[11px]">' +
                     '<td class="px-3 py-2 text-gray-400 whitespace-nowrap">' + f.time + '</td>' +
                     '<td class="px-3 py-2 font-mono whitespace-nowrap">' + f.qty + '</td>' +
@@ -636,7 +633,6 @@
                     '<td class="px-3 py-2 font-mono whitespace-nowrap">' + f.amount + '</td>' +
                     '<td class="px-3 py-2 whitespace-nowrap">' + f.role + '</td>' +
                     '<td class="px-3 py-2 font-mono whitespace-nowrap">' + f.fee + '</td>' +
-                    '<td class="px-3 py-2 font-mono font-bold whitespace-nowrap ' + pnlClass + '">' + (f.pnl || '--') + '</td>' +
                     '</tr>';
             }).join('');
             if (!pagerEl) return;
