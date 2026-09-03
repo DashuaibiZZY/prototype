@@ -3414,8 +3414,8 @@
     let obLayoutMode = 'split';
 
     const REALIZED_PNL_BREAKDOWN_DEMO = {
-        pos: { total: -45.20, closePnl: -38.10, funding: 2.15, fee: -9.25 },
-        hist: { total: -579.30, closePnl: -554.02, funding: 11.35, fee: -36.64 }
+        pos: { total: -45.20, roe: -8.42, closePnl: -38.10, funding: 2.15, fee: -9.25 },
+        hist: { total: -579.30, roe: -143.68, closePnl: -554.02, funding: 11.35, fee: -36.64 }
     };
     if (window.PositionFlow && PositionFlow.PNL_BREAKDOWN_EXTRA) {
         Object.assign(REALIZED_PNL_BREAKDOWN_DEMO, PositionFlow.PNL_BREAKDOWN_EXTRA);
@@ -3444,17 +3444,26 @@
             </div>`;
     }
 
+    function formatSignedRoe(n) {
+        return '(' + (n >= 0 ? '+' : '') + n.toFixed(2) + '%)';
+    }
+
     function renderUnrealizedPnlHoverCell(amountText, roeText, data, colorClass) {
+        const cls = colorClass || 'text-green-500';
         return `<span class="realized-pnl-wrap relative inline-block">
-            <span class="dashed-hint font-black ${colorClass || 'text-green-500'}">${amountText} <span class="text-[8px] font-black">${roeText}</span></span>
+            <span class="dashed-hint font-black ${cls} block leading-tight">${amountText}</span>
+            <span class="dashed-hint font-black text-[10px] ${cls} block leading-tight">${roeText}</span>
             <div class="realized-pnl-tip text-left whitespace-nowrap">${renderRealizedPnlBreakdownHtml(data)}</div>
         </span>`;
     }
 
     function renderRealizedPnlHoverCell(data, amountClass) {
         const cls = pnlColorClass(data.total);
+        const roeText = Number.isFinite(data.roe) ? formatSignedRoe(data.roe) : '';
+        const roeLine = roeText ? `<span class="dashed-hint font-black text-[10px] ${cls} block leading-tight">${roeText}</span>` : '';
         return `<span class="realized-pnl-wrap relative inline-block">
-            <span class="dashed-hint font-black ${cls} ${amountClass || ''}">${formatSignedUsdt(data.total)}</span>
+            <span class="dashed-hint font-black ${cls} ${amountClass || ''} block leading-tight">${formatSignedUsdt(data.total)}</span>
+            ${roeLine}
             <div class="realized-pnl-tip text-left whitespace-nowrap">${renderRealizedPnlBreakdownHtml(data)}</div>
         </span>`;
     }
