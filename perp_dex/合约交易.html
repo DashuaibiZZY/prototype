@@ -937,9 +937,8 @@
                 <div class="flex-1 overflow-y-auto no-scrollbar pt-12 px-6 pb-10">
 
                     <!-- 標題 -->
-                    <div class="flex items-center justify-between mb-4">
+                    <div class="mb-4">
                         <h2 id="contract-details-title" class="text-xl font-black italic tracking-tighter text-gray-900">BTCUSDC 永續</h2>
-                        <span class="text-[10px] font-black bg-blue-50 text-blue-600 px-2 py-1 rounded-sm uppercase">交易規則</span>
                     </div>
 
                     <!-- 交易币种项目介绍（后台配置） -->
@@ -947,6 +946,9 @@
                         <p id="contract-asset-intro-label" class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">项目介绍 · BTC</p>
                         <p id="contract-asset-intro-text" class="text-[12px] text-gray-600 leading-relaxed"></p>
                     </div>
+
+                    <!-- 交易規則 -->
+                    <h3 class="text-[11px] font-black text-gray-900 uppercase tracking-[0.2em] mb-4">交易規則</h3>
 
                     <!-- 基礎市場信息網格 -->
                     <div class="grid grid-cols-2 gap-y-6 gap-x-12 mb-10">
@@ -3018,12 +3020,12 @@
             </div>
             <div class="space-y-1">
                 <label class="text-gray-500 font-bold">委托价格</label>
-                <input id="modify-base-order-price" type="text" value="620.00" class="w-full border border-gray-200 rounded-sm px-3 py-2 font-mono font-bold outline-none focus:border-black">
+                <input id="modify-base-order-price" type="text" value="620.00" class="w-full border border-gray-200 rounded-sm px-3 py-2 font-mono font-bold outline-none focus:border-black" oninput="updateModifyBaseOrderEstimates()">
             </div>
             <div class="space-y-1">
                 <label class="text-gray-500 font-bold">数量</label>
                 <div class="flex border border-gray-200 rounded-sm overflow-hidden">
-                    <input id="modify-base-order-qty" type="text" value="1.00" class="flex-1 px-3 py-2 font-mono font-bold outline-none">
+                    <input id="modify-base-order-qty" type="text" value="1.00" class="flex-1 px-3 py-2 font-mono font-bold outline-none" oninput="updateModifyBaseOrderEstimates()">
                     <select id="modify-base-order-qty-unit" class="bg-gray-50 border-l border-gray-200 px-2 text-[10px] font-bold text-gray-600 outline-none">
                         <option>USDT</option>
                         <option>BNB</option>
@@ -3049,17 +3051,20 @@
                     <div class="space-y-0.5">
                         <div class="text-[8px] text-gray-400">止盈</div>
                         <div class="h-7 bg-gray-50 border border-gray-100 px-1.5 flex items-center">
-                            <input class="w-full bg-transparent font-bold text-[10px] outline-none" placeholder="价格" value="800.123">
+                            <input id="modify-base-order-tp-price" class="w-full bg-transparent font-bold text-[10px] outline-none" placeholder="价格" value="800.123" oninput="updateModifyBaseOrderEstimates()">
                             <select class="text-[8px] bg-transparent border-l border-gray-200 pl-1 text-gray-500 outline-none ml-1"><option>最新成交价</option><option>标记价格</option></select>
                         </div>
+                        <div id="modify-base-order-tp-estimate" class="tpsl-estimate hidden"></div>
                     </div>
                     <div class="space-y-0.5">
                         <div class="text-[8px] text-gray-400">止损</div>
                         <div class="h-7 bg-gray-50 border border-gray-100 px-1.5 flex items-center">
-                            <input class="w-full bg-transparent font-bold text-[10px] outline-none" placeholder="价格" value="600.234">
+                            <input id="modify-base-order-sl-price" class="w-full bg-transparent font-bold text-[10px] outline-none" placeholder="价格" value="600.234" oninput="updateModifyBaseOrderEstimates()">
                             <select class="text-[8px] bg-transparent border-l border-gray-200 pl-1 text-gray-500 outline-none ml-1"><option>最新成交价</option><option>标记价格</option></select>
                         </div>
+                        <div id="modify-base-order-sl-estimate" class="tpsl-estimate hidden"></div>
                     </div>
+                    <div id="modify-base-order-tpsl-conflict-hint" class="tpsl-conflict-hint hidden"></div>
                 </div>
             </div>
             <div class="flex space-x-3 pt-2">
@@ -3332,7 +3337,7 @@
     </div>
 </div>
 
-<script src="position-flow-module.js?v=2026-09-03-contract-filter-intro"></script>
+<script src="position-flow-module.js?v=2026-09-03-details-modify-fav"></script>
 <script src="position-close-module.js?v=2026-09-02-base-order-polish"></script>
 <script>
     // ==================== 通用工具 ====================
@@ -3805,6 +3810,37 @@
         return 620;
     }
 
+    function getModifyBaseOrderRefPrice() {
+        const priceInput = document.getElementById('modify-base-order-price');
+        const val = parseInputNum(priceInput?.value);
+        if (Number.isFinite(val)) return val;
+        const hint = document.getElementById('modify-base-order-last-price')?.textContent || '';
+        const fromHint = parseInputNum(hint.replace(/[^\d.,]/g, ''));
+        return Number.isFinite(fromHint) ? fromHint : getLastTradePrice();
+    }
+
+    function getModifyBaseOrderQtyUsdt() {
+        const qtyInput = document.getElementById('modify-base-order-qty');
+        const qty = parseInputNum(qtyInput?.value);
+        if (!Number.isFinite(qty)) return NaN;
+        const unit = document.getElementById('modify-base-order-qty-unit')?.value || 'USDT';
+        const ref = getModifyBaseOrderRefPrice();
+        if (unit === 'BNB' || unit === 'BTC') return qty * ref;
+        return qty;
+    }
+
+    function updateModifyBaseOrderEstimates() {
+        updateEstimateContext(
+            document.getElementById('modify-base-order-tp-price'),
+            document.getElementById('modify-base-order-sl-price'),
+            document.getElementById('modify-base-order-tp-estimate'),
+            document.getElementById('modify-base-order-sl-estimate'),
+            document.getElementById('modify-base-order-tpsl-conflict-hint'),
+            getModifyBaseOrderRefPrice(),
+            getModifyBaseOrderQtyUsdt()
+        );
+    }
+
     function renderPosTableHintTh(label, tip) {
         return `<th class="px-3 py-2 font-medium"><span class="market-hint-wrap dashed-hint">${label}<div class="market-hint-tip th-col-tip">${tip}</div></span></th>`;
     }
@@ -3836,6 +3872,7 @@
             getOrderModalRefPrice(),
             getOrderModalQtyUsdt()
         );
+        updateModifyBaseOrderEstimates();
     }
 
     function bindTPSLEstimateListeners() {
@@ -4456,6 +4493,7 @@
         const checked = document.getElementById('modify-base-order-tpsl-check')?.checked;
         const panel = document.getElementById('modify-base-order-tpsl-inputs');
         if (panel) panel.style.display = checked ? 'block' : 'none';
+        if (checked) updateModifyBaseOrderEstimates();
     }
     function confirmModifyBaseOrder() {
         toggleModal('modal-modify-base-order');

@@ -1,9 +1,9 @@
 /**
  * 合约交易页 · 持仓管理+流水模块：演示数据与筛选交互
- * @version 2026-09-03-contract-filter-intro
+ * @version 2026-09-03-details-modify-fav
  */
 (function () {
-    window.POSITION_FLOW_MODULE_VERSION = '2026-09-03-contract-filter-intro';
+    window.POSITION_FLOW_MODULE_VERSION = '2026-09-03-details-modify-fav';
     const PF_CONTRACT_OPTIONS = [
         'BTCUSDC', 'BNBUSDC', 'ETHUSDC', 'SOLUSDC', 'PEPEUSDC',
         'BTCUSDT', 'BNBUSDT', 'ETHUSDT', 'SOLUSDT',
@@ -675,9 +675,16 @@
             if (qtyInput) qtyInput.value = row.qty;
             const tpslCheck = document.getElementById('modify-base-order-tpsl-check');
             const tpslInputs = document.getElementById('modify-base-order-tpsl-inputs');
+            const tpInput = document.getElementById('modify-base-order-tp-price');
+            const slInput = document.getElementById('modify-base-order-sl-price');
             const hasTpsl = row.tpslTp || row.tpslSl;
             if (tpslCheck) tpslCheck.checked = hasTpsl;
             if (tpslInputs) tpslInputs.style.display = hasTpsl ? 'block' : 'none';
+            if (tpInput) tpInput.value = row.tpslTp || '';
+            if (slInput) slInput.value = row.tpslSl || '';
+            if (typeof window.updateModifyBaseOrderEstimates === 'function') {
+                window.updateModifyBaseOrderEstimates();
+            }
         },
 
         openFillDetail: function (orderId) {
