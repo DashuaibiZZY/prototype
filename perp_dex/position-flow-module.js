@@ -1,13 +1,14 @@
 /**
  * 合约交易页 · 持仓管理+流水模块：演示数据与筛选交互
- * @version 2026-09-03-trade-dir-unify
+ * @version 2026-09-03-hist-trade-pos
  */
 (function () {
-    window.POSITION_FLOW_MODULE_VERSION = '2026-09-03-trade-dir-unify';
+    window.POSITION_FLOW_MODULE_VERSION = '2026-09-03-hist-trade-pos';
     const DEMO_END = new Date('2026-06-15T12:00:00');
-    const histPosExpanded = new Set();
     const FILL_PAGE_SIZE = 10;
+    const RELATED_ORDERS_PAGE_SIZE = 10;
     let fillDetailState = { orderId: null, page: 1 };
+    let relatedOrdersState = { posId: null, page: 1 };
 
     const SYMBOL_BNBUSDC_ISOLATED = 'BNBUSDC <span class="text-gray-500 font-bold">逐仓</span> <span class="text-green-500 bg-green-50 px-1 rounded-[1px] text-[10px]">20x</span>';
     const SYMBOL_BTCUSDC_ISOLATED = 'BTCUSDC <span class="text-gray-500 font-bold">逐仓</span> <span class="text-green-500 bg-green-50 px-1 rounded-[1px] text-[10px]">20x</span>';
@@ -137,50 +138,86 @@
     ];
 
     const HIST_TRADES = [
-        { time: '2026-06-15 14:20:16', orderId: 'OR_1041927385473', symbol: 'BNBUSDT', dir: '买入开多', dirClass: 'text-green-500', avg: '618.50', qty: '618.50 USDC', role: '吃單方', fee: '0.619 USDC', pnl: '--', pnlClass: 'text-gray-400' },
-        { time: '2026-06-15 11:05:43', orderId: 'OR_1041927385120', symbol: 'BTCUSDT', dir: '卖出平多', dirClass: 'text-red-500', avg: '65,420.0', qty: '22,897.00 USDC', role: '掛單方', fee: '1.145 USDC', pnl: '+184.32 USDC', pnlClass: 'text-green-500' },
-        { time: '2026-06-14 16:40:12', orderId: 'OR_1041927384001', symbol: 'SOLUSDT', dir: '卖出开空', dirClass: 'text-red-500', avg: '142.80', qty: '17,136.00 USDC', role: '吃單方', fee: '0.856 USDC', pnl: '--', pnlClass: 'text-gray-400' },
-        { time: '2026-06-14 09:30:05', orderId: 'OR_1041927383888', symbol: 'ETHUSDT', dir: '买入平空', dirClass: 'text-green-500', avg: '2,410.5', qty: '4,821.00 USDC', role: '吃單方', fee: '0.241 USDC', pnl: '+42.18 USDC', pnlClass: 'text-green-500' },
-        { time: '2026-06-13 20:33:29', orderId: 'OR_1041927383777', symbol: 'BTCUSDT', dir: '买入开多', dirClass: 'text-green-500', avg: '64,980.0', qty: '7,797.60 USDC', role: '掛單方', fee: '0.390 USDC', pnl: '--', pnlClass: 'text-gray-400' },
+        { time: '2026-06-15 14:20:16', qty: '1.00 BNB', price: '618.50', amount: '618.50 USDC', role: '吃单方', fee: '0.619 USDC', flowId: 'TR_104192738547301' },
+        { time: '2026-06-15 11:05:43', qty: '0.35 BTC', price: '65,420.0', amount: '22,897.00 USDC', role: '挂单方', fee: '1.145 USDC', flowId: 'TR_104192738512001' },
+        { time: '2026-06-14 16:40:12', qty: '120 SOL', price: '142.80', amount: '17,136.00 USDC', role: '吃单方', fee: '0.856 USDC', flowId: 'TR_104192738400102' },
+        { time: '2026-06-14 09:30:05', qty: '2.00 ETH', price: '2,410.5', amount: '4,821.00 USDC', role: '吃单方', fee: '0.241 USDC', flowId: 'TR_104192738388801' },
+        { time: '2026-06-13 20:33:29', qty: '0.12 BTC', price: '64,980.0', amount: '7,797.60 USDC', role: '挂单方', fee: '0.390 USDC', flowId: 'TR_104192738377701' },
     ];
 
     const HIST_POSITIONS = [
         {
-            id: 'hp1', symbol: 'ETHUSDT', mode: '全倉', lev: '20x', levClass: 'text-green-500', openAvg: '2,400.0', closeAvg: '2,450.0',
-            posQty: '10.0 ETH', closedQty: '10.0 ETH', pnlKey: 'hist', status: '已全部平仓', statusKey: 'full',
-            openTime: '2026-06-10 10:00:00', closeTime: '2026-06-11 11:47:17',
-            closes: [
-                { time: '2026-06-11 11:47:17', qty: '6.0 ETH', price: '2,448.0', pnl: '+288.00 USDC', type: '市價平倉' },
-                { time: '2026-06-11 10:22:05', qty: '4.0 ETH', price: '2,453.0', pnl: '+212.00 USDC', type: '限價平倉' },
-            ],
+            id: 'hp1', symbol: 'ETHUSDT', positionType: '全仓 (20x)', subtitle: 'ETHUSDT 全仓 20x',
+            openAvg: '2,400.0', closeAvg: '2,450.0', maxQty: '10.0 ETH', closedQty: '10.0 ETH',
+            pnlKey: 'hist', status: '全部平仓', openTime: '2026-06-10 10:00:00', closeTime: '2026-06-11 11:47:17',
         },
         {
-            id: 'hp2', symbol: 'BNBUSDT', mode: '逐倉', lev: '15x', levClass: 'text-orange-500', openAvg: '592.15', closeAvg: '604.22',
-            posQty: '1.02 BNB', closedQty: '0.68 BNB', pnlKey: 'histBn', status: '部分平仓', statusKey: 'partial',
-            openTime: '2026-06-11 18:59:05', closeTime: '2026-06-12 09:15:40',
-            closes: [
-                { time: '2026-06-12 09:15:40', qty: '0.50 BNB', price: '605.10', pnl: '+6.48 USDC', type: '市價平倉' },
-                { time: '2026-06-11 19:12:18', qty: '0.18 BNB', price: '603.80', pnl: '+1.95 USDC', type: '限價平倉' },
-            ],
+            id: 'hp2', symbol: 'BNBUSDT', positionType: '逐仓 (15x)', subtitle: 'BNBUSDT 逐仓 15x',
+            openAvg: '592.15', closeAvg: '604.22', maxQty: '1.02 BNB', closedQty: '0.68 BNB',
+            pnlKey: 'histBn', status: '部分平仓', openTime: '2026-06-11 18:59:05', closeTime: '2026-06-12 09:15:40',
         },
         {
-            id: 'hp3', symbol: 'BTCUSDT', mode: '逐倉', lev: '10x', levClass: 'text-blue-500', openAvg: '65,100.5', closeAvg: '65,800.0',
-            posQty: '0.50 BTC', closedQty: '0.50 BTC', pnlKey: 'histBtc', status: '已全部平仓', statusKey: 'full',
-            openTime: '2026-06-08 08:30:00', closeTime: '2026-06-09 16:20:11',
-            closes: [
-                { time: '2026-06-09 16:20:11', qty: '0.50 BTC', price: '65,800.0', pnl: '+349.75 USDC', type: '市價平倉' },
-            ],
+            id: 'hp3', symbol: 'BTCUSDT', positionType: '逐仓 (10x)', subtitle: 'BTCUSDT 逐仓 10x',
+            openAvg: '65,100.5', closeAvg: '65,800.0', maxQty: '0.50 BTC', closedQty: '0.50 BTC',
+            pnlKey: 'histBtc', status: '全部平仓', openTime: '2026-06-08 08:30:00', closeTime: '2026-06-09 16:20:11',
         },
         {
-            id: 'hp4', symbol: 'SOLUSDT', mode: '全倉', lev: '25x', levClass: 'text-purple-500', openAvg: '148.20', closeAvg: '145.60',
-            posQty: '200 SOL', closedQty: '120 SOL', pnlKey: 'histSol', status: '部分平仓', statusKey: 'partial',
-            openTime: '2026-06-12 14:05:22', closeTime: '2026-06-13 11:40:33',
-            closes: [
-                { time: '2026-06-13 11:40:33', qty: '80 SOL', price: '146.10', pnl: '-96.00 USDC', type: '市價平倉' },
-                { time: '2026-06-12 20:18:44', qty: '40 SOL', price: '145.20', pnl: '-40.00 USDC', type: '限價平倉' },
-            ],
+            id: 'hp4', symbol: 'SOLUSDT', positionType: '全仓 (25x)', subtitle: 'SOLUSDT 全仓 25x',
+            openAvg: '148.20', closeAvg: '145.60', maxQty: '200 SOL', closedQty: '120 SOL',
+            pnlKey: 'histSol', status: '部分平仓', openTime: '2026-06-12 14:05:22', closeTime: '2026-06-13 11:40:33',
         },
     ];
+
+    function buildRelatedOrderRows(count, base) {
+        const rows = [];
+        for (let i = 0; i < count; i++) {
+            rows.push({
+                dir: base.dir,
+                dirClass: base.dirClass,
+                qty: base.qty,
+                price: base.price,
+                pnl: base.pnl,
+                pnlClass: base.pnlClass,
+                fee: base.fee,
+                orderId: base.orderIdPrefix + String(i + 1).padStart(2, '0'),
+                time: '2026-06-12 09:' + String(10 + i).padStart(2, '0') + ':40',
+            });
+        }
+        return rows;
+    }
+
+    const POSITION_RELATED_ORDERS = {
+        hp1: {
+            subtitle: 'ETHUSDT 全仓 20x',
+            orders: [
+                { dir: '买入开多', dirClass: 'text-green-500', qty: '10.0 ETH', price: '2,400.0', pnl: '--', pnlClass: 'text-gray-400', fee: '2.400 USDC', orderId: 'OR_1041927389001', time: '2026-06-10 10:00:00' },
+                { dir: '卖出平多', dirClass: 'text-red-500', qty: '6.0 ETH', price: '2,448.0', pnl: '+288.00 USDC', pnlClass: 'text-green-500', fee: '1.468 USDC', orderId: 'OR_1041927389002', time: '2026-06-11 11:47:17' },
+                { dir: '卖出平多', dirClass: 'text-red-500', qty: '4.0 ETH', price: '2,453.0', pnl: '+212.00 USDC', pnlClass: 'text-green-500', fee: '0.981 USDC', orderId: 'OR_1041927389003', time: '2026-06-11 10:22:05' },
+            ],
+        },
+        hp2: {
+            subtitle: 'BNBUSDT 逐仓 15x',
+            orders: buildRelatedOrderRows(12, {
+                dir: '卖出平多', dirClass: 'text-red-500', qty: '0.05 BNB', price: '605.10',
+                pnl: '+0.65 USDC', pnlClass: 'text-green-500', fee: '0.015 USDC', orderIdPrefix: 'OR_10419273891',
+            }),
+        },
+        hp3: {
+            subtitle: 'BTCUSDT 逐仓 10x',
+            orders: [
+                { dir: '买入开多', dirClass: 'text-green-500', qty: '0.50 BTC', price: '65,100.5', pnl: '--', pnlClass: 'text-gray-400', fee: '16.275 USDC', orderId: 'OR_1041927389201', time: '2026-06-08 08:30:00' },
+                { dir: '卖出平多', dirClass: 'text-red-500', qty: '0.50 BTC', price: '65,800.0', pnl: '+349.75 USDC', pnlClass: 'text-green-500', fee: '16.450 USDC', orderId: 'OR_1041927389202', time: '2026-06-09 16:20:11' },
+            ],
+        },
+        hp4: {
+            subtitle: 'SOLUSDT 全仓 25x',
+            orders: [
+                { dir: '卖出开空', dirClass: 'text-red-500', qty: '200 SOL', price: '148.20', pnl: '--', pnlClass: 'text-gray-400', fee: '2.964 USDC', orderId: 'OR_1041927389301', time: '2026-06-12 14:05:22' },
+                { dir: '买入平空', dirClass: 'text-green-500', qty: '80 SOL', price: '146.10', pnl: '-96.00 USDC', pnlClass: 'text-red-500', fee: '1.169 USDC', orderId: 'OR_1041927389302', time: '2026-06-13 11:40:33' },
+                { dir: '买入平空', dirClass: 'text-green-500', qty: '40 SOL', price: '145.20', pnl: '-40.00 USDC', pnlClass: 'text-red-500', fee: '0.581 USDC', orderId: 'OR_1041927389303', time: '2026-06-12 20:18:44' },
+            ],
+        },
+    };
 
     const ASSET_LOGS = [
         { time: '2026-06-15 08:00:00', type: '資金費用', amount: '-0.45202481 USDC', amountClass: 'text-red-500', coin: 'USDC', symbol: 'BNBUSDT' },
@@ -338,28 +375,13 @@
         return HIST_TRADES.map(function (r) {
             return `<tr class="border-b border-gray-50 hover:bg-gray-50 text-[11px]">
                 <td class="px-4 py-3 text-gray-400 whitespace-nowrap">${r.time}</td>
-                <td class="px-4 py-3 text-gray-700 whitespace-nowrap">${r.orderId}</td>
-                <td class="px-4 py-3 font-bold whitespace-nowrap">${r.symbol}</td>
-                <td class="px-4 py-3 font-bold whitespace-nowrap ${r.dirClass}">${r.dir}</td>
-                <td class="px-4 py-3 font-mono whitespace-nowrap">${r.avg}</td>
-                <td class="px-4 py-3 whitespace-nowrap">${r.qty}</td>
+                <td class="px-4 py-3 font-mono whitespace-nowrap">${r.qty}</td>
+                <td class="px-4 py-3 font-mono font-bold whitespace-nowrap">${r.price}</td>
+                <td class="px-4 py-3 font-mono whitespace-nowrap">${r.amount}</td>
                 <td class="px-4 py-3 whitespace-nowrap">${r.role}</td>
                 <td class="px-4 py-3 text-gray-500 whitespace-nowrap">${r.fee}</td>
-                <td class="px-4 py-3 font-black whitespace-nowrap ${r.pnlClass}">${r.pnl}</td>
+                <td class="px-4 py-3 font-mono text-[10px] text-gray-600 whitespace-nowrap">${r.flowId}</td>
             </tr>`;
-        }).join('');
-    }
-
-    function renderCloseDetailBlock(closes) {
-        return closes.map(function (c) {
-            const pnlCls = c.pnl.indexOf('-') >= 0 ? 'text-red-500' : 'text-green-500';
-            return `<div class="bg-white border border-gray-100 rounded-sm p-3 grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-3 text-[10px]">
-                <div><span class="text-gray-400 block mb-1">平倉時間</span><span class="font-bold text-gray-900">${c.time}</span></div>
-                <div><span class="text-gray-400 block mb-1">平倉類型</span><span class="font-bold text-gray-900">${c.type}</span></div>
-                <div><span class="text-gray-400 block mb-1">平倉數量</span><span class="font-bold text-gray-900 font-mono">${c.qty}</span></div>
-                <div><span class="text-gray-400 block mb-1">平倉價格</span><span class="font-bold text-gray-900 font-mono">${c.price}</span></div>
-                <div class="col-span-2 sm:col-span-4"><span class="text-gray-400 block mb-1">平倉盈虧</span><span class="font-black ${pnlCls}">${c.pnl}</span></div>
-            </div>`;
         }).join('');
     }
 
@@ -369,32 +391,20 @@
         const extra = PNL_BREAKDOWN_EXTRA;
         return HIST_POSITIONS.map(function (p) {
             const pnlData = extra[p.pnlKey] || demo[p.pnlKey] || demo.hist;
-            const expanded = histPosExpanded.has(p.id);
-            const chevron = expanded ? 'rotate-180' : '';
-            const statusBtn = `<button type="button" onclick="PositionFlow.toggleHistPosExpand('${p.id}')" class="inline-flex items-center gap-1 text-left hover:text-blue-600 max-w-[120px]">
-                <span class="whitespace-normal leading-snug">${p.status}</span>
-                <svg class="w-3 h-3 shrink-0 transition-transform ${chevron}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
-            </button>`;
-            const main = `<tr class="border-b border-gray-50 hover:bg-gray-50 text-[11px]">
+            const esc = String(p.id).replace(/'/g, "\\'");
+            return `<tr class="border-b border-gray-50 hover:bg-gray-50 text-[11px]">
                 <td class="px-4 py-3 font-bold whitespace-nowrap">${p.symbol}</td>
-                <td class="px-4 py-3 text-gray-600 whitespace-nowrap">${p.mode}</td>
-                <td class="px-4 py-3 whitespace-nowrap"><span class="${p.levClass} bg-green-50 px-1 rounded-[1px] text-[10px] font-bold">${p.lev}</span></td>
+                <td class="px-4 py-3 text-gray-600 whitespace-nowrap">${p.positionType}</td>
                 <td class="px-4 py-3 whitespace-nowrap">${p.openAvg}</td>
                 <td class="px-4 py-3 whitespace-nowrap">${p.closeAvg}</td>
-                <td class="px-4 py-3 whitespace-nowrap">${p.posQty}</td>
+                <td class="px-4 py-3 whitespace-nowrap">${p.maxQty}</td>
                 <td class="px-4 py-3 whitespace-nowrap">${p.closedQty}</td>
                 <td class="px-4 py-3 whitespace-nowrap"><div class="flex items-center space-x-1">${renderPnl(pnlData, 'text-[11px]')}<button onclick="toggleModal('modal-share-pnl')" class="text-gray-400 hover:text-blue-600 p-0.5 shrink-0"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6zM8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></td>
-                <td class="px-4 py-3 align-top">${statusBtn}</td>
+                <td class="px-4 py-3 whitespace-nowrap"><span class="font-bold text-gray-700">${p.status}</span></td>
                 <td class="px-4 py-3 whitespace-nowrap">${p.openTime}</td>
                 <td class="px-4 py-3 whitespace-nowrap">${p.closeTime}</td>
+                <td class="px-4 py-3 whitespace-nowrap"><button type="button" class="${BTN_BASE} text-blue-600" onclick="openHistPosRelatedOrders('${esc}')">关联订单</button></td>
             </tr>`;
-            const detail = expanded ? `<tr id="hist-pos-detail-${p.id}" class="bg-gray-50 border-b border-gray-100">
-                <td colspan="11" class="px-4 py-3">
-                    <div class="text-[10px] font-black text-gray-500 uppercase tracking-wide mb-2">平倉明細</div>
-                    <div class="space-y-2">${renderCloseDetailBlock(p.closes)}</div>
-                </td>
-            </tr>` : '';
-            return main + detail;
         }).join('');
     }
 
@@ -426,7 +436,7 @@
 
         renderHistOrderHeader: function (subTab) {
             if (subTab === 'base') {
-                return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">委託時間</th><th class="px-4 py-2">交易方向</th><th class="px-4 py-2">委託價</th><th class="px-4 py-2">委託數量</th><th class="px-4 py-2">成交均價</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">手續費</th><th class="px-4 py-2">平倉盈虧</th><th class="px-4 py-2">訂單狀態</th><th class="px-4 py-2">訂單編號</th><th class="px-4 py-2">流水详情</th>';
+                return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">委託時間</th><th class="px-4 py-2">交易方向</th><th class="px-4 py-2">委託價</th><th class="px-4 py-2">委託數量</th><th class="px-4 py-2">成交均價</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">手續費</th><th class="px-4 py-2">盈亏</th><th class="px-4 py-2">訂單狀態</th><th class="px-4 py-2">訂單編號</th><th class="px-4 py-2">流水详情</th>';
             }
             return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">委託時間</th><th class="px-4 py-2">交易方向</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發價格</th><th class="px-4 py-2">委託價格</th><th class="px-4 py-2">訂單狀態</th><th class="px-4 py-2">訂單編號</th>';
         },
@@ -484,7 +494,7 @@
         },
 
         renderHistTradeHeader: function () {
-            return '<th class="px-4 py-2">時間</th><th class="px-4 py-2">訂單號</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">方向</th><th class="px-4 py-2">成交均價</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">角色</th><th class="px-4 py-2">手續費</th><th class="px-4 py-2">已實現盈虧</th>';
+            return '<th class="px-4 py-2">成交时间</th><th class="px-4 py-2">数量</th><th class="px-4 py-2">价格</th><th class="px-4 py-2">成交金额</th><th class="px-4 py-2">角色</th><th class="px-4 py-2">手续费</th><th class="px-4 py-2">流水编号</th>';
         },
 
         renderHistTradeBody: function () {
@@ -492,7 +502,7 @@
         },
 
         renderHistPosHeader: function () {
-            return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">倉位模式</th><th class="px-4 py-2">槓桿</th><th class="px-4 py-2">開倉均價</th><th class="px-4 py-2">平倉均價</th><th class="px-4 py-2"><span class="market-hint-wrap dashed-hint">最大持仓量<div class="market-hint-tip th-col-tip">您的持仓曾达到的最大规模 (非累积计算)</div></span></th><th class="px-4 py-2">已平倉數量</th><th class="px-4 py-2">已平仓盈虧</th><th class="px-4 py-2">狀態</th><th class="px-4 py-2">開倉時間</th><th class="px-4 py-2">最新平倉時間</th>';
+            return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">仓位类型</th><th class="px-4 py-2">開倉均價</th><th class="px-4 py-2">平倉均價</th><th class="px-4 py-2"><span class="market-hint-wrap dashed-hint">最大持仓量<div class="market-hint-tip th-col-tip">您的持仓曾达到的最大规模 (非累积计算)</div></span></th><th class="px-4 py-2">已平仓量</th><th class="px-4 py-2">已实现盈亏</th><th class="px-4 py-2">狀態</th><th class="px-4 py-2">開倉時間</th><th class="px-4 py-2">平倉時間</th><th class="px-4 py-2">关联订单</th>';
         },
 
         renderHistPosBody: function (helpers) {
@@ -515,10 +525,60 @@
             return renderFundingFeeRows();
         },
 
-        toggleHistPosExpand: function (id) {
-            if (histPosExpanded.has(id)) histPosExpanded.delete(id);
-            else histPosExpanded.add(id);
-            if (typeof window.rerenderPositionFlowTab === 'function') window.rerenderPositionFlowTab();
+        openRelatedOrders: function (posId) {
+            relatedOrdersState = { posId: posId, page: 1 };
+            this.renderRelatedOrdersPage();
+            if (typeof window.toggleModal === 'function') {
+                window.toggleModal('modal-hist-pos-related-orders');
+            }
+        },
+
+        setRelatedOrdersPage: function (page) {
+            const data = POSITION_RELATED_ORDERS[relatedOrdersState.posId];
+            if (!data) return;
+            const totalPages = Math.max(1, Math.ceil(data.orders.length / RELATED_ORDERS_PAGE_SIZE));
+            relatedOrdersState.page = Math.min(Math.max(1, page), totalPages);
+            this.renderRelatedOrdersPage();
+        },
+
+        renderRelatedOrdersPage: function () {
+            const data = POSITION_RELATED_ORDERS[relatedOrdersState.posId];
+            const titleEl = document.getElementById('related-orders-subtitle');
+            const bodyEl = document.getElementById('related-orders-body');
+            const pagerEl = document.getElementById('related-orders-pager');
+            if (!data || !titleEl || !bodyEl) return;
+            titleEl.textContent = data.subtitle;
+            const orders = data.orders || [];
+            if (!orders.length) {
+                bodyEl.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-center text-gray-400">暂无关联订单</td></tr>';
+                if (pagerEl) pagerEl.innerHTML = '';
+                return;
+            }
+            const totalPages = Math.ceil(orders.length / RELATED_ORDERS_PAGE_SIZE);
+            const start = (relatedOrdersState.page - 1) * RELATED_ORDERS_PAGE_SIZE;
+            const pageOrders = orders.slice(start, start + RELATED_ORDERS_PAGE_SIZE);
+            bodyEl.innerHTML = pageOrders.map(function (o) {
+                const pnlClass = o.pnlClass || (String(o.pnl || '').indexOf('-') === 0 ? 'text-red-500' : 'text-green-500');
+                return '<tr class="border-b border-gray-50 text-[11px]">' +
+                    '<td class="px-3 py-2 font-bold whitespace-nowrap ' + o.dirClass + '">' + o.dir + '</td>' +
+                    '<td class="px-3 py-2 font-mono whitespace-nowrap">' + o.qty + '</td>' +
+                    '<td class="px-3 py-2 font-mono font-bold whitespace-nowrap">' + o.price + '</td>' +
+                    '<td class="px-3 py-2 font-mono font-bold whitespace-nowrap ' + pnlClass + '">' + (o.pnl || '--') + '</td>' +
+                    '<td class="px-3 py-2 font-mono whitespace-nowrap">' + o.fee + '</td>' +
+                    '<td class="px-3 py-2 font-mono text-[10px] text-gray-600 whitespace-nowrap">' + o.orderId + '</td>' +
+                    '<td class="px-3 py-2 text-gray-400 whitespace-nowrap">' + o.time + '</td>' +
+                    '</tr>';
+            }).join('');
+            if (!pagerEl) return;
+            let pagerHtml = '';
+            if (relatedOrdersState.page > 1) {
+                pagerHtml += '<button type="button" class="px-2 py-1 border border-gray-200 rounded-sm" onclick="PositionFlow.setRelatedOrdersPage(' + (relatedOrdersState.page - 1) + ')">上一页</button>';
+            }
+            pagerHtml += '<span class="text-gray-500">第 ' + relatedOrdersState.page + ' / ' + totalPages + ' 页</span>';
+            if (relatedOrdersState.page < totalPages) {
+                pagerHtml += '<button type="button" class="px-2 py-1 border border-gray-200 rounded-sm" onclick="PositionFlow.setRelatedOrdersPage(' + (relatedOrdersState.page + 1) + ')">下一页</button>';
+            }
+            pagerEl.innerHTML = pagerHtml;
         },
 
         setPeriod: function (btn, days) {
