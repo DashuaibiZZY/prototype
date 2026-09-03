@@ -1,9 +1,9 @@
 /**
  * 合约交易页 · 持仓管理+流水模块：演示数据与筛选交互
- * @version 2026-09-03-hist-base-cancel-status
+ * @version 2026-09-03-trade-dir-unify
  */
 (function () {
-    window.POSITION_FLOW_MODULE_VERSION = '2026-09-03-hist-base-cancel-status';
+    window.POSITION_FLOW_MODULE_VERSION = '2026-09-03-trade-dir-unify';
     const DEMO_END = new Date('2026-06-15T12:00:00');
     const histPosExpanded = new Set();
     const FILL_PAGE_SIZE = 10;
@@ -17,7 +17,7 @@
     const CURRENT_ORDER_BASE = [
         {
             time: '2024-05-24 14:20:15', symbol: SYMBOL_BNBUSDC_ISOLATED,
-            dir: '買入 / 開多', dirClass: 'text-green-500',
+            dir: '买入开多', dirClass: 'text-green-500',
             price: '620.00', qty: '1.00', avg: '--', filled: '0.00',
             tpslTp: '800.123', tpslSl: '600.234',
             status: '未成交', statusClass: 'text-blue-600', orderId: 'OR_882910',
@@ -26,7 +26,7 @@
         },
         {
             time: '2024-05-24 15:32:08', symbol: SYMBOL_BNBUSDC_ISOLATED,
-            dir: '賣出 / 平多', dirClass: 'text-red-500',
+            dir: '卖出平多', dirClass: 'text-red-500',
             price: '625.50', qty: '0.80', avg: '624.20', filled: '0.35',
             tpslTp: null, tpslSl: null,
             status: '部分成交', statusClass: 'text-gray-600', orderId: 'OR_882911',
@@ -36,11 +36,11 @@
     ];
 
     const HIST_ORDER_BASE = [
-        { time: '2026-06-15 14:20:15', symbol: SYMBOL_BNBUSDC_ISOLATED, dir: '買入 / 開多', dirClass: 'text-green-500', price: '620.00', qty: '1.00', avg: '618.50', filled: '1.00', fee: '0.619 USDC', pnl: '+124.52 USDC', pnlClass: 'text-green-500', status: '全部成交', statusClass: 'text-gray-900', orderId: 'OR_1041927385473' },
-        { time: '2026-06-15 11:05:42', symbol: SYMBOL_BTCUSDC_ISOLATED, dir: '賣出 / 平多', dirClass: 'text-red-500', price: '65,500.0', qty: '0.50', avg: '65,420.0', filled: '0.35', fee: '1.145 USDC', pnl: '+184.32 USDC', pnlClass: 'text-green-500', status: '部分成交', statusClass: 'text-gray-600', orderId: 'OR_1041927385120' },
-        { time: '2026-06-14 22:18:03', symbol: SYMBOL_BNBUSDC_ISOLATED, dir: '買入 / 平空', dirClass: 'text-green-500', price: '2,380.0', qty: '2.00', avg: '--', filled: '0.00', fee: '--', pnl: '--', pnlClass: 'text-gray-400', status: '已取消', statusClass: 'text-gray-400', statusTip: '用户手动取消', orderId: 'OR_1041927384001' },
-        { time: '2026-06-14 09:12:55', symbol: SYMBOL_BNBUSDC_ISOLATED, dir: '賣出 / 平多', dirClass: 'text-red-500', price: '635.00', qty: '0.80', avg: '--', filled: '0.00', fee: '--', pnl: '--', pnlClass: 'text-gray-400', status: '已取消', statusClass: 'text-gray-400', statusTip: '订单过期', orderId: 'OR_1041927383888' },
-        { time: '2026-06-13 20:33:28', symbol: SYMBOL_BTCUSDC_ISOLATED, dir: '買入 / 開多', dirClass: 'text-green-500', price: '64,900.0', qty: '0.20', avg: '64,980.0', filled: '0.12', fee: '0.390 USDC', pnl: '-8.15 USDC', pnlClass: 'text-red-500', status: '部分成交', statusClass: 'text-gray-600', orderId: 'OR_1041927383777' },
+        { time: '2026-06-15 14:20:15', symbol: SYMBOL_BNBUSDC_ISOLATED, dir: '买入开多', dirClass: 'text-green-500', price: '620.00', qty: '1.00', avg: '618.50', filled: '1.00', fee: '0.619 USDC', pnl: '+124.52 USDC', pnlClass: 'text-green-500', status: '全部成交', statusClass: 'text-gray-900', orderId: 'OR_1041927385473' },
+        { time: '2026-06-15 11:05:42', symbol: SYMBOL_BTCUSDC_ISOLATED, dir: '卖出平多', dirClass: 'text-red-500', price: '65,500.0', qty: '0.50', avg: '65,420.0', filled: '0.35', fee: '1.145 USDC', pnl: '+184.32 USDC', pnlClass: 'text-green-500', status: '部分成交', statusClass: 'text-gray-600', orderId: 'OR_1041927385120' },
+        { time: '2026-06-14 22:18:03', symbol: SYMBOL_BNBUSDC_ISOLATED, dir: '买入平空', dirClass: 'text-green-500', price: '2,380.0', qty: '2.00', avg: '--', filled: '0.00', fee: '--', pnl: '--', pnlClass: 'text-gray-400', status: '已取消', statusClass: 'text-gray-400', statusTip: '用户手动取消', orderId: 'OR_1041927384001' },
+        { time: '2026-06-14 09:12:55', symbol: SYMBOL_BNBUSDC_ISOLATED, dir: '卖出平多', dirClass: 'text-red-500', price: '635.00', qty: '0.80', avg: '--', filled: '0.00', fee: '--', pnl: '--', pnlClass: 'text-gray-400', status: '已取消', statusClass: 'text-gray-400', statusTip: '订单过期', orderId: 'OR_1041927383888' },
+        { time: '2026-06-13 20:33:28', symbol: SYMBOL_BTCUSDC_ISOLATED, dir: '买入开多', dirClass: 'text-green-500', price: '64,900.0', qty: '0.20', avg: '64,980.0', filled: '0.12', fee: '0.390 USDC', pnl: '-8.15 USDC', pnlClass: 'text-red-500', status: '部分成交', statusClass: 'text-gray-600', orderId: 'OR_1041927383777' },
     ];
 
     function buildFillRows(count, basePrice, baseQty) {
@@ -85,32 +85,32 @@
 
     const HIST_ORDER_TPSL = [
         {
-            time: '2026-06-15 13:55:00', symbol: 'BNBUSDT', dir: '平多', dirClass: 'text-green-500', qty: '0.80 BNB',
+            time: '2026-06-15 13:55:00', symbol: 'BNBUSDT', dir: '卖出平多', dirClass: 'text-red-500', qty: '0.80 BNB',
             triggerLines: ['800.23<span class="text-gray-400 font-normal">(最新)</span>', '600.48<span class="text-gray-400 font-normal">(最新)</span>'],
             priceLines: ['<span class="text-green-600 font-bold">止盈</span> 市价', '<span class="text-red-500 font-bold">止损</span> 598.23'],
             status: '已完成', statusClass: 'text-green-600', orderId: 'TPSL_1041927385473',
         },
         {
-            time: '2026-06-15 10:20:15', symbol: 'BTCUSDT', dir: '平空', dirClass: 'text-red-500', qty: '0.35 BTC',
+            time: '2026-06-15 10:20:15', symbol: 'BTCUSDT', dir: '买入平空', dirClass: 'text-green-500', qty: '0.35 BTC',
             triggerLines: ['64,200.0<span class="text-gray-400 font-normal">(最新)</span>'],
             priceLines: ['<span class="text-red-500 font-bold">止损</span> 市价'],
             status: '已完成', statusClass: 'text-green-600', orderId: 'TPSL_1041927385120',
         },
         {
-            time: '2026-06-14 18:45:33', symbol: 'ETHUSDT', dir: '平多', dirClass: 'text-green-500', qty: '2.00 ETH',
+            time: '2026-06-14 18:45:33', symbol: 'ETHUSDT', dir: '卖出平多', dirClass: 'text-red-500', qty: '2.00 ETH',
             triggerLines: ['2,520.0<span class="text-gray-400 font-normal">(最新)</span>'],
             priceLines: ['<span class="text-green-600 font-bold">止盈</span> 2,520.0'],
             status: '已取消', statusClass: 'text-gray-400', orderId: 'TPSL_1041927384001', statusTip: '用户手动取消',
         },
         {
-            time: '2026-06-14 08:10:19', symbol: 'SOLUSDT', dir: '平空', dirClass: 'text-red-500', qty: '80 SOL',
+            time: '2026-06-14 08:10:19', symbol: 'SOLUSDT', dir: '买入平空', dirClass: 'text-green-500', qty: '80 SOL',
             triggerLines: ['138.5<span class="text-gray-400 font-normal">(标记)</span>'],
             priceLines: ['<span class="text-red-500 font-bold">止损</span> 138.5'],
             status: '已取消', statusClass: 'text-gray-400', orderId: 'TPSL_1041927383888',
             statusTip: '仓位止盈订单触发，关联持仓已完全平仓',
         },
         {
-            time: '2026-06-13 23:58:44', symbol: 'BNBUSDT', dir: '平多', dirClass: 'text-green-500', qty: '0.50 BNB',
+            time: '2026-06-13 23:58:44', symbol: 'BNBUSDT', dir: '卖出平多', dirClass: 'text-red-500', qty: '0.50 BNB',
             triggerLines: ['610.00<span class="text-gray-400 font-normal">(最新)</span>'],
             priceLines: ['<span class="text-green-600 font-bold">止盈</span> 市价'],
             status: '已完成', statusClass: 'text-green-600', orderId: 'TPSL_1041927383777',
@@ -121,7 +121,7 @@
         {
             time: '2024-05-24 14:20:15',
             symbol: 'BNBUSDC <span class="text-gray-500 font-bold">逐仓</span> <span class="text-green-500 bg-green-50 px-1 rounded-[1px] text-[10px]">20x</span>',
-            dir: '平多', dirClass: 'text-green-500', qty: '0.142 BNB',
+            dir: '卖出平多', dirClass: 'text-red-500', qty: '0.142 BNB',
             triggerLines: ['800.23<span class="text-gray-400 font-normal">(最新)</span>', '600.48<span class="text-gray-400 font-normal">(最新)</span>'],
             priceLines: ['<span class="text-green-600 font-bold">止盈</span> 市价', '<span class="text-red-500 font-bold">止损</span> 598.23'],
             status: '未触发', statusClass: 'text-blue-600', orderId: 'TPSL_882910',
@@ -129,7 +129,7 @@
         {
             time: '2024-05-24 15:02:08',
             symbol: 'BNBUSDC <span class="text-gray-500 font-bold">逐仓</span> <span class="text-green-500 bg-green-50 px-1 rounded-[1px] text-[10px]">20x</span>',
-            dir: '平多', dirClass: 'text-green-500', qty: '0.050 BNB',
+            dir: '卖出平多', dirClass: 'text-red-500', qty: '0.050 BNB',
             triggerLines: ['620.00<span class="text-gray-400 font-normal">(标记)</span>'],
             priceLines: ['<span class="text-green-600 font-bold">止盈</span> 625.00'],
             status: '未触发', statusClass: 'text-blue-600', orderId: 'TPSL_882911',
@@ -137,11 +137,11 @@
     ];
 
     const HIST_TRADES = [
-        { time: '2026-06-15 14:20:16', orderId: 'OR_1041927385473', symbol: 'BNBUSDT', dir: '開多', dirClass: 'text-green-500', avg: '618.50', qty: '618.50 USDC', role: '吃單方', fee: '0.619 USDC', pnl: '--', pnlClass: 'text-gray-400' },
-        { time: '2026-06-15 11:05:43', orderId: 'OR_1041927385120', symbol: 'BTCUSDT', dir: '平多', dirClass: 'text-red-500', avg: '65,420.0', qty: '22,897.00 USDC', role: '掛單方', fee: '1.145 USDC', pnl: '+184.32 USDC', pnlClass: 'text-green-500' },
-        { time: '2026-06-14 16:40:12', orderId: 'OR_1041927384001', symbol: 'SOLUSDT', dir: '開空', dirClass: 'text-red-500', avg: '142.80', qty: '17,136.00 USDC', role: '吃單方', fee: '0.856 USDC', pnl: '--', pnlClass: 'text-gray-400' },
-        { time: '2026-06-14 09:30:05', orderId: 'OR_1041927383888', symbol: 'ETHUSDT', dir: '平空', dirClass: 'text-green-500', avg: '2,410.5', qty: '4,821.00 USDC', role: '吃單方', fee: '0.241 USDC', pnl: '+42.18 USDC', pnlClass: 'text-green-500' },
-        { time: '2026-06-13 20:33:29', orderId: 'OR_1041927383777', symbol: 'BTCUSDT', dir: '開多', dirClass: 'text-green-500', avg: '64,980.0', qty: '7,797.60 USDC', role: '掛單方', fee: '0.390 USDC', pnl: '--', pnlClass: 'text-gray-400' },
+        { time: '2026-06-15 14:20:16', orderId: 'OR_1041927385473', symbol: 'BNBUSDT', dir: '买入开多', dirClass: 'text-green-500', avg: '618.50', qty: '618.50 USDC', role: '吃單方', fee: '0.619 USDC', pnl: '--', pnlClass: 'text-gray-400' },
+        { time: '2026-06-15 11:05:43', orderId: 'OR_1041927385120', symbol: 'BTCUSDT', dir: '卖出平多', dirClass: 'text-red-500', avg: '65,420.0', qty: '22,897.00 USDC', role: '掛單方', fee: '1.145 USDC', pnl: '+184.32 USDC', pnlClass: 'text-green-500' },
+        { time: '2026-06-14 16:40:12', orderId: 'OR_1041927384001', symbol: 'SOLUSDT', dir: '卖出开空', dirClass: 'text-red-500', avg: '142.80', qty: '17,136.00 USDC', role: '吃單方', fee: '0.856 USDC', pnl: '--', pnlClass: 'text-gray-400' },
+        { time: '2026-06-14 09:30:05', orderId: 'OR_1041927383888', symbol: 'ETHUSDT', dir: '买入平空', dirClass: 'text-green-500', avg: '2,410.5', qty: '4,821.00 USDC', role: '吃單方', fee: '0.241 USDC', pnl: '+42.18 USDC', pnlClass: 'text-green-500' },
+        { time: '2026-06-13 20:33:29', orderId: 'OR_1041927383777', symbol: 'BTCUSDT', dir: '买入开多', dirClass: 'text-green-500', avg: '64,980.0', qty: '7,797.60 USDC', role: '掛單方', fee: '0.390 USDC', pnl: '--', pnlClass: 'text-gray-400' },
     ];
 
     const HIST_POSITIONS = [
@@ -215,8 +215,7 @@
 
     function statusCellHtml(row) {
         const tip = row.statusTip ? ` title="${row.statusTip}"` : '';
-        const dashed = row.statusDashed ? ' dashed-hint cursor-help' : '';
-        return `<span class="font-bold ${row.statusClass}${dashed}"${tip}>${row.status}</span>`;
+        return `<span class="font-bold ${row.statusClass}"${tip}>${row.status}</span>`;
     }
 
     function renderTpslStackCell(lines) {
