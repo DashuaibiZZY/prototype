@@ -13,17 +13,14 @@
         .screen { width: 100%; height: 100%; background: #fff; border-radius: 38px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
 
-        /* 控制面板樣式 */
         .control-panel { margin-left: 40px; display: flex; flex-direction: column; gap: 8px; max-width: 240px; }
         .btn-ctrl { background: white; border: 1px solid #e5e7eb; padding: 10px 16px; border-radius: 8px; font-size: 11px; font-weight: 800; text-align: left; transition: all 0.2s; }
         .btn-ctrl:hover { border-color: #3b82f6; color: #3b82f6; }
         .btn-ctrl.active { background: #3b82f6; color: white; border-color: #3b82f6; }
 
-        /* 動態進入動畫 */
         .fade-in { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* 複製圖標樣式 */
         .copy-icon { width: 14px; height: 14px; color: #d1d5db; cursor: pointer; transition: color 0.2s; }
         .copy-icon:hover { color: #000; }
     </style>
@@ -31,12 +28,9 @@
 <body>
 
 <div class="phone-shell">
-    <div class="screen" id="order-detail-screen">
-        <!-- 內容由 JS 動態注入 -->
-    </div>
+    <div class="screen" id="order-detail-screen"></div>
 </div>
 
-<!-- 右側控制面板 -->
 <div class="control-panel">
     <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">基礎訂單狀態</div>
     <button onclick="updateView('basic_filled')" id="btn-basic_filled" class="btn-ctrl active">基礎單 - 全部成交</button>
@@ -57,15 +51,75 @@
     const CROSS_SVG = `<div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-2"><svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="4"><path d="M6 18L18 6M6 6l12 12"/></svg></div>`;
     const ALERT_SVG = `<div class="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center mb-2 shadow-lg shadow-red-200"><svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></div>`;
 
+    const FILL_ROWS = [
+        { time: '2026-06-11 18:58:30', qty: '2031.23', price: '634.34', fee: '1.93' },
+        { time: '2026-06-11 18:58:32', qty: '512.80', price: '634.50', fee: '0.48' },
+        { time: '2026-06-11 18:58:35', qty: '318.45', price: '634.12', fee: '0.30' },
+        { time: '2026-06-11 18:58:38', qty: '168.75', price: '633.98', fee: '0.16' },
+    ];
+
+    function infoRow(label, value, valueClass) {
+        return `<div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">${label}</span><span class="text-gray-900 ${valueClass || ''}">${value}</span></div>`;
+    }
+
+    function copyOrderRow(label, id) {
+        return `<div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">${label}</span><div class="flex items-center text-gray-900 font-mono">${id} ${COPY_SVG}</div></div>`;
+    }
+
+    function filledInfoBlock(data) {
+        return `
+            <div class="px-6 py-4 space-y-4 text-[12px]">
+                ${infoRow('委托类型', data.orderType)}
+                ${infoRow('委托数量', data.qty + ' USDC')}
+                ${infoRow('委托价格', data.price, 'font-mono')}
+                ${infoRow('成交数量', data.filledQty + ' USDC')}
+                ${infoRow('成交均价', data.avgPrice, 'font-mono')}
+                ${infoRow('生效类型', data.timeInForce)}
+                ${infoRow('手续费', data.fee, 'font-mono text-red-500')}
+                ${infoRow('盈亏', data.pnl, data.pnlClass + ' font-mono')}
+                ${infoRow('委托时间', data.orderTime)}
+                ${copyOrderRow('订单编号', data.orderId)}
+            </div>`;
+    }
+
+    function cancelledInfoBlock(data) {
+        return `
+            <div class="px-6 py-4 space-y-4 text-[12px]">
+                ${infoRow('委托类型', data.orderType)}
+                ${infoRow('委托数量', data.qty + ' USDC')}
+                ${infoRow('委托价格', data.price, 'font-mono')}
+                ${infoRow('委托时间', data.orderTime)}
+                ${infoRow('生效类型', data.timeInForce)}
+                ${copyOrderRow('订单编号', data.orderId)}
+            </div>`;
+    }
+
+    function buildDetailList(rows) {
+        const items = rows.map(row => `
+            <div class="space-y-3 pb-5 border-b border-gray-50 last:border-0 last:pb-0">
+                <p class="text-[10px] font-bold text-gray-400">${row.time}</p>
+                <div class="grid grid-cols-3 gap-2 text-[11px] font-bold">
+                    <div class="flex flex-col"><span class="text-gray-400 text-[9px] mb-1">数量(USDC)</span><span class="text-gray-900 font-mono">${row.qty}</span></div>
+                    <div class="flex flex-col text-center"><span class="text-gray-400 text-[9px] mb-1">成交价(USDC)</span><span class="text-gray-900 font-mono">${row.price}</span></div>
+                    <div class="flex flex-col text-right"><span class="text-gray-400 text-[9px] mb-1">手续费(USDT)</span><span class="text-gray-900 font-mono">${row.fee}</span></div>
+                </div>
+            </div>
+        `).join('');
+
+        return `
+            <div class="px-6 py-6 border-t-[8px] border-gray-50">
+                <div class="flex justify-between items-center mb-6"><h4 class="font-black text-sm uppercase tracking-tighter italic">成交明細</h4></div>
+                <div class="space-y-2">${items}</div>
+            </div>`;
+    }
+
     function updateView(type) {
-        // 更新按鈕樣式
         document.querySelectorAll('.btn-ctrl').forEach(btn => btn.classList.remove('active'));
         document.getElementById('btn-' + type).classList.add('active');
 
         const screen = document.getElementById('order-detail-screen');
         let content = '';
 
-        // 通用導航欄 (BNB版)
         const headerBNB = `
             <header class="flex justify-between items-center px-4 pt-12 pb-4 shrink-0 bg-white border-b border-gray-50">
                 <button onclick="window.history.back()" class="p-1 -ml-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg></button>
@@ -73,34 +127,56 @@
                 <button class="p-1"><svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg></button>
             </header>`;
 
-        // 通用導航欄 (BTC版 for TPSL)
         const headerBTC = headerBNB.replace('BNBUSDT', 'BTCUSDT');
 
-        const commonInfo = (id, typeDir, qty, price, reduce) => `
-            <div class="px-6 py-4 space-y-4 text-[12px]">
-                <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">訂單號</span><div class="flex items-center text-gray-900">${id} ${COPY_SVG}</div></div>
-                <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">類型</span><span class="text-gray-900">${typeDir}</span></div>
-                <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">數量 / 成交數量 (USDT)</span><span class="text-gray-900">${qty}</span></div>
-                <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">均價 / 價格</span><span class="text-gray-900 font-mono">${price}</span></div>
-                <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">只減倉</span><span class="text-gray-900">${reduce}</span></div>
-            </div>`;
+        const filledData = {
+            orderType: '市价 / 开多',
+            qty: '2031.23',
+            price: '市价',
+            filledQty: '2031.23',
+            avgPrice: '634.34',
+            timeInForce: 'GTC',
+            fee: '-2.87 USDT',
+            pnl: '+12.45 USDT',
+            pnlClass: 'text-green-500',
+            orderTime: '2026-06-11 18:58:20',
+            orderId: '2938472941',
+        };
 
-        const detailList = `
-            <div class="px-6 py-6 border-t-[8px] border-gray-50">
-                <div class="flex justify-between items-center mb-6"><h4 class="font-black text-sm uppercase tracking-tighter italic">成交明細</h4></div>
-                <div class="space-y-6">
-                    <div class="space-y-2">
-                        <p class="text-[10px] font-black text-gray-900">2026-06-11 18:58:30</p>
-                        <div class="grid grid-cols-2 gap-y-2 text-[11px] font-bold">
-                            <div class="flex justify-between pr-4"><span class="text-gray-400">數量</span><span class="text-gray-900">5.00 USDT</span></div>
-                            <div class="flex justify-between pl-4 border-l border-gray-100"><span class="text-gray-400">價格</span><span class="text-gray-900">500.00</span></div>
-                            <div class="flex justify-between pr-4"><span class="text-gray-400">盈虧</span><span class="text-gray-900">0.00</span></div>
-                            <div class="flex justify-between pl-4 border-l border-gray-100"><span class="text-gray-400">手續費</span><span class="text-gray-900">0.012</span></div>
-                            <div class="flex justify-between pr-4"><span class="text-gray-400">角色</span><span class="text-gray-900 italic">吃單</span></div>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
+        const partialData = {
+            ...filledData,
+            orderType: '限价 / 开多',
+            price: '640.00',
+            filledQty: '123.24',
+            avgPrice: '634.34',
+            fee: '-0.62 USDT',
+            pnl: '--',
+            pnlClass: 'text-gray-400',
+            orderId: '2938472945',
+        };
+
+        const cancelledData = {
+            orderType: '限价 / 开多',
+            qty: '1000.00',
+            price: '640.00',
+            timeInForce: 'Post only',
+            orderTime: '2026-06-11 18:45:00',
+            orderId: '2938472948',
+        };
+
+        const liquidatedData = {
+            orderType: '强平 / 平多',
+            qty: '5000.00',
+            price: '645.00',
+            filledQty: '5000.00',
+            avgPrice: '644.82',
+            timeInForce: 'IOC',
+            fee: '-5.12 USDT',
+            pnl: '-124.50 USDT',
+            pnlClass: 'text-red-500',
+            orderTime: '2026-06-10 12:20:00',
+            orderId: 'LX-9283749',
+        };
 
         switch(type) {
             case 'basic_filled':
@@ -108,14 +184,8 @@
                     ${headerBNB}
                     <div class="flex-1 overflow-y-auto no-scrollbar fade-in">
                         <div class="py-8 flex flex-col items-center border-b border-gray-50">${CHECK_SVG}<h3 class="font-black text-lg">全部成交 100%</h3></div>
-                        ${commonInfo('2938472941', '市價 / 平多', '5.00 / 5.00', '500.00 / 500.00', '是')}
-                        <div class="px-6 py-4 space-y-4 text-[12px] border-t border-gray-50">
-                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">手續費</span><span class="text-gray-900 font-mono">-0.0025</span></div>
-                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">已實現盈虧</span><span class="text-green-500 font-mono">+1.25</span></div>
-                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">創建時間</span><span class="text-gray-900">2026-06-11 18:58:20</span></div>
-                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">更新時間</span><span class="text-gray-900">2026-06-11 18:58:30</span></div>
-                        </div>
-                        ${detailList}
+                        ${filledInfoBlock(filledData)}
+                        ${buildDetailList(FILL_ROWS)}
                     </div>`;
                 break;
             case 'basic_partial':
@@ -129,23 +199,18 @@
                             </div>
                             <h3 class="font-black text-lg">部分成交 50%</h3>
                         </div>
-                        ${commonInfo('2938472945', '限價 / 開多', '10.00 / 5.00', '500.00 / 500.00', '否')}
-                        ${detailList}
+                        ${filledInfoBlock(partialData)}
+                        ${buildDetailList(FILL_ROWS.slice(0, 2))}
                     </div>`;
                 break;
             case 'basic_cancelled':
             case 'basic_invalid':
                 const statusTxt = type === 'basic_cancelled' ? '已取消' : '已過期';
-                const timeLabel = type === 'basic_cancelled' ? '撤銷時間' : '過期時間';
                 content = `
                     ${headerBNB}
                     <div class="flex-1 overflow-y-auto no-scrollbar fade-in">
                         <div class="py-8 flex flex-col items-center border-b border-gray-50">${CROSS_SVG}<h3 class="font-black text-lg text-gray-400">${statusTxt}</h3></div>
-                        ${commonInfo('2938472948', '限價 / 開多', '5.00 / 0.00', '-- / 500.00', '否')}
-                        <div class="px-6 py-4 space-y-4 text-[12px] border-t border-gray-50">
-                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">手續費</span><span class="text-gray-400 font-mono">--</span></div>
-                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">${timeLabel}</span><span class="text-gray-900">2026-06-11 19:10:00</span></div>
-                        </div>
+                        ${cancelledInfoBlock(cancelledData)}
                         <div class="py-20 text-center text-gray-300 font-bold uppercase tracking-widest text-[10px]">已經全部加載完畢</div>
                     </div>`;
                 break;
@@ -154,12 +219,8 @@
                     ${headerBNB}
                     <div class="flex-1 overflow-y-auto no-scrollbar fade-in">
                         <div class="py-8 flex flex-col items-center border-b border-gray-50">${ALERT_SVG}<h3 class="font-black text-lg text-red-600 uppercase italic">強平委託成交</h3></div>
-                        ${commonInfo('LX-9283749', '強平委託 / 平多', '100.00 / 100.00', '650.00 / 645.00', '是')}
-                        <div class="px-6 py-4 space-y-4 text-[12px] border-t border-gray-50">
-                            <div class="flex justify-between font-bold"><span class="text-red-500 uppercase text-[10px] font-black">強平價格</span><span class="text-red-500 font-black font-mono">652.12</span></div>
-                            <div class="flex justify-between font-bold"><span class="text-gray-400 uppercase text-[10px]">已實現盈虧</span><span class="text-red-500 font-mono">-124.50</span></div>
-                        </div>
-                        ${detailList}
+                        ${filledInfoBlock(liquidatedData)}
+                        ${buildDetailList(FILL_ROWS)}
                     </div>`;
                 break;
             case 'tpsl_completed':
@@ -191,7 +252,6 @@
         screen.innerHTML = content;
     }
 
-    // 初始進入：顯示基礎單成交
     updateView('basic_filled');
 </script>
 

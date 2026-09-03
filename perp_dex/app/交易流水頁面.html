@@ -23,6 +23,8 @@
         /* 通用卡片 */
         .order-card { background: white; border-bottom: 1px solid #f3f4f6; padding: 16px 20px; transition: background 0.2s; }
         .order-card:active { background: #f9fafb; }
+        a.order-card { display: block; color: inherit; text-decoration: none; }
+        .picker-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #6b7280; }
 
         /* 篩選按鈕 */
         .filter-btn { display: flex; items-center; background: #f3f4f6; border-radius: 4px; padding: 4px 8px; font-size: 10px; font-weight: 800; color: #6b7280; }
@@ -116,7 +118,7 @@
 
         <!-- 3. 一級標籤欄 (支持橫向滾動) -->
         <div class="flex space-x-6 px-5 border-b border-gray-50 overflow-x-auto no-scrollbar shrink-0 mt-2">
-            <button onclick="switchPrimary('current')" id="p-current" class="tab-primary active">當前委託 (3)</button>
+            <button onclick="switchPrimary('current')" id="p-current" class="tab-primary active">當前委託 (4)</button>
             <button onclick="switchPrimary('history')" id="p-history" class="tab-primary">歷史委託</button>
             <button onclick="switchPrimary('position')" id="p-position" class="tab-primary">持倉歷史</button>
             <button onclick="switchPrimary('trades')" id="p-trades" class="tab-primary">歷史成交</button>
@@ -127,7 +129,7 @@
         <!-- 4. 二級標籤欄 (僅部分頁面顯示) -->
         <div id="secondary-tabs" class="flex items-center justify-between px-5 py-3 shrink-0">
             <div class="flex space-x-6">
-                <button onclick="switchSecondary('basic')" id="s-basic" class="tab-secondary active text-[14px]">基礎單 (1)</button>
+                <button onclick="switchSecondary('basic')" id="s-basic" class="tab-secondary active text-[14px]">基礎單 (2)</button>
                 <button onclick="switchSecondary('tpsl')" id="s-tpsl" class="tab-secondary text-[14px]">止盈止損單 (2)</button>
             </div>
         </div>
@@ -240,6 +242,94 @@
             </div>
         </div>
 
+        <!-- 修改基础单参数 -->
+        <div id="modify-base-order-sheet" class="hidden absolute inset-0 z-[56] flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('modify-base-order-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl max-h-[90%] overflow-y-auto">
+                <div class="py-4 px-5 border-b border-gray-50 flex justify-between items-center sticky top-0 bg-white z-10">
+                    <h3 class="text-[13px] font-black text-gray-900">修改参数</h3>
+                    <button type="button" onclick="closeSheet('modify-base-order-sheet')" class="text-gray-400 text-lg leading-none">✕</button>
+                </div>
+                <div class="p-5 space-y-4 pb-8 text-[11px]">
+                    <div>
+                        <p id="modify-base-order-title" class="font-black text-gray-900 text-[12px]">BNBUSDC <span class="text-green-500">买入开多 全仓 3x</span></p>
+                        <p id="modify-base-order-last-price" class="text-gray-400 mt-1 text-[10px]">最新价 606.31</p>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-gray-500 font-bold text-[10px]">委托价格</label>
+                        <input id="modify-base-order-price" type="text" value="620.00" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 font-mono font-bold outline-none focus:border-black">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-gray-500 font-bold text-[10px]">数量</label>
+                        <div class="flex border border-gray-200 rounded-lg overflow-hidden">
+                            <input id="modify-base-order-qty" type="text" value="620" class="flex-1 px-3 py-2.5 font-mono font-bold outline-none">
+                            <select id="modify-base-order-qty-unit" class="bg-gray-50 border-l border-gray-200 px-3 text-[10px] font-bold text-gray-600 outline-none">
+                                <option>USDT</option>
+                                <option>BNB</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="border-t border-gray-50 pt-3">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="modify-base-order-tpsl-check" class="w-3.5 h-3.5 accent-black" onchange="toggleModifyBaseOrderTpsl()">
+                            <span class="ml-1.5 font-bold text-gray-600">止盈止损</span>
+                        </label>
+                        <div id="modify-base-order-tpsl-inputs" class="mt-2 space-y-2 hidden">
+                            <div class="space-y-0.5">
+                                <div class="text-[8px] text-gray-400 font-bold">止盈</div>
+                                <input id="modify-base-order-tp-price" type="text" value="500" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 font-mono font-bold outline-none" placeholder="价格">
+                            </div>
+                            <div class="space-y-0.5">
+                                <div class="text-[8px] text-gray-400 font-bold">止损</div>
+                                <input id="modify-base-order-sl-price" type="text" value="600" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 font-mono font-bold outline-none" placeholder="价格">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-3 pt-2">
+                        <button type="button" onclick="closeSheet('modify-base-order-sheet')" class="flex-1 border border-gray-200 py-3 rounded-xl font-bold text-xs text-gray-400">取消</button>
+                        <button type="button" onclick="confirmModifyBaseOrder()" class="flex-1 bg-black text-white py-3 rounded-xl font-bold text-xs">确认</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 委托关联止盈止损设置 -->
+        <div id="order-attach-tpsl-sheet" class="hidden absolute inset-0 z-[56] flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('order-attach-tpsl-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl max-h-[90%] overflow-y-auto">
+                <div class="py-4 px-5 border-b border-gray-50 flex justify-between items-center sticky top-0 bg-white z-10">
+                    <h3 class="text-[13px] font-black text-gray-900">止盈止損設置</h3>
+                    <button type="button" onclick="closeSheet('order-attach-tpsl-sheet')" class="text-gray-400 text-lg leading-none">✕</button>
+                </div>
+                <div class="p-5 space-y-5 pb-8">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[12px] font-black text-gray-900">BNBUSDC</span>
+                        <span class="text-[10px] font-black text-red-500">卖出平多</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-[10px] font-bold text-gray-400 border-b border-gray-50 pb-4">
+                        <div>
+                            <p class="mb-1">數量 (USDC / BNB)</p>
+                            <p class="text-[13px] font-black text-gray-900 font-mono">620 / 1</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="mb-1">委託價格</p>
+                            <p class="text-[13px] font-black text-gray-900 font-mono">620.00</p>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-gray-400 leading-relaxed bg-gray-50 rounded-lg p-3 border border-gray-100">温馨提示：主訂單完全成交後，系統將自動按以下觸發價格掛出相應的止盈止損單。</p>
+                    <div class="space-y-3">
+                        <p class="text-[11px] font-black text-gray-700">市價止盈平多</p>
+                        <input type="number" placeholder="止盈觸發價格" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-[12px] font-bold outline-none font-mono" value="500">
+                    </div>
+                    <div class="space-y-3">
+                        <p class="text-[11px] font-black text-gray-700">市價止損平多</p>
+                        <input type="number" placeholder="止損觸發價格" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-[12px] font-bold outline-none font-mono" value="600">
+                    </div>
+                    <button type="button" onclick="confirmOrderAttachTPSL()" class="w-full bg-black text-white py-3 rounded-xl text-[13px] font-black">设置</button>
+                </div>
+            </div>
+        </div>
+
         <!-- 已实现盈亏拆解 -->
         <div id="realized-pnl-sheet" class="hidden absolute inset-0 z-[120] flex items-end rounded-[38px] overflow-hidden">
             <div class="absolute inset-0 bg-black/40" onclick="closeRealizedPnlSheet()"></div>
@@ -290,112 +380,333 @@
         document.getElementById('realized-pnl-sheet')?.classList.add('hidden');
     }
 
+    const MODIFY_BASE_ORDER_DATA = {
+        OR_882910: {
+            titleHtml: 'BNBUSDC <span class="text-red-500">卖出平多 全仓 3x</span>',
+            lastPrice: '606.31',
+            price: '620.00',
+            qty: '620',
+            unit: 'USDT',
+            tpslTp: '500',
+            tpslSl: '600',
+        },
+        OR_882912: {
+            titleHtml: 'ETHUSDT <span class="text-green-500">买入平空 逐仓 5x</span>',
+            lastPrice: '2,382.50',
+            price: '2380.00',
+            qty: '850',
+            unit: 'USDT',
+            tpslTp: '',
+            tpslSl: '',
+        },
+    };
+
+    function openSheet(id) { document.getElementById(id)?.classList.remove('hidden'); }
+    function closeSheet(id) { document.getElementById(id)?.classList.add('hidden'); }
+
+    function showProtoToast(msg) {
+        let toast = document.getElementById('proto-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'proto-toast';
+            toast.className = 'hidden absolute left-1/2 -translate-x-1/2 top-24 z-[120] bg-gray-900/95 text-white text-[11px] font-bold px-4 py-2 rounded-full shadow-lg';
+            document.querySelector('.screen')?.appendChild(toast);
+        }
+        toast.textContent = msg;
+        toast.classList.remove('hidden');
+        clearTimeout(showProtoToast._timer);
+        showProtoToast._timer = setTimeout(() => toast.classList.add('hidden'), 1600);
+    }
+
+    function openModifyBaseOrderSheet(orderId) {
+        const row = MODIFY_BASE_ORDER_DATA[orderId] || MODIFY_BASE_ORDER_DATA.OR_882910;
+        const titleEl = document.getElementById('modify-base-order-title');
+        const priceHintEl = document.getElementById('modify-base-order-last-price');
+        const priceInput = document.getElementById('modify-base-order-price');
+        const qtyInput = document.getElementById('modify-base-order-qty');
+        const unitSelect = document.getElementById('modify-base-order-qty-unit');
+        const tpslCheck = document.getElementById('modify-base-order-tpsl-check');
+        const tpslInputs = document.getElementById('modify-base-order-tpsl-inputs');
+        const tpInput = document.getElementById('modify-base-order-tp-price');
+        const slInput = document.getElementById('modify-base-order-sl-price');
+        if (titleEl) titleEl.innerHTML = row.titleHtml;
+        if (priceHintEl) priceHintEl.textContent = '最新价 ' + row.lastPrice;
+        if (priceInput) priceInput.value = row.price;
+        if (qtyInput) qtyInput.value = row.qty;
+        if (unitSelect) unitSelect.value = row.unit || 'USDT';
+        const hasTpsl = !!(row.tpslTp || row.tpslSl);
+        if (tpslCheck) tpslCheck.checked = hasTpsl;
+        if (tpslInputs) tpslInputs.classList.toggle('hidden', !hasTpsl);
+        if (tpInput) tpInput.value = row.tpslTp || '';
+        if (slInput) slInput.value = row.tpslSl || '';
+        openSheet('modify-base-order-sheet');
+    }
+
+    function toggleModifyBaseOrderTpsl() {
+        const checked = document.getElementById('modify-base-order-tpsl-check')?.checked;
+        const panel = document.getElementById('modify-base-order-tpsl-inputs');
+        if (panel) panel.classList.toggle('hidden', !checked);
+    }
+
+    function confirmModifyBaseOrder() {
+        closeSheet('modify-base-order-sheet');
+        showProtoToast('委托参数已更新');
+    }
+
+    function openOrderAttachTPSLSheet() {
+        openSheet('order-attach-tpsl-sheet');
+    }
+
+    function confirmOrderAttachTPSL() {
+        const tpInput = document.querySelector('#order-attach-tpsl-sheet input[placeholder="止盈觸發價格"]');
+        const slInput = document.querySelector('#order-attach-tpsl-sheet input[placeholder="止損觸發價格"]');
+        const tp = tpInput?.value || '500';
+        const sl = slInput?.value || '600';
+        const display = document.getElementById('order-basic-tpsl-display');
+        if (display) display.textContent = tp + '/' + sl;
+        closeSheet('order-attach-tpsl-sheet');
+        showProtoToast('止盈止損已更新');
+    }
+
+    function openOrderTPSLSheet() {
+        showProtoToast('打开止盈止损编辑');
+    }
+
+    const CHEVRON_SVG = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"/></svg>';
+
     // 數據模擬
     const mockData = {
         current: {
             basic: `
-                <div class="order-card">
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="flex items-center space-x-2">
-                            <span class="font-black text-[13px]">BNBUSDT</span>
-                            <span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <button class="bg-gray-100 text-gray-900 text-[10px] font-black px-3 py-1 rounded-sm">撤單</button>
-                        </div>
+            <div class="order-card">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-black text-[13px]">BNBUSDC</span>
+                        <span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span>
                     </div>
-                    <div class="flex items-center space-x-2 mb-4 text-[10px] font-black uppercase">
-                        <span class="text-green-500 italic">限價 / 開多</span>
-                        <span class="text-gray-300 font-medium">2026-06-11 18:58:25</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-y-2 text-[11px]">
-                        <div class="flex flex-col"><span class="text-gray-400 font-bold uppercase text-[9px]">成交數量 / 數量 (USDT)</span><span class="font-black">0.00 / 5.00</span></div>
-                        <div class="flex flex-col text-right"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black font-mono">500.00</span></div>
+                    <div class="flex items-center gap-1">
+                        <button type="button" onclick="openModifyBaseOrderSheet('OR_882910')" class="text-blue-500 p-1 active:opacity-60" aria-label="修改参数">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                        <button onclick="showProtoToast('已撤銷該委託')" class="bg-gray-100 text-gray-900 text-[10px] font-black px-3 py-1 rounded-sm">撤單</button>
                     </div>
                 </div>
-            `,
+                <div class="flex items-center flex-wrap gap-1.5 mb-4">
+                    <span class="bg-red-100 text-red-600 text-[10px] px-1 font-black rounded-sm">卖出平多</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">全仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">3X</span>
+                    <span class="text-gray-300 font-medium text-[10px]">06/11 18:59:34</span>
+                </div>
+                <div class="grid grid-cols-2 gap-y-2 text-[11px]">
+                    <div class="flex flex-col"><span class="text-gray-400 font-bold uppercase text-[9px]">成交數量 / 數量 (USDC)</span><span class="font-black font-mono">0.00 / 620</span></div>
+                    <div class="flex flex-col text-right"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black font-mono">620.00</span></div>
+                </div>
+                <div class="flex justify-between items-center text-[11px] mt-3">
+                    <span class="text-gray-400 font-bold uppercase text-[9px]">止盈/止損</span>
+                    <div class="flex items-center gap-1.5 font-black font-mono">
+                        <span id="order-basic-tpsl-display">500/600</span>
+                        <button type="button" onclick="openOrderAttachTPSLSheet()" class="text-blue-500 p-0.5 active:opacity-60" aria-label="设置止盈止损">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="order-card">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-black text-[13px]">ETHUSDT</span>
+                        <span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button type="button" onclick="openModifyBaseOrderSheet('OR_882912')" class="text-blue-500 p-1 active:opacity-60" aria-label="修改参数">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                        <button onclick="showProtoToast('已撤銷該委託')" class="bg-gray-100 text-gray-900 text-[10px] font-black px-3 py-1 rounded-sm">撤單</button>
+                    </div>
+                </div>
+                <div class="flex items-center flex-wrap gap-1.5 mb-4">
+                    <span class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">买入平空</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">逐仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">5X</span>
+                    <span class="text-gray-300 font-medium text-[10px]">06/11 19:05:12</span>
+                </div>
+                <div class="grid grid-cols-2 gap-y-2 text-[11px]">
+                    <div class="flex flex-col"><span class="text-gray-400 font-bold uppercase text-[9px]">成交數量 / 數量 (USDT)</span><span class="font-black font-mono">0.00 / 850</span></div>
+                    <div class="flex flex-col text-right"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black font-mono">2,380.00</span></div>
+                </div>
+            </div>
+        `,
             tpsl: `
-                <div class="order-card">
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="flex items-center space-x-2">
-                            <span class="font-black text-[13px]">BNBUSDT</span>
-                            <span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span>
-                        </div>
-                        <button class="bg-gray-100 text-gray-900 text-[10px] font-black px-3 py-1 rounded-sm">撤單</button>
+            <div class="order-card">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-black text-[13px]">BNBUSDT</span>
+                        <span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span>
                     </div>
-                    <div class="flex items-center space-x-2 mb-4 text-[10px] font-black uppercase">
-                        <span class="text-red-500 italic">止盈止損單 / 平多</span>
-                        <span class="text-gray-300 font-medium">2026-06-11 18:59:34</span>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">數量 (USDT)</span><span class="font-black">5.00</span></div>
-                        <div class="flex justify-between text-[11px] items-center"><span class="text-gray-400 font-bold uppercase text-[9px]">止盈/止損觸發價</span><div class="flex items-center space-x-1 font-black font-mono"><span>700.00 / 500.00</span><svg class="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"/></svg></div></div>
-                        <div class="flex justify-between text-[11px] items-center"><span class="text-gray-400 font-bold uppercase text-[9px]">止盈/止損單價格</span><div class="flex items-center space-x-1 font-black"><span>市價 / 市價</span><svg class="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"/></svg></div></div>
+                    <div class="flex items-center gap-1">
+                        <button type="button" onclick="openOrderTPSLSheet()" class="text-blue-500 p-1 active:opacity-60" aria-label="设置止盈止损">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                        <button onclick="showProtoToast('已撤銷該委託')" class="bg-gray-100 text-gray-900 text-[10px] font-black px-3 py-1 rounded-sm">撤單</button>
                     </div>
                 </div>
-            `
+                <div class="flex items-center flex-wrap gap-1.5 mb-3">
+                    <span class="bg-red-100 text-red-600 text-[10px] px-1 font-black rounded-sm">卖出平多</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">全仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">3X</span>
+                    <span class="text-gray-300 font-medium text-[10px]">06/11 18:59:34</span>
+                </div>
+                <div class="flex justify-between items-center text-[11px] mb-3">
+                    <span class="text-gray-400 font-bold text-[9px]">委托数量(USDT)</span>
+                    <span class="font-black font-mono">10.23</span>
+                </div>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                    <span class="text-gray-400 font-bold text-[9px]">止盈触发价</span>
+                    <span class="text-gray-400 font-bold text-[9px] text-right">止盈委托价</span>
+                    <span class="font-black font-mono">700</span>
+                    <span class="font-black font-mono text-right">市价</span>
+                    <span class="text-gray-400 font-bold text-[9px] pt-2">止损触发价</span>
+                    <span class="text-gray-400 font-bold text-[9px] text-right pt-2">止损委托价</span>
+                    <span class="font-black font-mono">510</span>
+                    <span class="font-black font-mono text-right">500</span>
+                </div>
+            </div>
+            <div class="order-card">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-black text-[13px]">ETHUSDT</span>
+                        <span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button type="button" onclick="openOrderTPSLSheet()" class="text-blue-500 p-1 active:opacity-60" aria-label="设置止盈止损">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                        <button onclick="showProtoToast('已撤銷該委託')" class="bg-gray-100 text-gray-900 text-[10px] font-black px-3 py-1 rounded-sm">撤單</button>
+                    </div>
+                </div>
+                <div class="flex items-center flex-wrap gap-1.5 mb-3">
+                    <span class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">买入平空</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">逐仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">5X</span>
+                    <span class="text-gray-300 font-medium text-[10px]">06/11 19:12:08</span>
+                </div>
+                <div class="flex justify-between items-center text-[11px] mb-3">
+                    <span class="text-gray-400 font-bold text-[9px]">委托数量(USDT)</span>
+                    <span class="font-black font-mono">8.50</span>
+                </div>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                    <span class="text-gray-400 font-bold text-[9px]">止盈触发价</span>
+                    <span class="text-gray-400 font-bold text-[9px] text-right">止盈委托价</span>
+                    <span class="font-black font-mono">2,450</span>
+                    <span class="font-black font-mono text-right">市价</span>
+                    <span class="text-gray-400 font-bold text-[9px] pt-2">止损触发价</span>
+                    <span class="text-gray-400 font-bold text-[9px] text-right pt-2">止损委托价</span>
+                    <span class="font-black font-mono">2,380</span>
+                    <span class="font-black font-mono text-right">2,375</span>
+                </div>
+            </div>
+        `
         },
         history: {
             basic: `
-        <!-- 1. 全部成交 -->
-        <div class="order-card">
-            <div class="flex justify-between items-start mb-1">
-                <div class="flex items-center space-x-2">
-                    <span class="font-black text-[13px]">BNBUSDT</span>
-                    <span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span>
+        <a href="历史委托详情页.html" class="order-card">
+            <div class="flex justify-between items-center mb-2">
+                <span class="font-black text-[13px]">BNBUSDT</span>
+                <span class="text-[10px] font-black text-green-500">全部成交</span>
+            </div>
+            <div class="flex justify-between items-center mb-3 gap-2">
+                <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                    <span class="text-[10px] font-bold text-gray-600">市价</span>
+                    <span class="bg-red-100 text-red-600 text-[10px] px-1 font-black rounded-sm">卖出平多</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">全仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">20x</span>
                 </div>
-                <a href="历史委托详情页.html"><div class="flex items-center space-x-1 text-gray-300"><span class="text-[10px] font-medium">2026-06-11 18:59:34</span><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"/></svg></div></a>
+                <div class="flex items-center space-x-1 text-gray-300 shrink-0">
+                    <span class="text-[10px] font-medium">2026-06-11 18:59:34</span>
+                    ${CHEVRON_SVG}
+                </div>
             </div>
-            <div class="text-[10px] font-black uppercase italic text-red-500 mb-4">市價 / 平多</div>
-            <div class="space-y-2">
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">數量 (USDT)</span><span class="font-black text-gray-900">6.01 / 6.01</span></div>
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black text-gray-900 font-mono">市價</span></div>
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">狀態</span><span class="font-black text-green-500">全部成交</span></div>
+            <div class="grid grid-cols-3 gap-2 text-[11px]">
+                <div class="flex flex-col"><span class="text-gray-400 font-bold text-[9px]">委托数量(USDC)</span><span class="font-black font-mono">2031.23</span></div>
+                <div class="flex flex-col text-center"><span class="text-gray-400 font-bold text-[9px]">成交数量(USDC)</span><span class="font-black font-mono">2031.23</span></div>
+                <div class="flex flex-col text-right"><span class="text-gray-400 font-bold text-[9px]">成交均价</span><span class="font-black font-mono">634.34</span></div>
             </div>
-        </div>
+        </a>
 
-        <!-- 2. 部分成交 (正在交易) -->
-        <div class="order-card">
-            <div class="flex justify-between items-start mb-1">
-                <div class="flex items-center space-x-2"><span class="font-black text-[13px]">ETHUSDT</span><span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span></div>
-                <a href="历史委托详情页.html"><div class="flex items-center space-x-1 text-gray-300"><span class="text-[10px] font-medium">2026-06-11 18:50:12</span><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"/></svg></div></a>
+        <a href="历史委托详情页.html" class="order-card">
+            <div class="flex justify-between items-center mb-2">
+                <span class="font-black text-[13px]">BNBUSDT</span>
+                <span class="text-[10px] font-black text-orange-500">部分成交</span>
             </div>
-            <div class="text-[10px] font-black uppercase italic text-green-500 mb-4">限價 / 開多</div>
-            <div class="space-y-2">
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">數量 (USDT)</span><span class="font-black text-gray-900">50.00 / 100.00</span></div>
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black text-gray-900 font-mono">3450.00</span></div>
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">狀態</span><span class="font-black text-orange-500">部分成交</span></div>
+            <div class="flex justify-between items-center mb-3 gap-2">
+                <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                    <span class="text-[10px] font-bold text-gray-600">市价</span>
+                    <span class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">开多</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">全仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">20x</span>
+                </div>
+                <div class="flex items-center space-x-1 text-gray-300 shrink-0">
+                    <span class="text-[10px] font-medium">2026-06-11 18:59:34</span>
+                    ${CHEVRON_SVG}
+                </div>
             </div>
-        </div>
+            <div class="grid grid-cols-3 gap-2 text-[11px]">
+                <div class="flex flex-col"><span class="text-gray-400 font-bold text-[9px]">委托数量(USDC)</span><span class="font-black font-mono">2031.23</span></div>
+                <div class="flex flex-col text-center"><span class="text-gray-400 font-bold text-[9px]">成交数量(USDC)</span><span class="font-black font-mono">123.24</span></div>
+                <div class="flex flex-col text-right"><span class="text-gray-400 font-bold text-[9px]">成交均价</span><span class="font-black font-mono">634.34</span></div>
+            </div>
+        </a>
 
-        <!-- 3. 已取消 -->
-        <div class="order-card opacity-60">
-            <div class="flex justify-between items-start mb-1">
-                <div class="flex items-center space-x-2"><span class="font-black text-[13px]">SOLUSDT</span><span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span></div>
-                <a href="历史委托详情页.html"><div class="flex items-center space-x-1 text-gray-300"><span class="text-[10px] font-medium">2026-06-11 18:45:00</span><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"/></svg></div></a>
+        <a href="历史委托详情页.html" class="order-card opacity-60">
+            <div class="flex justify-between items-center mb-2">
+                <span class="font-black text-[13px]">SOLUSDT</span>
+                <span class="text-[10px] font-black text-gray-400">已取消</span>
             </div>
-            <div class="text-[10px] font-black uppercase italic text-gray-400 mb-4">限價 / 開多</div>
-            <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">數量 (USDT)</span><span class="font-black text-gray-900">-- / 100.00</span></div>
-            <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black text-gray-900 font-mono">3450.00</span></div>
-            <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">狀態</span><span class="font-black text-gray-500">已取消</span></div>
-        </div>
+            <div class="flex justify-between items-center mb-3 gap-2">
+                <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                    <span class="text-[10px] font-bold text-gray-600">限价</span>
+                    <span class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">开多</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">逐仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">10x</span>
+                </div>
+                <div class="flex items-center space-x-1 text-gray-300 shrink-0">
+                    <span class="text-[10px] font-medium">2026-06-11 18:45:00</span>
+                    ${CHEVRON_SVG}
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-[11px]">
+                <div class="flex flex-col"><span class="text-gray-400 font-bold text-[9px]">委托数量(USDC)</span><span class="font-black font-mono">1000.00</span></div>
+                <div class="flex flex-col text-center"><span class="text-gray-400 font-bold text-[9px]">成交数量(USDC)</span><span class="font-black font-mono">0.00</span></div>
+                <div class="flex flex-col text-right"><span class="text-gray-400 font-bold text-[9px]">成交均价</span><span class="font-black font-mono">--</span></div>
+            </div>
+        </a>
 
-        <!-- 4. 強平委託 (特殊標記) -->
-        <div class="order-card bg-red-50/30">
-            <div class="flex justify-between items-start mb-1">
+        <a href="历史委托详情页.html" class="order-card bg-red-50/30">
+            <div class="flex justify-between items-center mb-2">
                 <div class="flex items-center space-x-2">
                     <span class="font-black text-[13px]">PEPEUSDT</span>
                     <span class="bg-red-600 text-white text-[8px] px-1 font-black rounded-sm uppercase tracking-tighter shadow-sm">強平委託</span>
                 </div>
-                <a href="历史委托详情页.html"><div class="flex items-center space-x-1 text-gray-300"><span class="text-[10px] font-medium">2026-06-10 12:20:05</span><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"/></svg></div></a>
+                <span class="text-[10px] font-black text-green-500">全部成交</span>
             </div>
-            <div class="text-[10px] font-black uppercase italic text-red-600 mb-4">強平 / 平多</div>
-            <div class="space-y-2">
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">數量 (USDT)</span><span class="font-black text-gray-900">100.00 / 100.00</span></div>
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black text-gray-900 font-mono">3450.00</span></div>
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">狀態</span><span class="font-black text-red-600">全部成交</span></div>
+            <div class="flex justify-between items-center mb-3 gap-2">
+                <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                    <span class="text-[10px] font-bold text-red-600">强平</span>
+                    <span class="bg-red-100 text-red-600 text-[10px] px-1 font-black rounded-sm">卖出平多</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">全仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">50x</span>
+                </div>
+                <div class="flex items-center space-x-1 text-gray-300 shrink-0">
+                    <span class="text-[10px] font-medium">2026-06-10 12:20:05</span>
+                    ${CHEVRON_SVG}
+                </div>
             </div>
-        </div>
+            <div class="grid grid-cols-3 gap-2 text-[11px]">
+                <div class="flex flex-col"><span class="text-gray-400 font-bold text-[9px]">委托数量(USDC)</span><span class="font-black font-mono">5000.00</span></div>
+                <div class="flex flex-col text-center"><span class="text-gray-400 font-bold text-[9px]">成交数量(USDC)</span><span class="font-black font-mono">5000.00</span></div>
+                <div class="flex flex-col text-right"><span class="text-gray-400 font-bold text-[9px]">成交均价</span><span class="font-black font-mono">0.000012</span></div>
+            </div>
+        </a>
     `,
             tpsl: `
     <!-- 1. 已取消 -->
@@ -552,7 +863,7 @@
             btnCancel.style.display = (tab === 'current') ? 'block' : 'none';
 
             if (tab === 'current') {
-                sBasic.innerText = "基礎單 (1)";
+                sBasic.innerText = "基礎單 (2)";
                 sTpsl.innerText = "止盈止損單 (2)";
             } else {
                 sBasic.innerText = "基礎單";
