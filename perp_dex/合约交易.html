@@ -1296,19 +1296,18 @@
             </span>
                 </div>
 
-                <!-- GTC 选择器 -->
-                <div onclick="toggleGtcDropdown(event)"
+                <!-- 生效时间选择器（仅限价） -->
+                <div id="gtc-selector"
+                     onclick="toggleGtcDropdown(event)"
                      class="flex items-center text-[9px] font-bold text-gray-500 mb-2 cursor-pointer relative"
-                     id="gtc-trigger"
                      style="overflow: visible !important;">
                     生效时间&nbsp;&nbsp;<span id="gtc-value">GTC</span>
                     <svg width="8" height="8" class="ml-1" viewBox="0 0 16 16"><path d="M8 11.2L3.2 6.4h9.6L8 11.2z" fill="currentColor"></path></svg>
                     <div id="gtc-dropdown"
-                         class="absolute top-full left-0 mt-1 bg-white border border-gray-200 shadow rounded-sm text-[10px] hidden z-50 w-40"
+                         class="absolute top-full left-0 mt-1 bg-white border border-gray-200 shadow rounded-sm text-[10px] hidden z-50 w-48"
                          style="pointer-events: auto;">
-                        <div class="px-3 py-1.5 hover:bg-gray-100 cursor-pointer" data-gtc="GTC (一直有效直至取消)" onclick="selectGtc(this, event)">GTC (一直有效直至取消)</div>
-                        <div class="px-3 py-1.5 hover:bg-gray-100 cursor-pointer" data-gtc="FOK (全部成交否則取消)" onclick="selectGtc(this, event)">FOK (全部成交否則取消)</div>
-                        <div class="px-3 py-1.5 hover:bg-gray-100 cursor-pointer" data-gtc="IOC (立即成交或取消)" onclick="selectGtc(this, event)">IOC (立即成交或取消)</div>
+                        <div class="px-3 py-1.5 hover:bg-gray-100 cursor-pointer" data-tif="GTC" onclick="selectGtc(this, event)">GTC (一直有效直至取消)</div>
+                        <div class="px-3 py-1.5 hover:bg-gray-100 cursor-pointer" data-tif="Post only" onclick="selectGtc(this, event)">Post only (只挂单)</div>
                     </div>
                 </div>
 
@@ -1406,13 +1405,13 @@
                 </div>
             </div>
 
-            <!-- 当前委托/历史委托 子标签（切换基础单/止盈止损单） -->
+            <!-- 当前委托/历史委托 子标签（切换限价｜市价/止盈止损单） -->
             <div id="order-subtabs" class="flex space-x-4 px-4 py-2 border-b border-gray-50 bg-white text-[10px] font-bold hidden shrink-0">
-                <button id="subtab-order-base" onclick="event.stopPropagation(); switchOrderSubTab('base')" class="tab-active cursor-pointer pb-1">基礎單 (2)</button>
+                <button id="subtab-order-base" onclick="event.stopPropagation(); switchOrderSubTab('base')" class="tab-active cursor-pointer pb-1">限價｜市價 (2)</button>
                 <button id="subtab-order-tpsl" onclick="event.stopPropagation(); switchOrderSubTab('tpsl')" class="cursor-pointer pb-1 text-gray-400 hover:text-black">止盈止損單 (2)</button>
             </div>
 
-            <!-- 历史委托筛选栏（基础单/止盈止损单共用容器，由JS控制内部显示） -->
+            <!-- 历史委托筛选栏（限价｜市价/止盈止损单共用容器，由JS控制内部显示） -->
             <div id="hist-order-filters" class="pf-filter-bar px-4 py-2 border-b border-gray-50 flex flex-wrap items-center space-x-2 text-[9px] font-bold hidden shrink-0">
                 <!-- 快捷时间按钮组 -->
                 <button type="button" class="pf-period-btn px-2 py-1 rounded-sm bg-gray-900 text-white" onclick="PositionFlow.setPeriod(this, 1)">近1日</button>
@@ -2992,7 +2991,7 @@
         <div class="p-5 space-y-4">
             <div class="text-xs text-gray-600 leading-relaxed">
                 <p class="font-bold text-gray-900 mb-2">確定要撤銷所有當前委託訂單嗎？</p>
-                <p class="text-gray-400" id="cancel-all-order-type-hint">此操作將撤銷所有基礎單</p>
+                <p class="text-gray-400" id="cancel-all-order-type-hint">此操作將撤銷所有限價｜市價</p>
             </div>
             <div class="flex space-x-3 pt-2">
                 <button onclick="toggleModal('modal-cancel-all')" class="flex-1 border border-gray-200 py-2.5 rounded-sm font-bold text-xs text-gray-400 uppercase">取消</button>
@@ -3007,7 +3006,7 @@
     </div>
 </div>
 
-<!-- 弹窗：修改基础单委托参数 -->
+<!-- 弹窗：修改限价｜市价委托参数 -->
 <div id="modal-modify-base-order" class="modal-overlay" style="display: none;">
     <div class="bg-white w-[400px] rounded-sm shadow-2xl overflow-hidden">
         <div class="px-5 py-4 border-b border-gray-100">
@@ -3075,7 +3074,7 @@
     </div>
 </div>
 
-<!-- 弹窗：历史基础单流水详情 -->
+<!-- 弹窗：历史限价｜市价流水详情 -->
 <div id="modal-order-fill-detail" class="modal-overlay" style="display: none;">
     <div class="bg-white w-[640px] max-w-[95vw] rounded-sm shadow-2xl overflow-hidden">
         <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center">
@@ -4140,20 +4139,20 @@
         if (checkbox.checked) updateTPSLEstimates();
     }
 
-    // GTC 下拉控制
+    // 生效时间下拉控制
     function toggleGtcDropdown(e) {
-        e.stopPropagation();   // 阻止冒泡，防止被其他全局监听器干扰
+        e.stopPropagation();
         const dropdown = document.getElementById('gtc-dropdown');
         if (dropdown) {
             dropdown.classList.toggle('hidden');
         }
     }
 
-    // 选项点击
+    // 选项点击：终端仅展示英文缩写
     function selectGtc(el, e) {
-        e.stopPropagation();   // 阻止冒泡，避免触发父级关闭逻辑
-        const type = el.getAttribute('data-gtc');
-        document.getElementById('gtc-value').innerText = type;
+        e.stopPropagation();
+        const shortLabel = el.getAttribute('data-tif') || 'GTC';
+        document.getElementById('gtc-value').innerText = shortLabel;
         document.getElementById('gtc-dropdown').classList.add('hidden');
     }
 
@@ -4359,7 +4358,7 @@
             if (subtabsEl) subtabsEl.classList.remove('hidden');
             const baseBtn = document.getElementById('subtab-order-base');
             const tpslBtn = document.getElementById('subtab-order-tpsl');
-            if (baseBtn) baseBtn.innerText = tabId === 'order' ? '基礎單 (2)' : '基礎單';
+            if (baseBtn) baseBtn.innerText = tabId === 'order' ? '限價｜市價 (2)' : '限價｜市價';
             if (tpslBtn) tpslBtn.innerText = tabId === 'order' ? '止盈止損單 (2)' : '止盈止損單';
             switchOrderSubTab('base');
         } else {
@@ -4531,7 +4530,7 @@
         if (hint) {
             hint.textContent = orderType === 'tpsl'
                 ? '此操作將撤銷所有止盈止損單'
-                : '此操作將撤銷所有基礎單';
+                : '此操作將撤銷所有限價｜市價';
         }
         toggleModal('modal-cancel-all');
     }
@@ -4589,9 +4588,9 @@
         if (!e.target.closest('[onclick^="toggleMultiSelect"]') && !e.target.closest('.absolute.top-full') && !e.target.closest('.kline-period-more-wrap')) {
             document.querySelectorAll('[id$="-dropdown"]').forEach(el => el.classList.add('hidden'));
         }
-        const gtcTrigger = document.getElementById('gtc-trigger');
+        const gtcSelector = document.getElementById('gtc-selector');
         const gtcDropdown = document.getElementById('gtc-dropdown');
-        if (gtcTrigger && gtcDropdown && !gtcTrigger.contains(e.target) && !gtcDropdown.contains(e.target)) {
+        if (gtcSelector && gtcDropdown && !gtcSelector.contains(e.target)) {
             gtcDropdown.classList.add('hidden');
         }
         const qtyDropdown = document.getElementById('qty-unit-dropdown');
