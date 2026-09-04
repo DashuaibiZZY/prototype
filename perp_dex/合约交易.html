@@ -2380,6 +2380,88 @@
     </div>
 </div>
 
+<!-- 彈窗: 持仓杠杆调整 -->
+<div id="modal-pos-leverage" class="modal-overlay" style="display: none;">
+    <div class="bn-modal" style="width: 420px;">
+        <div class="flex justify-between items-center px-6 py-4 border-b border-gray-50">
+            <span class="text-base font-bold">調整槓桿</span>
+            <span class="cursor-pointer text-gray-400 hover:text-black" onclick="toggleModal('modal-pos-leverage')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </span>
+        </div>
+        <div class="p-6 space-y-5">
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-bold text-gray-700">槓桿</span>
+                    <span class="text-[10px] text-gray-400">當前 <span id="web-pos-lev-current" class="font-bold text-gray-900">20x</span></span>
+                </div>
+                <div class="flex items-center border border-gray-200 rounded px-1 py-1 mb-3 focus-within:border-blue-500 transition-colors">
+                    <button type="button" onclick="adjustWebPosLeverage(-1)" class="w-10 h-10 flex items-center justify-center hover:bg-gray-50 text-xl font-light text-gray-400">-</button>
+                    <div class="flex-1 flex items-center justify-center">
+                        <input type="number" id="web-pos-lev-input" class="w-12 text-center text-lg font-black outline-none bg-transparent text-gray-900" value="20" oninput="syncWebPosLeverageFromInput()">
+                        <span class="ml-1 text-base font-bold text-gray-900">x</span>
+                    </div>
+                    <button type="button" onclick="adjustWebPosLeverage(1)" class="w-10 h-10 flex items-center justify-center hover:bg-gray-50 text-xl font-light text-gray-400">+</button>
+                </div>
+                <input type="range" id="web-pos-lev-slider" min="1" max="150" value="20" class="bn-slider w-full h-1 bg-gray-100 rounded-full appearance-none accent-blue-500 mb-4" oninput="syncWebPosLeverageSlider(this.value)">
+            </div>
+            <div class="space-y-2 text-[11px]">
+                <div class="flex justify-between"><span class="text-gray-500 font-bold">調整後最大可開</span><span id="web-pos-lev-max-open" class="font-mono font-black text-gray-900">50,000.23 USDC</span></div>
+                <div class="flex justify-between"><span class="text-gray-500 font-bold">所需保证金</span><span id="web-pos-lev-required-margin" class="font-mono font-black text-gray-900">1,240.23 USDC</span></div>
+                <div class="flex justify-between"><span class="text-gray-500 font-bold">预估强平价</span><span id="web-pos-lev-est-liq" class="font-mono font-black text-gray-900">12,240.23 USDC</span></div>
+            </div>
+            <div id="web-pos-lev-reduce-hint" class="hidden text-[10px] text-orange-600 bg-orange-50 border border-orange-100 rounded p-3 leading-relaxed">调整杠杆倍数后，将从账户余额中转出 <b id="web-pos-lev-transfer-amt">23.12 USDC</b>，用于逐仓保证金（以实际金额为准）</div>
+        </div>
+        <div class="p-6 pt-0">
+            <button type="button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-md hover:bg-blue-700 transition" onclick="confirmWebPosLeverage()">確認</button>
+        </div>
+    </div>
+</div>
+
+<!-- 彈窗: 逐仓保证金调整 -->
+<div id="modal-pos-margin" class="modal-overlay" style="display: none;">
+    <div class="bn-modal" style="width: 420px;">
+        <div class="flex justify-between items-center px-6 py-4 border-b border-gray-50">
+            <span class="text-base font-bold">調整保證金</span>
+            <span class="cursor-pointer text-gray-400 hover:text-black" onclick="toggleModal('modal-pos-margin')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </span>
+        </div>
+        <div class="p-6 space-y-5">
+            <p id="web-pos-margin-pair" class="text-sm font-black text-gray-900">BTCUSDC</p>
+            <div class="flex gap-2">
+                <div id="web-pos-margin-tab-add" class="bn-subscript checked flex-1 text-center text-[11px]" onclick="switchWebPosMarginTab('add')">增加保证金</div>
+                <div id="web-pos-margin-tab-reduce" class="bn-subscript flex-1 text-center text-[11px]" onclick="switchWebPosMarginTab('reduce')">减少保证金</div>
+            </div>
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold text-gray-500">數量 (USDC)</label>
+                <input type="number" id="web-pos-margin-qty-input" class="w-full h-9 border border-gray-200 rounded-sm px-2 font-mono font-bold text-[11px] outline-none focus:border-blue-400" value="0" min="0" oninput="syncWebPosMarginFromInput()">
+                <div class="pos-close-slider-wrap">
+                    <div class="pos-close-slider-rail">
+                        <div class="pos-close-slider-ticks" aria-hidden="true">
+                            <span class="pos-close-slider-tick"></span>
+                            <span class="pos-close-slider-tick"></span>
+                            <span class="pos-close-slider-tick"></span>
+                            <span class="pos-close-slider-tick"></span>
+                            <span class="pos-close-slider-tick"></span>
+                        </div>
+                        <input type="range" id="web-pos-margin-qty-slider" class="pos-close-slider-input" min="0" max="100" step="25" value="0" oninput="syncWebPosMarginSlider(this.value)">
+                    </div>
+                    <div class="pos-close-slider-labels"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+                </div>
+            </div>
+            <div class="space-y-2 text-[11px]">
+                <div class="flex justify-between"><span id="web-pos-margin-max-label" class="text-gray-500 font-bold">最多可增加</span><span id="web-pos-margin-max-val" class="font-mono font-black text-gray-900">20,342.32 USDC</span></div>
+                <div class="flex justify-between"><span id="web-pos-margin-liq-label" class="text-gray-500 font-bold">增加后强平价格</span><span id="web-pos-margin-liq-val" class="font-mono font-black text-gray-900">32,283.23</span></div>
+                <div class="flex justify-between"><span id="web-pos-margin-lev-label" class="text-gray-500 font-bold">增加后杠杠倍数</span><span id="web-pos-margin-lev-val" class="font-mono font-black text-gray-900">10x</span></div>
+            </div>
+        </div>
+        <div class="p-6 pt-0">
+            <button type="button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-md hover:bg-blue-700 transition" onclick="confirmWebPosMarginAdjust()">確認</button>
+        </div>
+    </div>
+</div>
+
 <!-- 彈窗: 保證金模式 -->
 <div id="modal-margin" class="modal-overlay">
     <div class="bn-modal p-6">
@@ -4425,14 +4507,34 @@
         if (tabId === 'pos') {
             h.innerHTML = `<th class="px-3 py-2 font-medium">合約</th><th class="px-3 py-2 font-medium">數量</th><th class="px-3 py-2 font-medium">開倉均價</th>${renderPosTableHintTh('標記價格', '最新标记价格，用于计算盈亏和强平')}${renderPosTableHintTh('盈虧平衡價', '持仓达到盈亏平衡时的价格')}${renderPosTableHintTh('預估強平價', '预估强平价数据仅供参考。实际强平价会根据账户权益、维持保证金和浮动收益的变化而产生差异。')}${renderPosTableHintTh('联合保证金率', '维持保证金率可衡量合约仓位的风险情况;维持保证金率越低，仓位风险越大;当维持保证金率≤100%时，会触发强减或强平。')}<th class="px-3 py-2 font-medium">保證金</th><th class="px-3 py-2 font-medium">盈虧 (ROE%)</th><th class="px-3 py-2 font-medium" id="pos-close-col-header">${PositionClose.renderCloseColHeaderInner()}</th><th class="px-3 py-2 font-medium">止盈/止損</th>`;
             b.innerHTML = `<tr class="hover:bg-gray-50 transition-colors border-b border-gray-50">
-            <td class="px-3 py-2.5 whitespace-nowrap"><div class="font-bold text-black text-[10px]">BTCUSDC <span class="text-gray-500 font-bold">逐仓</span> <span class="text-green-500 bg-green-50 px-1 rounded-[1px]">20x</span></div></td>
+            <td class="px-3 py-2.5 whitespace-nowrap"><div class="font-bold text-black text-[10px] flex items-center flex-wrap gap-1">BTCUSDC <span class="text-gray-500 font-bold">全仓</span> <span id="web-pos-lev-cross" class="text-green-500 bg-green-50 px-1 rounded-[1px]">10x</span><button type="button" onclick="openWebPosLeverageModal('cross')" class="text-gray-400 hover:text-blue-600 p-0.5" title="调整杠杆"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button></div></td>
+            <td class="px-3 py-2.5 whitespace-nowrap font-medium text-gray-900">8,520.00 USDC</td>
+            <td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,100.5</td>
+            <td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,432.1</td>
+            <td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,120.0</td>
+            <td class="px-3 py-2.5 whitespace-nowrap text-orange-500 font-bold">62,400.0</td>
+            <td class="px-3 py-2.5 whitespace-nowrap text-green-500 font-medium">1.25%</td>
+            <td class="px-3 py-2.5 whitespace-nowrap text-gray-900">2,140.00 USDC</td>
+            <td class="px-3 py-2.5 whitespace-nowrap">
+                <div class="flex items-center space-x-1">
+                    <div>${renderUnrealizedPnlHoverCell('+88.20 USDC', '(+12.10%)', REALIZED_PNL_BREAKDOWN_DEMO.pos, 'text-green-500')}</div>
+                    <button onclick="toggleModal('modal-share-pnl')" class="text-gray-400 hover:text-blue-600 transition-colors p-0.5" title="分享战绩">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6zM8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                </div>
+            </td>
+            ${PositionClose.renderCloseCell().replace(/^<td/, '<td id="pos-close-action-cell-cross"')}
+            <td class="px-3 py-2.5 whitespace-nowrap">-- / --<button onclick="toggleModal('modal-tpsl')" class="text-blue-500 hover:text-blue-700 flex items-center group"><svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>設置</button></td>
+        </tr>
+        <tr class="hover:bg-gray-50 transition-colors border-b border-gray-50">
+            <td class="px-3 py-2.5 whitespace-nowrap"><div class="font-bold text-black text-[10px] flex items-center flex-wrap gap-1">BTCUSDC <span class="text-gray-500 font-bold">逐仓</span> <span id="web-pos-lev-iso" class="text-green-500 bg-green-50 px-1 rounded-[1px]">20x</span><button type="button" onclick="openWebPosLeverageModal('iso')" class="text-gray-400 hover:text-blue-600 p-0.5" title="调整杠杆"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button></div></td>
             <td class="px-3 py-2.5 whitespace-nowrap font-medium text-gray-900" id="pos-qty-cell">${PositionClose.renderPosQtyCellInner()}</td>
             <td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,100.5</td>
             <td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,432.1</td>
             <td class="px-3 py-2.5 whitespace-nowrap text-gray-600">65,120.0</td>
             <td class="px-3 py-2.5 whitespace-nowrap text-orange-500 font-bold">62,400.0</td>
             <td class="px-3 py-2.5 whitespace-nowrap text-green-500 font-medium">1.25%</td>
-            <td class="px-3 py-2.5 whitespace-nowrap text-gray-900">1,627.50 USDC</td>
+            <td class="px-3 py-2.5 whitespace-nowrap"><div class="flex items-center gap-1"><span id="web-pos-margin-iso" class="text-gray-900">1,627.50 USDC</span><button type="button" onclick="openWebPosMarginModal()" class="inline-flex items-center justify-center w-4 h-4 bg-blue-50 text-blue-500 rounded-[2px] hover:bg-blue-100" title="调整保证金"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg></button></div></td>
             <td class="px-3 py-2.5 whitespace-nowrap">
                 <div class="flex items-center space-x-1">
                     <div>${renderUnrealizedPnlHoverCell('+166.05 USDC', '(+25.40%)', REALIZED_PNL_BREAKDOWN_DEMO.pos, 'text-green-500')}</div>
@@ -4491,6 +4593,104 @@
             h.innerHTML = PositionFlow.renderFundingFeeHeader();
             b.innerHTML = PositionFlow.renderFundingFeeBody();
         }
+    }
+
+    const webPosLeverageState = {
+        cross: { leverage: 10, marginMode: 'cross', transferAmt: '23.12' },
+        iso: { leverage: 20, marginMode: 'isolated', transferAmt: '23.12' }
+    };
+    let activeWebPosLeverageKey = 'iso';
+    let draftWebPosLeverage = 20;
+    let webPosMarginTab = 'add';
+    const webPosMarginMaxAdd = 20342.32;
+    const webPosMarginMaxReduce = 1240.00;
+
+    function openWebPosLeverageModal(cardKey) {
+        activeWebPosLeverageKey = cardKey;
+        const state = webPosLeverageState[cardKey];
+        draftWebPosLeverage = state.leverage;
+        document.getElementById('web-pos-lev-current').innerText = state.leverage + 'x';
+        document.getElementById('web-pos-lev-input').value = state.leverage;
+        document.getElementById('web-pos-lev-slider').value = state.leverage;
+        document.getElementById('web-pos-lev-transfer-amt').innerText = state.transferAmt + ' USDC';
+        updateWebPosLeverageReduceHint();
+        toggleModal('modal-pos-leverage');
+    }
+
+    function adjustWebPosLeverage(delta) {
+        draftWebPosLeverage = Math.min(150, Math.max(1, draftWebPosLeverage + delta));
+        syncWebPosLeverageDisplay();
+    }
+
+    function syncWebPosLeverageSlider(val) {
+        draftWebPosLeverage = parseInt(val, 10);
+        syncWebPosLeverageDisplay();
+    }
+
+    function syncWebPosLeverageFromInput() {
+        draftWebPosLeverage = Math.min(150, Math.max(1, parseInt(document.getElementById('web-pos-lev-input').value, 10) || 1));
+        syncWebPosLeverageDisplay();
+    }
+
+    function syncWebPosLeverageDisplay() {
+        document.getElementById('web-pos-lev-input').value = draftWebPosLeverage;
+        document.getElementById('web-pos-lev-slider').value = draftWebPosLeverage;
+        updateWebPosLeverageReduceHint();
+    }
+
+    function updateWebPosLeverageReduceHint() {
+        const state = webPosLeverageState[activeWebPosLeverageKey];
+        const hint = document.getElementById('web-pos-lev-reduce-hint');
+        if (!hint) return;
+        hint.classList.toggle('hidden', !(state.marginMode === 'isolated' && draftWebPosLeverage < state.leverage));
+    }
+
+    function confirmWebPosLeverage() {
+        const state = webPosLeverageState[activeWebPosLeverageKey];
+        state.leverage = draftWebPosLeverage;
+        const tagId = activeWebPosLeverageKey === 'cross' ? 'web-pos-lev-cross' : 'web-pos-lev-iso';
+        const tag = document.getElementById(tagId);
+        if (tag) tag.innerText = draftWebPosLeverage + 'x';
+        toggleModal('modal-pos-leverage');
+    }
+
+    function openWebPosMarginModal() {
+        webPosMarginTab = 'add';
+        document.getElementById('web-pos-margin-pair').innerText = 'BTCUSDC';
+        switchWebPosMarginTab('add');
+        toggleModal('modal-pos-margin');
+    }
+
+    function switchWebPosMarginTab(tab) {
+        webPosMarginTab = tab;
+        document.getElementById('web-pos-margin-tab-add').classList.toggle('checked', tab === 'add');
+        document.getElementById('web-pos-margin-tab-reduce').classList.toggle('checked', tab === 'reduce');
+        const verb = tab === 'add' ? '增加' : '减少';
+        document.getElementById('web-pos-margin-max-label').innerText = '最多可' + verb;
+        document.getElementById('web-pos-margin-liq-label').innerText = verb + '后强平价格';
+        document.getElementById('web-pos-margin-lev-label').innerText = verb + '后杠杠倍数';
+        document.getElementById('web-pos-margin-max-val').innerText = (tab === 'add' ? webPosMarginMaxAdd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : webPosMarginMaxReduce.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })) + ' USDC';
+        document.getElementById('web-pos-margin-liq-val').innerText = tab === 'add' ? '32,283.23' : '28,120.50';
+        document.getElementById('web-pos-margin-lev-val').innerText = tab === 'add' ? '10x' : '12x';
+        document.getElementById('web-pos-margin-qty-input').value = '0';
+        document.getElementById('web-pos-margin-qty-slider').value = 0;
+    }
+
+    function syncWebPosMarginSlider(pct) {
+        const max = webPosMarginTab === 'add' ? webPosMarginMaxAdd : webPosMarginMaxReduce;
+        document.getElementById('web-pos-margin-qty-input').value = (max * parseInt(pct, 10) / 100).toFixed(2);
+    }
+
+    function syncWebPosMarginFromInput() {
+        const max = webPosMarginTab === 'add' ? webPosMarginMaxAdd : webPosMarginMaxReduce;
+        const val = parseFloat(document.getElementById('web-pos-margin-qty-input').value) || 0;
+        const pct = Math.min(100, Math.round((val / max) * 100 / 25) * 25);
+        document.getElementById('web-pos-margin-qty-slider').value = pct;
+    }
+
+    function confirmWebPosMarginAdjust() {
+        toggleModal('modal-pos-margin');
+        showNotification('保证金调整已提交');
     }
 
     function openModifyBaseOrder(orderId) {
