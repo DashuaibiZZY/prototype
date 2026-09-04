@@ -124,11 +124,6 @@
         #tpsl-order-container .tpsl-mode-label-row { font-size: 8px; font-weight: 700; color: #9ca3af; }
         #tpsl-order-container .tpsl-mode-dropdown-wrap { position: relative; }
         #tpsl-order-container .tpsl-mode-dropdown { position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.08); z-index: 60; overflow: hidden; }
-        #tif-section { position: relative; }
-        #tif-section .tif-dropdown { position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.08); z-index: 60; overflow: hidden; }
-        #tif-section .tif-option { display: block; width: 100%; text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 700; color: #374151; background: none; border: none; cursor: pointer; }
-        #tif-section .tif-option + .tif-option { border-top: 1px solid #f3f4f6; }
-        #tif-section .tif-option:active { background: #f9fafb; }
         #tpsl-order-container .tpsl-mode-option { display: block; width: 100%; text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 700; color: #111827; background: none; border: none; cursor: pointer; }
         #tpsl-order-container .tpsl-mode-option:active { background: #f9fafb; }
         #tpsl-order-container .tpsl-mode-option + .tpsl-mode-option { border-top: 1px solid #f3f4f6; }
@@ -264,19 +259,6 @@
                             </div>
                         </div>
                         <button id="btn-bbo" onclick="toggleBestPriceMode()" class="bg-gray-100 px-2 py-2.5 rounded text-[10px] font-bold shrink-0">最优价</button>
-                    </div>
-
-                    <!-- 生效时间（仅限价） -->
-                    <div id="tif-section" class="tif-dropdown-wrap">
-                        <div class="flex items-center text-[10px] font-bold cursor-pointer py-0.5" onclick="toggleTifDropdown(event)">
-                            <span class="text-gray-400 shrink-0">生效时间</span>
-                            <span id="tif-value" class="ml-2 text-gray-900">GTC</span>
-                            <svg class="w-3 h-3 text-gray-400 ml-1 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
-                        </div>
-                        <div id="tif-dropdown" class="tif-dropdown hidden">
-                            <button type="button" class="tif-option" onclick="selectTif('gtc', event)">GTC (一直有效直至取消)</button>
-                            <button type="button" class="tif-option" onclick="selectTif('post-only', event)">Post only (只挂单)</button>
-                        </div>
                     </div>
 
                     <!-- 止盈止損下單區 -->
@@ -599,6 +581,10 @@
                     <div class="sheet-option-rich" onclick="selectOrderMode('market')">
                         <div class="text-[13px] font-bold text-gray-900">市價委讬</div>
                         <div class="text-[10px] text-gray-400 mt-1 leading-snug">以可成交的最优价格快速买入或卖出</div>
+                    </div>
+                    <div class="sheet-option-rich" onclick="selectOrderMode('post-only')">
+                        <div class="text-[13px] font-bold text-gray-900">只做Maker（Post only）</div>
+                        <div class="text-[10px] text-gray-400 mt-1 leading-snug">订单不会立即在市场成交，否则将会被取消</div>
                     </div>
                     <div class="sheet-option-rich" onclick="selectOrderMode('fok')">
                         <div class="text-[13px] font-bold text-gray-900">限价（FOK）</div>
@@ -1304,7 +1290,7 @@
             </div>
         </div>
 
-        <!-- ===== 底部弹层：修改限价｜市价参数 ===== -->
+        <!-- ===== 底部弹层：修改基础单参数 ===== -->
         <div id="modify-base-order-sheet" class="hidden absolute inset-0 z-[56] flex items-end rounded-[38px] overflow-hidden">
             <div class="absolute inset-0 bg-black/40" onclick="closeSheet('modify-base-order-sheet')"></div>
             <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet max-h-[90%] overflow-y-auto">
@@ -1454,7 +1440,6 @@
 <script>
     let currentSide = 'open';
     let currentOrderMode = 'limit';
-    let currentTif = 'gtc';
     let currentTPSLMode = '单向委托';
     const triggerTypeMap = { 'attach-tp': 'latest', 'attach-sl': 'latest', tp: 'latest', sl: 'latest', 'pos-tp': 'latest', 'pos-sl': 'latest', 'order-att-tp': 'mark', 'order-att-sl': 'mark' };
     const orderDelegateMap = { 'tp-order': 'market', 'sl-order': 'market' };
@@ -1535,52 +1520,23 @@
     const orderTypeLabels = {
         limit: '限價委讬',
         market: '市價委讬',
+        'post-only': '只做Maker',
         fok: '限价（FOK）',
         ioc: '限价（IOC）',
         'profit-loss': '止盈止損',
     };
 
-    const tifShortLabels = {
-        gtc: 'GTC',
-        'post-only': 'Post only',
-    };
-
     function isLimitLikeOrderMode(mode) {
-        return mode === 'limit' || mode === 'fok' || mode === 'ioc';
+        return mode === 'limit' || mode === 'post-only' || mode === 'fok' || mode === 'ioc';
     }
 
     function getOrderConfirmTypeLabel(mode) {
         if (mode === 'market') return '市價單';
         if (mode === 'profit-loss') return '止盈止損單';
+        if (mode === 'post-only') return 'Post only';
         if (mode === 'fok') return 'FOK';
         if (mode === 'ioc') return 'IOC';
-        if (mode === 'limit' && currentTif === 'post-only') return 'Post only';
         return '限價單';
-    }
-
-    function toggleTifDropdown(e) {
-        e.stopPropagation();
-        document.getElementById('tif-dropdown')?.classList.toggle('hidden');
-    }
-
-    function closeTifDropdown() {
-        document.getElementById('tif-dropdown')?.classList.add('hidden');
-    }
-
-    function selectTif(value, e) {
-        e.stopPropagation();
-        currentTif = value;
-        const labelEl = document.getElementById('tif-value');
-        if (labelEl) labelEl.textContent = tifShortLabels[value] || 'GTC';
-        closeTifDropdown();
-    }
-
-    function updateTifVisibility() {
-        const section = document.getElementById('tif-section');
-        if (!section) return;
-        const show = currentOrderMode === 'limit';
-        section.classList.toggle('hidden', !show);
-        if (!show) closeTifDropdown();
     }
 
     const REALIZED_PNL_BREAKDOWN = {
@@ -2580,9 +2536,6 @@
 
     function selectOrderMode(mode) {
         currentOrderMode = mode;
-        if (mode !== 'limit') currentTif = 'gtc';
-        const tifLabelEl = document.getElementById('tif-value');
-        if (tifLabelEl) tifLabelEl.textContent = tifShortLabels[currentTif];
         document.getElementById('order-type-label').innerText = orderTypeLabels[mode];
         closeSheet('order-type-sheet');
         applyOrderModeUI();
@@ -2594,8 +2547,6 @@
         const attachTpsl = document.getElementById('attach-tpsl-section');
         const priceInput = document.getElementById('price-input');
         const btnBbo = document.getElementById('btn-bbo');
-
-        updateTifVisibility();
 
         if (isLimitLikeOrderMode(currentOrderMode)) {
             resetBestPriceMode();
@@ -3252,7 +3203,6 @@
     updateBestPriceChecks();
     document.addEventListener('click', function (e) {
         if (!e.target.closest('#tpsl-mode-dropdown-wrap')) closeTPSLModeDropdown();
-        if (!e.target.closest('#tif-section')) closeTifDropdown();
     });
 </script>
 </body>
