@@ -25,10 +25,18 @@
         </header>
 
         <div class="flex-1 overflow-y-auto no-scrollbar px-5 py-6">
-            <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center justify-between mb-6">
                 <h2 id="pair-title" class="text-xl font-black italic tracking-tighter text-gray-900">BTCUSDT 永續</h2>
                 <span class="text-[10px] font-black bg-blue-50 text-blue-600 px-2 py-1 rounded-sm uppercase">交易規則</span>
             </div>
+
+            <!-- 交易币种项目介绍（后台配置） -->
+            <div id="asset-intro-block" class="mb-6 pb-6 border-b border-gray-100">
+                <p id="asset-intro-label" class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">项目介绍 · BTC</p>
+                <p id="asset-intro-text" class="text-[12px] text-gray-600 leading-relaxed"></p>
+            </div>
+
+            <h3 class="text-[11px] font-black text-gray-900 uppercase tracking-[0.2em] mb-4">交易規則</h3>
 
             <div class="grid grid-cols-2 gap-y-6 gap-x-8">
                 <div class="space-y-1">
@@ -65,7 +73,7 @@
                 </div>
             </div>
 
-            <a href="风险限额.html" class="mt-10 flex items-center justify-between py-4 border-t border-gray-100 active:opacity-70">
+            <a href="风险限额.html" id="risk-limit-link" class="mt-10 flex items-center justify-between py-4 border-t border-gray-100 active:opacity-70">
                 <span class="text-[12px] font-bold text-gray-700">查看風險限額</span>
                 <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
             </a>
@@ -74,10 +82,40 @@
 </div>
 
 <script>
+    const CONTRACT_ASSET_INTRO = {
+        BTC: '比特币（Bitcoin）是首个去中心化加密货币，由中本聪于 2009 年提出。BTC 采用工作量证明共识机制，总量上限 2100 万枚，常被用作数字价值存储与合约市场的核心标的。',
+        ETH: '以太坊（Ethereum）是支持智能合约的公链平台，ETH 为其原生代币，广泛用于 DeFi、NFT 及链上应用生态，也是主流永续合约的重要基础资产。',
+        BNB: 'BNB 是 BNB Chain 生态的原生代币，可用于链上 Gas、生态应用及平台权益；在 ForX 合约市场中常作为高流动性交易对的基础资产。',
+        SOL: 'Solana（SOL）是高性能公链原生代币，以低延迟与高吞吐著称，在 DeFi 与链上交易场景中增长迅速，亦是合约市场常见标的。',
+        PEPE: 'PEPE 是基于以太坊的 Meme 代币，社区驱动、流通量大；ForX 上线 PEPE 永续合约为用户提供该热门资产的价格敞口与对冲工具。',
+    };
+
+    function getBaseAssetFromPair(pair) {
+        if (!pair) return '';
+        return pair.replace(/USDC|USDT|HUSDC|BUSD/gi, '').toUpperCase();
+    }
+
+    function updateAssetIntro(pair) {
+        const base = getBaseAssetFromPair(pair);
+        const block = document.getElementById('asset-intro-block');
+        const label = document.getElementById('asset-intro-label');
+        const text = document.getElementById('asset-intro-text');
+        const intro = CONTRACT_ASSET_INTRO[base];
+        if (!intro) {
+            block.classList.add('hidden');
+            return;
+        }
+        block.classList.remove('hidden');
+        label.textContent = '项目介绍 · ' + base;
+        text.textContent = intro;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const pair = params.get('pair') || 'BTCUSDT';
     document.getElementById('pair-title').textContent = pair + ' 永續';
     document.getElementById('info-market').textContent = pair;
+    document.getElementById('risk-limit-link').href = '风险限额.html?pair=' + encodeURIComponent(pair);
+    updateAssetIntro(pair);
 </script>
 </body>
 </html>
