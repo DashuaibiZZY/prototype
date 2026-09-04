@@ -89,6 +89,12 @@
         return 'text-gray-900';
     }
 
+    function formatTimeInForceDisplay(tif) {
+        if (!tif) return '--';
+        if (tif === 'Post Only' || tif === 'Post only') return '只挂单(Post Only)';
+        return tif;
+    }
+
     function filledInfoBlock(data) {
         const roeClass = !data.pnlRoe || data.pnlRoe === '--' ? 'text-gray-400'
             : (String(data.pnlRoe).trim().startsWith('+') ? 'text-green-500' : 'text-red-500');
@@ -100,7 +106,7 @@
                 ${infoRow('委托价格', data.price, 'font-mono')}
                 ${infoRow('成交数量', data.filledQty + ' USDC')}
                 ${infoRow('成交均价', data.avgPrice, 'font-mono')}
-                ${infoRow('生效类型', data.timeInForce)}
+                ${infoRow('生效类型', formatTimeInForceDisplay(data.timeInForce))}
                 ${infoRow('手续费', data.fee, 'font-mono text-red-500')}
                 ${infoRow('已实现盈亏', data.pnl, (data.pnlClass || '') + ' font-mono')}
                 ${infoRow('投资回报率', data.pnlRoe || '--', roeClass + ' font-mono')}
@@ -117,7 +123,7 @@
                 ${infoRow('委托数量', data.qty + ' USDC')}
                 ${infoRow('委托价格', data.price, 'font-mono')}
                 ${infoRow('委托时间', data.orderTime)}
-                ${infoRow('生效类型', data.timeInForce)}
+                ${infoRow('生效类型', formatTimeInForceDisplay(data.timeInForce))}
                 ${copyOrderRow('订单编号', data.orderId)}
             </div>`;
     }
@@ -210,6 +216,7 @@
             pnl: '+8.62 USDT',
             pnlRoe: '+12.15%',
             orderId: '2938472945',
+            timeInForce: 'IOC',
         };
 
         const cancelledData = {
@@ -218,7 +225,7 @@
             tradeDirection: '开多',
             qty: '1000.00',
             price: '640.00',
-            timeInForce: 'Post only',
+            timeInForce: 'Post Only',
             orderTime: '2026-06-11 18:45:00',
             orderId: '2938472948',
         };
