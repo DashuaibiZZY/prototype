@@ -69,11 +69,18 @@
 
     function contractRow(data) {
         const c = data.contract || CONTRACT_DEFAULT;
-        return infoRow('合约', `${c.symbol} <span class="text-gray-500 font-bold text-[11px]">【${c.marginMode}】【${c.leverage}】</span>`);
+        return `<div class="flex justify-between font-bold items-center gap-3">
+            <span class="text-gray-400 uppercase text-[10px] shrink-0">合约</span>
+            <div class="flex items-center flex-wrap justify-end gap-1.5">
+                <span class="font-black text-gray-900 text-[12px]">${c.symbol}</span>
+                <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">${c.marginMode}</span>
+                <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">${c.leverage}</span>
+            </div>
+        </div>`;
     }
 
     function contractBlockAfterStatus(data) {
-        return `<div class="px-6 py-4 border-b border-gray-50 text-[12px]">${contractRow(data)}</div>`;
+        return `<div class="px-6 pt-1 pb-4 text-[12px]">${contractRow(data)}</div>`;
     }
 
     function dirClass(dir) {
@@ -264,7 +271,7 @@
                 content = `
                     ${header}
                     <div class="flex-1 overflow-y-auto no-scrollbar fade-in">
-                        <div class="py-8 flex flex-col items-center border-b border-gray-50">${CHECK_SVG}<h3 class="font-black text-lg">全部成交 100%</h3></div>
+                        <div class="py-8 flex flex-col items-center">${CHECK_SVG}<h3 class="font-black text-lg">全部成交 100%</h3></div>
                         ${contractBlockAfterStatus(filledData)}
                         ${filledInfoBlock(filledData)}
                         ${buildDetailList(FILL_ROWS)}
@@ -274,7 +281,7 @@
                 content = `
                     ${header}
                     <div class="flex-1 overflow-y-auto no-scrollbar fade-in">
-                        <div class="py-8 flex flex-col items-center border-b border-gray-50">
+                        <div class="py-8 flex flex-col items-center">
                             <div class="relative w-12 h-12 mb-2 flex items-center justify-center">
                                 <svg class="absolute inset-0 w-full h-full -rotate-90"><circle cx="24" cy="24" r="20" stroke="#f3f4f6" stroke-width="4" fill="none"/><circle cx="24" cy="24" r="20" stroke="#22c55e" stroke-width="4" fill="none" stroke-dasharray="125" stroke-dashoffset="62"/></svg>
                                 <span class="text-[10px] font-black">50%</span>
@@ -292,7 +299,7 @@
                 content = `
                     ${header}
                     <div class="flex-1 overflow-y-auto no-scrollbar fade-in">
-                        <div class="py-8 flex flex-col items-center border-b border-gray-50">${CROSS_SVG}<h3 class="font-black text-lg text-gray-400">${statusTxt}</h3></div>
+                        <div class="py-8 flex flex-col items-center">${CROSS_SVG}<h3 class="font-black text-lg text-gray-400">${statusTxt}</h3></div>
                         ${contractBlockAfterStatus(cancelledData)}
                         ${cancelledInfoBlock(cancelledData)}
                         <div class="py-20 text-center text-gray-300 font-bold uppercase tracking-widest text-[10px]">已經全部加載完畢</div>
@@ -302,7 +309,7 @@
                 content = `
                     ${header}
                     <div class="flex-1 overflow-y-auto no-scrollbar fade-in">
-                        <div class="py-8 flex flex-col items-center border-b border-gray-50">${ALERT_SVG}<h3 class="font-black text-lg text-red-600 uppercase italic">強平委託成交</h3></div>
+                        <div class="py-8 flex flex-col items-center">${ALERT_SVG}<h3 class="font-black text-lg text-red-600 uppercase italic">強平委託成交</h3></div>
                         ${contractBlockAfterStatus(liquidatedData)}
                         ${filledInfoBlock(liquidatedData)}
                         ${buildDetailList(FILL_ROWS)}
@@ -312,7 +319,7 @@
                 content = `
                     ${header}
                     <div class="flex-1 overflow-y-auto no-scrollbar fade-in">
-                        <div class="py-8 flex flex-col items-center border-b border-gray-50">${CHECK_SVG}<h3 class="font-black text-lg">已完成</h3></div>
+                        <div class="py-8 flex flex-col items-center">${CHECK_SVG}<h3 class="font-black text-lg">已完成</h3></div>
                         ${contractBlockAfterStatus(tpslCompletedData)}
                         ${tpslMainBlock(tpslCompletedData)}
                         ${tpslTimeBlock(tpslCompletedData, true)}
@@ -322,7 +329,7 @@
                 content = `
                     ${header}
                     <div class="flex-1 overflow-y-auto no-scrollbar fade-in">
-                        <div class="py-8 flex flex-col items-center border-b border-gray-50">${CROSS_SVG}<h3 class="font-black text-lg text-gray-400">已取消</h3></div>
+                        <div class="py-8 flex flex-col items-center">${CROSS_SVG}<h3 class="font-black text-lg text-gray-400">已取消</h3></div>
                         ${contractBlockAfterStatus(tpslCancelledData)}
                         ${tpslMainBlock(tpslCancelledData)}
                         ${tpslTimeBlock(tpslCancelledData, false)}
