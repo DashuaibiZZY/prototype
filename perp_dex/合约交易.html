@@ -5458,6 +5458,12 @@
             { key: 'stock', label: '股票' },
             { key: 'commodity', label: '大宗商品' }
         ],
+        hot: [
+            { key: 'all', label: '全部' },
+            { key: 'crypto', label: '数字货币' },
+            { key: 'stock', label: '股票' },
+            { key: 'commodity', label: '大宗商品' }
+        ],
         crypto: [
             { key: 'hot', label: '熱門' },
             { key: 'new', label: '新幣上線' },
@@ -5532,6 +5538,10 @@
             let show = false;
             if (tabKey === 'fav') {
                 if (row.dataset.marketFav !== '1') { show = false; }
+                else if (!subKey || subKey === 'all') show = true;
+                else show = industry === subKey;
+            } else if (tabKey === 'hot') {
+                if (!tags.includes('hot')) show = false;
                 else if (!subKey || subKey === 'all') show = true;
                 else show = industry === subKey;
             } else if (tabKey === 'stock') {
@@ -5654,6 +5664,7 @@
             </div>
             <div class="cat-tab-row hide-scrollbar">
                 <span data-market-tab="fav" class="cat-tab-l1 shrink-0 cursor-pointer" onclick="switchMarketListTab('fav', this)">收藏</span>
+                <span data-market-tab="hot" class="cat-tab-l1 shrink-0 cursor-pointer" onclick="switchMarketListTab('hot', this)">热门</span>
                 <span data-market-tab="crypto" class="cat-tab-l1 active shrink-0 cursor-pointer" onclick="switchMarketListTab('crypto', this)">数字货币</span>
                 <span data-market-tab="stock" class="cat-tab-l1 shrink-0 cursor-pointer" onclick="switchMarketListTab('stock', this)">股票</span>
                 <span data-market-tab="commodity" class="cat-tab-l1 shrink-0 cursor-pointer" onclick="switchMarketListTab('commodity', this)">大宗商品</span>
@@ -5748,7 +5759,7 @@
                     <span id="market-list-pepe-countdown" class="font-mono text-orange-500 font-bold">${formatMarketListCountdown()}</span>
                 </div>
             </div>
-            <div data-market-pair="SNDKUSDC" data-market-industry="stock" data-market-tags="" data-market-fav="1" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('SNDKUSDC')">
+            <div data-market-pair="SNDKUSDC" data-market-industry="stock" data-market-tags="hot" data-market-fav="1" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('SNDKUSDC')">
                 ${renderMarketPairCell('SNDKUSDC', '20x')}
                 <div class="text-right">1,786.00</div>
                 <div class="text-right text-green-500">+0.59%</div>
