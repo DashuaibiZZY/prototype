@@ -1,9 +1,9 @@
 /**
  * 合约交易页 · 持仓管理+流水模块：演示数据与筛选交互
- * @version 2026-09-03-flow-pnl-roe-tif
+ * @version 2026-09-07-fund-bill
  */
 (function () {
-    window.POSITION_FLOW_MODULE_VERSION = '2026-09-03-flow-pnl-roe-tif';
+    window.POSITION_FLOW_MODULE_VERSION = '2026-09-07-fund-bill';
     const PF_CONTRACT_OPTIONS = [
         'BTCUSDC', 'BNBUSDC', 'ETHUSDC', 'SOLUSDC', 'PEPEUSDC',
         'BTCUSDT', 'BNBUSDT', 'ETHUSDT', 'SOLUSDT',
