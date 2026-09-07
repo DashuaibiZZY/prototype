@@ -5451,30 +5451,17 @@
         else setKlineCountdownMode(false);
     }
 
-    const marketSubTabsByPrimary = {
-        fav: [
-            { key: 'all', label: '全部' },
-            { key: 'crypto', label: '数字货币' },
-            { key: 'stock', label: '股票' },
-            { key: 'commodity', label: '大宗商品' }
-        ],
-        hot: [
-            { key: 'all', label: '全部' },
-            { key: 'crypto', label: '数字货币' },
-            { key: 'stock', label: '股票' },
-            { key: 'commodity', label: '大宗商品' }
-        ],
-        crypto: [
-            { key: 'hot', label: '熱門' },
-            { key: 'new', label: '新幣上線' },
-            { key: 'main', label: '主流幣' },
-            { key: 'ai', label: 'AI' }
-        ],
-        commodity: [
-            { key: 'hot', label: '熱門' },
-            { key: 'tradefi', label: 'TradeFi' }
-        ]
-    };
+    const marketTagTabs = [
+        { key: 'all', label: '全部', priority: 0 },
+        { key: 'new', label: '新币上线', priority: 1 },
+        { key: 'hot', label: '热门', priority: 2 },
+        { key: 'main', label: '主流币', priority: 3 },
+        { key: 'ai', label: 'AI', priority: 4 }
+    ];
+
+    function sortMarketTagTabs(tabs) {
+        return [...tabs].sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
+    }
 
     function applyMarketPrimaryTabStyle(btn, active) {
         btn.className = active
@@ -5482,75 +5469,60 @@
             : 'cat-tab-l1 shrink-0 cursor-pointer';
     }
 
-    function applyMarketSubTabStyle(btn, active) {
-        btn.className = active
-            ? 'cat-chip cat-chip-active shrink-0 cursor-pointer'
-            : 'cat-chip shrink-0 cursor-pointer';
-    }
-
-    function renderMarketSubPanel(modal, tabKey) {
-        const panel = modal.querySelector('#market-sub-panel');
-        const subWrap = modal.querySelector('#market-sub-tabs');
-        const subs = marketSubTabsByPrimary[tabKey];
-        if (!panel || !subWrap) return;
-        if (!subs) {
-            panel.classList.add('hidden');
-            subWrap.innerHTML = '';
-            modal.dataset.activeSub = '';
-            return;
-        }
-        panel.classList.remove('hidden');
-        const firstKey = subs[0].key;
-        modal.dataset.activeSub = firstKey;
-        subWrap.innerHTML = subs.map(s => `
-            <span data-market-sub="${s.key}" class="cat-chip ${s.key === firstKey ? 'cat-chip-active' : ''} shrink-0 cursor-pointer"
-                onclick="switchMarketListSubTab('${s.key}', this)">${s.label}</span>
-        `).join('');
-    }
-
     function switchMarketListTab(tabKey, el) {
         const modal = document.getElementById('market-list-modal');
         if (!modal) return;
+        modal.dataset.activeTag = tabKey;
         modal.querySelectorAll('[data-market-tab]').forEach(btn => {
             applyMarketPrimaryTabStyle(btn, btn.dataset.marketTab === tabKey);
         });
-        renderMarketSubPanel(modal, tabKey);
         filterMarketListRows(modal, tabKey);
     }
 
-    function switchMarketListSubTab(subKey, el) {
-        const modal = document.getElementById('market-list-modal');
-        if (!modal) return;
-        modal.dataset.activeSub = subKey;
-        modal.querySelectorAll('[data-market-sub]').forEach(btn => {
-            applyMarketSubTabStyle(btn, btn.dataset.marketSub === subKey);
+    function filterMarketListRows(modal, tabKey) {
+        const rows = [...modal.querySelectorAll('[data-market-pair]')];
+        const tag = tabKey || modal.dataset.activeTag || 'all';
+
+        if (tag === 'all') {
+            rows.forEach(row => row.classList.remove('hidden'));
+            return;
+        }
+
+        if (tag === 'hot') {
+            const ranked = rows.filter(r => r.dataset.marketHotRank).sort((a, b) => Number(a.dataset.marketHotRank) - Number(b.dataset.marketHotRank));
+            const rankedPairs = new Set(ranked.map(r => r.dataset.marketPair));
+            const fillers = rows.filter(r => !rankedPairs.has(r.dataset.marketPair))
+                .sort((a, b) => Number(b.dataset.marketVolumeNum || 0) - Number(a.dataset.marketVolumeNum || 0));
+            const visible = new Set([...ranked, ...fillers].slice(0, 20).map(r => r.dataset.marketPair));
+            rows.forEach(row => row.classList.toggle('hidden', !visible.has(row.dataset.marketPair)));
+            return;
+        }
+
+        if (tag === 'new') {
+            rows.forEach(row => {
+                const days = Number(row.dataset.marketListedDays || 999);
+                const isPremarket = row.dataset.marketPremarket === '1';
+                row.classList.toggle('hidden', isPremarket || days > 30);
+            });
+            const visibleRows = rows.filter(r => !r.classList.contains('hidden'))
+                .sort((a, b) => Number(a.dataset.marketListedDays) - Number(b.dataset.marketListedDays));
+            const visible = new Set(visibleRows.map(r => r.dataset.marketPair));
+            rows.forEach(row => row.classList.toggle('hidden', !visible.has(row.dataset.marketPair)));
+            return;
+        }
+
+        rows.forEach(row => {
+            const tags = (row.dataset.marketTags || '').split(/\s+/).filter(Boolean);
+            row.classList.toggle('hidden', !tags.includes(tag));
         });
-        const primary = modal.dataset.activePrimary || 'crypto';
-        filterMarketListRows(modal, primary);
     }
 
-    function filterMarketListRows(modal, tabKey) {
-        modal.dataset.activePrimary = tabKey;
-        const subKey = modal.dataset.activeSub || '';
-        modal.querySelectorAll('[data-market-category]').forEach(row => {
-            const industry = row.dataset.marketIndustry || '';
-            const tags = (row.dataset.marketTags || '').split(/\s+/).filter(Boolean);
-            let show = false;
-            if (tabKey === 'fav') {
-                if (row.dataset.marketFav !== '1') { show = false; }
-                else if (!subKey || subKey === 'all') show = true;
-                else show = industry === subKey;
-            } else if (tabKey === 'hot') {
-                if (!tags.includes('hot')) show = false;
-                else if (!subKey || subKey === 'all') show = true;
-                else show = industry === subKey;
-            } else if (tabKey === 'stock') {
-                show = industry === 'stock';
-            } else if (tabKey === 'crypto' || tabKey === 'commodity') {
-                show = industry === tabKey && (!subKey || tags.includes(subKey));
-            }
-            row.classList.toggle('hidden', !show);
-        });
+    function renderMarketListTagTabs(modal) {
+        const wrap = modal.querySelector('.cat-tab-row');
+        if (!wrap) return;
+        wrap.innerHTML = sortMarketTagTabs(marketTagTabs).map(t => `
+            <span data-market-tab="${t.key}" class="cat-tab-l1${t.key === 'all' ? ' active' : ''} shrink-0 cursor-pointer" onclick="switchMarketListTab('${t.key}', this)">${t.label}</span>
+        `).join('');
     }
 
     setInterval(() => {
@@ -5662,24 +5634,12 @@
                 <svg class="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2"/></svg>
                 <input class="w-full h-8 pl-7 pr-2 bg-gray-50 border border-gray-200 rounded-md text-[10px] outline-none focus:border-gray-300" placeholder="查詢">
             </div>
-            <div class="cat-tab-row hide-scrollbar">
-                <span data-market-tab="fav" class="cat-tab-l1 shrink-0 cursor-pointer" onclick="switchMarketListTab('fav', this)">收藏</span>
-                <span data-market-tab="hot" class="cat-tab-l1 shrink-0 cursor-pointer" onclick="switchMarketListTab('hot', this)">热门</span>
-                <span data-market-tab="crypto" class="cat-tab-l1 active shrink-0 cursor-pointer" onclick="switchMarketListTab('crypto', this)">数字货币</span>
-                <span data-market-tab="stock" class="cat-tab-l1 shrink-0 cursor-pointer" onclick="switchMarketListTab('stock', this)">股票</span>
-                <span data-market-tab="commodity" class="cat-tab-l1 shrink-0 cursor-pointer" onclick="switchMarketListTab('commodity', this)">大宗商品</span>
-            </div>
-            <div id="market-sub-panel">
-                <div id="market-sub-tabs" class="cat-chip-row hide-scrollbar"></div>
-            </div>
+            <div class="cat-tab-row hide-scrollbar"></div>
             <style>
                 #market-list-modal .cat-tab-row { display:flex; flex-wrap:nowrap; gap:20px; border-bottom:1px solid #f3f4f6; padding-bottom:0; margin-bottom:0; overflow-x:auto; background:transparent; }
                 #market-list-modal .cat-tab-l1 { position:relative; display:inline-flex; width:fit-content; flex:none; padding:0 0 10px; font-size:12px; font-weight:600; color:#9ca3af; background:none; border:none; white-space:nowrap; }
                 #market-list-modal .cat-tab-l1.active { color:#111827; font-weight:800; }
                 #market-list-modal .cat-tab-l1.active::after { content:''; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:#111827; border-radius:1px; }
-                #market-list-modal .cat-chip-row { display:flex; flex-wrap:nowrap; gap:12px; align-items:center; padding:10px 0 6px; overflow-x:auto; background:transparent; }
-                #market-list-modal .cat-chip { display:inline-flex; align-items:center; width:fit-content; flex:none; font-size:11px; font-weight:600; color:#9ca3af; padding:4px 10px; border-radius:999px; background:transparent; white-space:nowrap; }
-                #market-list-modal .cat-chip-active { background:#111827; color:#fff; font-weight:700; }
             </style>
             <div class="grid grid-cols-6 gap-2 text-[9px] text-gray-400 font-medium px-2 mt-3">
     <div class="flex items-center space-x-1">
@@ -5728,7 +5688,7 @@
         </div>
         <!-- 列表 -->
         <div class="flex-1 overflow-y-auto px-3" id="market-list-rows">
-            <div data-market-pair="BTCUSDC" data-market-industry="crypto" data-market-tags="hot main" data-market-fav="1" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('BTCUSDC')">
+            <div data-market-pair="BTCUSDC" data-market-industry="crypto" data-market-tags="hot main" data-market-hot-rank="1" data-market-volume-num="60230000" data-market-listed-days="900" data-market-fav="1" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('BTCUSDC')">
                 ${renderMarketPairCell('BTCUSDC', '100x')}
                 <div class="text-right">65,432.10</div>
                 <div class="text-right text-red-500">-1.76%</div>
@@ -5736,7 +5696,7 @@
                 <div class="text-right">3.23M</div>
                 <div class="text-right text-blue-500">0.0001%</div>
             </div>
-            <div data-market-pair="ETHUSDC" data-market-industry="crypto" data-market-tags="hot main" data-market-fav="1" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('ETHUSDC')">
+            <div data-market-pair="ETHUSDC" data-market-industry="crypto" data-market-tags="hot main" data-market-hot-rank="2" data-market-volume-num="42230000" data-market-listed-days="800" data-market-fav="1" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('ETHUSDC')">
                 ${renderMarketPairCell('ETHUSDC', '100x')}
                 <div class="text-right">2,432.10</div>
                 <div class="text-right text-red-500">-3.76%</div>
@@ -5744,7 +5704,7 @@
                 <div class="text-right">10.23M</div>
                 <div class="text-right text-blue-500">0.0001%</div>
             </div>
-            <div data-market-pair="SOLHUSDC" data-market-industry="crypto" data-market-tags="hot ai" data-market-fav="0" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('SOLHUSDC')">
+            <div data-market-pair="SOLHUSDC" data-market-industry="crypto" data-market-tags="hot ai" data-market-hot-rank="3" data-market-volume-num="30000000" data-market-listed-days="400" data-market-fav="0" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('SOLHUSDC')">
                 ${renderMarketPairCell('SOLHUSDC', '100x')}
                 <div class="text-right">62.10</div>
                 <div class="text-right text-red-500">-4.76%</div>
@@ -5752,14 +5712,14 @@
                 <div class="text-right">10.23M</div>
                 <div class="text-right text-blue-500">0.0001%</div>
             </div>
-            <div data-market-pair="PEPEUSDC" data-market-industry="crypto" data-market-tags="new" data-market-fav="0" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-orange-50 cursor-pointer text-[10px]" onclick="selectMarketPair('PEPEUSDC')">
+            <div data-market-pair="PEPEUSDC" data-market-industry="crypto" data-market-tags="new" data-market-listed-days="8" data-market-volume-num="5000000" data-market-fav="0" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-orange-50 cursor-pointer text-[10px]" onclick="selectMarketPair('PEPEUSDC')">
                 ${renderMarketPairCell('PEPEUSDC', '50x')}
                 <div class="col-span-5 flex items-center justify-end gap-2 text-right whitespace-nowrap">
                     <span class="text-orange-600 font-bold">即将上线</span>
                     <span id="market-list-pepe-countdown" class="font-mono text-orange-500 font-bold">${formatMarketListCountdown()}</span>
                 </div>
             </div>
-            <div data-market-pair="SNDKUSDC" data-market-industry="stock" data-market-tags="hot" data-market-fav="1" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('SNDKUSDC')">
+            <div data-market-pair="SNDKUSDC" data-market-industry="stock" data-market-tags="hot" data-market-hot-rank="4" data-market-volume-num="8000000" data-market-listed-days="60" data-market-fav="1" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('SNDKUSDC')">
                 ${renderMarketPairCell('SNDKUSDC', '20x')}
                 <div class="text-right">1,786.00</div>
                 <div class="text-right text-green-500">+0.59%</div>
@@ -5767,7 +5727,7 @@
                 <div class="text-right">8.2M</div>
                 <div class="text-right text-blue-500">0.0001%</div>
             </div>
-            <div data-market-pair="GOLDUSDC" data-market-industry="commodity" data-market-tags="hot" data-market-fav="0" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('GOLDUSDC')">
+            <div data-market-pair="GOLDUSDC" data-market-industry="commodity" data-market-tags="hot" data-market-hot-rank="5" data-market-volume-num="12000000" data-market-listed-days="300" data-market-fav="0" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('GOLDUSDC')">
                 ${renderMarketPairCell('GOLDUSDC', '50x')}
                 <div class="text-right">4,411.89</div>
                 <div class="text-right text-red-500">-0.33%</div>
@@ -5778,9 +5738,9 @@
         </div>
         `;
         document.body.appendChild(modal);
-        modal.dataset.activePrimary = 'crypto';
-        renderMarketSubPanel(modal, 'crypto');
-        filterMarketListRows(modal, 'crypto');
+        modal.dataset.activeTag = 'all';
+        renderMarketListTagTabs(modal);
+        filterMarketListRows(modal, 'all');
 
         // 点击外部关闭
         setTimeout(() => {
