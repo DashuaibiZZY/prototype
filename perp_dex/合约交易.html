@@ -5470,28 +5470,21 @@
         ]
     };
 
-    const marketSubPanelLabels = {
-        fav: '行业筛选',
-        crypto: '分类标签',
-        commodity: '分类标签'
-    };
-
     function applyMarketPrimaryTabStyle(btn, active) {
         btn.className = active
-            ? 'flex-1 min-w-[72px] py-1.5 px-2 text-[10px] font-black rounded-md bg-white text-gray-900 shadow-sm shrink-0 cursor-pointer'
-            : 'flex-1 min-w-[72px] py-1.5 px-2 text-[10px] font-bold rounded-md text-gray-500 shrink-0 cursor-pointer hover:text-gray-800';
+            ? 'cat-tab-l1 active shrink-0 cursor-pointer'
+            : 'cat-tab-l1 shrink-0 cursor-pointer';
     }
 
     function applyMarketSubTabStyle(btn, active) {
         btn.className = active
-            ? 'px-2.5 py-1 text-[9px] font-black rounded-md bg-white text-gray-900 border border-gray-200 shadow-sm shrink-0 cursor-pointer'
-            : 'px-2.5 py-1 text-[9px] font-bold rounded-md text-gray-500 shrink-0 cursor-pointer hover:bg-white/70';
+            ? 'cat-chip cat-chip-active shrink-0 cursor-pointer'
+            : 'cat-chip shrink-0 cursor-pointer';
     }
 
     function renderMarketSubPanel(modal, tabKey) {
         const panel = modal.querySelector('#market-sub-panel');
         const subWrap = modal.querySelector('#market-sub-tabs');
-        const labelEl = modal.querySelector('#market-sub-label');
         const subs = marketSubTabsByPrimary[tabKey];
         if (!panel || !subWrap) return;
         if (!subs) {
@@ -5501,11 +5494,10 @@
             return;
         }
         panel.classList.remove('hidden');
-        if (labelEl) labelEl.textContent = marketSubPanelLabels[tabKey] || '分类标签';
         const firstKey = subs[0].key;
         modal.dataset.activeSub = firstKey;
         subWrap.innerHTML = subs.map(s => `
-            <span data-market-sub="${s.key}" class="${s.key === firstKey ? 'px-2.5 py-1 text-[9px] font-black rounded-md bg-white text-gray-900 border border-gray-200 shadow-sm shrink-0 cursor-pointer' : 'px-2.5 py-1 text-[9px] font-bold rounded-md text-gray-500 shrink-0 cursor-pointer hover:bg-white/70'}"
+            <span data-market-sub="${s.key}" class="cat-chip ${s.key === firstKey ? 'cat-chip-active' : ''} shrink-0 cursor-pointer"
                 onclick="switchMarketListSubTab('${s.key}', this)">${s.label}</span>
         `).join('');
     }
@@ -5660,16 +5652,24 @@
                 <svg class="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2"/></svg>
                 <input class="w-full h-8 pl-7 pr-2 bg-gray-50 border border-gray-200 rounded-md text-[10px] outline-none focus:border-gray-300" placeholder="查詢">
             </div>
-            <div class="flex p-1 bg-gray-100 rounded-lg gap-0.5 overflow-x-auto hide-scrollbar">
-                <span data-market-tab="fav" class="flex-1 min-w-[72px] py-1.5 px-2 text-[10px] font-bold rounded-md text-gray-500 shrink-0 cursor-pointer hover:text-gray-800" onclick="switchMarketListTab('fav', this)">收藏</span>
-                <span data-market-tab="crypto" class="flex-1 min-w-[72px] py-1.5 px-2 text-[10px] font-black rounded-md bg-white text-gray-900 shadow-sm shrink-0 cursor-pointer" onclick="switchMarketListTab('crypto', this)">数字货币</span>
-                <span data-market-tab="stock" class="flex-1 min-w-[72px] py-1.5 px-2 text-[10px] font-bold rounded-md text-gray-500 shrink-0 cursor-pointer hover:text-gray-800" onclick="switchMarketListTab('stock', this)">股票</span>
-                <span data-market-tab="commodity" class="flex-1 min-w-[72px] py-1.5 px-2 text-[10px] font-bold rounded-md text-gray-500 shrink-0 cursor-pointer hover:text-gray-800" onclick="switchMarketListTab('commodity', this)">大宗商品</span>
+            <div class="cat-tab-row hide-scrollbar">
+                <span data-market-tab="fav" class="cat-tab-l1 shrink-0 cursor-pointer" onclick="switchMarketListTab('fav', this)">收藏</span>
+                <span data-market-tab="crypto" class="cat-tab-l1 active shrink-0 cursor-pointer" onclick="switchMarketListTab('crypto', this)">数字货币</span>
+                <span data-market-tab="stock" class="cat-tab-l1 shrink-0 cursor-pointer" onclick="switchMarketListTab('stock', this)">股票</span>
+                <span data-market-tab="commodity" class="cat-tab-l1 shrink-0 cursor-pointer" onclick="switchMarketListTab('commodity', this)">大宗商品</span>
             </div>
-            <div id="market-sub-panel" class="mt-2.5 rounded-lg bg-gray-50 border border-gray-100 px-2.5 pt-2 pb-2.5">
-                <p id="market-sub-label" class="text-[8px] font-bold text-gray-400 uppercase tracking-wider mb-2">分类标签</p>
-                <div id="market-sub-tabs" class="flex gap-1.5 overflow-x-auto hide-scrollbar"></div>
+            <div id="market-sub-panel">
+                <div id="market-sub-tabs" class="cat-chip-row hide-scrollbar"></div>
             </div>
+            <style>
+                #market-list-modal .cat-tab-row { display:flex; flex-wrap:nowrap; gap:20px; border-bottom:1px solid #f3f4f6; padding-bottom:0; margin-bottom:0; overflow-x:auto; background:transparent; }
+                #market-list-modal .cat-tab-l1 { position:relative; display:inline-flex; width:fit-content; flex:none; padding:0 0 10px; font-size:12px; font-weight:600; color:#9ca3af; background:none; border:none; white-space:nowrap; }
+                #market-list-modal .cat-tab-l1.active { color:#111827; font-weight:800; }
+                #market-list-modal .cat-tab-l1.active::after { content:''; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:#111827; border-radius:1px; }
+                #market-list-modal .cat-chip-row { display:flex; flex-wrap:nowrap; gap:12px; align-items:center; padding:10px 0 6px; overflow-x:auto; background:transparent; }
+                #market-list-modal .cat-chip { display:inline-flex; align-items:center; width:fit-content; flex:none; font-size:11px; font-weight:600; color:#9ca3af; padding:4px 10px; border-radius:999px; background:transparent; white-space:nowrap; }
+                #market-list-modal .cat-chip-active { background:#111827; color:#fff; font-weight:700; }
+            </style>
             <div class="grid grid-cols-6 gap-2 text-[9px] text-gray-400 font-medium px-2 mt-3">
     <div class="flex items-center space-x-1">
         <span>合約</span>
