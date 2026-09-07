@@ -640,6 +640,27 @@
         refreshBillTypePickerModal();
     }
 
+    function pickBillSubWithMain(main, sub) {
+        billFilterMain = main;
+        billFilterSub = sub;
+        refreshBillTypePickerModal();
+    }
+
+    function getBillSubTypePickerItems() {
+        if (billFilterMain) {
+            return (BILL_MAIN_SUB_TYPES[billFilterMain] || []).filter(function (s) { return s !== '全部'; }).map(function (sub) {
+                return { main: billFilterMain, sub: sub, label: sub, showMain: false };
+            });
+        }
+        const items = [];
+        Object.keys(BILL_MAIN_SUB_TYPES).forEach(function (main) {
+            (BILL_MAIN_SUB_TYPES[main] || []).filter(function (s) { return s !== '全部'; }).forEach(function (sub) {
+                items.push({ main: main, sub: sub, label: sub, showMain: true });
+            });
+        });
+        return items;
+    }
+
     function confirmBillTypeFilter() {
         closeFilterModal();
         updateTradeBillFilterBar();
@@ -649,7 +670,7 @@
     function renderBillTypePickerHtml() {
         const mainHeaderActive = !billFilterMain;
         const subHeaderActive = billFilterSub === '全部';
-        const subs = billFilterMain ? (BILL_MAIN_SUB_TYPES[billFilterMain] || []).filter(function (s) { return s !== '全部'; }) : [];
+        const subItems = getBillSubTypePickerItems();
         const checkMark = '<svg class="w-3 h-3 inline-block ml-0.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="3"/></svg>';
 
         return `
@@ -666,10 +687,11 @@
                         }).join('')}
                     </div>
                     <div class="bill-type-col no-scrollbar">
-                        ${billFilterMain ? subs.map(function (sub) {
-                            const active = billFilterSub === sub;
-                            return `<div class="bill-type-item ${active ? 'active' : ''}" onclick="pickBillSub('${sub}')">${sub}</div>`;
-                        }).join('') : '<p class="text-[10px] text-gray-300 font-bold p-3 leading-relaxed">选择左侧主账单类型后，此处显示对应子类型</p>'}
+                        ${subItems.map(function (item) {
+                            const active = billFilterMain === item.main && billFilterSub === item.sub;
+                            const label = item.showMain ? `${item.main} · ${item.sub}` : item.label;
+                            return `<div class="bill-type-item ${active ? 'active' : ''}" onclick="pickBillSubWithMain('${item.main}', '${item.sub}')">${label}</div>`;
+                        }).join('')}
                     </div>
                 </div>
             </div>
