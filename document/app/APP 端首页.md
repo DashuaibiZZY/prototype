@@ -20,7 +20,7 @@
 
 ### 1\.3 交易对配置（后台）
 
-标签 Tab、热门/新币填充规则见 **[《交易对标签配置及填充逻辑》](../交易对标签配置及填充逻辑.md)**。
+标签 Tab、热门/新币填充规则见 **[《交易对标签配置及填充逻辑》](https://ksgf73ukjokp.sg.larksuite.com/docx/SLB5dwR8eo5xy9xNLAFllX1Lg4b?from=from_copylink)**。
 
 **首屏行情卡片（后台配置，仅顶部卡片区）**
 
@@ -38,7 +38,7 @@
 4. 每张卡片展示：名称、首屏行业分类（灰色小字）、右上角 K 线折线迷你图、最新价、24h 涨跌幅。
 5. 点击卡片跳转该交易对行情详情页。
 
-详细规则见 **[《交易对标签配置及填充逻辑》](../交易对标签配置及填充逻辑.md)** §1。
+详细规则见 **[《交易对标签配置及填充逻辑》](https://ksgf73ukjokp.sg.larksuite.com/docx/SLB5dwR8eo5xy9xNLAFllX1Lg4b?from=from_copylink)** §1。
 
 ---
 
@@ -354,7 +354,7 @@ APP 冷启动时展示品牌开屏，传递“ForX”品牌感知，固定时长
 |Tab|数据说明|展示数量|备注|
 |---|---|---|---|
 |收藏|用户自选币对，需登录后同步|最新收藏的前5个|—|
-|热门|后台 rank 配置 Top 5；详见《交易对标签配置及填充逻辑》§3|5 个|—|
+|热门|后台 rank 配置 Top 5；详见[《交易对标签配置及填充逻辑》](https://ksgf73ukjokp.sg.larksuite.com/docx/SLB5dwR8eo5xy9xNLAFllX1Lg4b?from=from_copylink) §3|5 个|—|
 |新币上线|过去 30 天内开盘的合约币对|5 个|按上线时间倒序（最新在前）；详见 §4|
 |涨幅榜|24h 涨幅最高|5 个|—|
 |跌幅榜|24h 跌幅最高|5 个|—|
@@ -383,7 +383,7 @@ APP 冷启动时展示品牌开屏，传递“ForX”品牌感知，固定时长
 
 页面截图：[**App · 收藏列表态**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/首页-app/app-home-fav-filled.png)
 
-- **首次使用（无收藏）**：展示热门推荐币种（取热门 rank 前 **6** 个，见《交易对标签配置及填充逻辑》§3.2），每个币种右侧有勾选框且默认勾选。底部有“一键收藏”按钮
+- **首次使用（无收藏）**：展示热门推荐币种（取热门 rank 前 **6** 个，见[《交易对标签配置及填充逻辑》](https://ksgf73ukjokp.sg.larksuite.com/docx/SLB5dwR8eo5xy9xNLAFllX1Lg4b?from=from_copylink) §3.2），每个币种右侧有勾选框且默认勾选。底部有“一键收藏”按钮
 
     - 点击“一键收藏” → 将当前所有勾选币种加入我的收藏，界面变为已收藏列表样式
 
