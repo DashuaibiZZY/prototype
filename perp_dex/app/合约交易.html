@@ -308,7 +308,7 @@
                         <span class="text-gray-400">可用</span>
                         <div class="flex items-center space-x-1">
                             <span id="available-balance" class="font-bold text-gray-900">12,450.00 USDT</span>
-                            <div id="deposit-plus-btn" class="bg-gray-100 w-3 h-3 flex items-center justify-center rounded-full text-[8px] cursor-pointer">+</div>
+                            <div id="deposit-plus-btn" onclick="openDepositSheet()" class="bg-gray-100 w-3 h-3 flex items-center justify-center rounded-full text-[8px] cursor-pointer">+</div>
                         </div>
                     </div>
 
@@ -680,6 +680,35 @@
                         <p>逐倉：一定數量保證金分配到倉位上。保證金虧損低於維持保證金時，倉位將被強平。</p>
                     </div>
                     <button onclick="confirmMarginMode()" class="w-full bg-black text-white py-3 rounded-xl text-[13px] font-black">確認</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 底部弹层：充币 / 余额不足 ===== -->
+        <div id="deposit-sheet" class="hidden absolute inset-0 z-50 flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('deposit-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet">
+                <div class="py-4 px-5 border-b border-gray-50 flex justify-between items-center">
+                    <h3 id="deposit-sheet-title" class="text-[13px] font-black">選擇充幣方式</h3>
+                    <button onclick="closeSheet('deposit-sheet')" class="text-gray-400 text-lg leading-none">✕</button>
+                </div>
+                <div class="p-5 space-y-3">
+                    <p id="deposit-sheet-hint" class="text-[10px] text-gray-400 leading-relaxed hidden">当前输入数量超过最大可开，请先补充保证金或降低下单数量。</p>
+                    <div onclick="closeSheet('deposit-sheet'); showProtoToast('打开资金划转');" class="flex items-center justify-between p-3 border border-gray-200 rounded-xl active:bg-gray-50 cursor-pointer">
+                        <div>
+                            <div class="font-bold text-gray-800 text-[11px] mb-1">資金劃轉</div>
+                            <div class="text-[9px] text-gray-500">在交易賬戶和資金賬戶之間劃轉資金</div>
+                            <div class="text-[9px] text-gray-400 mt-1">資金賬戶餘額：<span class="font-bold text-gray-700">0 USDT</span></div>
+                        </div>
+                        <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                    </div>
+                    <div onclick="closeSheet('deposit-sheet'); goMoreMenu('deposit');" class="flex items-center justify-between p-3 border border-gray-200 rounded-xl active:bg-gray-50 cursor-pointer">
+                        <div>
+                            <div class="font-bold text-gray-800 text-[11px] mb-1">充幣</div>
+                            <div class="text-[9px] text-gray-500">從鏈上錢包或交易所轉入數字貨幣</div>
+                        </div>
+                        <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1550,8 +1579,8 @@
 
     const loggedInSnapshot = {
         balance: '12,450.00 USDT',
-        maxOpenLong: '50,000 USDT',
-        maxOpenShort: '50,000 USDT',
+        maxOpenLong: '1,397.50 USDT',
+        maxOpenShort: '1,397.50 USDT',
         liqLong: '65,241.2',
         liqShort: '78,120.5',
         closeLongQty: '0.050 BTC',
@@ -3328,8 +3357,29 @@
         closeSheet('margin-sheet');
     }
 
+    function openDepositSheet(sheetTitle) {
+        const title = sheetTitle || '選擇充幣方式';
+        const titleEl = document.getElementById('deposit-sheet-title');
+        const hintEl = document.getElementById('deposit-sheet-hint');
+        if (titleEl) titleEl.textContent = title;
+        if (hintEl) hintEl.classList.toggle('hidden', title !== '余额不足');
+        openSheet('deposit-sheet');
+    }
+
+    function exceedsMaxOpen(direction) {
+        if (currentSide !== 'open' || (direction !== 'long' && direction !== 'short')) return false;
+        const qtyUsdt = getQtyUsdt();
+        const maxOpenEl = document.getElementById(direction === 'long' ? 'stat-max-open-long' : 'stat-max-open-short');
+        const maxOpen = parseInputNum(maxOpenEl?.textContent);
+        return Number.isFinite(qtyUsdt) && Number.isFinite(maxOpen) && qtyUsdt > maxOpen;
+    }
+
     function openOrderConfirm(direction) {
         pendingOrderDirection = direction;
+        if (exceedsMaxOpen(direction)) {
+            openDepositSheet('余额不足');
+            return;
+        }
         const title = document.getElementById('confirm-title');
         const priceEl = document.getElementById('confirm-price');
         const typeText = document.getElementById('confirm-type-text');
