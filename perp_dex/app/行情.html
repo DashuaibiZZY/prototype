@@ -15,6 +15,8 @@
 
         .tab-active { color: #000; font-weight: 800; position: relative; }
         .tab-active::after { content: ''; position: absolute; bottom: -8px; left: 0; width: 100%; height: 2.5px; background: #000; border-radius: 2px; }
+        .sub-tab { color: #9ca3af; font-weight: 700; font-size: 11px; padding: 4px 12px; border-radius: 999px; background: #f3f4f6; border: none; white-space: nowrap; flex-shrink: 0; }
+        .sub-tab-active { color: #fff; background: #111827; font-weight: 800; }
 
         .sort-icon { display: flex; flex-direction: column; margin-left: 2px; line-height: 0; }
         .sort-arrow { width: 0; height: 0; border-left: 3px solid transparent; border-right: 3px solid transparent; margin: 1px 0; }
@@ -60,15 +62,20 @@
             </div>
         </div>
 
-        <!-- 2. 交易對 Tab 標籤 (支持橫向滾動)  【新增 “全部” 按钮】 -->
+        <!-- 2. 一级行业 Tab -->
         <div id="market-tabs" class="flex space-x-6 px-5 border-b border-gray-50 overflow-x-auto no-scrollbar whitespace-nowrap">
-            <button onclick="switchMarketTab('fav')" id="tab-fav" class="text-gray-400 pb-2 text-[13px] font-bold">自選</button>
-            <button onclick="switchMarketTab('all')" id="tab-all" class="tab-active pb-2 text-[13px]">全部</button>
-            <button onclick="switchMarketTab('hot')" id="tab-hot" class="text-gray-400 pb-2 text-[13px] font-bold">熱門</button>
-            <button onclick="switchMarketTab('new')" id="tab-new" class="text-gray-400 pb-2 text-[13px] font-bold">新幣</button>
-            <button onclick="switchMarketTab('tradefi')" id="tab-tradefi" class="text-gray-400 pb-2 text-[13px] font-bold">TradeFi</button>
-            <button onclick="switchMarketTab('main')" id="tab-main" class="text-gray-400 pb-2 text-[13px] font-bold">主流幣</button>
-            <button onclick="switchMarketTab('ai')" id="tab-ai" class="text-gray-400 pb-2 text-[13px] font-bold">AI</button>
+            <button onclick="switchMarketPrimaryTab('fav')" id="tab-fav" class="text-gray-400 pb-2 text-[13px] font-bold">收藏</button>
+            <button onclick="switchMarketPrimaryTab('crypto')" id="tab-crypto" class="tab-active pb-2 text-[13px]">数字货币</button>
+            <button onclick="switchMarketPrimaryTab('stock')" id="tab-stock" class="text-gray-400 pb-2 text-[13px] font-bold">股票</button>
+            <button onclick="switchMarketPrimaryTab('commodity')" id="tab-commodity" class="text-gray-400 pb-2 text-[13px] font-bold">大宗商品</button>
+        </div>
+        <!-- 2.1 二级分类标签（数字货币 / 大宗商品下展示） -->
+        <div id="market-sub-tabs" class="flex space-x-2 px-5 py-3 overflow-x-auto no-scrollbar whitespace-nowrap">
+            <button onclick="switchMarketSubTab('hot')" id="sub-hot" class="sub-tab sub-tab-active">熱門</button>
+            <button onclick="switchMarketSubTab('new')" id="sub-new" class="sub-tab">新幣</button>
+            <button onclick="switchMarketSubTab('main')" id="sub-main" class="sub-tab">主流幣</button>
+            <button onclick="switchMarketSubTab('ai')" id="sub-ai" class="sub-tab">AI</button>
+            <button onclick="switchMarketSubTab('tradefi')" id="sub-tradefi" class="sub-tab hidden">TradeFi</button>
         </div>
 
         <!-- 3. 表頭字段 -->
@@ -165,50 +172,64 @@
 </div>
 
 <script>
-    const marketData = {
-        all: [
-            { name: 'BTCUSDT', vol: '42.5億', price: '64,120.50', change: '+1.24%', up: true },
-            { name: 'ETHUSDT', vol: '18.2億', price: '3,450.12', change: '-2.15%', up: false },
-            { name: 'SOLUSDT', vol: '1.2億', price: '145.82', change: '+5.42%', up: true },
-            { name: 'PEPEUSDT', vol: '8,500萬', price: '0.0000082', change: '-12.4%', up: false },
-            { name: 'WIFUSDT', vol: '4,200萬', price: '2.8415', change: '+15.20%', up: true },
-            { name: 'ONDOUSDT', vol: '2,200萬', price: '1.24', change: '+5.1%', up: true },
-            { name: 'RNDRUSDT', vol: '3,200萬', price: '10.24', change: '-3.2%', up: false },
-        ],
-        fav: [
-            { name: 'BTCUSDT', vol: '42.5億', price: '64,120.50', change: '+1.24%', up: true },
-            { name: 'ETHUSDT', vol: '18.2億', price: '3,450.12', change: '-2.15%', up: false }
-        ],
-        hot: [
-            { name: 'SOLUSDT', vol: '1.2億', price: '145.82', change: '+5.42%', up: true },
-            { name: 'PEPEUSDT', vol: '8,500萬', price: '0.0000082', change: '-12.4%', up: false }
-        ],
-        new: [{ name: 'NOTUSDT', vol: '5,500萬', price: '0.0142', change: '+45.2%', up: true }],
-        tradefi: [{ name: 'ONDOUSDT', vol: '2,200萬', price: '1.24', change: '+5.1%', up: true }],
-        main: [{ name: 'BNBUSDT', vol: '1.5億', price: '592.1', change: '+0.5%', up: true }],
-        ai: [{ name: 'RNDRUSDT', vol: '3,200萬', price: '10.24', change: '-3.2%', up: false }]
+    const marketSubTabsByPrimary = {
+        crypto: ['hot', 'new', 'main', 'ai'],
+        commodity: ['hot', 'tradefi']
     };
 
-    function switchMarketTab(tab) {
-        const tabs = ['fav', 'all', 'hot', 'new', 'tradefi', 'main', 'ai'];
+    const marketData = [
+        { name: 'BTCUSDT', vol: '42.5億', price: '64,120.50', change: '+1.24%', up: true, industry: 'crypto', tags: ['hot', 'main'] },
+        { name: 'ETHUSDT', vol: '18.2億', price: '3,450.12', change: '-2.15%', up: false, industry: 'crypto', tags: ['hot', 'main'] },
+        { name: 'SOLUSDT', vol: '1.2億', price: '145.82', change: '+5.42%', up: true, industry: 'crypto', tags: ['hot', 'ai'] },
+        { name: 'PEPEUSDT', vol: '8,500萬', price: '0.0000082', change: '-12.4%', up: false, industry: 'crypto', tags: ['hot'] },
+        { name: 'NOTUSDT', vol: '5,500萬', price: '0.0142', change: '+45.2%', up: true, industry: 'crypto', tags: ['new'] },
+        { name: 'BNBUSDT', vol: '1.5億', price: '592.1', change: '+0.5%', up: true, industry: 'crypto', tags: ['main'] },
+        { name: 'RNDRUSDT', vol: '3,200萬', price: '10.24', change: '-3.2%', up: false, industry: 'crypto', tags: ['ai'] },
+        { name: 'SNDKUSDT', vol: '4,210萬', price: '1,786.00', change: '+0.59%', up: true, industry: 'stock', tags: [] },
+        { name: 'DELLUSDT', vol: '1,860萬', price: '525.49', change: '+0.42%', up: true, industry: 'stock', tags: [] },
+        { name: 'GOLDUSDT', vol: '9,620萬', price: '4,411.89', change: '-0.33%', up: false, industry: 'commodity', tags: ['hot'] },
+        { name: 'ONDOUSDT', vol: '2,200萬', price: '1.24', change: '+5.1%', up: true, industry: 'commodity', tags: ['tradefi'] }
+    ];
+
+    const favPairs = new Set(['BTCUSDT', 'ETHUSDT']);
+
+    let currentPrimaryTab = 'crypto';
+    let currentSubTab = 'hot';
+
+    function renderMarketSubTabs() {
+        const wrap = document.getElementById('market-sub-tabs');
+        const allowed = marketSubTabsByPrimary[currentPrimaryTab];
+        if (!allowed) {
+            wrap.classList.add('hidden');
+            return;
+        }
+        wrap.classList.remove('hidden');
+        wrap.querySelectorAll('.sub-tab').forEach(btn => {
+            const key = btn.id.replace('sub-', '');
+            const show = allowed.includes(key);
+            btn.classList.toggle('hidden', !show);
+            btn.className = show
+                ? (key === currentSubTab ? 'sub-tab sub-tab-active' : 'sub-tab')
+                : 'sub-tab hidden';
+        });
+    }
+
+    function getFilteredMarketData() {
+        if (currentPrimaryTab === 'fav') {
+            return marketData.filter(item => favPairs.has(item.name));
+        }
+        return marketData.filter(item => {
+            if (item.industry !== currentPrimaryTab) return false;
+            if (currentPrimaryTab === 'stock') return true;
+            return item.tags.includes(currentSubTab);
+        });
+    }
+
+    function renderMarketList() {
         const listContainer = document.getElementById('content-list');
         const editBtn = document.getElementById('edit-fav-btn');
-
-        // 切換 Tab 樣式
-        tabs.forEach(t => {
-            const el = document.getElementById('tab-' + t);
-            if (t === tab) {
-                el.className = "tab-active pb-2 text-[13px]";
-            } else {
-                el.className = "text-gray-400 pb-2 text-[13px] font-bold";
-            }
-        });
-
-        // 僅自選 Tab 顯示編輯按鈕
-        editBtn.style.display = (tab === 'fav') ? 'block' : 'none';
-
-        // 渲染數據
-        const data = marketData[tab] || [];
+        editBtn.style.display = (currentPrimaryTab === 'fav') ? 'block' : 'none';
+        const data = getFilteredMarketData();
         listContainer.innerHTML = data.map(item => `
         <a href="行情详情.html" class="flex justify-between items-center py-1 fade-in">
             <div>
@@ -225,8 +246,39 @@
     `).join('');
     }
 
-    // 默認顯示“全部” Tab
-    switchMarketTab('all');
+    function switchMarketPrimaryTab(tab) {
+        const tabs = ['fav', 'crypto', 'stock', 'commodity'];
+        currentPrimaryTab = tab;
+        const subs = marketSubTabsByPrimary[tab];
+        currentSubTab = subs ? subs[0] : '';
+        tabs.forEach(t => {
+            const el = document.getElementById('tab-' + t);
+            if (t === tab) {
+                el.className = "tab-active pb-2 text-[13px]";
+            } else {
+                el.className = "text-gray-400 pb-2 text-[13px] font-bold";
+            }
+        });
+        renderMarketSubTabs();
+        renderMarketList();
+    }
+
+    function switchMarketSubTab(sub) {
+        currentSubTab = sub;
+        document.querySelectorAll('#market-sub-tabs .sub-tab').forEach(btn => {
+            const key = btn.id.replace('sub-', '');
+            if (btn.classList.contains('hidden')) return;
+            btn.className = key === sub ? 'sub-tab sub-tab-active' : 'sub-tab';
+        });
+        renderMarketList();
+    }
+
+    function switchMarketTab(tab) {
+        switchMarketPrimaryTab(tab);
+    }
+
+    // 默認顯示「数字货币 · 熱門」
+    switchMarketPrimaryTab('crypto');
 
     let isNetError = false;
 
@@ -247,7 +299,7 @@
             listContent.classList.remove('hidden');
             if(tabContainer) tabContainer.classList.remove('opacity-20', 'pointer-events-none');
             timeoutModal.classList.add('hidden');
-            switchMarketTab('all');
+            switchMarketPrimaryTab('crypto');
         }
     }
 

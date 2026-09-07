@@ -5460,9 +5460,62 @@
                 ? 'px-2.5 py-1 bg-gray-900 text-white rounded-full text-[9px] font-bold cursor-pointer shrink-0'
                 : 'px-2.5 py-1 bg-gray-100 rounded-full text-[9px] font-bold cursor-pointer shrink-0';
         });
+        const subWrap = modal.querySelector('#market-sub-tabs');
+        const subConfig = {
+            crypto: ['hot', 'new', 'main', 'ai'],
+            commodity: ['hot', 'tradefi']
+        };
+        if (subWrap) {
+            if (tabKey === 'crypto' || tabKey === 'commodity') {
+                subWrap.classList.remove('hidden');
+                subWrap.querySelectorAll('[data-market-sub]').forEach(btn => {
+                    const allowed = subConfig[tabKey] || [];
+                    const subKey = btn.dataset.marketSub;
+                    const showSub = allowed.includes(subKey);
+                    btn.classList.toggle('hidden', !showSub);
+                    if (showSub && subKey === allowed[0]) {
+                        btn.className = 'px-2 py-0.5 bg-gray-900 text-white rounded-full text-[8px] font-bold cursor-pointer shrink-0';
+                        modal.dataset.activeSub = subKey;
+                    } else if (showSub) {
+                        btn.className = 'px-2 py-0.5 bg-gray-100 rounded-full text-[8px] font-bold cursor-pointer shrink-0';
+                    }
+                });
+            } else {
+                subWrap.classList.add('hidden');
+                modal.dataset.activeSub = '';
+            }
+        }
+        filterMarketListRows(modal, tabKey);
+    }
+
+    function switchMarketListSubTab(subKey, el) {
+        const modal = document.getElementById('market-list-modal');
+        if (!modal) return;
+        modal.dataset.activeSub = subKey;
+        modal.querySelectorAll('[data-market-sub]').forEach(btn => {
+            const active = btn.dataset.marketSub === subKey;
+            btn.className = active
+                ? 'px-2 py-0.5 bg-gray-900 text-white rounded-full text-[8px] font-bold cursor-pointer shrink-0'
+                : 'px-2 py-0.5 bg-gray-100 rounded-full text-[8px] font-bold cursor-pointer shrink-0';
+        });
+        const primary = modal.dataset.activePrimary || 'crypto';
+        filterMarketListRows(modal, primary);
+    }
+
+    function filterMarketListRows(modal, tabKey) {
+        modal.dataset.activePrimary = tabKey;
+        const subKey = modal.dataset.activeSub || '';
         modal.querySelectorAll('[data-market-category]').forEach(row => {
-            const categories = (row.dataset.marketCategory || '').split(/\s+/);
-            const show = tabKey === 'all' || categories.includes(tabKey);
+            const industry = row.dataset.marketIndustry || '';
+            const tags = (row.dataset.marketTags || '').split(/\s+/).filter(Boolean);
+            let show = false;
+            if (tabKey === 'fav') {
+                show = row.dataset.marketFav === '1';
+            } else if (tabKey === 'stock') {
+                show = industry === 'stock';
+            } else if (tabKey === 'crypto' || tabKey === 'commodity') {
+                show = industry === tabKey && (!subKey || tags.includes(subKey));
+            }
             row.classList.toggle('hidden', !show);
         });
     }
@@ -5579,14 +5632,16 @@
                 </div>
                 <div class="flex space-x-2 overflow-x-auto hide-scrollbar">
                     <span data-market-tab="fav" class="px-2.5 py-1 bg-gray-100 rounded-full text-[9px] font-bold cursor-pointer shrink-0" onclick="switchMarketListTab('fav', this)">收藏</span>
-                    <span data-market-tab="all" class="px-2.5 py-1 bg-gray-900 text-white rounded-full text-[9px] font-bold cursor-pointer shrink-0" onclick="switchMarketListTab('all', this)">全部</span>
-                    <span data-market-tab="new" class="px-2.5 py-1 bg-gray-100 rounded-full text-[9px] font-bold cursor-pointer shrink-0" onclick="switchMarketListTab('new', this)">新幣上線</span>
-                    <span data-market-tab="commodity" class="px-2.5 py-1 bg-gray-100 rounded-full text-[9px] font-bold cursor-pointer shrink-0" onclick="switchMarketListTab('commodity', this)">大宗商品</span>
-                    <span data-market-tab="preipo" class="px-2.5 py-1 bg-gray-100 rounded-full text-[9px] font-bold cursor-pointer shrink-0" onclick="switchMarketListTab('preipo', this)">Pre-IPO</span>
-                    <span data-market-tab="etf" class="px-2.5 py-1 bg-gray-100 rounded-full text-[9px] font-bold cursor-pointer shrink-0" onclick="switchMarketListTab('etf', this)">ETF/指數</span>
+                    <span data-market-tab="crypto" class="px-2.5 py-1 bg-gray-900 text-white rounded-full text-[9px] font-bold cursor-pointer shrink-0" onclick="switchMarketListTab('crypto', this)">数字货币</span>
                     <span data-market-tab="stock" class="px-2.5 py-1 bg-gray-100 rounded-full text-[9px] font-bold cursor-pointer shrink-0" onclick="switchMarketListTab('stock', this)">股票</span>
-                    <span data-market-tab="hot" class="px-2.5 py-1 bg-gray-100 rounded-full text-[9px] font-bold cursor-pointer shrink-0" onclick="switchMarketListTab('hot', this)">熱門</span>
-                    <span data-market-tab="defi" class="px-2.5 py-1 bg-gray-100 rounded-full text-[9px] font-bold cursor-pointer shrink-0" onclick="switchMarketListTab('defi', this)">Defi</span>
+                    <span data-market-tab="commodity" class="px-2.5 py-1 bg-gray-100 rounded-full text-[9px] font-bold cursor-pointer shrink-0" onclick="switchMarketListTab('commodity', this)">大宗商品</span>
+                </div>
+                <div id="market-sub-tabs" class="flex space-x-2 overflow-x-auto hide-scrollbar mt-2">
+                    <span data-market-sub="hot" class="px-2 py-0.5 bg-gray-900 text-white rounded-full text-[8px] font-bold cursor-pointer shrink-0" onclick="switchMarketListSubTab('hot', this)">熱門</span>
+                    <span data-market-sub="new" class="px-2 py-0.5 bg-gray-100 rounded-full text-[8px] font-bold cursor-pointer shrink-0" onclick="switchMarketListSubTab('new', this)">新幣上線</span>
+                    <span data-market-sub="main" class="px-2 py-0.5 bg-gray-100 rounded-full text-[8px] font-bold cursor-pointer shrink-0" onclick="switchMarketListSubTab('main', this)">主流幣</span>
+                    <span data-market-sub="ai" class="px-2 py-0.5 bg-gray-100 rounded-full text-[8px] font-bold cursor-pointer shrink-0" onclick="switchMarketListSubTab('ai', this)">AI</span>
+                    <span data-market-sub="tradefi" class="px-2 py-0.5 bg-gray-100 rounded-full text-[8px] font-bold cursor-pointer shrink-0 hidden" onclick="switchMarketListSubTab('tradefi', this)">TradeFi</span>
                 </div>
             </div>
             <div class="grid grid-cols-6 gap-2 text-[9px] text-gray-400 font-medium px-2 mt-1">
@@ -5636,7 +5691,7 @@
         </div>
         <!-- 列表 -->
         <div class="flex-1 overflow-y-auto px-3" id="market-list-rows">
-            <div data-market-pair="BTCUSDC" data-market-category="all hot fav" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('BTCUSDC')">
+            <div data-market-pair="BTCUSDC" data-market-industry="crypto" data-market-tags="hot main" data-market-fav="1" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('BTCUSDC')">
                 ${renderMarketPairCell('BTCUSDC', '100x')}
                 <div class="text-right">65,432.10</div>
                 <div class="text-right text-red-500">-1.76%</div>
@@ -5644,7 +5699,7 @@
                 <div class="text-right">3.23M</div>
                 <div class="text-right text-blue-500">0.0001%</div>
             </div>
-            <div data-market-pair="ETHUSDC" data-market-category="all hot fav" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('ETHUSDC')">
+            <div data-market-pair="ETHUSDC" data-market-industry="crypto" data-market-tags="hot main" data-market-fav="1" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('ETHUSDC')">
                 ${renderMarketPairCell('ETHUSDC', '100x')}
                 <div class="text-right">2,432.10</div>
                 <div class="text-right text-red-500">-3.76%</div>
@@ -5652,7 +5707,7 @@
                 <div class="text-right">10.23M</div>
                 <div class="text-right text-blue-500">0.0001%</div>
             </div>
-            <div data-market-pair="SOLHUSDC" data-market-category="all" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('SOLHUSDC')">
+            <div data-market-pair="SOLHUSDC" data-market-industry="crypto" data-market-tags="hot ai" data-market-fav="0" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('SOLHUSDC')">
                 ${renderMarketPairCell('SOLHUSDC', '100x')}
                 <div class="text-right">62.10</div>
                 <div class="text-right text-red-500">-4.76%</div>
@@ -5660,16 +5715,35 @@
                 <div class="text-right">10.23M</div>
                 <div class="text-right text-blue-500">0.0001%</div>
             </div>
-            <div data-market-pair="PEPEUSDC" data-market-category="all new" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-orange-50 cursor-pointer text-[10px]" onclick="selectMarketPair('PEPEUSDC')">
+            <div data-market-pair="PEPEUSDC" data-market-industry="crypto" data-market-tags="new" data-market-fav="0" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-orange-50 cursor-pointer text-[10px]" onclick="selectMarketPair('PEPEUSDC')">
                 ${renderMarketPairCell('PEPEUSDC', '50x')}
                 <div class="col-span-5 flex items-center justify-end gap-2 text-right whitespace-nowrap">
                     <span class="text-orange-600 font-bold">即将上线</span>
                     <span id="market-list-pepe-countdown" class="font-mono text-orange-500 font-bold">${formatMarketListCountdown()}</span>
                 </div>
             </div>
+            <div data-market-pair="SNDKUSDC" data-market-industry="stock" data-market-tags="" data-market-fav="0" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('SNDKUSDC')">
+                ${renderMarketPairCell('SNDKUSDC', '20x')}
+                <div class="text-right">1,786.00</div>
+                <div class="text-right text-green-500">+0.59%</div>
+                <div class="text-right">42.1M</div>
+                <div class="text-right">8.2M</div>
+                <div class="text-right text-blue-500">0.0001%</div>
+            </div>
+            <div data-market-pair="GOLDUSDC" data-market-industry="commodity" data-market-tags="hot" data-market-fav="0" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('GOLDUSDC')">
+                ${renderMarketPairCell('GOLDUSDC', '50x')}
+                <div class="text-right">4,411.89</div>
+                <div class="text-right text-red-500">-0.33%</div>
+                <div class="text-right">96.2M</div>
+                <div class="text-right">12.5M</div>
+                <div class="text-right text-blue-500">0.0001%</div>
+            </div>
         </div>
         `;
         document.body.appendChild(modal);
+        modal.dataset.activePrimary = 'crypto';
+        modal.dataset.activeSub = 'hot';
+        filterMarketListRows(modal, 'crypto');
 
         // 点击外部关闭
         setTimeout(() => {
