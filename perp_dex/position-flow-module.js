@@ -168,73 +168,69 @@
     /** 账单主类型 → 账单子类型（对应关系见需求文档「账单流水对应关系」） */
     const BILL_MAIN_SUB_TYPES = {
         '划转': ['全部', '转入', '转出'],
-        '交易': ['全部', '买入开多', '卖出开空', '卖出平多', '买入平空', '强平'],
-        '手续费': ['全部', '交易手续费', '强平手续费'],
-        '资金费用': ['全部', '收入', '支出'],
-        '已实现盈亏': ['全部', '盈利', '亏损'],
-        '爆仓清算': ['全部'],
-        '邀请返佣': ['全部'],
-        '体验金': ['全部', '入账', '回收'],
-        '充值': ['全部'],
-        '提现': ['全部'],
+        '体验金': ['全部', '使用体验金', '未使用体验金回收', '体验金回收'],
+        '交易': ['全部', '开多', '开空', '平多', '平空'],
+        '保证金划转': ['全部', '手动追加保证金', '手动减少保证金', '自动追加保证金'],
+        '阶梯减仓': ['全部', '平多', '平空'],
+        '资金费': ['全部', '资金费支出', '资金费收入'],
     };
 
     const TRADE_BILLS = [
         {
-            time: '2026-06-15 14:20:16', mainType: '交易', subType: '买入开多', role: '吃单方',
+            time: '2026-06-15 14:20:16', mainType: '交易', subType: '开多', role: '吃单方',
             coin: 'USDC', symbol: 'BNBUSDC', positionType: '逐仓 (20x)',
             qty: '1.00 BNB', fee: '0.619 USDC', price: '618.50', pnl: '--', pnlClass: 'text-gray-400',
             posBalChange: '+618.50 USDC', posBalChangeClass: 'text-green-500', posBal: '1,250.00 USDC',
             acctBalChange: '-0.619 USDC', acctBalChangeClass: 'text-red-500', acctBal: '12,845.32 USDC',
         },
         {
-            time: '2026-06-15 11:05:43', mainType: '交易', subType: '卖出平多', role: '挂单方',
+            time: '2026-06-15 11:05:43', mainType: '交易', subType: '平多', role: '挂单方',
             coin: 'USDC', symbol: 'BTCUSDC', positionType: '逐仓 (20x)',
             qty: '0.35 BTC', fee: '1.145 USDC', price: '65,420.0', pnl: '+184.32 USDC', pnlClass: 'text-green-500',
             posBalChange: '-22,897.00 USDC', posBalChangeClass: 'text-red-500', posBal: '0.00 USDC',
             acctBalChange: '+183.18 USDC', acctBalChangeClass: 'text-green-500', acctBal: '13,028.50 USDC',
         },
         {
-            time: '2026-06-15 08:00:00', mainType: '资金费用', subType: '支出', role: '--',
+            time: '2026-06-15 08:00:00', mainType: '资金费', subType: '资金费支出', role: '--',
             coin: 'USDC', symbol: 'BNBUSDC', positionType: '逐仓 (20x)',
             qty: '--', fee: '--', price: '--', pnl: '-0.452 USDC', pnlClass: 'text-red-500',
             posBalChange: '-0.452 USDC', posBalChangeClass: 'text-red-500', posBal: '1,249.55 USDC',
             acctBalChange: '-0.452 USDC', acctBalChangeClass: 'text-red-500', acctBal: '13,028.05 USDC',
         },
         {
-            time: '2026-06-14 18:22:15', mainType: '已实现盈亏', subType: '盈利', role: '--',
-            coin: 'USDC', symbol: 'BTCUSDC', positionType: '逐仓 (20x)',
-            qty: '--', fee: '--', price: '--', pnl: '+124.52 USDC', pnlClass: 'text-green-500',
-            posBalChange: '+124.52 USDC', posBalChangeClass: 'text-green-500', posBal: '0.00 USDC',
-            acctBalChange: '+124.52 USDC', acctBalChangeClass: 'text-green-500', acctBal: '12,903.53 USDC',
+            time: '2026-06-14 16:40:12', mainType: '阶梯减仓', subType: '平空', role: '--',
+            coin: 'USDC', symbol: 'SOLUSDC', positionType: '全仓 (25x)',
+            qty: '120 SOL', fee: '0.856 USDC', price: '142.80', pnl: '-88.40 USDC', pnlClass: 'text-red-500',
+            posBalChange: '-17,136.00 USDC', posBalChangeClass: 'text-red-500', posBal: '0.00 USDC',
+            acctBalChange: '-89.26 USDC', acctBalChangeClass: 'text-red-500', acctBal: '12,938.79 USDC',
         },
         {
             time: '2026-06-13 16:40:08', mainType: '划转', subType: '转入', role: '--',
             coin: 'USDC', symbol: '--', positionType: '--',
             qty: '500.00 USDC', fee: '--', price: '--', pnl: '--', pnlClass: 'text-gray-400',
             posBalChange: '--', posBalChangeClass: 'text-gray-400', posBal: '--',
-            acctBalChange: '+500.00 USDC', acctBalChangeClass: 'text-green-500', acctBal: '12,779.01 USDC',
+            acctBalChange: '+500.00 USDC', acctBalChangeClass: 'text-green-500', acctBal: '13,028.05 USDC',
         },
         {
-            time: '2026-06-13 09:12:44', mainType: '爆仓清算', subType: '全部', role: '--',
-            coin: 'USDC', symbol: 'SOLUSDC', positionType: '全仓 (25x)',
-            qty: '120 SOL', fee: '0.856 USDC', price: '142.80', pnl: '-88.40 USDC', pnlClass: 'text-red-500',
-            posBalChange: '-17,136.00 USDC', posBalChangeClass: 'text-red-500', posBal: '0.00 USDC',
-            acctBalChange: '-89.26 USDC', acctBalChangeClass: 'text-red-500', acctBal: '12,279.01 USDC',
+            time: '2026-06-13 10:22:30', mainType: '保证金划转', subType: '手动追加保证金', role: '--',
+            coin: 'USDC', symbol: 'BNBUSDC', positionType: '逐仓 (20x)',
+            qty: '50.00 USDC', fee: '--', price: '--', pnl: '--', pnlClass: 'text-gray-400',
+            posBalChange: '+50.00 USDC', posBalChangeClass: 'text-green-500', posBal: '1,300.00 USDC',
+            acctBalChange: '-50.00 USDC', acctBalChangeClass: 'text-red-500', acctBal: '12,978.05 USDC',
         },
         {
-            time: '2026-06-12 21:30:19', mainType: '邀请返佣', subType: '全部', role: '--',
-            coin: 'USDC', symbol: '--', positionType: '--',
-            qty: '12.80 USDC', fee: '--', price: '--', pnl: '+12.80 USDC', pnlClass: 'text-green-500',
-            posBalChange: '--', posBalChangeClass: 'text-gray-400', posBal: '--',
-            acctBalChange: '+12.80 USDC', acctBalChangeClass: 'text-green-500', acctBal: '12,368.27 USDC',
+            time: '2026-06-12 21:30:19', mainType: '资金费', subType: '资金费收入', role: '--',
+            coin: 'USDC', symbol: 'BTCUSDC', positionType: '逐仓 (20x)',
+            qty: '--', fee: '--', price: '--', pnl: '+0.128 USDC', pnlClass: 'text-green-500',
+            posBalChange: '+0.128 USDC', posBalChangeClass: 'text-green-500', posBal: '0.00 USDC',
+            acctBalChange: '+0.128 USDC', acctBalChangeClass: 'text-green-500', acctBal: '13,028.18 USDC',
         },
         {
-            time: '2026-06-12 15:00:00', mainType: '体验金', subType: '入账', role: '--',
-            coin: 'USDC', symbol: '--', positionType: '--',
+            time: '2026-06-12 15:00:00', mainType: '体验金', subType: '使用体验金', role: '--',
+            coin: 'USDC', symbol: 'BNBUSDC', positionType: '逐仓 (20x)',
             qty: '200.00 USDC', fee: '--', price: '--', pnl: '--', pnlClass: 'text-gray-400',
-            posBalChange: '--', posBalChangeClass: 'text-gray-400', posBal: '--',
-            acctBalChange: '+200.00 USDC', acctBalChangeClass: 'text-green-500', acctBal: '12,355.47 USDC',
+            posBalChange: '+200.00 USDC', posBalChangeClass: 'text-green-500', posBal: '1,050.00 USDC',
+            acctBalChange: '--', acctBalChangeClass: 'text-gray-400', acctBal: '13,028.18 USDC',
         },
     ];
 
@@ -647,6 +643,13 @@
         },
 
         initBillTypeFilters: function () {
+            const mainEl = document.getElementById('hist-trade-bill-main-type');
+            if (mainEl) {
+                mainEl.innerHTML = '<option value="">账单主类型</option>' +
+                    Object.keys(BILL_MAIN_SUB_TYPES).map(function (main) {
+                        return '<option value="' + main + '">' + main + '</option>';
+                    }).join('');
+            }
             this.resetBillTypeFilters();
         },
 
