@@ -92,7 +92,16 @@
         .bill-tag-trade-long { background: #dcfce7; color: #16a34a; }
         .bill-tag-trade-short { background: #fee2e2; color: #dc2626; }
         .bill-tag-neutral { background: #f3f4f6; color: #6b7280; }
-        .bill-card-section { border-top: 1px solid #f3f4f6; padding-top: 10px; margin-top: 10px; }
+        .bill-card { padding: 12px 16px; }
+        .bill-type-picker { border: 1px solid #f3f4f6; border-radius: 12px; overflow: hidden; }
+        .bill-type-col-header { width: 100%; padding: 10px 8px; text-align: center; font-size: 10px; font-weight: 900; color: #9ca3af; background: #fafafa; border-bottom: 1px solid #f3f4f6; }
+        .bill-type-col-header.active { color: #000; background: #f0f9ff; }
+        .bill-type-col-header + .bill-type-col-header { border-left: 1px solid #f3f4f6; }
+        .bill-type-col { max-height: 240px; overflow-y: auto; border-right: 1px solid #f3f4f6; }
+        .bill-type-col:last-child { border-right: none; }
+        .bill-type-item { padding: 10px 12px; font-size: 11px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 1px solid #f9fafb; }
+        .bill-type-item.active { color: #000; font-weight: 900; background: #f9fafb; }
+        .bill-type-item:active { background: #f3f4f6; }
         .filter-btn.disabled { opacity: 0.45; pointer-events: none; }
     </style>
 </head>
@@ -522,45 +531,27 @@
         return 'bill-tag-sub bill-tag-neutral';
     }
 
-    function renderBillFieldRow(label, value, valueClass) {
+    function renderBillGridCell(label, value, valueClass) {
         if (isBillFieldEmpty(value)) return '';
-        return `<div class="flex justify-between items-start gap-3"><span class="text-gray-400 font-bold text-[9px] uppercase shrink-0 pt-0.5">${label}</span><span class="font-black text-[11px] text-right ${valueClass || 'text-gray-900'}">${value}</span></div>`;
-    }
-
-    function renderBillMetricCell(label, value, valueClass, align) {
-        if (isBillFieldEmpty(value)) return '';
-        const alignClass = align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left';
-        return `<div class="flex flex-col ${alignClass}"><span class="text-gray-400 font-bold text-[9px] uppercase">${label}</span><span class="font-black font-mono text-[11px] ${valueClass || 'text-gray-900'}">${value}</span></div>`;
+        return `<div class="min-w-0"><p class="text-gray-400 font-bold text-[8px] uppercase leading-tight mb-0.5">${label}</p><p class="font-black font-mono text-[10px] leading-tight break-all ${valueClass || 'text-gray-900'}">${value}</p></div>`;
     }
 
     function renderTradeBillCard(bill) {
         const hasSymbol = !isBillFieldEmpty(bill.symbol);
         const hasPosition = !isBillFieldEmpty(bill.positionType);
-        const tradeMetrics = [
-            renderBillMetricCell('数量', bill.qty, '', 'left'),
-            renderBillMetricCell('成交价', bill.price, '', 'right'),
-        ].filter(Boolean).join('');
-        const tradeRows = [
-            renderBillFieldRow('挂单/吃单', bill.role, ''),
-            renderBillFieldRow('手续费', bill.fee, 'text-red-500 font-mono'),
-        ].filter(Boolean).join('');
-        const pnlRow = renderBillFieldRow('收益', bill.pnl, bill.pnlClass || '');
-        const balanceRows = [
-            renderBillFieldRow('仓位余额变动', bill.posBalChange, bill.posBalChangeClass),
-            renderBillFieldRow('仓位余额', bill.posBal, 'font-mono'),
-            renderBillFieldRow('账户余额变动', bill.acctBalChange, bill.acctBalChangeClass),
-            renderBillFieldRow('账户余额', bill.acctBal, 'font-mono'),
-        ].filter(Boolean).join('');
-        const coinRow = (!hasSymbol && !isBillFieldEmpty(bill.coin)) ? renderBillFieldRow('币种', bill.coin, '') : '';
-
-        let bodyHtml = '';
-        if (coinRow) bodyHtml += `<div class="space-y-2">${coinRow}</div>`;
-        if (tradeMetrics) {
-            bodyHtml += `<div class="grid grid-cols-2 gap-3 ${bodyHtml ? 'mt-3' : ''}">${tradeMetrics}</div>`;
-        }
-        if (tradeRows) bodyHtml += `<div class="space-y-2 mt-2.5">${tradeRows}</div>`;
-        if (pnlRow) bodyHtml += `<div class="mt-2.5">${pnlRow}</div>`;
-        if (balanceRows) bodyHtml += `<div class="bill-card-section space-y-2">${balanceRows}</div>`;
+        const cells = [
+            renderBillGridCell('币种', !hasSymbol ? bill.coin : null, ''),
+            renderBillGridCell('数量', bill.qty, ''),
+            renderBillGridCell('成交价', bill.price, ''),
+            renderBillGridCell('挂单/吃单', bill.role, ''),
+            renderBillGridCell('手续费', bill.fee, 'text-red-500'),
+            renderBillGridCell('收益', bill.pnl, bill.pnlClass || ''),
+            renderBillGridCell('仓位余额变动', bill.posBalChange, bill.posBalChangeClass),
+            renderBillGridCell('仓位余额', bill.posBal, ''),
+            renderBillGridCell('账户余额变动', bill.acctBalChange, bill.acctBalChangeClass),
+            renderBillGridCell('账户余额', bill.acctBal, ''),
+        ].filter(Boolean);
+        const gridHtml = cells.length ? `<div class="grid grid-cols-3 gap-x-2 gap-y-2.5">${cells.join('')}</div>` : '';
 
         const contextHtml = hasSymbol || hasPosition ? (function () {
             let modeTag = '';
@@ -570,15 +561,15 @@
                 modeTag = m ? m[1].trim() : bill.positionType;
                 levTag = m ? m[2].trim() : '';
             }
-            return `<div class="flex items-center flex-wrap gap-1.5 mb-3 min-w-0">
-                ${hasSymbol ? `<span class="font-black text-[13px]">${bill.symbol}</span>` : ''}
-                ${modeTag ? `<span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">${modeTag}</span>` : ''}
-                ${levTag ? `<span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">${levTag}</span>` : ''}
+            return `<div class="flex items-center flex-wrap gap-1 mb-2 min-w-0">
+                ${hasSymbol ? `<span class="font-black text-[12px]">${bill.symbol}</span>` : ''}
+                ${modeTag ? `<span class="bg-gray-100 text-gray-600 text-[9px] px-1 font-bold rounded-sm">${modeTag}</span>` : ''}
+                ${levTag ? `<span class="bg-gray-100 text-gray-600 text-[9px] px-1 font-bold rounded-sm">${levTag}</span>` : ''}
             </div>`;
         })() : '';
 
-        return `<div class="order-card">
-            <div class="flex justify-between items-start gap-2 mb-2">
+        return `<div class="order-card bill-card">
+            <div class="flex justify-between items-start gap-2 mb-1.5">
                 <div class="flex items-center flex-wrap gap-1 min-w-0">
                     <span class="bill-tag-main">${bill.mainType}</span>
                     <span class="${billSubTypeTagClass(bill.subType)}">${bill.subType}</span>
@@ -586,7 +577,7 @@
                 <span class="text-gray-300 font-medium text-[10px] shrink-0">${formatBillTime(bill.time)}</span>
             </div>
             ${contextHtml}
-            ${bodyHtml || '<p class="text-[10px] text-gray-300 font-bold">—</p>'}
+            ${gridHtml || '<p class="text-[10px] text-gray-300 font-bold">—</p>'}
         </div>`;
     }
 
@@ -614,43 +605,92 @@
         renderList();
     }
 
-    function selectBillMainType(main) {
-        billFilterMain = main === '全部' ? '' : main;
+    function getBillTypeFilterLabel() {
+        if (!billFilterMain) return '账单类型';
+        if (billFilterSub === '全部') return billFilterMain;
+        return billFilterMain + ' · ' + billFilterSub;
+    }
+
+    function refreshBillTypePickerModal() {
+        const content = document.getElementById('filter-content');
+        if (content && currentFilterModalType === 'billType') {
+            content.innerHTML = renderBillTypePickerHtml();
+        }
+    }
+
+    function pickBillMainHeaderAll() {
+        billFilterMain = '';
         billFilterSub = '全部';
+        refreshBillTypePickerModal();
+    }
+
+    function pickBillSubHeaderAll() {
+        billFilterSub = '全部';
+        refreshBillTypePickerModal();
+    }
+
+    function pickBillMain(main) {
+        billFilterMain = main;
+        billFilterSub = '全部';
+        refreshBillTypePickerModal();
+    }
+
+    function pickBillSub(sub) {
+        billFilterSub = sub;
+        refreshBillTypePickerModal();
+    }
+
+    function confirmBillTypeFilter() {
         closeFilterModal();
         updateTradeBillFilterBar();
         renderList();
     }
 
-    function selectBillSubType(sub) {
-        billFilterSub = sub;
-        closeFilterModal();
-        updateTradeBillFilterBar();
-        renderList();
+    function renderBillTypePickerHtml() {
+        const mainHeaderActive = !billFilterMain;
+        const subHeaderActive = billFilterSub === '全部';
+        const subs = billFilterMain ? (BILL_MAIN_SUB_TYPES[billFilterMain] || []).filter(function (s) { return s !== '全部'; }) : [];
+        const checkMark = '<svg class="w-3 h-3 inline-block ml-0.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="3"/></svg>';
+
+        return `
+            <div class="bill-type-picker mb-4">
+                <div class="grid grid-cols-2">
+                    <button type="button" onclick="pickBillMainHeaderAll()" class="bill-type-col-header ${mainHeaderActive ? 'active' : ''}">主账单类型${mainHeaderActive ? checkMark : ''}</button>
+                    <button type="button" onclick="pickBillSubHeaderAll()" class="bill-type-col-header ${subHeaderActive ? 'active' : ''}">子账单类型${subHeaderActive ? checkMark : ''}</button>
+                </div>
+                <div class="grid grid-cols-2">
+                    <div class="bill-type-col no-scrollbar">
+                        ${Object.keys(BILL_MAIN_SUB_TYPES).map(function (main) {
+                            const active = billFilterMain === main;
+                            return `<div class="bill-type-item ${active ? 'active' : ''}" onclick="pickBillMain('${main}')">${main}</div>`;
+                        }).join('')}
+                    </div>
+                    <div class="bill-type-col no-scrollbar">
+                        ${billFilterMain ? subs.map(function (sub) {
+                            const active = billFilterSub === sub;
+                            return `<div class="bill-type-item ${active ? 'active' : ''}" onclick="pickBillSub('${sub}')">${sub}</div>`;
+                        }).join('') : '<p class="text-[10px] text-gray-300 font-bold p-3 leading-relaxed">选择左侧主账单类型后，此处显示对应子类型</p>'}
+                    </div>
+                </div>
+            </div>
+            <div class="flex space-x-3 pb-2">
+                <button type="button" onclick="resetBillFilters(); refreshBillTypePickerModal();" class="flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-xs uppercase">重置</button>
+                <button type="button" onclick="confirmBillTypeFilter()" class="flex-1 py-3 bg-black text-white rounded-xl font-black text-xs uppercase shadow-lg">确认</button>
+            </div>`;
     }
 
     function updateTradeBillFilterBar() {
         if (currentPrimary !== 'tradeBill') return;
         const triangle = `<svg class="w-2 h-2 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M5 7l5 5 5-5z"/></svg>`;
         const funnelBtn = `<button onclick="openFilterModal('date')" class="p-2 text-gray-400 hover:text-black transition-colors relative shrink-0"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"/></svg></button>`;
-        const mainLabel = billFilterMain || '账单主类型';
-        const subLabel = billFilterSub === '全部' && !billFilterMain ? '账单子类型' : billFilterSub;
-        const subDisabled = !billFilterMain;
+        const typeLabel = getBillTypeFilterLabel();
+        const typeActive = billFilterMain ? 'text-gray-900' : '';
         document.getElementById('filter-group').innerHTML = `
             <div class="flex items-center flex-1 overflow-x-auto no-scrollbar space-x-2">
                 <button onclick="openFilterModal('contract')" class="filter-btn">合约 ${triangle}</button>
-                <button onclick="openFilterModal('billMainType')" class="filter-btn ${billFilterMain ? 'text-gray-900' : ''}">${mainLabel} ${triangle}</button>
-                <button onclick="openBillSubTypeFilter()" class="filter-btn ${subDisabled ? 'disabled' : ''} ${billFilterSub !== '全部' || billFilterMain ? 'text-gray-900' : ''}" id="btn-bill-sub-type">${subLabel} ${triangle}</button>
+                <button onclick="openFilterModal('billType')" class="filter-btn ${typeActive}">${typeLabel} ${triangle}</button>
             </div>
             ${funnelBtn}`;
-    }
-
-    function openBillSubTypeFilter() {
-        if (!billFilterMain) {
-            showProtoToast('请先选择账单主类型');
-            return;
-        }
-        openFilterModal('billSubType');
     }
 
     const CHEVRON_SVG = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"/></svg>';
@@ -1067,6 +1107,7 @@
 
     let currentPrimary = 'current';
     let currentSecondary = 'basic';
+    let currentFilterModalType = '';
 
     // 2. 修改切換邏輯
     function switchPrimary(tab) {
@@ -1181,6 +1222,7 @@
 
     // 打開彈窗的總控函數
     function openFilterModal(type) {
+        currentFilterModalType = type;
         const overlay = document.getElementById('filter-modal-overlay');
         const sheet = document.getElementById('filter-sheet');
         const content = document.getElementById('filter-content');
@@ -1193,6 +1235,7 @@
     }
 
     function closeFilterModal() {
+        currentFilterModalType = '';
         const overlay = document.getElementById('filter-modal-overlay');
         const sheet = document.getElementById('filter-sheet');
         sheet.classList.remove('active');
@@ -1283,39 +1326,8 @@
                     `).join('')}
                 </div>
             `;
-            case 'billMainType':
-                return `
-                <h3 class="text-center font-black text-sm mb-6 uppercase tracking-widest">账单主类型</h3>
-                <div class="space-y-1 pb-6">
-                    <div class="flex justify-between items-center py-4 border-b border-gray-50 cursor-pointer active:bg-gray-50" onclick="selectBillMainType('全部')">
-                        <span class="${!billFilterMain ? 'text-black font-black' : 'text-gray-500 font-bold'} text-xs">全部</span>
-                        ${!billFilterMain ? '<svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="3"/></svg>' : ''}
-                    </div>
-                    ${Object.keys(BILL_MAIN_SUB_TYPES).map(function (main) {
-                        const active = billFilterMain === main;
-                        return `<div class="flex justify-between items-center py-4 border-b border-gray-50 cursor-pointer active:bg-gray-50" onclick="selectBillMainType('${main}')">
-                            <span class="${active ? 'text-black font-black' : 'text-gray-500 font-bold'} text-xs">${main}</span>
-                            ${active ? '<svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="3"/></svg>' : ''}
-                        </div>`;
-                    }).join('')}
-                </div>
-                <button onclick="resetBillFilters()" class="w-full py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-xs uppercase">重置</button>
-            `;
-            case 'billSubType':
-                const subs = BILL_MAIN_SUB_TYPES[billFilterMain] || [];
-                return `
-                <h3 class="text-center font-black text-sm mb-2 uppercase tracking-widest">账单子类型</h3>
-                <p class="text-center text-[10px] text-gray-400 mb-6">主类型：${billFilterMain}</p>
-                <div class="space-y-1 pb-6">
-                    ${subs.map(function (sub) {
-                        const active = billFilterSub === sub;
-                        return `<div class="flex justify-between items-center py-4 border-b border-gray-50 cursor-pointer active:bg-gray-50" onclick="selectBillSubType('${sub}')">
-                            <span class="${active ? 'text-black font-black' : 'text-gray-500 font-bold'} text-xs">${sub}</span>
-                            ${active ? '<svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="3"/></svg>' : ''}
-                        </div>`;
-                    }).join('')}
-                </div>
-            `;
+            case 'billType':
+                return renderBillTypePickerHtml();
             case 'cancel-type-select':
                 return `
         <div class="space-y-4 pb-8">
