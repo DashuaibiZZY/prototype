@@ -15,8 +15,13 @@
 
         .tab-active { color: #000; font-weight: 800; position: relative; }
         .tab-active::after { content: ''; position: absolute; bottom: -8px; left: 0; width: 100%; height: 2.5px; background: #000; border-radius: 2px; }
-        .sub-tab { color: #9ca3af; font-weight: 700; font-size: 11px; padding: 4px 12px; border-radius: 999px; background: #f3f4f6; border: none; white-space: nowrap; flex-shrink: 0; }
-        .sub-tab-active { color: #fff; background: #111827; font-weight: 800; }
+        .primary-seg { display: flex; margin: 0 20px 0; padding: 3px; background: #f3f4f6; border-radius: 12px; gap: 2px; overflow-x: auto; }
+        .primary-seg-btn { flex: 1; min-width: 72px; padding: 8px 6px; font-size: 11px; font-weight: 700; color: #6b7280; border: none; background: transparent; border-radius: 9px; white-space: nowrap; }
+        .primary-seg-btn.active { background: #fff; color: #111827; font-weight: 900; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .sub-panel { margin: 10px 20px 0; padding: 10px 12px; background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 12px; }
+        .sub-panel-label { font-size: 9px; font-weight: 800; color: #9ca3af; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+        .sub-tab { color: #6b7280; font-weight: 700; font-size: 10px; padding: 5px 12px; border-radius: 8px; background: transparent; border: 1px solid transparent; white-space: nowrap; flex-shrink: 0; }
+        .sub-tab-active { background: #fff; color: #111827; font-weight: 800; border-color: #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
 
         .sort-icon { display: flex; flex-direction: column; margin-left: 2px; line-height: 0; }
         .sort-arrow { width: 0; height: 0; border-left: 3px solid transparent; border-right: 3px solid transparent; margin: 1px 0; }
@@ -63,19 +68,16 @@
         </div>
 
         <!-- 2. 一级行业 Tab -->
-        <div id="market-tabs" class="flex space-x-6 px-5 border-b border-gray-50 overflow-x-auto no-scrollbar whitespace-nowrap">
-            <button onclick="switchMarketPrimaryTab('fav')" id="tab-fav" class="text-gray-400 pb-2 text-[13px] font-bold">收藏</button>
-            <button onclick="switchMarketPrimaryTab('crypto')" id="tab-crypto" class="tab-active pb-2 text-[13px]">数字货币</button>
-            <button onclick="switchMarketPrimaryTab('stock')" id="tab-stock" class="text-gray-400 pb-2 text-[13px] font-bold">股票</button>
-            <button onclick="switchMarketPrimaryTab('commodity')" id="tab-commodity" class="text-gray-400 pb-2 text-[13px] font-bold">大宗商品</button>
+        <div id="market-tabs" class="primary-seg no-scrollbar">
+            <button onclick="switchMarketPrimaryTab('fav')" id="tab-fav" class="primary-seg-btn">收藏</button>
+            <button onclick="switchMarketPrimaryTab('crypto')" id="tab-crypto" class="primary-seg-btn active">数字货币</button>
+            <button onclick="switchMarketPrimaryTab('stock')" id="tab-stock" class="primary-seg-btn">股票</button>
+            <button onclick="switchMarketPrimaryTab('commodity')" id="tab-commodity" class="primary-seg-btn">大宗商品</button>
         </div>
-        <!-- 2.1 二级分类标签（数字货币 / 大宗商品下展示） -->
-        <div id="market-sub-tabs" class="flex space-x-2 px-5 py-3 overflow-x-auto no-scrollbar whitespace-nowrap">
-            <button onclick="switchMarketSubTab('hot')" id="sub-hot" class="sub-tab sub-tab-active">熱門</button>
-            <button onclick="switchMarketSubTab('new')" id="sub-new" class="sub-tab">新幣</button>
-            <button onclick="switchMarketSubTab('main')" id="sub-main" class="sub-tab">主流幣</button>
-            <button onclick="switchMarketSubTab('ai')" id="sub-ai" class="sub-tab">AI</button>
-            <button onclick="switchMarketSubTab('tradefi')" id="sub-tradefi" class="sub-tab hidden">TradeFi</button>
+        <!-- 2.1 二级面板 -->
+        <div id="market-sub-panel" class="sub-panel">
+            <div class="sub-panel-label" id="market-sub-label">分类标签</div>
+            <div id="market-sub-tabs" class="flex space-x-2 overflow-x-auto no-scrollbar whitespace-nowrap"></div>
         </div>
 
         <!-- 3. 表頭字段 -->
@@ -173,8 +175,28 @@
 
 <script>
     const marketSubTabsByPrimary = {
-        crypto: ['hot', 'new', 'main', 'ai'],
-        commodity: ['hot', 'tradefi']
+        fav: [
+            { key: 'all', label: '全部' },
+            { key: 'crypto', label: '数字货币' },
+            { key: 'stock', label: '股票' },
+            { key: 'commodity', label: '大宗商品' }
+        ],
+        crypto: [
+            { key: 'hot', label: '熱門' },
+            { key: 'new', label: '新幣' },
+            { key: 'main', label: '主流幣' },
+            { key: 'ai', label: 'AI' }
+        ],
+        commodity: [
+            { key: 'hot', label: '熱門' },
+            { key: 'tradefi', label: 'TradeFi' }
+        ]
+    };
+
+    const marketSubPanelLabels = {
+        fav: '行业筛选',
+        crypto: '分类标签',
+        commodity: '分类标签'
     };
 
     const marketData = [
@@ -191,32 +213,36 @@
         { name: 'ONDOUSDT', vol: '2,200萬', price: '1.24', change: '+5.1%', up: true, industry: 'commodity', tags: ['tradefi'] }
     ];
 
-    const favPairs = new Set(['BTCUSDT', 'ETHUSDT']);
+    const favPairs = new Set(['BTCUSDT', 'ETHUSDT', 'SNDKUSDT']);
 
     let currentPrimaryTab = 'crypto';
     let currentSubTab = 'hot';
 
     function renderMarketSubTabs() {
+        const panel = document.getElementById('market-sub-panel');
         const wrap = document.getElementById('market-sub-tabs');
-        const allowed = marketSubTabsByPrimary[currentPrimaryTab];
-        if (!allowed) {
-            wrap.classList.add('hidden');
+        const label = document.getElementById('market-sub-label');
+        const subs = marketSubTabsByPrimary[currentPrimaryTab];
+        if (!panel || !wrap) return;
+        if (!subs) {
+            panel.classList.add('hidden');
+            wrap.innerHTML = '';
             return;
         }
-        wrap.classList.remove('hidden');
-        wrap.querySelectorAll('.sub-tab').forEach(btn => {
-            const key = btn.id.replace('sub-', '');
-            const show = allowed.includes(key);
-            btn.classList.toggle('hidden', !show);
-            btn.className = show
-                ? (key === currentSubTab ? 'sub-tab sub-tab-active' : 'sub-tab')
-                : 'sub-tab hidden';
-        });
+        panel.classList.remove('hidden');
+        if (label) label.textContent = marketSubPanelLabels[currentPrimaryTab] || '分类标签';
+        wrap.innerHTML = subs.map(s => `
+            <button onclick="switchMarketSubTab('${s.key}')" id="sub-${s.key}" class="sub-tab ${s.key === currentSubTab ? 'sub-tab-active' : ''}">${s.label}</button>
+        `).join('');
     }
 
     function getFilteredMarketData() {
         if (currentPrimaryTab === 'fav') {
-            return marketData.filter(item => favPairs.has(item.name));
+            return marketData.filter(item => {
+                if (!favPairs.has(item.name)) return false;
+                if (currentSubTab === 'all') return true;
+                return item.industry === currentSubTab;
+            });
         }
         return marketData.filter(item => {
             if (item.industry !== currentPrimaryTab) return false;
@@ -250,14 +276,10 @@
         const tabs = ['fav', 'crypto', 'stock', 'commodity'];
         currentPrimaryTab = tab;
         const subs = marketSubTabsByPrimary[tab];
-        currentSubTab = subs ? subs[0] : '';
+        currentSubTab = subs ? subs[0].key : '';
         tabs.forEach(t => {
             const el = document.getElementById('tab-' + t);
-            if (t === tab) {
-                el.className = "tab-active pb-2 text-[13px]";
-            } else {
-                el.className = "text-gray-400 pb-2 text-[13px] font-bold";
-            }
+            el.className = t === tab ? 'primary-seg-btn active' : 'primary-seg-btn';
         });
         renderMarketSubTabs();
         renderMarketList();
@@ -267,7 +289,6 @@
         currentSubTab = sub;
         document.querySelectorAll('#market-sub-tabs .sub-tab').forEach(btn => {
             const key = btn.id.replace('sub-', '');
-            if (btn.classList.contains('hidden')) return;
             btn.className = key === sub ? 'sub-tab sub-tab-active' : 'sub-tab';
         });
         renderMarketList();

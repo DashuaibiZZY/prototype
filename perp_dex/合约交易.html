@@ -5451,40 +5451,72 @@
         else setKlineCountdownMode(false);
     }
 
+    const marketSubTabsByPrimary = {
+        fav: [
+            { key: 'all', label: '全部' },
+            { key: 'crypto', label: '数字货币' },
+            { key: 'stock', label: '股票' },
+            { key: 'commodity', label: '大宗商品' }
+        ],
+        crypto: [
+            { key: 'hot', label: '熱門' },
+            { key: 'new', label: '新幣上線' },
+            { key: 'main', label: '主流幣' },
+            { key: 'ai', label: 'AI' }
+        ],
+        commodity: [
+            { key: 'hot', label: '熱門' },
+            { key: 'tradefi', label: 'TradeFi' }
+        ]
+    };
+
+    const marketSubPanelLabels = {
+        fav: '行业筛选',
+        crypto: '分类标签',
+        commodity: '分类标签'
+    };
+
+    function applyMarketPrimaryTabStyle(btn, active) {
+        btn.className = active
+            ? 'flex-1 min-w-[72px] py-1.5 px-2 text-[10px] font-black rounded-md bg-white text-gray-900 shadow-sm shrink-0 cursor-pointer'
+            : 'flex-1 min-w-[72px] py-1.5 px-2 text-[10px] font-bold rounded-md text-gray-500 shrink-0 cursor-pointer hover:text-gray-800';
+    }
+
+    function applyMarketSubTabStyle(btn, active) {
+        btn.className = active
+            ? 'px-2.5 py-1 text-[9px] font-black rounded-md bg-white text-gray-900 border border-gray-200 shadow-sm shrink-0 cursor-pointer'
+            : 'px-2.5 py-1 text-[9px] font-bold rounded-md text-gray-500 shrink-0 cursor-pointer hover:bg-white/70';
+    }
+
+    function renderMarketSubPanel(modal, tabKey) {
+        const panel = modal.querySelector('#market-sub-panel');
+        const subWrap = modal.querySelector('#market-sub-tabs');
+        const labelEl = modal.querySelector('#market-sub-label');
+        const subs = marketSubTabsByPrimary[tabKey];
+        if (!panel || !subWrap) return;
+        if (!subs) {
+            panel.classList.add('hidden');
+            subWrap.innerHTML = '';
+            modal.dataset.activeSub = '';
+            return;
+        }
+        panel.classList.remove('hidden');
+        if (labelEl) labelEl.textContent = marketSubPanelLabels[tabKey] || '分类标签';
+        const firstKey = subs[0].key;
+        modal.dataset.activeSub = firstKey;
+        subWrap.innerHTML = subs.map(s => `
+            <span data-market-sub="${s.key}" class="${s.key === firstKey ? 'px-2.5 py-1 text-[9px] font-black rounded-md bg-white text-gray-900 border border-gray-200 shadow-sm shrink-0 cursor-pointer' : 'px-2.5 py-1 text-[9px] font-bold rounded-md text-gray-500 shrink-0 cursor-pointer hover:bg-white/70'}"
+                onclick="switchMarketListSubTab('${s.key}', this)">${s.label}</span>
+        `).join('');
+    }
+
     function switchMarketListTab(tabKey, el) {
         const modal = document.getElementById('market-list-modal');
         if (!modal) return;
         modal.querySelectorAll('[data-market-tab]').forEach(btn => {
-            const active = btn.dataset.marketTab === tabKey;
-            btn.className = active
-                ? 'px-2.5 py-1 bg-gray-900 text-white rounded-full text-[9px] font-bold cursor-pointer shrink-0'
-                : 'px-2.5 py-1 bg-gray-100 rounded-full text-[9px] font-bold cursor-pointer shrink-0';
+            applyMarketPrimaryTabStyle(btn, btn.dataset.marketTab === tabKey);
         });
-        const subWrap = modal.querySelector('#market-sub-tabs');
-        const subConfig = {
-            crypto: ['hot', 'new', 'main', 'ai'],
-            commodity: ['hot', 'tradefi']
-        };
-        if (subWrap) {
-            if (tabKey === 'crypto' || tabKey === 'commodity') {
-                subWrap.classList.remove('hidden');
-                subWrap.querySelectorAll('[data-market-sub]').forEach(btn => {
-                    const allowed = subConfig[tabKey] || [];
-                    const subKey = btn.dataset.marketSub;
-                    const showSub = allowed.includes(subKey);
-                    btn.classList.toggle('hidden', !showSub);
-                    if (showSub && subKey === allowed[0]) {
-                        btn.className = 'px-2 py-0.5 bg-gray-900 text-white rounded-full text-[8px] font-bold cursor-pointer shrink-0';
-                        modal.dataset.activeSub = subKey;
-                    } else if (showSub) {
-                        btn.className = 'px-2 py-0.5 bg-gray-100 rounded-full text-[8px] font-bold cursor-pointer shrink-0';
-                    }
-                });
-            } else {
-                subWrap.classList.add('hidden');
-                modal.dataset.activeSub = '';
-            }
-        }
+        renderMarketSubPanel(modal, tabKey);
         filterMarketListRows(modal, tabKey);
     }
 
@@ -5493,10 +5525,7 @@
         if (!modal) return;
         modal.dataset.activeSub = subKey;
         modal.querySelectorAll('[data-market-sub]').forEach(btn => {
-            const active = btn.dataset.marketSub === subKey;
-            btn.className = active
-                ? 'px-2 py-0.5 bg-gray-900 text-white rounded-full text-[8px] font-bold cursor-pointer shrink-0'
-                : 'px-2 py-0.5 bg-gray-100 rounded-full text-[8px] font-bold cursor-pointer shrink-0';
+            applyMarketSubTabStyle(btn, btn.dataset.marketSub === subKey);
         });
         const primary = modal.dataset.activePrimary || 'crypto';
         filterMarketListRows(modal, primary);
@@ -5510,7 +5539,9 @@
             const tags = (row.dataset.marketTags || '').split(/\s+/).filter(Boolean);
             let show = false;
             if (tabKey === 'fav') {
-                show = row.dataset.marketFav === '1';
+                if (row.dataset.marketFav !== '1') { show = false; }
+                else if (!subKey || subKey === 'all') show = true;
+                else show = industry === subKey;
             } else if (tabKey === 'stock') {
                 show = industry === 'stock';
             } else if (tabKey === 'crypto' || tabKey === 'commodity') {
@@ -5625,26 +5656,21 @@
         modal.innerHTML = `
         <!-- 顶部搜索与分类 -->
         <div class="p-3 border-b border-gray-100">
-            <div class="flex items-center space-x-3 mb-2">
-                <div class="relative flex-1">
-                    <svg class="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2"/></svg>
-                    <input class="w-full h-7 pl-7 pr-2 bg-gray-50 border border-gray-200 rounded text-[10px] outline-none" placeholder="查詢">
-                </div>
-                <div class="flex space-x-2 overflow-x-auto hide-scrollbar">
-                    <span data-market-tab="fav" class="px-2.5 py-1 bg-gray-100 rounded-full text-[9px] font-bold cursor-pointer shrink-0" onclick="switchMarketListTab('fav', this)">收藏</span>
-                    <span data-market-tab="crypto" class="px-2.5 py-1 bg-gray-900 text-white rounded-full text-[9px] font-bold cursor-pointer shrink-0" onclick="switchMarketListTab('crypto', this)">数字货币</span>
-                    <span data-market-tab="stock" class="px-2.5 py-1 bg-gray-100 rounded-full text-[9px] font-bold cursor-pointer shrink-0" onclick="switchMarketListTab('stock', this)">股票</span>
-                    <span data-market-tab="commodity" class="px-2.5 py-1 bg-gray-100 rounded-full text-[9px] font-bold cursor-pointer shrink-0" onclick="switchMarketListTab('commodity', this)">大宗商品</span>
-                </div>
-                <div id="market-sub-tabs" class="flex space-x-2 overflow-x-auto hide-scrollbar mt-2">
-                    <span data-market-sub="hot" class="px-2 py-0.5 bg-gray-900 text-white rounded-full text-[8px] font-bold cursor-pointer shrink-0" onclick="switchMarketListSubTab('hot', this)">熱門</span>
-                    <span data-market-sub="new" class="px-2 py-0.5 bg-gray-100 rounded-full text-[8px] font-bold cursor-pointer shrink-0" onclick="switchMarketListSubTab('new', this)">新幣上線</span>
-                    <span data-market-sub="main" class="px-2 py-0.5 bg-gray-100 rounded-full text-[8px] font-bold cursor-pointer shrink-0" onclick="switchMarketListSubTab('main', this)">主流幣</span>
-                    <span data-market-sub="ai" class="px-2 py-0.5 bg-gray-100 rounded-full text-[8px] font-bold cursor-pointer shrink-0" onclick="switchMarketListSubTab('ai', this)">AI</span>
-                    <span data-market-sub="tradefi" class="px-2 py-0.5 bg-gray-100 rounded-full text-[8px] font-bold cursor-pointer shrink-0 hidden" onclick="switchMarketListSubTab('tradefi', this)">TradeFi</span>
-                </div>
+            <div class="relative mb-3">
+                <svg class="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2"/></svg>
+                <input class="w-full h-8 pl-7 pr-2 bg-gray-50 border border-gray-200 rounded-md text-[10px] outline-none focus:border-gray-300" placeholder="查詢">
             </div>
-            <div class="grid grid-cols-6 gap-2 text-[9px] text-gray-400 font-medium px-2 mt-1">
+            <div class="flex p-1 bg-gray-100 rounded-lg gap-0.5 overflow-x-auto hide-scrollbar">
+                <span data-market-tab="fav" class="flex-1 min-w-[72px] py-1.5 px-2 text-[10px] font-bold rounded-md text-gray-500 shrink-0 cursor-pointer hover:text-gray-800" onclick="switchMarketListTab('fav', this)">收藏</span>
+                <span data-market-tab="crypto" class="flex-1 min-w-[72px] py-1.5 px-2 text-[10px] font-black rounded-md bg-white text-gray-900 shadow-sm shrink-0 cursor-pointer" onclick="switchMarketListTab('crypto', this)">数字货币</span>
+                <span data-market-tab="stock" class="flex-1 min-w-[72px] py-1.5 px-2 text-[10px] font-bold rounded-md text-gray-500 shrink-0 cursor-pointer hover:text-gray-800" onclick="switchMarketListTab('stock', this)">股票</span>
+                <span data-market-tab="commodity" class="flex-1 min-w-[72px] py-1.5 px-2 text-[10px] font-bold rounded-md text-gray-500 shrink-0 cursor-pointer hover:text-gray-800" onclick="switchMarketListTab('commodity', this)">大宗商品</span>
+            </div>
+            <div id="market-sub-panel" class="mt-2.5 rounded-lg bg-gray-50 border border-gray-100 px-2.5 pt-2 pb-2.5">
+                <p id="market-sub-label" class="text-[8px] font-bold text-gray-400 uppercase tracking-wider mb-2">分类标签</p>
+                <div id="market-sub-tabs" class="flex gap-1.5 overflow-x-auto hide-scrollbar"></div>
+            </div>
+            <div class="grid grid-cols-6 gap-2 text-[9px] text-gray-400 font-medium px-2 mt-3">
     <div class="flex items-center space-x-1">
         <span>合約</span>
         <span class="flex flex-col leading-none">
@@ -5722,7 +5748,7 @@
                     <span id="market-list-pepe-countdown" class="font-mono text-orange-500 font-bold">${formatMarketListCountdown()}</span>
                 </div>
             </div>
-            <div data-market-pair="SNDKUSDC" data-market-industry="stock" data-market-tags="" data-market-fav="0" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('SNDKUSDC')">
+            <div data-market-pair="SNDKUSDC" data-market-industry="stock" data-market-tags="" data-market-fav="1" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('SNDKUSDC')">
                 ${renderMarketPairCell('SNDKUSDC', '20x')}
                 <div class="text-right">1,786.00</div>
                 <div class="text-right text-green-500">+0.59%</div>
@@ -5742,7 +5768,7 @@
         `;
         document.body.appendChild(modal);
         modal.dataset.activePrimary = 'crypto';
-        modal.dataset.activeSub = 'hot';
+        renderMarketSubPanel(modal, 'crypto');
         filterMarketListRows(modal, 'crypto');
 
         // 点击外部关闭
