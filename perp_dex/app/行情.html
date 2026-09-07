@@ -70,6 +70,7 @@
         <!-- 2. 一级行业 Tab -->
         <div id="market-tabs" class="cat-tab-row no-scrollbar">
             <button onclick="switchMarketPrimaryTab('fav')" id="tab-fav" class="cat-tab-l1">收藏</button>
+            <button onclick="switchMarketPrimaryTab('hot')" id="tab-hot" class="cat-tab-l1">热门</button>
             <button onclick="switchMarketPrimaryTab('crypto')" id="tab-crypto" class="cat-tab-l1 active">数字货币</button>
             <button onclick="switchMarketPrimaryTab('stock')" id="tab-stock" class="cat-tab-l1">股票</button>
             <button onclick="switchMarketPrimaryTab('commodity')" id="tab-commodity" class="cat-tab-l1">大宗商品</button>
@@ -179,6 +180,12 @@
             { key: 'stock', label: '股票' },
             { key: 'commodity', label: '大宗商品' }
         ],
+        hot: [
+            { key: 'all', label: '全部' },
+            { key: 'crypto', label: '数字货币' },
+            { key: 'stock', label: '股票' },
+            { key: 'commodity', label: '大宗商品' }
+        ],
         crypto: [
             { key: 'hot', label: '熱門' },
             { key: 'new', label: '新幣' },
@@ -199,8 +206,8 @@
         { name: 'NOTUSDT', vol: '5,500萬', price: '0.0142', change: '+45.2%', up: true, industry: 'crypto', tags: ['new'] },
         { name: 'BNBUSDT', vol: '1.5億', price: '592.1', change: '+0.5%', up: true, industry: 'crypto', tags: ['main'] },
         { name: 'RNDRUSDT', vol: '3,200萬', price: '10.24', change: '-3.2%', up: false, industry: 'crypto', tags: ['ai'] },
-        { name: 'SNDKUSDT', vol: '4,210萬', price: '1,786.00', change: '+0.59%', up: true, industry: 'stock', tags: [] },
-        { name: 'DELLUSDT', vol: '1,860萬', price: '525.49', change: '+0.42%', up: true, industry: 'stock', tags: [] },
+        { name: 'SNDKUSDT', vol: '4,210萬', price: '1,786.00', change: '+0.59%', up: true, industry: 'stock', tags: ['hot'] },
+        { name: 'DELLUSDT', vol: '1,860萬', price: '525.49', change: '+0.42%', up: true, industry: 'stock', tags: ['hot'] },
         { name: 'GOLDUSDT', vol: '9,620萬', price: '4,411.89', change: '-0.33%', up: false, industry: 'commodity', tags: ['hot'] },
         { name: 'ONDOUSDT', vol: '2,200萬', price: '1.24', change: '+5.1%', up: true, industry: 'commodity', tags: ['tradefi'] }
     ];
@@ -234,6 +241,13 @@
                 return item.industry === currentSubTab;
             });
         }
+        if (currentPrimaryTab === 'hot') {
+            return marketData.filter(item => {
+                if (!item.tags.includes('hot')) return false;
+                if (currentSubTab === 'all') return true;
+                return item.industry === currentSubTab;
+            });
+        }
         return marketData.filter(item => {
             if (item.industry !== currentPrimaryTab) return false;
             if (currentPrimaryTab === 'stock') return true;
@@ -263,7 +277,7 @@
     }
 
     function switchMarketPrimaryTab(tab) {
-        const tabs = ['fav', 'crypto', 'stock', 'commodity'];
+        const tabs = ['fav', 'hot', 'crypto', 'stock', 'commodity'];
         currentPrimaryTab = tab;
         const subs = marketSubTabsByPrimary[tab];
         currentSubTab = subs ? subs[0].key : '';
