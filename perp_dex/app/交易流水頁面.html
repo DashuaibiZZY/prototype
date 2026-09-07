@@ -141,7 +141,7 @@
             <button onclick="switchPrimary('history')" id="p-history" class="tab-primary">歷史委託</button>
             <button onclick="switchPrimary('position')" id="p-position" class="tab-primary">持倉歷史</button>
             <button onclick="switchPrimary('tradeBill')" id="p-tradeBill" class="tab-primary">交易賬單</button>
-            <button onclick="switchPrimary('logs')" id="p-logs" class="tab-primary">資金流水</button>
+            <button onclick="switchPrimary('fundBill')" id="p-fundBill" class="tab-primary">資金賬單</button>
             <button onclick="switchPrimary('funding')" id="p-funding" class="tab-primary">資金費率</button>
         </div>
 
@@ -489,6 +489,94 @@
 
     function openOrderTPSLSheet() {
         showProtoToast('打开止盈止损编辑');
+    }
+
+    /** 资金账单 · 账单主类型（与 Web §3.6.2 一致） */
+    const FUND_BILL_MAIN_TYPES = ['充值', '提币', '转入', '转出', '空投奖励', '返佣'];
+
+    const FUND_BILLS = [
+        { time: '2026-06-15 10:30:00', coin: 'USDC', mainType: '充值', qty: '+1,000.00 USDC', qtyClass: 'text-green-500', accountBalance: '13,845.32 USDC' },
+        { time: '2026-06-14 16:20:00', coin: 'USDC', mainType: '转入', qty: '+500.00 USDC', qtyClass: 'text-green-500', accountBalance: '12,845.32 USDC' },
+        { time: '2026-06-14 09:15:00', coin: 'USDC', mainType: '转出', qty: '-200.00 USDC', qtyClass: 'text-red-500', accountBalance: '12,345.32 USDC' },
+        { time: '2026-06-13 18:00:00', coin: 'USDC', mainType: '提币', qty: '-800.00 USDC', qtyClass: 'text-red-500', accountBalance: '12,545.32 USDC' },
+        { time: '2026-06-12 21:30:19', coin: 'USDC', mainType: '返佣', qty: '+12.80 USDC', qtyClass: 'text-green-500', accountBalance: '13,332.52 USDC' },
+        { time: '2026-06-12 08:00:00', coin: 'USDC', mainType: '空投奖励', qty: '+50.00 USDC', qtyClass: 'text-green-500', accountBalance: '13,319.72 USDC' },
+        { time: '2026-06-11 14:22:08', coin: 'USDC', mainType: '充值', qty: '+2,000.00 USDC', qtyClass: 'text-green-500', accountBalance: '13,269.72 USDC' },
+    ];
+
+    let fundBillFilterMain = '';
+
+    function renderFundBillGridCell(label, value, valueClass) {
+        return `<div class="min-w-0"><p class="text-gray-400 font-bold text-[8px] uppercase leading-tight mb-0.5">${label}</p><p class="font-black font-mono text-[10px] leading-tight break-all ${valueClass || 'text-gray-900'}">${value}</p></div>`;
+    }
+
+    function renderFundBillCard(bill) {
+        return `<div class="order-card bill-card">
+            <div class="flex justify-between items-start gap-2 mb-2">
+                <span class="bill-tag-main">${bill.mainType}</span>
+                <span class="text-gray-300 font-medium text-[10px] shrink-0">${formatBillTime(bill.time)}</span>
+            </div>
+            <div class="grid grid-cols-3 gap-x-2 gap-y-1">
+                ${renderFundBillGridCell('币种', bill.coin, '')}
+                ${renderFundBillGridCell('数量', bill.qty, bill.qtyClass)}
+                ${renderFundBillGridCell('账户余额', bill.accountBalance, '')}
+            </div>
+        </div>`;
+    }
+
+    function filterFundBills() {
+        return FUND_BILLS.filter(function (bill) {
+            if (fundBillFilterMain && bill.mainType !== fundBillFilterMain) return false;
+            return true;
+        });
+    }
+
+    function renderFundBillList() {
+        const rows = filterFundBills();
+        if (!rows.length) {
+            return '<div class="py-20 text-center text-gray-300 font-bold uppercase tracking-widest text-[10px]">暂无账单记录</div>';
+        }
+        return rows.map(renderFundBillCard).join('');
+    }
+
+    function resetFundBillFilters() {
+        fundBillFilterMain = '';
+        updateFundBillFilterBar();
+        renderList();
+    }
+
+    function pickFundBillMainType(main) {
+        fundBillFilterMain = main === '全部' ? '' : main;
+        closeFilterModal();
+        updateFundBillFilterBar();
+        renderList();
+    }
+
+    function updateFundBillFilterBar() {
+        if (currentPrimary !== 'fundBill') return;
+        const triangle = `<svg class="w-2 h-2 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M5 7l5 5 5-5z"/></svg>`;
+        const funnelBtn = `<button onclick="openFilterModal('date')" class="p-2 text-gray-400 hover:text-black transition-colors relative shrink-0"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"/></svg></button>`;
+        const typeLabel = fundBillFilterMain || '账单主类型';
+        document.getElementById('filter-group').innerHTML = `
+            <div class="flex items-center flex-1 overflow-x-auto no-scrollbar space-x-2">
+                <button onclick="openFilterModal('fundBillMainType')" class="filter-btn ${fundBillFilterMain ? 'text-gray-900' : ''}">${typeLabel} ${triangle}</button>
+            </div>
+            ${funnelBtn}`;
+    }
+
+    function renderFundBillMainTypePickerHtml() {
+        const headerActive = !fundBillFilterMain;
+        const checkMark = '<svg class="w-3 h-3 inline-block ml-0.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="3"/></svg>';
+        return `
+            <div class="bill-type-picker mb-4">
+                <button type="button" onclick="pickFundBillMainType('全部')" class="bill-type-col-header w-full ${headerActive ? 'active' : ''}">账单主类型${headerActive ? checkMark : ''}</button>
+                <div class="bill-type-col no-scrollbar max-h-none border-r-0">
+                    ${FUND_BILL_MAIN_TYPES.map(function (main) {
+                        const active = fundBillFilterMain === main;
+                        return `<div class="bill-type-item ${active ? 'active' : ''}" onclick="pickFundBillMainType('${main}')">${main}</div>`;
+                    }).join('')}
+                </div>
+            </div>`;
     }
 
     /** 账单主类型 → 账单子类型（与 Web / 《持仓管理 & 资金流水 模块》§3.4.2 一致） */
@@ -1089,30 +1177,6 @@
                 <a href="持仓关联订单.html" class="block w-full py-2.5 bg-gray-100 rounded-lg text-center text-[11px] font-black text-gray-900 active:opacity-70">关联订单</a>
             </div>
         `,
-        logs: `
-            <div class="order-card">
-                <div class="flex justify-between items-center mb-3">
-                    <span class="font-black text-[13px] text-gray-900">USDT</span>
-                    <span class="text-[10px] text-gray-300 font-medium">2026-06-10 15:04:27</span>
-                </div>
-                <div class="space-y-2">
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">類型</span><span class="font-black text-gray-900 uppercase">資金費用</span></div>
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">合約</span><span class="font-black text-gray-900 uppercase tracking-tighter">BNBUSDT</span></div>
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">總額</span><span class="font-black text-red-500 font-mono">-0.45202481</span></div>
-                </div>
-            </div>
-            <div class="order-card">
-                <div class="flex justify-between items-center mb-3">
-                    <span class="font-black text-[13px] text-gray-900">USDT</span>
-                    <span class="text-[10px] text-gray-300 font-medium">2026-06-10 12:00:00</span>
-                </div>
-                <div class="space-y-2">
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">類型</span><span class="font-black text-gray-900 uppercase">已實現盈虧</span></div>
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">合約</span><span class="font-black text-gray-900 uppercase tracking-tighter">BTCUSDT</span></div>
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">總額</span><span class="font-black text-green-500 font-mono">+124.52</span></div>
-                </div>
-            </div>
-        `,
         funding: `
             <div class="order-card">
                 <div class="flex justify-between items-center mb-3">
@@ -1136,7 +1200,7 @@
         currentPrimary = tab;
 
         // 1. 更新主 Tab 樣式
-        const tabs = ['current', 'history', 'position', 'tradeBill', 'logs', 'funding'];
+        const tabs = ['current', 'history', 'position', 'tradeBill', 'fundBill', 'funding'];
         tabs.forEach(t => {
             const el = document.getElementById('p-' + t);
             if (el) el.classList.toggle('active', t === tab);
@@ -1188,12 +1252,12 @@
 
             if (tab === 'tradeBill') {
                 updateTradeBillFilterBar();
+            } else if (tab === 'fundBill') {
+                updateFundBillFilterBar();
             } else {
                 let filters = '';
                 if (tab === 'position') {
                     filters = `<button onclick="openFilterModal('contract')" class="filter-btn">合約 ${triangle}</button><button onclick="openFilterModal('posMode')" class="filter-btn">倉位模式 ${triangle}</button><button onclick="openFilterModal('posStatus')" class="filter-btn">狀態 ${triangle}</button>`;
-                } else if (tab === 'logs') {
-                    filters = `<button onclick="openFilterModal('logType')" class="filter-btn">類型 ${triangle}</button>`;
                 }
 
                 filterGroup.innerHTML = `
@@ -1235,6 +1299,8 @@
         const container = document.getElementById('list-container');
         if (currentPrimary === 'tradeBill') {
             container.innerHTML = renderTradeBillList();
+        } else if (currentPrimary === 'fundBill') {
+            container.innerHTML = renderFundBillList();
         } else if (currentPrimary === 'current' || currentPrimary === 'history') {
             container.innerHTML = mockData[currentPrimary][currentSecondary];
         } else {
@@ -1337,17 +1403,8 @@
                     <div class="filter-option-btn active">已取消<div class="check-badge">✓</div></div>
                 </div>
             `;
-            case 'logType': // 7. 資金流水類型 (垂直列表)
-                return `
-                <div class="space-y-1 pb-10">
-                    ${['全部','轉帳','已實現盈虧','手續費','資金費用','爆倉清算','邀請返佣','體驗金入帳','體驗金回收'].map((t, i) => `
-                        <div class="flex justify-between items-center py-4 border-b border-gray-50">
-                            <span class="${i === 0 ? 'text-black font-black' : 'text-gray-500 font-bold'} text-xs">${t}</span>
-                            ${i === 0 ? '<svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="3"/></svg>' : ''}
-                        </div>
-                    `).join('')}
-                </div>
-            `;
+            case 'fundBillMainType':
+                return renderFundBillMainTypePickerHtml();
             case 'billType':
                 return renderBillTypePickerHtml();
             case 'cancel-type-select':
