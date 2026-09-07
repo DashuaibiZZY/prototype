@@ -32,7 +32,7 @@
 
 页面截图：[**App · 分类标签栏**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-tabs.png)
 
-采用**单层**标签 Tab（无二级面板），横向可滚动。详细规则见 **[《交易对标签配置及填充逻辑》](../交易对标签配置及填充逻辑.md)** §2。
+采用**单层**标签 Tab（无二级面板），横向可滚动。详细规则见 **[《交易对标签配置及填充逻辑》](https://ksgf73ukjokp.sg.larksuite.com/docx/SLB5dwR8eo5xy9xNLAFllX1Lg4b?from=from_copylink)** §2。
 
 **默认标签（不可删除）**
 
