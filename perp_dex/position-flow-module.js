@@ -308,15 +308,17 @@
         },
     };
 
-    const ASSET_LOGS = [
-        { time: '2026-06-15 08:00:00', type: '資金費用', amount: '-0.45202481 USDC', amountClass: 'text-red-500', coin: 'USDC', symbol: 'BNBUSDT' },
-        { time: '2026-06-14 18:22:15', type: '已實現盈虧', amount: '+124.52 USDC', amountClass: 'text-green-500', coin: 'USDC', symbol: 'BTCUSDT' },
-        { time: '2026-06-14 10:05:33', type: '手續費', amount: '-1.24500000 USDC', amountClass: 'text-red-500', coin: 'USDC', symbol: 'BNBUSDT' },
-        { time: '2026-06-13 16:40:08', type: '轉帳', amount: '+500.00 USDC', amountClass: 'text-green-500', coin: 'USDC', symbol: '--' },
-        { time: '2026-06-13 09:12:44', type: '爆倉清算', amount: '-88.40 USDC', amountClass: 'text-red-500', coin: 'USDC', symbol: 'SOLUSDT' },
-        { time: '2026-06-12 21:30:19', type: '邀請返佣', amount: '+12.80 USDC', amountClass: 'text-green-500', coin: 'USDC', symbol: '--' },
-        { time: '2026-06-12 15:00:00', type: '體驗金入帳', amount: '+200.00 USDC', amountClass: 'text-green-500', coin: 'USDC', symbol: '--' },
-        { time: '2026-06-11 23:59:59', type: '體驗金回收', amount: '-50.00 USDC', amountClass: 'text-red-500', coin: 'USDC', symbol: '--' },
+    /** 资金账单 · 账单主类型（对应关系见需求文档「账单流水对应关系」） */
+    const FUND_BILL_MAIN_TYPES = ['充值', '提币', '转入', '转出', '空投奖励', '返佣'];
+
+    const FUND_BILLS = [
+        { time: '2026-06-15 10:30:00', coin: 'USDC', mainType: '充值', qty: '+1,000.00 USDC', qtyClass: 'text-green-500', accountBalance: '13,845.32 USDC' },
+        { time: '2026-06-14 16:20:00', coin: 'USDC', mainType: '转入', qty: '+500.00 USDC', qtyClass: 'text-green-500', accountBalance: '12,845.32 USDC' },
+        { time: '2026-06-14 09:15:00', coin: 'USDC', mainType: '转出', qty: '-200.00 USDC', qtyClass: 'text-red-500', accountBalance: '12,345.32 USDC' },
+        { time: '2026-06-13 18:00:00', coin: 'USDC', mainType: '提币', qty: '-800.00 USDC', qtyClass: 'text-red-500', accountBalance: '12,545.32 USDC' },
+        { time: '2026-06-12 21:30:19', coin: 'USDC', mainType: '返佣', qty: '+12.80 USDC', qtyClass: 'text-green-500', accountBalance: '13,332.52 USDC' },
+        { time: '2026-06-12 08:00:00', coin: 'USDC', mainType: '空投奖励', qty: '+50.00 USDC', qtyClass: 'text-green-500', accountBalance: '13,319.72 USDC' },
+        { time: '2026-06-11 14:22:08', coin: 'USDC', mainType: '充值', qty: '+2,000.00 USDC', qtyClass: 'text-green-500', accountBalance: '13,269.72 USDC' },
     ];
 
     const FUNDING_FEES = [
@@ -522,13 +524,13 @@
     }
 
     function renderAssetLogRows() {
-        return ASSET_LOGS.map(function (r) {
+        return FUND_BILLS.map(function (r) {
             return `<tr class="border-b border-gray-50 text-[11px]">
                 <td class="px-4 py-3 text-gray-400 whitespace-nowrap">${r.time}</td>
-                <td class="px-4 py-3 whitespace-nowrap">${r.type}</td>
-                <td class="px-4 py-3 font-mono whitespace-nowrap ${r.amountClass}">${r.amount}</td>
                 <td class="px-4 py-3 whitespace-nowrap">${r.coin}</td>
-                <td class="px-4 py-3 whitespace-nowrap">${r.symbol}</td>
+                <td class="px-4 py-3 font-bold whitespace-nowrap">${r.mainType}</td>
+                <td class="px-4 py-3 font-mono whitespace-nowrap ${r.qtyClass}">${r.qty}</td>
+                <td class="px-4 py-3 font-mono whitespace-nowrap">${r.accountBalance}</td>
             </tr>`;
         }).join('');
     }
@@ -666,7 +668,25 @@
         },
 
         renderAssetLogHeader: function () {
-            return '<th class="px-4 py-2">時間</th><th class="px-4 py-2">類型</th><th class="px-4 py-2">金額</th><th class="px-4 py-2">幣種</th><th class="px-4 py-2">合約</th>';
+            return '<th class="px-4 py-2">时间</th><th class="px-4 py-2">币种</th><th class="px-4 py-2">账单主类型</th><th class="px-4 py-2">数量</th><th class="px-4 py-2">账户余额</th>';
+        },
+
+        FUND_BILL_MAIN_TYPES: FUND_BILL_MAIN_TYPES,
+
+        resetFundBillTypeFilter: function () {
+            const el = document.getElementById('asset-log-bill-main-type');
+            if (el) el.value = '';
+        },
+
+        initFundBillFilters: function () {
+            const mainEl = document.getElementById('asset-log-bill-main-type');
+            if (mainEl) {
+                mainEl.innerHTML = '<option value="">账单主类型</option>' +
+                    FUND_BILL_MAIN_TYPES.map(function (t) {
+                        return '<option value="' + t + '">' + t + '</option>';
+                    }).join('');
+            }
+            this.resetFundBillTypeFilter();
         },
 
         renderAssetLogBody: function () {
@@ -876,6 +896,7 @@
                 slot.innerHTML = buildContractFilterHtml(filterId);
             });
             this.initBillTypeFilters();
+            this.initFundBillFilters();
             if (this._contractFilterDocBound) return;
             this._contractFilterDocBound = true;
             document.addEventListener('click', function (e) {
