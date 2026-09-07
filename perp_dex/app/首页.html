@@ -48,6 +48,7 @@
         .quick-entry-icon svg { width: 20px; height: 20px; }
         .quick-entry-label { font-size: 10px; font-weight: 800; color: #374151; }
         .home-top-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+        .home-top-cards--count-1 { grid-template-columns: 1fr; }
         .home-top-card {
             border: 1px solid #f3f4f6; border-radius: 14px; padding: 12px 12px 10px;
             background: #fff; position: relative; min-height: 88px;
@@ -115,8 +116,8 @@ function marketPageLink(homeTab) {
         fav: '行情.html?tab=all',
         hot: '行情.html?tab=hot',
         new: '行情.html?tab=new',
-        up: '行情.html?view=gainers',
-        down: '行情.html?view=losers'
+        up: '行情.html?tab=all&view=gainers',
+        down: '行情.html?tab=all&view=losers'
     };
     return map[homeTab] || '行情.html';
 }
@@ -270,27 +271,38 @@ function quickEntryHtml() {
         </div>`;
 }
 
-const homeTopMarketCards = [
-    { name: 'BTC', category: '加密货币', price: '79,481.30', change: '-0.48%', up: false, spark: 'M0,18 L8,14 L16,16 L24,10 L32,12 L40,6 L48,8 L56,4' },
-    { name: '闪迪', category: '股票', price: '$1,786.00', change: '+0.59%', up: true, spark: 'M0,20 L8,16 L16,18 L24,12 L32,14 L40,8 L48,10 L56,6' },
-    { name: '戴尔', category: '股票', price: '$525.49', change: '+0.42%', up: true, spark: 'M0,16 L8,18 L16,14 L24,16 L32,10 L40,12 L48,8 L56,10' },
-    { name: '黄金', category: '大宗商品', price: '4,411.89', change: '-0.33%', up: false, spark: 'M0,8 L8,10 L16,12 L24,14 L32,10 L40,16 L48,12 L56,18' }
+const homeTopMarketPool = [
+    { name: 'BTC', homeScreenShow: true, homeScreenSort: 1, homeScreenCategory: '加密货币', price: '79,481.30', change: '-0.48%', up: false, spark: 'M0,18 L8,14 L16,16 L24,10 L32,12 L40,6 L48,8 L56,4' },
+    { name: '闪迪', homeScreenShow: true, homeScreenSort: 2, homeScreenCategory: '股票', price: '$1,786.00', change: '+0.59%', up: true, spark: 'M0,20 L8,16 L16,18 L24,12 L32,14 L40,8 L48,10 L56,6' },
+    { name: '戴尔', homeScreenShow: true, homeScreenSort: 3, homeScreenCategory: '股票', price: '$525.49', change: '+0.42%', up: true, spark: 'M0,16 L8,18 L16,14 L24,16 L32,10 L40,12 L48,8 L56,10' },
+    { name: '黄金', homeScreenShow: true, homeScreenSort: 4, homeScreenCategory: '大宗商品', price: '4,411.89', change: '-0.33%', up: false, spark: 'M0,8 L8,10 L16,12 L24,14 L32,10 L40,16 L48,12 L56,18' },
+    { name: 'ETH', homeScreenShow: false, homeScreenSort: 5, homeScreenCategory: '加密货币', price: '3,450.12', change: '-2.15%', up: false, spark: 'M0,12 L8,14 L16,10 L24,12 L32,8 L40,10 L48,6 L56,8' }
 ];
 
-function homeTopMarketCardsHtml() {
-    const cards = homeTopMarketCards.map(c => `
+function getHomeTopMarketCards(pool) {
+    return (pool || homeTopMarketPool)
+        .filter(c => c.homeScreenShow)
+        .sort((a, b) => a.homeScreenSort - b.homeScreenSort)
+        .slice(0, 4);
+}
+
+function homeTopMarketCardsHtml(pool) {
+    const cards = getHomeTopMarketCards(pool);
+    if (!cards.length) return '';
+    const countClass = `home-top-cards--count-${cards.length}`;
+    const inner = cards.map(c => `
         <a href="行情详情.html" class="home-top-card block">
             <svg class="sparkline" viewBox="0 0 56 24" fill="none" preserveAspectRatio="none">
                 <path d="${c.spark}" stroke="${c.up ? '#22c55e' : '#ef4444'}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             <p class="font-black text-sm leading-tight">${c.name}</p>
-            <p class="cat-label">${c.category}</p>
+            <p class="cat-label">${c.homeScreenCategory}</p>
             <div class="mt-3 flex items-baseline justify-between gap-1">
                 <span class="font-black text-[13px] leading-none">${c.price}</span>
                 <span class="${c.up ? 'text-green-500' : 'text-red-500'} text-[10px] font-bold">${c.change}</span>
             </div>
         </a>`).join('');
-    return `<section class="home-top-cards">${cards}</section>`;
+    return `<section class="home-top-cards ${countClass}">${inner}</section>`;
 }
 
 function bannerHtml() {
@@ -477,7 +489,8 @@ function homeScreenHtml(cfg) {
         favMode = 'filled',
         showAnnouncements = true,
         netError = false,
-        appUpdate = false
+        appUpdate = false,
+        topCardsPool = null
     } = cfg;
 
     let scrollContent = '';
@@ -487,7 +500,7 @@ function homeScreenHtml(cfg) {
     } else {
         const hero = loggedIn ? heroLoggedIn(assetHidden) : heroLoggedOut();
         const quick = loggedIn ? `<section class="mb-2">${quickEntryHtml()}</section>` : '';
-        const topCards = homeTopMarketCardsHtml();
+        const topCards = homeTopMarketCardsHtml(topCardsPool);
         const banner = loggedIn ? bannerHtml() : '';
         const market = `
             <section>
@@ -549,6 +562,16 @@ const STATES = [
         title: '⑥b 新币上线列表',
         desc: '新币 Tab + 「查看更多」跳转行情页新币上线标签',
         render: () => homeScreenHtml({ loggedIn: true, activeTab: 'new' })
+    },
+    {
+        title: '⑥c 首屏 · 无行情卡片',
+        desc: '所有交易对「首屏行情显示开关」关闭时，不展示首屏卡片区块',
+        render: () => homeScreenHtml({ loggedIn: true, activeTab: 'fav', favMode: 'filled', topCardsPool: homeTopMarketPool.map(c => ({ ...c, homeScreenShow: false })) })
+    },
+    {
+        title: '⑥d 首屏 · 2 张卡片',
+        desc: '仅 2 个交易对开启首屏显示时，一行 2 列布局',
+        render: () => homeScreenHtml({ loggedIn: true, activeTab: 'hot', topCardsPool: homeTopMarketPool.map((c, i) => ({ ...c, homeScreenShow: i < 2 })) })
     },
     {
         title: '⑦ 收藏 · 已有自选（列表样式）',
