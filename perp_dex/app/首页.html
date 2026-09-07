@@ -56,8 +56,11 @@
         .home-top-card .cat-label { font-size: 9px; color: #9ca3af; font-weight: 600; margin-top: 2px; }
         .home-top-card .sparkline { position: absolute; top: 10px; right: 10px; width: 56px; height: 28px; opacity: 0.85; }
         .home-industry-strip { display: flex; flex-wrap: nowrap; gap: 12px; align-items: center; overflow-x: auto; padding: 2px 0 10px; background: transparent; }
+        .home-industry-strip-sm { gap: 8px; padding: 2px 0 8px; }
         .home-industry-tab { display: inline-flex; align-items: center; width: fit-content; flex: none; font-size: 11px; font-weight: 600; color: #9ca3af; padding: 4px 10px; border-radius: 999px; white-space: nowrap; background: transparent; border: none; }
         .home-industry-tab.active { background: #111827; color: #fff; font-weight: 700; }
+        .home-industry-tab-sm { display: inline-flex; align-items: center; width: fit-content; flex: none; font-size: 9px; font-weight: 600; color: #9ca3af; padding: 2px 7px; border-radius: 999px; white-space: nowrap; background: transparent; border: none; }
+        .home-industry-tab-sm.active { background: #111827; color: #fff; font-weight: 700; }
     </style>
 </head>
 <body>
@@ -85,19 +88,22 @@ const marketTabData = {
         { symbol: 'GOLDUSDT', vol: '9,620萬', price: '4,411.89', change: '-0.33%', up: false, industry: 'commodity' }
     ],
     new: [
-        { symbol: 'NOTUSDT', vol: '2.5億', price: '0.0142', change: '+45.12%', up: true },
-        { symbol: 'JUPUSDT', vol: '1.1億', price: '1.084', change: '+2.15%', up: true },
-        { symbol: 'STRKUSDT', vol: '8,200萬', price: '1.241', change: '-5.40%', up: false }
+        { symbol: 'NOTUSDT', vol: '2.5億', price: '0.0142', change: '+45.12%', up: true, industry: 'crypto' },
+        { symbol: 'JUPUSDT', vol: '1.1億', price: '1.084', change: '+2.15%', up: true, industry: 'crypto' },
+        { symbol: 'STRKUSDT', vol: '8,200萬', price: '1.241', change: '-5.40%', up: false, industry: 'crypto' },
+        { symbol: 'SNDKUSDT', vol: '4,210萬', price: '1,786.00', change: '+0.59%', up: true, industry: 'stock' }
     ],
     up: [
-        { symbol: 'WIFUSDT', vol: '4,200萬', price: '2.84', change: '+22.41%', up: true },
-        { symbol: 'BOMEUSDT', vol: '3,100萬', price: '0.012', change: '+18.52%', up: true },
-        { symbol: 'ORDIUSDT', vol: '6,800萬', price: '38.45', change: '+12.10%', up: true }
+        { symbol: 'WIFUSDT', vol: '4,200萬', price: '2.84', change: '+22.41%', up: true, industry: 'crypto' },
+        { symbol: 'BOMEUSDT', vol: '3,100萬', price: '0.012', change: '+18.52%', up: true, industry: 'crypto' },
+        { symbol: 'ORDIUSDT', vol: '6,800萬', price: '38.45', change: '+12.10%', up: true, industry: 'crypto' },
+        { symbol: 'DELLUSDT', vol: '1,860萬', price: '525.49', change: '+0.42%', up: true, industry: 'stock' }
     ],
     down: [
-        { symbol: 'SATSUSDT', vol: '1,500萬', price: '0.0000002', change: '-15.42%', up: false },
-        { symbol: 'LDOUSDT', vol: '2,400萬', price: '1.85', change: '-9.12%', up: false },
-        { symbol: 'TIAUSDT', vol: '5,200萬', price: '8.42', change: '-7.55%', up: false }
+        { symbol: 'SATSUSDT', vol: '1,500萬', price: '0.0000002', change: '-15.42%', up: false, industry: 'crypto' },
+        { symbol: 'LDOUSDT', vol: '2,400萬', price: '1.85', change: '-9.12%', up: false, industry: 'crypto' },
+        { symbol: 'TIAUSDT', vol: '5,200萬', price: '8.42', change: '-7.55%', up: false, industry: 'crypto' },
+        { symbol: 'GOLDUSDT', vol: '9,620萬', price: '4,411.89', change: '-0.33%', up: false, industry: 'commodity' }
     ]
 };
 
@@ -110,11 +116,68 @@ const favRecommend = [
     { symbol: 'ARBUSDT', price: '1.024', change: '-2.15%', up: false }
 ];
 
-const viewMoreHtml = `
-    <a href="行情.html" class="flex items-center justify-center py-6 space-x-1 group border-t border-gray-50 mt-4">
+const INDUSTRY_TABS = [
+    { key: 'all', label: '全部', priority: 0 },
+    { key: 'crypto', label: '数字货币', priority: 1 },
+    { key: 'stock', label: '股票', priority: 2 },
+    { key: 'commodity', label: '大宗商品', priority: 3 }
+];
+
+const HOME_TABS_WITH_INDUSTRY = ['fav', 'hot', 'new', 'up', 'down'];
+const HOME_TABS_INDUSTRY_COMPACT = ['new', 'up', 'down'];
+
+function sortByTabPriority(tabs) {
+    return [...tabs].sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
+}
+
+function filterByIndustry(items, industry) {
+    if (!industry || industry === 'all') return items;
+    return items.filter(i => i.industry === industry);
+}
+
+function marketPageLink(homeTab, industry) {
+    const ind = industry || 'all';
+    const map = {
+        fav: `行情.html?tab=fav&industry=${ind}`,
+        hot: `行情.html?tab=hot&industry=${ind}`,
+        new: `行情.html?tab=crypto&sub=new&industry=${ind}`,
+        up: `行情.html?view=gainers&industry=${ind}`,
+        down: `行情.html?view=losers&industry=${ind}`
+    };
+    return map[homeTab] || '行情.html';
+}
+
+function viewMoreHtml(homeTab, industry) {
+    const href = marketPageLink(homeTab, industry);
+    return `
+    <a href="${href}" class="flex items-center justify-center py-6 space-x-1 group border-t border-gray-50 mt-4">
         <span class="text-[11px] font-black text-gray-400 group-hover:text-black uppercase tracking-wider">查看更多</span>
         <svg class="w-3 h-3 text-gray-400 group-hover:text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="3"/></svg>
     </a>`;
+}
+
+function marketIndustryTabsHtml(activeTab, activeIndustry) {
+    if (!HOME_TABS_WITH_INDUSTRY.includes(activeTab)) return '';
+    const isCompact = HOME_TABS_INDUSTRY_COMPACT.includes(activeTab);
+    const stripCls = isCompact ? 'home-industry-strip home-industry-strip-sm mb-2 no-scrollbar' : 'home-industry-strip mb-3 no-scrollbar';
+    const tabClass = isCompact ? 'home-industry-tab-sm' : 'home-industry-tab';
+    const chips = sortByTabPriority(INDUSTRY_TABS).map(t => {
+        const cls = t.key === activeIndustry ? `${tabClass} active` : tabClass;
+        return `<span class="${cls}">${t.label}</span>`;
+    }).join('');
+    return `<div class="${stripCls}">${chips}</div>`;
+}
+
+function favFilledHtml(activeTab, industry) {
+    const data = filterByIndustry(favListData, industry);
+    return `<div class="space-y-4">${data.map(i => listRow(i)).join('')}${viewMoreHtml(activeTab, industry)}</div>`;
+}
+
+function listTabHtml(tabKey, industry) {
+    const raw = marketTabData[tabKey] || favListData;
+    const data = filterByIndustry(raw, industry);
+    return `<div class="space-y-4">${data.map(i => listRow(i)).join('')}${viewMoreHtml(tabKey, industry)}</div>`;
+}
 
 function listRow(item) {
     const row = `
@@ -155,38 +218,6 @@ function favEmptyHtml() {
         </div>`;
 }
 
-const INDUSTRY_TABS = [
-    { key: 'all', label: '全部' },
-    { key: 'crypto', label: '数字货币' },
-    { key: 'stock', label: '股票' },
-    { key: 'commodity', label: '大宗商品' }
-];
-
-function filterByIndustry(items, industry) {
-    if (!industry || industry === 'all') return items;
-    return items.filter(i => i.industry === industry);
-}
-
-function marketIndustryTabsHtml(activeTab, activeIndustry) {
-    if (activeTab !== 'fav' && activeTab !== 'hot') return '';
-    const chips = INDUSTRY_TABS.map(t => {
-        const cls = t.key === activeIndustry ? 'home-industry-tab active' : 'home-industry-tab';
-        return `<span class="${cls}">${t.label}</span>`;
-    }).join('');
-    return `<div class="home-industry-strip mb-3 no-scrollbar">${chips}</div>`;
-}
-
-function favFilledHtml(industry) {
-    const data = filterByIndustry(favListData, industry);
-    return `<div class="space-y-4">${data.map(i => listRow(i)).join('')}${viewMoreHtml}</div>`;
-}
-
-function listTabHtml(tabKey, industry) {
-    const raw = marketTabData[tabKey] || favListData;
-    const data = (tabKey === 'hot') ? filterByIndustry(raw, industry) : raw;
-    return `<div class="space-y-4">${data.map(i => listRow(i)).join('')}${viewMoreHtml}</div>`;
-}
-
 function marketTabsHtml(activeTab) {
     const tabs = [
         { key: 'fav', label: '收藏' },
@@ -206,7 +237,7 @@ function marketContentHtml(activeTab, favMode, activeIndustry) {
     const industryStrip = marketIndustryTabsHtml(activeTab, activeIndustry || 'all');
     let body = '';
     if (activeTab === 'fav') {
-        body = favMode === 'empty' ? favEmptyHtml() : favFilledHtml(activeIndustry);
+        body = favMode === 'empty' ? favEmptyHtml() : favFilledHtml(activeTab, activeIndustry);
     } else {
         body = listTabHtml(activeTab, activeIndustry);
     }
@@ -558,6 +589,16 @@ const STATES = [
         title: '⑥ 热门 · 行业筛选',
         desc: '热门 Tab 下展示行业筛选条，示例为「数字货币」筛选结果',
         render: () => homeScreenHtml({ loggedIn: true, activeTab: 'hot', activeIndustry: 'crypto' })
+    },
+    {
+        title: '⑥b 新币上线 · 行业筛选（紧凑）',
+        desc: '新币/涨幅/跌幅 Tab 下行业筛选条字号更小；「查看更多」跳转行情页对应 Tab',
+        render: () => homeScreenHtml({ loggedIn: true, activeTab: 'new', activeIndustry: 'crypto' })
+    },
+    {
+        title: '⑥c 涨幅榜 · 行业筛选（紧凑）',
+        desc: '紧凑行业筛选 + 查看更多跳转行情页涨幅排序视图',
+        render: () => homeScreenHtml({ loggedIn: true, activeTab: 'up', activeIndustry: 'all' })
     },
     {
         title: '⑦ 收藏 · 已有自选（列表样式）',

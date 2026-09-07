@@ -1915,28 +1915,32 @@
 
     const pairSubTabsByPrimary = {
         fav: [
-            { key: 'all', label: '全部' },
-            { key: 'crypto', label: '数字货币' },
-            { key: 'stock', label: '股票' },
-            { key: 'commodity', label: '大宗商品' }
+            { key: 'all', label: '全部', priority: 0 },
+            { key: 'crypto', label: '数字货币', priority: 1 },
+            { key: 'stock', label: '股票', priority: 2 },
+            { key: 'commodity', label: '大宗商品', priority: 3 }
         ],
         hot: [
-            { key: 'all', label: '全部' },
-            { key: 'crypto', label: '数字货币' },
-            { key: 'stock', label: '股票' },
-            { key: 'commodity', label: '大宗商品' }
+            { key: 'all', label: '全部', priority: 0 },
+            { key: 'crypto', label: '数字货币', priority: 1 },
+            { key: 'stock', label: '股票', priority: 2 },
+            { key: 'commodity', label: '大宗商品', priority: 3 }
         ],
         crypto: [
-            { key: 'hot', label: '熱門' },
-            { key: 'new', label: '新幣上線' },
-            { key: 'main', label: '主流幣' },
-            { key: 'ai', label: 'AI' }
+            { key: 'hot', label: '熱門', priority: 0 },
+            { key: 'new', label: '新幣上線', priority: 1 },
+            { key: 'main', label: '主流幣', priority: 2 },
+            { key: 'ai', label: 'AI', priority: 3 }
         ],
         commodity: [
-            { key: 'hot', label: '熱門' },
-            { key: 'tradefi', label: 'TradeFi' }
+            { key: 'hot', label: '熱門', priority: 0 },
+            { key: 'tradefi', label: 'TradeFi', priority: 1 }
         ]
     };
+
+    function sortByTabPriority(tabs) {
+        return [...tabs].sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
+    }
 
     const pairListData = [
         { pair: 'BTCUSDT', leverage: '100x', price: '65,432.10', priceNum: 65432.10, change: '-1.76%', changeNum: -1.76, volume: '2.45B', volumeNum: 2450000000, industry: 'crypto', cats: ['hot', 'main', 'fav'] },
@@ -2793,7 +2797,7 @@
             return;
         }
         panel.classList.remove('hidden');
-        wrap.innerHTML = subs.map(s => `
+        wrap.innerHTML = sortByTabPriority(subs).map(s => `
             <button type="button" class="pair-sub-tab ${s.key === currentPairSubCategory ? 'active' : ''}" data-sub="${s.key}" onclick="switchPairSubCategory('${s.key}')">${s.label}</button>
         `).join('');
     }
@@ -2839,7 +2843,7 @@
     function switchPairPrimaryCategory(cat) {
         currentPairPrimaryCategory = cat;
         const subs = pairSubTabsByPrimary[cat];
-        currentPairSubCategory = subs ? subs[0].key : '';
+        currentPairSubCategory = subs ? sortByTabPriority(subs)[0].key : '';
         document.querySelectorAll('#pair-category-tabs .pair-tab-l1').forEach(tab => {
             tab.classList.toggle('active', tab.dataset.cat === cat);
         });
