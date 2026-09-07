@@ -1275,6 +1275,7 @@
                     </div>
                     <div class="pair-primary-row no-scrollbar" id="pair-category-tabs">
                         <button type="button" class="pair-tab-l1" data-cat="fav" onclick="switchPairPrimaryCategory('fav')">收藏</button>
+                        <button type="button" class="pair-tab-l1" data-cat="hot" onclick="switchPairPrimaryCategory('hot')">热门</button>
                         <button type="button" class="pair-tab-l1 active" data-cat="crypto" onclick="switchPairPrimaryCategory('crypto')">数字货币</button>
                         <button type="button" class="pair-tab-l1" data-cat="stock" onclick="switchPairPrimaryCategory('stock')">股票</button>
                         <button type="button" class="pair-tab-l1" data-cat="commodity" onclick="switchPairPrimaryCategory('commodity')">大宗商品</button>
@@ -1919,6 +1920,12 @@
             { key: 'stock', label: '股票' },
             { key: 'commodity', label: '大宗商品' }
         ],
+        hot: [
+            { key: 'all', label: '全部' },
+            { key: 'crypto', label: '数字货币' },
+            { key: 'stock', label: '股票' },
+            { key: 'commodity', label: '大宗商品' }
+        ],
         crypto: [
             { key: 'hot', label: '熱門' },
             { key: 'new', label: '新幣上線' },
@@ -1937,8 +1944,8 @@
         { pair: 'BNBUSDT', leverage: '75x', price: '723.50', priceNum: 723.50, change: '+2.45%', changeNum: 2.45, volume: '856.2M', volumeNum: 856200000, industry: 'crypto', cats: ['hot', 'fav'] },
         { pair: 'SOLUSDT', leverage: '50x', price: '198.20', priceNum: 198.20, change: '+5.12%', changeNum: 5.12, volume: '612.8M', volumeNum: 612800000, industry: 'crypto', cats: ['hot', 'ai'] },
         { pair: 'PEPEUSDT', leverage: '50x', price: '--', priceNum: null, change: '--', changeNum: null, volume: '--', volumeNum: null, changeClass: 'text-gray-400', premarket: true, industry: 'crypto', cats: ['new'] },
-        { pair: 'SNDKUSDT', leverage: '20x', price: '1,786.00', priceNum: 1786.00, change: '+0.59%', changeNum: 0.59, volume: '42.1M', volumeNum: 42100000, industry: 'stock', cats: [] },
-        { pair: 'DELLUSDT', leverage: '20x', price: '525.49', priceNum: 525.49, change: '+0.42%', changeNum: 0.42, volume: '18.6M', volumeNum: 18600000, industry: 'stock', cats: [] },
+        { pair: 'SNDKUSDT', leverage: '20x', price: '1,786.00', priceNum: 1786.00, change: '+0.59%', changeNum: 0.59, volume: '42.1M', volumeNum: 42100000, industry: 'stock', cats: ['hot'] },
+        { pair: 'DELLUSDT', leverage: '20x', price: '525.49', priceNum: 525.49, change: '+0.42%', changeNum: 0.42, volume: '18.6M', volumeNum: 18600000, industry: 'stock', cats: ['hot'] },
         { pair: 'GOLDUSDT', leverage: '50x', price: '4,411.89', priceNum: 4411.89, change: '-0.33%', changeNum: -0.33, volume: '96.2M', volumeNum: 96200000, industry: 'commodity', cats: ['hot'] },
         { pair: 'OILUSDT', leverage: '50x', price: '78.42', priceNum: 78.42, change: '+1.12%', changeNum: 1.12, volume: '55.4M', volumeNum: 55400000, industry: 'commodity', cats: ['tradefi'] }
     ];
@@ -2797,6 +2804,11 @@
         const items = pairListData.filter(item => {
             if (currentPairPrimaryCategory === 'fav') {
                 if (!favoritePairs.has(item.pair)) return false;
+                if (currentPairSubCategory === 'all') return true;
+                return item.industry === currentPairSubCategory;
+            }
+            if (currentPairPrimaryCategory === 'hot') {
+                if (!item.cats.includes('hot')) return false;
                 if (currentPairSubCategory === 'all') return true;
                 return item.industry === currentPairSubCategory;
             }
