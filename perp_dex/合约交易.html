@@ -1393,7 +1393,7 @@
                 <span onclick="switchDataTab('pos')" id="tab-data-pos" class="tab-active cursor-pointer h-8 flex items-center shrink-0">當前持倉 (1)</span>
                 <span onclick="switchDataTab('order')" id="tab-data-order" class="cursor-pointer h-8 flex items-center shrink-0">當前委託 (1)</span>
                 <span onclick="switchDataTab('hist-order')" id="tab-data-hist-order" class="cursor-pointer h-8 flex items-center shrink-0">歷史委託</span>
-                <span onclick="switchDataTab('hist-trade')" id="tab-data-hist-trade" class="cursor-pointer h-8 flex items-center shrink-0">歷史成交</span>
+                <span onclick="switchDataTab('hist-trade')" id="tab-data-hist-trade" class="cursor-pointer h-8 flex items-center shrink-0">交易賬單</span>
                 <span onclick="switchDataTab('hist-pos')" id="tab-data-hist-pos" class="cursor-pointer h-8 flex items-center shrink-0">歷史持倉</span>
                 <span onclick="switchDataTab('asset-log')" id="tab-data-asset-log" class="cursor-pointer h-8 flex items-center shrink-0">資金流水</span>
                 <span onclick="switchDataTab('funding-fee')" id="tab-data-funding-fee" class="cursor-pointer h-8 flex items-center shrink-0">資金費用</span>
@@ -1578,7 +1578,7 @@
                 <button class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm">重置</button>
             </div>
 
-            <!-- 历史成交筛选栏 -->
+            <!-- 交易账单筛选栏 -->
             <div id="hist-trade-filters" class="pf-filter-bar px-4 py-2 border-b border-gray-50 flex flex-wrap items-center space-x-2 text-[9px] font-bold hidden shrink-0">
                 <button type="button" class="pf-period-btn px-2 py-1 rounded-sm bg-gray-900 text-white" onclick="PositionFlow.setPeriod(this, 1)">近1日</button>
                 <button type="button" class="pf-period-btn px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100" onclick="PositionFlow.setPeriod(this, 7)">近7日</button>
@@ -1704,9 +1704,24 @@
                     </div>
                 </div>
                 <div data-pf-contract-filter="hist-trade-contract-filter"></div>
-                <select class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]"><option>方向</option><option>全部</option><option>買入</option><option>賣出</option></select>
+                <select id="hist-trade-bill-main-type" class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]" onchange="PositionFlow.onBillMainTypeChange(this)">
+                    <option value="">账单主类型</option>
+                    <option value="划转">划转</option>
+                    <option value="交易">交易</option>
+                    <option value="手续费">手续费</option>
+                    <option value="资金费用">资金费用</option>
+                    <option value="已实现盈亏">已实现盈亏</option>
+                    <option value="爆仓清算">爆仓清算</option>
+                    <option value="邀请返佣">邀请返佣</option>
+                    <option value="体验金">体验金</option>
+                    <option value="充值">充值</option>
+                    <option value="提现">提现</option>
+                </select>
+                <select id="hist-trade-bill-sub-type" class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px] opacity-50 cursor-not-allowed" disabled>
+                    <option value="">账单子类型</option>
+                </select>
                 <button class="px-3 py-1 bg-black text-white rounded-sm">查詢</button>
-                <button class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm">重置</button>
+                <button type="button" class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm" onclick="PositionFlow.resetBillTypeFilters()">重置</button>
             </div>
 
             <!-- 历史持仓筛选栏 -->
