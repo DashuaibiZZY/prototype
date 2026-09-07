@@ -165,12 +165,77 @@
         },
     ];
 
-    const HIST_TRADES = [
-        { time: '2026-06-15 14:20:16', qty: '1.00 BNB', price: '618.50', amount: '618.50 USDC', role: '吃单方', fee: '0.619 USDC', flowId: 'TR_104192738547301' },
-        { time: '2026-06-15 11:05:43', qty: '0.35 BTC', price: '65,420.0', amount: '22,897.00 USDC', role: '挂单方', fee: '1.145 USDC', flowId: 'TR_104192738512001' },
-        { time: '2026-06-14 16:40:12', qty: '120 SOL', price: '142.80', amount: '17,136.00 USDC', role: '吃单方', fee: '0.856 USDC', flowId: 'TR_104192738400102' },
-        { time: '2026-06-14 09:30:05', qty: '2.00 ETH', price: '2,410.5', amount: '4,821.00 USDC', role: '吃单方', fee: '0.241 USDC', flowId: 'TR_104192738388801' },
-        { time: '2026-06-13 20:33:29', qty: '0.12 BTC', price: '64,980.0', amount: '7,797.60 USDC', role: '挂单方', fee: '0.390 USDC', flowId: 'TR_104192738377701' },
+    /** 账单主类型 → 账单子类型（对应关系见需求文档「账单流水对应关系」） */
+    const BILL_MAIN_SUB_TYPES = {
+        '划转': ['全部', '转入', '转出'],
+        '交易': ['全部', '买入开多', '卖出开空', '卖出平多', '买入平空', '强平'],
+        '手续费': ['全部', '交易手续费', '强平手续费'],
+        '资金费用': ['全部', '收入', '支出'],
+        '已实现盈亏': ['全部', '盈利', '亏损'],
+        '爆仓清算': ['全部'],
+        '邀请返佣': ['全部'],
+        '体验金': ['全部', '入账', '回收'],
+        '充值': ['全部'],
+        '提现': ['全部'],
+    };
+
+    const TRADE_BILLS = [
+        {
+            time: '2026-06-15 14:20:16', mainType: '交易', subType: '买入开多', role: '吃单方',
+            coin: 'USDC', symbol: 'BNBUSDC', positionType: '逐仓 (20x)',
+            qty: '1.00 BNB', fee: '0.619 USDC', price: '618.50', pnl: '--', pnlClass: 'text-gray-400',
+            posBalChange: '+618.50 USDC', posBalChangeClass: 'text-green-500', posBal: '1,250.00 USDC',
+            acctBalChange: '-0.619 USDC', acctBalChangeClass: 'text-red-500', acctBal: '12,845.32 USDC',
+        },
+        {
+            time: '2026-06-15 11:05:43', mainType: '交易', subType: '卖出平多', role: '挂单方',
+            coin: 'USDC', symbol: 'BTCUSDC', positionType: '逐仓 (20x)',
+            qty: '0.35 BTC', fee: '1.145 USDC', price: '65,420.0', pnl: '+184.32 USDC', pnlClass: 'text-green-500',
+            posBalChange: '-22,897.00 USDC', posBalChangeClass: 'text-red-500', posBal: '0.00 USDC',
+            acctBalChange: '+183.18 USDC', acctBalChangeClass: 'text-green-500', acctBal: '13,028.50 USDC',
+        },
+        {
+            time: '2026-06-15 08:00:00', mainType: '资金费用', subType: '支出', role: '--',
+            coin: 'USDC', symbol: 'BNBUSDC', positionType: '逐仓 (20x)',
+            qty: '--', fee: '--', price: '--', pnl: '-0.452 USDC', pnlClass: 'text-red-500',
+            posBalChange: '-0.452 USDC', posBalChangeClass: 'text-red-500', posBal: '1,249.55 USDC',
+            acctBalChange: '-0.452 USDC', acctBalChangeClass: 'text-red-500', acctBal: '13,028.05 USDC',
+        },
+        {
+            time: '2026-06-14 18:22:15', mainType: '已实现盈亏', subType: '盈利', role: '--',
+            coin: 'USDC', symbol: 'BTCUSDC', positionType: '逐仓 (20x)',
+            qty: '--', fee: '--', price: '--', pnl: '+124.52 USDC', pnlClass: 'text-green-500',
+            posBalChange: '+124.52 USDC', posBalChangeClass: 'text-green-500', posBal: '0.00 USDC',
+            acctBalChange: '+124.52 USDC', acctBalChangeClass: 'text-green-500', acctBal: '12,903.53 USDC',
+        },
+        {
+            time: '2026-06-13 16:40:08', mainType: '划转', subType: '转入', role: '--',
+            coin: 'USDC', symbol: '--', positionType: '--',
+            qty: '500.00 USDC', fee: '--', price: '--', pnl: '--', pnlClass: 'text-gray-400',
+            posBalChange: '--', posBalChangeClass: 'text-gray-400', posBal: '--',
+            acctBalChange: '+500.00 USDC', acctBalChangeClass: 'text-green-500', acctBal: '12,779.01 USDC',
+        },
+        {
+            time: '2026-06-13 09:12:44', mainType: '爆仓清算', subType: '全部', role: '--',
+            coin: 'USDC', symbol: 'SOLUSDC', positionType: '全仓 (25x)',
+            qty: '120 SOL', fee: '0.856 USDC', price: '142.80', pnl: '-88.40 USDC', pnlClass: 'text-red-500',
+            posBalChange: '-17,136.00 USDC', posBalChangeClass: 'text-red-500', posBal: '0.00 USDC',
+            acctBalChange: '-89.26 USDC', acctBalChangeClass: 'text-red-500', acctBal: '12,279.01 USDC',
+        },
+        {
+            time: '2026-06-12 21:30:19', mainType: '邀请返佣', subType: '全部', role: '--',
+            coin: 'USDC', symbol: '--', positionType: '--',
+            qty: '12.80 USDC', fee: '--', price: '--', pnl: '+12.80 USDC', pnlClass: 'text-green-500',
+            posBalChange: '--', posBalChangeClass: 'text-gray-400', posBal: '--',
+            acctBalChange: '+12.80 USDC', acctBalChangeClass: 'text-green-500', acctBal: '12,368.27 USDC',
+        },
+        {
+            time: '2026-06-12 15:00:00', mainType: '体验金', subType: '入账', role: '--',
+            coin: 'USDC', symbol: '--', positionType: '--',
+            qty: '200.00 USDC', fee: '--', price: '--', pnl: '--', pnlClass: 'text-gray-400',
+            posBalChange: '--', posBalChangeClass: 'text-gray-400', posBal: '--',
+            acctBalChange: '+200.00 USDC', acctBalChangeClass: 'text-green-500', acctBal: '12,355.47 USDC',
+        },
     ];
 
     const HIST_POSITIONS = [
@@ -408,16 +473,32 @@
     }
 
     function renderHistTradeRows() {
-        return HIST_TRADES.map(function (r) {
+        return TRADE_BILLS.map(function (r) {
             return `<tr class="border-b border-gray-50 hover:bg-gray-50 text-[11px]">
                 <td class="px-4 py-3 text-gray-400 whitespace-nowrap">${r.time}</td>
-                <td class="px-4 py-3 font-mono whitespace-nowrap">${r.qty}</td>
-                <td class="px-4 py-3 font-mono font-bold whitespace-nowrap">${r.price}</td>
-                <td class="px-4 py-3 font-mono whitespace-nowrap">${r.amount}</td>
+                <td class="px-4 py-3 font-bold whitespace-nowrap">${r.mainType}</td>
+                <td class="px-4 py-3 whitespace-nowrap">${r.subType}</td>
                 <td class="px-4 py-3 whitespace-nowrap">${r.role}</td>
+                <td class="px-4 py-3 whitespace-nowrap">${r.coin}</td>
+                <td class="px-4 py-3 font-bold whitespace-nowrap">${r.symbol}</td>
+                <td class="px-4 py-3 text-gray-600 whitespace-nowrap">${r.positionType}</td>
+                <td class="px-4 py-3 font-mono whitespace-nowrap">${r.qty}</td>
                 <td class="px-4 py-3 text-gray-500 whitespace-nowrap">${r.fee}</td>
-                <td class="px-4 py-3 font-mono text-[10px] text-gray-600 whitespace-nowrap">${r.flowId}</td>
+                <td class="px-4 py-3 font-mono font-bold whitespace-nowrap">${r.price}</td>
+                <td class="px-4 py-3 font-black whitespace-nowrap ${r.pnlClass}">${r.pnl}</td>
+                <td class="px-4 py-3 font-mono whitespace-nowrap ${r.posBalChangeClass}">${r.posBalChange}</td>
+                <td class="px-4 py-3 font-mono whitespace-nowrap">${r.posBal}</td>
+                <td class="px-4 py-3 font-mono whitespace-nowrap ${r.acctBalChangeClass}">${r.acctBalChange}</td>
+                <td class="px-4 py-3 font-mono whitespace-nowrap">${r.acctBal}</td>
             </tr>`;
+        }).join('');
+    }
+
+    function buildBillSubTypeOptions(mainType) {
+        const subs = BILL_MAIN_SUB_TYPES[mainType];
+        if (!subs || !subs.length) return '';
+        return subs.map(function (s) {
+            return '<option value="' + s + '">' + s + '</option>';
         }).join('');
     }
 
@@ -530,7 +611,43 @@
         },
 
         renderHistTradeHeader: function () {
-            return '<th class="px-4 py-2">成交时间</th><th class="px-4 py-2">数量</th><th class="px-4 py-2">价格</th><th class="px-4 py-2">成交金额</th><th class="px-4 py-2">角色</th><th class="px-4 py-2">手续费</th><th class="px-4 py-2">流水编号</th>';
+            return '<th class="px-4 py-2">发生时间</th><th class="px-4 py-2">账单主类型</th><th class="px-4 py-2">账单子类型</th><th class="px-4 py-2">挂单/吃单</th><th class="px-4 py-2">币种</th><th class="px-4 py-2">交易合约</th><th class="px-4 py-2">仓位类型</th><th class="px-4 py-2">数量</th><th class="px-4 py-2">手续费</th><th class="px-4 py-2">成交价</th><th class="px-4 py-2">收益</th><th class="px-4 py-2">仓位余额变动</th><th class="px-4 py-2">仓位余额</th><th class="px-4 py-2">账户余额变动</th><th class="px-4 py-2">账户余额</th>';
+        },
+
+        BILL_MAIN_SUB_TYPES: BILL_MAIN_SUB_TYPES,
+
+        onBillMainTypeChange: function (selectEl) {
+            const container = selectEl.closest('#hist-trade-filters');
+            if (!container) return;
+            const subEl = container.querySelector('#hist-trade-bill-sub-type');
+            if (!subEl) return;
+            const mainType = selectEl.value;
+            if (!mainType) {
+                subEl.innerHTML = '<option value="">账单子类型</option>';
+                subEl.disabled = true;
+                subEl.classList.add('opacity-50', 'cursor-not-allowed');
+                return;
+            }
+            subEl.innerHTML = buildBillSubTypeOptions(mainType);
+            subEl.disabled = false;
+            subEl.classList.remove('opacity-50', 'cursor-not-allowed');
+        },
+
+        resetBillTypeFilters: function () {
+            const container = document.getElementById('hist-trade-filters');
+            if (!container) return;
+            const mainEl = container.querySelector('#hist-trade-bill-main-type');
+            const subEl = container.querySelector('#hist-trade-bill-sub-type');
+            if (mainEl) mainEl.value = '';
+            if (subEl) {
+                subEl.innerHTML = '<option value="">账单子类型</option>';
+                subEl.disabled = true;
+                subEl.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        },
+
+        initBillTypeFilters: function () {
+            this.resetBillTypeFilters();
         },
 
         renderHistTradeBody: function () {
@@ -755,6 +872,7 @@
                 slot.dataset.pfContractFilter = filterId;
                 slot.innerHTML = buildContractFilterHtml(filterId);
             });
+            this.initBillTypeFilters();
             if (this._contractFilterDocBound) return;
             this._contractFilterDocBound = true;
             document.addEventListener('click', function (e) {
