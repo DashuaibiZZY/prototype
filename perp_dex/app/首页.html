@@ -47,6 +47,14 @@
         }
         .quick-entry-icon svg { width: 20px; height: 20px; }
         .quick-entry-label { font-size: 10px; font-weight: 800; color: #374151; }
+        .home-top-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+        .home-top-card {
+            border: 1px solid #f3f4f6; border-radius: 14px; padding: 12px 12px 10px;
+            background: #fff; position: relative; min-height: 88px;
+        }
+        .home-top-card:active { opacity: 0.85; }
+        .home-top-card .cat-label { font-size: 9px; color: #9ca3af; font-weight: 600; margin-top: 2px; }
+        .home-top-card .sparkline { position: absolute; top: 10px; right: 10px; width: 56px; height: 28px; opacity: 0.85; }
     </style>
 </head>
 <body>
@@ -237,6 +245,29 @@ function quickEntryHtml() {
                 <span class="quick-entry-label">VIP</span>
             </a>
         </div>`;
+}
+
+const homeTopMarketCards = [
+    { name: 'BTC', category: '加密货币', price: '79,481.30', change: '-0.48%', up: false, spark: 'M0,18 L8,14 L16,16 L24,10 L32,12 L40,6 L48,8 L56,4' },
+    { name: '闪迪', category: '股票', price: '$1,786.00', change: '+0.59%', up: true, spark: 'M0,20 L8,16 L16,18 L24,12 L32,14 L40,8 L48,10 L56,6' },
+    { name: '戴尔', category: '股票', price: '$525.49', change: '+0.42%', up: true, spark: 'M0,16 L8,18 L16,14 L24,16 L32,10 L40,12 L48,8 L56,10' },
+    { name: '黄金', category: '大宗商品', price: '4,411.89', change: '-0.33%', up: false, spark: 'M0,8 L8,10 L16,12 L24,14 L32,10 L40,16 L48,12 L56,18' }
+];
+
+function homeTopMarketCardsHtml() {
+    const cards = homeTopMarketCards.map(c => `
+        <a href="行情详情.html" class="home-top-card block">
+            <svg class="sparkline" viewBox="0 0 56 24" fill="none" preserveAspectRatio="none">
+                <path d="${c.spark}" stroke="${c.up ? '#22c55e' : '#ef4444'}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <p class="font-black text-sm leading-tight">${c.name}</p>
+            <p class="cat-label">${c.category}</p>
+            <div class="mt-3 flex items-baseline justify-between gap-1">
+                <span class="font-black text-[13px] leading-none">${c.price}</span>
+                <span class="${c.up ? 'text-green-500' : 'text-red-500'} text-[10px] font-bold">${c.change}</span>
+            </div>
+        </a>`).join('');
+    return `<section class="home-top-cards">${cards}</section>`;
 }
 
 function bannerHtml() {
@@ -433,6 +464,8 @@ function homeScreenHtml(cfg) {
     } else {
         const hero = loggedIn ? heroLoggedIn(assetHidden) : heroLoggedOut();
         const quick = loggedIn ? `<section class="mb-2">${quickEntryHtml()}</section>` : '';
+        const topCards = homeTopMarketCardsHtml();
+        const banner = loggedIn ? bannerHtml() : '';
         const market = `
             <section>
                 ${marketTabsHtml(activeTab)}
@@ -441,7 +474,8 @@ function homeScreenHtml(cfg) {
         scrollContent = `
             <section class="mb-6">${hero}</section>
             ${quick}
-            ${bannerHtml()}
+            ${topCards}
+            ${banner}
             ${market}
             ${showAnnouncements ? announcementsHtml() : ''}`;
     }
@@ -465,12 +499,12 @@ const STATES = [
     },
     {
         title: '② 首页 · 未登录',
-        desc: '访客态：新人礼包 Hero + Banner + 收藏 Tab（默认无自选）+ 公告区',
+        desc: '访客态：新人礼包 Hero + 首页顶部 4 行情卡片（2×2）+ 收藏 Tab；无活动轮播',
         render: () => homeScreenHtml({ loggedIn: false, activeTab: 'fav', favMode: 'empty' })
     },
     {
         title: '③ 首页 · 已登录 · 资产可见',
-        desc: '权益卡片展示金额与涨跌；快捷入口四宫格；收藏 Tab 已有自选列表',
+        desc: '权益卡片 + 快捷入口 + 顶部 4 行情卡片 + 活动轮播（卡片下方）+ 收藏 Tab',
         render: () => homeScreenHtml({ loggedIn: true, activeTab: 'fav', favMode: 'filled' })
     },
     {

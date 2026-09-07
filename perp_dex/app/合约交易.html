@@ -42,6 +42,8 @@
         .pair-tab { color: #9ca3af; font-weight: 700; font-size: 12px; padding-bottom: 10px; position: relative; cursor: pointer; white-space: nowrap; flex-shrink: 0; background: none; border: none; }
         .pair-tab.active { color: #111827; font-weight: 900; }
         .pair-tab.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: #111827; border-radius: 1px; }
+        .pair-sub-tab { color: #9ca3af; font-weight: 700; font-size: 10px; padding: 4px 10px; border-radius: 999px; cursor: pointer; white-space: nowrap; flex-shrink: 0; background: #f3f4f6; border: none; }
+        .pair-sub-tab.active { background: #111827; color: #fff; font-weight: 800; }
         .pair-sheet-panel { height: 82%; min-height: 82%; }
         .pair-sort-th { background: none; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 2px; padding: 0; color: inherit; font: inherit; }
         .pair-sort-th:active { opacity: 0.7; }
@@ -1267,10 +1269,16 @@
                         <input type="text" placeholder="查詢" class="w-full bg-gray-100 rounded-xl py-2.5 pl-10 pr-4 text-xs outline-none">
                     </div>
                     <div class="flex space-x-5 overflow-x-auto no-scrollbar border-b border-gray-100" id="pair-category-tabs">
-                        <button type="button" class="pair-tab" data-cat="fav" onclick="switchPairCategory('fav')">收藏</button>
-                        <button type="button" class="pair-tab active" data-cat="all" onclick="switchPairCategory('all')">全部</button>
-                        <button type="button" class="pair-tab" data-cat="new" onclick="switchPairCategory('new')">新幣上線</button>
-                        <button type="button" class="pair-tab" data-cat="hot" onclick="switchPairCategory('hot')">熱門</button>
+                        <button type="button" class="pair-tab" data-cat="fav" onclick="switchPairPrimaryCategory('fav')">收藏</button>
+                        <button type="button" class="pair-tab active" data-cat="crypto" onclick="switchPairPrimaryCategory('crypto')">数字货币</button>
+                        <button type="button" class="pair-tab" data-cat="stock" onclick="switchPairPrimaryCategory('stock')">股票</button>
+                        <button type="button" class="pair-tab" data-cat="commodity" onclick="switchPairPrimaryCategory('commodity')">大宗商品</button>
+                    </div>
+                    <div id="pair-sub-tabs" class="flex space-x-2 overflow-x-auto no-scrollbar mt-3">
+                        <button type="button" class="pair-sub-tab active" data-sub="hot" onclick="switchPairSubCategory('hot')">熱門</button>
+                        <button type="button" class="pair-sub-tab" data-sub="new" onclick="switchPairSubCategory('new')">新幣上線</button>
+                        <button type="button" class="pair-sub-tab" data-sub="main" onclick="switchPairSubCategory('main')">主流幣</button>
+                        <button type="button" class="pair-sub-tab" data-sub="ai" onclick="switchPairSubCategory('ai')">AI</button>
                     </div>
                 </div>
                 <div class="px-5 py-2 grid grid-cols-3 text-[9px] text-gray-400 font-bold shrink-0">
@@ -1573,7 +1581,8 @@
     let isGuestMode = false;
     let klineCountdownRemaining = 2 * 86400 + 14 * 3600 + 35 * 60 + 22;
     let currentPair = 'BTCUSDT';
-    let currentPairCategory = 'all';
+    let currentPairPrimaryCategory = 'crypto';
+    let currentPairSubCategory = 'hot';
     const favoritePairs = new Set(['BTCUSDT', 'BNBUSDT']);
 
     const loggedInSnapshot = {
@@ -1901,12 +1910,29 @@
         );
     }
 
+    const pairSubTabsByPrimary = {
+        crypto: [
+            { key: 'hot', label: '熱門' },
+            { key: 'new', label: '新幣上線' },
+            { key: 'main', label: '主流幣' },
+            { key: 'ai', label: 'AI' }
+        ],
+        commodity: [
+            { key: 'hot', label: '熱門' },
+            { key: 'tradefi', label: 'TradeFi' }
+        ]
+    };
+
     const pairListData = [
-        { pair: 'BTCUSDT', leverage: '100x', price: '65,432.10', priceNum: 65432.10, change: '-1.76%', changeNum: -1.76, volume: '2.45B', volumeNum: 2450000000, cats: ['all', 'hot', 'fav'] },
-        { pair: 'ETHUSDT', leverage: '100x', price: '2,432.10', priceNum: 2432.10, change: '-3.76%', changeNum: -3.76, volume: '1.82B', volumeNum: 1820000000, cats: ['all', 'hot'] },
-        { pair: 'BNBUSDT', leverage: '75x', price: '723.50', priceNum: 723.50, change: '+2.45%', changeNum: 2.45, volume: '856.2M', volumeNum: 856200000, cats: ['all', 'hot', 'fav'] },
-        { pair: 'SOLUSDT', leverage: '50x', price: '198.20', priceNum: 198.20, change: '+5.12%', changeNum: 5.12, volume: '612.8M', volumeNum: 612800000, cats: ['all', 'hot'] },
-        { pair: 'PEPEUSDT', leverage: '50x', price: '--', priceNum: null, change: '--', changeNum: null, volume: '--', volumeNum: null, changeClass: 'text-gray-400', premarket: true, cats: ['all', 'new'] }
+        { pair: 'BTCUSDT', leverage: '100x', price: '65,432.10', priceNum: 65432.10, change: '-1.76%', changeNum: -1.76, volume: '2.45B', volumeNum: 2450000000, industry: 'crypto', cats: ['hot', 'main', 'fav'] },
+        { pair: 'ETHUSDT', leverage: '100x', price: '2,432.10', priceNum: 2432.10, change: '-3.76%', changeNum: -3.76, volume: '1.82B', volumeNum: 1820000000, industry: 'crypto', cats: ['hot', 'main'] },
+        { pair: 'BNBUSDT', leverage: '75x', price: '723.50', priceNum: 723.50, change: '+2.45%', changeNum: 2.45, volume: '856.2M', volumeNum: 856200000, industry: 'crypto', cats: ['hot', 'fav'] },
+        { pair: 'SOLUSDT', leverage: '50x', price: '198.20', priceNum: 198.20, change: '+5.12%', changeNum: 5.12, volume: '612.8M', volumeNum: 612800000, industry: 'crypto', cats: ['hot', 'ai'] },
+        { pair: 'PEPEUSDT', leverage: '50x', price: '--', priceNum: null, change: '--', changeNum: null, volume: '--', volumeNum: null, changeClass: 'text-gray-400', premarket: true, industry: 'crypto', cats: ['new'] },
+        { pair: 'SNDKUSDT', leverage: '20x', price: '1,786.00', priceNum: 1786.00, change: '+0.59%', changeNum: 0.59, volume: '42.1M', volumeNum: 42100000, industry: 'stock', cats: [] },
+        { pair: 'DELLUSDT', leverage: '20x', price: '525.49', priceNum: 525.49, change: '+0.42%', changeNum: 0.42, volume: '18.6M', volumeNum: 18600000, industry: 'stock', cats: [] },
+        { pair: 'GOLDUSDT', leverage: '50x', price: '4,411.89', priceNum: 4411.89, change: '-0.33%', changeNum: -0.33, volume: '96.2M', volumeNum: 96200000, industry: 'commodity', cats: ['hot'] },
+        { pair: 'OILUSDT', leverage: '50x', price: '78.42', priceNum: 78.42, change: '+1.12%', changeNum: 1.12, volume: '55.4M', volumeNum: 55400000, industry: 'commodity', cats: ['tradefi'] }
     ];
 
     let pairSortField = 'volume';
@@ -2096,7 +2122,7 @@
             showProtoToast('已添加自选');
         }
         updateMoreMenuFavoriteUI();
-        if (currentPairCategory === 'fav') renderPairList();
+        if (currentPairPrimaryCategory === 'fav') renderPairList();
     }
 
     function showProtoToast(msg) {
@@ -2741,12 +2767,29 @@
         return a.pair.localeCompare(b.pair);
     }
 
+    function renderPairSubTabs() {
+        const wrap = document.getElementById('pair-sub-tabs');
+        if (!wrap) return;
+        const subs = pairSubTabsByPrimary[currentPairPrimaryCategory];
+        if (!subs) {
+            wrap.classList.add('hidden');
+            wrap.innerHTML = '';
+            return;
+        }
+        wrap.classList.remove('hidden');
+        wrap.innerHTML = subs.map(s => `
+            <button type="button" class="pair-sub-tab ${s.key === currentPairSubCategory ? 'active' : ''}" data-sub="${s.key}" onclick="switchPairSubCategory('${s.key}')">${s.label}</button>
+        `).join('');
+    }
+
     function renderPairList() {
         const list = document.getElementById('pair-list');
         if (!list) return;
         const items = pairListData.filter(item => {
-            if (currentPairCategory === 'fav') return favoritePairs.has(item.pair);
-            return item.cats.includes(currentPairCategory);
+            if (currentPairPrimaryCategory === 'fav') return favoritePairs.has(item.pair);
+            if (item.industry !== currentPairPrimaryCategory) return false;
+            if (currentPairPrimaryCategory === 'stock') return true;
+            return item.cats.includes(currentPairSubCategory);
         });
         const sorted = [...items].sort((a, b) => {
             const cmp = comparePairSortValue(a, b, pairSortField);
@@ -2768,12 +2811,27 @@
         `).join('');
     }
 
-    function switchPairCategory(cat) {
-        currentPairCategory = cat;
+    function switchPairPrimaryCategory(cat) {
+        currentPairPrimaryCategory = cat;
+        const subs = pairSubTabsByPrimary[cat];
+        currentPairSubCategory = subs ? subs[0].key : '';
         document.querySelectorAll('#pair-category-tabs .pair-tab').forEach(tab => {
             tab.classList.toggle('active', tab.dataset.cat === cat);
         });
+        renderPairSubTabs();
         renderPairList();
+    }
+
+    function switchPairSubCategory(sub) {
+        currentPairSubCategory = sub;
+        document.querySelectorAll('#pair-sub-tabs .pair-sub-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.sub === sub);
+        });
+        renderPairList();
+    }
+
+    function switchPairCategory(cat) {
+        switchPairPrimaryCategory(cat);
     }
 
     function selectPair(pair, premarket) {
@@ -3431,6 +3489,7 @@
     renderOrderBookDepth();
     setInterval(tickOrderBookDepth, 900);
     renderOrderList();
+    renderPairSubTabs();
     renderPairList();
     updateBestPriceChecks();
     document.addEventListener('click', function (e) {
