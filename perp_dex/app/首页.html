@@ -55,6 +55,9 @@
         .home-top-card:active { opacity: 0.85; }
         .home-top-card .cat-label { font-size: 9px; color: #9ca3af; font-weight: 600; margin-top: 2px; }
         .home-top-card .sparkline { position: absolute; top: 10px; right: 10px; width: 56px; height: 28px; opacity: 0.85; }
+        .home-industry-strip { display: flex; gap: 6px; overflow-x: auto; padding: 8px 10px; background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 10px; }
+        .home-industry-tab { font-size: 10px; font-weight: 700; color: #6b7280; padding: 5px 12px; border-radius: 8px; white-space: nowrap; flex-shrink: 0; border: 1px solid transparent; }
+        .home-industry-tab.active { background: #fff; color: #111827; font-weight: 800; border-color: #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
     </style>
 </head>
 <body>
@@ -68,13 +71,19 @@
 
 <script>
 const favListData = [
-    { symbol: 'SOLUSDT', vol: '1.2億', price: '145.82', change: '+5.42%', up: true },
-    { symbol: 'PEPEUSDT', vol: '8,500萬', price: '0.0000082', change: '-12.4%', up: false },
-    { symbol: 'BTCUSDT', vol: '42億', price: '64,120.5', change: '+1.24%', up: true }
+    { symbol: 'SOLUSDT', vol: '1.2億', price: '145.82', change: '+5.42%', up: true, industry: 'crypto' },
+    { symbol: 'PEPEUSDT', vol: '8,500萬', price: '0.0000082', change: '-12.4%', up: false, industry: 'crypto' },
+    { symbol: 'BTCUSDT', vol: '42億', price: '64,120.5', change: '+1.24%', up: true, industry: 'crypto' },
+    { symbol: 'SNDKUSDT', vol: '4,210萬', price: '1,786.00', change: '+0.59%', up: true, industry: 'stock' }
 ];
 
 const marketTabData = {
-    hot: favListData,
+    hot: [
+        { symbol: 'BTCUSDT', vol: '42億', price: '64,120.5', change: '+1.24%', up: true, industry: 'crypto' },
+        { symbol: 'SOLUSDT', vol: '1.2億', price: '145.82', change: '+5.42%', up: true, industry: 'crypto' },
+        { symbol: 'SNDKUSDT', vol: '4,210萬', price: '1,786.00', change: '+0.59%', up: true, industry: 'stock' },
+        { symbol: 'GOLDUSDT', vol: '9,620萬', price: '4,411.89', change: '-0.33%', up: false, industry: 'commodity' }
+    ],
     new: [
         { symbol: 'NOTUSDT', vol: '2.5億', price: '0.0142', change: '+45.12%', up: true },
         { symbol: 'JUPUSDT', vol: '1.1億', price: '1.084', change: '+2.15%', up: true },
@@ -146,12 +155,35 @@ function favEmptyHtml() {
         </div>`;
 }
 
-function favFilledHtml() {
-    return `<div class="space-y-4">${favListData.map(i => listRow(i)).join('')}${viewMoreHtml}</div>`;
+const INDUSTRY_TABS = [
+    { key: 'all', label: '全部' },
+    { key: 'crypto', label: '数字货币' },
+    { key: 'stock', label: '股票' },
+    { key: 'commodity', label: '大宗商品' }
+];
+
+function filterByIndustry(items, industry) {
+    if (!industry || industry === 'all') return items;
+    return items.filter(i => i.industry === industry);
 }
 
-function listTabHtml(tabKey) {
-    const data = marketTabData[tabKey] || favListData;
+function marketIndustryTabsHtml(activeTab, activeIndustry) {
+    if (activeTab !== 'fav' && activeTab !== 'hot') return '';
+    const chips = INDUSTRY_TABS.map(t => {
+        const cls = t.key === activeIndustry ? 'home-industry-tab active' : 'home-industry-tab';
+        return `<span class="${cls}">${t.label}</span>`;
+    }).join('');
+    return `<div class="home-industry-strip mb-3 no-scrollbar">${chips}</div>`;
+}
+
+function favFilledHtml(industry) {
+    const data = filterByIndustry(favListData, industry);
+    return `<div class="space-y-4">${data.map(i => listRow(i)).join('')}${viewMoreHtml}</div>`;
+}
+
+function listTabHtml(tabKey, industry) {
+    const raw = marketTabData[tabKey] || favListData;
+    const data = (tabKey === 'hot') ? filterByIndustry(raw, industry) : raw;
     return `<div class="space-y-4">${data.map(i => listRow(i)).join('')}${viewMoreHtml}</div>`;
 }
 
@@ -170,11 +202,15 @@ function marketTabsHtml(activeTab) {
     return `<div class="flex space-x-6 border-b border-gray-100 mb-4 overflow-x-auto whitespace-nowrap no-scrollbar">${btns}</div>`;
 }
 
-function marketContentHtml(activeTab, favMode) {
+function marketContentHtml(activeTab, favMode, activeIndustry) {
+    const industryStrip = marketIndustryTabsHtml(activeTab, activeIndustry || 'all');
+    let body = '';
     if (activeTab === 'fav') {
-        return favMode === 'empty' ? favEmptyHtml() : favFilledHtml();
+        body = favMode === 'empty' ? favEmptyHtml() : favFilledHtml(activeIndustry);
+    } else {
+        body = listTabHtml(activeTab, activeIndustry);
     }
-    return listTabHtml(activeTab);
+    return industryStrip + body;
 }
 
 function heroLoggedOut() {
@@ -452,6 +488,7 @@ function homeScreenHtml(cfg) {
         assetHidden = false,
         activeTab = 'fav',
         favMode = 'filled',
+        activeIndustry = 'all',
         showAnnouncements = true,
         netError = false,
         appUpdate = false
@@ -469,7 +506,7 @@ function homeScreenHtml(cfg) {
         const market = `
             <section>
                 ${marketTabsHtml(activeTab)}
-                ${marketContentHtml(activeTab, favMode)}
+                ${marketContentHtml(activeTab, favMode, activeIndustry)}
             </section>`;
         scrollContent = `
             <section class="mb-6">${hero}</section>
@@ -518,17 +555,27 @@ const STATES = [
         render: () => homeScreenHtml({ loggedIn: true, activeTab: 'fav', favMode: 'empty' })
     },
     {
-        title: '⑥ 收藏 · 已有自选（列表样式）',
-        desc: '已收藏后：行式行情列表（无勾选框）+ 涨跌幅色块 + 查看更多',
-        render: () => homeScreenHtml({ loggedIn: true, activeTab: 'fav', favMode: 'filled' })
+        title: '⑥ 热门 · 行业筛选',
+        desc: '热门 Tab 下展示行业筛选条，示例为「数字货币」筛选结果',
+        render: () => homeScreenHtml({ loggedIn: true, activeTab: 'hot', activeIndustry: 'crypto' })
     },
     {
-        title: '⑦ 版本更新提示弹窗',
+        title: '⑦ 收藏 · 已有自选（列表样式）',
+        desc: '已收藏后：行式行情列表 + 行业筛选条（全部/数字货币/股票/大宗商品）',
+        render: () => homeScreenHtml({ loggedIn: true, activeTab: 'fav', favMode: 'filled', activeIndustry: 'all' })
+    },
+    {
+        title: '⑦b 收藏 · 行业筛选（数字货币）',
+        desc: '收藏 Tab 下切换「数字货币」行业筛选，仅展示该行业自选',
+        render: () => homeScreenHtml({ loggedIn: true, activeTab: 'fav', favMode: 'filled', activeIndustry: 'crypto' })
+    },
+    {
+        title: '⑧ 版本更新提示弹窗',
         desc: 'App 检测到新版本时首页弹出「发现新版本」；可稍后或跳转设置页更新',
         render: () => homeScreenHtml({ loggedIn: true, activeTab: 'fav', favMode: 'filled', appUpdate: true })
     },
     {
-        title: '⑧ 网络异常',
+        title: '⑨ 网络异常',
         desc: '顶部红色横幅 + 资产显示 -- + 行情区刷新失败 + 「請求超時」弹窗叠加',
         render: () => homeScreenHtml({ loggedIn: true, netError: true, showAnnouncements: false })
     }

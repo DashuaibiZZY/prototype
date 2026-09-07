@@ -32,6 +32,12 @@
 
 页面截图：[**App · 分类标签栏**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-tabs.png)
 
+**视觉层级**
+
+- **一级行业 Tab**：Segment 分段控件（灰底 + 白底选中项），固定「收藏 / 数字货币 / 股票 / 大宗商品」。
+
+- **二级面板**：独立灰色卡片区域，带小字标题（「行业筛选」或「分类标签」），与一级 Tab 明确分层。
+
 **一级 Tab（固定，不可后台移除）**
 
 |Tab|说明|
@@ -61,11 +67,11 @@
 
 **「收藏」Tab 补充**
 
-- 展示用户已收藏的交易对，不受行业分类限制。
+- 展示用户已收藏的交易对。
+
+- 二级**行业筛选条**：全部 / 数字货币 / 股票 / 大宗商品。
 
 - 在该 Tab 下显示「编辑自选」按钮（铅笔图标），点击跳转至编辑自选页面。
-
-- [「热门」标签的特殊排序与填充逻辑](https://ksgf73ukjokp.sg.larksuite.com/docx/SLB5dwR8eo5xy9xNLAFllX1Lg4b?from=from_copylink) 适用于二级「热门」标签。
 
 ---
 
@@ -73,11 +79,7 @@
 
 页面截图：[**App · 列表表头与排序**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-list-header.png)
 
-页面截图：[**App · 全部 Tab 列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-list-all.png)
-
-页面截图：[**App · 自选 Tab 列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-tab-fav.png)
-
-页面截图：[**App · 热门 Tab 列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-tab-hot.png)
+页面截图：[**App · 数字货币 · 热门 Tab 列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-tab-hot.png)
 
 页面截图：[**App · 新币 Tab 列表**](https://raw.githubusercontent.com/DashuaibiZZY/prototype/doc-assets/document/assets/行情-app/app-markets-tab-new.png)
 
