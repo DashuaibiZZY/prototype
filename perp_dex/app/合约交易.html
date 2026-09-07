@@ -1273,16 +1273,7 @@
                         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2.5"/></svg>
                         <input type="text" placeholder="查詢" class="w-full bg-gray-100 rounded-xl py-2.5 pl-10 pr-4 text-xs outline-none">
                     </div>
-                    <div class="pair-primary-row no-scrollbar" id="pair-category-tabs">
-                        <button type="button" class="pair-tab-l1" data-cat="fav" onclick="switchPairPrimaryCategory('fav')">收藏</button>
-                        <button type="button" class="pair-tab-l1" data-cat="hot" onclick="switchPairPrimaryCategory('hot')">热门</button>
-                        <button type="button" class="pair-tab-l1 active" data-cat="crypto" onclick="switchPairPrimaryCategory('crypto')">数字货币</button>
-                        <button type="button" class="pair-tab-l1" data-cat="stock" onclick="switchPairPrimaryCategory('stock')">股票</button>
-                        <button type="button" class="pair-tab-l1" data-cat="commodity" onclick="switchPairPrimaryCategory('commodity')">大宗商品</button>
-                    </div>
-                    <div id="pair-sub-panel">
-                        <div id="pair-sub-tabs" class="pair-sub-row no-scrollbar"></div>
-                    </div>
+                    <div class="pair-primary-row no-scrollbar" id="pair-category-tabs"></div>
                 </div>
                 <div class="px-5 py-2 grid grid-cols-3 text-[9px] text-gray-400 font-bold shrink-0">
                     <button type="button" class="pair-sort-th text-left" onclick="togglePairSort('volume')">合约/成交量 <span id="pair-sort-volume" class="pair-sort-indicator active">↓</span></button>
@@ -1584,8 +1575,7 @@
     let isGuestMode = false;
     let klineCountdownRemaining = 2 * 86400 + 14 * 3600 + 35 * 60 + 22;
     let currentPair = 'BTCUSDT';
-    let currentPairPrimaryCategory = 'crypto';
-    let currentPairSubCategory = 'hot';
+    let currentPairTag = 'all';
     const favoritePairs = new Set(['BTCUSDT', 'BNBUSDT', 'SNDKUSDT']);
 
     const loggedInSnapshot = {
@@ -1913,45 +1903,31 @@
         );
     }
 
-    const pairSubTabsByPrimary = {
-        fav: [
-            { key: 'all', label: '全部', priority: 0 },
-            { key: 'crypto', label: '数字货币', priority: 1 },
-            { key: 'stock', label: '股票', priority: 2 },
-            { key: 'commodity', label: '大宗商品', priority: 3 }
-        ],
-        hot: [
-            { key: 'all', label: '全部', priority: 0 },
-            { key: 'crypto', label: '数字货币', priority: 1 },
-            { key: 'stock', label: '股票', priority: 2 },
-            { key: 'commodity', label: '大宗商品', priority: 3 }
-        ],
-        crypto: [
-            { key: 'hot', label: '熱門', priority: 0 },
-            { key: 'new', label: '新幣上線', priority: 1 },
-            { key: 'main', label: '主流幣', priority: 2 },
-            { key: 'ai', label: 'AI', priority: 3 }
-        ],
-        commodity: [
-            { key: 'hot', label: '熱門', priority: 0 },
-            { key: 'tradefi', label: 'TradeFi', priority: 1 }
-        ]
-    };
+    const pairTagTabs = [
+        { key: 'all', label: '全部', system: true, priority: 0 },
+        { key: 'new', label: '新币上线', system: true, priority: 1 },
+        { key: 'hot', label: '热门', system: true, priority: 2 },
+        { key: 'main', label: '主流币', system: false, priority: 3 },
+        { key: 'ai', label: 'AI', system: false, priority: 4 }
+    ];
 
     function sortByTabPriority(tabs) {
         return [...tabs].sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
     }
 
+    const PAIR_HOT_LIMIT = 20;
+    const PAIR_NEW_DAYS = 30;
+
     const pairListData = [
-        { pair: 'BTCUSDT', leverage: '100x', price: '65,432.10', priceNum: 65432.10, change: '-1.76%', changeNum: -1.76, volume: '2.45B', volumeNum: 2450000000, industry: 'crypto', cats: ['hot', 'main', 'fav'] },
-        { pair: 'ETHUSDT', leverage: '100x', price: '2,432.10', priceNum: 2432.10, change: '-3.76%', changeNum: -3.76, volume: '1.82B', volumeNum: 1820000000, industry: 'crypto', cats: ['hot', 'main'] },
-        { pair: 'BNBUSDT', leverage: '75x', price: '723.50', priceNum: 723.50, change: '+2.45%', changeNum: 2.45, volume: '856.2M', volumeNum: 856200000, industry: 'crypto', cats: ['hot', 'fav'] },
-        { pair: 'SOLUSDT', leverage: '50x', price: '198.20', priceNum: 198.20, change: '+5.12%', changeNum: 5.12, volume: '612.8M', volumeNum: 612800000, industry: 'crypto', cats: ['hot', 'ai'] },
-        { pair: 'PEPEUSDT', leverage: '50x', price: '--', priceNum: null, change: '--', changeNum: null, volume: '--', volumeNum: null, changeClass: 'text-gray-400', premarket: true, industry: 'crypto', cats: ['new'] },
-        { pair: 'SNDKUSDT', leverage: '20x', price: '1,786.00', priceNum: 1786.00, change: '+0.59%', changeNum: 0.59, volume: '42.1M', volumeNum: 42100000, industry: 'stock', cats: ['hot'] },
-        { pair: 'DELLUSDT', leverage: '20x', price: '525.49', priceNum: 525.49, change: '+0.42%', changeNum: 0.42, volume: '18.6M', volumeNum: 18600000, industry: 'stock', cats: ['hot'] },
-        { pair: 'GOLDUSDT', leverage: '50x', price: '4,411.89', priceNum: 4411.89, change: '-0.33%', changeNum: -0.33, volume: '96.2M', volumeNum: 96200000, industry: 'commodity', cats: ['hot'] },
-        { pair: 'OILUSDT', leverage: '50x', price: '78.42', priceNum: 78.42, change: '+1.12%', changeNum: 1.12, volume: '55.4M', volumeNum: 55400000, industry: 'commodity', cats: ['tradefi'] }
+        { pair: 'BTCUSDT', leverage: '100x', price: '65,432.10', priceNum: 65432.10, change: '-1.76%', changeNum: -1.76, volume: '2.45B', volumeNum: 2450000000, industry: 'crypto', cats: ['hot', 'main'], hotRank: 1, listedDaysAgo: 900 },
+        { pair: 'ETHUSDT', leverage: '100x', price: '2,432.10', priceNum: 2432.10, change: '-3.76%', changeNum: -3.76, volume: '1.82B', volumeNum: 1820000000, industry: 'crypto', cats: ['hot', 'main'], hotRank: 2, listedDaysAgo: 800 },
+        { pair: 'BNBUSDT', leverage: '75x', price: '723.50', priceNum: 723.50, change: '+2.45%', changeNum: 2.45, volume: '856.2M', volumeNum: 856200000, industry: 'crypto', cats: ['hot'], hotRank: 3, listedDaysAgo: 600 },
+        { pair: 'SOLUSDT', leverage: '50x', price: '198.20', priceNum: 198.20, change: '+5.12%', changeNum: 5.12, volume: '612.8M', volumeNum: 612800000, industry: 'crypto', cats: ['hot', 'ai'], hotRank: 4, listedDaysAgo: 400 },
+        { pair: 'PEPEUSDT', leverage: '50x', price: '--', priceNum: null, change: '--', changeNum: null, volume: '--', volumeNum: null, changeClass: 'text-gray-400', premarket: true, industry: 'crypto', cats: ['new'], listedDaysAgo: 8 },
+        { pair: 'SNDKUSDT', leverage: '20x', price: '1,786.00', priceNum: 1786.00, change: '+0.59%', changeNum: 0.59, volume: '42.1M', volumeNum: 42100000, industry: 'stock', cats: ['hot'], hotRank: 5, listedDaysAgo: 60 },
+        { pair: 'DELLUSDT', leverage: '20x', price: '525.49', priceNum: 525.49, change: '+0.42%', changeNum: 0.42, volume: '18.6M', volumeNum: 18600000, industry: 'stock', cats: [], listedDaysAgo: 25 },
+        { pair: 'GOLDUSDT', leverage: '50x', price: '4,411.89', priceNum: 4411.89, change: '-0.33%', changeNum: -0.33, volume: '96.2M', volumeNum: 96200000, industry: 'commodity', cats: ['hot'], hotRank: 6, listedDaysAgo: 300 },
+        { pair: 'OILUSDT', leverage: '50x', price: '78.42', priceNum: 78.42, change: '+1.12%', changeNum: 1.12, volume: '55.4M', volumeNum: 55400000, industry: 'commodity', cats: ['tradefi'], listedDaysAgo: 200 }
     ];
 
     let pairSortField = 'volume';
@@ -2141,7 +2117,7 @@
             showProtoToast('已添加自选');
         }
         updateMoreMenuFavoriteUI();
-        if (currentPairPrimaryCategory === 'fav') renderPairList();
+        renderPairList();
     }
 
     function showProtoToast(msg) {
@@ -2786,40 +2762,44 @@
         return a.pair.localeCompare(b.pair);
     }
 
-    function renderPairSubTabs() {
-        const panel = document.getElementById('pair-sub-panel');
-        const wrap = document.getElementById('pair-sub-tabs');
-        if (!wrap || !panel) return;
-        const subs = pairSubTabsByPrimary[currentPairPrimaryCategory];
-        if (!subs) {
-            panel.classList.add('hidden');
-            wrap.innerHTML = '';
-            return;
+    function getPairHotList(limit) {
+        const ranked = pairListData.filter(i => i.hotRank != null).sort((a, b) => a.hotRank - b.hotRank);
+        const rankedPairs = new Set(ranked.map(i => i.pair));
+        const list = [...ranked];
+        if (list.length < limit) {
+            const fillers = [...pairListData]
+                .filter(i => !rankedPairs.has(i.pair))
+                .sort((a, b) => b.volumeNum - a.volumeNum);
+            list.push(...fillers.slice(0, limit - list.length));
         }
-        panel.classList.remove('hidden');
-        wrap.innerHTML = sortByTabPriority(subs).map(s => `
-            <button type="button" class="pair-sub-tab ${s.key === currentPairSubCategory ? 'active' : ''}" data-sub="${s.key}" onclick="switchPairSubCategory('${s.key}')">${s.label}</button>
+        return list.slice(0, limit);
+    }
+
+    function getPairNewList() {
+        return pairListData
+            .filter(i => !i.premarket && i.listedDaysAgo != null && i.listedDaysAgo <= PAIR_NEW_DAYS)
+            .sort((a, b) => a.listedDaysAgo - b.listedDaysAgo);
+    }
+
+    function getFilteredPairList() {
+        if (currentPairTag === 'all') return pairListData;
+        if (currentPairTag === 'hot') return getPairHotList(PAIR_HOT_LIMIT);
+        if (currentPairTag === 'new') return getPairNewList();
+        return pairListData.filter(item => item.cats.includes(currentPairTag));
+    }
+
+    function renderPairTagTabs() {
+        const wrap = document.getElementById('pair-category-tabs');
+        if (!wrap) return;
+        wrap.innerHTML = sortByTabPriority(pairTagTabs).map(t => `
+            <button type="button" class="pair-tab-l1${t.key === currentPairTag ? ' active' : ''}" data-cat="${t.key}" onclick="switchPairTagCategory('${t.key}')">${t.label}</button>
         `).join('');
     }
 
     function renderPairList() {
         const list = document.getElementById('pair-list');
         if (!list) return;
-        const items = pairListData.filter(item => {
-            if (currentPairPrimaryCategory === 'fav') {
-                if (!favoritePairs.has(item.pair)) return false;
-                if (currentPairSubCategory === 'all') return true;
-                return item.industry === currentPairSubCategory;
-            }
-            if (currentPairPrimaryCategory === 'hot') {
-                if (!item.cats.includes('hot')) return false;
-                if (currentPairSubCategory === 'all') return true;
-                return item.industry === currentPairSubCategory;
-            }
-            if (item.industry !== currentPairPrimaryCategory) return false;
-            if (currentPairPrimaryCategory === 'stock') return true;
-            return item.cats.includes(currentPairSubCategory);
-        });
+        const items = getFilteredPairList();
         const sorted = [...items].sort((a, b) => {
             const cmp = comparePairSortValue(a, b, pairSortField);
             return pairSortOrder === 'desc' ? -cmp : cmp;
@@ -2840,27 +2820,14 @@
         `).join('');
     }
 
-    function switchPairPrimaryCategory(cat) {
-        currentPairPrimaryCategory = cat;
-        const subs = pairSubTabsByPrimary[cat];
-        currentPairSubCategory = subs ? sortByTabPriority(subs)[0].key : '';
-        document.querySelectorAll('#pair-category-tabs .pair-tab-l1').forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.cat === cat);
-        });
-        renderPairSubTabs();
-        renderPairList();
-    }
-
-    function switchPairSubCategory(sub) {
-        currentPairSubCategory = sub;
-        document.querySelectorAll('#pair-sub-tabs .pair-sub-tab').forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.sub === sub);
-        });
+    function switchPairTagCategory(tag) {
+        currentPairTag = tag;
+        renderPairTagTabs();
         renderPairList();
     }
 
     function switchPairCategory(cat) {
-        switchPairPrimaryCategory(cat);
+        switchPairTagCategory(cat);
     }
 
     function selectPair(pair, premarket) {
@@ -3518,7 +3485,7 @@
     renderOrderBookDepth();
     setInterval(tickOrderBookDepth, 900);
     renderOrderList();
-    renderPairSubTabs();
+    renderPairTagTabs();
     renderPairList();
     updateBestPriceChecks();
     document.addEventListener('click', function (e) {
