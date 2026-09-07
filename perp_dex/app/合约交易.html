@@ -42,14 +42,13 @@
         .pair-tab { color: #9ca3af; font-weight: 700; font-size: 12px; padding-bottom: 10px; position: relative; cursor: pointer; white-space: nowrap; flex-shrink: 0; background: none; border: none; }
         .pair-tab.active { color: #111827; font-weight: 900; }
         .pair-tab.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: #111827; border-radius: 1px; }
-        .pair-primary-seg { display: flex; padding: 3px; background: #f3f4f6; border-radius: 12px; gap: 2px; overflow-x: auto; }
-        .pair-tab-seg { flex: 1; min-width: 72px; padding: 8px 6px; font-size: 11px; font-weight: 700; color: #6b7280; border: none; background: transparent; border-radius: 9px; cursor: pointer; white-space: nowrap; }
-        .pair-tab-seg.active { background: #fff; color: #111827; font-weight: 900; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-        .pair-sub-panel { margin-top: 10px; padding: 10px 12px; background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 12px; }
-        .pair-sub-label { font-size: 9px; font-weight: 800; color: #9ca3af; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
-        .pair-sub-tabs-inner { display: flex; gap: 6px; overflow-x: auto; }
-        .pair-sub-tab { color: #6b7280; font-weight: 700; font-size: 10px; padding: 5px 12px; border-radius: 8px; cursor: pointer; white-space: nowrap; flex-shrink: 0; background: transparent; border: 1px solid transparent; }
-        .pair-sub-tab.active { background: #fff; color: #111827; font-weight: 800; border-color: #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+        .pair-primary-row { display: flex; gap: 20px; overflow-x: auto; border-bottom: 1px solid #f3f4f6; margin-bottom: 0; }
+        .pair-tab-l1 { position: relative; padding: 0 0 10px; font-size: 13px; font-weight: 600; color: #9ca3af; cursor: pointer; white-space: nowrap; flex-shrink: 0; background: none; border: none; }
+        .pair-tab-l1.active { color: #111827; font-weight: 800; }
+        .pair-tab-l1.active::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: #111827; border-radius: 1px; }
+        .pair-sub-row { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 4px; }
+        .pair-sub-tab { font-size: 11px; font-weight: 600; color: #6b7280; padding: 5px 14px; border-radius: 999px; cursor: pointer; white-space: nowrap; flex-shrink: 0; background: #f3f4f6; border: none; transition: all 0.15s ease; }
+        .pair-sub-tab.active { background: #111827; color: #fff; font-weight: 700; }
         .pair-sheet-panel { height: 82%; min-height: 82%; }
         .pair-sort-th { background: none; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 2px; padding: 0; color: inherit; font: inherit; }
         .pair-sort-th:active { opacity: 0.7; }
@@ -1274,15 +1273,14 @@
                         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2.5"/></svg>
                         <input type="text" placeholder="查詢" class="w-full bg-gray-100 rounded-xl py-2.5 pl-10 pr-4 text-xs outline-none">
                     </div>
-                    <div class="pair-primary-seg no-scrollbar" id="pair-category-tabs">
-                        <button type="button" class="pair-tab-seg" data-cat="fav" onclick="switchPairPrimaryCategory('fav')">收藏</button>
-                        <button type="button" class="pair-tab-seg active" data-cat="crypto" onclick="switchPairPrimaryCategory('crypto')">数字货币</button>
-                        <button type="button" class="pair-tab-seg" data-cat="stock" onclick="switchPairPrimaryCategory('stock')">股票</button>
-                        <button type="button" class="pair-tab-seg" data-cat="commodity" onclick="switchPairPrimaryCategory('commodity')">大宗商品</button>
+                    <div class="pair-primary-row no-scrollbar" id="pair-category-tabs">
+                        <button type="button" class="pair-tab-l1" data-cat="fav" onclick="switchPairPrimaryCategory('fav')">收藏</button>
+                        <button type="button" class="pair-tab-l1 active" data-cat="crypto" onclick="switchPairPrimaryCategory('crypto')">数字货币</button>
+                        <button type="button" class="pair-tab-l1" data-cat="stock" onclick="switchPairPrimaryCategory('stock')">股票</button>
+                        <button type="button" class="pair-tab-l1" data-cat="commodity" onclick="switchPairPrimaryCategory('commodity')">大宗商品</button>
                     </div>
-                    <div id="pair-sub-panel" class="pair-sub-panel">
-                        <div class="pair-sub-label" id="pair-sub-label">分类标签</div>
-                        <div id="pair-sub-tabs" class="pair-sub-tabs-inner"></div>
+                    <div id="pair-sub-panel">
+                        <div id="pair-sub-tabs" class="pair-sub-row no-scrollbar"></div>
                     </div>
                 </div>
                 <div class="px-5 py-2 grid grid-cols-3 text-[9px] text-gray-400 font-bold shrink-0">
@@ -1931,12 +1929,6 @@
             { key: 'hot', label: '熱門' },
             { key: 'tradefi', label: 'TradeFi' }
         ]
-    };
-
-    const pairSubPanelLabels = {
-        fav: '行业筛选',
-        crypto: '分类标签',
-        commodity: '分类标签'
     };
 
     const pairListData = [
@@ -2786,7 +2778,6 @@
     function renderPairSubTabs() {
         const panel = document.getElementById('pair-sub-panel');
         const wrap = document.getElementById('pair-sub-tabs');
-        const label = document.getElementById('pair-sub-label');
         if (!wrap || !panel) return;
         const subs = pairSubTabsByPrimary[currentPairPrimaryCategory];
         if (!subs) {
@@ -2795,7 +2786,6 @@
             return;
         }
         panel.classList.remove('hidden');
-        if (label) label.textContent = pairSubPanelLabels[currentPairPrimaryCategory] || '分类标签';
         wrap.innerHTML = subs.map(s => `
             <button type="button" class="pair-sub-tab ${s.key === currentPairSubCategory ? 'active' : ''}" data-sub="${s.key}" onclick="switchPairSubCategory('${s.key}')">${s.label}</button>
         `).join('');
@@ -2838,7 +2828,7 @@
         currentPairPrimaryCategory = cat;
         const subs = pairSubTabsByPrimary[cat];
         currentPairSubCategory = subs ? subs[0].key : '';
-        document.querySelectorAll('#pair-category-tabs .pair-tab-seg').forEach(tab => {
+        document.querySelectorAll('#pair-category-tabs .pair-tab-l1').forEach(tab => {
             tab.classList.toggle('active', tab.dataset.cat === cat);
         });
         renderPairSubTabs();

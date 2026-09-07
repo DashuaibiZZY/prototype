@@ -15,13 +15,13 @@
 
         .tab-active { color: #000; font-weight: 800; position: relative; }
         .tab-active::after { content: ''; position: absolute; bottom: -8px; left: 0; width: 100%; height: 2.5px; background: #000; border-radius: 2px; }
-        .primary-seg { display: flex; margin: 0 20px 0; padding: 3px; background: #f3f4f6; border-radius: 12px; gap: 2px; overflow-x: auto; }
-        .primary-seg-btn { flex: 1; min-width: 72px; padding: 8px 6px; font-size: 11px; font-weight: 700; color: #6b7280; border: none; background: transparent; border-radius: 9px; white-space: nowrap; }
-        .primary-seg-btn.active { background: #fff; color: #111827; font-weight: 900; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-        .sub-panel { margin: 10px 20px 0; padding: 10px 12px; background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 12px; }
-        .sub-panel-label { font-size: 9px; font-weight: 800; color: #9ca3af; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
-        .sub-tab { color: #6b7280; font-weight: 700; font-size: 10px; padding: 5px 12px; border-radius: 8px; background: transparent; border: 1px solid transparent; white-space: nowrap; flex-shrink: 0; }
-        .sub-tab-active { background: #fff; color: #111827; font-weight: 800; border-color: #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+        .cat-tab-row { display: flex; gap: 20px; padding: 0 20px; overflow-x: auto; border-bottom: 1px solid #f3f4f6; }
+        .cat-tab-l1 { position: relative; padding: 0 0 10px; font-size: 13px; font-weight: 600; color: #9ca3af; background: none; border: none; white-space: nowrap; flex-shrink: 0; cursor: pointer; }
+        .cat-tab-l1.active { color: #111827; font-weight: 800; }
+        .cat-tab-l1.active::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: #111827; border-radius: 1px; }
+        .cat-chip-row { display: flex; gap: 8px; padding: 10px 20px 6px; overflow-x: auto; }
+        .cat-chip { font-size: 11px; font-weight: 600; color: #6b7280; padding: 5px 14px; border-radius: 999px; background: #f3f4f6; border: none; white-space: nowrap; flex-shrink: 0; cursor: pointer; transition: all 0.15s ease; }
+        .cat-chip-active { background: #111827; color: #fff; font-weight: 700; }
 
         .sort-icon { display: flex; flex-direction: column; margin-left: 2px; line-height: 0; }
         .sort-arrow { width: 0; height: 0; border-left: 3px solid transparent; border-right: 3px solid transparent; margin: 1px 0; }
@@ -68,16 +68,14 @@
         </div>
 
         <!-- 2. 一级行业 Tab -->
-        <div id="market-tabs" class="primary-seg no-scrollbar">
-            <button onclick="switchMarketPrimaryTab('fav')" id="tab-fav" class="primary-seg-btn">收藏</button>
-            <button onclick="switchMarketPrimaryTab('crypto')" id="tab-crypto" class="primary-seg-btn active">数字货币</button>
-            <button onclick="switchMarketPrimaryTab('stock')" id="tab-stock" class="primary-seg-btn">股票</button>
-            <button onclick="switchMarketPrimaryTab('commodity')" id="tab-commodity" class="primary-seg-btn">大宗商品</button>
+        <div id="market-tabs" class="cat-tab-row no-scrollbar">
+            <button onclick="switchMarketPrimaryTab('fav')" id="tab-fav" class="cat-tab-l1">收藏</button>
+            <button onclick="switchMarketPrimaryTab('crypto')" id="tab-crypto" class="cat-tab-l1 active">数字货币</button>
+            <button onclick="switchMarketPrimaryTab('stock')" id="tab-stock" class="cat-tab-l1">股票</button>
+            <button onclick="switchMarketPrimaryTab('commodity')" id="tab-commodity" class="cat-tab-l1">大宗商品</button>
         </div>
-        <!-- 2.1 二级面板 -->
-        <div id="market-sub-panel" class="sub-panel">
-            <div class="sub-panel-label" id="market-sub-label">分类标签</div>
-            <div id="market-sub-tabs" class="flex space-x-2 overflow-x-auto no-scrollbar whitespace-nowrap"></div>
+        <div id="market-sub-panel">
+            <div id="market-sub-tabs" class="cat-chip-row no-scrollbar"></div>
         </div>
 
         <!-- 3. 表頭字段 -->
@@ -193,12 +191,6 @@
         ]
     };
 
-    const marketSubPanelLabels = {
-        fav: '行业筛选',
-        crypto: '分类标签',
-        commodity: '分类标签'
-    };
-
     const marketData = [
         { name: 'BTCUSDT', vol: '42.5億', price: '64,120.50', change: '+1.24%', up: true, industry: 'crypto', tags: ['hot', 'main'] },
         { name: 'ETHUSDT', vol: '18.2億', price: '3,450.12', change: '-2.15%', up: false, industry: 'crypto', tags: ['hot', 'main'] },
@@ -221,7 +213,6 @@
     function renderMarketSubTabs() {
         const panel = document.getElementById('market-sub-panel');
         const wrap = document.getElementById('market-sub-tabs');
-        const label = document.getElementById('market-sub-label');
         const subs = marketSubTabsByPrimary[currentPrimaryTab];
         if (!panel || !wrap) return;
         if (!subs) {
@@ -230,9 +221,8 @@
             return;
         }
         panel.classList.remove('hidden');
-        if (label) label.textContent = marketSubPanelLabels[currentPrimaryTab] || '分类标签';
         wrap.innerHTML = subs.map(s => `
-            <button onclick="switchMarketSubTab('${s.key}')" id="sub-${s.key}" class="sub-tab ${s.key === currentSubTab ? 'sub-tab-active' : ''}">${s.label}</button>
+            <button onclick="switchMarketSubTab('${s.key}')" id="sub-${s.key}" class="cat-chip ${s.key === currentSubTab ? 'cat-chip-active' : ''}">${s.label}</button>
         `).join('');
     }
 
@@ -279,7 +269,7 @@
         currentSubTab = subs ? subs[0].key : '';
         tabs.forEach(t => {
             const el = document.getElementById('tab-' + t);
-            el.className = t === tab ? 'primary-seg-btn active' : 'primary-seg-btn';
+            el.className = t === tab ? 'cat-tab-l1 active' : 'cat-tab-l1';
         });
         renderMarketSubTabs();
         renderMarketList();
@@ -287,9 +277,9 @@
 
     function switchMarketSubTab(sub) {
         currentSubTab = sub;
-        document.querySelectorAll('#market-sub-tabs .sub-tab').forEach(btn => {
+        document.querySelectorAll('#market-sub-tabs .cat-chip').forEach(btn => {
             const key = btn.id.replace('sub-', '');
-            btn.className = key === sub ? 'sub-tab sub-tab-active' : 'sub-tab';
+            btn.className = key === sub ? 'cat-chip cat-chip-active' : 'cat-chip';
         });
         renderMarketList();
     }
