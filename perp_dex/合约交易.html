@@ -1367,8 +1367,8 @@
                         <div class="flex justify-between"><span class="text-gray-400">保證金</span><span class="font-bold">0.00</span></div>
                     </div>
                     <div class="grid grid-cols-2 gap-x-4">
-                        <div class="flex justify-between"><span class="text-gray-400">可開</span><span class="font-bold">0.00 USDC</span></div>
-                        <div class="flex justify-between"><span class="text-gray-400">可開</span><span class="font-bold">0.00 USDC</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">可開</span><span id="stat-max-open-long" class="font-bold">1,397.50 USDC</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">可開</span><span id="stat-max-open-short" class="font-bold">1,397.50 USDC</span></div>
                     </div>
                     <div class="pt-1 text-[8px] text-gray-400">
                         手續費率:
@@ -4242,13 +4242,14 @@
         document.getElementById('gtc-dropdown').classList.add('hidden');
     }
 
-    function openDepositModal() {
+    function openDepositModal(modalTitle) {
+        const title = modalTitle || '選擇充幣方式';
         const modal = document.createElement('div');
         modal.className = 'fixed inset-0 bg-black/30 z-50 flex items-center justify-center';
         modal.innerHTML = `
         <div class="bg-white w-80 p-5 rounded-lg shadow-xl text-xs">
             <div class="flex justify-between items-center mb-4">
-                <span class="text-sm font-bold text-gray-800">選擇充幣方式</span>
+                <span class="text-sm font-bold text-gray-800">${title}</span>
                 <span onclick="this.closest('.fixed').remove()" class="cursor-pointer text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</span>
             </div>
             <!-- 选择条1：资金划转 -->
@@ -4340,6 +4341,14 @@
         }
     }
 
+    function exceedsMaxOpen(direction) {
+        if (currentSide !== 'open' || (direction !== 'long' && direction !== 'short')) return false;
+        const qtyUsdt = getQtyUsdt();
+        const maxOpenEl = document.getElementById(direction === 'long' ? 'stat-max-open-long' : 'stat-max-open-short');
+        const maxOpen = parseInputNum(maxOpenEl?.textContent);
+        return Number.isFinite(qtyUsdt) && Number.isFinite(maxOpen) && qtyUsdt > maxOpen;
+    }
+
     function openOrderConfirm(direction, overrides) {
         const title = document.getElementById('confirm-title');
         const priceText = document.getElementById('confirm-price');
@@ -4347,14 +4356,22 @@
         const actionBtn = document.getElementById('confirm-action-btn');
         if (!title || !priceText || !typeText || !actionBtn) return;
 
+        if (exceedsMaxOpen(direction)) {
+            openDepositModal('余额不足');
+            return;
+        }
+
         let price = '', qty = '', isMarket = currentOrderMode === 'market';
+        const qtyInputVal = (document.getElementById('qty-input')?.value || '').trim();
+        const qtyUnit = document.getElementById('qty-unit')?.innerText || 'USDC';
+        const displayQty = qtyInputVal ? `${qtyInputVal} ${qtyUnit}` : '800.00 USDC';
         if (direction === 'long') {
             currentOpenDirection = 'long';
             title.innerText = "BTCUSDC 买入开多";
             title.className = "text-[13px] font-black text-green-500";
             actionBtn.className = "w-full bg-green-500 text-white py-3 rounded-sm font-black uppercase text-[12px] shadow-lg";
             price = isMarket ? '市價' : '52600.00 USDC';
-            qty = '800.00 USDC';
+            qty = displayQty;
             typeText.innerText = isMarket ? '市價單' : '限價單';
         } else if (direction === 'short') {
             currentOpenDirection = 'short';
@@ -4362,7 +4379,7 @@
             title.className = "text-[13px] font-black text-red-500";
             actionBtn.className = "w-full bg-red-500 text-white py-3 rounded-sm font-black uppercase text-[12px] shadow-lg";
             price = isMarket ? '市價' : '52600.00 USDC';
-            qty = '800.00 USDC';
+            qty = displayQty;
             typeText.innerText = isMarket ? '市價單' : '限價單';
         } else if (direction === 'close-long-market') {
             title.innerText = "BTCUSDC 卖出平多";
