@@ -2,7 +2,7 @@
  * 合伙人中心（用户侧）原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-user-40';
+    const DATA_VERSION = 'partner-user-41';
     const SOURCE_LABELS = ['自己产生', '直属直客', '合伙人级差'];
     const SOURCE_COLORS = ['#93c5fd', '#3b82f6', '#1e3a8a'];
     const SOURCE_STYLES = [
@@ -47,10 +47,14 @@
     let settlementPage = 1;
     let settlementDateFilter = '';
     let settlementStatusFilter = 'all';
+    let settlementSort = { key: null, dir: 'desc' };
     let commissionDetailDate = '';
     let commissionDetailSelectedUid = '';
     let commissionDetailSummaryPage = 1;
     let commissionTradesModalPage = 1;
+    let commissionDetailSearch = '';
+    let commissionDetailTypeFilter = 'all';
+    let commissionDetailSort = { key: null, dir: 'desc' };
 
     const mySuperiorInfo = {
         level: 2,
@@ -1189,15 +1193,22 @@
             return true;
         });
 
+        const settlementGetters = {
+            date: function (r) { return new Date(r.date).getTime(); },
+            vol: function (r) { return r.vol; },
+            rebate: function (r) { return r.rebate; }
+        };
+        filtered = applySort(filtered, settlementSort, settlementGetters);
+
         const sliced = slicePage(filtered, settlementPage, 10);
         settlementPage = sliced.page;
 
         const thead = document.getElementById('settlement-table-head');
         if (thead) {
             thead.innerHTML = '<tr>' +
-                '<th class="px-6 py-4">结算日期</th>' +
-                '<th class="px-6 py-4 text-right">团队交易额</th>' +
-                '<th class="px-6 py-4 text-right text-blue-600">返佣金额</th>' +
+                '<th class="px-6 py-4 cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setSettlementSort(\'date\')">结算日期' + sortIconHtml('date', settlementSort) + '</th>' +
+                '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setSettlementSort(\'vol\')">团队交易额' + sortIconHtml('vol', settlementSort) + '</th>' +
+                '<th class="px-6 py-4 text-right text-blue-600 cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setSettlementSort(\'rebate\')">返佣金额' + sortIconHtml('rebate', settlementSort) + '</th>' +
                 '<th class="px-6 py-4 text-right">状态</th>' +
                 '<th class="px-6 py-4 text-right">操作</th>' +
                 '</tr>';
@@ -1243,9 +1254,12 @@
             map[row.uid].vol += row.vol;
             map[row.uid].rebate += row.rebate;
         });
-        return Object.keys(map).map(function (uid) { return map[uid]; }).sort(function (a, b) {
-            return b.rebate - a.rebate;
-        });
+        return Object.keys(map).map(function (uid) { return map[uid]; });
+    }
+
+    function matchCommissionDetailSearch(row, q) {
+        const hay = [row.uid, row.wallet, row.email, row.remark].filter(Boolean).join(' ').toLowerCase();
+        return hay.indexOf(q) >= 0;
     }
 
     function commissionUidCell(row) {
@@ -1277,6 +1291,13 @@
         if (statusEl) statusEl.value = settlementStatusFilter;
     }
 
+    function syncCommissionDetailFilterInputs() {
+        const searchEl = document.getElementById('commission-detail-search');
+        const typeEl = document.getElementById('commission-detail-type-filter');
+        if (searchEl) searchEl.value = commissionDetailSearch;
+        if (typeEl) typeEl.value = commissionDetailTypeFilter;
+    }
+
     function renderCommissionDetailSummary() {
         const subtitle = document.getElementById('commission-detail-subtitle');
         if (subtitle) {
@@ -1285,9 +1306,36 @@
                 : '请选择结算日查看返佣构成。';
         }
 
-        const summary = commissionDetailDate ? getCommissionSummaryForDate(commissionDetailDate) : [];
+        let summary = commissionDetailDate ? getCommissionSummaryForDate(commissionDetailDate) : [];
+        if (commissionDetailTypeFilter !== 'all') {
+            summary = summary.filter(function (row) { return row.sourceType === commissionDetailTypeFilter; });
+        }
+        if (commissionDetailSearch.trim()) {
+            const q = commissionDetailSearch.trim().toLowerCase();
+            summary = summary.filter(function (row) { return matchCommissionDetailSearch(row, q); });
+        }
+
+        const detailGetters = {
+            vol: function (r) { return r.vol; },
+            rebate: function (r) { return r.rebate; }
+        };
+        summary = applySort(summary, commissionDetailSort, detailGetters);
+
         const sliced = slicePage(summary, commissionDetailSummaryPage, 10);
         commissionDetailSummaryPage = sliced.page;
+
+        const thead = document.getElementById('commission-detail-summary-head');
+        if (thead) {
+            thead.innerHTML = '<tr>' +
+                '<th class="px-5 py-3">UID</th>' +
+                '<th class="px-5 py-3">钱包 / 邮箱</th>' +
+                '<th class="px-5 py-3">下级/直客</th>' +
+                '<th class="px-5 py-3 text-right">返佣比例/级差比例</th>' +
+                '<th class="px-5 py-3 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setCommissionDetailSort(\'vol\')">团队/个人日交易额' + sortIconHtml('vol', commissionDetailSort) + '</th>' +
+                '<th class="px-5 py-3 text-right text-blue-600 cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setCommissionDetailSort(\'rebate\')">级差/返佣收入' + sortIconHtml('rebate', commissionDetailSort) + '</th>' +
+                '<th class="px-5 py-3 text-right">操作</th>' +
+                '</tr>';
+        }
 
         const tbody = document.getElementById('commission-detail-summary-body');
         if (tbody) {
@@ -1296,23 +1344,15 @@
             } else {
                 tbody.innerHTML = sliced.items.map(function (row) {
                     const typeLabel = row.sourceType === '直客' ? '直客' : '下级';
-                    const volLabel = row.isPartner ? '团队' : '个人';
-                    const incomeLabel = row.isPartner ? '级差' : '返佣';
                     return '<tr class="hover:bg-gray-50/80">' +
                         '<td class="px-5 py-3">' + commissionUidCell(row) + '</td>' +
                         '<td class="px-5 py-3 font-mono text-gray-700">' + commissionContactCell(row) + '</td>' +
                         '<td class="px-5 py-3 font-bold text-gray-900">' + esc(typeLabel) + '</td>' +
                         '<td class="px-5 py-3 text-right text-gray-600 font-bold">' + esc(row.ratio) + '</td>' +
+                        '<td class="px-5 py-3 text-right font-black text-gray-900">' + fmtMoney(row.vol) + '</td>' +
+                        '<td class="px-5 py-3 text-right font-black text-blue-600">' + fmtMoney(row.rebate) + '</td>' +
                         '<td class="px-5 py-3 text-right">' +
-                        '<span class="block text-[9px] text-gray-400 font-bold">' + volLabel + '日交易额</span>' +
-                        '<span class="font-black text-gray-900">' + fmtMoney(row.vol) + '</span>' +
-                        '</td>' +
-                        '<td class="px-5 py-3 text-right">' +
-                        '<span class="block text-[9px] text-gray-400 font-bold">' + incomeLabel + '收入</span>' +
-                        '<span class="font-black text-blue-600">' + fmtMoney(row.rebate) + '</span>' +
-                        '</td>' +
-                        '<td class="px-5 py-3 text-right">' +
-                        '<button type="button" onclick="PartnerCenter.openCommissionTradesModal(\'' + jsEsc(row.uid) + '\')" class="text-blue-600 font-black hover:underline text-[11px]">查看返佣流水明细</button>' +
+                        '<button type="button" onclick="PartnerCenter.openCommissionTradesModal(\'' + jsEsc(row.uid) + '\')" class="text-blue-600 font-black hover:underline text-[11px]">交易返佣流水</button>' +
                         '</td></tr>';
                 }).join('');
             }
@@ -2030,12 +2070,35 @@
             settlementPage = 1;
             renderSettlementTable();
         },
+        setSettlementSort: function (key) {
+            toggleSort(settlementSort, key);
+            settlementPage = 1;
+            renderSettlementTable();
+        },
         openCommissionDetail: function (date) {
             commissionDetailDate = date || '';
             commissionDetailSelectedUid = '';
+            commissionDetailSearch = '';
+            commissionDetailTypeFilter = 'all';
             commissionDetailSummaryPage = 1;
             commissionTradesModalPage = 1;
             if (typeof showMainPage === 'function') showMainPage('page-commission-detail');
+            syncCommissionDetailFilterInputs();
+            renderCommissionDetailSummary();
+        },
+        setCommissionDetailSearch: function (q) {
+            commissionDetailSearch = q || '';
+            commissionDetailSummaryPage = 1;
+            renderCommissionDetailSummary();
+        },
+        setCommissionDetailTypeFilter: function (v) {
+            commissionDetailTypeFilter = v === '下级' || v === '直客' ? v : 'all';
+            commissionDetailSummaryPage = 1;
+            renderCommissionDetailSummary();
+        },
+        setCommissionDetailSort: function (key) {
+            toggleSort(commissionDetailSort, key);
+            commissionDetailSummaryPage = 1;
             renderCommissionDetailSummary();
         },
         openCommissionTradesModal: function (uid) {
@@ -2091,7 +2154,10 @@
                 syncSettlementFilterInputs();
                 renderSettlementTable();
             }
-            else if (pageId === 'page-commission-detail') renderCommissionDetailSummary();
+            else if (pageId === 'page-commission-detail') {
+                syncCommissionDetailFilterInputs();
+                renderCommissionDetailSummary();
+            }
             else if (pageId === 'page-links') renderInviteLinks();
             else if (pageId === 'page-drill-overview') renderDrillOverview();
         }
