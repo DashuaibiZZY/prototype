@@ -2,7 +2,7 @@
  * 合伙人中心（用户侧）原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-user-33';
+    const DATA_VERSION = 'partner-user-34';
     const SOURCE_LABELS = ['自己产生', '直属直客', '合伙人级差'];
     const SOURCE_COLORS = ['#93c5fd', '#3b82f6', '#1e3a8a'];
     const SOURCE_STYLES = [
@@ -15,8 +15,8 @@
     const LINKS_CHART_POINTS = { '1D': 24, '1W': 7, '1M': 30, '3M': 90 };
     const LINKS_CHART_LABEL_STEP = { '1D': 6, '1W': 1, '1M': 5, '3M': 15 };
     const MY_MAX_RATIO = 70;
-    const OVERVIEW_SNAPSHOT_PERIOD = '1W';
 
+    let overviewPeriod = '1W';
     let analyticsPeriod = '1W';
     let analyticsDimTab = 'vol';
     let linksPeriod = '1W';
@@ -886,27 +886,36 @@
     }
 
     function renderOverview() {
-        const scale = PERIOD_SCALE[OVERVIEW_SNAPSHOT_PERIOD] || 1;
+        const scale = PERIOD_SCALE[overviewPeriod] || 1;
         const scaled = computeOverviewScaled(scale);
 
         const volEl = document.getElementById('overview-team-vol');
         if (volEl) volEl.textContent = fmtMoney(scaled.vol);
         const volChangeEl = document.getElementById('overview-vol-change');
-        if (volChangeEl) volChangeEl.textContent = '+' + scaled.volChange + '%';
+        if (volChangeEl) {
+            const sign = scaled.volChange >= 0 ? '+' : '';
+            volChangeEl.textContent = sign + scaled.volChange + '%';
+            volChangeEl.className = scaled.volChange >= 0 ? 'text-green-500 font-black' : 'text-red-500 font-black';
+        }
         const rebateEl = document.getElementById('overview-total-rebate');
         if (rebateEl) rebateEl.textContent = fmtMoney(scaled.rebate);
+        const selfEl = document.getElementById('overview-self-rebate');
+        if (selfEl) selfEl.textContent = fmtMoney(scaled.selfRebate);
+        const directEl = document.getElementById('overview-direct-rebate');
+        if (directEl) directEl.textContent = fmtMoney(scaled.directRebate);
         const gapEl = document.getElementById('overview-gap-rebate');
         if (gapEl) gapEl.textContent = fmtMoney(scaled.gapRebate);
-        const teamUsersEl = document.getElementById('overview-team-users');
-        if (teamUsersEl) teamUsersEl.textContent = fmtNum(scaled.teamUsers);
-        const activeEl = document.getElementById('overview-trade-users-active');
-        if (activeEl) activeEl.textContent = fmtNum(scaled.activeTraders);
         const netEl = document.getElementById('overview-team-net');
         if (netEl) {
             netEl.textContent = fmtMoney(scaled.net, { signed: true });
-            netEl.className = 'text-2xl font-black ' + (scaled.net >= 0 ? 'text-green-500' : 'text-red-500');
+            netEl.className = 'text-3xl font-black ' + (scaled.net >= 0 ? 'text-green-500' : 'text-red-500');
         }
+        const activeEl = document.getElementById('overview-trade-users-active');
+        if (activeEl) activeEl.innerHTML = fmtNum(scaled.activeTraders) + ' <span class="text-base font-bold text-gray-600">交易用户</span>';
+        const totalEl = document.getElementById('overview-trade-users-total');
+        if (totalEl) totalEl.textContent = fmtNum(scaled.teamUsers) + ' 总用户';
 
+        updatePeriodButtons('overview-period-btn', overviewPeriod);
         renderMySuperior();
         renderSubPartnersTable({ masked: false });
         renderDirectClientsTable({ masked: false });
@@ -1164,7 +1173,7 @@
         opts = opts || {};
         const masked = opts.masked;
         const drill = opts.drill;
-        const scale = drill ? (PERIOD_SCALE[drillPeriod] || 1) : (PERIOD_SCALE[OVERVIEW_SNAPSHOT_PERIOD] || 1);
+        const scale = drill ? (PERIOD_SCALE[drillPeriod] || 1) : (PERIOD_SCALE[overviewPeriod] || 1);
         const sortState = drill ? drillSubSort : subPartnerSort;
         const headId = drill ? 'drill-sub-partner-table-head' : 'sub-partner-table-head';
         const bodyId = drill ? 'drill-sub-partner-table-body' : 'sub-partner-table-body';
@@ -1556,6 +1565,10 @@
     }
 
     window.PartnerCenter = {
+        setOverviewPeriod: function (p) {
+            overviewPeriod = p;
+            renderOverview();
+        },
         setAnalyticsPeriod: function (p) {
             analyticsPeriod = p;
             renderAnalytics();

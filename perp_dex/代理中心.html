@@ -52,6 +52,7 @@
         .analytics-source-matrix th, .analytics-source-matrix td { padding: 10px 12px; font-size: 11px; }
         .analytics-source-matrix th { font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; }
         .analytics-pct-chip { display: inline-block; min-width: 42px; text-align: right; font-weight: 800; color: #6b7280; font-size: 10px; }
+        .overview-analytics-guide { border: 1px dashed #e5e7eb; background: linear-gradient(90deg, #f8fafc 0%, #fff 100%); }
         .partner-nav-group { display: flex; flex-direction: column; gap: 4px; }
         .partner-nav-sub { padding-left: 12px !important; font-size: 11px !important; }
         .partner-nav-sub-active { background: #f3f4f6 !important; color: #111827 !important; font-weight: 800 !important; }
@@ -219,12 +220,14 @@
                 <div class="flex flex-wrap justify-between items-end gap-4">
                     <div>
                         <h1 class="text-2xl font-black tracking-tight">合伙人管理</h1>
-                        <p class="text-gray-400 font-medium">管理直属下级合伙人与自邀直客，默认展示近 7 日汇总。</p>
+                        <p class="text-gray-400 font-medium">管理直属下级合伙人与自邀直客，顶部卡片随周期切换汇总。</p>
                     </div>
-                    <button type="button" onclick="showMainPage('page-analytics')" class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-sm font-black text-[11px] hover:bg-gray-800 transition">
-                        团队数据分析
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-                    </button>
+                    <div class="flex bg-white p-1 rounded border border-gray-200 shadow-sm">
+                        <button type="button" data-period="1D" onclick="PartnerCenter.setOverviewPeriod('1D')" class="overview-period-btn px-4 py-1 text-[10px] font-bold hover:bg-gray-50">1D</button>
+                        <button type="button" data-period="1W" onclick="PartnerCenter.setOverviewPeriod('1W')" class="overview-period-btn px-4 py-1 text-[10px] font-bold bg-black text-white rounded-sm shadow-md">1W</button>
+                        <button type="button" data-period="1M" onclick="PartnerCenter.setOverviewPeriod('1M')" class="overview-period-btn px-4 py-1 text-[10px] font-bold hover:bg-gray-50">1M</button>
+                        <button type="button" data-period="3M" onclick="PartnerCenter.setOverviewPeriod('3M')" class="overview-period-btn px-4 py-1 text-[10px] font-bold hover:bg-gray-50">3M</button>
+                    </div>
                 </div>
 
                 <!-- 我的上级 / 我的返佣比例 -->
@@ -241,29 +244,45 @@
                     </div>
                 </div>
 
-                <!-- 核心指标（精简快照） -->
-                <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                    <div class="stats-card !py-4">
-                        <p class="text-gray-400 font-bold mb-1 text-[10px]">团队交易额</p>
-                        <h3 id="overview-team-vol" class="text-2xl font-black">—</h3>
-                        <p class="text-[10px] text-gray-400 mt-1">近 7 日 · 较上周期 <span id="overview-vol-change" class="text-green-500">—</span></p>
+                <!-- 核心指标 -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="stats-card">
+                        <p class="text-gray-400 font-bold mb-2 text-[10px]">团队总交易额</p>
+                        <h3 id="overview-team-vol" class="text-3xl font-black">—</h3>
+                        <p class="text-[10px] text-gray-400 mt-2">较上周期 <span id="overview-vol-change" class="text-green-500 font-black">—</span></p>
                     </div>
-                    <div class="stats-card !py-4 border-l-4 border-l-blue-600">
-                        <p class="text-gray-400 font-bold mb-1 text-[10px] text-blue-600">返佣收入</p>
-                        <h3 id="overview-total-rebate" class="text-2xl font-black text-gray-900">—</h3>
+                    <div class="stats-card border-l-4 border-l-blue-600">
+                        <p class="text-gray-400 font-bold mb-2 text-[10px] text-blue-600">总返佣收入 (本期预估)</p>
+                        <h3 id="overview-total-rebate" class="text-3xl font-black text-gray-900">—</h3>
+                        <div class="mt-3 grid grid-cols-2 gap-x-2 gap-y-1 text-[9px] font-black uppercase text-gray-400 border-t pt-3 border-gray-50">
+                            <div>自返佣: <span id="overview-self-rebate" class="text-gray-900">—</span></div>
+                            <div>直客: <span id="overview-direct-rebate" class="text-gray-900">—</span></div>
+                            <div class="col-span-2 text-blue-600">级差: <span id="overview-gap-rebate">—</span></div>
+                        </div>
                     </div>
-                    <div class="stats-card !py-4">
-                        <p class="text-gray-400 font-bold mb-1 text-[10px]">团队人数</p>
-                        <h3 id="overview-team-users" class="text-2xl font-black text-gray-900">—</h3>
+                    <div class="stats-card">
+                        <p class="text-gray-400 font-bold mb-2 text-[10px]">团队净入金</p>
+                        <h3 id="overview-team-net" class="text-3xl font-black text-green-500">—</h3>
+                        <p class="text-[10px] text-gray-400 mt-2">包含下级穿透数据</p>
                     </div>
-                    <div class="stats-card !py-4">
-                        <p class="text-gray-400 font-bold mb-1 text-[10px]">团队交易人数</p>
-                        <h3 id="overview-trade-users-active" class="text-2xl font-black text-gray-900">—</h3>
+                    <div class="stats-card">
+                        <p class="text-gray-400 font-bold mb-2 text-[10px]">用户规模</p>
+                        <h3 id="overview-trade-users-active" class="text-3xl font-black text-gray-900">—</h3>
+                        <p id="overview-trade-users-total" class="text-[10px] text-gray-400 mt-2 font-bold">—</p>
                     </div>
-                    <div class="stats-card !py-4">
-                        <p class="text-gray-400 font-bold mb-1 text-[10px]">团队净入金</p>
-                        <h3 id="overview-team-net" class="text-2xl font-black text-green-500">—</h3>
+                </div>
+
+                <!-- 团队数据分析引导 -->
+                <div class="stats-card overview-analytics-guide py-4 px-5 flex flex-wrap items-center justify-between gap-4">
+                    <div class="min-w-0">
+                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">深度分析</p>
+                        <p class="text-[13px] font-black text-gray-900">需要看来源占比、趋势曲线或贡献排行？</p>
+                        <p class="text-[11px] text-gray-500 mt-1 font-medium">「团队数据分析」支持五指标 × 三来源拆解，以及自己 / 直客 / 下级 Top 5 贡献。</p>
                     </div>
+                    <button type="button" onclick="showMainPage('page-analytics')" class="shrink-0 flex items-center gap-2 bg-black text-white px-4 py-2.5 rounded-sm font-black text-[11px] hover:bg-gray-800 transition">
+                        进入团队数据分析
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                    </button>
                 </div>
 
                 <!-- 详细名单数据 -->
@@ -835,7 +854,7 @@
     </div>
 </div>
 
-<script src="partner-center-user.js?v=partner-user-33"></script>
+<script src="partner-center-user.js?v=partner-user-34"></script>
 <script>
     // 切换数据表格 (下级代理 vs 直客)
     function switchTable(tableId) {
