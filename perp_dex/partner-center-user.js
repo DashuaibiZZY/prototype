@@ -2,15 +2,16 @@
  * 合伙人中心（用户侧）原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-user-30';
+    const DATA_VERSION = 'partner-user-31';
     const USER_SCALE_TIP = '交易用户数据每天 UTC+8 0 点更新';
     const PERIOD_SCALE = { '1D': 0.14, '1W': 1, '1M': 4.2, '3M': 12 };
     const LINKS_CHART_POINTS = { '1D': 24, '1W': 7, '1M': 30, '3M': 90 };
     const LINKS_CHART_LABEL_STEP = { '1D': 6, '1W': 1, '1M': 5, '3M': 15 };
     const MY_MAX_RATIO = 70;
+    const OVERVIEW_SNAPSHOT_PERIOD = '1W';
 
-    let overviewPeriod = '1W';
-    let overviewDimTab = 'trend';
+    let analyticsPeriod = '1W';
+    let analyticsDimTab = 'revenue';
     let linksPeriod = '1W';
     let linksPage = 1;
     let linksSearch = '';
@@ -246,6 +247,10 @@
         return subPartnersData.reduce(function (acc, row) { return acc + (row.gapIncome || 0); }, 0);
     }
 
+    function sumDirectClientVol() {
+        return directClientsData.reduce(function (acc, row) { return acc + (row.totalVol || 0); }, 0);
+    }
+
     const overviewBase = {
         teamVol: 52450000,
         totalRebate: 13000,
@@ -253,10 +258,17 @@
         directRebate: 1200,
         gapRebate: 11600,
         directGapRebate: sumDirectGapIncome(),
+        directSubTeamVol: 41200000,
+        directClientVol: 890000,
+        penetrateTeamVol: 10360000,
         teamNetDeposit: 1240000,
         totalTradeUsers: 3680,
         activeTradeUsers: 1850,
-        volChange: 12.4
+        newUsers: 142,
+        volChange: 12.4,
+        rebateChange: 8.6,
+        netDepositChange: 5.2,
+        userChange: 3.1
     };
     overviewBase.penetrateGapRebate = overviewBase.gapRebate - overviewBase.directGapRebate;
 
@@ -461,9 +473,65 @@
             '</svg>';
     }
 
-    function renderSvgStackedRebateChart4(container, selfSeries, directSeries, directGapSeries, penetrateGapSeries, period) {
+    function computeOverviewScaled(scale) {
+        const rebate = overviewBase.totalRebate * scale;
+        const self = overviewBase.selfRebate * scale;
+        const direct = overviewBase.directRebate * scale;
+        const directGap = overviewBase.directGapRebate * scale;
+        const penetrateGap = overviewBase.penetrateGapRebate * scale;
+        const directSubVol = overviewBase.directSubTeamVol * scale;
+        const directClientVol = overviewBase.directClientVol * scale;
+        const penetrateVol = overviewBase.penetrateTeamVol * scale;
+        return {
+            vol: overviewBase.teamVol * scale,
+            rebate: rebate,
+            self: self,
+            direct: direct,
+            directGap: directGap,
+            penetrateGap: penetrateGap,
+            gap: directGap + penetrateGap,
+            directSubVol: directSubVol,
+            directClientVol: directClientVol,
+            penetrateVol: penetrateVol,
+            net: overviewBase.teamNetDeposit * scale,
+            totalUsers: overviewBase.totalTradeUsers,
+            activeUsers: Math.round(overviewBase.activeTradeUsers * Math.min(scale, 1.2)),
+            newUsers: Math.round(overviewBase.newUsers * Math.min(scale, 1.2)),
+            volChange: overviewBase.volChange,
+            rebateChange: overviewBase.rebateChange,
+            netDepositChange: overviewBase.netDepositChange,
+            userChange: overviewBase.userChange
+        };
+    }
+
+    function overviewRebateRatios(scaled) {
+        const total = scaled.rebate || 1;
+        return {
+            self: scaled.self / total,
+            direct: scaled.direct / total,
+            directGap: scaled.directGap / total,
+            penetrateGap: scaled.penetrateGap / total
+        };
+    }
+
+    function overviewVolRatios(scaled) {
+        const total = scaled.vol || 1;
+        return {
+            directSub: scaled.directSubVol / total,
+            directClient: scaled.directClientVol / total,
+            penetrate: scaled.penetrateVol / total
+        };
+    }
+
+    function formatDeltaPct(value) {
+        const cls = value >= 0 ? 'kpi-delta-up' : 'kpi-delta-down';
+        const sign = value >= 0 ? '+' : '';
+        return '<span class="' + cls + '">' + sign + value + '% vs 上周期</span>';
+    }
+
+    function renderSvgStackedAreaChart(container, layerSeries, period, layerStyles) {
         if (!container) return;
-        const points = selfSeries.length;
+        const points = layerSeries[0] ? layerSeries[0].length : 0;
         if (!points) {
             container.innerHTML = '';
             return;
@@ -473,9 +541,12 @@
         const pad = { l: 42, r: 10, t: 10, b: 22 };
         const pw = W - pad.l - pad.r;
         const ph = H - pad.t - pad.b;
-        const totals = selfSeries.map(function (_s, i) {
-            return selfSeries[i] + directSeries[i] + directGapSeries[i] + penetrateGapSeries[i];
-        });
+        const totals = [];
+        for (let i = 0; i < points; i++) {
+            let sum = 0;
+            layerSeries.forEach(function (series) { sum += series[i]; });
+            totals.push(sum);
+        }
         const maxV = Math.max.apply(null, totals) * 1.12 || 1;
         const xAt = function (i) { return pad.l + (points <= 1 ? pw / 2 : (i / (points - 1)) * pw); };
         const yAt = function (v) { return pad.t + ph - (v / maxV) * ph; };
@@ -487,13 +558,12 @@
             return d + ' Z';
         }
 
-        const selfTop = selfSeries.slice();
-        const directBottom = selfTop.slice();
-        const directTop = selfSeries.map(function (s, i) { return s + directSeries[i]; });
-        const directGapBottom = directTop.slice();
-        const directGapTop = selfSeries.map(function (s, i) { return s + directSeries[i] + directGapSeries[i]; });
-        const penetrateBottom = directGapTop.slice();
-        const penetrateTop = totals.slice();
+        const cumul = [];
+        layerSeries.forEach(function (_series, layerIdx) {
+            const bottom = layerIdx === 0 ? Array(points).fill(0) : cumul[layerIdx - 1].slice();
+            const top = bottom.map(function (b, i) { return b + layerSeries[layerIdx][i]; });
+            cumul.push(top);
+        });
 
         let grid = '';
         for (let g = 0; g <= 3; g++) {
@@ -510,154 +580,149 @@
             labels += '<text x="' + xAt(i).toFixed(1) + '" y="' + (H - 4) + '" text-anchor="middle" fill="#94a3b8" font-size="7" font-weight="700">' + esc(text) + '</text>';
         });
 
+        let areas = '';
+        layerSeries.forEach(function (_series, layerIdx) {
+            const style = layerStyles[layerIdx] || { fill: '#3b82f6', opacity: 0.8 };
+            const bottom = layerIdx === 0 ? Array(points).fill(0) : cumul[layerIdx - 1];
+            areas += '<path d="' + areaPath(bottom, cumul[layerIdx]) + '" fill="' + style.fill + '" fill-opacity="' + (style.opacity || 0.8) + '"/>';
+        });
+
         container.innerHTML =
             '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' +
-            grid +
-            '<path d="' + areaPath(Array(points).fill(0), selfTop) + '" fill="#93c5fd" fill-opacity="0.88"/>' +
-            '<path d="' + areaPath(directBottom, directTop) + '" fill="#3b82f6" fill-opacity="0.8"/>' +
-            '<path d="' + areaPath(directGapBottom, directGapTop) + '" fill="#2563eb" fill-opacity="0.82"/>' +
-            '<path d="' + areaPath(penetrateBottom, penetrateTop) + '" fill="#1e3a8a" fill-opacity="0.85"/>' +
-            labels +
-            '</svg>';
+            grid + areas + labels + '</svg>';
     }
 
-    function computeOverviewScaled(scale) {
-        const rebate = overviewBase.totalRebate * scale;
-        const self = overviewBase.selfRebate * scale;
-        const direct = overviewBase.directRebate * scale;
-        const directGap = overviewBase.directGapRebate * scale;
-        const penetrateGap = overviewBase.penetrateGapRebate * scale;
-        return {
-            vol: overviewBase.teamVol * scale,
-            rebate: rebate,
-            self: self,
-            direct: direct,
-            directGap: directGap,
-            penetrateGap: penetrateGap,
-            gap: directGap + penetrateGap,
-            net: overviewBase.teamNetDeposit * scale,
-            totalUsers: overviewBase.totalTradeUsers,
-            activeUsers: Math.round(overviewBase.activeTradeUsers * Math.min(scale, 1.2)),
-            volChange: overviewBase.volChange
-        };
+    function renderSvgStackedRebateChart4(container, selfSeries, directSeries, directGapSeries, penetrateGapSeries, period) {
+        renderSvgStackedAreaChart(container, [selfSeries, directSeries, directGapSeries, penetrateGapSeries], period, [
+            { fill: '#93c5fd', opacity: 0.88 },
+            { fill: '#3b82f6', opacity: 0.8 },
+            { fill: '#2563eb', opacity: 0.82 },
+            { fill: '#1e3a8a', opacity: 0.85 }
+        ]);
     }
 
-    function overviewRebateRatios(scaled) {
-        const total = scaled.rebate || 1;
-        return {
-            self: scaled.self / total,
-            direct: scaled.direct / total,
-            directGap: scaled.directGap / total,
-            penetrateGap: scaled.penetrateGap / total
-        };
-    }
-
-    function renderOverviewDimTabs() {
-        document.querySelectorAll('.overview-dim-tab').forEach(function (btn) {
+    function renderAnalyticsDimTabs() {
+        document.querySelectorAll('.analytics-dim-tab').forEach(function (btn) {
             const tab = btn.getAttribute('data-dim-tab');
-            if (tab === overviewDimTab) btn.className = 'overview-dim-tab tab-active pb-1';
-            else btn.className = 'overview-dim-tab text-gray-400 font-bold pb-1 hover:text-black';
+            if (tab === analyticsDimTab) btn.className = 'analytics-dim-tab tab-active pb-1';
+            else btn.className = 'analytics-dim-tab text-gray-400 font-bold pb-1 hover:text-black';
         });
-        ['trend', 'contrib', 'gap-split'].forEach(function (id) {
-            const panel = document.getElementById('overview-dim-panel-' + id);
-            if (panel) panel.classList.toggle('hidden', overviewDimTab !== id);
+        ['revenue', 'volume', 'structure', 'ranking'].forEach(function (id) {
+            const panel = document.getElementById('analytics-dim-panel-' + id);
+            if (panel) panel.classList.toggle('hidden', analyticsDimTab !== id);
         });
     }
 
-    function renderOverviewInsightPanels(scaled) {
-        const ratios = overviewRebateRatios(scaled);
+    function renderAnalyticsPanels(scaled) {
+        const rebateRatios = overviewRebateRatios(scaled);
+        const volRatios = overviewVolRatios(scaled);
         const gapTotal = scaled.gap || 1;
         const directGapPct = Math.round((scaled.directGap / gapTotal) * 100);
         const penetrateGapPct = 100 - directGapPct;
-
         const rankedSubs = subPartnersData.slice().sort(function (a, b) { return b.gapIncome - a.gapIncome; });
         const topSub = rankedSubs[0];
-        const topSubGapShare = scaled.directGap ? Math.round((topSub.gapIncome * (scaled.directGap / overviewBase.directGapRebate)) / scaled.directGap * 100) : 0;
 
-        const trendEl = document.getElementById('overview-insight-trend');
-        if (trendEl) {
-            trendEl.innerHTML =
-                '<div class="grid grid-cols-1 md:grid-cols-3 gap-4">' +
-                '<div class="rounded-sm border border-gray-100 bg-gray-50/60 p-4">' +
-                '<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">交易额</p>' +
-                '<p class="text-lg font-black text-gray-900">' + esc(fmtMoney(scaled.vol)) + '</p>' +
-                '<p class="text-[10px] text-gray-500 mt-2">较上周期 <span class="text-green-500 font-black">+' + scaled.volChange + '%</span></p>' +
-                '</div>' +
-                '<div class="rounded-sm border border-blue-100 bg-blue-50/40 p-4">' +
-                '<p class="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2">级差构成</p>' +
-                '<p class="text-lg font-black text-gray-900">直属 ' + directGapPct + '% · 穿透 ' + penetrateGapPct + '%</p>' +
-                '<p class="text-[10px] text-gray-500 mt-2">直属级差来自 L1 下级；穿透级差来自更深层团队</p>' +
-                '</div>' +
-                '<div class="rounded-sm border border-gray-100 bg-gray-50/60 p-4">' +
-                '<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">返佣结构</p>' +
-                '<p class="text-lg font-black text-gray-900">级差占 ' + Math.round(ratios.directGap * 100 + ratios.penetrateGap * 100) + '%</p>' +
-                '<p class="text-[10px] text-gray-500 mt-2">自返佣 ' + Math.round(ratios.self * 100) + '% · 直客 ' + Math.round(ratios.direct * 100) + '%</p>' +
-                '</div>' +
-                '</div>' +
-                (topSub ? '<p class="text-[11px] text-gray-600 mt-4 font-medium">本期直属级差最大贡献：<span class="font-black text-gray-900">' + esc(topSub.remark || topSub.name) + '</span>（约 ' + topSubGapShare + '% 直属级差）</p>' : '');
+        const revenueEl = document.getElementById('analytics-panel-revenue');
+        if (revenueEl) {
+            revenueEl.innerHTML =
+                '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">' +
+                '<div class="space-y-4">' +
+                '<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">返佣构成</p>' +
+                '<div class="space-y-3">' +
+                revenueBarRow('自返佣', scaled.self, rebateRatios.self, '#93c5fd') +
+                revenueBarRow('直客返佣', scaled.direct, rebateRatios.direct, '#3b82f6') +
+                revenueBarRow('直属级差', scaled.directGap, rebateRatios.directGap, '#2563eb') +
+                revenueBarRow('穿透级差', scaled.penetrateGap, rebateRatios.penetrateGap, '#1e3a8a') +
+                '</div></div>' +
+                '<div class="space-y-4">' +
+                '<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">经营解读</p>' +
+                '<div class="rounded-sm border border-gray-100 bg-gray-50/60 p-4 space-y-3 text-[11px] text-gray-600">' +
+                '<p>本期返佣 <span class="font-black text-gray-900">' + fmtMoney(scaled.rebate) + '</span>，级差收入占 ' + Math.round(rebateRatios.directGap * 100 + rebateRatios.penetrateGap * 100) + '%。</p>' +
+                '<p>直属级差 ' + directGapPct + '% · 穿透级差 ' + penetrateGapPct + '%。' +
+                (topSub ? ' 最大贡献下级：<span class="font-black text-gray-900">' + esc(topSub.remark || topSub.name) + '</span>。' : '') +
+                '</p>' +
+                '<p class="text-[10px] text-gray-400">建议：穿透占比较高时，优先关注 L2 团队活跃与下级合伙人招募质量。</p>' +
+                '</div></div></div>';
         }
 
-        const contribBody = document.getElementById('overview-contrib-body');
-        if (contribBody) {
+        const volumeEl = document.getElementById('analytics-panel-volume');
+        if (volumeEl) {
+            volumeEl.innerHTML =
+                '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">' +
+                '<div class="space-y-4">' +
+                '<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">交易额来源</p>' +
+                '<div class="space-y-3">' +
+                revenueBarRow('直属下级团队', scaled.directSubVol, volRatios.directSub, '#60a5fa') +
+                revenueBarRow('自邀直客', scaled.directClientVol, volRatios.directClient, '#3b82f6') +
+                revenueBarRow('穿透团队', scaled.penetrateVol, volRatios.penetrate, '#1e3a8a') +
+                '</div></div>' +
+                '<div class="space-y-4">' +
+                '<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">用户与入金</p>' +
+                '<div class="grid grid-cols-2 gap-3">' +
+                kpiMiniCard('交易用户', fmtNum(scaled.activeUsers), '+' + scaled.userChange + '%') +
+                kpiMiniCard('总用户', fmtNum(scaled.totalUsers), '含穿透') +
+                kpiMiniCard('新增用户', fmtNum(scaled.newUsers), '本期注册') +
+                kpiMiniCard('团队净入金', fmtMoney(scaled.net, { signed: true }), '+' + scaled.netDepositChange + '%') +
+                '</div></div></div>';
+        }
+
+        const structureEl = document.getElementById('analytics-panel-structure');
+        if (structureEl) {
+            let subRows = '';
+            rankedSubs.forEach(function (row) {
+                const gapShare = overviewBase.directGapRebate ? Math.round(row.gapIncome / overviewBase.directGapRebate * 100) : 0;
+                subRows += '<div class="flex items-center gap-3 text-[11px]">' +
+                    '<span class="w-28 truncate font-bold text-gray-700">' + esc(row.remark || row.name) + '</span>' +
+                    '<div class="flex-1 h-2 bg-gray-100 rounded-sm overflow-hidden">' +
+                    '<div class="h-full bg-blue-500 rounded-sm" style="width:' + gapShare + '%"></div></div>' +
+                    '<span class="w-16 text-right font-black">' + gapShare + '%</span></div>';
+            });
+            structureEl.innerHTML =
+                '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">' +
+                '<div class="space-y-4">' +
+                '<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">级差结构 · 直属 vs 穿透</p>' +
+                '<div class="flex h-3 rounded-sm overflow-hidden">' +
+                '<div class="bg-blue-500" style="width:' + directGapPct + '%"></div>' +
+                '<div class="bg-indigo-900" style="width:' + penetrateGapPct + '%"></div></div>' +
+                '<div class="grid grid-cols-2 gap-3 text-[11px]">' +
+                '<div class="rounded-sm border border-blue-100 p-3 bg-blue-50/30"><p class="text-[9px] font-black text-blue-600 uppercase">直属级差</p><p class="text-xl font-black mt-1">' + fmtMoney(scaled.directGap) + '</p></div>' +
+                '<div class="rounded-sm border border-indigo-100 p-3 bg-indigo-50/30"><p class="text-[9px] font-black text-indigo-800 uppercase">穿透级差</p><p class="text-xl font-black mt-1">' + fmtMoney(scaled.penetrateGap) + '</p></div>' +
+                '</div></div>' +
+                '<div class="space-y-3"><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">L1 下级级差占比</p>' + subRows + '</div></div>';
+        }
+
+        const rankingBody = document.getElementById('analytics-ranking-body');
+        if (rankingBody) {
             const scaleGap = scaled.directGap / (overviewBase.directGapRebate || 1);
             const scaleVol = scaled.vol / (overviewBase.teamVol || 1);
             let rows = '';
             rankedSubs.forEach(function (row, idx) {
-                const gapVal = row.gapIncome * scaleGap;
-                const volVal = row.totalVol * scaleVol;
-                const gapShare = scaled.directGap ? Math.round(gapVal / scaled.directGap * 100) : 0;
-                const volShare = scaled.vol ? Math.round(volVal / scaled.vol * 100) : 0;
                 rows += '<tr class="hover:bg-gray-50/80">' +
                     '<td class="px-5 py-3 font-black text-gray-400">' + (idx + 1) + '</td>' +
                     '<td class="px-5 py-3"><span class="font-black text-gray-900">' + esc(row.remark || row.name) + '</span>' +
                     '<span class="text-[10px] text-gray-400 block font-mono">' + esc(row.wallet) + '</span></td>' +
-                    '<td class="px-5 py-3 font-black">' + fmtMoney(gapVal) + ' <span class="text-[9px] text-gray-400">(' + gapShare + '%)</span></td>' +
-                    '<td class="px-5 py-3 font-black">' + fmtMoney(volVal) + ' <span class="text-[9px] text-gray-400">(' + volShare + '%)</span></td>' +
-                    '<td class="px-5 py-3"><span class="gap-tag">' + row.gap + '%</span></td>' +
-                    '</tr>';
+                    '<td class="px-5 py-3 font-black text-blue-600">' + fmtMoney(row.gapIncome * scaleGap) + '</td>' +
+                    '<td class="px-5 py-3 font-black">' + fmtMoney(row.totalVol * scaleVol) + '</td>' +
+                    '<td class="px-5 py-3">' + userScaleCell(row.activeUsers, row.totalUsers) + '</td>' +
+                    '<td class="px-5 py-3 font-black">' + fmtMoney(row.netDeposit, { signed: true }) + '</td>' +
+                    '<td class="px-5 py-3"><span class="gap-tag">' + row.gap + '%</span></td></tr>';
             });
-            contribBody.innerHTML = rows;
+            rankingBody.innerHTML = rows;
         }
 
-        const gapSplitEl = document.getElementById('overview-gap-split-body');
-        if (gapSplitEl) {
-            const barW = 100;
-            const directW = Math.round(ratios.directGap * barW);
-            const penetrateW = barW - directW;
-            let subRows = '';
-            rankedSubs.forEach(function (row) {
-                const share = overviewBase.directGapRebate ? Math.round(row.gapIncome / overviewBase.directGapRebate * 100) : 0;
-                subRows += '<div class="flex items-center gap-3 text-[11px]">' +
-                    '<span class="w-28 truncate font-bold text-gray-700">' + esc(row.remark || row.name) + '</span>' +
-                    '<div class="flex-1 h-2 bg-gray-100 rounded-sm overflow-hidden">' +
-                    '<div class="h-full bg-blue-500 rounded-sm" style="width:' + share + '%"></div></div>' +
-                    '<span class="w-16 text-right font-black text-gray-900">' + share + '%</span>' +
-                    '<span class="w-20 text-right text-gray-500">' + fmtMoney(row.gapIncome * (scaled.directGap / (overviewBase.directGapRebate || 1))) + '</span>' +
-                    '</div>';
-            });
-            gapSplitEl.innerHTML =
-                '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">' +
-                '<div class="space-y-4">' +
-                '<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">级差收入拆分</p>' +
-                '<div class="flex h-3 rounded-sm overflow-hidden">' +
-                '<div class="bg-blue-500" style="width:' + directW + '%" title="直属级差"></div>' +
-                '<div class="bg-indigo-900" style="width:' + penetrateW + '%" title="穿透级差"></div></div>' +
-                '<div class="grid grid-cols-2 gap-3 text-[11px]">' +
-                '<div class="rounded-sm border border-blue-100 p-3 bg-blue-50/30">' +
-                '<p class="text-[9px] font-black text-blue-600 uppercase">直属级差</p>' +
-                '<p class="text-xl font-black mt-1">' + fmtMoney(scaled.directGap) + '</p>' +
-                '<p class="text-[10px] text-gray-500 mt-1">L1 下级合伙人 gap 合计 · ' + directGapPct + '%</p></div>' +
-                '<div class="rounded-sm border border-indigo-100 p-3 bg-indigo-50/30">' +
-                '<p class="text-[9px] font-black text-indigo-800 uppercase">穿透级差</p>' +
-                '<p class="text-xl font-black mt-1">' + fmtMoney(scaled.penetrateGap) + '</p>' +
-                '<p class="text-[10px] text-gray-500 mt-1">L2 及以下团队贡献 · ' + penetrateGapPct + '%</p></div></div></div>' +
-                '<div class="space-y-3">' +
-                '<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">直属级差 · 下级占比</p>' +
-                subRows +
-                '</div></div>';
-        }
+        renderAnalyticsDimTabs();
+    }
 
-        renderOverviewDimTabs();
+    function revenueBarRow(label, value, ratio, color) {
+        const pct = Math.round(ratio * 100);
+        return '<div><div class="flex justify-between text-[11px] mb-1"><span class="font-bold text-gray-700">' + esc(label) + '</span>' +
+            '<span class="font-black text-gray-900">' + fmtMoney(value) + ' <span class="text-gray-400 font-bold">(' + pct + '%)</span></span></div>' +
+            '<div class="h-2 bg-gray-100 rounded-sm overflow-hidden"><div class="h-full rounded-sm" style="width:' + pct + '%;background:' + color + '"></div></div></div>';
+    }
+
+    function kpiMiniCard(label, value, sub) {
+        return '<div class="rounded-sm border border-gray-100 p-3 bg-white"><p class="text-[9px] font-black text-gray-400 uppercase">' + esc(label) + '</p>' +
+            '<p class="text-lg font-black mt-1 text-gray-900">' + value + '</p><p class="text-[10px] text-gray-400 mt-1">' + esc(sub) + '</p></div>';
     }
 
     function findSubPartner(id) {
@@ -674,7 +739,7 @@
     }
 
     function renderOverview() {
-        const scale = PERIOD_SCALE[overviewPeriod] || 1;
+        const scale = PERIOD_SCALE[OVERVIEW_SNAPSHOT_PERIOD] || 1;
         const scaled = computeOverviewScaled(scale);
 
         const volEl = document.getElementById('overview-team-vol');
@@ -683,10 +748,6 @@
         if (volChangeEl) volChangeEl.textContent = '+' + scaled.volChange + '%';
         const rebateEl = document.getElementById('overview-total-rebate');
         if (rebateEl) rebateEl.textContent = fmtMoney(scaled.rebate);
-        const selfEl = document.getElementById('overview-self-rebate');
-        if (selfEl) selfEl.textContent = fmtMoney(scaled.self);
-        const directEl = document.getElementById('overview-direct-rebate');
-        if (directEl) directEl.textContent = fmtMoney(scaled.direct);
         const directGapEl = document.getElementById('overview-direct-gap-rebate');
         if (directGapEl) directGapEl.textContent = fmtMoney(scaled.directGap);
         const penetrateGapEl = document.getElementById('overview-penetrate-gap-rebate');
@@ -694,45 +755,81 @@
         const netEl = document.getElementById('overview-team-net');
         if (netEl) netEl.textContent = fmtMoney(scaled.net, { signed: true });
         const activeEl = document.getElementById('overview-trade-users-active');
-        if (activeEl) activeEl.innerHTML = fmtNum(scaled.activeUsers) + ' <span class="text-base font-bold text-gray-600">交易用户</span>';
+        if (activeEl) activeEl.textContent = fmtNum(scaled.activeUsers);
         const totalEl = document.getElementById('overview-trade-users-total');
         if (totalEl) totalEl.textContent = fmtNum(scaled.totalUsers) + ' 总用户';
 
-        const periodTag = document.getElementById('overview-chart-period-tag');
-        if (periodTag) periodTag.textContent = overviewPeriod;
+        renderMySuperior();
+        renderSubPartnersTable({ masked: false });
+        renderDirectClientsTable({ masked: false });
+    }
 
-        const pointCount = LINKS_CHART_POINTS[overviewPeriod] || 7;
+    function renderAnalytics() {
+        const scale = PERIOD_SCALE[analyticsPeriod] || 1;
+        const scaled = computeOverviewScaled(scale);
+        const rebateRatios = overviewRebateRatios(scaled);
+        const volRatios = overviewVolRatios(scaled);
+        const gapTotal = scaled.gap || 1;
+        const directGapShare = Math.round((scaled.directGap / gapTotal) * 100);
+        const penetrateGapShare = 100 - directGapShare;
+
+        const setText = function (id, text) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        };
+        const setHtml = function (id, html) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = html;
+        };
+
+        setText('analytics-kpi-vol', fmtMoney(scaled.vol));
+        setHtml('analytics-kpi-vol-delta', formatDeltaPct(scaled.volChange));
+        setText('analytics-kpi-rebate', fmtMoney(scaled.rebate));
+        setHtml('analytics-kpi-rebate-delta', formatDeltaPct(scaled.rebateChange));
+        setText('analytics-kpi-net', fmtMoney(scaled.net, { signed: true }));
+        setHtml('analytics-kpi-net-delta', formatDeltaPct(scaled.netDepositChange));
+        setText('analytics-kpi-active-users', fmtNum(scaled.activeUsers));
+        setHtml('analytics-kpi-users-delta', formatDeltaPct(scaled.userChange));
+        setText('analytics-kpi-direct-gap', fmtMoney(scaled.directGap));
+        setText('analytics-kpi-direct-gap-share', '占级差 ' + directGapShare + '%');
+        setText('analytics-kpi-penetrate-gap', fmtMoney(scaled.penetrateGap));
+        setText('analytics-kpi-penetrate-gap-share', '占级差 ' + penetrateGapShare + '%');
+        setText('analytics-chart-period-tag', analyticsPeriod);
+
+        const pointCount = LINKS_CHART_POINTS[analyticsPeriod] || 7;
         const seedMap = { '1D': 71, '1W': 83, '1M': 97, '3M': 113 };
-        const seed = seedMap[overviewPeriod] || 83;
-        const ratios = overviewRebateRatios(scaled);
+        const seed = seedMap[analyticsPeriod] || 83;
         const rebateSeries = buildDistributedSeries(scaled.rebate, pointCount, seed);
         const volSeries = buildDistributedSeries(scaled.vol, pointCount, seed + 41);
-        const selfSeries = rebateSeries.map(function (v) { return v * ratios.self; });
-        const directSeries = rebateSeries.map(function (v) { return v * ratios.direct; });
-        const directGapSeries = rebateSeries.map(function (v) { return v * ratios.directGap; });
-        const penetrateGapSeries = rebateSeries.map(function (v) { return v * ratios.penetrateGap; });
+        const selfSeries = rebateSeries.map(function (v) { return v * rebateRatios.self; });
+        const directSeries = rebateSeries.map(function (v) { return v * rebateRatios.direct; });
+        const directGapSeries = rebateSeries.map(function (v) { return v * rebateRatios.directGap; });
+        const penetrateGapSeries = rebateSeries.map(function (v) { return v * rebateRatios.penetrateGap; });
+        const directSubVolSeries = volSeries.map(function (v) { return v * volRatios.directSub; });
+        const directClientVolSeries = volSeries.map(function (v) { return v * volRatios.directClient; });
+        const penetrateVolSeries = volSeries.map(function (v) { return v * volRatios.penetrate; });
 
         renderSvgStackedRebateChart4(
-            document.getElementById('overview-chart-rebate'),
+            document.getElementById('analytics-chart-rebate'),
             selfSeries,
             directSeries,
             directGapSeries,
             penetrateGapSeries,
-            overviewPeriod
+            analyticsPeriod
         );
-        renderSvgLineChart(
-            document.getElementById('overview-chart-vol'),
-            volSeries,
-            overviewPeriod,
-            '#2563eb',
-            { gradId: 'overview-vol-grad-' + overviewPeriod }
+        renderSvgStackedAreaChart(
+            document.getElementById('analytics-chart-vol'),
+            [directSubVolSeries, directClientVolSeries, penetrateVolSeries],
+            analyticsPeriod,
+            [
+                { fill: '#60a5fa', opacity: 0.85 },
+                { fill: '#3b82f6', opacity: 0.82 },
+                { fill: '#1e3a8a', opacity: 0.88 }
+            ]
         );
 
-        renderOverviewInsightPanels(scaled);
-        updatePeriodButtons('overview-period-btn', overviewPeriod);
-        renderMySuperior();
-        renderSubPartnersTable({ masked: false });
-        renderDirectClientsTable({ masked: false });
+        renderAnalyticsPanels(scaled);
+        updatePeriodButtons('analytics-period-btn', analyticsPeriod);
     }
 
     function renderPartnerIdentityBar(superiorElId, ratioElId, info) {
@@ -958,7 +1055,7 @@
         opts = opts || {};
         const masked = opts.masked;
         const drill = opts.drill;
-        const scale = drill ? (PERIOD_SCALE[drillPeriod] || 1) : (PERIOD_SCALE[overviewPeriod] || 1);
+        const scale = drill ? (PERIOD_SCALE[drillPeriod] || 1) : (PERIOD_SCALE[OVERVIEW_SNAPSHOT_PERIOD] || 1);
         const sortState = drill ? drillSubSort : subPartnerSort;
         const headId = drill ? 'drill-sub-partner-table-head' : 'sub-partner-table-head';
         const bodyId = drill ? 'drill-sub-partner-table-body' : 'sub-partner-table-body';
@@ -1350,13 +1447,13 @@
     }
 
     window.PartnerCenter = {
-        setOverviewPeriod: function (p) {
-            overviewPeriod = p;
-            renderOverview();
+        setAnalyticsPeriod: function (p) {
+            analyticsPeriod = p;
+            renderAnalytics();
         },
-        setOverviewDimTab: function (tab) {
-            overviewDimTab = tab;
-            renderOverviewDimTabs();
+        setAnalyticsDimTab: function (tab) {
+            analyticsDimTab = tab;
+            renderAnalyticsDimTabs();
         },
         setDrillPeriod: function (p) {
             drillPeriod = p;
@@ -1543,6 +1640,7 @@
                 return;
             }
             if (pageId === 'page-overview') renderOverview();
+            else if (pageId === 'page-analytics') renderAnalytics();
             else if (pageId === 'page-settlement') renderSettlementTable();
             else if (pageId === 'page-links') renderInviteLinks();
             else if (pageId === 'page-drill-overview') renderDrillOverview();
