@@ -214,7 +214,7 @@
                 <button onclick="showMainPage('page-overview')" id="sidebar-overview" class="w-full text-left px-4 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all">合伙人管理</button>
                 <button onclick="showMainPage('page-analytics')" id="sidebar-analytics" class="partner-nav-sub w-full text-left px-4 py-2.5 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all">团队数据分析</button>
             </div>
-            <button onclick="showMainPage('page-settlement')" id="sidebar-settlement" class="w-full text-left px-4 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all">佣金結算記錄</button>
+            <button onclick="showMainPage('page-settlement')" id="sidebar-settlement" class="w-full text-left px-4 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all">佣金管理</button>
         </nav>
         <div class="p-6 border-t border-gray-50">
             <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">我的最高比例</p>
@@ -230,7 +230,7 @@
                 <div class="flex flex-wrap justify-between items-end gap-4">
                     <div>
                         <h1 class="text-2xl font-black tracking-tight">合伙人管理</h1>
-                        <p class="text-gray-400 font-medium">管理直属下级合伙人与自邀直客，顶部卡片随周期切换汇总。</p>
+                        <p class="text-gray-400 font-medium">查看团队业绩，管理直属下级合伙人与自邀直客名单。</p>
                     </div>
                     <div class="flex bg-white p-1 rounded border border-gray-200 shadow-sm">
                         <button type="button" data-period="1D" onclick="PartnerCenter.setOverviewPeriod('1D')" class="overview-period-btn px-4 py-1 text-[10px] font-bold hover:bg-gray-50">1D</button>
@@ -259,7 +259,6 @@
                     <div class="stats-card partner-kpi-card">
                         <p class="partner-kpi-label">团队总交易额</p>
                         <h3 id="overview-team-vol" class="partner-kpi-value">—</h3>
-                        <p class="partner-kpi-sub">较上周期 <span id="overview-vol-change" class="text-green-500 font-black">—</span></p>
                     </div>
                     <div class="stats-card partner-kpi-card border-l-4 border-l-blue-600">
                         <p class="partner-kpi-label text-blue-600">总返佣收入 (本期预估)</p>
@@ -293,6 +292,7 @@
                             <select id="sub-partner-status-filter" onchange="PartnerCenter.setSubPartnerFilter(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[10px] font-bold text-gray-700 outline-none focus:ring-1 focus:ring-black cursor-pointer">
                                 <option value="all">全部结算状态</option>
                                 <option value="normal">正常</option>
+                                <option value="frozen">冻结待结算</option>
                             </select>
 
                             <div class="relative">
@@ -464,49 +464,99 @@
                 </div>
             </div>
 
-            <!-- 页面 B: 佣金结算记录 (New) -->
-            <div id="page-settlement" class="space-y-8 hidden">
+            <!-- 页面 B: 佣金管理 -->
+            <div id="page-settlement" class="space-y-6 hidden">
                 <div class="flex justify-between items-end">
                     <div>
-                        <h1 class="text-2xl font-black tracking-tight">佣金结算与发放</h1>
-                        <p class="text-gray-400 font-medium">系统每日 00:00 自动结算前一日产生的所有佣金收益。</p>
+                        <h1 class="text-2xl font-black tracking-tight">佣金管理</h1>
+                        <p class="text-gray-400 font-medium">每日 0:00 系统将前一日 24 小时内产生的返佣汇总为结算批次，经风控审核通过后发放至您的账户。</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-6">
-                    <div class="stats-card bg-gray-900 text-white border-none">
-                        <p class="text-gray-400 font-bold mb-2 uppercase text-[10px]">待结算佣金 (今日预估)</p>
-                        <h3 class="text-3xl font-black">$450.82</h3>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div class="stats-card bg-gray-900 text-white border-none !py-4">
+                        <p class="text-gray-400 font-bold mb-1 uppercase text-[10px]">待返佣（今日预估）</p>
+                        <h3 id="commission-kpi-pending-today" class="text-2xl font-black">—</h3>
                     </div>
-                    <div class="stats-card">
-                        <p class="text-gray-400 font-bold mb-2 uppercase text-[10px]">已结算总额 (累计)</p>
-                        <h3 class="text-3xl font-black text-gray-900">$124,500.00</h3>
+                    <div class="stats-card !py-4">
+                        <p class="text-gray-400 font-bold mb-1 uppercase text-[10px]">历史已返佣（累计）</p>
+                        <h3 id="commission-kpi-settled-total" class="text-2xl font-black text-gray-900">—</h3>
                     </div>
-                    <div class="stats-card">
-                        <p class="text-gray-400 font-bold mb-2 uppercase text-[10px]">昨日发放佣金</p>
-                        <h3 class="text-3xl font-black text-green-500">$1,120.50</h3>
-                        <p class="text-[10px] text-gray-400 mt-3 font-bold tracking-widest uppercase">Status: Success</p>
+                    <div class="stats-card !py-4">
+                        <p class="text-gray-400 font-bold mb-1 uppercase text-[10px]">最近发放</p>
+                        <h3 id="commission-kpi-yesterday" class="text-2xl font-black text-green-500">—</h3>
+                        <p id="commission-kpi-yesterday-status" class="text-[10px] text-gray-400 mt-2 font-bold">—</p>
                     </div>
                 </div>
 
-                <!-- 结算列表 -->
-                <div class="stats-card !p-0">
-                    <div class="p-6 border-b border-gray-50 bg-white flex flex-wrap justify-between items-center gap-4">
-                        <h4 class="font-black text-sm">每日结算流水</h4>
+                <div class="stats-card !p-0 overflow-hidden shadow-sm">
+                    <div class="p-5 border-b border-gray-50 bg-white flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex flex-wrap items-center gap-6">
+                            <button type="button" data-commission-tab="history" onclick="PartnerCenter.setCommissionTab('history')" class="commission-tab tab-active pb-1">历史返佣</button>
+                            <button type="button" data-commission-tab="pending" onclick="PartnerCenter.setCommissionTab('pending')" class="commission-tab text-gray-400 font-bold pb-1 hover:text-black">佣金统计</button>
+                        </div>
                         <div class="flex flex-wrap items-center gap-3">
                             <input type="date" id="settlement-filter-date" onchange="PartnerCenter.setSettlementDateFilter(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[11px] outline-none focus:ring-1 focus:ring-black">
-                            <select id="settlement-filter-status" onchange="PartnerCenter.setSettlementStatusFilter(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[10px] font-bold text-gray-700 outline-none focus:ring-1 focus:ring-black cursor-pointer">
-                                <option value="all">全部状态</option>
-                                <option value="pending">待结算</option>
-                                <option value="settled">已结算</option>
-                            </select>
                         </div>
                     </div>
+                    <p id="commission-tab-desc" class="px-5 py-3 text-[11px] text-gray-500 font-medium border-b border-gray-50 bg-slate-50/60">已发放至账户的返佣记录，按日汇总，一天一条。</p>
                     <table class="w-full text-left">
                         <thead id="settlement-table-head" class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase"></thead>
                         <tbody id="settlement-table-body" class="divide-y divide-gray-50 text-[11px] font-bold"></tbody>
                     </table>
                     <div id="settlement-pagination"></div>
+                </div>
+            </div>
+
+            <!-- 页面 B2: 佣金明细 -->
+            <div id="page-commission-detail" class="space-y-6 hidden">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div class="flex items-start gap-3">
+                        <button type="button" onclick="PartnerCenter.backToCommission()" class="p-2 bg-white border border-gray-200 rounded-sm hover:bg-gray-50 shrink-0 mt-0.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
+                        </button>
+                        <div>
+                            <h1 class="text-2xl font-black tracking-tight">佣金明细</h1>
+                            <p id="commission-detail-subtitle" class="text-gray-400 font-medium text-[12px] mt-1">查看单日或多日返佣构成明细。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-card !p-0 overflow-hidden shadow-sm">
+                    <div class="p-5 border-b border-gray-50 bg-white flex flex-wrap items-end gap-3">
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">开始日期</label>
+                            <input type="date" id="commission-detail-date-from" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[11px] outline-none focus:ring-1 focus:ring-black">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">结束日期</label>
+                            <input type="date" id="commission-detail-date-to" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[11px] outline-none focus:ring-1 focus:ring-black">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">UID</label>
+                            <input type="text" id="commission-detail-uid" placeholder="输入 UID" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[11px] w-36 outline-none focus:ring-1 focus:ring-black">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">渠道备注</label>
+                            <input type="text" id="commission-detail-remark" placeholder="合伙人备注" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[11px] w-40 outline-none focus:ring-1 focus:ring-black">
+                        </div>
+                        <button type="button" onclick="PartnerCenter.searchCommissionDetail()" class="bg-black text-white px-4 py-2 rounded-sm font-black text-[11px] hover:bg-gray-800 transition">查询</button>
+                    </div>
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase">
+                            <tr>
+                                <th class="px-5 py-3">时间</th>
+                                <th class="px-5 py-3">UID</th>
+                                <th class="px-5 py-3">下级/直客</th>
+                                <th class="px-5 py-3">渠道备注</th>
+                                <th class="px-5 py-3 text-right">交易额</th>
+                                <th class="px-5 py-3 text-right">返佣比例/级差比例</th>
+                                <th class="px-5 py-3 text-right text-blue-600">返佣收入</th>
+                            </tr>
+                        </thead>
+                        <tbody id="commission-detail-table-body" class="divide-y divide-gray-50 text-[11px] font-medium"></tbody>
+                    </table>
+                    <div id="commission-detail-pagination"></div>
                 </div>
             </div>
 
@@ -549,7 +599,6 @@
                 <div class="stats-card partner-kpi-card">
                     <p class="partner-kpi-label">团队总交易额</p>
                     <h3 id="drill-team-vol" class="partner-kpi-value">—</h3>
-                    <p class="partner-kpi-sub">较上周期 <span class="text-green-500 font-black">+12.4%</span></p>
                 </div>
                 <div class="stats-card partner-kpi-card border-l-4 border-l-blue-600">
                     <p class="partner-kpi-label text-blue-600">总返佣收入 (本期预估)</p>
@@ -582,6 +631,7 @@
                         <select id="drill-sub-partner-status-filter" onchange="PartnerCenter.setDrillSubFilter(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[10px] font-bold text-gray-700 outline-none focus:ring-1 focus:ring-black cursor-pointer">
                             <option value="all">全部结算状态</option>
                             <option value="normal">正常</option>
+                            <option value="frozen">冻结待结算</option>
                         </select>
                         <div class="relative">
                             <input type="text" id="drill-sub-partner-search" placeholder="搜索 UID / 钱包 / 邮箱..." oninput="PartnerCenter.setDrillSubSearch(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[11px] w-48 outline-none focus:ring-1 focus:ring-black">
@@ -859,7 +909,7 @@
     </div>
 </div>
 
-<script src="partner-center-user.js?v=partner-user-37"></script>
+<script src="partner-center-user.js?v=partner-user-38"></script>
 <script>
     // 切换数据表格 (下级代理 vs 直客)
     function switchTable(tableId) {
@@ -905,7 +955,7 @@
     }
 
     function showMainPage(pageId) {
-        const pages = ['page-links', 'page-overview', 'page-analytics', 'page-settlement', 'page-drill-overview'];
+        const pages = ['page-links', 'page-overview', 'page-analytics', 'page-settlement', 'page-commission-detail', 'page-drill-overview'];
         pages.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.classList.add('hidden');
@@ -920,7 +970,8 @@
             'page-overview': 'sidebar-overview',
             'page-analytics': 'sidebar-analytics',
             'page-drill-overview': 'sidebar-overview',
-            'page-settlement': 'sidebar-settlement'
+            'page-settlement': 'sidebar-settlement',
+            'page-commission-detail': 'sidebar-settlement'
         };
 
         const activeBtnId = sidebarBtns[pageId];
