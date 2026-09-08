@@ -233,16 +233,17 @@
                     <div class="stats-card">
                         <p class="text-gray-400 font-bold mb-2">团队总交易额</p>
                         <h3 id="overview-team-vol" class="text-3xl font-black">$52,450,000</h3>
-                        <p class="text-[10px] text-gray-400 mt-2">较上周期 <span class="text-green-500">+12.4%</span></p>
+                        <p class="text-[10px] text-gray-400 mt-2">较上周期 <span id="overview-vol-change" class="text-green-500">+12.4%</span></p>
                     </div>
                     <div class="stats-card border-l-4 border-l-blue-600">
                         <p class="text-gray-400 font-bold mb-2 text-blue-600">总返佣收入 (本期预估)</p>
-                        <h3 id="overview-total-rebate" class="text-3xl font-black text-gray-900">$12,840.50</h3>
-                        <!-- 收入拆解 -->
-                        <div class="mt-3 grid grid-cols-3 gap-1 text-[9px] font-black uppercase text-gray-400 border-t pt-3 border-gray-50">
-                            <div>自返佣: <span id="overview-self-rebate" class="text-gray-900">$0.2k</span></div>
-                            <div>直客: <span id="overview-direct-rebate" class="text-gray-900">$1.2k</span></div>
-                            <div class="text-blue-600">级差: <span id="overview-gap-rebate">$11.6k</span></div>
+                        <h3 id="overview-total-rebate" class="text-3xl font-black text-gray-900">$13,000</h3>
+                        <!-- 收入拆解：直属 / 穿透级差 -->
+                        <div class="mt-3 grid grid-cols-2 gap-x-2 gap-y-1 text-[9px] font-black uppercase text-gray-400 border-t pt-3 border-gray-50">
+                            <div>自返佣: <span id="overview-self-rebate" class="text-gray-900">$200</span></div>
+                            <div>直客: <span id="overview-direct-rebate" class="text-gray-900">$1,200</span></div>
+                            <div class="text-blue-600">直属级差: <span id="overview-direct-gap-rebate">$5,120</span></div>
+                            <div class="text-indigo-800">穿透级差: <span id="overview-penetrate-gap-rebate">$6,480</span></div>
                         </div>
                     </div>
                     <div class="stats-card">
@@ -254,6 +255,68 @@
                         <p class="text-gray-400 font-bold mb-2">用户规模</p>
                         <h3 id="overview-trade-users-active" class="text-3xl font-black text-gray-900">1,850 <span class="text-base font-bold text-gray-600">交易用户</span></h3>
                         <p id="overview-trade-users-total" class="text-[10px] text-gray-400 mt-2 font-bold">3,680 总用户</p>
+                    </div>
+                </div>
+
+                <!-- 趋势图表（周期与顶部 1D/1W/1M/3M 联动） -->
+                <div class="stats-card shadow-sm space-y-5">
+                    <div class="flex flex-wrap items-end justify-between gap-3">
+                        <div>
+                            <h2 class="text-sm font-black tracking-tight">团队趋势</h2>
+                            <p class="text-[10px] text-gray-400 font-medium mt-1">返佣组成与交易额走势，周期与上方筛选一致</p>
+                        </div>
+                        <span id="overview-chart-period-tag" class="text-[10px] font-black text-gray-500 uppercase tracking-widest bg-gray-100 px-2 py-1 rounded-sm">1W</span>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                        <div class="border border-gray-100 rounded-sm p-4 bg-gray-50/40">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">返佣收入趋势 · 组成结构</p>
+                                <div class="links-chart-legend">
+                                    <span><i style="background:#93c5fd"></i>自返佣</span>
+                                    <span><i style="background:#3b82f6"></i>直客</span>
+                                    <span><i style="background:#2563eb"></i>直属级差</span>
+                                    <span><i style="background:#1e3a8a"></i>穿透级差</span>
+                                </div>
+                            </div>
+                            <div id="overview-chart-rebate" class="links-chart-wrap"></div>
+                        </div>
+                        <div class="border border-gray-100 rounded-sm p-4 bg-gray-50/40">
+                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">团队交易额趋势</p>
+                            <div id="overview-chart-vol" class="links-chart-wrap"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- L2 分析维度 -->
+                <div class="stats-card !p-0 overflow-hidden shadow-sm">
+                    <div class="p-6 border-b border-gray-50 bg-white">
+                        <div class="flex flex-wrap items-center gap-8">
+                            <button type="button" data-dim-tab="trend" onclick="PartnerCenter.setOverviewDimTab('trend')" class="overview-dim-tab tab-active pb-1">趋势解读</button>
+                            <button type="button" data-dim-tab="contrib" onclick="PartnerCenter.setOverviewDimTab('contrib')" class="overview-dim-tab text-gray-400 font-bold pb-1 hover:text-black">下级贡献</button>
+                            <button type="button" data-dim-tab="gap-split" onclick="PartnerCenter.setOverviewDimTab('gap-split')" class="overview-dim-tab text-gray-400 font-bold pb-1 hover:text-black">直属与穿透</button>
+                        </div>
+                    </div>
+                    <div id="overview-dim-panel-trend" class="p-6">
+                        <div id="overview-insight-trend"></div>
+                    </div>
+                    <div id="overview-dim-panel-contrib" class="p-0 hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left whitespace-nowrap">
+                                <thead class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase tracking-wider">
+                                    <tr>
+                                        <th class="px-5 py-3">#</th>
+                                        <th class="px-5 py-3">下级合伙人</th>
+                                        <th class="px-5 py-3">直属级差贡献</th>
+                                        <th class="px-5 py-3">团队交易额</th>
+                                        <th class="px-5 py-3">级差比例</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="overview-contrib-body" class="divide-y divide-gray-50 text-[11px] font-medium"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="overview-dim-panel-gap-split" class="p-6 hidden">
+                        <div id="overview-gap-split-body"></div>
                     </div>
                 </div>
 
