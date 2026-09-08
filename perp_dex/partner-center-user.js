@@ -2,7 +2,14 @@
  * 合伙人中心（用户侧）原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-user-31';
+    const DATA_VERSION = 'partner-user-32';
+    const SOURCE_LABELS = ['自己产生', '直属直客', '合伙人级差'];
+    const SOURCE_COLORS = ['#93c5fd', '#3b82f6', '#1e3a8a'];
+    const SOURCE_STYLES = [
+        { fill: '#93c5fd', opacity: 0.88 },
+        { fill: '#3b82f6', opacity: 0.82 },
+        { fill: '#1e3a8a', opacity: 0.85 }
+    ];
     const USER_SCALE_TIP = '交易用户数据每天 UTC+8 0 点更新';
     const PERIOD_SCALE = { '1D': 0.14, '1W': 1, '1M': 4.2, '3M': 12 };
     const LINKS_CHART_POINTS = { '1D': 24, '1W': 7, '1M': 30, '3M': 90 };
@@ -11,7 +18,7 @@
     const OVERVIEW_SNAPSHOT_PERIOD = '1W';
 
     let analyticsPeriod = '1W';
-    let analyticsDimTab = 'revenue';
+    let analyticsDimTab = 'vol';
     let linksPeriod = '1W';
     let linksPage = 1;
     let linksSearch = '';
@@ -243,34 +250,29 @@
         });
     })();
 
-    function sumDirectGapIncome() {
-        return subPartnersData.reduce(function (acc, row) { return acc + (row.gapIncome || 0); }, 0);
-    }
-
-    function sumDirectClientVol() {
-        return directClientsData.reduce(function (acc, row) { return acc + (row.totalVol || 0); }, 0);
-    }
-
     const overviewBase = {
         teamVol: 52450000,
         totalRebate: 13000,
         selfRebate: 200,
         directRebate: 1200,
         gapRebate: 11600,
-        directGapRebate: sumDirectGapIncome(),
-        directSubTeamVol: 41200000,
+        selfVol: 420000,
         directClientVol: 890000,
-        penetrateTeamVol: 10360000,
+        partnerTeamVol: 51140000,
+        teamUsers: 3680,
+        selfUsers: 1,
+        directClientUsers: 291,
+        partnerTeamUsers: 3388,
+        activeTraders: 1850,
+        selfActiveTraders: 1,
+        directClientActiveTraders: 186,
+        partnerTeamActiveTraders: 1663,
         teamNetDeposit: 1240000,
-        totalTradeUsers: 3680,
-        activeTradeUsers: 1850,
-        newUsers: 142,
         volChange: 12.4,
         rebateChange: 8.6,
-        netDepositChange: 5.2,
-        userChange: 3.1
+        usersChange: 2.8,
+        activeTradersChange: 3.1
     };
-    overviewBase.penetrateGapRebate = overviewBase.gapRebate - overviewBase.directGapRebate;
 
     function fmtMoney(n, opts) {
         opts = opts || {};
@@ -474,53 +476,47 @@
     }
 
     function computeOverviewScaled(scale) {
-        const rebate = overviewBase.totalRebate * scale;
-        const self = overviewBase.selfRebate * scale;
-        const direct = overviewBase.directRebate * scale;
-        const directGap = overviewBase.directGapRebate * scale;
-        const penetrateGap = overviewBase.penetrateGapRebate * scale;
-        const directSubVol = overviewBase.directSubTeamVol * scale;
-        const directClientVol = overviewBase.directClientVol * scale;
-        const penetrateVol = overviewBase.penetrateTeamVol * scale;
         return {
             vol: overviewBase.teamVol * scale,
-            rebate: rebate,
-            self: self,
-            direct: direct,
-            directGap: directGap,
-            penetrateGap: penetrateGap,
-            gap: directGap + penetrateGap,
-            directSubVol: directSubVol,
-            directClientVol: directClientVol,
-            penetrateVol: penetrateVol,
+            rebate: overviewBase.totalRebate * scale,
+            teamUsers: overviewBase.teamUsers,
+            activeTraders: Math.round(overviewBase.activeTraders * Math.min(scale, 1.2)),
+            selfRebate: overviewBase.selfRebate * scale,
+            directRebate: overviewBase.directRebate * scale,
+            gapRebate: overviewBase.gapRebate * scale,
+            selfVol: overviewBase.selfVol * scale,
+            directClientVol: overviewBase.directClientVol * scale,
+            partnerTeamVol: overviewBase.partnerTeamVol * scale,
+            selfUsers: overviewBase.selfUsers,
+            directClientUsers: overviewBase.directClientUsers,
+            partnerTeamUsers: overviewBase.partnerTeamUsers,
+            selfActiveTraders: overviewBase.selfActiveTraders,
+            directClientActiveTraders: Math.round(overviewBase.directClientActiveTraders * Math.min(scale, 1.2)),
+            partnerTeamActiveTraders: Math.round(overviewBase.partnerTeamActiveTraders * Math.min(scale, 1.2)),
             net: overviewBase.teamNetDeposit * scale,
-            totalUsers: overviewBase.totalTradeUsers,
-            activeUsers: Math.round(overviewBase.activeTradeUsers * Math.min(scale, 1.2)),
-            newUsers: Math.round(overviewBase.newUsers * Math.min(scale, 1.2)),
             volChange: overviewBase.volChange,
             rebateChange: overviewBase.rebateChange,
-            netDepositChange: overviewBase.netDepositChange,
-            userChange: overviewBase.userChange
+            usersChange: overviewBase.usersChange,
+            activeTradersChange: overviewBase.activeTradersChange
         };
     }
 
-    function overviewRebateRatios(scaled) {
-        const total = scaled.rebate || 1;
-        return {
-            self: scaled.self / total,
-            direct: scaled.direct / total,
-            directGap: scaled.directGap / total,
-            penetrateGap: scaled.penetrateGap / total
-        };
+    function sourceTriple(scaled, metric) {
+        if (metric === 'vol') {
+            return { self: scaled.selfVol, direct: scaled.directClientVol, partner: scaled.partnerTeamVol, total: scaled.vol };
+        }
+        if (metric === 'rebate') {
+            return { self: scaled.selfRebate, direct: scaled.directRebate, partner: scaled.gapRebate, total: scaled.rebate };
+        }
+        if (metric === 'users') {
+            return { self: scaled.selfUsers, direct: scaled.directClientUsers, partner: scaled.partnerTeamUsers, total: scaled.teamUsers };
+        }
+        return { self: scaled.selfActiveTraders, direct: scaled.directClientActiveTraders, partner: scaled.partnerTeamActiveTraders, total: scaled.activeTraders };
     }
 
-    function overviewVolRatios(scaled) {
-        const total = scaled.vol || 1;
-        return {
-            directSub: scaled.directSubVol / total,
-            directClient: scaled.directClientVol / total,
-            penetrate: scaled.penetrateVol / total
-        };
+    function sourceRatios(triple) {
+        const total = triple.total || 1;
+        return { self: triple.self / total, direct: triple.direct / total, partner: triple.partner / total };
     }
 
     function formatDeltaPct(value) {
@@ -529,7 +525,7 @@
         return '<span class="' + cls + '">' + sign + value + '% vs 上周期</span>';
     }
 
-    function renderSvgStackedAreaChart(container, layerSeries, period, layerStyles) {
+    function renderSvgStackedAreaChart(container, layerSeries, period, layerStyles, useMoneyAxis) {
         if (!container) return;
         const points = layerSeries[0] ? layerSeries[0].length : 0;
         if (!points) {
@@ -570,7 +566,8 @@
             const y = pad.t + (ph * g) / 3;
             const val = maxV * (1 - g / 3);
             grid += '<line x1="' + pad.l + '" y1="' + y.toFixed(1) + '" x2="' + (W - pad.r) + '" y2="' + y.toFixed(1) + '" stroke="#f1f5f9" stroke-width="1"/>';
-            grid += '<text x="' + (pad.l - 6) + '" y="' + (y + 3).toFixed(1) + '" text-anchor="end" fill="#94a3b8" font-size="8" font-weight="700">' + esc(compactAxisMoney(val)) + '</text>';
+            grid += '<text x="' + (pad.l - 6) + '" y="' + (y + 3).toFixed(1) + '" text-anchor="end" fill="#94a3b8" font-size="8" font-weight="700">' +
+                esc(useMoneyAxis ? compactAxisMoney(val) : fmtNum(Math.round(val))) + '</text>';
         }
 
         let labels = '';
@@ -592,13 +589,27 @@
             grid + areas + labels + '</svg>';
     }
 
-    function renderSvgStackedRebateChart4(container, selfSeries, directSeries, directGapSeries, penetrateGapSeries, period) {
-        renderSvgStackedAreaChart(container, [selfSeries, directSeries, directGapSeries, penetrateGapSeries], period, [
-            { fill: '#93c5fd', opacity: 0.88 },
-            { fill: '#3b82f6', opacity: 0.8 },
-            { fill: '#2563eb', opacity: 0.82 },
-            { fill: '#1e3a8a', opacity: 0.85 }
-        ]);
+    function renderSvgStackedSourceChart(container, triple, period, seed, useMoneyAxis) {
+        const ratios = sourceRatios(triple);
+        const pointCount = LINKS_CHART_POINTS[period] || 7;
+        const totalSeries = buildDistributedSeries(triple.total, pointCount, seed);
+        const selfSeries = totalSeries.map(function (v) { return v * ratios.self; });
+        const directSeries = totalSeries.map(function (v) { return v * ratios.direct; });
+        const partnerSeries = totalSeries.map(function (v) { return v * ratios.partner; });
+        renderSvgStackedAreaChart(container, [selfSeries, directSeries, partnerSeries], period, SOURCE_STYLES, useMoneyAxis);
+    }
+
+    function renderSourceLegend(className) {
+        document.querySelectorAll('.' + className).forEach(function (el) {
+            el.innerHTML = SOURCE_LABELS.map(function (label, i) {
+                return '<span><i style="background:' + SOURCE_COLORS[i] + '"></i>' + label + '</span>';
+            }).join('');
+        });
+    }
+
+    function formatMetricValue(metric, value, opts) {
+        if (metric === 'vol' || metric === 'rebate') return fmtMoney(value, opts);
+        return fmtNum(value);
     }
 
     function renderAnalyticsDimTabs() {
@@ -607,122 +618,107 @@
             if (tab === analyticsDimTab) btn.className = 'analytics-dim-tab tab-active pb-1';
             else btn.className = 'analytics-dim-tab text-gray-400 font-bold pb-1 hover:text-black';
         });
-        ['revenue', 'volume', 'structure', 'ranking'].forEach(function (id) {
+        ['vol', 'rebate', 'users', 'traders'].forEach(function (id) {
             const panel = document.getElementById('analytics-dim-panel-' + id);
             if (panel) panel.classList.toggle('hidden', analyticsDimTab !== id);
         });
     }
 
-    function renderAnalyticsPanels(scaled) {
-        const rebateRatios = overviewRebateRatios(scaled);
-        const volRatios = overviewVolRatios(scaled);
-        const gapTotal = scaled.gap || 1;
-        const directGapPct = Math.round((scaled.directGap / gapTotal) * 100);
-        const penetrateGapPct = 100 - directGapPct;
-        const rankedSubs = subPartnersData.slice().sort(function (a, b) { return b.gapIncome - a.gapIncome; });
-        const topSub = rankedSubs[0];
+    function renderDistributionBlock(containerId, metric, triple) {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        const ratios = sourceRatios(triple);
+        let html = '<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">来源分布</p><div class="space-y-3">';
+        SOURCE_LABELS.forEach(function (label, i) {
+            const key = i === 0 ? 'self' : (i === 1 ? 'direct' : 'partner');
+            html += sourceBarRow(label, triple[key], ratios[key], SOURCE_COLORS[i], metric);
+        });
+        html += '</div>';
+        el.innerHTML = html;
+    }
 
-        const revenueEl = document.getElementById('analytics-panel-revenue');
-        if (revenueEl) {
-            revenueEl.innerHTML =
-                '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">' +
-                '<div class="space-y-4">' +
-                '<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">返佣构成</p>' +
-                '<div class="space-y-3">' +
-                revenueBarRow('自返佣', scaled.self, rebateRatios.self, '#93c5fd') +
-                revenueBarRow('直客返佣', scaled.direct, rebateRatios.direct, '#3b82f6') +
-                revenueBarRow('直属级差', scaled.directGap, rebateRatios.directGap, '#2563eb') +
-                revenueBarRow('穿透级差', scaled.penetrateGap, rebateRatios.penetrateGap, '#1e3a8a') +
-                '</div></div>' +
-                '<div class="space-y-4">' +
-                '<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">经营解读</p>' +
-                '<div class="rounded-sm border border-gray-100 bg-gray-50/60 p-4 space-y-3 text-[11px] text-gray-600">' +
-                '<p>本期返佣 <span class="font-black text-gray-900">' + fmtMoney(scaled.rebate) + '</span>，级差收入占 ' + Math.round(rebateRatios.directGap * 100 + rebateRatios.penetrateGap * 100) + '%。</p>' +
-                '<p>直属级差 ' + directGapPct + '% · 穿透级差 ' + penetrateGapPct + '%。' +
-                (topSub ? ' 最大贡献下级：<span class="font-black text-gray-900">' + esc(topSub.remark || topSub.name) + '</span>。' : '') +
-                '</p>' +
-                '<p class="text-[10px] text-gray-400">建议：穿透占比较高时，优先关注 L2 团队活跃与下级合伙人招募质量。</p>' +
-                '</div></div></div>';
+    function renderRankingBlock(containerId, metric, scaled) {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        const scaleVol = scaled.vol / (overviewBase.teamVol || 1);
+        const scaleGap = scaled.gapRebate / (overviewBase.gapRebate || 1);
+        const rankedSubs = subPartnersData.slice().sort(function (a, b) {
+            if (metric === 'rebate') return b.gapIncome - a.gapIncome;
+            if (metric === 'users') return b.totalUsers - a.totalUsers;
+            if (metric === 'traders') return b.activeUsers - a.activeUsers;
+            return b.totalVol - a.totalVol;
+        });
+        const rankedClients = directClientsData.slice().sort(function (a, b) {
+            if (metric === 'rebate') return b.rebate - a.rebate;
+            return b.totalVol - a.totalVol;
+        });
+
+        function partnerMetric(row) {
+            if (metric === 'rebate') return fmtMoney(row.gapIncome * scaleGap);
+            if (metric === 'users') return fmtNum(row.totalUsers);
+            if (metric === 'traders') return fmtNum(row.activeUsers);
+            return fmtMoney(row.totalVol * scaleVol);
+        }
+        function clientMetric(row) {
+            if (metric === 'rebate') return fmtMoney(row.rebate * (scaled.directRebate / (overviewBase.directRebate || 1)));
+            return fmtMoney(row.totalVol * (scaled.directClientVol / (overviewBase.directClientVol || 1)));
         }
 
-        const volumeEl = document.getElementById('analytics-panel-volume');
-        if (volumeEl) {
-            volumeEl.innerHTML =
-                '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">' +
-                '<div class="space-y-4">' +
-                '<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">交易额来源</p>' +
-                '<div class="space-y-3">' +
-                revenueBarRow('直属下级团队', scaled.directSubVol, volRatios.directSub, '#60a5fa') +
-                revenueBarRow('自邀直客', scaled.directClientVol, volRatios.directClient, '#3b82f6') +
-                revenueBarRow('穿透团队', scaled.penetrateVol, volRatios.penetrate, '#1e3a8a') +
-                '</div></div>' +
-                '<div class="space-y-4">' +
-                '<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">用户与入金</p>' +
-                '<div class="grid grid-cols-2 gap-3">' +
-                kpiMiniCard('交易用户', fmtNum(scaled.activeUsers), '+' + scaled.userChange + '%') +
-                kpiMiniCard('总用户', fmtNum(scaled.totalUsers), '含穿透') +
-                kpiMiniCard('新增用户', fmtNum(scaled.newUsers), '本期注册') +
-                kpiMiniCard('团队净入金', fmtMoney(scaled.net, { signed: true }), '+' + scaled.netDepositChange + '%') +
-                '</div></div></div>';
-        }
+        let subRows = '';
+        rankedSubs.forEach(function (row, idx) {
+            subRows += '<tr class="hover:bg-gray-50/80"><td class="px-4 py-2.5 font-black text-gray-400">' + (idx + 1) + '</td>' +
+                '<td class="px-4 py-2.5 font-black text-gray-900">' + esc(row.remark || row.name) + '</td>' +
+                '<td class="px-4 py-2.5 font-black text-right">' + partnerMetric(row) + '</td></tr>';
+        });
+        let clientRows = '';
+        rankedClients.forEach(function (row, idx) {
+            const name = row.wallet || row.email || '—';
+            clientRows += '<tr class="hover:bg-gray-50/80"><td class="px-4 py-2.5 font-black text-gray-400">' + (idx + 1) + '</td>' +
+                '<td class="px-4 py-2.5 font-mono text-gray-900">' + esc(name) + '</td>' +
+                '<td class="px-4 py-2.5 font-black text-right">' + clientMetric(row) + '</td></tr>';
+        });
 
-        const structureEl = document.getElementById('analytics-panel-structure');
-        if (structureEl) {
-            let subRows = '';
-            rankedSubs.forEach(function (row) {
-                const gapShare = overviewBase.directGapRebate ? Math.round(row.gapIncome / overviewBase.directGapRebate * 100) : 0;
-                subRows += '<div class="flex items-center gap-3 text-[11px]">' +
-                    '<span class="w-28 truncate font-bold text-gray-700">' + esc(row.remark || row.name) + '</span>' +
-                    '<div class="flex-1 h-2 bg-gray-100 rounded-sm overflow-hidden">' +
-                    '<div class="h-full bg-blue-500 rounded-sm" style="width:' + gapShare + '%"></div></div>' +
-                    '<span class="w-16 text-right font-black">' + gapShare + '%</span></div>';
-            });
-            structureEl.innerHTML =
-                '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">' +
-                '<div class="space-y-4">' +
-                '<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">级差结构 · 直属 vs 穿透</p>' +
-                '<div class="flex h-3 rounded-sm overflow-hidden">' +
-                '<div class="bg-blue-500" style="width:' + directGapPct + '%"></div>' +
-                '<div class="bg-indigo-900" style="width:' + penetrateGapPct + '%"></div></div>' +
-                '<div class="grid grid-cols-2 gap-3 text-[11px]">' +
-                '<div class="rounded-sm border border-blue-100 p-3 bg-blue-50/30"><p class="text-[9px] font-black text-blue-600 uppercase">直属级差</p><p class="text-xl font-black mt-1">' + fmtMoney(scaled.directGap) + '</p></div>' +
-                '<div class="rounded-sm border border-indigo-100 p-3 bg-indigo-50/30"><p class="text-[9px] font-black text-indigo-800 uppercase">穿透级差</p><p class="text-xl font-black mt-1">' + fmtMoney(scaled.penetrateGap) + '</p></div>' +
-                '</div></div>' +
-                '<div class="space-y-3"><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">L1 下级级差占比</p>' + subRows + '</div></div>';
-        }
+        const metricLabel = { vol: '交易额', rebate: '级差贡献', users: '团队人数', traders: '交易人数' }[metric];
 
-        const rankingBody = document.getElementById('analytics-ranking-body');
-        if (rankingBody) {
-            const scaleGap = scaled.directGap / (overviewBase.directGapRebate || 1);
-            const scaleVol = scaled.vol / (overviewBase.teamVol || 1);
-            let rows = '';
-            rankedSubs.forEach(function (row, idx) {
-                rows += '<tr class="hover:bg-gray-50/80">' +
-                    '<td class="px-5 py-3 font-black text-gray-400">' + (idx + 1) + '</td>' +
-                    '<td class="px-5 py-3"><span class="font-black text-gray-900">' + esc(row.remark || row.name) + '</span>' +
-                    '<span class="text-[10px] text-gray-400 block font-mono">' + esc(row.wallet) + '</span></td>' +
-                    '<td class="px-5 py-3 font-black text-blue-600">' + fmtMoney(row.gapIncome * scaleGap) + '</td>' +
-                    '<td class="px-5 py-3 font-black">' + fmtMoney(row.totalVol * scaleVol) + '</td>' +
-                    '<td class="px-5 py-3">' + userScaleCell(row.activeUsers, row.totalUsers) + '</td>' +
-                    '<td class="px-5 py-3 font-black">' + fmtMoney(row.netDeposit, { signed: true }) + '</td>' +
-                    '<td class="px-5 py-3"><span class="gap-tag">' + row.gap + '%</span></td></tr>';
-            });
-            rankingBody.innerHTML = rows;
-        }
+        el.innerHTML =
+            '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">' +
+            '<div><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">合伙人 · ' + metricLabel + '排行</p>' +
+            '<table class="w-full text-left text-[11px]"><thead class="text-[10px] text-gray-400 font-black uppercase"><tr>' +
+            '<th class="pb-2 pr-2">#</th><th class="pb-2">下级合伙人</th><th class="pb-2 text-right">' + metricLabel + '</th></tr></thead><tbody class="divide-y divide-gray-50">' + subRows + '</tbody></table></div>' +
+            '<div><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">直属直客 · ' + metricLabel + '排行</p>' +
+            '<table class="w-full text-left text-[11px]"><thead class="text-[10px] text-gray-400 font-black uppercase"><tr>' +
+            '<th class="pb-2 pr-2">#</th><th class="pb-2">用户</th><th class="pb-2 text-right">' + metricLabel + '</th></tr></thead><tbody class="divide-y divide-gray-50">' + clientRows + '</tbody></table></div></div>';
+    }
 
+    function renderAnalyticsTabContent(scaled) {
+        const seedMap = { '1D': 71, '1W': 83, '1M': 97, '3M': 113 };
+        const seed = seedMap[analyticsPeriod] || 83;
+        const metrics = ['vol', 'rebate', 'users', 'traders'];
+        metrics.forEach(function (metric, idx) {
+            const triple = sourceTriple(scaled, metric);
+            const useMoney = metric === 'vol' || metric === 'rebate';
+            renderSvgStackedSourceChart(
+                document.getElementById('analytics-chart-' + metric),
+                triple,
+                analyticsPeriod,
+                seed + idx * 17,
+                useMoney
+            );
+            renderDistributionBlock('analytics-dist-' + metric, metric, triple);
+            renderRankingBlock('analytics-rank-' + metric, metric, scaled);
+        });
+        renderSourceLegend('analytics-legend-vol');
+        renderSourceLegend('analytics-legend-rebate');
+        renderSourceLegend('analytics-legend-users');
+        renderSourceLegend('analytics-legend-traders');
         renderAnalyticsDimTabs();
     }
 
-    function revenueBarRow(label, value, ratio, color) {
+    function sourceBarRow(label, value, ratio, color, metric) {
         const pct = Math.round(ratio * 100);
         return '<div><div class="flex justify-between text-[11px] mb-1"><span class="font-bold text-gray-700">' + esc(label) + '</span>' +
-            '<span class="font-black text-gray-900">' + fmtMoney(value) + ' <span class="text-gray-400 font-bold">(' + pct + '%)</span></span></div>' +
+            '<span class="font-black text-gray-900">' + formatMetricValue(metric, value) + ' <span class="text-gray-400 font-bold">(' + pct + '%)</span></span></div>' +
             '<div class="h-2 bg-gray-100 rounded-sm overflow-hidden"><div class="h-full rounded-sm" style="width:' + pct + '%;background:' + color + '"></div></div></div>';
-    }
-
-    function kpiMiniCard(label, value, sub) {
-        return '<div class="rounded-sm border border-gray-100 p-3 bg-white"><p class="text-[9px] font-black text-gray-400 uppercase">' + esc(label) + '</p>' +
-            '<p class="text-lg font-black mt-1 text-gray-900">' + value + '</p><p class="text-[10px] text-gray-400 mt-1">' + esc(sub) + '</p></div>';
     }
 
     function findSubPartner(id) {
@@ -748,16 +744,12 @@
         if (volChangeEl) volChangeEl.textContent = '+' + scaled.volChange + '%';
         const rebateEl = document.getElementById('overview-total-rebate');
         if (rebateEl) rebateEl.textContent = fmtMoney(scaled.rebate);
-        const directGapEl = document.getElementById('overview-direct-gap-rebate');
-        if (directGapEl) directGapEl.textContent = fmtMoney(scaled.directGap);
-        const penetrateGapEl = document.getElementById('overview-penetrate-gap-rebate');
-        if (penetrateGapEl) penetrateGapEl.textContent = fmtMoney(scaled.penetrateGap);
-        const netEl = document.getElementById('overview-team-net');
-        if (netEl) netEl.textContent = fmtMoney(scaled.net, { signed: true });
+        const gapEl = document.getElementById('overview-gap-rebate');
+        if (gapEl) gapEl.textContent = fmtMoney(scaled.gapRebate);
+        const teamUsersEl = document.getElementById('overview-team-users');
+        if (teamUsersEl) teamUsersEl.textContent = fmtNum(scaled.teamUsers);
         const activeEl = document.getElementById('overview-trade-users-active');
-        if (activeEl) activeEl.textContent = fmtNum(scaled.activeUsers);
-        const totalEl = document.getElementById('overview-trade-users-total');
-        if (totalEl) totalEl.textContent = fmtNum(scaled.totalUsers) + ' 总用户';
+        if (activeEl) activeEl.textContent = fmtNum(scaled.activeTraders);
 
         renderMySuperior();
         renderSubPartnersTable({ masked: false });
@@ -767,11 +759,6 @@
     function renderAnalytics() {
         const scale = PERIOD_SCALE[analyticsPeriod] || 1;
         const scaled = computeOverviewScaled(scale);
-        const rebateRatios = overviewRebateRatios(scaled);
-        const volRatios = overviewVolRatios(scaled);
-        const gapTotal = scaled.gap || 1;
-        const directGapShare = Math.round((scaled.directGap / gapTotal) * 100);
-        const penetrateGapShare = 100 - directGapShare;
 
         const setText = function (id, text) {
             const el = document.getElementById(id);
@@ -786,49 +773,13 @@
         setHtml('analytics-kpi-vol-delta', formatDeltaPct(scaled.volChange));
         setText('analytics-kpi-rebate', fmtMoney(scaled.rebate));
         setHtml('analytics-kpi-rebate-delta', formatDeltaPct(scaled.rebateChange));
-        setText('analytics-kpi-net', fmtMoney(scaled.net, { signed: true }));
-        setHtml('analytics-kpi-net-delta', formatDeltaPct(scaled.netDepositChange));
-        setText('analytics-kpi-active-users', fmtNum(scaled.activeUsers));
-        setHtml('analytics-kpi-users-delta', formatDeltaPct(scaled.userChange));
-        setText('analytics-kpi-direct-gap', fmtMoney(scaled.directGap));
-        setText('analytics-kpi-direct-gap-share', '占级差 ' + directGapShare + '%');
-        setText('analytics-kpi-penetrate-gap', fmtMoney(scaled.penetrateGap));
-        setText('analytics-kpi-penetrate-gap-share', '占级差 ' + penetrateGapShare + '%');
+        setText('analytics-kpi-team-users', fmtNum(scaled.teamUsers));
+        setHtml('analytics-kpi-team-users-delta', formatDeltaPct(scaled.usersChange));
+        setText('analytics-kpi-active-traders', fmtNum(scaled.activeTraders));
+        setHtml('analytics-kpi-active-traders-delta', formatDeltaPct(scaled.activeTradersChange));
         setText('analytics-chart-period-tag', analyticsPeriod);
 
-        const pointCount = LINKS_CHART_POINTS[analyticsPeriod] || 7;
-        const seedMap = { '1D': 71, '1W': 83, '1M': 97, '3M': 113 };
-        const seed = seedMap[analyticsPeriod] || 83;
-        const rebateSeries = buildDistributedSeries(scaled.rebate, pointCount, seed);
-        const volSeries = buildDistributedSeries(scaled.vol, pointCount, seed + 41);
-        const selfSeries = rebateSeries.map(function (v) { return v * rebateRatios.self; });
-        const directSeries = rebateSeries.map(function (v) { return v * rebateRatios.direct; });
-        const directGapSeries = rebateSeries.map(function (v) { return v * rebateRatios.directGap; });
-        const penetrateGapSeries = rebateSeries.map(function (v) { return v * rebateRatios.penetrateGap; });
-        const directSubVolSeries = volSeries.map(function (v) { return v * volRatios.directSub; });
-        const directClientVolSeries = volSeries.map(function (v) { return v * volRatios.directClient; });
-        const penetrateVolSeries = volSeries.map(function (v) { return v * volRatios.penetrate; });
-
-        renderSvgStackedRebateChart4(
-            document.getElementById('analytics-chart-rebate'),
-            selfSeries,
-            directSeries,
-            directGapSeries,
-            penetrateGapSeries,
-            analyticsPeriod
-        );
-        renderSvgStackedAreaChart(
-            document.getElementById('analytics-chart-vol'),
-            [directSubVolSeries, directClientVolSeries, penetrateVolSeries],
-            analyticsPeriod,
-            [
-                { fill: '#60a5fa', opacity: 0.85 },
-                { fill: '#3b82f6', opacity: 0.82 },
-                { fill: '#1e3a8a', opacity: 0.88 }
-            ]
-        );
-
-        renderAnalyticsPanels(scaled);
+        renderAnalyticsTabContent(scaled);
         updatePeriodButtons('analytics-period-btn', analyticsPeriod);
     }
 
