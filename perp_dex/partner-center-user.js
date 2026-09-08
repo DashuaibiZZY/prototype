@@ -2,7 +2,7 @@
  * 合伙人中心（用户侧）原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-user-34';
+    const DATA_VERSION = 'partner-user-35';
     const SOURCE_LABELS = ['自己产生', '直属直客', '合伙人级差'];
     const SOURCE_COLORS = ['#93c5fd', '#3b82f6', '#1e3a8a'];
     const SOURCE_STYLES = [
@@ -908,10 +908,10 @@
         const netEl = document.getElementById('overview-team-net');
         if (netEl) {
             netEl.textContent = fmtMoney(scaled.net, { signed: true });
-            netEl.className = 'text-3xl font-black ' + (scaled.net >= 0 ? 'text-green-500' : 'text-red-500');
+            netEl.className = 'partner-kpi-value ' + (scaled.net >= 0 ? 'text-green-500' : 'text-red-500');
         }
         const activeEl = document.getElementById('overview-trade-users-active');
-        if (activeEl) activeEl.innerHTML = fmtNum(scaled.activeTraders) + ' <span class="text-base font-bold text-gray-600">交易用户</span>';
+        if (activeEl) activeEl.innerHTML = fmtNum(scaled.activeTraders) + ' <span class="text-[11px] font-bold text-gray-600">交易用户</span>';
         const totalEl = document.getElementById('overview-trade-users-total');
         if (totalEl) totalEl.textContent = fmtNum(scaled.teamUsers) + ' 总用户';
 
@@ -1089,10 +1089,15 @@
         set('drill-self-rebate', fmtMoney(o.selfRebate * scale));
         set('drill-direct-rebate', fmtMoney(o.directRebate * scale));
         set('drill-gap-rebate', fmtMoney(o.gapRebate * scale));
-        set('drill-team-net', fmtMoney(o.teamNetDeposit * scale, { signed: true }));
+        const netEl = document.getElementById('drill-team-net');
+        if (netEl) {
+            const netVal = o.teamNetDeposit * scale;
+            netEl.textContent = fmtMoney(netVal, { signed: true });
+            netEl.className = 'partner-kpi-value ' + (netVal >= 0 ? 'text-green-500' : 'text-red-500');
+        }
 
         const activeUserEl = document.getElementById('drill-users-active');
-        if (activeUserEl) activeUserEl.innerHTML = fmtNum(activeUsers) + ' <span class="text-base font-bold text-gray-600">交易用户</span>';
+        if (activeUserEl) activeUserEl.innerHTML = fmtNum(activeUsers) + ' <span class="text-[11px] font-bold text-gray-600">交易用户</span>';
         set('drill-users-total', fmtNum(o.totalUsers) + ' 总用户');
 
         updatePeriodButtons('drill-period-btn', drillPeriod);
