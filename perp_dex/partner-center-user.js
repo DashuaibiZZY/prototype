@@ -2,10 +2,9 @@
  * 合伙人中心（用户侧）原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-user-29';
+    const DATA_VERSION = 'partner-user-30';
     const USER_SCALE_TIP = '交易用户数据每天 UTC+8 0 点更新';
     const PERIOD_SCALE = { '1D': 0.14, '1W': 1, '1M': 4.2, '3M': 12 };
-    const LINKS_REBATE_SPLIT = { self: 0.015, direct: 0.094, gap: 0.891 };
     const LINKS_CHART_POINTS = { '1D': 24, '1W': 7, '1M': 30, '3M': 90 };
     const LINKS_CHART_LABEL_STEP = { '1D': 6, '1W': 1, '1M': 5, '3M': 15 };
     const MY_MAX_RATIO = 70;
@@ -382,31 +381,6 @@
         };
     }
 
-    function aggregateLinksOverviewTotals(scale) {
-        let totalVol = 0;
-        let totalRebate = 0;
-        let totalNet = 0;
-        let directCount = 0;
-        let subPartnerCount = 0;
-        inviteLinksData.forEach(function (row) {
-            totalVol += row.totalVol * scale;
-            totalRebate += row.rebateIncome * scale;
-            totalNet += row.netDeposit;
-            directCount += row.directCount;
-            subPartnerCount += row.subPartnerCount;
-        });
-        return {
-            totalVol: totalVol,
-            totalRebate: totalRebate,
-            totalNet: totalNet,
-            directCount: directCount,
-            subPartnerCount: subPartnerCount,
-            selfRebate: totalRebate * LINKS_REBATE_SPLIT.self,
-            directRebate: totalRebate * LINKS_REBATE_SPLIT.direct,
-            gapRebate: totalRebate * LINKS_REBATE_SPLIT.gap
-        };
-    }
-
     function buildDistributedSeries(total, points, seed) {
         const rnd = createRng(seed);
         const weights = [];
@@ -483,61 +457,6 @@
             grid +
             '<path d="' + fillPath + '" fill="url(#' + gradId + ')" stroke="none"/>' +
             '<path d="' + path + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' +
-            labels +
-            '</svg>';
-    }
-
-    function renderSvgStackedRebateChart(container, selfSeries, directSeries, gapSeries, period) {
-        if (!container) return;
-        const points = selfSeries.length;
-        if (!points) {
-            container.innerHTML = '';
-            return;
-        }
-        const W = 400;
-        const H = 160;
-        const pad = { l: 42, r: 10, t: 10, b: 22 };
-        const pw = W - pad.l - pad.r;
-        const ph = H - pad.t - pad.b;
-        const totals = selfSeries.map(function (_s, i) { return selfSeries[i] + directSeries[i] + gapSeries[i]; });
-        const maxV = Math.max.apply(null, totals) * 1.12 || 1;
-        const xAt = function (i) { return pad.l + (points <= 1 ? pw / 2 : (i / (points - 1)) * pw); };
-        const yAt = function (v) { return pad.t + ph - (v / maxV) * ph; };
-
-        function areaPath(bottom, top) {
-            let d = 'M' + xAt(0).toFixed(2) + ',' + yAt(bottom[0]).toFixed(2);
-            for (let i = 1; i < points; i++) d += ' L' + xAt(i).toFixed(2) + ',' + yAt(bottom[i]).toFixed(2);
-            for (let i = points - 1; i >= 0; i--) d += ' L' + xAt(i).toFixed(2) + ',' + yAt(top[i]).toFixed(2);
-            return d + ' Z';
-        }
-
-        const selfTop = selfSeries.slice();
-        const directBottom = selfTop.slice();
-        const directTop = selfSeries.map(function (s, i) { return s + directSeries[i]; });
-        const gapBottom = directTop.slice();
-        const gapTop = totals.slice();
-
-        let grid = '';
-        for (let g = 0; g <= 3; g++) {
-            const y = pad.t + (ph * g) / 3;
-            const val = maxV * (1 - g / 3);
-            grid += '<line x1="' + pad.l + '" y1="' + y.toFixed(1) + '" x2="' + (W - pad.r) + '" y2="' + y.toFixed(1) + '" stroke="#f1f5f9" stroke-width="1"/>';
-            grid += '<text x="' + (pad.l - 6) + '" y="' + (y + 3).toFixed(1) + '" text-anchor="end" fill="#94a3b8" font-size="8" font-weight="700">' + esc(compactAxisMoney(val)) + '</text>';
-        }
-
-        let labels = '';
-        totals.forEach(function (_v, i) {
-            const text = formatLinksChartLabel(period, i, points);
-            if (!text) return;
-            labels += '<text x="' + xAt(i).toFixed(1) + '" y="' + (H - 4) + '" text-anchor="middle" fill="#94a3b8" font-size="7" font-weight="700">' + esc(text) + '</text>';
-        });
-
-        container.innerHTML =
-            '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' +
-            grid +
-            '<path d="' + areaPath(Array(points).fill(0), selfTop) + '" fill="#93c5fd" fill-opacity="0.85"/>' +
-            '<path d="' + areaPath(directBottom, directTop) + '" fill="#3b82f6" fill-opacity="0.78"/>' +
-            '<path d="' + areaPath(gapBottom, gapTop) + '" fill="#1d4ed8" fill-opacity="0.82"/>' +
             labels +
             '</svg>';
     }
@@ -739,50 +658,6 @@
         }
 
         renderOverviewDimTabs();
-    }
-
-    function renderLinksOverview() {
-        const scale = PERIOD_SCALE[linksPeriod] || 1;
-        const totals = aggregateLinksOverviewTotals(scale);
-        const periodTag = document.getElementById('links-overview-period-tag');
-        if (periodTag) periodTag.textContent = linksPeriod;
-
-        const set = function (id, text) {
-            const el = document.getElementById(id);
-            if (el) el.textContent = text;
-        };
-        set('links-overview-rebate', fmtMoney(totals.totalRebate));
-        set('links-overview-self', fmtMoney(totals.selfRebate));
-        set('links-overview-direct', fmtMoney(totals.directRebate));
-        set('links-overview-gap', fmtMoney(totals.gapRebate));
-        set('links-overview-vol', fmtMoney(totals.totalVol));
-        set('links-overview-scale', fmtNum(totals.directCount + totals.subPartnerCount));
-        set('links-overview-scale-sub', fmtNum(totals.directCount) + ' 直邀 · ' + fmtNum(totals.subPartnerCount) + ' 下级合伙人');
-        set('links-overview-net', fmtMoney(totals.totalNet, { signed: true }));
-
-        const pointCount = LINKS_CHART_POINTS[linksPeriod] || 7;
-        const seedMap = { '1D': 11, '1W': 23, '1M': 37, '3M': 53 };
-        const seed = seedMap[linksPeriod] || 23;
-        const rebateSeries = buildDistributedSeries(totals.totalRebate, pointCount, seed);
-        const volSeries = buildDistributedSeries(totals.totalVol, pointCount, seed + 97);
-        const selfSeries = rebateSeries.map(function (v) { return v * LINKS_REBATE_SPLIT.self; });
-        const directSeries = rebateSeries.map(function (v) { return v * LINKS_REBATE_SPLIT.direct; });
-        const gapSeries = rebateSeries.map(function (v) { return v * LINKS_REBATE_SPLIT.gap; });
-
-        renderSvgStackedRebateChart(
-            document.getElementById('links-chart-rebate'),
-            selfSeries,
-            directSeries,
-            gapSeries,
-            linksPeriod
-        );
-        renderSvgLineChart(
-            document.getElementById('links-chart-vol'),
-            volSeries,
-            linksPeriod,
-            '#2563eb',
-            { gradId: 'links-vol-grad-' + linksPeriod }
-        );
     }
 
     function findSubPartner(id) {
@@ -1290,7 +1165,6 @@
     }
 
     function renderInviteLinks() {
-        renderLinksOverview();
         let filtered = inviteLinksData.filter(function (row) {
             if (!linksSearch) return true;
             const q = linksSearch.toLowerCase();
