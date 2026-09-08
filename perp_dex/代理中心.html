@@ -208,11 +208,7 @@
     <!-- 侧边栏 -->
     <aside class="w-56 bg-white border-r border-gray-100 flex flex-col shrink-0">
         <nav class="flex-1 px-4 py-6 space-y-2">
-            <!-- 邀请链接 -->
-            <div class="partner-nav-group">
-                <button onclick="showMainPage('page-links')" id="sidebar-links" class="sidebar-btn-active w-full text-left px-4 py-3 rounded font-black transition-all">邀请链接管理</button>
-                <button onclick="showMainPage('page-link-analytics')" id="sidebar-link-analytics" class="partner-nav-sub w-full text-left px-4 py-2.5 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all">链接数据分析</button>
-            </div>
+            <button onclick="showMainPage('page-links')" id="sidebar-links" class="sidebar-btn-active w-full text-left px-4 py-3 rounded font-black transition-all">邀请链接管理</button>
             <div class="partner-nav-group">
                 <button onclick="showMainPage('page-overview')" id="sidebar-overview" class="w-full text-left px-4 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all">合伙人管理</button>
                 <button onclick="showMainPage('page-analytics')" id="sidebar-analytics" class="partner-nav-sub w-full text-left px-4 py-2.5 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all">团队数据分析</button>
@@ -669,7 +665,6 @@
                 <div>
                     <h1 class="text-2xl font-black tracking-tight">邀请链接管理</h1>
                     <p class="text-gray-400 font-medium">创建多个邀请链接用于渠道推广追踪；使用中链接最多 50 个，可停用不再使用的链接。</p>
-                    <button type="button" onclick="showMainPage('page-link-analytics')" class="text-[11px] font-black text-blue-600 hover:underline mt-2">查看链接数据分析 →</button>
                 </div>
                 <button onclick="openReferralModal('create')" id="links-create-count" class="bg-blue-600 text-white px-6 py-2.5 rounded-sm font-black text-[11px] hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">
                     + 創建新連結 (使用中 11/50)
@@ -727,107 +722,6 @@
             </div>
         </div>
 
-        <!-- 页面：链接数据分析 -->
-        <div id="page-link-analytics" class="space-y-6 hidden">
-            <div class="flex flex-wrap justify-between items-end gap-4">
-                <div>
-                    <h1 class="text-2xl font-black tracking-tight">链接数据分析</h1>
-                    <p class="text-gray-400 font-medium">对比各邀请链接的渠道表现与历史趋势，识别高价值推广渠道。</p>
-                </div>
-                <div class="flex items-center gap-3">
-                    <button type="button" onclick="showMainPage('page-links')" class="text-[11px] font-black text-gray-500 hover:text-black">← 返回邀请链接管理</button>
-                    <div class="flex bg-white p-1 rounded border border-gray-200 shadow-sm">
-                        <button type="button" data-period="1D" onclick="PartnerCenter.setLinkAnalyticsPeriod('1D')" class="link-analytics-period-btn px-4 py-1 text-[10px] font-bold hover:bg-gray-50">1D</button>
-                        <button type="button" data-period="1W" onclick="PartnerCenter.setLinkAnalyticsPeriod('1W')" class="link-analytics-period-btn px-4 py-1 text-[10px] font-bold bg-black text-white rounded-sm shadow-md">1W</button>
-                        <button type="button" data-period="1M" onclick="PartnerCenter.setLinkAnalyticsPeriod('1M')" class="link-analytics-period-btn px-4 py-1 text-[10px] font-bold hover:bg-gray-50">1M</button>
-                        <button type="button" data-period="3M" onclick="PartnerCenter.setLinkAnalyticsPeriod('3M')" class="link-analytics-period-btn px-4 py-1 text-[10px] font-bold hover:bg-gray-50">3M</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <div class="analytics-kpi-card">
-                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">渠道总交易额</p>
-                    <p id="link-analytics-kpi-vol" class="text-lg font-black text-gray-900">—</p>
-                    <p id="link-analytics-kpi-vol-delta" class="kpi-delta-up mt-1">—</p>
-                </div>
-                <div class="analytics-kpi-card border-l-2 border-l-blue-600">
-                    <p class="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-1">渠道返佣收入</p>
-                    <p id="link-analytics-kpi-rebate" class="text-lg font-black text-gray-900">—</p>
-                    <p id="link-analytics-kpi-rebate-delta" class="kpi-delta-up mt-1">—</p>
-                </div>
-                <div class="analytics-kpi-card">
-                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">渠道注册人数</p>
-                    <p id="link-analytics-kpi-registrations" class="text-lg font-black text-gray-900">—</p>
-                    <p id="link-analytics-kpi-registrations-delta" class="kpi-delta-up mt-1">—</p>
-                </div>
-                <div class="analytics-kpi-card">
-                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">渠道净入金</p>
-                    <p id="link-analytics-kpi-net" class="text-lg font-black text-green-600">—</p>
-                    <p id="link-analytics-kpi-net-delta" class="kpi-delta-up mt-1">—</p>
-                </div>
-            </div>
-
-            <div class="stats-card !p-0 overflow-hidden shadow-sm">
-                <div class="p-5 border-b border-gray-50 bg-white flex flex-wrap items-center justify-between gap-4">
-                    <div class="flex flex-wrap items-center gap-6">
-                        <button type="button" data-dim-tab="vol" onclick="PartnerCenter.setLinkAnalyticsDimTab('vol')" class="link-analytics-dim-tab tab-active pb-1">交易额</button>
-                        <button type="button" data-dim-tab="rebate" onclick="PartnerCenter.setLinkAnalyticsDimTab('rebate')" class="link-analytics-dim-tab text-gray-400 font-bold pb-1 hover:text-black">返佣收入</button>
-                        <button type="button" data-dim-tab="registrations" onclick="PartnerCenter.setLinkAnalyticsDimTab('registrations')" class="link-analytics-dim-tab text-gray-400 font-bold pb-1 hover:text-black">注册人数</button>
-                        <button type="button" data-dim-tab="net" onclick="PartnerCenter.setLinkAnalyticsDimTab('net')" class="link-analytics-dim-tab text-gray-400 font-bold pb-1 hover:text-black">净入金</button>
-                    </div>
-                    <span id="link-analytics-period-tag" class="text-[10px] font-black text-gray-500 uppercase tracking-widest bg-gray-100 px-2 py-1 rounded-sm">1W</span>
-                </div>
-                <div id="link-analytics-dim-panel-vol" class="p-6 space-y-4">
-                    <div class="stats-card analytics-section-card shadow-sm">
-                        <p class="analytics-section-title mb-3">历史趋势</p>
-                        <div id="link-analytics-chart-vol" class="links-chart-wrap"></div>
-                    </div>
-                    <div class="stats-card analytics-section-card shadow-sm">
-                        <div id="link-analytics-share-vol"></div>
-                    </div>
-                    <div class="stats-card analytics-section-card shadow-sm">
-                        <div id="link-analytics-rank-vol"></div>
-                    </div>
-                </div>
-                <div id="link-analytics-dim-panel-rebate" class="p-6 space-y-4 hidden">
-                    <div class="stats-card analytics-section-card shadow-sm">
-                        <p class="analytics-section-title mb-3">历史趋势</p>
-                        <div id="link-analytics-chart-rebate" class="links-chart-wrap"></div>
-                    </div>
-                    <div class="stats-card analytics-section-card shadow-sm">
-                        <div id="link-analytics-share-rebate"></div>
-                    </div>
-                    <div class="stats-card analytics-section-card shadow-sm">
-                        <div id="link-analytics-rank-rebate"></div>
-                    </div>
-                </div>
-                <div id="link-analytics-dim-panel-registrations" class="p-6 space-y-4 hidden">
-                    <div class="stats-card analytics-section-card shadow-sm">
-                        <p class="analytics-section-title mb-3">历史趋势</p>
-                        <div id="link-analytics-chart-registrations" class="links-chart-wrap"></div>
-                    </div>
-                    <div class="stats-card analytics-section-card shadow-sm">
-                        <div id="link-analytics-share-registrations"></div>
-                    </div>
-                    <div class="stats-card analytics-section-card shadow-sm">
-                        <div id="link-analytics-rank-registrations"></div>
-                    </div>
-                </div>
-                <div id="link-analytics-dim-panel-net" class="p-6 space-y-4 hidden">
-                    <div class="stats-card analytics-section-card shadow-sm">
-                        <p class="analytics-section-title mb-3">历史趋势</p>
-                        <div id="link-analytics-chart-net" class="links-chart-wrap"></div>
-                    </div>
-                    <div class="stats-card analytics-section-card shadow-sm">
-                        <div id="link-analytics-share-net"></div>
-                    </div>
-                    <div class="stats-card analytics-section-card shadow-sm">
-                        <div id="link-analytics-rank-net"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </main>
 </div>
 
@@ -1044,7 +938,7 @@
     </div>
 </div>
 
-<script src="partner-center-user.js?v=partner-user-44"></script>
+<script src="partner-center-user.js?v=partner-user-45"></script>
 <script>
     // 切换数据表格 (下级代理 vs 直客)
     function switchTable(tableId) {
@@ -1090,7 +984,7 @@
     }
 
     function showMainPage(pageId) {
-        const pages = ['page-links', 'page-link-analytics', 'page-overview', 'page-analytics', 'page-settlement', 'page-commission-detail', 'page-drill-overview'];
+        const pages = ['page-links', 'page-overview', 'page-analytics', 'page-settlement', 'page-commission-detail', 'page-drill-overview'];
         pages.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.classList.add('hidden');
@@ -1100,7 +994,6 @@
 
         const sidebarBtns = {
             'page-links': 'sidebar-links',
-            'page-link-analytics': 'sidebar-link-analytics',
             'page-overview': 'sidebar-overview',
             'page-analytics': 'sidebar-analytics',
             'page-drill-overview': 'sidebar-overview',
@@ -1109,23 +1002,12 @@
         };
 
         const activeBtnId = sidebarBtns[pageId];
-        const linkSubActive = pageId === 'page-link-analytics';
         const partnerSubActive = pageId === 'page-analytics';
 
-        ['sidebar-links', 'sidebar-link-analytics', 'sidebar-overview', 'sidebar-analytics', 'sidebar-settlement'].forEach(id => {
+        ['sidebar-links', 'sidebar-overview', 'sidebar-analytics', 'sidebar-settlement'].forEach(id => {
             const btn = document.getElementById(id);
             if (!btn) return;
-            if (id === 'sidebar-links') {
-                btn.className = (activeBtnId === 'sidebar-links')
-                    ? 'sidebar-btn-active w-full text-left px-4 py-3 rounded font-black transition-all'
-                    : (linkSubActive
-                        ? 'w-full text-left px-4 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all'
-                        : 'w-full text-left px-4 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all');
-            } else if (id === 'sidebar-link-analytics') {
-                btn.className = linkSubActive
-                    ? 'partner-nav-sub partner-nav-sub-active w-full text-left px-4 py-2.5 rounded transition-all'
-                    : 'partner-nav-sub w-full text-left px-4 py-2.5 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all';
-            } else if (id === 'sidebar-overview') {
+            if (id === 'sidebar-overview') {
                 btn.className = (activeBtnId === 'sidebar-overview')
                     ? 'sidebar-btn-active w-full text-left px-4 py-3 rounded font-black transition-all'
                     : 'w-full text-left px-4 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all';
