@@ -2,7 +2,7 @@
  * 合伙人中心（用户侧）原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-user-32';
+    const DATA_VERSION = 'partner-user-33';
     const SOURCE_LABELS = ['自己产生', '直属直客', '合伙人级差'];
     const SOURCE_COLORS = ['#93c5fd', '#3b82f6', '#1e3a8a'];
     const SOURCE_STYLES = [
@@ -268,10 +268,14 @@
         directClientActiveTraders: 186,
         partnerTeamActiveTraders: 1663,
         teamNetDeposit: 1240000,
+        selfNetDeposit: 12000,
+        directClientNetDeposit: 86000,
+        partnerTeamNetDeposit: 1142000,
         volChange: 12.4,
         rebateChange: 8.6,
         usersChange: 2.8,
-        activeTradersChange: 3.1
+        activeTradersChange: 3.1,
+        netDepositChange: 5.2
     };
 
     function fmtMoney(n, opts) {
@@ -494,10 +498,14 @@
             directClientActiveTraders: Math.round(overviewBase.directClientActiveTraders * Math.min(scale, 1.2)),
             partnerTeamActiveTraders: Math.round(overviewBase.partnerTeamActiveTraders * Math.min(scale, 1.2)),
             net: overviewBase.teamNetDeposit * scale,
+            selfNetDeposit: overviewBase.selfNetDeposit * scale,
+            directClientNetDeposit: overviewBase.directClientNetDeposit * scale,
+            partnerTeamNetDeposit: overviewBase.partnerTeamNetDeposit * scale,
             volChange: overviewBase.volChange,
             rebateChange: overviewBase.rebateChange,
             usersChange: overviewBase.usersChange,
-            activeTradersChange: overviewBase.activeTradersChange
+            activeTradersChange: overviewBase.activeTradersChange,
+            netDepositChange: overviewBase.netDepositChange
         };
     }
 
@@ -511,6 +519,9 @@
         if (metric === 'users') {
             return { self: scaled.selfUsers, direct: scaled.directClientUsers, partner: scaled.partnerTeamUsers, total: scaled.teamUsers };
         }
+        if (metric === 'net') {
+            return { self: scaled.selfNetDeposit, direct: scaled.directClientNetDeposit, partner: scaled.partnerTeamNetDeposit, total: scaled.net };
+        }
         return { self: scaled.selfActiveTraders, direct: scaled.directClientActiveTraders, partner: scaled.partnerTeamActiveTraders, total: scaled.activeTraders };
     }
 
@@ -523,6 +534,86 @@
         const cls = value >= 0 ? 'kpi-delta-up' : 'kpi-delta-down';
         const sign = value >= 0 ? '+' : '';
         return '<span class="' + cls + '">' + sign + value + '% vs 上周期</span>';
+    }
+
+    function buildYAxisLabels(maxV, useMoneyAxis) {
+        const labels = [];
+        for (let g = 0; g <= 3; g++) {
+            const val = maxV * (1 - g / 3);
+            labels.push(useMoneyAxis ? compactAxisMoney(val) : fmtNum(Math.round(val)));
+        }
+        return labels;
+    }
+
+    function renderAnalyticsStackedAreaChart(container, layerSeries, period, layerStyles, useMoneyAxis) {
+        if (!container) return;
+        const points = layerSeries[0] ? layerSeries[0].length : 0;
+        if (!points) {
+            container.innerHTML = '';
+            return;
+        }
+        const W = 400;
+        const H = 160;
+        const pad = { l: 8, r: 10, t: 10, b: 22 };
+        const pw = W - pad.l - pad.r;
+        const ph = H - pad.t - pad.b;
+        const totals = [];
+        for (let i = 0; i < points; i++) {
+            let sum = 0;
+            layerSeries.forEach(function (series) { sum += series[i]; });
+            totals.push(sum);
+        }
+        const maxV = Math.max.apply(null, totals) * 1.12 || 1;
+        const xAt = function (i) { return pad.l + (points <= 1 ? pw / 2 : (i / (points - 1)) * pw); };
+        const yAt = function (v) { return pad.t + ph - (v / maxV) * ph; };
+
+        function areaPath(bottom, top) {
+            let d = 'M' + xAt(0).toFixed(2) + ',' + yAt(bottom[0]).toFixed(2);
+            for (let i = 1; i < points; i++) d += ' L' + xAt(i).toFixed(2) + ',' + yAt(bottom[i]).toFixed(2);
+            for (let i = points - 1; i >= 0; i--) d += ' L' + xAt(i).toFixed(2) + ',' + yAt(top[i]).toFixed(2);
+            return d + ' Z';
+        }
+
+        const cumul = [];
+        layerSeries.forEach(function (_series, layerIdx) {
+            const bottom = layerIdx === 0 ? Array(points).fill(0) : cumul[layerIdx - 1].slice();
+            const top = bottom.map(function (b, i) { return b + layerSeries[layerIdx][i]; });
+            cumul.push(top);
+        });
+
+        let grid = '';
+        for (let g = 0; g <= 3; g++) {
+            const y = pad.t + (ph * g) / 3;
+            grid += '<line x1="' + pad.l + '" y1="' + y.toFixed(1) + '" x2="' + (W - pad.r) + '" y2="' + y.toFixed(1) + '" stroke="#f1f5f9" stroke-width="1"/>';
+        }
+
+        let labels = '';
+        totals.forEach(function (_v, i) {
+            const text = formatLinksChartLabel(period, i, points);
+            if (!text) return;
+            labels += '<text x="' + xAt(i).toFixed(1) + '" y="' + (H - 4) + '" text-anchor="middle" fill="#94a3b8" font-size="7" font-weight="700">' + esc(text) + '</text>';
+        });
+
+        let areas = '';
+        layerSeries.forEach(function (_series, layerIdx) {
+            const style = layerStyles[layerIdx] || { fill: '#3b82f6', opacity: 0.8 };
+            const bottom = layerIdx === 0 ? Array(points).fill(0) : cumul[layerIdx - 1];
+            areas += '<path d="' + areaPath(bottom, cumul[layerIdx]) + '" fill="' + style.fill + '" fill-opacity="' + (style.opacity || 0.8) + '"/>';
+        });
+
+        const yAxisHtml = buildYAxisLabels(maxV, useMoneyAxis).map(function (label) {
+            return '<span>' + esc(label) + '</span>';
+        }).join('');
+
+        const svgHtml =
+            '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' +
+            grid + areas + labels + '</svg>';
+
+        container.innerHTML =
+            '<div class="analytics-chart-shell">' +
+            '<div class="analytics-chart-y-axis">' + yAxisHtml + '</div>' +
+            svgHtml +
+            '</div>';
     }
 
     function renderSvgStackedAreaChart(container, layerSeries, period, layerStyles, useMoneyAxis) {
@@ -596,7 +687,7 @@
         const selfSeries = totalSeries.map(function (v) { return v * ratios.self; });
         const directSeries = totalSeries.map(function (v) { return v * ratios.direct; });
         const partnerSeries = totalSeries.map(function (v) { return v * ratios.partner; });
-        renderSvgStackedAreaChart(container, [selfSeries, directSeries, partnerSeries], period, SOURCE_STYLES, useMoneyAxis);
+        renderAnalyticsStackedAreaChart(container, [selfSeries, directSeries, partnerSeries], period, SOURCE_STYLES, useMoneyAxis);
     }
 
     function renderSourceLegend(className) {
@@ -608,8 +699,35 @@
     }
 
     function formatMetricValue(metric, value, opts) {
-        if (metric === 'vol' || metric === 'rebate') return fmtMoney(value, opts);
+        if (metric === 'vol' || metric === 'rebate' || metric === 'net') return fmtMoney(value, opts);
         return fmtNum(value);
+    }
+
+    const ANALYTICS_METRICS = [
+        { key: 'vol', label: '团队交易额' },
+        { key: 'rebate', label: '返佣收入' },
+        { key: 'users', label: '团队人数' },
+        { key: 'traders', label: '团队交易人数' },
+        { key: 'net', label: '团队净入金' }
+    ];
+
+    function renderSourceMatrix(scaled) {
+        const body = document.getElementById('analytics-source-matrix-body');
+        if (!body) return;
+        let html = '';
+        ANALYTICS_METRICS.forEach(function (item) {
+            const triple = sourceTriple(scaled, item.key);
+            const ratios = sourceRatios(triple);
+            html += '<tr class="border-b border-gray-50 last:border-0">';
+            html += '<td class="font-black text-gray-900">' + item.label + '</td>';
+            ['self', 'direct', 'partner'].forEach(function (key) {
+                html += '<td class="text-right font-bold text-gray-800">' +
+                    formatMetricValue(item.key, triple[key]) +
+                    ' <span class="analytics-pct-chip">' + Math.round(ratios[key] * 100) + '%</span></td>';
+            });
+            html += '</tr>';
+        });
+        body.innerHTML = html;
     }
 
     function renderAnalyticsDimTabs() {
@@ -618,9 +736,9 @@
             if (tab === analyticsDimTab) btn.className = 'analytics-dim-tab tab-active pb-1';
             else btn.className = 'analytics-dim-tab text-gray-400 font-bold pb-1 hover:text-black';
         });
-        ['vol', 'rebate', 'users', 'traders'].forEach(function (id) {
-            const panel = document.getElementById('analytics-dim-panel-' + id);
-            if (panel) panel.classList.toggle('hidden', analyticsDimTab !== id);
+        ANALYTICS_METRICS.forEach(function (item) {
+            const panel = document.getElementById('analytics-dim-panel-' + item.key);
+            if (panel) panel.classList.toggle('hidden', analyticsDimTab !== item.key);
         });
     }
 
@@ -637,32 +755,54 @@
         el.innerHTML = html;
     }
 
+    function selfMetricValue(metric, scaled) {
+        if (metric === 'vol') return scaled.selfVol;
+        if (metric === 'rebate') return scaled.selfRebate;
+        if (metric === 'users') return scaled.selfUsers;
+        if (metric === 'traders') return scaled.selfActiveTraders;
+        return scaled.selfNetDeposit;
+    }
+
     function renderRankingBlock(containerId, metric, scaled) {
         const el = document.getElementById(containerId);
         if (!el) return;
         const scaleVol = scaled.vol / (overviewBase.teamVol || 1);
         const scaleGap = scaled.gapRebate / (overviewBase.gapRebate || 1);
+        const scaleDirectRebate = scaled.directRebate / (overviewBase.directRebate || 1);
+        const scaleDirectVol = scaled.directClientVol / (overviewBase.directClientVol || 1);
+        const scaleDirectNet = scaled.directClientNetDeposit / (overviewBase.directClientNetDeposit || 1);
+        const scalePartnerNet = scaled.partnerTeamNetDeposit / (overviewBase.partnerTeamNetDeposit || 1);
+
         const rankedSubs = subPartnersData.slice().sort(function (a, b) {
             if (metric === 'rebate') return b.gapIncome - a.gapIncome;
             if (metric === 'users') return b.totalUsers - a.totalUsers;
             if (metric === 'traders') return b.activeUsers - a.activeUsers;
+            if (metric === 'net') return b.netDeposit - a.netDeposit;
             return b.totalVol - a.totalVol;
-        });
+        }).slice(0, 5);
+
         const rankedClients = directClientsData.slice().sort(function (a, b) {
             if (metric === 'rebate') return b.rebate - a.rebate;
+            if (metric === 'net') return b.netDeposit - a.netDeposit;
             return b.totalVol - a.totalVol;
-        });
+        }).slice(0, 5);
 
         function partnerMetric(row) {
             if (metric === 'rebate') return fmtMoney(row.gapIncome * scaleGap);
             if (metric === 'users') return fmtNum(row.totalUsers);
             if (metric === 'traders') return fmtNum(row.activeUsers);
+            if (metric === 'net') return fmtMoney(row.netDeposit * scalePartnerNet, { signed: true });
             return fmtMoney(row.totalVol * scaleVol);
         }
         function clientMetric(row) {
-            if (metric === 'rebate') return fmtMoney(row.rebate * (scaled.directRebate / (overviewBase.directRebate || 1)));
-            return fmtMoney(row.totalVol * (scaled.directClientVol / (overviewBase.directClientVol || 1)));
+            if (metric === 'rebate') return fmtMoney(row.rebate * scaleDirectRebate);
+            if (metric === 'net') return fmtMoney(row.netDeposit * scaleDirectNet, { signed: true });
+            return fmtMoney(row.totalVol * scaleDirectVol);
         }
+
+        const metricLabel = { vol: '交易额', rebate: '返佣', users: '人数', traders: '交易人数', net: '净入金' }[metric];
+        const selfValue = selfMetricValue(metric, scaled);
+        const selfDisplay = formatMetricValue(metric, selfValue, metric === 'net' ? { signed: true } : undefined);
 
         let subRows = '';
         rankedSubs.forEach(function (row, idx) {
@@ -670,6 +810,10 @@
                 '<td class="px-4 py-2.5 font-black text-gray-900">' + esc(row.remark || row.name) + '</td>' +
                 '<td class="px-4 py-2.5 font-black text-right">' + partnerMetric(row) + '</td></tr>';
         });
+        if (!subRows) {
+            subRows = '<tr><td colspan="3" class="px-4 py-3 text-gray-400 font-bold">暂无数据</td></tr>';
+        }
+
         let clientRows = '';
         rankedClients.forEach(function (row, idx) {
             const name = row.wallet || row.email || '—';
@@ -677,26 +821,36 @@
                 '<td class="px-4 py-2.5 font-mono text-gray-900">' + esc(name) + '</td>' +
                 '<td class="px-4 py-2.5 font-black text-right">' + clientMetric(row) + '</td></tr>';
         });
-
-        const metricLabel = { vol: '交易额', rebate: '级差贡献', users: '团队人数', traders: '交易人数' }[metric];
+        if (!clientRows) {
+            clientRows = '<tr><td colspan="3" class="px-4 py-3 text-gray-400 font-bold">暂无数据</td></tr>';
+        }
 
         el.innerHTML =
-            '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">' +
-            '<div><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">合伙人 · ' + metricLabel + '排行</p>' +
+            '<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">贡献排行 · Top 5</p>' +
+            '<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">' +
+            '<div><p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">自己产生</p>' +
+            '<table class="w-full text-left text-[11px]"><thead class="text-[10px] text-gray-400 font-black uppercase"><tr>' +
+            '<th class="pb-2 pr-2">#</th><th class="pb-2">账户</th><th class="pb-2 text-right">' + metricLabel + '</th></tr></thead><tbody class="divide-y divide-gray-50">' +
+            '<tr class="hover:bg-gray-50/80"><td class="px-4 py-2.5 font-black text-gray-400">—</td>' +
+            '<td class="px-4 py-2.5 font-mono text-gray-900">' + esc(myPartnerProfile.wallet) + '</td>' +
+            '<td class="px-4 py-2.5 font-black text-right">' + selfDisplay + '</td></tr></tbody></table></div>' +
+            '<div><p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">直属直客 · Top 5</p>' +
+            '<table class="w-full text-left text-[11px]"><thead class="text-[10px] text-gray-400 font-black uppercase"><tr>' +
+            '<th class="pb-2 pr-2">#</th><th class="pb-2">用户</th><th class="pb-2 text-right">' + metricLabel + '</th></tr></thead><tbody class="divide-y divide-gray-50">' + clientRows + '</tbody></table></div>' +
+            '<div><p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">合伙人 · Top 5</p>' +
             '<table class="w-full text-left text-[11px]"><thead class="text-[10px] text-gray-400 font-black uppercase"><tr>' +
             '<th class="pb-2 pr-2">#</th><th class="pb-2">下级合伙人</th><th class="pb-2 text-right">' + metricLabel + '</th></tr></thead><tbody class="divide-y divide-gray-50">' + subRows + '</tbody></table></div>' +
-            '<div><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">直属直客 · ' + metricLabel + '排行</p>' +
-            '<table class="w-full text-left text-[11px]"><thead class="text-[10px] text-gray-400 font-black uppercase"><tr>' +
-            '<th class="pb-2 pr-2">#</th><th class="pb-2">用户</th><th class="pb-2 text-right">' + metricLabel + '</th></tr></thead><tbody class="divide-y divide-gray-50">' + clientRows + '</tbody></table></div></div>';
+            '</div>';
     }
 
     function renderAnalyticsTabContent(scaled) {
         const seedMap = { '1D': 71, '1W': 83, '1M': 97, '3M': 113 };
         const seed = seedMap[analyticsPeriod] || 83;
-        const metrics = ['vol', 'rebate', 'users', 'traders'];
-        metrics.forEach(function (metric, idx) {
+        renderSourceMatrix(scaled);
+        ANALYTICS_METRICS.forEach(function (item, idx) {
+            const metric = item.key;
             const triple = sourceTriple(scaled, metric);
-            const useMoney = metric === 'vol' || metric === 'rebate';
+            const useMoney = metric === 'vol' || metric === 'rebate' || metric === 'net';
             renderSvgStackedSourceChart(
                 document.getElementById('analytics-chart-' + metric),
                 triple,
@@ -706,11 +860,8 @@
             );
             renderDistributionBlock('analytics-dist-' + metric, metric, triple);
             renderRankingBlock('analytics-rank-' + metric, metric, scaled);
+            renderSourceLegend('analytics-legend-' + metric);
         });
-        renderSourceLegend('analytics-legend-vol');
-        renderSourceLegend('analytics-legend-rebate');
-        renderSourceLegend('analytics-legend-users');
-        renderSourceLegend('analytics-legend-traders');
         renderAnalyticsDimTabs();
     }
 
@@ -750,6 +901,11 @@
         if (teamUsersEl) teamUsersEl.textContent = fmtNum(scaled.teamUsers);
         const activeEl = document.getElementById('overview-trade-users-active');
         if (activeEl) activeEl.textContent = fmtNum(scaled.activeTraders);
+        const netEl = document.getElementById('overview-team-net');
+        if (netEl) {
+            netEl.textContent = fmtMoney(scaled.net, { signed: true });
+            netEl.className = 'text-2xl font-black ' + (scaled.net >= 0 ? 'text-green-500' : 'text-red-500');
+        }
 
         renderMySuperior();
         renderSubPartnersTable({ masked: false });
@@ -777,6 +933,8 @@
         setHtml('analytics-kpi-team-users-delta', formatDeltaPct(scaled.usersChange));
         setText('analytics-kpi-active-traders', fmtNum(scaled.activeTraders));
         setHtml('analytics-kpi-active-traders-delta', formatDeltaPct(scaled.activeTradersChange));
+        setText('analytics-kpi-net', fmtMoney(scaled.net, { signed: true }));
+        setHtml('analytics-kpi-net-delta', formatDeltaPct(scaled.netDepositChange));
         setText('analytics-chart-period-tag', analyticsPeriod);
 
         renderAnalyticsTabContent(scaled);
