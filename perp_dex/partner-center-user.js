@@ -2,7 +2,7 @@
  * 合伙人中心（用户侧）原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-user-41';
+    const DATA_VERSION = 'partner-user-42';
     const SOURCE_LABELS = ['自己产生', '直属直客', '合伙人级差'];
     const SOURCE_COLORS = ['#93c5fd', '#3b82f6', '#1e3a8a'];
     const SOURCE_STYLES = [
@@ -119,15 +119,15 @@
     ];
 
     const commissionUserMeta = {
-        '10086002': { wallet: '0x3f...12a' },
-        '10086003': { wallet: '0x8e...55c' },
-        '10086004': { wallet: '0x2a...9f1' },
-        '10086005': { wallet: '0x5c...882' },
-        '10086006': { wallet: '0x7b...4c2' },
-        '10086008': { wallet: '0xAb...12cd' },
-        '10086009': { wallet: '0x99...F4d2' },
+        '10086002': { wallet: '0x3f...12a', walletFull: '0x3f8a2b1c9d4e5f60718293a4b5c6d7e8f9012a' },
+        '10086003': { wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c' },
+        '10086004': { wallet: '0x2a...9f1', walletFull: '0x2a9f1e8d7c6b5a4938271605948372616059489f1' },
+        '10086005': { wallet: '0x5c...882', walletFull: '0x5c8821a0b9c8d7e6f504938271605948372618882' },
+        '10086006': { wallet: '0x7b...4c2', walletFull: '0x7b4c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4c2' },
+        '10086008': { wallet: '0xAb...12cd', walletFull: '0xAb12cd9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b12cd' },
+        '10086009': { wallet: '0x99...F4d2', walletFull: '0x99F4d2a1b0c9d8e7f6059483726180a9b8c7d6e5' },
         '10086010': { email: 'demo.trader@forx.io' },
-        '10086011': { wallet: '0xEf...33aa' }
+        '10086011': { wallet: '0xEf...33aa', walletFull: '0xEf33aa5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f33aa' }
     };
 
     const inviteLinksData = [
@@ -334,7 +334,10 @@
         opts = opts || {};
         const abs = Math.abs(n);
         let str;
-        if (abs >= 1000000) str = '$' + (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+        if (opts.plain) {
+            if (abs >= 1000) str = '$' + Math.round(n).toLocaleString();
+            else str = '$' + n.toFixed(2);
+        } else if (abs >= 1000000) str = '$' + (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
         else if (abs >= 1000) str = '$' + Math.round(n).toLocaleString();
         else str = '$' + n.toFixed(2);
         if (opts.signed && n > 0) str = '+' + str;
@@ -892,15 +895,15 @@
     }
 
     function analyticsPartnerRankCell(row) {
-        let html = '<span class="font-black font-mono text-gray-900">' + esc(row.uid || '—') + '</span>';
+        let html = '<div class="copy-chip"><span class="font-black font-mono text-gray-900">' + esc(row.uid || '—') + '</span>' + copyChipBtn(row.uid || '', 'UID') + '</div>';
         if (row.remark) {
-            html += '<span class="block text-[10px] text-gray-400 font-bold mt-0.5">' + esc(row.remark) + '</span>';
+            html += '<div class="copy-chip mt-0.5"><span class="text-[10px] text-gray-400 font-bold">' + esc(row.remark) + '</span>' + copyChipBtn(row.remark, '备注') + '</div>';
         }
         return html;
     }
 
     function analyticsClientRankCell(row) {
-        return '<span class="font-mono font-black text-gray-900">' + esc(row.uid || '—') + '</span>';
+        return '<div class="copy-chip"><span class="font-mono font-black text-gray-900">' + esc(row.uid || '—') + '</span>' + copyChipBtn(row.uid || '', 'UID') + '</div>';
     }
 
     function renderRankingBlock(containerId, metric, scaled) {
@@ -1028,25 +1031,39 @@
         const scale = PERIOD_SCALE[overviewPeriod] || 1;
         const scaled = computeOverviewScaled(scale);
 
-        const volEl = document.getElementById('overview-team-vol');
-        if (volEl) volEl.textContent = fmtMoney(scaled.vol);
-        const rebateEl = document.getElementById('overview-total-rebate');
-        if (rebateEl) rebateEl.textContent = fmtMoney(scaled.rebate);
-        const selfEl = document.getElementById('overview-self-rebate');
-        if (selfEl) selfEl.textContent = fmtMoney(scaled.selfRebate);
-        const directEl = document.getElementById('overview-direct-rebate');
-        if (directEl) directEl.textContent = fmtMoney(scaled.directRebate);
-        const gapEl = document.getElementById('overview-gap-rebate');
-        if (gapEl) gapEl.textContent = fmtMoney(scaled.gapRebate);
+        const set = function (id, text) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        };
+
+        set('overview-team-vol', fmtMoney(scaled.vol));
+        set('overview-self-vol', fmtMoney(scaled.selfVol));
+        set('overview-direct-vol', fmtMoney(scaled.directClientVol));
+        set('overview-partner-vol', fmtMoney(scaled.partnerTeamVol));
+
+        set('overview-total-rebate', fmtMoney(scaled.rebate));
+        set('overview-self-rebate', fmtMoney(scaled.selfRebate));
+        set('overview-direct-rebate', fmtMoney(scaled.directRebate));
+        set('overview-gap-rebate', fmtMoney(scaled.gapRebate));
+
+        set('overview-team-users', fmtNum(scaled.teamUsers));
+        set('overview-self-users', fmtNum(scaled.selfUsers));
+        set('overview-direct-users', fmtNum(scaled.directClientUsers));
+        set('overview-partner-users', fmtNum(scaled.partnerTeamUsers));
+
+        set('overview-active-traders', fmtNum(scaled.activeTraders));
+        set('overview-self-active-traders', fmtNum(scaled.selfActiveTraders));
+        set('overview-direct-active-traders', fmtNum(scaled.directClientActiveTraders));
+        set('overview-partner-active-traders', fmtNum(scaled.partnerTeamActiveTraders));
+
         const netEl = document.getElementById('overview-team-net');
         if (netEl) {
             netEl.textContent = fmtMoney(scaled.net, { signed: true });
             netEl.className = 'partner-kpi-value ' + (scaled.net >= 0 ? 'text-green-500' : 'text-red-500');
         }
-        const activeEl = document.getElementById('overview-trade-users-active');
-        if (activeEl) activeEl.innerHTML = fmtNum(scaled.activeTraders) + ' <span class="text-[11px] font-bold text-gray-600">交易用户</span>';
-        const totalEl = document.getElementById('overview-trade-users-total');
-        if (totalEl) totalEl.textContent = fmtNum(scaled.teamUsers) + ' 总用户';
+        set('overview-self-net', fmtMoney(scaled.selfNetDeposit, { signed: true }));
+        set('overview-direct-net', fmtMoney(scaled.directClientNetDeposit, { signed: true }));
+        set('overview-partner-net', fmtMoney(scaled.partnerTeamNetDeposit, { signed: true }));
 
         updatePeriodButtons('overview-period-btn', overviewPeriod);
         renderMySuperior();
@@ -1062,21 +1079,12 @@
             const el = document.getElementById(id);
             if (el) el.textContent = text;
         };
-        const setHtml = function (id, html) {
-            const el = document.getElementById(id);
-            if (el) el.innerHTML = html;
-        };
 
-        setText('analytics-kpi-vol', fmtMoney(scaled.vol));
-        setHtml('analytics-kpi-vol-delta', formatDeltaPct(scaled.volChange));
-        setText('analytics-kpi-rebate', fmtMoney(scaled.rebate));
-        setHtml('analytics-kpi-rebate-delta', formatDeltaPct(scaled.rebateChange));
+        setText('analytics-kpi-vol', fmtMoney(scaled.vol, { plain: true }));
+        setText('analytics-kpi-rebate', fmtMoney(scaled.rebate, { plain: true }));
         setText('analytics-kpi-team-users', fmtNum(scaled.teamUsers));
-        setHtml('analytics-kpi-team-users-delta', formatDeltaPct(scaled.usersChange));
         setText('analytics-kpi-active-traders', fmtNum(scaled.activeTraders));
-        setHtml('analytics-kpi-active-traders-delta', formatDeltaPct(scaled.activeTradersChange));
-        setText('analytics-kpi-net', fmtMoney(scaled.net, { signed: true }));
-        setHtml('analytics-kpi-net-delta', formatDeltaPct(scaled.netDepositChange));
+        setText('analytics-kpi-net', fmtMoney(scaled.net, { plain: true, signed: true }));
         setText('analytics-chart-period-tag', analyticsPeriod);
 
         renderAnalyticsTabContent(scaled);
@@ -1245,6 +1253,7 @@
                     remark: row.remark || '',
                     ratio: row.ratio,
                     wallet: meta.wallet || '',
+                    walletFull: meta.walletFull || meta.wallet || '',
                     email: meta.email || '',
                     vol: 0,
                     rebate: 0,
@@ -1262,17 +1271,30 @@
         return hay.indexOf(q) >= 0;
     }
 
+    function formatSettlementDateSlash(isoDate) {
+        if (!isoDate) return '—';
+        return isoDate.replace(/-/g, '/');
+    }
+
+    function commissionTradesModalTitle(uid, date) {
+        return (uid || '—') + ' - ' + formatSettlementDateSlash(date) + ' - 交易返佣流水';
+    }
+
     function commissionUidCell(row) {
-        let html = '<span class="font-mono font-black text-gray-900">' + esc(row.uid) + '</span>';
+        let html = '<div class="copy-chip"><span class="font-mono font-black text-gray-900">' + esc(row.uid) + '</span>' + copyChipBtn(row.uid, 'UID') + '</div>';
         if (row.isPartner && row.remark) {
-            html += '<span class="block text-[9px] text-gray-400 font-bold mt-0.5">' + esc(row.remark) + '</span>';
+            html += '<div class="copy-chip mt-0.5"><span class="text-[9px] text-gray-400 font-bold">' + esc(row.remark) + '</span>' + copyChipBtn(row.remark, '合伙人备注') + '</div>';
         }
         return html;
     }
 
     function commissionContactCell(row) {
-        if (row.email) return esc(row.email);
-        if (row.wallet) return esc(row.wallet);
+        if (row.email) {
+            return '<div class="copy-chip"><span class="text-[10px] text-gray-500 font-bold">' + esc(row.email) + '</span>' + copyChipBtn(row.email, '邮箱') + '</div>';
+        }
+        if (row.wallet) {
+            return '<div class="copy-chip"><span class="text-[10px] text-gray-500 font-bold font-mono">' + esc(row.wallet) + '</span>' + copyChipBtn(row.walletFull || row.wallet, '钱包地址') + '</div>';
+        }
         return '—';
     }
 
@@ -1363,9 +1385,9 @@
 
     function renderCommissionTradesModal() {
         const trades = getCommissionTradesForDateAndUid(commissionDetailDate, commissionDetailSelectedUid);
-        const subtitle = document.getElementById('commission-trades-modal-subtitle');
-        if (subtitle) {
-            subtitle.textContent = (commissionDetailSelectedUid || '—') + '-' + (commissionDetailDate || '—') + '-返佣流水明细';
+        const titleEl = document.getElementById('commission-trades-modal-title');
+        if (titleEl) {
+            titleEl.textContent = commissionTradesModalTitle(commissionDetailSelectedUid, commissionDetailDate);
         }
 
         const sliced = slicePage(trades, commissionTradesModalPage, 10);
