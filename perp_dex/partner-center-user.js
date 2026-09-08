@@ -2,7 +2,7 @@
  * 合伙人中心（用户侧）原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-user-43';
+    const DATA_VERSION = 'partner-user-44';
     const SOURCE_LABELS = ['自己产生', '直属直客', '合伙人级差'];
     const SOURCE_COLORS = ['#93c5fd', '#3b82f6', '#1e3a8a'];
     const SOURCE_STYLES = [
@@ -23,6 +23,8 @@
     let linksPage = 1;
     let linksSearch = '';
     let linksSort = { key: null, dir: 'desc' };
+    let linkAnalyticsPeriod = '1W';
+    let linkAnalyticsDimTab = 'vol';
     let subPartnerFilter = 'all';
     let subPartnerSearch = '';
     let subPartnerSort = { key: null, dir: 'desc' };
@@ -519,7 +521,8 @@
             const y = pad.t + (ph * g) / 3;
             const val = maxV * (1 - g / 3);
             grid += '<line x1="' + pad.l + '" y1="' + y.toFixed(1) + '" x2="' + (W - pad.r) + '" y2="' + y.toFixed(1) + '" stroke="#f1f5f9" stroke-width="1"/>';
-            grid += '<text x="' + (pad.l - 6) + '" y="' + (y + 3).toFixed(1) + '" text-anchor="end" fill="#94a3b8" font-size="8" font-weight="700">' + esc(compactAxisMoney(val)) + '</text>';
+            const label = opts.useMoneyAxis === false ? fmtNum(Math.round(val)) : compactAxisMoney(val);
+            grid += '<text x="' + (pad.l - 6) + '" y="' + (y + 3).toFixed(1) + '" text-anchor="end" fill="#94a3b8" font-size="8" font-weight="700">' + esc(label) + '</text>';
         }
 
         let labels = '';
@@ -872,6 +875,153 @@
         return fmtNum(value);
     }
 
+    const LINK_ANALYTICS_METRICS = [
+        { key: 'vol', label: '交易额' },
+        { key: 'rebate', label: '返佣收入' },
+        { key: 'registrations', label: '注册人数' },
+        { key: 'net', label: '净入金' }
+    ];
+
+    const linkAnalyticsBase = {
+        volChange: 9.2,
+        rebateChange: 6.8,
+        registrationsChange: 4.1,
+        netChange: 7.5
+    };
+
+    function computeLinkAnalyticsTotals(scale) {
+        return inviteLinksData.reduce(function (acc, row) {
+            acc.vol += row.totalVol * scale;
+            acc.rebate += row.rebateIncome * scale;
+            acc.registrations += row.directCount + row.subPartnerCount;
+            acc.net += row.netDeposit * scale;
+            return acc;
+        }, { vol: 0, rebate: 0, registrations: 0, net: 0 });
+    }
+
+    function getLinkMetricValue(row, metric, scale) {
+        if (metric === 'vol') return row.totalVol * scale;
+        if (metric === 'rebate') return row.rebateIncome * scale;
+        if (metric === 'registrations') return row.directCount + row.subPartnerCount;
+        if (metric === 'net') return row.netDeposit * scale;
+        return 0;
+    }
+
+    function formatLinkMetricValue(metric, value, opts) {
+        if (metric === 'vol' || metric === 'net') return fmtCompactMoney(value, opts);
+        if (metric === 'rebate') return fmtMoney(value, opts);
+        return fmtNum(value);
+    }
+
+    function renderLinkAnalyticsDimTabs() {
+        document.querySelectorAll('.link-analytics-dim-tab').forEach(function (btn) {
+            const tab = btn.getAttribute('data-dim-tab');
+            if (tab === linkAnalyticsDimTab) btn.className = 'link-analytics-dim-tab tab-active pb-1';
+            else btn.className = 'link-analytics-dim-tab text-gray-400 font-bold pb-1 hover:text-black';
+        });
+        LINK_ANALYTICS_METRICS.forEach(function (item) {
+            const panel = document.getElementById('link-analytics-dim-panel-' + item.key);
+            if (panel) panel.classList.toggle('hidden', linkAnalyticsDimTab !== item.key);
+        });
+    }
+
+    function renderLinkAnalyticsShareBlock(containerId, metric, scale) {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        const rows = inviteLinksData.map(function (row) {
+            return { remark: row.remark, code: row.code, value: getLinkMetricValue(row, metric, scale), disabled: row.disabled };
+        }).sort(function (a, b) { return b.value - a.value; }).slice(0, 5);
+        const total = rows.reduce(function (sum, row) { return sum + Math.abs(row.value); }, 0) || 1;
+        let html = '<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Top 5 渠道占比</p><div class="space-y-3">';
+        rows.forEach(function (row) {
+            const pct = Math.round(Math.abs(row.value) / total * 100);
+            html += '<div><div class="flex justify-between text-[11px] mb-1">' +
+                '<span class="font-bold text-gray-700">' + esc(row.remark) + ' <span class="text-gray-400 font-mono">(' + esc(row.code) + ')</span>' +
+                (row.disabled ? ' <span class="text-gray-400 text-[9px]">已停用</span>' : '') + '</span>' +
+                '<span class="font-black text-gray-900">' + formatLinkMetricValue(metric, row.value, metric === 'net' ? { signed: true } : {}) +
+                ' <span class="text-gray-400 font-bold">(' + pct + '%)</span></span></div>' +
+                '<div class="h-2 bg-gray-100 rounded-sm overflow-hidden"><div class="h-full rounded-sm bg-blue-600" style="width:' + pct + '%"></div></div></div>';
+        });
+        html += '</div>';
+        el.innerHTML = html;
+    }
+
+    function renderLinkAnalyticsRankingBlock(containerId, metric, scale) {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        const metricLabel = { vol: '交易额', rebate: '返佣', registrations: '注册', net: '净入金' }[metric];
+        const sorted = inviteLinksData.slice().sort(function (a, b) {
+            return getLinkMetricValue(b, metric, scale) - getLinkMetricValue(a, metric, scale);
+        }).slice(0, 10);
+        let rows = '';
+        sorted.forEach(function (row, idx) {
+            const val = getLinkMetricValue(row, metric, scale);
+            const statusHtml = row.disabled
+                ? '<span class="text-gray-400 font-bold">已停用</span>'
+                : '<span class="text-green-600 font-bold">使用中</span>';
+            rows += '<tr class="hover:bg-gray-50/80' + (row.disabled ? ' opacity-60' : '') + '">' +
+                '<td class="px-4 py-2.5 font-black text-gray-400">' + (idx + 1) + '</td>' +
+                '<td class="px-4 py-2.5"><span class="font-black text-gray-900">' + esc(row.remark) + '</span>' +
+                '<span class="block text-[10px] text-gray-400 font-mono mt-0.5">' + esc(row.code) + '</span></td>' +
+                '<td class="px-4 py-2.5 text-center">' + statusHtml + '</td>' +
+                '<td class="px-4 py-2.5 font-black text-right">' + formatLinkMetricValue(metric, val, metric === 'net' ? { signed: true } : {}) + '</td></tr>';
+        });
+        if (!rows) rows = '<tr><td colspan="4" class="px-4 py-3 text-gray-400 font-bold">暂无数据</td></tr>';
+        el.innerHTML =
+            '<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">渠道排行 · Top 10</p>' +
+            '<table class="w-full text-left text-[11px]"><thead class="text-[10px] text-gray-400 font-black uppercase"><tr>' +
+            '<th class="pb-2 pr-2">#</th><th class="pb-2">备注 / 邀请码</th><th class="pb-2 text-center">状态</th>' +
+            '<th class="pb-2 text-right">' + metricLabel + '</th></tr></thead><tbody class="divide-y divide-gray-50">' + rows + '</tbody></table>';
+    }
+
+    function renderLinkAnalyticsTabContent(totals) {
+        const seedMap = { '1D': 51, '1W': 63, '1M': 77, '3M': 91 };
+        const seed = seedMap[linkAnalyticsPeriod] || 63;
+        const points = LINKS_CHART_POINTS[linkAnalyticsPeriod] || 7;
+        LINK_ANALYTICS_METRICS.forEach(function (item, idx) {
+            const metric = item.key;
+            const total = Math.abs(totals[metric]) || 1;
+            const series = buildDistributedSeries(total, points, seed + idx * 13);
+            const useMoney = metric === 'vol' || metric === 'rebate' || metric === 'net';
+            renderSvgLineChart(
+                document.getElementById('link-analytics-chart-' + metric),
+                series,
+                linkAnalyticsPeriod,
+                '#2563eb',
+                { useMoneyAxis: useMoney, gradId: 'link-analytics-grad-' + metric }
+            );
+            renderLinkAnalyticsShareBlock('link-analytics-share-' + metric, metric, PERIOD_SCALE[linkAnalyticsPeriod] || 1);
+            renderLinkAnalyticsRankingBlock('link-analytics-rank-' + metric, metric, PERIOD_SCALE[linkAnalyticsPeriod] || 1);
+        });
+        renderLinkAnalyticsDimTabs();
+    }
+
+    function renderLinkAnalytics() {
+        const scale = PERIOD_SCALE[linkAnalyticsPeriod] || 1;
+        const totals = computeLinkAnalyticsTotals(scale);
+        const setText = function (id, text) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        };
+        const setHtml = function (id, html) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = html;
+        };
+
+        setText('link-analytics-kpi-vol', fmtCompactMoney(totals.vol));
+        setHtml('link-analytics-kpi-vol-delta', formatDeltaPct(linkAnalyticsBase.volChange));
+        setText('link-analytics-kpi-rebate', fmtMoney(totals.rebate));
+        setHtml('link-analytics-kpi-rebate-delta', formatDeltaPct(linkAnalyticsBase.rebateChange));
+        setText('link-analytics-kpi-registrations', fmtNum(totals.registrations));
+        setHtml('link-analytics-kpi-registrations-delta', formatDeltaPct(linkAnalyticsBase.registrationsChange));
+        setText('link-analytics-kpi-net', fmtCompactMoney(totals.net, { signed: true }));
+        setHtml('link-analytics-kpi-net-delta', formatDeltaPct(linkAnalyticsBase.netChange));
+        setText('link-analytics-period-tag', linkAnalyticsPeriod);
+
+        renderLinkAnalyticsTabContent(totals);
+        updatePeriodButtons('link-analytics-period-btn', linkAnalyticsPeriod);
+    }
+
     const ANALYTICS_METRICS = [
         { key: 'vol', label: '团队交易额' },
         { key: 'rebate', label: '返佣收入' },
@@ -1058,12 +1208,10 @@
         set('overview-gap-rebate', fmtMoney(scaled.gapRebate));
 
         set('overview-team-users', fmtNum(scaled.teamUsers));
-        set('overview-self-users', fmtNum(scaled.selfUsers));
         set('overview-direct-users', fmtNum(scaled.directClientUsers));
         set('overview-partner-users', fmtNum(scaled.partnerTeamUsers));
 
         set('overview-active-traders', fmtNum(scaled.activeTraders));
-        set('overview-self-active-traders', fmtNum(scaled.selfActiveTraders));
         set('overview-direct-active-traders', fmtNum(scaled.directClientActiveTraders));
         set('overview-partner-active-traders', fmtNum(scaled.partnerTeamActiveTraders));
 
@@ -1989,6 +2137,14 @@
             drillPeriod = p;
             renderDrillOverview();
         },
+        setLinkAnalyticsPeriod: function (p) {
+            linkAnalyticsPeriod = p;
+            renderLinkAnalytics();
+        },
+        setLinkAnalyticsDimTab: function (tab) {
+            linkAnalyticsDimTab = tab;
+            renderLinkAnalyticsDimTabs();
+        },
         setLinksPeriod: function (p) {
             linksPeriod = p;
             renderInviteLinks();
@@ -2118,6 +2274,15 @@
                 alert('默认邀请链接不可停用。');
                 return;
             }
+            if (row.disabled) {
+                if (countActiveInviteLinks() >= 50) {
+                    alert('使用中链接已达上限 50 个，请先停用其他链接后再启用。');
+                    return;
+                }
+                if (!confirm('确认启用链接「' + row.remark + '」（' + row.code + '）？\n启用后将占用一个使用中名额，新用户可通过该链接注册。')) return;
+            } else {
+                if (!confirm('确认停用链接「' + row.remark + '」（' + row.code + '）？\n停用后新用户将无法通过该链接注册，历史数据保留。')) return;
+            }
             row.disabled = !row.disabled;
             renderInviteLinks();
         },
@@ -2244,6 +2409,7 @@
                 renderCommissionDetailSummary();
             }
             else if (pageId === 'page-links') renderInviteLinks();
+            else if (pageId === 'page-link-analytics') renderLinkAnalytics();
             else if (pageId === 'page-drill-overview') renderDrillOverview();
         }
     };
