@@ -2,7 +2,7 @@
  * 合伙人中心（用户侧）原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-user-37';
+    const DATA_VERSION = 'partner-user-38';
     const SOURCE_LABELS = ['自己产生', '直属直客', '合伙人级差'];
     const SOURCE_COLORS = ['#93c5fd', '#3b82f6', '#1e3a8a'];
     const SOURCE_STYLES = [
@@ -46,7 +46,12 @@
     let drillClientPage = 1;
     let settlementPage = 1;
     let settlementDateFilter = '';
-    let settlementStatusFilter = 'all';
+    let commissionTab = 'history';
+    let commissionDetailPage = 1;
+    let commissionDetailDateFrom = '';
+    let commissionDetailDateTo = '';
+    let commissionDetailUid = '';
+    let commissionDetailRemark = '';
 
     const mySuperiorInfo = {
         level: 2,
@@ -78,6 +83,38 @@
         { date: '2024-05-12', vol: 0, rebate: 0, status: 'pending' }
     ];
 
+    const commissionDetailRecords = [
+        { date: '2024-05-22', time: '2024-05-22 23:58:12', uid: '10086002', sourceType: '下级', remark: '渠道-小王', vol: 820000, ratio: '级差 10%', rebate: 820 },
+        { date: '2024-05-22', time: '2024-05-22 21:14:33', uid: '10086003', sourceType: '下级', remark: '推特KOL-J', vol: 560000, ratio: '级差 20%', rebate: 112 },
+        { date: '2024-05-22', time: '2024-05-22 18:42:05', uid: '10086008', sourceType: '直客', remark: '', vol: 128000, ratio: '返佣 70%', rebate: 89.6 },
+        { date: '2024-05-22', time: '2024-05-22 16:20:41', uid: '10086009', sourceType: '直客', remark: '', vol: 42500, ratio: '返佣 70%', rebate: 29.75 },
+        { date: '2024-05-22', time: '2024-05-22 11:08:19', uid: '10086006', sourceType: '下级', remark: '韩国KOL', vol: 310000, ratio: '级差 25%', rebate: 77.5 },
+        { date: '2024-05-21', time: '2024-05-21 22:45:08', uid: '10086002', sourceType: '下级', remark: '渠道-小王', vol: 640000, ratio: '级差 10%', rebate: 640 },
+        { date: '2024-05-21', time: '2024-05-21 19:33:27', uid: '10086010', sourceType: '直客', remark: '', vol: 8900, ratio: '返佣 70%', rebate: 6.23 },
+        { date: '2024-05-21', time: '2024-05-21 15:12:54', uid: '10086004', sourceType: '下级', remark: '东南亚渠道', vol: 220000, ratio: '级差 15%', rebate: 33 },
+        { date: '2024-05-21', time: '2024-05-21 09:55:03', uid: '10086011', sourceType: '直客', remark: '', vol: 256000, ratio: '返佣 70%', rebate: 179.2 },
+        { date: '2024-05-20', time: '2024-05-20 20:18:46', uid: '10086003', sourceType: '下级', remark: '推特KOL-J', vol: 180000, ratio: '级差 20%', rebate: 36 },
+        { date: '2024-05-20', time: '2024-05-20 17:02:11', uid: '10086008', sourceType: '直客', remark: '', vol: 52000, ratio: '返佣 70%', rebate: 36.4 },
+        { date: '2024-05-19', time: '2024-05-19 23:40:22', uid: '10086002', sourceType: '下级', remark: '渠道-小王', vol: 410000, ratio: '级差 10%', rebate: 410 },
+        { date: '2024-05-19', time: '2024-05-19 18:26:57', uid: '10086006', sourceType: '下级', remark: '韩国KOL', vol: 520000, ratio: '级差 25%', rebate: 130 },
+        { date: '2024-05-19', time: '2024-05-19 14:11:08', uid: '10086009', sourceType: '直客', remark: '', vol: 18500, ratio: '返佣 70%', rebate: 12.95 },
+        { date: '2024-05-19', time: '2024-05-19 10:05:33', uid: '10086005', sourceType: '下级', remark: '', vol: 98000, ratio: '级差 15%', rebate: 14.7 },
+        { date: '2024-05-18', time: '2024-05-18 21:33:19', uid: '10086002', sourceType: '下级', remark: '渠道-小王', vol: 350000, ratio: '级差 10%', rebate: 350 },
+        { date: '2024-05-18', time: '2024-05-18 16:48:42', uid: '10086011', sourceType: '直客', remark: '', vol: 92000, ratio: '返佣 70%', rebate: 64.4 },
+        { date: '2024-05-18', time: '2024-05-18 12:22:07', uid: '10086004', sourceType: '下级', remark: '东南亚渠道', vol: 160000, ratio: '级差 15%', rebate: 24 },
+        { date: '2024-05-17', time: '2024-05-17 22:10:55', uid: '10086003', sourceType: '下级', remark: '推特KOL-J', vol: 210000, ratio: '级差 20%', rebate: 42 },
+        { date: '2024-05-17', time: '2024-05-17 18:55:31', uid: '10086010', sourceType: '直客', remark: '', vol: 12000, ratio: '返佣 70%', rebate: 8.4 },
+        { date: '2024-05-17', time: '2024-05-17 13:40:18', uid: '10086006', sourceType: '下级', remark: '韩国KOL', vol: 280000, ratio: '级差 25%', rebate: 70 },
+        { date: '2024-05-16', time: '2024-05-16 20:05:44', uid: '10086002', sourceType: '下级', remark: '渠道-小王', vol: 190000, ratio: '级差 10%', rebate: 190 },
+        { date: '2024-05-16', time: '2024-05-16 15:33:26', uid: '10086008', sourceType: '直客', remark: '', vol: 76000, ratio: '返佣 70%', rebate: 53.2 },
+        { date: '2024-05-15', time: '2024-05-15 19:22:11', uid: '10086004', sourceType: '下级', remark: '东南亚渠道', vol: 88000, ratio: '级差 15%', rebate: 13.2 },
+        { date: '2024-05-15', time: '2024-05-15 11:18:09', uid: '10086009', sourceType: '直客', remark: '', vol: 31000, ratio: '返佣 70%', rebate: 21.7 },
+        { date: '2024-05-14', time: '2024-05-14 21:44:57', uid: '10086006', sourceType: '下级', remark: '韩国KOL', vol: 420000, ratio: '级差 25%', rebate: 105 },
+        { date: '2024-05-14', time: '2024-05-14 17:09:33', uid: '10086011', sourceType: '直客', remark: '', vol: 54000, ratio: '返佣 70%', rebate: 37.8 },
+        { date: '2024-05-13', time: '2024-05-13 23:12:08', uid: '10086002', sourceType: '下级', remark: '渠道-小王', vol: 290000, ratio: '级差 10%', rebate: 290 },
+        { date: '2024-05-13', time: '2024-05-13 14:56:41', uid: '10086003', sourceType: '下级', remark: '推特KOL-J', vol: 170000, ratio: '级差 20%', rebate: 34 }
+    ];
+
     const inviteLinksData = [
         { remark: '預設連結', code: 'E6DL28G', directCount: 124, subPartnerCount: 42, totalVol: 5200000, totalFee: 5200, rebateIncome: 3640, netDeposit: 420000, isDefault: true },
         { remark: '推特推廣-01', code: 'FORX99', directCount: 12, subPartnerCount: 0, totalVol: 850000, totalFee: 850, rebateIncome: 595, netDeposit: 62000, isDefault: false },
@@ -98,7 +135,7 @@
     const subPartnersData = [
         { id: 'sp1', joinDate: '2024-05-12', wallet: '0x3f...12a', walletFull: '0x3f8a2b1c9d4e5f60718293a4b5c6d7e8f9012a', remark: '渠道-小王', ratio: 60, minSubRatio: 45, gap: 10, gapIncome: 1250, totalVol: 12500000, netDeposit: 500000, totalUsers: 3680, activeUsers: 1850, settlementStatus: 'normal', name: '合伙人-小王', hasTeam: true },
         { id: 'sp2', joinDate: '2024-05-10', wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J', ratio: 50, minSubRatio: 40, gap: 20, gapIncome: 560, totalVol: 16200000, netDeposit: 820000, totalUsers: 850, activeUsers: 120, settlementStatus: 'normal', name: 'KOL-J', hasTeam: true },
-        { id: 'sp3', joinDate: '2024-05-08', wallet: '0x5c...882', walletFull: '0x5c8821a0b9c8d7e6f504938271605948372618882', remark: '', ratio: 55, minSubRatio: 40, gap: 15, gapIncome: 320, totalVol: 2100000, netDeposit: -120000, totalUsers: 12, activeUsers: 0, settlementStatus: 'normal', name: '合伙人-C', hasTeam: true },
+        { id: 'sp3', joinDate: '2024-05-08', wallet: '0x5c...882', walletFull: '0x5c8821a0b9c8d7e6f504938271605948372618882', remark: '', ratio: 55, minSubRatio: 40, gap: 15, gapIncome: 320, totalVol: 2100000, netDeposit: -120000, totalUsers: 12, activeUsers: 0, settlementStatus: 'frozen', name: '合伙人-C', hasTeam: true },
         { id: 'sp4', joinDate: '2024-05-05', wallet: '0x2a...9f1', walletFull: '0x2a9f1e8d7c6b5a4938271605948372616059489f1', remark: '東南亞渠道', ratio: 55, minSubRatio: 40, gap: 15, gapIncome: 890, totalVol: 8900000, netDeposit: 320000, totalUsers: 620, activeUsers: 180, settlementStatus: 'normal', name: '东南亚渠道', hasTeam: true },
         { id: 'sp5', joinDate: '2024-04-28', wallet: '0x7b...4c2', walletFull: '0x7b4c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4c2', remark: '韓國KOL', ratio: 45, minSubRatio: 30, gap: 25, gapIncome: 2100, totalVol: 22400000, netDeposit: 980000, totalUsers: 1580, activeUsers: 510, settlementStatus: 'normal', name: '韩国KOL', hasTeam: true }
     ];
@@ -978,12 +1015,6 @@
 
         const volEl = document.getElementById('overview-team-vol');
         if (volEl) volEl.textContent = fmtMoney(scaled.vol);
-        const volChangeEl = document.getElementById('overview-vol-change');
-        if (volChangeEl) {
-            const sign = scaled.volChange >= 0 ? '+' : '';
-            volChangeEl.textContent = sign + scaled.volChange + '%';
-            volChangeEl.className = scaled.volChange >= 0 ? 'text-green-500 font-black' : 'text-red-500 font-black';
-        }
         const rebateEl = document.getElementById('overview-total-rebate');
         if (rebateEl) rebateEl.textContent = fmtMoney(scaled.rebate);
         const selfEl = document.getElementById('overview-self-rebate');
@@ -1107,26 +1138,62 @@
     }
 
     function settlementStatusLabel(status) {
-        if (status === 'pending') return '<span class="text-amber-600 font-bold">待结算</span>';
-        if (status === 'settled') return '<span class="text-green-600 font-bold">已结算</span>';
+        if (status === 'pending') return '<span class="text-amber-600 font-bold">待审核</span>';
+        if (status === 'settled') return '<span class="text-green-600 font-bold">已发放</span>';
         return '<span class="text-gray-400">—</span>';
     }
 
-    function rebateAmountCell(row) {
-        let html = '<span class="font-black text-blue-600">' + fmtMoney(row.rebate) + '</span>';
-        if (row.violationDeduction) {
-            html += '<span class="block text-[9px] text-red-500 font-bold mt-0.5">违规-' + fmtMoney(row.violationDeduction) + '</span>';
+    function partnerSettlementStatusLabel(status) {
+        if (status === 'frozen') return '<span class="text-amber-600 font-bold">冻结待结算</span>';
+        if (status === 'normal') return '<span class="text-green-600 font-bold">正常</span>';
+        return '<span class="text-gray-400">—</span>';
+    }
+
+    function renderCommissionKpis() {
+        const pendingToday = settlementRecords.filter(function (r) {
+            return r.date === '2024-05-23' && r.status === 'pending';
+        }).reduce(function (sum, r) { return sum + r.rebate; }, 0);
+        const settledTotal = settlementRecords.filter(function (r) {
+            return r.status === 'settled';
+        }).reduce(function (sum, r) { return sum + r.rebate; }, 0);
+        const yesterday = settlementRecords.find(function (r) { return r.date === '2024-05-22'; });
+
+        const set = function (id, text) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        };
+        set('commission-kpi-pending-today', fmtMoney(pendingToday || 450.82));
+        set('commission-kpi-settled-total', fmtMoney(settledTotal || 124500));
+        set('commission-kpi-yesterday', fmtMoney(yesterday ? yesterday.rebate : 1120.5));
+        set('commission-kpi-yesterday-status', yesterday && yesterday.status === 'settled' ? '已发放' : '待审核');
+    }
+
+    function renderCommissionTabs() {
+        document.querySelectorAll('.commission-tab').forEach(function (btn) {
+            const tab = btn.getAttribute('data-commission-tab');
+            if (tab === commissionTab) btn.className = 'commission-tab tab-active pb-1';
+            else btn.className = 'commission-tab text-gray-400 font-bold pb-1 hover:text-black';
+        });
+        const desc = document.getElementById('commission-tab-desc');
+        if (desc) {
+            desc.textContent = commissionTab === 'history'
+                ? '已发放至账户的返佣记录，按日汇总，一天一条。'
+                : '基于交易数据汇总的待返佣金额，按日统计，审核通过后发放。';
         }
-        return html;
     }
 
     function renderSettlementTable() {
+        renderCommissionKpis();
+        renderCommissionTabs();
+
+        const targetStatus = commissionTab === 'history' ? 'settled' : 'pending';
         let filtered = settlementRecords.filter(function (row) {
             if (row.status === 'rebate_stopped') return false;
+            if (row.status !== targetStatus) return false;
             if (settlementDateFilter && row.date !== settlementDateFilter) return false;
-            if (settlementStatusFilter !== 'all' && row.status !== settlementStatusFilter) return false;
             return true;
         });
+
         const sliced = slicePage(filtered, settlementPage, 10);
         settlementPage = sliced.page;
 
@@ -1134,9 +1201,10 @@
         if (thead) {
             thead.innerHTML = '<tr>' +
                 '<th class="px-6 py-4">结算日期</th>' +
-                '<th class="px-6 py-4 text-right">交易额</th>' +
+                '<th class="px-6 py-4 text-right">团队交易额</th>' +
                 '<th class="px-6 py-4 text-right text-blue-600">返佣金额</th>' +
-                '<th class="px-6 py-4 text-right">结算状态</th>' +
+                '<th class="px-6 py-4 text-right">状态</th>' +
+                '<th class="px-6 py-4 text-right">操作</th>' +
                 '</tr>';
         }
 
@@ -1149,11 +1217,77 @@
                     '<td class="px-6 py-4 text-right text-gray-700">' + fmtMoney(row.vol) + '</td>' +
                     '<td class="px-6 py-4 text-right">' + rebateAmountCell(row) + '</td>' +
                     '<td class="px-6 py-4 text-right">' + settlementStatusLabel(row.status) + '</td>' +
-                    '</tr>';
+                    '<td class="px-6 py-4 text-right">' +
+                    '<button type="button" onclick="PartnerCenter.openCommissionDetail(\'' + jsEsc(row.date) + '\')" class="text-blue-600 font-black hover:underline text-[11px]">佣金详情</button>' +
+                    '</td></tr>';
             }).join('');
         }
 
         buildPaginationHtml('settlement-pagination', sliced.page, sliced.total, 10, 'PartnerCenter.goSettlementPage');
+    }
+
+    function renderCommissionDetailTable() {
+        let filtered = commissionDetailRecords.filter(function (row) {
+            if (commissionDetailDateFrom && row.date < commissionDetailDateFrom) return false;
+            if (commissionDetailDateTo && row.date > commissionDetailDateTo) return false;
+            if (commissionDetailUid && String(row.uid).indexOf(commissionDetailUid.trim()) === -1) return false;
+            if (commissionDetailRemark && (!row.remark || row.remark.indexOf(commissionDetailRemark.trim()) === -1)) return false;
+            return true;
+        });
+
+        const sliced = slicePage(filtered, commissionDetailPage, 20);
+        commissionDetailPage = sliced.page;
+
+        const subtitle = document.getElementById('commission-detail-subtitle');
+        if (subtitle) {
+            if (commissionDetailDateFrom && commissionDetailDateTo && commissionDetailDateFrom === commissionDetailDateTo) {
+                subtitle.textContent = '结算日 ' + commissionDetailDateFrom + ' 的返佣构成明细。';
+            } else if (commissionDetailDateFrom || commissionDetailDateTo) {
+                subtitle.textContent = '筛选区间 ' + (commissionDetailDateFrom || '—') + ' 至 ' + (commissionDetailDateTo || '—') + '。';
+            } else {
+                subtitle.textContent = '查看单日或多日返佣构成明细。';
+            }
+        }
+
+        const tbody = document.getElementById('commission-detail-table-body');
+        if (tbody) {
+            if (!sliced.items.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="px-5 py-8 text-center text-gray-400 font-bold">暂无符合条件的明细</td></tr>';
+            } else {
+                tbody.innerHTML = sliced.items.map(function (row) {
+                    return '<tr class="hover:bg-gray-50/80">' +
+                        '<td class="px-5 py-3 text-gray-700">' + esc(row.time) + '</td>' +
+                        '<td class="px-5 py-3 font-mono font-black text-gray-900">' + esc(row.uid) + '</td>' +
+                        '<td class="px-5 py-3 font-bold text-gray-900">' + esc(row.sourceType) + '</td>' +
+                        '<td class="px-5 py-3 text-gray-500">' + esc(row.remark || '—') + '</td>' +
+                        '<td class="px-5 py-3 text-right font-black">' + fmtMoney(row.vol) + '</td>' +
+                        '<td class="px-5 py-3 text-right text-gray-600 font-bold">' + esc(row.ratio) + '</td>' +
+                        '<td class="px-5 py-3 text-right font-black text-blue-600">' + fmtMoney(row.rebate) + '</td>' +
+                        '</tr>';
+                }).join('');
+            }
+        }
+
+        buildPaginationHtml('commission-detail-pagination', sliced.page, sliced.total, 20, 'PartnerCenter.goCommissionDetailPage');
+    }
+
+    function syncCommissionDetailFilterInputs() {
+        const fromEl = document.getElementById('commission-detail-date-from');
+        const toEl = document.getElementById('commission-detail-date-to');
+        const uidEl = document.getElementById('commission-detail-uid');
+        const remarkEl = document.getElementById('commission-detail-remark');
+        if (fromEl) fromEl.value = commissionDetailDateFrom;
+        if (toEl) toEl.value = commissionDetailDateTo;
+        if (uidEl) uidEl.value = commissionDetailUid;
+        if (remarkEl) remarkEl.value = commissionDetailRemark;
+    }
+
+    function rebateAmountCell(row) {
+        let html = '<span class="font-black text-blue-600">' + fmtMoney(row.rebate) + '</span>';
+        if (row.violationDeduction) {
+            html += '<span class="block text-[9px] text-red-500 font-bold mt-0.5">违规-' + fmtMoney(row.violationDeduction) + '</span>';
+        }
+        return html;
     }
 
     function renderDrillOverview() {
@@ -1208,7 +1342,7 @@
     }
 
     function settlementStatusCell(row, scale, masked) {
-        return '<span class="text-[10px] text-gray-400">—</span>';
+        return partnerSettlementStatusLabel(row.settlementStatus || 'normal');
     }
 
     function gapIncomeCell(row, scale) {
@@ -1816,10 +1950,39 @@
             settlementPage = 1;
             renderSettlementTable();
         },
-        setSettlementStatusFilter: function (v) {
-            settlementStatusFilter = v || 'all';
+        setCommissionTab: function (tab) {
+            commissionTab = tab === 'pending' ? 'pending' : 'history';
             settlementPage = 1;
             renderSettlementTable();
+        },
+        openCommissionDetail: function (date) {
+            commissionDetailDateFrom = date || '';
+            commissionDetailDateTo = date || '';
+            commissionDetailUid = '';
+            commissionDetailRemark = '';
+            commissionDetailPage = 1;
+            if (typeof showMainPage === 'function') showMainPage('page-commission-detail');
+            syncCommissionDetailFilterInputs();
+            renderCommissionDetailTable();
+        },
+        backToCommission: function () {
+            if (typeof showMainPage === 'function') showMainPage('page-settlement');
+        },
+        searchCommissionDetail: function () {
+            const fromEl = document.getElementById('commission-detail-date-from');
+            const toEl = document.getElementById('commission-detail-date-to');
+            const uidEl = document.getElementById('commission-detail-uid');
+            const remarkEl = document.getElementById('commission-detail-remark');
+            commissionDetailDateFrom = fromEl ? fromEl.value : '';
+            commissionDetailDateTo = toEl ? toEl.value : '';
+            commissionDetailUid = uidEl ? uidEl.value.trim() : '';
+            commissionDetailRemark = remarkEl ? remarkEl.value.trim() : '';
+            commissionDetailPage = 1;
+            renderCommissionDetailTable();
+        },
+        goCommissionDetailPage: function (p) {
+            commissionDetailPage = Math.max(1, p);
+            renderCommissionDetailTable();
         },
         goSettlementPage: function (p) {
             settlementPage = Math.max(1, p);
@@ -1856,6 +2019,10 @@
             if (pageId === 'page-overview') renderOverview();
             else if (pageId === 'page-analytics') renderAnalytics();
             else if (pageId === 'page-settlement') renderSettlementTable();
+            else if (pageId === 'page-commission-detail') {
+                syncCommissionDetailFilterInputs();
+                renderCommissionDetailTable();
+            }
             else if (pageId === 'page-links') renderInviteLinks();
             else if (pageId === 'page-drill-overview') renderDrillOverview();
         }
