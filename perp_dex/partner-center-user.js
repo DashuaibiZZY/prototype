@@ -2,7 +2,7 @@
  * 合伙人中心（用户侧）原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-user-42';
+    const DATA_VERSION = 'partner-user-43';
     const SOURCE_LABELS = ['自己产生', '直属直客', '合伙人级差'];
     const SOURCE_COLORS = ['#93c5fd', '#3b82f6', '#1e3a8a'];
     const SOURCE_STYLES = [
@@ -131,18 +131,18 @@
     };
 
     const inviteLinksData = [
-        { remark: '預設連結', code: 'E6DL28G', directCount: 124, subPartnerCount: 42, totalVol: 5200000, totalFee: 5200, rebateIncome: 3640, netDeposit: 420000, isDefault: true },
-        { remark: '推特推廣-01', code: 'FORX99', directCount: 12, subPartnerCount: 0, totalVol: 850000, totalFee: 850, rebateIncome: 595, netDeposit: 62000, isDefault: false },
-        { remark: 'YouTube-KOL', code: 'YT2024', directCount: 56, subPartnerCount: 3, totalVol: 2100000, totalFee: 2100, rebateIncome: 1470, netDeposit: 185000, isDefault: false },
-        { remark: 'Discord社群', code: 'DSC001', directCount: 89, subPartnerCount: 5, totalVol: 1680000, totalFee: 1680, rebateIncome: 1176, netDeposit: 92000, isDefault: false },
-        { remark: '亞洲渠道-A', code: 'ASIA01', directCount: 34, subPartnerCount: 2, totalVol: 980000, totalFee: 980, rebateIncome: 686, netDeposit: 45000, isDefault: false },
-        { remark: '歐洲渠道-B', code: 'EUR002', directCount: 21, subPartnerCount: 1, totalVol: 720000, totalFee: 720, rebateIncome: 504, netDeposit: 38000, isDefault: false },
-        { remark: '線下活動-深圳', code: 'SZ2405', directCount: 45, subPartnerCount: 0, totalVol: 560000, totalFee: 560, rebateIncome: 392, netDeposit: 28000, isDefault: false },
-        { remark: '線下活動-新加坡', code: 'SG2406', directCount: 18, subPartnerCount: 0, totalVol: 430000, totalFee: 430, rebateIncome: 301, netDeposit: 22000, isDefault: false },
-        { remark: 'KOL合作-03', code: 'KOL003', directCount: 67, subPartnerCount: 4, totalVol: 1450000, totalFee: 1450, rebateIncome: 1015, netDeposit: 76000, isDefault: false },
-        { remark: '媒體投放-01', code: 'MED001', directCount: 9, subPartnerCount: 0, totalVol: 320000, totalFee: 320, rebateIncome: 224, netDeposit: 15000, isDefault: false },
-        { remark: '媒體投放-02', code: 'MED002', directCount: 14, subPartnerCount: 0, totalVol: 410000, totalFee: 410, rebateIncome: 287, netDeposit: 19000, isDefault: false },
-        { remark: '社群裂變', code: 'VIRAL1', directCount: 102, subPartnerCount: 6, totalVol: 2890000, totalFee: 2890, rebateIncome: 2023, netDeposit: 156000, isDefault: false }
+        { remark: '預設連結', code: 'E6DL28G', directCount: 124, subPartnerCount: 42, totalVol: 5200000, totalFee: 5200, rebateIncome: 3640, netDeposit: 420000, isDefault: true, disabled: false },
+        { remark: '推特推廣-01', code: 'FORX99', directCount: 12, subPartnerCount: 0, totalVol: 850000, totalFee: 850, rebateIncome: 595, netDeposit: 62000, isDefault: false, disabled: false },
+        { remark: 'YouTube-KOL', code: 'YT2024', directCount: 56, subPartnerCount: 3, totalVol: 2100000, totalFee: 2100, rebateIncome: 1470, netDeposit: 185000, isDefault: false, disabled: false },
+        { remark: 'Discord社群', code: 'DSC001', directCount: 89, subPartnerCount: 5, totalVol: 1680000, totalFee: 1680, rebateIncome: 1176, netDeposit: 92000, isDefault: false, disabled: false },
+        { remark: '亞洲渠道-A', code: 'ASIA01', directCount: 34, subPartnerCount: 2, totalVol: 980000, totalFee: 980, rebateIncome: 686, netDeposit: 45000, isDefault: false, disabled: false },
+        { remark: '歐洲渠道-B', code: 'EUR002', directCount: 21, subPartnerCount: 1, totalVol: 720000, totalFee: 720, rebateIncome: 504, netDeposit: 38000, isDefault: false, disabled: false },
+        { remark: '線下活動-深圳', code: 'SZ2405', directCount: 45, subPartnerCount: 0, totalVol: 560000, totalFee: 560, rebateIncome: 392, netDeposit: 28000, isDefault: false, disabled: false },
+        { remark: '線下活動-新加坡', code: 'SG2406', directCount: 18, subPartnerCount: 0, totalVol: 430000, totalFee: 430, rebateIncome: 301, netDeposit: 22000, isDefault: false, disabled: false },
+        { remark: 'KOL合作-03', code: 'KOL003', directCount: 67, subPartnerCount: 4, totalVol: 1450000, totalFee: 1450, rebateIncome: 1015, netDeposit: 76000, isDefault: false, disabled: false },
+        { remark: '媒體投放-01', code: 'MED001', directCount: 9, subPartnerCount: 0, totalVol: 320000, totalFee: 320, rebateIncome: 224, netDeposit: 15000, isDefault: false, disabled: false },
+        { remark: '媒體投放-02', code: 'MED002', directCount: 14, subPartnerCount: 0, totalVol: 410000, totalFee: 410, rebateIncome: 287, netDeposit: 19000, isDefault: false, disabled: true },
+        { remark: '社群裂變', code: 'VIRAL1', directCount: 102, subPartnerCount: 6, totalVol: 2890000, totalFee: 2890, rebateIncome: 2023, netDeposit: 156000, isDefault: false, disabled: false }
     ];
 
     const existingCodesList = inviteLinksData.map(function (r) { return r.code; });
@@ -330,15 +330,25 @@
         netDepositChange: 5.2
     };
 
+    function fmtCompactMoney(n, opts) {
+        opts = opts || {};
+        const sign = n < 0 ? -1 : 1;
+        const abs = Math.abs(n);
+        let str;
+        if (abs >= 1e9) str = '$' + (abs / 1e9).toFixed(2) + 'B';
+        else if (abs >= 1e6) str = '$' + (abs / 1e6).toFixed(2) + 'M';
+        else if (abs >= 1e3) str = '$' + (abs / 1e3).toFixed(2) + 'K';
+        else str = '$' + abs.toFixed(2);
+        if (sign < 0) str = '-' + str;
+        else if (opts.signed && n > 0) str = '+' + str;
+        return str;
+    }
+
     function fmtMoney(n, opts) {
         opts = opts || {};
         const abs = Math.abs(n);
         let str;
-        if (opts.plain) {
-            if (abs >= 1000) str = '$' + Math.round(n).toLocaleString();
-            else str = '$' + n.toFixed(2);
-        } else if (abs >= 1000000) str = '$' + (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-        else if (abs >= 1000) str = '$' + Math.round(n).toLocaleString();
+        if (abs >= 1000) str = '$' + Math.round(n).toLocaleString();
         else str = '$' + n.toFixed(2);
         if (opts.signed && n > 0) str = '+' + str;
         if (opts.signed && n < 0) str = '-' + str.replace('-', '');
@@ -857,7 +867,8 @@
     }
 
     function formatMetricValue(metric, value, opts) {
-        if (metric === 'vol' || metric === 'rebate' || metric === 'net') return fmtMoney(value, opts);
+        if (metric === 'vol' || metric === 'net') return fmtCompactMoney(value, opts);
+        if (metric === 'rebate') return fmtMoney(value, opts);
         return fmtNum(value);
     }
 
@@ -934,13 +945,13 @@
             if (metric === 'rebate') return fmtMoney(row.gapIncome * scaleGap);
             if (metric === 'users') return fmtNum(row.totalUsers);
             if (metric === 'traders') return fmtNum(row.activeUsers);
-            if (metric === 'net') return fmtMoney(row.netDeposit * scalePartnerNet, { signed: true });
-            return fmtMoney(row.totalVol * scaleVol);
+            if (metric === 'net') return fmtCompactMoney(row.netDeposit * scalePartnerNet, { signed: true });
+            return fmtCompactMoney(row.totalVol * scaleVol);
         }
         function clientMetric(row) {
             if (metric === 'rebate') return fmtMoney(row.rebate * scaleDirectRebate);
-            if (metric === 'net') return fmtMoney(row.netDeposit * scaleDirectNet, { signed: true });
-            return fmtMoney(row.totalVol * scaleDirectVol);
+            if (metric === 'net') return fmtCompactMoney(row.netDeposit * scaleDirectNet, { signed: true });
+            return fmtCompactMoney(row.totalVol * scaleDirectVol);
         }
 
         const metricLabel = { vol: '交易额', rebate: '返佣', users: '人数', traders: '交易人数', net: '净入金' }[metric];
@@ -1036,10 +1047,10 @@
             if (el) el.textContent = text;
         };
 
-        set('overview-team-vol', fmtMoney(scaled.vol));
-        set('overview-self-vol', fmtMoney(scaled.selfVol));
-        set('overview-direct-vol', fmtMoney(scaled.directClientVol));
-        set('overview-partner-vol', fmtMoney(scaled.partnerTeamVol));
+        set('overview-team-vol', fmtCompactMoney(scaled.vol));
+        set('overview-self-vol', fmtCompactMoney(scaled.selfVol));
+        set('overview-direct-vol', fmtCompactMoney(scaled.directClientVol));
+        set('overview-partner-vol', fmtCompactMoney(scaled.partnerTeamVol));
 
         set('overview-total-rebate', fmtMoney(scaled.rebate));
         set('overview-self-rebate', fmtMoney(scaled.selfRebate));
@@ -1058,12 +1069,12 @@
 
         const netEl = document.getElementById('overview-team-net');
         if (netEl) {
-            netEl.textContent = fmtMoney(scaled.net, { signed: true });
+            netEl.textContent = fmtCompactMoney(scaled.net, { signed: true });
             netEl.className = 'partner-kpi-value ' + (scaled.net >= 0 ? 'text-green-500' : 'text-red-500');
         }
-        set('overview-self-net', fmtMoney(scaled.selfNetDeposit, { signed: true }));
-        set('overview-direct-net', fmtMoney(scaled.directClientNetDeposit, { signed: true }));
-        set('overview-partner-net', fmtMoney(scaled.partnerTeamNetDeposit, { signed: true }));
+        set('overview-self-net', fmtCompactMoney(scaled.selfNetDeposit, { signed: true }));
+        set('overview-direct-net', fmtCompactMoney(scaled.directClientNetDeposit, { signed: true }));
+        set('overview-partner-net', fmtCompactMoney(scaled.partnerTeamNetDeposit, { signed: true }));
 
         updatePeriodButtons('overview-period-btn', overviewPeriod);
         renderMySuperior();
@@ -1080,11 +1091,21 @@
             if (el) el.textContent = text;
         };
 
-        setText('analytics-kpi-vol', fmtMoney(scaled.vol, { plain: true }));
-        setText('analytics-kpi-rebate', fmtMoney(scaled.rebate, { plain: true }));
+        const setHtml = function (id, html) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = html;
+        };
+
+        setText('analytics-kpi-vol', fmtCompactMoney(scaled.vol));
+        setHtml('analytics-kpi-vol-delta', formatDeltaPct(scaled.volChange));
+        setText('analytics-kpi-rebate', fmtMoney(scaled.rebate));
+        setHtml('analytics-kpi-rebate-delta', formatDeltaPct(scaled.rebateChange));
         setText('analytics-kpi-team-users', fmtNum(scaled.teamUsers));
+        setHtml('analytics-kpi-team-users-delta', formatDeltaPct(scaled.usersChange));
         setText('analytics-kpi-active-traders', fmtNum(scaled.activeTraders));
-        setText('analytics-kpi-net', fmtMoney(scaled.net, { plain: true, signed: true }));
+        setHtml('analytics-kpi-active-traders-delta', formatDeltaPct(scaled.activeTradersChange));
+        setText('analytics-kpi-net', fmtCompactMoney(scaled.net, { signed: true }));
+        setHtml('analytics-kpi-net-delta', formatDeltaPct(scaled.netDepositChange));
         setText('analytics-chart-period-tag', analyticsPeriod);
 
         renderAnalyticsTabContent(scaled);
@@ -1228,7 +1249,7 @@
                 const rowClass = row.status === 'pending' ? 'bg-amber-50/30' : 'hover:bg-slate-50';
                 return '<tr class="' + rowClass + ' transition-colors">' +
                     '<td class="px-6 py-4 text-gray-900">' + row.date + '</td>' +
-                    '<td class="px-6 py-4 text-right text-gray-700">' + fmtMoney(row.vol) + '</td>' +
+                    '<td class="px-6 py-4 text-right text-gray-700">' + fmtCompactMoney(row.vol) + '</td>' +
                     '<td class="px-6 py-4 text-right">' + rebateAmountCell(row) + '</td>' +
                     '<td class="px-6 py-4 text-right">' + settlementStatusLabel(row.status) + '</td>' +
                     '<td class="px-6 py-4 text-right">' +
@@ -1371,7 +1392,7 @@
                         '<td class="px-5 py-3 font-mono text-gray-700">' + commissionContactCell(row) + '</td>' +
                         '<td class="px-5 py-3 font-bold text-gray-900">' + esc(typeLabel) + '</td>' +
                         '<td class="px-5 py-3 text-right text-gray-600 font-bold">' + esc(row.ratio) + '</td>' +
-                        '<td class="px-5 py-3 text-right font-black text-gray-900">' + fmtMoney(row.vol) + '</td>' +
+                        '<td class="px-5 py-3 text-right font-black text-gray-900">' + fmtCompactMoney(row.vol) + '</td>' +
                         '<td class="px-5 py-3 text-right font-black text-blue-600">' + fmtMoney(row.rebate) + '</td>' +
                         '<td class="px-5 py-3 text-right">' +
                         '<button type="button" onclick="PartnerCenter.openCommissionTradesModal(\'' + jsEsc(row.uid) + '\')" class="text-blue-600 font-black hover:underline text-[11px]">交易返佣流水</button>' +
@@ -1401,7 +1422,7 @@
                 tbody.innerHTML = sliced.items.map(function (row) {
                     return '<tr class="hover:bg-gray-50/80">' +
                         '<td class="px-5 py-3 text-gray-700">' + esc(row.time) + '</td>' +
-                        '<td class="px-5 py-3 text-right font-black">' + fmtMoney(row.vol) + '</td>' +
+                        '<td class="px-5 py-3 text-right font-black">' + fmtCompactMoney(row.vol) + '</td>' +
                         '<td class="px-5 py-3 text-right text-gray-600 font-bold">' + esc(row.ratio) + '</td>' +
                         '<td class="px-5 py-3 text-right font-black text-blue-600">' + fmtMoney(row.rebate) + '</td>' +
                         '</tr>';
@@ -1442,7 +1463,7 @@
         if (subEl) subEl.textContent = team.wallet + ' · 加入 ' + team.joinDate + (drillStack.length > 1 ? ' · 层级 ' + drillStack.length : '');
 
         const set = function (id, text) { const el = document.getElementById(id); if (el) el.textContent = text; };
-        set('drill-team-vol', fmtMoney(vol));
+        set('drill-team-vol', fmtCompactMoney(vol));
         set('drill-total-rebate', fmtMoney(rebate));
         set('drill-self-rebate', fmtMoney(o.selfRebate * scale));
         set('drill-direct-rebate', fmtMoney(o.directRebate * scale));
@@ -1450,7 +1471,7 @@
         const netEl = document.getElementById('drill-team-net');
         if (netEl) {
             const netVal = o.teamNetDeposit * scale;
-            netEl.textContent = fmtMoney(netVal, { signed: true });
+            netEl.textContent = fmtCompactMoney(netVal, { signed: true });
             netEl.className = 'partner-kpi-value ' + (netVal >= 0 ? 'text-green-500' : 'text-red-500');
         }
 
@@ -1617,8 +1638,8 @@
                 '<td class="px-6 py-4 text-center"><span class="' + gapClass + '">' + row.gap + '%</span></td>' +
                 '<td class="px-6 py-4">' + settlementStatusCell(row, scale, masked) + '</td>' +
                 '<td class="px-6 py-4 text-right">' + gapIncomeCell(row, scale) + '</td>' +
-                '<td class="px-6 py-4 text-right font-bold">' + fmtMoney(vol) + '</td>' +
-                '<td class="px-6 py-4 text-right font-bold text-green-500">' + fmtMoney(row.netDeposit, { signed: true }) + '</td>' +
+                '<td class="px-6 py-4 text-right font-bold">' + fmtCompactMoney(vol) + '</td>' +
+                '<td class="px-6 py-4 text-right font-bold text-green-500">' + fmtCompactMoney(row.netDeposit, { signed: true }) + '</td>' +
                 '<td class="px-6 py-4 text-center">' + userScaleCell(activeUsers, row.totalUsers) + '</td>' +
                 '<td class="px-6 py-4 text-right">' + actionHtml + '</td>' +
                 '</tr>';
@@ -1682,10 +1703,10 @@
                 '<td class="px-6 py-4 text-gray-400 font-bold">' + row.joinDate + '</td>' +
                 '<td class="px-6 py-4">' + partnerUidCell(row, masked) + '</td>' +
                 '<td class="px-6 py-4">' + partnerContactCell(row, masked) + '</td>' +
-                '<td class="px-6 py-4 text-right font-bold">' + fmtMoney(row.totalVol) + '</td>' +
+                '<td class="px-6 py-4 text-right font-bold">' + fmtCompactMoney(row.totalVol) + '</td>' +
                 '<td class="px-6 py-4 text-right font-bold">' + fmtMoney(row.totalFee) + '</td>' +
                 '<td class="px-6 py-4 text-right font-black text-blue-600">' + fmtMoney(row.rebate) + '</td>' +
-                '<td class="px-6 py-4 text-right font-bold ' + netClass + '">' + fmtMoney(row.netDeposit, { signed: true }) + '</td>' +
+                '<td class="px-6 py-4 text-right font-bold ' + netClass + '">' + fmtCompactMoney(row.netDeposit, { signed: true }) + '</td>' +
                 actionCell + '</tr>';
         }).join('');
 
@@ -1742,6 +1763,10 @@
         return drillTeams[partnerId];
     }
 
+    function countActiveInviteLinks() {
+        return inviteLinksData.filter(function (row) { return !row.disabled; }).length;
+    }
+
     function renderInviteLinks() {
         let filtered = inviteLinksData.filter(function (row) {
             if (!linksSearch) return true;
@@ -1774,6 +1799,7 @@
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setLinksSort(\'totalFee\')">合计手续费' + sortIconHtml('totalFee', linksSort) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setLinksSort(\'rebateIncome\')">合计返佣收入' + sortIconHtml('rebateIncome', linksSort) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setLinksSort(\'netDeposit\')">总净入金' + sortIconHtml('netDeposit', linksSort) + '</th>' +
+                '<th class="px-6 py-4 text-center">状态</th>' +
                 '<th class="px-6 py-4 text-right">操作</th>' +
                 '</tr>';
         }
@@ -1785,26 +1811,45 @@
             const fee = row.totalFee * scale;
             const rebate = row.rebateIncome * scale;
             const linkUrl = 'https://forx.finance/?ref=' + row.code;
-            return '<tr class="hover:bg-slate-50 transition-colors">' +
+            const rowClass = row.disabled ? 'opacity-60 bg-gray-50/60' : 'hover:bg-slate-50';
+            const statusHtml = row.disabled
+                ? '<span class="text-gray-400 font-bold">已停用</span>'
+                : '<span class="text-green-600 font-bold">使用中</span>';
+            const toggleLabel = row.disabled ? '启用' : '停用';
+            const toggleClass = row.disabled ? 'text-green-600' : 'text-amber-600';
+            const canToggle = !(row.isDefault && !row.disabled);
+            const toggleBtn = canToggle
+                ? '<button type="button" onclick="PartnerCenter.toggleInviteLinkStatus(\'' + jsEsc(row.code) + '\')" class="' + toggleClass + ' font-black hover:underline">' + toggleLabel + '</button>'
+                : '<span class="text-gray-300 font-bold text-[10px]">默认</span>';
+            return '<tr class="' + rowClass + ' transition-colors">' +
                 '<td class="px-6 py-4 font-black">' + esc(row.remark) + '</td>' +
                 '<td class="px-6 py-4 font-mono text-blue-600">' + esc(row.code) + '</td>' +
                 '<td class="px-6 py-4 text-center font-bold">' + row.directCount + '</td>' +
                 '<td class="px-6 py-4 text-center font-bold">' + row.subPartnerCount + '</td>' +
-                '<td class="px-6 py-4 text-right font-bold">' + fmtMoney(vol) + '</td>' +
+                '<td class="px-6 py-4 text-right font-bold">' + fmtCompactMoney(vol) + '</td>' +
                 '<td class="px-6 py-4 text-right font-bold">' + fmtMoney(fee) + '</td>' +
                 '<td class="px-6 py-4 text-right font-black text-blue-600">' + fmtMoney(rebate) + '</td>' +
-                '<td class="px-6 py-4 text-right font-bold text-green-500">' + fmtMoney(row.netDeposit, { signed: true }) + '</td>' +
+                '<td class="px-6 py-4 text-right font-bold text-green-500">' + fmtCompactMoney(row.netDeposit, { signed: true }) + '</td>' +
+                '<td class="px-6 py-4 text-center">' + statusHtml + '</td>' +
                 '<td class="px-6 py-4 text-right space-x-2 whitespace-nowrap">' +
-                '<button type="button" onclick="PartnerCenter.copyText(\'' + jsEsc(linkUrl) + '\', \'邀请链接\')" class="text-blue-600 font-black hover:underline">複製連結</button>' +
+                '<button type="button" onclick="PartnerCenter.copyText(\'' + jsEsc(linkUrl) + '\', \'邀请链接\')" class="text-blue-600 font-black hover:underline"' + (row.disabled ? ' disabled title="链接已停用"' : '') + '>複製連結</button>' +
                 '<button class="text-gray-300">|</button>' +
-                '<button type="button" onclick="openSharePoster(\'' + jsEsc(row.code) + '\')" class="text-gray-900 font-black hover:underline">分享海报</button>' +
+                '<button type="button" onclick="openSharePoster(\'' + jsEsc(row.code) + '\')" class="text-gray-900 font-black hover:underline"' + (row.disabled ? ' disabled' : '') + '>分享海报</button>' +
                 '<button class="text-gray-300">|</button>' +
                 '<button type="button" onclick="openReferralModal(\'edit\', \'' + row.remark.replace(/'/g, "\\'") + '\', \'' + row.code + '\')" class="text-gray-400 hover:text-black">修改備註</button>' +
+                '<button class="text-gray-300">|</button>' +
+                toggleBtn +
                 '</td></tr>';
         }).join('');
 
         const countEl = document.getElementById('links-create-count');
-        if (countEl) countEl.textContent = '+ 創建新連結 (已用 ' + inviteLinksData.length + '/50)';
+        if (countEl) {
+            const activeCount = countActiveInviteLinks();
+            countEl.textContent = '+ 創建新連結 (使用中 ' + activeCount + '/50)';
+            countEl.disabled = activeCount >= 50;
+            countEl.classList.toggle('opacity-50', activeCount >= 50);
+            countEl.classList.toggle('cursor-not-allowed', activeCount >= 50);
+        }
 
         updateLinksPeriodButtons();
         buildPaginationHtml('links-pagination', sliced.page, sliced.total, 10, 'PartnerCenter.goLinksPage');
@@ -1830,7 +1875,7 @@
             '<div class="tree-line-header flex items-center justify-between px-4 py-3 hover:bg-amber-50/80" onclick="PartnerCenter.toggleTeamTreeLine(\'' + partnerId + '\', \'' + line.id + '\')">' +
             '<div class="min-w-0 flex-1"><p class="font-black text-amber-900 text-[11px]">' + esc(line.title) + '</p>' +
             '<p class="text-[10px] text-amber-700/80 font-medium mt-0.5 truncate max-w-[520px]">' + esc(line.summary) + '</p>' +
-            (line.pausedVol ? '<p class="text-[10px] text-red-600 font-black mt-1">停止结算交易额 ' + fmtMoney(line.pausedVol) + '</p>' : '') +
+            (line.pausedVol ? '<p class="text-[10px] text-red-600 font-black mt-1">停止结算交易额 ' + fmtCompactMoney(line.pausedVol) + '</p>' : '') +
             '</div>' +
             '<span class="text-[10px] font-black text-amber-600 shrink-0 ml-2">' + (isOpen ? '收起' : '展开') + '</span></div>' +
             (isOpen ? '<div class="tree-line-body px-2 pb-2">' + nodesHtml + '</div>' : '') +
@@ -2053,13 +2098,31 @@
             toggleModal('modal-add-agent');
         },
         addInviteLink: function (remark, code) {
+            if (countActiveInviteLinks() >= 50) {
+                alert('使用中链接已达上限 50 个，请先停用其他链接后再创建。');
+                return false;
+            }
             inviteLinksData.push({
                 remark: remark, code: code, directCount: 0, subPartnerCount: 0,
-                totalVol: 0, totalFee: 0, rebateIncome: 0, netDeposit: 0, isDefault: false
+                totalVol: 0, totalFee: 0, rebateIncome: 0, netDeposit: 0, isDefault: false, disabled: false
             });
             existingCodesList.push(code);
             linksPage = 1;
             renderInviteLinks();
+            return true;
+        },
+        toggleInviteLinkStatus: function (code) {
+            const row = inviteLinksData.find(function (r) { return r.code === code; });
+            if (!row) return;
+            if (row.isDefault && !row.disabled) {
+                alert('默认邀请链接不可停用。');
+                return;
+            }
+            row.disabled = !row.disabled;
+            renderInviteLinks();
+        },
+        canCreateInviteLink: function () {
+            return countActiveInviteLinks() < 50;
         },
         openDrillTeam: function (partnerId) {
             if (!ensureDrillTeam(partnerId)) return;
