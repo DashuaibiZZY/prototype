@@ -526,42 +526,25 @@
                 <div id="commission-detail-summary-panel" class="stats-card !p-0 overflow-hidden shadow-sm">
                     <div class="p-5 border-b border-gray-50 bg-white">
                         <p class="text-[11px] font-black text-gray-900">当日贡献汇总</p>
-                        <p class="text-[10px] text-gray-500 mt-1">各下级合伙人 / 直客在本结算日产生的返佣合计，点击查看交易明细。</p>
+                        <p class="text-[10px] text-gray-500 mt-1">各下级合伙人 / 直客在本结算日的返佣构成，点击可查看返佣流水明细。</p>
                     </div>
-                    <table class="w-full text-left">
-                        <thead class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase">
-                            <tr>
-                                <th class="px-5 py-3">UID</th>
-                                <th class="px-5 py-3">下级/直客</th>
-                                <th class="px-5 py-3">渠道备注</th>
-                                <th class="px-5 py-3 text-right text-blue-600">当日返佣</th>
-                                <th class="px-5 py-3 text-right">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="commission-detail-summary-body" class="divide-y divide-gray-50 text-[11px] font-medium"></tbody>
-                    </table>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left min-w-[960px]">
+                            <thead class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase">
+                                <tr>
+                                    <th class="px-5 py-3">UID</th>
+                                    <th class="px-5 py-3">钱包 / 邮箱</th>
+                                    <th class="px-5 py-3">下级/直客</th>
+                                    <th class="px-5 py-3 text-right">返佣比例/级差比例</th>
+                                    <th class="px-5 py-3 text-right">团队/个人日交易额</th>
+                                    <th class="px-5 py-3 text-right text-blue-600">级差/返佣收入</th>
+                                    <th class="px-5 py-3 text-right">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="commission-detail-summary-body" class="divide-y divide-gray-50 text-[11px] font-medium"></tbody>
+                        </table>
+                    </div>
                     <div id="commission-detail-summary-pagination"></div>
-                </div>
-
-                <div id="commission-detail-trades-panel" class="stats-card !p-0 overflow-hidden shadow-sm hidden">
-                    <div class="p-5 border-b border-gray-50 bg-white flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                            <button type="button" onclick="PartnerCenter.backCommissionDetailSummary()" class="text-[11px] font-black text-gray-500 hover:text-black mb-2">← 返回贡献汇总</button>
-                            <p id="commission-detail-trades-title" class="text-[11px] font-black text-gray-900">交易明细</p>
-                        </div>
-                    </div>
-                    <table class="w-full text-left">
-                        <thead class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase">
-                            <tr>
-                                <th class="px-5 py-3">交易时间</th>
-                                <th class="px-5 py-3 text-right">交易金额</th>
-                                <th class="px-5 py-3 text-right">返佣比例/级差比例</th>
-                                <th class="px-5 py-3 text-right text-blue-600">返佣金额</th>
-                            </tr>
-                        </thead>
-                        <tbody id="commission-detail-trades-body" class="divide-y divide-gray-50 text-[11px] font-medium"></tbody>
-                    </table>
-                    <div id="commission-detail-trades-pagination"></div>
                 </div>
             </div>
 
@@ -914,7 +897,34 @@
     </div>
 </div>
 
-<script src="partner-center-user.js?v=partner-user-39"></script>
+<!-- 弹窗：返佣流水明细 -->
+<div id="modal-commission-trades" class="modal-overlay" onclick="closeModalOnSide(event, 'modal-commission-trades')">
+    <div class="bg-white rounded-sm shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col mx-4" onclick="event.stopPropagation()">
+        <div class="p-5 border-b border-gray-100 flex items-start justify-between gap-4 shrink-0">
+            <div>
+                <p class="text-sm font-black text-gray-900">返佣流水明细</p>
+                <p id="commission-trades-modal-subtitle" class="text-[10px] text-gray-500 font-bold mt-1">—</p>
+            </div>
+            <span class="cursor-pointer text-gray-400 hover:text-black font-bold shrink-0" onclick="toggleModal('modal-commission-trades')">✕</span>
+        </div>
+        <div class="overflow-x-auto flex-1">
+            <table class="w-full text-left">
+                <thead class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase">
+                    <tr>
+                        <th class="px-5 py-3">交易时间</th>
+                        <th class="px-5 py-3 text-right">交易金额</th>
+                        <th class="px-5 py-3 text-right">返佣比例/级差比例</th>
+                        <th class="px-5 py-3 text-right text-blue-600">返佣金额</th>
+                    </tr>
+                </thead>
+                <tbody id="commission-trades-modal-body" class="divide-y divide-gray-50 text-[11px] font-medium"></tbody>
+            </table>
+        </div>
+        <div id="commission-trades-modal-pagination" class="border-t border-gray-50 shrink-0"></div>
+    </div>
+</div>
+
+<script src="partner-center-user.js?v=partner-user-40"></script>
 <script>
     // 切换数据表格 (下级代理 vs 直客)
     function switchTable(tableId) {
