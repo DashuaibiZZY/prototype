@@ -434,7 +434,7 @@
 
 #### 6\.6.4 账单主类型与账单子类型
 
-与 Web §3.4.2 **账单流水对应关系** 完全一致：
+与 Web §3.4.2 **[账单流水对应关系](https://ksgf73ukjokp.sg.larksuite.com/sheets/Grt7s32vYhTSyMt0QqRlYYECgKA?sheet=dEY9l2)** 完全一致（完整枚举以在线表为准）：
 
 |账单主类型|账单子类型|
 |---|---|
@@ -485,7 +485,7 @@
 
 #### 6\.7.4 账单主类型枚举
 
-与 Web §3.6.2 一致：充值、提币、转入、转出、空投奖励、返佣。
+与 Web §3.6.2 [账单流水对应关系](https://ksgf73ukjokp.sg.larksuite.com/sheets/Grt7s32vYhTSyMt0QqRlYYECgKA?sheet=dEY9l2) 一致：充值、提币、转入、转出、空投奖励、返佣（完整枚举以在线表为准）。
 
 #### 6\.7.5 空态
 
