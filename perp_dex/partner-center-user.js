@@ -2,7 +2,7 @@
  * 合伙人中心（用户侧）原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-user-36';
+    const DATA_VERSION = 'partner-user-37';
     const SOURCE_LABELS = ['自己产生', '直属直客', '合伙人级差'];
     const SOURCE_COLORS = ['#93c5fd', '#3b82f6', '#1e3a8a'];
     const SOURCE_STYLES = [
@@ -839,6 +839,18 @@
         el.innerHTML = html;
     }
 
+    function analyticsPartnerRankCell(row) {
+        let html = '<span class="font-black font-mono text-gray-900">' + esc(row.uid || '—') + '</span>';
+        if (row.remark) {
+            html += '<span class="block text-[10px] text-gray-400 font-bold mt-0.5">' + esc(row.remark) + '</span>';
+        }
+        return html;
+    }
+
+    function analyticsClientRankCell(row) {
+        return '<span class="font-mono font-black text-gray-900">' + esc(row.uid || '—') + '</span>';
+    }
+
     function renderRankingBlock(containerId, metric, scaled) {
         const el = document.getElementById(containerId);
         if (!el) return;
@@ -881,7 +893,7 @@
         let subRows = '';
         rankedSubs.forEach(function (row, idx) {
             subRows += '<tr class="hover:bg-gray-50/80"><td class="px-4 py-2.5 font-black text-gray-400">' + (idx + 1) + '</td>' +
-                '<td class="px-4 py-2.5 font-black text-gray-900">' + esc(row.remark || row.name) + '</td>' +
+                '<td class="px-4 py-2.5">' + analyticsPartnerRankCell(row) + '</td>' +
                 '<td class="px-4 py-2.5 font-black text-right">' + partnerMetric(row) + '</td></tr>';
         });
         if (!subRows) {
@@ -890,9 +902,8 @@
 
         let clientRows = '';
         rankedClients.forEach(function (row, idx) {
-            const name = row.wallet || row.email || '—';
             clientRows += '<tr class="hover:bg-gray-50/80"><td class="px-4 py-2.5 font-black text-gray-400">' + (idx + 1) + '</td>' +
-                '<td class="px-4 py-2.5 font-mono text-gray-900">' + esc(name) + '</td>' +
+                '<td class="px-4 py-2.5">' + analyticsClientRankCell(row) + '</td>' +
                 '<td class="px-4 py-2.5 font-black text-right">' + clientMetric(row) + '</td></tr>';
         });
         if (!clientRows) {
@@ -904,10 +915,10 @@
             '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">' +
             '<div><p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">直属直客 · Top 10</p>' +
             '<table class="w-full text-left text-[11px]"><thead class="text-[10px] text-gray-400 font-black uppercase"><tr>' +
-            '<th class="pb-2 pr-2">#</th><th class="pb-2">用户</th><th class="pb-2 text-right">' + metricLabel + '</th></tr></thead><tbody class="divide-y divide-gray-50">' + clientRows + '</tbody></table></div>' +
+            '<th class="pb-2 pr-2">#</th><th class="pb-2">UID</th><th class="pb-2 text-right">' + metricLabel + '</th></tr></thead><tbody class="divide-y divide-gray-50">' + clientRows + '</tbody></table></div>' +
             '<div><p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">合伙人 · Top 10</p>' +
             '<table class="w-full text-left text-[11px]"><thead class="text-[10px] text-gray-400 font-black uppercase"><tr>' +
-            '<th class="pb-2 pr-2">#</th><th class="pb-2">下级合伙人</th><th class="pb-2 text-right">' + metricLabel + '</th></tr></thead><tbody class="divide-y divide-gray-50">' + subRows + '</tbody></table></div>' +
+            '<th class="pb-2 pr-2">#</th><th class="pb-2">UID / 备注</th><th class="pb-2 text-right">' + metricLabel + '</th></tr></thead><tbody class="divide-y divide-gray-50">' + subRows + '</tbody></table></div>' +
             '</div>';
     }
 
