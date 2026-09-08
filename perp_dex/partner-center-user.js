@@ -2,7 +2,7 @@
  * 合伙人中心（用户侧）原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-user-45';
+    const DATA_VERSION = 'partner-user-46';
     const SOURCE_LABELS = ['自己产生', '直属直客', '合伙人级差'];
     const SOURCE_COLORS = ['#93c5fd', '#3b82f6', '#1e3a8a'];
     const SOURCE_STYLES = [
@@ -357,6 +357,17 @@
 
     function fmtNum(n) {
         return Math.round(n).toLocaleString();
+    }
+
+    function feeFromVol(vol) {
+        return (vol || 0) * 0.001;
+    }
+
+    function rowFee(row, volKey) {
+        volKey = volKey || 'totalVol';
+        if (row.totalFee != null) return row.totalFee;
+        if (row.fee != null) return row.fee;
+        return feeFromVol(row[volKey] != null ? row[volKey] : row.vol);
     }
 
     function esc(s) {
@@ -1224,6 +1235,7 @@
         const settlementGetters = {
             date: function (r) { return new Date(r.date).getTime(); },
             vol: function (r) { return r.vol; },
+            fee: function (r) { return rowFee(r, 'vol'); },
             rebate: function (r) { return r.rebate; }
         };
         filtered = applySort(filtered, settlementSort, settlementGetters);
@@ -1236,6 +1248,7 @@
             thead.innerHTML = '<tr>' +
                 '<th class="px-6 py-4 cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setSettlementSort(\'date\')">结算日期' + sortIconHtml('date', settlementSort) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setSettlementSort(\'vol\')">团队交易额' + sortIconHtml('vol', settlementSort) + '</th>' +
+                '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setSettlementSort(\'fee\')">手续费(USDC)' + sortIconHtml('fee', settlementSort) + '</th>' +
                 '<th class="px-6 py-4 text-right text-blue-600 cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setSettlementSort(\'rebate\')">返佣金额' + sortIconHtml('rebate', settlementSort) + '</th>' +
                 '<th class="px-6 py-4 text-right">状态</th>' +
                 '<th class="px-6 py-4 text-right">操作</th>' +
@@ -1249,6 +1262,7 @@
                 return '<tr class="' + rowClass + ' transition-colors">' +
                     '<td class="px-6 py-4 text-gray-900">' + row.date + '</td>' +
                     '<td class="px-6 py-4 text-right text-gray-700">' + fmtCompactMoney(row.vol) + '</td>' +
+                    '<td class="px-6 py-4 text-right text-gray-700">' + fmtMoney(rowFee(row, 'vol')) + '</td>' +
                     '<td class="px-6 py-4 text-right">' + rebateAmountCell(row) + '</td>' +
                     '<td class="px-6 py-4 text-right">' + settlementStatusLabel(row.status) + '</td>' +
                     '<td class="px-6 py-4 text-right">' +
@@ -1276,11 +1290,13 @@
                     walletFull: meta.walletFull || meta.wallet || '',
                     email: meta.email || '',
                     vol: 0,
+                    fee: 0,
                     rebate: 0,
                     isPartner: row.sourceType === '下级'
                 };
             }
             map[row.uid].vol += row.vol;
+            map[row.uid].fee += rowFee(row, 'vol');
             map[row.uid].rebate += row.rebate;
         });
         return Object.keys(map).map(function (uid) { return map[uid]; });
@@ -1359,6 +1375,7 @@
 
         const detailGetters = {
             vol: function (r) { return r.vol; },
+            fee: function (r) { return r.fee; },
             rebate: function (r) { return r.rebate; }
         };
         summary = applySort(summary, commissionDetailSort, detailGetters);
@@ -1374,6 +1391,7 @@
                 '<th class="px-5 py-3">下级/直客</th>' +
                 '<th class="px-5 py-3 text-right">返佣比例/级差比例</th>' +
                 '<th class="px-5 py-3 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setCommissionDetailSort(\'vol\')">团队/个人日交易额' + sortIconHtml('vol', commissionDetailSort) + '</th>' +
+                '<th class="px-5 py-3 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setCommissionDetailSort(\'fee\')">手续费(USDC)' + sortIconHtml('fee', commissionDetailSort) + '</th>' +
                 '<th class="px-5 py-3 text-right text-blue-600 cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setCommissionDetailSort(\'rebate\')">级差/返佣收入' + sortIconHtml('rebate', commissionDetailSort) + '</th>' +
                 '<th class="px-5 py-3 text-right">操作</th>' +
                 '</tr>';
@@ -1382,7 +1400,7 @@
         const tbody = document.getElementById('commission-detail-summary-body');
         if (tbody) {
             if (!sliced.items.length) {
-                tbody.innerHTML = '<tr><td colspan="7" class="px-5 py-8 text-center text-gray-400 font-bold">该结算日暂无返佣明细</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="px-5 py-8 text-center text-gray-400 font-bold">该结算日暂无返佣明细</td></tr>';
             } else {
                 tbody.innerHTML = sliced.items.map(function (row) {
                     const typeLabel = row.sourceType === '直客' ? '直客' : '下级';
@@ -1392,6 +1410,7 @@
                         '<td class="px-5 py-3 font-bold text-gray-900">' + esc(typeLabel) + '</td>' +
                         '<td class="px-5 py-3 text-right text-gray-600 font-bold">' + esc(row.ratio) + '</td>' +
                         '<td class="px-5 py-3 text-right font-black text-gray-900">' + fmtCompactMoney(row.vol) + '</td>' +
+                        '<td class="px-5 py-3 text-right font-bold text-gray-700">' + fmtMoney(row.fee) + '</td>' +
                         '<td class="px-5 py-3 text-right font-black text-blue-600">' + fmtMoney(row.rebate) + '</td>' +
                         '<td class="px-5 py-3 text-right">' +
                         '<button type="button" onclick="PartnerCenter.openCommissionTradesModal(\'' + jsEsc(row.uid) + '\')" class="text-blue-600 font-black hover:underline text-[11px]">交易返佣流水</button>' +
@@ -1416,12 +1435,13 @@
         const tbody = document.getElementById('commission-trades-modal-body');
         if (tbody) {
             if (!sliced.items.length) {
-                tbody.innerHTML = '<tr><td colspan="4" class="px-5 py-8 text-center text-gray-400 font-bold">暂无返佣流水</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="px-5 py-8 text-center text-gray-400 font-bold">暂无返佣流水</td></tr>';
             } else {
                 tbody.innerHTML = sliced.items.map(function (row) {
                     return '<tr class="hover:bg-gray-50/80">' +
                         '<td class="px-5 py-3 text-gray-700">' + esc(row.time) + '</td>' +
                         '<td class="px-5 py-3 text-right font-black">' + fmtCompactMoney(row.vol) + '</td>' +
+                        '<td class="px-5 py-3 text-right font-bold text-gray-700">' + fmtMoney(rowFee(row, 'vol')) + '</td>' +
                         '<td class="px-5 py-3 text-right text-gray-600 font-bold">' + esc(row.ratio) + '</td>' +
                         '<td class="px-5 py-3 text-right font-black text-blue-600">' + fmtMoney(row.rebate) + '</td>' +
                         '</tr>';
@@ -1575,6 +1595,7 @@
         const getters = {
             gapIncome: function (r) { return r.gapIncome * scale; },
             totalVol: function (r) { return r.totalVol * scale; },
+            totalFee: function (r) { return rowFee(r) * scale; },
             netDeposit: function (r) { return r.netDeposit; },
             tradeUsers: function (r) { return r.activeUsers; }
         };
@@ -1602,6 +1623,7 @@
                 '<th class="px-6 py-4">结算状态</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'gapIncome\')">贡献级差收入' + sortIconHtml('gapIncome', sortState) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'totalVol\')">总交易额' + sortIconHtml('totalVol', sortState) + '</th>' +
+                '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'totalFee\')">手续费(USDC)' + sortIconHtml('totalFee', sortState) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'netDeposit\')">总净入金' + sortIconHtml('netDeposit', sortState) + '</th>' +
                 '<th class="px-6 py-4 text-center cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'tradeUsers\')">' +
                 userScaleHeaderHtml() + sortIconHtml('tradeUsers', sortState) + '</th>' +
@@ -1616,6 +1638,7 @@
             const activeUsers = Math.round(row.activeUsers * Math.min(scale, 1.2));
             const gapIncome = row.gapIncome * scale;
             const vol = row.totalVol * scale;
+            const fee = rowFee(row) * scale;
             const rowClass = 'hover:bg-slate-50';
             const ratioClass = 'text-gray-700 font-bold';
             const gapClass = 'gap-tag';
@@ -1638,6 +1661,7 @@
                 '<td class="px-6 py-4">' + settlementStatusCell(row, scale, masked) + '</td>' +
                 '<td class="px-6 py-4 text-right">' + gapIncomeCell(row, scale) + '</td>' +
                 '<td class="px-6 py-4 text-right font-bold">' + fmtCompactMoney(vol) + '</td>' +
+                '<td class="px-6 py-4 text-right font-bold">' + fmtMoney(fee) + '</td>' +
                 '<td class="px-6 py-4 text-right font-bold text-green-500">' + fmtCompactMoney(row.netDeposit, { signed: true }) + '</td>' +
                 '<td class="px-6 py-4 text-center">' + userScaleCell(activeUsers, row.totalUsers) + '</td>' +
                 '<td class="px-6 py-4 text-right">' + actionHtml + '</td>' +
@@ -1678,7 +1702,7 @@
                 '<th class="px-6 py-4">直客 UID</th>' +
                 '<th class="px-6 py-4">钱包 / 邮箱</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'totalVol\')">累计交易额' + sortIconHtml('totalVol', sortState) + '</th>' +
-                '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'totalFee\')">累计手续费' + sortIconHtml('totalFee', sortState) + '</th>' +
+                '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'totalFee\')">手续费(USDC)' + sortIconHtml('totalFee', sortState) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'rebate\')">返佣金额' + sortIconHtml('rebate', sortState) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'netDeposit\')">净入金' + sortIconHtml('netDeposit', sortState) + '</th>';
             if (!masked) {
@@ -1778,6 +1802,7 @@
             directCount: function (r) { return r.directCount; },
             subPartnerCount: function (r) { return r.subPartnerCount; },
             totalVol: function (r) { return r.totalVol * scale; },
+            totalFee: function (r) { return row.totalFee * scale; },
             rebateIncome: function (r) { return r.rebateIncome * scale; },
             netDeposit: function (r) { return r.netDeposit; }
         };
@@ -1794,6 +1819,7 @@
                 '<th class="px-6 py-4 text-center cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setLinksSort(\'directCount\')">直邀人數' + sortIconHtml('directCount', linksSort) + '</th>' +
                 '<th class="px-6 py-4 text-center cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setLinksSort(\'subPartnerCount\')">下級合伙人數' + sortIconHtml('subPartnerCount', linksSort) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setLinksSort(\'totalVol\')">总交易额' + sortIconHtml('totalVol', linksSort) + '</th>' +
+                '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setLinksSort(\'totalFee\')">手续费(USDC)' + sortIconHtml('totalFee', linksSort) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setLinksSort(\'rebateIncome\')">合计返佣收入' + sortIconHtml('rebateIncome', linksSort) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setLinksSort(\'netDeposit\')">总净入金' + sortIconHtml('netDeposit', linksSort) + '</th>' +
                 '<th class="px-6 py-4 text-center">状态</th>' +
@@ -1805,6 +1831,7 @@
         if (!tbody) return;
         tbody.innerHTML = sliced.items.map(function (row) {
             const vol = row.totalVol * scale;
+            const fee = row.totalFee * scale;
             const rebate = row.rebateIncome * scale;
             const linkUrl = 'https://forx.finance/?ref=' + row.code;
             const rowClass = row.disabled ? 'opacity-60 bg-gray-50/60' : 'hover:bg-slate-50';
@@ -1823,6 +1850,7 @@
                 '<td class="px-6 py-4 text-center font-bold">' + row.directCount + '</td>' +
                 '<td class="px-6 py-4 text-center font-bold">' + row.subPartnerCount + '</td>' +
                 '<td class="px-6 py-4 text-right font-bold">' + fmtCompactMoney(vol) + '</td>' +
+                '<td class="px-6 py-4 text-right font-bold">' + fmtMoney(fee) + '</td>' +
                 '<td class="px-6 py-4 text-right font-black text-blue-600">' + fmtMoney(rebate) + '</td>' +
                 '<td class="px-6 py-4 text-right font-bold text-green-500">' + fmtCompactMoney(row.netDeposit, { signed: true }) + '</td>' +
                 '<td class="px-6 py-4 text-center">' + statusHtml + '</td>' +
