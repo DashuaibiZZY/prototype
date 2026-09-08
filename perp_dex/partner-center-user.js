@@ -2,7 +2,7 @@
  * 合伙人中心（用户侧）原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-user-35';
+    const DATA_VERSION = 'partner-user-36';
     const SOURCE_LABELS = ['自己产生', '直属直客', '合伙人级差'];
     const SOURCE_COLORS = ['#93c5fd', '#3b82f6', '#1e3a8a'];
     const SOURCE_STYLES = [
@@ -536,6 +536,109 @@
         return '<span class="' + cls + '">' + sign + value + '% vs 上周期</span>';
     }
 
+    function buildSignedDistributedSeries(total, points, seed) {
+        const rnd = createRng(seed);
+        const raw = [];
+        let sum = 0;
+        for (let i = 0; i < points; i++) {
+            const wave = Math.sin((i + 1) * 0.55) * 0.35;
+            const v = wave + (rnd() - 0.48) * 1.4;
+            raw.push(v);
+            sum += v;
+        }
+        if (Math.abs(sum) < 0.001) sum = sum >= 0 ? 1 : -1;
+        const scale = total / sum;
+        return raw.map(function (v) { return v * scale; });
+    }
+
+    function buildSignedYAxisLabels(minV, maxV, useMoneyAxis) {
+        const labels = [];
+        for (let g = 0; g <= 3; g++) {
+            const val = maxV - (maxV - minV) * (g / 3);
+            labels.push(useMoneyAxis ? compactAxisMoney(val) : fmtNum(Math.round(val)));
+        }
+        return labels;
+    }
+
+    function renderAnalyticsMultiLineChart(container, lineSeries, lineColors, period, useMoneyAxis) {
+        if (!container) return;
+        const points = lineSeries[0] ? lineSeries[0].length : 0;
+        if (!points) {
+            container.innerHTML = '';
+            return;
+        }
+        const W = 400;
+        const H = 160;
+        const pad = { l: 8, r: 10, t: 10, b: 22 };
+        const pw = W - pad.l - pad.r;
+        const ph = H - pad.t - pad.b;
+        let minV = 0;
+        let maxV = 0;
+        lineSeries.forEach(function (series) {
+            series.forEach(function (v) {
+                if (v < minV) minV = v;
+                if (v > maxV) maxV = v;
+            });
+        });
+        const span = maxV - minV || 1;
+        minV -= span * 0.12;
+        maxV += span * 0.12;
+        if (minV > 0) minV = 0;
+        if (maxV < 0) maxV = 0;
+
+        const xAt = function (i) { return pad.l + (points <= 1 ? pw / 2 : (i / (points - 1)) * pw); };
+        const yAt = function (v) { return pad.t + ph - ((v - minV) / (maxV - minV || 1)) * ph; };
+
+        let grid = '';
+        for (let g = 0; g <= 3; g++) {
+            const y = pad.t + (ph * g) / 3;
+            grid += '<line x1="' + pad.l + '" y1="' + y.toFixed(1) + '" x2="' + (W - pad.r) + '" y2="' + y.toFixed(1) + '" stroke="#f1f5f9" stroke-width="1"/>';
+        }
+        if (minV < 0 && maxV > 0) {
+            const zeroY = yAt(0);
+            grid += '<line x1="' + pad.l + '" y1="' + zeroY.toFixed(1) + '" x2="' + (W - pad.r) + '" y2="' + zeroY.toFixed(1) + '" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3 3"/>';
+        }
+
+        let labels = '';
+        for (let i = 0; i < points; i++) {
+            const text = formatLinksChartLabel(period, i, points);
+            if (!text) continue;
+            labels += '<text x="' + xAt(i).toFixed(1) + '" y="' + (H - 4) + '" text-anchor="middle" fill="#94a3b8" font-size="7" font-weight="700">' + esc(text) + '</text>';
+        }
+
+        let lines = '';
+        lineSeries.forEach(function (series, idx) {
+            const color = lineColors[idx] || '#3b82f6';
+            let path = '';
+            series.forEach(function (v, i) {
+                path += (i ? ' L' : 'M') + xAt(i).toFixed(2) + ',' + yAt(v).toFixed(2);
+            });
+            lines += '<path d="' + path + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+        });
+
+        const yAxisHtml = buildSignedYAxisLabels(minV, maxV, useMoneyAxis).map(function (label) {
+            return '<span>' + esc(label) + '</span>';
+        }).join('');
+
+        const svgHtml =
+            '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' +
+            grid + lines + labels + '</svg>';
+
+        container.innerHTML =
+            '<div class="analytics-chart-shell">' +
+            '<div class="analytics-chart-y-axis">' + yAxisHtml + '</div>' +
+            svgHtml +
+            '</div>';
+    }
+
+    function renderNetSourceLineChart(container, triple, period, seed) {
+        const pointCount = LINKS_CHART_POINTS[period] || 7;
+        const selfSeries = buildSignedDistributedSeries(triple.self, pointCount, seed);
+        const directSeries = buildSignedDistributedSeries(triple.direct, pointCount, seed + 11);
+        const partnerSeries = buildSignedDistributedSeries(triple.partner, pointCount, seed + 23);
+        renderAnalyticsMultiLineChart(container, [selfSeries, directSeries, partnerSeries], SOURCE_COLORS, period, true);
+    }
+
     function buildYAxisLabels(maxV, useMoneyAxis) {
         const labels = [];
         for (let g = 0; g <= 3; g++) {
@@ -711,25 +814,6 @@
         { key: 'net', label: '团队净入金' }
     ];
 
-    function renderSourceMatrix(scaled) {
-        const body = document.getElementById('analytics-source-matrix-body');
-        if (!body) return;
-        let html = '';
-        ANALYTICS_METRICS.forEach(function (item) {
-            const triple = sourceTriple(scaled, item.key);
-            const ratios = sourceRatios(triple);
-            html += '<tr class="border-b border-gray-50 last:border-0">';
-            html += '<td class="font-black text-gray-900">' + item.label + '</td>';
-            ['self', 'direct', 'partner'].forEach(function (key) {
-                html += '<td class="text-right font-bold text-gray-800">' +
-                    formatMetricValue(item.key, triple[key]) +
-                    ' <span class="analytics-pct-chip">' + Math.round(ratios[key] * 100) + '%</span></td>';
-            });
-            html += '</tr>';
-        });
-        body.innerHTML = html;
-    }
-
     function renderAnalyticsDimTabs() {
         document.querySelectorAll('.analytics-dim-tab').forEach(function (btn) {
             const tab = btn.getAttribute('data-dim-tab');
@@ -755,14 +839,6 @@
         el.innerHTML = html;
     }
 
-    function selfMetricValue(metric, scaled) {
-        if (metric === 'vol') return scaled.selfVol;
-        if (metric === 'rebate') return scaled.selfRebate;
-        if (metric === 'users') return scaled.selfUsers;
-        if (metric === 'traders') return scaled.selfActiveTraders;
-        return scaled.selfNetDeposit;
-    }
-
     function renderRankingBlock(containerId, metric, scaled) {
         const el = document.getElementById(containerId);
         if (!el) return;
@@ -779,13 +855,13 @@
             if (metric === 'traders') return b.activeUsers - a.activeUsers;
             if (metric === 'net') return b.netDeposit - a.netDeposit;
             return b.totalVol - a.totalVol;
-        }).slice(0, 5);
+        }).slice(0, 10);
 
         const rankedClients = directClientsData.slice().sort(function (a, b) {
             if (metric === 'rebate') return b.rebate - a.rebate;
             if (metric === 'net') return b.netDeposit - a.netDeposit;
             return b.totalVol - a.totalVol;
-        }).slice(0, 5);
+        }).slice(0, 10);
 
         function partnerMetric(row) {
             if (metric === 'rebate') return fmtMoney(row.gapIncome * scaleGap);
@@ -801,8 +877,6 @@
         }
 
         const metricLabel = { vol: '交易额', rebate: '返佣', users: '人数', traders: '交易人数', net: '净入金' }[metric];
-        const selfValue = selfMetricValue(metric, scaled);
-        const selfDisplay = formatMetricValue(metric, selfValue, metric === 'net' ? { signed: true } : undefined);
 
         let subRows = '';
         rankedSubs.forEach(function (row, idx) {
@@ -826,18 +900,12 @@
         }
 
         el.innerHTML =
-            '<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">贡献排行 · Top 5</p>' +
-            '<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">' +
-            '<div><p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">自己产生</p>' +
-            '<table class="w-full text-left text-[11px]"><thead class="text-[10px] text-gray-400 font-black uppercase"><tr>' +
-            '<th class="pb-2 pr-2">#</th><th class="pb-2">账户</th><th class="pb-2 text-right">' + metricLabel + '</th></tr></thead><tbody class="divide-y divide-gray-50">' +
-            '<tr class="hover:bg-gray-50/80"><td class="px-4 py-2.5 font-black text-gray-400">—</td>' +
-            '<td class="px-4 py-2.5 font-mono text-gray-900">' + esc(myPartnerProfile.wallet) + '</td>' +
-            '<td class="px-4 py-2.5 font-black text-right">' + selfDisplay + '</td></tr></tbody></table></div>' +
-            '<div><p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">直属直客 · Top 5</p>' +
+            '<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">贡献排行 · Top 10</p>' +
+            '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">' +
+            '<div><p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">直属直客 · Top 10</p>' +
             '<table class="w-full text-left text-[11px]"><thead class="text-[10px] text-gray-400 font-black uppercase"><tr>' +
             '<th class="pb-2 pr-2">#</th><th class="pb-2">用户</th><th class="pb-2 text-right">' + metricLabel + '</th></tr></thead><tbody class="divide-y divide-gray-50">' + clientRows + '</tbody></table></div>' +
-            '<div><p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">合伙人 · Top 5</p>' +
+            '<div><p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">合伙人 · Top 10</p>' +
             '<table class="w-full text-left text-[11px]"><thead class="text-[10px] text-gray-400 font-black uppercase"><tr>' +
             '<th class="pb-2 pr-2">#</th><th class="pb-2">下级合伙人</th><th class="pb-2 text-right">' + metricLabel + '</th></tr></thead><tbody class="divide-y divide-gray-50">' + subRows + '</tbody></table></div>' +
             '</div>';
@@ -846,18 +914,26 @@
     function renderAnalyticsTabContent(scaled) {
         const seedMap = { '1D': 71, '1W': 83, '1M': 97, '3M': 113 };
         const seed = seedMap[analyticsPeriod] || 83;
-        renderSourceMatrix(scaled);
         ANALYTICS_METRICS.forEach(function (item, idx) {
             const metric = item.key;
             const triple = sourceTriple(scaled, metric);
             const useMoney = metric === 'vol' || metric === 'rebate' || metric === 'net';
-            renderSvgStackedSourceChart(
-                document.getElementById('analytics-chart-' + metric),
-                triple,
-                analyticsPeriod,
-                seed + idx * 17,
-                useMoney
-            );
+            if (metric === 'net') {
+                renderNetSourceLineChart(
+                    document.getElementById('analytics-chart-' + metric),
+                    triple,
+                    analyticsPeriod,
+                    seed + idx * 17
+                );
+            } else {
+                renderSvgStackedSourceChart(
+                    document.getElementById('analytics-chart-' + metric),
+                    triple,
+                    analyticsPeriod,
+                    seed + idx * 17,
+                    useMoney
+                );
+            }
             renderDistributionBlock('analytics-dist-' + metric, metric, triple);
             renderRankingBlock('analytics-rank-' + metric, metric, scaled);
             renderSourceLegend('analytics-legend-' + metric);
