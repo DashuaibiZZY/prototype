@@ -2,7 +2,7 @@
  * 合伙人中心（用户侧）原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-user-48';
+    const DATA_VERSION = 'partner-user-49';
     const SOURCE_LABELS = ['自己产生', '直属直客', '合伙人级差'];
     const SOURCE_COLORS = ['#93c5fd', '#3b82f6', '#1e3a8a'];
     const SOURCE_STYLES = [
@@ -894,6 +894,28 @@
         { key: 'net', label: '团队净入金' }
     ];
 
+    function dashedHintLine(text) {
+        return '<span class="user-scale-hint-wrap inline-flex">' +
+            '<span class="user-scale-hint-label">' + esc(text) + '</span>' +
+            '</span>';
+    }
+
+    function renderAnalyticsDimHint() {
+        const row = document.getElementById('analytics-dim-hint-row');
+        const textEl = document.getElementById('analytics-dim-hint-text');
+        if (!row || !textEl) return;
+        if (analyticsDimTab === 'traders') {
+            row.classList.remove('hidden');
+            textEl.innerHTML = dashedHintLine(ACTIVE_TRADERS_TIP);
+        } else if (analyticsDimTab === 'net') {
+            row.classList.remove('hidden');
+            textEl.innerHTML = dashedHintLine(TEAM_NET_DEPOSIT_TIP);
+        } else {
+            row.classList.add('hidden');
+            textEl.innerHTML = '';
+        }
+    }
+
     function renderAnalyticsDimTabs() {
         document.querySelectorAll('.analytics-dim-tab').forEach(function (btn) {
             const tab = btn.getAttribute('data-dim-tab');
@@ -904,6 +926,7 @@
             const panel = document.getElementById('analytics-dim-panel-' + item.key);
             if (panel) panel.classList.toggle('hidden', analyticsDimTab !== item.key);
         });
+        renderAnalyticsDimHint();
     }
 
     function renderDistributionBlock(containerId, metric, triple) {
