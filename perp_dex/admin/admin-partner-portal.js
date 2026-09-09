@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-44';
+    const DATA_VERSION = 'partner-demo-45';
     /** 原型：从权限配置 u_ops（运营小王）读取合伙人管理数据范围 */
     const DEMO_PERM_USER_ID = 'u_ops';
     const CURRENT_OPERATOR = 'allen@forx.fi';
@@ -531,6 +531,85 @@
         }).map(function (u) { return u.id; });
     }
 
+    /** 概览环比演示：相对「上周期」的增幅 %（原型 mock，生产由后端返回） */
+    const OVERVIEW_PERIOD_COMPARE = {
+        '1D': { l1Count: 0, vol: 5.8, fee: 5.8, rebate: 4.2, netIncome: 6.5, netDeposit: 2.8, usersActive: 1.2, usersTotal: 0.9 },
+        '1W': { l1Count: 0, vol: 12.4, fee: 12.4, rebate: 8.6, netIncome: 11.2, netDeposit: 5.2, usersActive: 3.1, usersTotal: 2.8 },
+        '1M': { l1Count: 0, vol: 9.6, fee: 9.6, rebate: 7.1, netIncome: 10.4, netDeposit: 4.1, usersActive: 2.6, usersTotal: 2.2 },
+        '3M': { l1Count: 0, vol: 15.3, fee: 15.3, rebate: 11.8, netIncome: 14.6, netDeposit: 6.8, usersActive: 4.2, usersTotal: 3.5 },
+        'ALL': { l1Count: 0, vol: 18.2, fee: 18.2, rebate: 14.5, netIncome: 16.8, netDeposit: 8.1, usersActive: 5.6, usersTotal: 4.8 }
+    };
+
+    function getOverviewCompareConfig(period) {
+        return OVERVIEW_PERIOD_COMPARE[period] || OVERVIEW_PERIOD_COMPARE.ALL;
+    }
+
+    function overviewPrevValue(current, pctChange) {
+        if (!pctChange) return current;
+        return current / (1 + pctChange / 100);
+    }
+
+    function overviewCompareDelta(current, pctChange) {
+        return current - overviewPrevValue(current, pctChange);
+    }
+
+    function overviewCompareClass(delta) {
+        if (delta > 0) return 'text-green-400';
+        if (delta < 0) return 'text-red-300';
+        return 'text-slate-400';
+    }
+
+    function formatOverviewCompareCount(current, pctChange) {
+        if (!pctChange) {
+            return '<span class="text-slate-400 font-bold">较上周期持平</span>';
+        }
+        const delta = overviewCompareDelta(current, pctChange);
+        const cls = overviewCompareClass(delta);
+        const deltaSign = delta >= 0 ? '+' : '';
+        const pctSign = pctChange >= 0 ? '+' : '';
+        return '<span class="' + cls + ' font-bold">' +
+            deltaSign + Math.round(delta).toLocaleString() +
+            ' (' + pctSign + pctChange.toFixed(1) + '%) vs 上周期</span>';
+    }
+
+    function formatOverviewCompareMoney(current, pctChange, opts) {
+        opts = opts || {};
+        if (!pctChange) {
+            return '<span class="text-slate-400 font-bold">较上周期持平</span>';
+        }
+        const delta = overviewCompareDelta(current, pctChange);
+        const cls = overviewCompareClass(delta);
+        const pctSign = pctChange >= 0 ? '+' : '';
+        let deltaText;
+        if (opts.compact) deltaText = fmtCompactMoney(delta);
+        else if (opts.signed) deltaText = fmtSignedMoney(delta);
+        else deltaText = (delta >= 0 ? '+' : '-') + fmtMoney(Math.abs(delta));
+        return '<span class="' + cls + ' font-bold">' +
+            deltaText + ' (' + pctSign + pctChange.toFixed(1) + '%) vs 上周期</span>';
+    }
+
+    function formatOverviewUsersCompare(active, total, cfg) {
+        const activeDelta = overviewCompareDelta(active, cfg.usersActive);
+        const totalDelta = overviewCompareDelta(total, cfg.usersTotal);
+        const activeCls = overviewCompareClass(activeDelta);
+        const totalCls = overviewCompareClass(totalDelta);
+        const fmtCountPart = function (label, delta, pct) {
+            if (!pct) return label + ' 持平';
+            const sign = delta >= 0 ? '+' : '';
+            const pctSign = pct >= 0 ? '+' : '';
+            return label + ' ' + sign + Math.round(delta).toLocaleString() + ' (' + pctSign + pct.toFixed(1) + '%)';
+        };
+        return '<span class="' + activeCls + ' font-bold">' + fmtCountPart('活跃', activeDelta, cfg.usersActive) + '</span>' +
+            '<span class="text-slate-500 font-bold"> · </span>' +
+            '<span class="' + totalCls + ' font-bold">' + fmtCountPart('总', totalDelta, cfg.usersTotal) + '</span>' +
+            '<span class="text-slate-400 font-bold"> vs 上周期</span>';
+    }
+
+    function setOverviewCompareHtml(id, html) {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = html || '—';
+    }
+
     function computeAgentOverviewMetrics(period) {
         const ids = getOverviewScopeL1Ids();
         const metrics = {
@@ -567,6 +646,7 @@
         const scope = getAgentDataScope();
         const period = listStatsPeriod || 'ALL';
         const m = computeAgentOverviewMetrics(period);
+        const cmp = getOverviewCompareConfig(period);
         const titleEl = document.getElementById('agent-overview-title');
         const subEl = document.getElementById('agent-overview-subtitle');
         const chipEl = document.getElementById('agent-overview-scope-chip');
@@ -604,14 +684,21 @@
         }
         setText('agent-overview-vol', fmtCompactMoney(m.vol));
         setText('agent-overview-fee', fmtMoney(m.fee));
+        setOverviewCompareHtml('agent-overview-l1-compare', formatOverviewCompareCount(m.l1Count, cmp.l1Count));
+        setOverviewCompareHtml('agent-overview-vol-compare', formatOverviewCompareMoney(m.vol, cmp.vol, { compact: true }));
+        setOverviewCompareHtml('agent-overview-fee-compare', formatOverviewCompareMoney(m.fee, cmp.fee));
+        setOverviewCompareHtml('agent-overview-rebate-compare', formatOverviewCompareMoney(m.rebate, cmp.rebate));
+        setOverviewCompareHtml('agent-overview-net-income-compare', formatOverviewCompareMoney(m.netIncome, cmp.netIncome));
         setText('agent-overview-rebate', fmtMoney(m.rebate));
         setText('agent-overview-net-income', fmtMoney(m.netIncome));
         const depEl = document.getElementById('agent-overview-net-deposit');
         if (depEl) {
             depEl.textContent = fmtSignedMoney(m.netDeposit);
-            depEl.className = 'text-2xl font-black flex-1 ' + (m.netDeposit >= 0 ? 'text-green-400' : 'text-red-300');
+            depEl.className = 'text-2xl font-black ' + (m.netDeposit >= 0 ? 'text-green-400' : 'text-red-300');
         }
+        setOverviewCompareHtml('agent-overview-net-deposit-compare', formatOverviewCompareMoney(m.netDeposit, cmp.netDeposit, { signed: true }));
         setText('agent-overview-users', m.usersActive.toLocaleString() + ' / ' + m.usersTotal.toLocaleString());
+        setOverviewCompareHtml('agent-overview-users-compare', formatOverviewUsersCompare(m.usersActive, m.usersTotal, cmp));
         const pendingEl = document.getElementById('agent-overview-pending');
         if (pendingEl) {
             pendingEl.textContent = m.pendingSettlement ? fmtMoney(m.pendingSettlement) : '—';
