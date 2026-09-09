@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX APP · 待结算回收记录</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #e5e7eb; margin: 0; padding: 32px 24px 48px; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .gallery-header { max-width: 1200px; margin: 0 auto 28px; }
+        .gallery-header h1 { font-size: 22px; font-weight: 900; color: #111827; letter-spacing: -0.02em; }
+        .gallery-header p { font-size: 12px; color: #6b7280; margin-top: 6px; line-height: 1.6; }
+        .proto-grid { display: flex; flex-wrap: wrap; gap: 36px 28px; align-items: flex-start; justify-content: center; max-width: 1600px; margin: 0 auto; }
+        .proto-panel { display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+        .proto-label { width: 375px; font-size: 13px; font-weight: 800; color: #111827; line-height: 1.45; }
+        .proto-label .desc { display: block; font-size: 11px; font-weight: 600; color: #6b7280; margin-top: 4px; }
+        .phone-shell {
+            width: 375px; height: 812px; background: #000; border-radius: 50px; padding: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.45); position: relative; border: 4px solid #333; flex-shrink: 0;
+        }
+        .screen {
+            width: 100%; height: 100%; background: #fff; border-radius: 38px; overflow: hidden;
+            position: relative; display: flex; flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+
+<div class="gallery-header">
+    <h1>待结算回收记录 · 子页面原型</h1>
+    <p>从 App 邀请返佣页「待结算收益」下方「待结算回收记录」入口进入。展示后台执行回收后的对外记录。</p>
+</div>
+
+<div class="proto-grid" id="proto-grid"></div>
+
+<script>
+const RECLAIM_RECORDS = [
+    { date: '2026-08-28', amount: '12.60', reason: '异常套利风控复核，扣减待结算返佣' },
+    { date: '2026-08-15', amount: '8.00', reason: '重复结算差错修正' }
+];
+
+function recordRow(r) {
+    return `
+        <div class="px-5 py-4 border-b border-gray-50">
+            <div class="flex justify-between items-start gap-3 mb-2">
+                <p class="text-[10px] text-gray-400 font-bold uppercase">日期</p>
+                <p class="text-[12px] font-black text-gray-800">${r.date}</p>
+            </div>
+            <div class="flex justify-between items-start gap-3 mb-2">
+                <p class="text-[10px] text-gray-400 font-bold uppercase">回收待结算金额</p>
+                <p class="text-[13px] font-black text-red-600">-${r.amount} <span class="text-[9px] opacity-60">USDT</span></p>
+            </div>
+            <div>
+                <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">回收原因</p>
+                <p class="text-[12px] text-gray-600 leading-relaxed">${r.reason}</p>
+            </div>
+        </div>`;
+}
+
+function screenHtml() {
+    const rows = RECLAIM_RECORDS.map(recordRow).join('');
+    return `
+        <div class="screen flex flex-col">
+            <header class="flex justify-between items-center px-6 pt-4 pb-3 shrink-0 bg-white border-b border-gray-50">
+                <a href="邀请返佣.html" class="p-1 -ml-1">
+                    <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </a>
+                <h2 class="font-black text-sm uppercase tracking-tighter">待结算回收记录</h2>
+                <div class="w-6"></div>
+            </header>
+            <div class="flex-1 overflow-y-auto no-scrollbar bg-slate-50">
+                <div class="bg-white border-b border-gray-100">
+                    ${rows}
+                </div>
+                <p class="text-[10px] text-gray-400 text-center px-6 py-6 leading-relaxed">仅展示已在日结批次执行成功的回收记录；与站内信通知同步。</p>
+            </div>
+        </div>`;
+}
+
+const STATES = [
+    {
+        title: '① 待结算回收记录列表',
+        desc: '字段：日期、回收待结算金额、回收原因；返回邀请返佣页',
+        render: screenHtml
+    }
+];
+
+const grid = document.getElementById('proto-grid');
+STATES.forEach(function (state) {
+    const panel = document.createElement('div');
+    panel.className = 'proto-panel';
+    panel.innerHTML = `
+        <div class="proto-label">${state.title}<span class="desc">${state.desc}</span></div>
+        <div class="phone-shell">${state.render()}</div>`;
+    grid.appendChild(panel);
+});
+</script>
+
+</body>
+</html>
