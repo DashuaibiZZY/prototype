@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ForX 后台管理 - 邀请返佣</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+    .sidebar-item-active { background-color: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden text-[12px]">
+
+<aside id="admin-sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0"></aside>
+
+<main class="flex-1 flex flex-col overflow-hidden">
+  <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+    <h1 id="page-title" class="text-lg font-bold text-slate-800">邀请返佣管理</h1>
+    <div class="flex items-center gap-4">
+      <span class="text-sm text-slate-500">Referral_Ops</span>
+      <div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">RO</div>
+    </div>
+  </header>
+
+  <div class="flex-1 overflow-y-auto p-8">
+    <div id="page-invite-rebate" class="space-y-6">
+
+      <section id="invite-rebate-overview" class="bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-900 rounded-lg border border-emerald-900/60 p-5 shadow-lg text-white">
+        <p class="text-[10px] font-bold text-emerald-300/80 uppercase tracking-widest">数据预览</p>
+        <h2 class="text-lg font-black mt-1">普通用户邀请返佣概览</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+          <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">邀请用户数</p>
+            <p id="invite-overview-users" class="text-2xl font-black">—</p>
+          </div>
+          <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">累计已返佣</p>
+            <p id="invite-overview-rebated" class="text-2xl font-black text-green-300">—</p>
+          </div>
+          <div class="bg-white/5 border border-white/10 rounded-lg p-4 border-l-4 border-l-amber-400">
+            <p class="text-[10px] font-bold text-amber-200 uppercase mb-1">待结算返佣</p>
+            <p id="invite-overview-pending" class="text-2xl font-black text-amber-200">—</p>
+          </div>
+          <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">冻结账户</p>
+            <p id="invite-overview-frozen" class="text-2xl font-black text-red-300">—</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card p-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">UID / 钱包 / 邮箱</label>
+            <input id="invite-filter-q" type="text" placeholder="模糊搜索" class="border p-2 rounded w-full outline-none focus:ring-1 focus:ring-blue-600" oninput="InviteRebateAdmin.applyFilters()">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">邀请等级</label>
+            <select id="invite-filter-level" class="border p-2 rounded w-full bg-white outline-none focus:ring-1 focus:ring-blue-600" onchange="InviteRebateAdmin.applyFilters()">
+              <option value="">全部</option>
+              <option value="0">Lv 0</option>
+              <option value="1">Lv 1</option>
+              <option value="2">Lv 2</option>
+              <option value="3">Lv 3</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">结算状态</label>
+            <select id="invite-filter-status" class="border p-2 rounded w-full bg-white outline-none focus:ring-1 focus:ring-blue-600" onchange="InviteRebateAdmin.applyFilters()">
+              <option value="">全部</option>
+              <option value="normal">正常</option>
+              <option value="frozen">冻结</option>
+            </select>
+          </div>
+          <div class="flex gap-2">
+            <button type="button" onclick="InviteRebateAdmin.resetFilters()" class="px-4 py-2 border rounded font-bold text-slate-500 text-[11px]">重置</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-100 flex justify-between items-center">
+          <span class="font-bold text-slate-700">普通用户邀请返佣列表</span>
+          <span class="text-[10px] text-slate-400">不含合伙人用户 · 数据随筛选区联动刷新概览</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left min-w-[1400px]">
+            <thead class="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th class="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase">UID</th>
+                <th class="px-3 py-3 text-[10px] font-bold text-slate-500 uppercase">钱包地址 / 邮箱</th>
+                <th class="px-3 py-3 text-[10px] font-bold text-slate-500 uppercase">邀请等级</th>
+                <th class="px-3 py-3 text-[10px] font-bold text-slate-500 uppercase">返佣比例</th>
+                <th class="px-3 py-3 text-[10px] font-bold text-slate-500 uppercase text-right">邀请好友人数</th>
+                <th class="px-3 py-3 text-[10px] font-bold text-slate-500 uppercase text-right">活跃好友数</th>
+                <th class="px-3 py-3 text-[10px] font-bold text-slate-500 uppercase text-right">下级交易额</th>
+                <th class="px-3 py-3 text-[10px] font-bold text-slate-500 uppercase text-right">下级手续费</th>
+                <th class="px-3 py-3 text-[10px] font-bold text-slate-500 uppercase text-right">累计已返佣金额</th>
+                <th class="px-3 py-3 text-[10px] font-bold text-slate-500 uppercase text-right">待结算返佣</th>
+                <th class="px-3 py-3 text-[10px] font-bold text-slate-500 uppercase">结算状态</th>
+                <th class="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody id="invite-rebate-list-body" class="divide-y divide-slate-50"></tbody>
+          </table>
+          <div id="invite-rebate-pagination"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<!-- 回收待结算 -->
+<div id="reclaim-pending-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-100">
+      <h3 class="text-base font-black text-slate-800">回收待结算</h3>
+    </div>
+    <div class="px-6 py-5 space-y-4">
+      <div>
+        <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">UID</p>
+        <p id="reclaim-modal-uid" class="font-mono font-bold text-slate-800">—</p>
+      </div>
+      <div>
+        <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">累计待返佣金额</p>
+        <p id="reclaim-modal-pending-total" class="text-lg font-black text-amber-700">—</p>
+      </div>
+      <div>
+        <label for="reclaim-modal-amount" class="block text-[10px] font-bold text-slate-400 uppercase mb-1">回收待结算金额</label>
+        <input id="reclaim-modal-amount" type="number" min="0" step="0.01" class="w-full border border-slate-200 rounded-lg p-3 text-sm font-bold outline-none focus:ring-2 focus:ring-red-200 focus:border-red-300" placeholder="请输入回收金额">
+      </div>
+      <div>
+        <label for="reclaim-modal-reason" class="block text-[10px] font-bold text-slate-400 uppercase mb-1">回收原因（站内信用）</label>
+        <textarea id="reclaim-modal-reason" rows="3" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none focus:ring-2 focus:ring-red-200 focus:border-red-300" placeholder="请填写回收原因，将同步至用户站内信"></textarea>
+      </div>
+      <p class="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded-lg p-3 leading-relaxed">
+        提交后，回收指令将随<strong>次日 0:00（UTC+8）</strong>日结批次执行。当日 0:00 前可修改或撤销；<strong>过 0 点后将无法变更回收金额</strong>，请谨慎填写。
+      </p>
+    </div>
+    <div class="px-6 py-4 bg-slate-50 flex gap-3">
+      <button type="button" onclick="InviteRebateAdmin.closeReclaimModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg font-bold text-slate-600 hover:bg-white">取消</button>
+      <button type="button" onclick="InviteRebateAdmin.submitReclaim()" class="flex-1 py-2.5 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700">确认</button>
+    </div>
+  </div>
+</div>
+
+<script src="admin-sidebar.js"></script>
+<script src="admin-pagination.js"></script>
+<script src="admin-copy-chip.js"></script>
+<script src="admin-invite-rebate.js?v=invite-rebate-1"></script>
+<script>
+  if (window.initAdminSidebar) {
+    initAdminSidebar('invite-rebate', '登录身份: 邀请返佣运营');
+  }
+</script>
+</body>
+</html>
