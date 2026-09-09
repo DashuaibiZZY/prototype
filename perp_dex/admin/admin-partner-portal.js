@@ -526,10 +526,9 @@
     }
 
     function getOverviewScopeL1Ids() {
-        return LIST_IDS.filter(function (id) {
-            const u = getUser(id);
-            return u && u.level === 1 && isPartnerInDataScope(id);
-        });
+        return USERS.filter(function (u) {
+            return u.level === 1 && isPartnerInDataScope(u.id);
+        }).map(function (u) { return u.id; });
     }
 
     function computeAgentOverviewMetrics(period) {
