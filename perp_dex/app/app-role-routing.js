@@ -39,7 +39,11 @@
         scope.querySelectorAll('[data-invite-benefit-card]').forEach(function (card) {
             card.setAttribute('href', partner ? PARTNER_PAGE : REFERRAL_PAGE);
             card.querySelectorAll('[data-invite-progress]').forEach(function (el) {
-                el.classList.toggle('hidden', partner);
+                if (partner) {
+                    el.classList.add('hidden');
+                } else if (!card.classList.contains('is-guest')) {
+                    el.classList.remove('hidden');
+                }
             });
             const subtitle = card.querySelector('[data-partner-subtitle]');
             if (subtitle) subtitle.classList.toggle('hidden', !partner);
