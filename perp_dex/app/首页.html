@@ -241,7 +241,10 @@ function heroLoggedIn(hidden = false, errored = false) {
         </div>`;
 }
 
-function quickEntryHtml() {
+function quickEntryHtml(cfg) {
+    const isPartner = !!(cfg && cfg.isPartner);
+    const inviteHref = isPartner ? '代理中心.html' : '邀请返佣.html';
+    const inviteLabel = isPartner ? '合伙人' : '邀请';
     return `
         <div class="quick-entry-grid">
             <a href="活动中心.html" class="quick-entry-item">
@@ -256,11 +259,11 @@ function quickEntryHtml() {
                 </div>
                 <span class="quick-entry-label">积分</span>
             </a>
-            <a href="邀请返佣.html" class="quick-entry-item">
+            <a href="${inviteHref}" class="quick-entry-item" data-invite-entry>
                 <div class="quick-entry-icon text-violet-600">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 </div>
-                <span class="quick-entry-label">邀请</span>
+                <span class="quick-entry-label">${inviteLabel}</span>
             </a>
             <a href="VIP费率等级.html" class="quick-entry-item">
                 <div class="quick-entry-icon text-yellow-600">
@@ -490,7 +493,8 @@ function homeScreenHtml(cfg) {
         showAnnouncements = true,
         netError = false,
         appUpdate = false,
-        topCardsPool = null
+        topCardsPool = null,
+        isPartner = false
     } = cfg;
 
     let scrollContent = '';
@@ -499,7 +503,7 @@ function homeScreenHtml(cfg) {
         scrollContent = marketErrorHtml();
     } else {
         const hero = loggedIn ? heroLoggedIn(assetHidden) : heroLoggedOut();
-        const quick = loggedIn ? `<section class="mb-2">${quickEntryHtml()}</section>` : '';
+        const quick = loggedIn ? `<section class="mb-2">${quickEntryHtml({ isPartner })}</section>` : '';
         const topCards = homeTopMarketCardsHtml(topCardsPool);
         const banner = loggedIn ? bannerHtml() : '';
         const market = `
@@ -542,6 +546,11 @@ const STATES = [
         title: '③ 首页 · 已登录 · 资产可见',
         desc: '权益卡片 + 快捷入口 + 顶部 4 行情卡片 + 活动轮播（卡片下方）+ 收藏 Tab',
         render: () => homeScreenHtml({ loggedIn: true, activeTab: 'fav', favMode: 'filled' })
+    },
+    {
+        title: '③b 首页 · 已登录 · 合伙人',
+        desc: '合伙人身份：快捷入口「邀请」跳转合伙人管理中心（代理中心），非邀请返佣页',
+        render: () => homeScreenHtml({ loggedIn: true, activeTab: 'fav', favMode: 'filled', isPartner: true })
     },
     {
         title: '④ 首页 · 已登录 · 资产已隐藏',
