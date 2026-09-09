@@ -188,18 +188,9 @@
     ];
 
     const APP_OPERATOR = 'allen@forx.fi';
-    const APP_DEMO_TODAY = new Date('2026-08-28T12:00:00');
-    const APP_OVERVIEW_PERIOD_DAYS = { '7D': 7, '30D': 30, '90D': 90 };
-    const APP_OVERVIEW_COMPARE = {
-        '7D': { backlog: 1, submit: 33.3, approved: 0, rejected: 0, highPotential: 0, avgVol: 15.2 },
-        '30D': { backlog: 2, submit: 25, approved: 100, rejected: 0, highPotential: 50, avgVol: 8.6 },
-        '90D': { backlog: 3, submit: 40, approved: 100, rejected: -50, highPotential: 100, avgVol: 12.1 },
-        'ALL': { backlog: 4, submit: 50, approved: 100, rejected: 0, highPotential: 100, avgVol: 18.4 }
-    };
 
     let appListPage = 1;
     let appListFilters = { q: '', contact: '', x: '', youtube: '' };
-    let appOverviewPeriod = '30D';
     let currentApplicationId = null;
     let appBindState = { applicationId: null, operatorSearch: '', operatorOpen: false };
     let appRejectState = { applicationId: null };
@@ -245,139 +236,34 @@
         return PARTNER_APPLICATIONS.filter(isApplicationInScope);
     }
 
-    function parseAppDate(str) {
-        if (!str) return null;
-        return new Date(String(str).replace(' ', 'T') + ':00');
-    }
-
-    function isDateInOverviewPeriod(dateStr, period) {
-        if (period === 'ALL') return true;
-        const d = parseAppDate(dateStr);
-        if (!d) return false;
-        const days = APP_OVERVIEW_PERIOD_DAYS[period];
-        if (!days) return true;
-        const start = new Date(APP_DEMO_TODAY);
-        start.setDate(start.getDate() - days);
-        return d >= start && d <= APP_DEMO_TODAY;
-    }
-
-    function isHighPotentialApp(app) {
-        return (app.monthlyVolEstimate || 0) >= 1000000 || (app.vol30d || 0) >= 500000;
-    }
-
     function isBacklogApp(app) {
         return app.status === 'pending' || app.status === 'reviewing';
     }
 
-    function appOverviewCompareDelta(current, pctChange) {
-        if (!pctChange) return 0;
-        return current - current / (1 + pctChange / 100);
-    }
-
-    function appOverviewCompareClass(delta) {
-        if (delta > 0) return 'text-green-400';
-        if (delta < 0) return 'text-red-300';
-        return 'text-slate-400';
-    }
-
-    function formatAppOverviewCompareCount(current, pctChange) {
-        if (!pctChange) {
-            return '<span class="text-slate-400 font-bold">较上周期持平</span>';
-        }
-        const delta = appOverviewCompareDelta(current, pctChange);
-        const cls = appOverviewCompareClass(delta);
-        const deltaSign = delta >= 0 ? '+' : '';
-        const pctSign = pctChange >= 0 ? '+' : '';
-        return '<span class="' + cls + ' font-bold">' +
-            deltaSign + Math.round(delta).toLocaleString() +
-            ' (' + pctSign + pctChange.toFixed(1) + '%) vs 上周期</span>';
-    }
-
-    function formatAppOverviewCompareMoney(current, pctChange) {
-        if (!pctChange) {
-            return '<span class="text-slate-400 font-bold">较上周期持平</span>';
-        }
-        const delta = appOverviewCompareDelta(current, pctChange);
-        const cls = appOverviewCompareClass(delta);
-        const pctSign = pctChange >= 0 ? '+' : '';
-        const deltaText = (delta >= 0 ? '+' : '-') + fmtMoney(Math.abs(delta)).replace(/^\$/, '$');
-        return '<span class="' + cls + ' font-bold">' +
-            deltaText + ' (' + pctSign + pctChange.toFixed(1) + '%) vs 上周期</span>';
-    }
-
-    function setAppOverviewCompareHtml(id, html) {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = html;
-    }
-
-    function computeApplicationOverviewMetrics(period) {
+    function computeApplicationOverviewMetrics() {
         const scoped = getScopedApplications();
-        const backlogApps = scoped.filter(isBacklogApp);
-        const pendingCount = scoped.filter(function (a) { return a.status === 'pending'; }).length;
-        const reviewingCount = scoped.filter(function (a) { return a.status === 'reviewing'; }).length;
-        const periodApps = scoped.filter(function (a) { return isDateInOverviewPeriod(a.appliedAt, period); });
-        const approvedCount = periodApps.filter(function (a) { return a.status === 'approved'; }).length;
-        const rejectedCount = periodApps.filter(function (a) { return a.status === 'rejected'; }).length;
-        const highPotential = backlogApps.filter(isHighPotentialApp).length;
-        const partnerIdentityBacklog = backlogApps.filter(function (a) { return isMultiLevelPartner(a.partnerIdentity); }).length;
-        let avgVol = 0;
-        if (backlogApps.length) {
-            const sum = backlogApps.reduce(function (s, a) { return s + (a.monthlyVolEstimate || 0); }, 0);
-            avgVol = sum / backlogApps.length;
-        }
         return {
-            backlog: backlogApps.length,
-            pendingCount: pendingCount,
-            reviewingCount: reviewingCount,
-            submit: periodApps.length,
-            approved: approvedCount,
-            rejected: rejectedCount,
-            highPotential: highPotential,
-            partnerIdentityBacklog: partnerIdentityBacklog,
-            avgVol: avgVol,
-            totalScoped: scoped.length
+            backlog: scoped.filter(isBacklogApp).length,
+            submit: scoped.length,
+            approved: scoped.filter(function (a) { return a.status === 'approved'; }).length,
+            rejected: scoped.filter(function (a) { return a.status === 'rejected'; }).length
         };
-    }
-
-    function updateAppOverviewPeriodUi(period) {
-        document.querySelectorAll('.app-overview-period-btn').forEach(function (btn) {
-            const active = btn.getAttribute('data-period') === period;
-            btn.className = 'app-overview-period-btn px-3 py-1 rounded border text-[11px] font-bold ' +
-                (active ? 'bg-white text-slate-900 border-white' : 'border-white/20 text-slate-200 hover:bg-white/10');
-        });
     }
 
     function renderApplicationOverview() {
         const scope = getAppDataScope();
-        const period = appOverviewPeriod || '30D';
-        const m = computeApplicationOverviewMetrics(period);
-        const cmp = APP_OVERVIEW_COMPARE[period] || APP_OVERVIEW_COMPARE['30D'];
+        const m = computeApplicationOverviewMetrics();
         const titleEl = document.getElementById('app-overview-title');
-        const subEl = document.getElementById('app-overview-subtitle');
         const chipEl = document.getElementById('app-overview-scope-chip');
-        const hintEl = document.getElementById('app-list-scope-hint');
 
         if (titleEl) {
             titleEl.textContent = scope === 'global' ? '平台合伙人申请概览' : '我的待审申请概览';
-        }
-        if (subEl) {
-            subEl.textContent = scope === 'global'
-                ? ('全站 ' + m.totalScoped + ' 条申请记录 · 周期 ' + period + ' · 待处理为当前快照')
-                : ('可见 ' + m.totalScoped + ' 条 · 未分配或归属 ' + getAppOperatorEmail() + ' · 周期 ' + period);
         }
         if (chipEl) {
             chipEl.textContent = scope === 'global' ? '数据权限: 全局' : '数据权限: 个人';
             chipEl.className = scope === 'global'
                 ? 'bg-violet-500/20 text-violet-200 px-3 py-1 rounded-full font-bold text-[10px]'
                 : 'bg-white/10 text-slate-200 px-3 py-1 rounded-full font-bold text-[10px]';
-        }
-        if (hintEl) {
-            const base = '上方概览按<strong>数据权限</strong>汇总申请单；周期内提交 / 通过 / 驳回按<strong>申请时间</strong>统计。<strong>待处理申请</strong>为当前快照，不随周期切换。';
-            if (scope === 'personal') {
-                hintEl.innerHTML = base + ' <span class="text-slate-500">· 个人权限可见未分配负责 BD 的申请 + 本人负责 BD 的申请。</span>';
-            } else {
-                hintEl.innerHTML = base + ' <span class="text-slate-500">· 全局权限可见全部申请单。</span>';
-            }
         }
 
         const setText = function (id, text) {
@@ -386,24 +272,9 @@
         };
 
         setText('app-overview-backlog', m.backlog.toLocaleString());
-        setText('app-overview-backlog-sub', m.pendingCount + ' 待审核 · ' + m.reviewingCount + ' 审核中');
-        setAppOverviewCompareHtml('app-overview-backlog-compare', formatAppOverviewCompareCount(m.backlog, cmp.backlog));
-
         setText('app-overview-submit', m.submit.toLocaleString());
-        setAppOverviewCompareHtml('app-overview-submit-compare', formatAppOverviewCompareCount(m.submit, cmp.submit));
-
         setText('app-overview-approved', m.approved.toLocaleString());
-        setAppOverviewCompareHtml('app-overview-approved-compare', formatAppOverviewCompareCount(m.approved, cmp.approved));
-
         setText('app-overview-rejected', m.rejected.toLocaleString());
-        setAppOverviewCompareHtml('app-overview-rejected-compare', formatAppOverviewCompareCount(m.rejected, cmp.rejected));
-
-        updateAppOverviewPeriodUi(period);
-    }
-
-    function setAppOverviewPeriod(period) {
-        appOverviewPeriod = period;
-        renderApplicationOverview();
     }
 
     function matchesAppFilters(app) {
@@ -890,7 +761,6 @@
                 app.resolvedAt = app.resolvedAt || '2026-08-28 12:00';
             }
         },
-        setAppOverviewPeriod: setAppOverviewPeriod,
         renderApplicationOverview: renderApplicationOverview
     };
 
