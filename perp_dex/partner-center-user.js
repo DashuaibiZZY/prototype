@@ -2,7 +2,7 @@
  * 合伙人中心（用户侧）原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-user-50';
+    const DATA_VERSION = 'partner-user-51';
     const SOURCE_LABELS = ['自己产生', '直属直客', '合伙人级差'];
     const SOURCE_COLORS = ['#93c5fd', '#3b82f6', '#1e3a8a'];
     const SOURCE_STYLES = [
@@ -78,7 +78,7 @@
         { date: '2024-05-22', vol: 1240000, rebate: 868, status: 'settled' },
         { date: '2024-05-21', vol: 980000, rebate: 686, status: 'settled' },
         { date: '2024-05-20', vol: 86800, rebate: 61, status: 'pending' },
-        { date: '2024-05-19', vol: 820000, rebate: 1003, violationDeduction: 342.23, status: 'pending' },
+        { date: '2024-05-19', vol: 820000, rebate: 1003, violationDeduction: 342.23, violationReason: '经风控核查，该结算日伞下存在异常刷单交易，按合伙人协议第 8.2 条扣减相应返佣。', status: 'pending' },
         { date: '2024-05-18', vol: 650000, rebate: 455, status: 'settled' },
         { date: '2024-05-17', vol: 420000, rebate: 294, status: 'pending' },
         { date: '2024-05-16', vol: 380000, rebate: 266, status: 'settled' },
@@ -1386,6 +1386,8 @@
                 : '请选择结算日查看返佣构成。';
         }
 
+        renderCommissionDetailKpis();
+
         let summary = commissionDetailDate ? getCommissionSummaryForDate(commissionDetailDate) : [];
         if (commissionDetailTypeFilter !== 'all') {
             summary = summary.filter(function (row) { return row.sourceType === commissionDetailTypeFilter; });
@@ -1481,12 +1483,62 @@
         if (typeof toggleModal === 'function') toggleModal('modal-commission-trades');
     }
 
+    function getSettlementRecord(date) {
+        return settlementRecords.find(function (r) { return r.date === date; }) || null;
+    }
+
+    function settlementGrossRebate(row) {
+        if (!row) return 0;
+        return (row.rebate || 0) + (row.violationDeduction || 0);
+    }
+
+    function violationDeductionCell(row) {
+        if (!row || !row.violationDeduction) return '';
+        const label = '违规-' + fmtMoney(row.violationDeduction);
+        const tip = row.violationReason || '违规扣除原因由后台配置';
+        return '<span class="block mt-0.5">' + fieldHintHtml(label, tip) + '</span>';
+    }
+
     function rebateAmountCell(row) {
         let html = '<span class="font-black text-blue-600">' + fmtMoney(row.rebate) + '</span>';
-        if (row.violationDeduction) {
-            html += '<span class="block text-[9px] text-red-500 font-bold mt-0.5">违规-' + fmtMoney(row.violationDeduction) + '</span>';
-        }
+        html += violationDeductionCell(row);
         return html;
+    }
+
+    function renderCommissionDetailKpis() {
+        const row = commissionDetailDate ? getSettlementRecord(commissionDetailDate) : null;
+        const panel = document.getElementById('commission-detail-kpi-panel');
+        if (panel) panel.classList.toggle('hidden', !row);
+
+        const setText = function (id, text) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        };
+
+        if (!row) return;
+
+        const gross = settlementGrossRebate(row);
+        setText('commission-detail-kpi-vol', fmtCompactMoney(row.vol));
+        setText('commission-detail-kpi-gross-rebate', fmtMoney(gross));
+        setText('commission-detail-kpi-final-rebate', fmtMoney(row.rebate));
+
+        const violationWrap = document.getElementById('commission-detail-kpi-violation-wrap');
+        const violationVal = document.getElementById('commission-detail-kpi-violation');
+        const violationReason = document.getElementById('commission-detail-kpi-violation-reason');
+        if (violationWrap) violationWrap.classList.remove('hidden');
+        if (row.violationDeduction) {
+            if (violationVal) violationVal.textContent = '-' + fmtMoney(row.violationDeduction);
+            if (violationReason) {
+                violationReason.textContent = row.violationReason || '违规扣除原因由后台配置';
+                violationReason.classList.remove('hidden');
+            }
+        } else {
+            if (violationVal) violationVal.textContent = '—';
+            if (violationReason) {
+                violationReason.textContent = '';
+                violationReason.classList.add('hidden');
+            }
+        }
     }
 
     function renderDrillOverview() {
