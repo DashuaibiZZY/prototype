@@ -2,7 +2,9 @@
  * 合伙人中心 App 原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-app-01';
+    const DATA_VERSION = 'partner-app-02';
+    const LIST_END_HINT = '已展示全部记录';
+    const SCROLL_LOAD_HINT = '继续下滑加载更多';
     const SOURCE_LABELS = ['自己产生', '直属直客', '合伙人级差'];
     const SOURCE_COLORS = ['#93c5fd', '#3b82f6', '#1e3a8a'];
     const ACTIVE_TRADERS_TIP = '交易用户数据每天 UTC+8 0 点更新';
@@ -42,9 +44,14 @@
     let commissionTradesPage = 1;
     let adjustRatioPartnerId = null;
     let shareLinkCode = '';
+    let editLinkCode = '';
+    let periodPickerTarget = '';
+    let pendingConfirmAction = null;
     let drillStack = [];
     let drillPeriod = '1W';
     let drillActiveTable = 'sub-agent';
+    let scrollLoadBound = false;
+    let toastTimer = null;
 
     const mySuperiorInfo = {
         level: 2,
@@ -138,19 +145,19 @@
     const existingCodesList = inviteLinksData.map(function (r) { return r.code; });
 
     const subPartnersData = [
-        { id: 'sp1', joinDate: '2024-05-12', wallet: '0x3f...12a', walletFull: '0x3f8a2b1c9d4e5f60718293a4b5c6d7e8f9012a', remark: '渠道-小王', ratio: 60, minSubRatio: 45, gap: 10, gapIncome: 1250, totalVol: 12500000, netDeposit: 500000, totalUsers: 3680, activeUsers: 1850, settlementStatus: 'normal', name: '合伙人-小王', hasTeam: true },
-        { id: 'sp2', joinDate: '2024-05-10', wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J', ratio: 50, minSubRatio: 40, gap: 20, gapIncome: 560, totalVol: 16200000, netDeposit: 820000, totalUsers: 850, activeUsers: 120, settlementStatus: 'normal', name: 'KOL-J', hasTeam: true },
-        { id: 'sp3', joinDate: '2024-05-08', wallet: '0x5c...882', walletFull: '0x5c8821a0b9c8d7e6f504938271605948372618882', remark: '', ratio: 55, minSubRatio: 40, gap: 15, gapIncome: 320, totalVol: 2100000, netDeposit: -120000, totalUsers: 12, activeUsers: 0, settlementStatus: 'frozen', name: '合伙人-C', hasTeam: true },
-        { id: 'sp4', joinDate: '2024-05-05', wallet: '0x2a...9f1', walletFull: '0x2a9f1e8d7c6b5a4938271605948372616059489f1', remark: '東南亞渠道', ratio: 55, minSubRatio: 40, gap: 15, gapIncome: 890, totalVol: 8900000, netDeposit: 320000, totalUsers: 620, activeUsers: 180, settlementStatus: 'normal', name: '东南亚渠道', hasTeam: true },
-        { id: 'sp5', joinDate: '2024-04-28', wallet: '0x7b...4c2', walletFull: '0x7b4c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4c2', remark: '韓國KOL', ratio: 45, minSubRatio: 30, gap: 25, gapIncome: 2100, totalVol: 22400000, netDeposit: 980000, totalUsers: 1580, activeUsers: 510, settlementStatus: 'normal', name: '韩国KOL', hasTeam: true }
+        { id: 'sp1', uid: '10086002', joinDate: '2024-05-12', wallet: '0x3f...12a', walletFull: '0x3f8a2b1c9d4e5f60718293a4b5c6d7e8f9012a', remark: '渠道-小王', ratio: 60, minSubRatio: 45, gap: 10, gapIncome: 1250, totalVol: 12500000, netDeposit: 500000, totalUsers: 3680, activeUsers: 1850, settlementStatus: 'normal', name: '合伙人-小王', hasTeam: true },
+        { id: 'sp2', uid: '10086003', joinDate: '2024-05-10', wallet: '0x8e...55c', walletFull: '0x8e55c4d3b2a1908f7e6d5c4b3a291807f6e5d55c', remark: '推特KOL-J', ratio: 50, minSubRatio: 40, gap: 20, gapIncome: 560, totalVol: 16200000, netDeposit: 820000, totalUsers: 850, activeUsers: 120, settlementStatus: 'normal', name: 'KOL-J', hasTeam: true },
+        { id: 'sp3', uid: '10086005', joinDate: '2024-05-08', wallet: '0x5c...882', walletFull: '0x5c8821a0b9c8d7e6f504938271605948372618882', remark: '', ratio: 55, minSubRatio: 40, gap: 15, gapIncome: 320, totalVol: 2100000, netDeposit: -120000, totalUsers: 12, activeUsers: 0, settlementStatus: 'frozen', name: '合伙人-C', hasTeam: true },
+        { id: 'sp4', uid: '10086004', joinDate: '2024-05-05', wallet: '0x2a...9f1', walletFull: '0x2a9f1e8d7c6b5a4938271605948372616059489f1', remark: '東南亞渠道', ratio: 55, minSubRatio: 40, gap: 15, gapIncome: 890, totalVol: 8900000, netDeposit: 320000, totalUsers: 620, activeUsers: 180, settlementStatus: 'normal', name: '东南亚渠道', hasTeam: true },
+        { id: 'sp5', uid: '10086006', joinDate: '2024-04-28', wallet: '0x7b...4c2', walletFull: '0x7b4c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4c2', remark: '韓國KOL', ratio: 45, minSubRatio: 30, gap: 25, gapIncome: 2100, totalVol: 22400000, netDeposit: 980000, totalUsers: 1580, activeUsers: 510, settlementStatus: 'normal', name: '韩国KOL', hasTeam: true }
     ];
 
 
     const directClientsData = [
-        { joinDate: '2024-05-20', wallet: '0x99...F4d2', walletFull: '0x99F4d2a1b0c9d8e7f6059483726180a9b8c7d6e5', totalVol: 42500, totalFee: 42.50, rebate: 29.75, netDeposit: 5200 },
-        { joinDate: '2024-05-18', wallet: '0xAb...12cd', walletFull: '0xAb12cd9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b12cd', totalVol: 128000, totalFee: 128.00, rebate: 89.60, netDeposit: 15000 },
-        { joinDate: '2024-05-15', email: 'demo.trader@forx.io', totalVol: 8900, totalFee: 8.90, rebate: 6.23, netDeposit: -1200 },
-        { joinDate: '2024-05-12', wallet: '0xEf...33aa', walletFull: '0xEf33aa5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f33aa', totalVol: 256000, totalFee: 256.00, rebate: 179.20, netDeposit: 32000 }
+        { uid: '10086009', joinDate: '2024-05-20', wallet: '0x99...F4d2', walletFull: '0x99F4d2a1b0c9d8e7f6059483726180a9b8c7d6e5', totalVol: 42500, totalFee: 42.50, rebate: 29.75, netDeposit: 5200 },
+        { uid: '10086008', joinDate: '2024-05-18', wallet: '0xAb...12cd', walletFull: '0xAb12cd9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b12cd', totalVol: 128000, totalFee: 128.00, rebate: 89.60, netDeposit: 15000 },
+        { uid: '10086010', joinDate: '2024-05-15', email: 'demo.trader@forx.io', totalVol: 8900, totalFee: 8.90, rebate: 6.23, netDeposit: -1200 },
+        { uid: '10086011', joinDate: '2024-05-12', wallet: '0xEf...33aa', walletFull: '0xEf33aa5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f33aa', totalVol: 256000, totalFee: 256.00, rebate: 179.20, netDeposit: 32000 }
     ];
 
     const drillTeams = {
@@ -366,6 +373,236 @@
         return '<span class="hint-dashed" title="' + esc(tip) + '">' + esc(label) + '</span>';
     }
 
+    function uidCopyHtml(uid, label) {
+        if (!uid) return '—';
+        label = label || 'UID';
+        return '<span class="uid-copy"><span class="font-mono font-black text-[12px]">' + esc(uid) + '</span>' +
+            '<button type="button" class="uid-copy-btn" title="复制' + esc(label) + '"' + clickHandler('copyText', uid, label) + '>' +
+            '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg></button></span>';
+    }
+
+    function showToast(message) {
+        const el = document.getElementById('app-toast');
+        if (!el) return;
+        el.textContent = message;
+        el.classList.add('show');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { el.classList.remove('show'); }, 1800);
+    }
+
+    function openInfoDialog(title, body, confirmLabel) {
+        const dialog = document.getElementById('app-dialog');
+        const titleEl = document.getElementById('app-dialog-title');
+        const bodyEl = document.getElementById('app-dialog-body');
+        const actions = document.getElementById('app-dialog-actions');
+        if (!dialog || !titleEl || !bodyEl || !actions) return;
+        titleEl.textContent = title;
+        bodyEl.textContent = body;
+        actions.innerHTML = '<button type="button" class="app-dialog-confirm" onclick="PartnerCenterApp.closeDialog()">' + esc(confirmLabel || '确认') + '</button>';
+        dialog.classList.add('active');
+    }
+
+    function openConfirmDialog(title, body, onConfirm) {
+        const dialog = document.getElementById('app-dialog');
+        const titleEl = document.getElementById('app-dialog-title');
+        const bodyEl = document.getElementById('app-dialog-body');
+        const actions = document.getElementById('app-dialog-actions');
+        if (!dialog || !titleEl || !bodyEl || !actions) return;
+        pendingConfirmAction = onConfirm;
+        titleEl.textContent = title;
+        bodyEl.textContent = body;
+        actions.innerHTML =
+            '<button type="button" class="app-dialog-cancel" onclick="PartnerCenterApp.closeDialog()">取消</button>' +
+            '<button type="button" class="app-dialog-confirm" onclick="PartnerCenterApp.confirmDialog()">确认</button>';
+        dialog.classList.add('active');
+    }
+
+    function closeDialog() {
+        const dialog = document.getElementById('app-dialog');
+        if (dialog) dialog.classList.remove('active');
+        pendingConfirmAction = null;
+    }
+
+    function confirmDialog() {
+        const fn = pendingConfirmAction;
+        closeDialog();
+        if (typeof fn === 'function') fn();
+    }
+
+    function sliceAccumulated(items, page, perPage) {
+        const total = items.length;
+        const pages = Math.max(1, Math.ceil(total / perPage));
+        const p = Math.max(1, Math.min(page, pages));
+        return { items: items.slice(0, p * perPage), page: p, total: total, pages: pages, hasMore: p < pages };
+    }
+
+    function renderListEnd(endId, result) {
+        const el = document.getElementById(endId);
+        if (!el) return;
+        if (!result.total) {
+            el.innerHTML = '';
+            return;
+        }
+        if (result.hasMore) {
+            el.innerHTML = '<p class="list-end-hint">' + SCROLL_LOAD_HINT + '</p>';
+        } else {
+            el.innerHTML = '<p class="list-end-hint">' + LIST_END_HINT + '（共 ' + result.total + ' 条）</p>';
+        }
+    }
+
+    function compactKpiPanel(items) {
+        let html = '<div class="compact-kpi-panel">';
+        items.forEach(function (item, idx) {
+            const spanClass = item.span2 ? ' ck-item span-2' : ' ck-item';
+            html += '<div class="' + spanClass.trim() + '"><p class="ck-label">' + esc(item.label) + '</p><p class="ck-value' +
+                (item.valueClass ? ' ' + item.valueClass : '') + '">' + item.value + '</p>' + (item.extra || '') + '</div>';
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function commissionKpiStrip(pending, settled, yesterdayVal, yesterdayStatus) {
+        return '<div class="commission-kpi-strip">' +
+            '<div><p class="ck-label">待返佣</p><p class="ck-value text-blue-600">' + fmtMoney(pending) + '</p></div>' +
+            '<div><p class="ck-label">累计已发放</p><p class="ck-value">' + fmtMoney(settled) + '</p></div>' +
+            '<div><p class="ck-label">昨日返佣</p><p class="ck-value">' + fmtMoney(yesterdayVal) + '</p><p class="ck-sub">' + esc(yesterdayStatus) + '</p></div>' +
+            '</div>';
+    }
+
+    function teamOverviewKpiPanel(scaled, delta) {
+        delta = delta || false;
+        const netClass = scaled.net >= 0 ? 'text-green-600' : 'text-red-500';
+        return compactKpiPanel([
+            { label: '团队交易额', value: fmtCompactMoney(scaled.vol), extra: delta ? formatDeltaPct(scaled.volChange) : '' },
+            { label: '返佣收入', value: fmtMoney(scaled.rebate), extra: delta ? formatDeltaPct(scaled.rebateChange) : '' },
+            { label: '团队人数', value: fmtNum(scaled.teamUsers), extra: delta ? formatDeltaPct(scaled.usersChange) : '' },
+            { label: '交易人数', value: fmtNum(scaled.activeTraders), extra: delta ? formatDeltaPct(scaled.activeTradersChange) : '' },
+            { label: '团队净入金', value: fmtCompactMoney(scaled.net, { signed: true }), valueClass: netClass, span2: true, extra: delta ? formatDeltaPct(scaled.netDepositChange) : '' }
+        ]);
+    }
+
+    function renderPeriodPicker(containerId, activePeriod, targetKey) {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        el.innerHTML = '<button type="button" class="period-picker-btn"' + clickHandler('openPeriodPicker', targetKey) + '>' +
+            '周期 · ' + esc(activePeriod) +
+            ' <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg></button>';
+    }
+
+    function renderPeriodSheetBody() {
+        const body = document.getElementById('sheet-period-body');
+        if (!body) return;
+        body.innerHTML = PERIODS.map(function (p) {
+            let current = linksPeriod;
+            if (periodPickerTarget === 'team') current = overviewPeriod;
+            else if (periodPickerTarget === 'analytics') current = analyticsPeriod;
+            const cls = p === current ? 'period-option active' : 'period-option';
+            return '<button type="button" class="' + cls + '"' + clickHandler('selectPeriod', p) + '>' + p + '</button>';
+        }).join('');
+    }
+
+    function sharePosterHtml(code) {
+        return '<div class="bg-white w-full rounded-3xl overflow-hidden shadow-2xl">' +
+            '<div class="bg-black p-6 text-white space-y-6 relative overflow-hidden">' +
+            '<div class="absolute -right-10 -top-10 w-40 h-40 bg-blue-600/30 rounded-full blur-3xl"></div>' +
+            '<div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 20px 20px;"></div>' +
+            '<div class="flex justify-between items-center relative z-10"><span class="font-black italic text-xl tracking-tighter">ForX</span>' +
+            '<span class="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-sm font-black tracking-widest uppercase">Perp DEX</span></div>' +
+            '<div class="space-y-2 relative z-10"><p class="text-[10px] text-blue-400 font-black tracking-[0.3em]">探索无限，交易可能</p>' +
+            '<p class="text-[11px] text-gray-400 font-medium leading-relaxed pt-1">体验毫秒级订单撮合与深度的去中心化流动性交易体验</p></div>' +
+            '<div class="relative z-10 py-1"><div class="h-20 w-full bg-white/5 border border-white/10 rounded-xl flex items-end px-3 pb-2 gap-1">' +
+            '<div class="flex-1 bg-blue-500/40 h-8 rounded-t-sm"></div><div class="flex-1 bg-blue-500/60 h-10 rounded-t-sm"></div>' +
+            '<div class="flex-1 bg-blue-500 h-12 rounded-t-sm"></div><div class="flex-1 bg-blue-400/80 h-9 rounded-t-sm"></div></div></div>' +
+            '<div class="flex justify-between items-end relative z-10"><div><p class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">我的邀请码</p>' +
+            '<p class="text-2xl font-black tracking-[0.1em] text-white font-mono">' + esc(code) + '</p></div>' +
+            '<div class="w-12 h-12 bg-white p-1 rounded-lg shadow-lg flex items-center justify-center">' +
+            '<svg class="w-full h-full text-black" fill="currentColor" viewBox="0 0 24 24"><path d="M3 3h6v6H3V3zm2 2v2h2V5H5zm8-2h6v6h-6V3zm2 2v2h2V5h-2zM3 15h6v6H3v-6zm2 2v2h2v-2H5zm10 0h2v2h-2v-2zm2-2h2v2h-2v-2zm0 4h2v2h-2v-2zM13 15h2v2h-2v-2zm2 2h2v2h-2v-2z"/></svg></div></div></div>' +
+            '<div class="p-5 bg-slate-50 flex gap-2">' +
+            '<button type="button" class="flex-1 py-3 border border-gray-200 rounded-xl font-bold text-gray-400 text-xs uppercase" onclick="PartnerCenterApp.closeShareOverlay()">取消</button>' +
+            '<button type="button" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-black text-xs uppercase tracking-widest" onclick="PartnerCenterApp.closeShareOverlay()">分享海报</button></div></div>';
+    }
+
+    function bindScrollLoaders() {
+        if (scrollLoadBound) return;
+        scrollLoadBound = true;
+        function bind(el, fn) {
+            if (!el) return;
+            el.addEventListener('scroll', function () {
+                if (el.scrollTop + el.clientHeight >= el.scrollHeight - 48) fn();
+            });
+        }
+        bind(document.getElementById('hub-scroll'), onHubScrollLoad);
+        bind(document.getElementById('cd-scroll'), function () { if (stackMode === 'commission-detail') loadMoreCommissionDetail(); });
+        bind(document.getElementById('ct-scroll'), function () { if (stackMode === 'commission-trades') loadMoreCommissionTrades(); });
+        bind(document.getElementById('drill-scroll'), function () { /* drill lists are short */ });
+    }
+
+    function onHubScrollLoad() {
+        if (stackMode) return;
+        if (activeTab === 'links') {
+            const filtered = inviteLinksData.filter(function (row) {
+                if (!linksSearch) return true;
+                const q = linksSearch.toLowerCase();
+                return row.remark.toLowerCase().includes(q) || row.code.toLowerCase().includes(q);
+            });
+            const result = sliceAccumulated(filtered, linksPage, PAGE_SIZE);
+            if (result.hasMore) { linksPage++; renderLinks(); }
+        } else if (activeTab === 'team') {
+            if (activeTeamTable === 'sub-agent') {
+                let list = subPartnersData.filter(function (row) {
+                    if (!subPartnerSearch) return true;
+                    return matchUserSearch(row, subPartnerSearch.toLowerCase());
+                });
+                const result = sliceAccumulated(list, subPartnerPage, PAGE_SIZE);
+                if (result.hasMore) { subPartnerPage++; renderTeam(); }
+            } else {
+                let list = directClientsData.filter(function (row) {
+                    if (!subPartnerSearch) return true;
+                    return matchUserSearch(row, subPartnerSearch.toLowerCase());
+                });
+                const result = sliceAccumulated(list, directClientPage, PAGE_SIZE);
+                if (result.hasMore) { directClientPage++; renderTeam(); }
+            }
+        } else if (activeTab === 'commission') {
+            let filtered = settlementRecords.filter(function (row) {
+                if (settlementStatusFilter !== 'all' && row.status !== settlementStatusFilter) return false;
+                if (settlementDateFilter && row.date !== settlementDateFilter) return false;
+                return true;
+            });
+            const result = sliceAccumulated(filtered, settlementPage, PAGE_SIZE);
+            if (result.hasMore) { settlementPage++; renderCommission(); }
+        }
+    }
+
+    function loadMoreCommissionDetail() {
+        const summary = commissionDetailDate ? getCommissionSummaryForDate(commissionDetailDate) : [];
+        const result = sliceAccumulated(summary, commissionDetailPage, PAGE_SIZE);
+        if (result.hasMore) {
+            commissionDetailPage++;
+            renderCommissionDetail();
+        }
+    }
+
+    function loadMoreCommissionTrades() {
+        const trades = getCommissionTradesForDateAndUid(commissionDetailDate, commissionTradesUid);
+        const result = sliceAccumulated(trades, commissionTradesPage, PAGE_SIZE);
+        if (result.hasMore) {
+            commissionTradesPage++;
+            renderCommissionTrades();
+        }
+    }
+
+    function syncRatioControls(inputId, sliderId, maxId, val) {
+        val = Math.max(0, Math.min(MY_MAX_RATIO, parseInt(val, 10) || 0));
+        const input = document.getElementById(inputId);
+        const slider = document.getElementById(sliderId);
+        const maxEl = document.getElementById(maxId);
+        if (input) input.value = val;
+        if (slider) slider.value = val;
+        if (maxEl) maxEl.textContent = '最高 ' + MY_MAX_RATIO + '%';
+        return val;
+    }
+
     function feeFromVol(vol) { return (vol || 0) * 0.001; }
 
     function rowFee(row, volKey) {
@@ -379,9 +616,9 @@
         if (!text) return;
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(text).then(function () {
-                alert((label || '内容') + '已复制');
-            }).catch(function () { alert('复制失败'); });
-        } else { alert('已复制: ' + text); }
+                showToast((label || '内容') + '已复制');
+            }).catch(function () { showToast('复制失败'); });
+        } else { showToast('已复制: ' + text); }
     }
 
     function slicePage(items, page, perPage) {
@@ -390,17 +627,6 @@
         const p = Math.max(1, Math.min(page, pages));
         const start = (p - 1) * perPage;
         return { items: items.slice(start, start + perPage), page: p, total: total, pages: pages, hasMore: p < pages };
-    }
-
-    function setLoadMore(btnId, result) {
-        const btn = document.getElementById(btnId);
-        if (!btn) return;
-        if (result.hasMore) {
-            btn.classList.remove('hidden');
-            btn.textContent = '加载更多 (' + result.page + '/' + result.pages + ')';
-        } else {
-            btn.classList.add('hidden');
-        }
     }
 
     function computeOverviewScaled(scale) {
@@ -467,16 +693,17 @@
         return (row.rebate || 0) + (row.violationDeduction || 0);
     }
 
-    function violationDeductionCell(row) {
+    function violationHintHtml(row) {
         if (!row || !row.violationDeduction) return '';
         const label = '违规-' + fmtMoney(row.violationDeduction);
         const tip = row.violationReason || '违规扣除原因由后台配置';
-        return '<span class="block mt-0.5 text-[10px] text-amber-700">' + fieldHintHtml(label, tip) + '</span>';
+        return '<button type="button" class="hint-dashed text-[10px] text-amber-700 font-bold mt-0.5 block"' +
+            clickHandler('openViolationDialog', tip) + '>' + esc(label) + '</button>';
     }
 
     function rebateAmountHtml(row) {
         let html = '<span class="font-black text-blue-600">' + fmtMoney(row.rebate) + '</span>';
-        html += violationDeductionCell(row);
+        html += violationHintHtml(row);
         return html;
     }
 
@@ -585,15 +812,6 @@
         container.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="w-full h-full"><path d="' + path + '" fill="none" stroke="' + color + '" stroke-width="2"/>' + bars + '</svg>';
     }
 
-    function renderPeriodChips(containerId, activePeriod, onclickFn) {
-        const el = document.getElementById(containerId);
-        if (!el) return;
-        el.innerHTML = PERIODS.map(function (p) {
-            const cls = p === activePeriod ? 'period-chip active' : 'period-chip';
-            return '<button type="button" class="' + cls + '" onclick="PartnerCenterApp.' + onclickFn + '(\'' + p + '\')">' + p + '</button>';
-        }).join('');
-    }
-
     function openSheet(id) {
         document.getElementById('sheet-overlay').classList.add('active');
         document.getElementById(id).classList.add('active');
@@ -609,6 +827,13 @@
         const title = document.getElementById('app-header-title');
         const action = document.getElementById('app-header-action');
         const tabs = document.getElementById('main-tabs');
+        if (stackMode === 'commission-trades') {
+            if (back) back.style.visibility = 'hidden';
+            if (title) title.textContent = '交易返佣流水';
+            if (action) action.innerHTML = '';
+            if (tabs) tabs.classList.add('hidden');
+            return;
+        }
         if (stackMode === 'commission-detail') {
             if (back) back.style.visibility = 'hidden';
             if (title) title.textContent = '佣金详情';
@@ -639,24 +864,18 @@
 
 
 function renderLinks() {
-    renderPeriodChips('links-period-chips', linksPeriod, 'setLinksPeriod');
+    renderPeriodPicker('links-period-picker', linksPeriod, 'links');
     const scale = PERIOD_SCALE[linksPeriod] || 1;
-    const defaultLink = inviteLinksData.find(function (r) { return r.isDefault; });
     const summary = document.getElementById('links-summary');
     if (summary) {
-        summary.innerHTML = '<div class="flex gap-2 overflow-x-auto no-scrollbar text-[10px] font-bold">' +
-            '<span class="shrink-0 px-3 py-1.5 bg-white border border-gray-100 rounded-full">最高比例 ' + mySuperiorInfo.myRatio + '%</span>' +
-            '<span class="shrink-0 px-3 py-1.5 bg-white border border-gray-100 rounded-full">上级 ' + esc(mySuperiorInfo.parentUid) + '</span>' +
-            '<span class="shrink-0 px-3 py-1.5 bg-white border border-gray-100 rounded-full">默认码 ' + esc(defaultLink ? defaultLink.code : '—') + '</span>' +
-            '<span class="shrink-0 px-3 py-1.5 bg-white border border-gray-100 rounded-full">使用中 ' + countActiveInviteLinks() + '/50</span>' +
-            '</div>';
+        summary.innerHTML = '<div class="summary-bar"><span>返佣比例 ' + myPartnerProfile.ratio + '%</span><span>使用中 ' + countActiveInviteLinks() + '/50</span></div>';
     }
     let filtered = inviteLinksData.filter(function (row) {
         if (!linksSearch) return true;
         const q = linksSearch.toLowerCase();
         return row.remark.toLowerCase().includes(q) || row.code.toLowerCase().includes(q);
     });
-    const sliced = slicePage(filtered, linksPage, PAGE_SIZE);
+    const sliced = sliceAccumulated(filtered, linksPage, PAGE_SIZE);
     linksPage = sliced.page;
     const list = document.getElementById('links-list');
     if (list) {
@@ -666,27 +885,30 @@ function renderLinks() {
             const rebate = row.rebateIncome * scale;
             const linkUrl = 'https://forx.finance/?ref=' + row.code;
             const statusBadge = row.disabled
-                ? '<span class="text-[9px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">已停用</span>'
-                : '<span class="text-[9px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">使用中</span>';
+                ? '<span class="status-badge off">已停用</span>'
+                : '<span class="status-badge on">使用中</span>';
             const disabledAttr = row.disabled ? ' disabled' : '';
+            const shareBtn = '<button type="button" class="icon-btn"' + disabledAttr + clickHandler('openShare', row.code) + '>' +
+                '<svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg></button>';
             return '<div class="list-card' + (row.disabled ? ' opacity-60' : '') + '">' +
-                '<div class="flex justify-between items-start mb-2"><div><p class="font-black text-[13px]">' + esc(row.remark) + '</p>' +
-                '<p class="font-mono text-blue-600 text-[11px] font-bold mt-0.5">' + esc(row.code) +
-                ' <button type="button" class="text-gray-400 ml-1"' + clickHandler('copyText', row.code, '邀请码') + '>📋</button></p></div>' + statusBadge + '</div>' +
+                '<div class="flex justify-between items-start mb-2 gap-2">' +
+                '<div class="min-w-0 flex-1"><div class="flex items-center gap-2 flex-wrap"><p class="font-black text-[13px]">' + esc(row.remark) + '</p>' + statusBadge + '</div>' +
+                '<p class="font-mono text-blue-600 text-[11px] font-bold mt-1">' + esc(row.code) +
+                ' <button type="button" class="text-gray-400 ml-1 inline-flex"' + clickHandler('copyText', row.code, '邀请码') + '><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg></button></p></div>' +
+                shareBtn + '</div>' +
                 '<div class="grid grid-cols-3 gap-2 text-[9px] mb-3">' +
                 metricMini('直邀', row.directCount) + metricMini('下级合伙人', row.subPartnerCount) + metricMini('交易额', fmtCompactMoney(vol)) +
                 metricMini('手续费', fmtMoney(fee)) + metricMini('返佣', fmtMoney(rebate)) + metricMini('净入金', fmtCompactMoney(row.netDeposit, { signed: true })) +
                 '</div>' +
-                '<div class="flex flex-wrap gap-2 text-[10px] font-black">' +
-                '<button type="button" class="px-2 py-1 bg-slate-100 rounded-lg"' + disabledAttr + clickHandler('copyText', linkUrl, '邀请链接') + '>复制链接</button>' +
-                '<button type="button" class="px-2 py-1 bg-slate-100 rounded-lg"' + disabledAttr + clickHandler('openShare', row.code) + '>分享</button>' +
-                '<button type="button" class="px-2 py-1 bg-slate-100 rounded-lg"' + clickHandler('editLinkRemark', row.code) + '>修改</button>' +
-                (row.isDefault && !row.disabled ? '<span class="px-2 py-1 text-gray-400">默认</span>' :
-                    '<button type="button" class="px-2 py-1 bg-slate-100 rounded-lg"' + clickHandler('toggleLink', row.code) + '>' + (row.disabled ? '启用' : '停用') + '</button>') +
+                '<div class="flex flex-wrap gap-2">' +
+                '<button type="button" class="action-btn primary"' + disabledAttr + clickHandler('copyText', linkUrl, '邀请链接') + '>复制链接</button>' +
+                '<button type="button" class="action-btn"' + clickHandler('editLinkRemark', row.code) + '>修改</button>' +
+                (row.isDefault && !row.disabled ? '<span class="action-btn text-gray-400">默认</span>' :
+                    '<button type="button" class="action-btn danger"' + clickHandler('toggleLink', row.code) + '>' + (row.disabled ? '启用' : '停用') + '</button>') +
                 '</div></div>';
         }).join('') || '<p class="text-center text-gray-400 text-[11px] py-8 font-bold">暂无链接</p>';
     }
-    setLoadMore('links-load-more', sliced);
+    renderListEnd('links-list-end', sliced);
 }
 
 function metricMini(label, value) {
@@ -694,27 +916,19 @@ function metricMini(label, value) {
 }
 
 function renderTeam() {
-    renderPeriodChips('team-period-chips', overviewPeriod, 'setTeamPeriod');
+    renderPeriodPicker('team-period-picker', overviewPeriod, 'team');
     const scale = PERIOD_SCALE[overviewPeriod] || 1;
     const scaled = computeOverviewScaled(scale);
     const identity = document.getElementById('team-identity');
     if (identity) {
         identity.innerHTML = '<p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">我的身份</p>' +
             '<div class="flex justify-between items-center"><div><p class="text-[10px] text-gray-500 font-bold">上级 UID</p>' +
-            '<p class="font-mono font-black text-[13px]">' + esc(mySuperiorInfo.parentUid) +
-            ' <button type="button" class="text-gray-400"' + clickHandler('copyText', mySuperiorInfo.parentUid, 'UID') + '>📋</button></p>' +
+            uidCopyHtml(mySuperiorInfo.parentUid, '上级 UID') +
             '<p class="text-[10px] text-gray-400 font-mono mt-1">' + esc(mySuperiorInfo.parentWallet) + '</p></div>' +
             '<div class="text-right"><p class="text-[10px] text-gray-500 font-bold">我的比例</p><p class="text-2xl font-black">' + myPartnerProfile.ratio + '%</p></div></div>';
     }
     const kpi = document.getElementById('team-kpi-grid');
-    if (kpi) {
-        kpi.innerHTML =
-            kpiCard('团队交易额', fmtCompactMoney(scaled.vol)) +
-            kpiCard('返佣收入', fmtMoney(scaled.rebate)) +
-            kpiCard('团队人数', fmtNum(scaled.teamUsers)) +
-            kpiCard('交易人数', fmtNum(scaled.activeTraders)) +
-            '<div class="col-span-2 kpi-card"><p class="kpi-label">团队净入金</p><p class="kpi-value ' + (scaled.net >= 0 ? 'text-green-600' : 'text-red-500') + '">' + fmtCompactMoney(scaled.net, { signed: true }) + '</p></div>';
-    }
+    if (kpi) kpi.innerHTML = teamOverviewKpiPanel(scaled, false);
     const subtabs = document.getElementById('team-subtabs');
     if (subtabs) {
         subtabs.innerHTML =
@@ -722,10 +936,6 @@ function renderTeam() {
             '<button type="button" class="sub-tab' + (activeTeamTable === 'direct-client' ? ' active' : '') + '"' + clickHandler('setTeamTable', 'direct-client') + '>自邀直客</button>';
     }
     renderTeamList(scaled);
-}
-
-function kpiCard(label, value, deltaHtml) {
-    return '<div class="kpi-card"><p class="kpi-label">' + esc(label) + '</p><p class="kpi-value">' + value + '</p>' + (deltaHtml || '') + '</div>';
 }
 
 function renderTeamList(scaled) {
@@ -737,58 +947,51 @@ function renderTeamList(scaled) {
             if (!subPartnerSearch) return true;
             return matchUserSearch(row, subPartnerSearch.toLowerCase());
         });
-        const sliced = slicePage(list, subPartnerPage, PAGE_SIZE);
+        const sliced = sliceAccumulated(list, subPartnerPage, PAGE_SIZE);
         subPartnerPage = sliced.page;
         listEl.innerHTML = sliced.items.map(function (row) {
             return '<div class="list-card">' +
-                '<div class="flex justify-between items-start mb-2"><div><p class="font-black font-mono text-[12px]">' + esc(row.uid) + '</p>' +
-                '<p class="text-[10px] text-gray-400 font-mono">' + esc(row.wallet) + '</p>' +
+                '<div class="flex justify-between items-start mb-2"><div>' + uidCopyHtml(row.uid, 'UID') +
+                '<p class="text-[10px] text-gray-400 font-mono mt-1">' + esc(row.wallet) + '</p>' +
                 (row.remark ? '<p class="text-[10px] text-gray-500 font-bold mt-0.5">' + esc(row.remark) + '</p>' : '') +
                 '</div>' + partnerSettlementStatusLabel(row.settlementStatus) + '</div>' +
                 '<div class="grid grid-cols-2 gap-2 text-[10px] mb-3">' +
                 metricMini('比例', row.ratio + '%') + metricMini('级差', row.gap + '%') +
                 metricMini('级差收入', fmtMoney(row.gapIncome * scale)) + metricMini('团队规模', fmtNum(row.totalUsers) + ' 人') +
                 '</div>' +
-                '<div class="flex gap-2 text-[10px] font-black">' +
-                (row.hasTeam ? '<button type="button" class="px-2 py-1 bg-blue-50 text-blue-600 rounded-lg"' + clickHandler('openDrill', row.id) + '>查看团队</button>' : '') +
-                '<button type="button" class="px-2 py-1 bg-slate-100 rounded-lg"' + clickHandler('openAdjustRatio', row.id) + '>调整比例</button>' +
+                '<div class="flex gap-2">' +
+                (row.hasTeam ? '<button type="button" class="action-btn primary"' + clickHandler('openDrill', row.id) + '>查看团队</button>' : '') +
+                '<button type="button" class="action-btn"' + clickHandler('openAdjustRatio', row.id) + '>调整比例</button>' +
                 '</div></div>';
         }).join('') || '<p class="text-center text-gray-400 text-[11px] py-8 font-bold">暂无下级合伙人</p>';
-        setLoadMore('team-load-more', sliced);
+        renderListEnd('team-list-end', sliced);
     } else {
         let list = directClientsData.filter(function (row) {
             if (!subPartnerSearch) return true;
             return matchUserSearch(row, subPartnerSearch.toLowerCase());
         });
-        const sliced = slicePage(list, directClientPage, PAGE_SIZE);
+        const sliced = sliceAccumulated(list, directClientPage, PAGE_SIZE);
         directClientPage = sliced.page;
         listEl.innerHTML = sliced.items.map(function (row) {
             const contact = row.wallet || row.email || '—';
-            return '<div class="list-card"><div class="mb-2"><p class="font-black font-mono text-[12px]">' + esc(row.uid) + '</p>' +
-                '<p class="text-[10px] text-gray-400">' + esc(contact) + '</p><p class="text-[10px] text-gray-400 mt-0.5">加入 ' + esc(row.joinDate) + '</p></div>' +
+            return '<div class="list-card"><div class="mb-2">' + uidCopyHtml(row.uid, 'UID') +
+                '<p class="text-[10px] text-gray-400 mt-1">' + esc(contact) + '</p><p class="text-[10px] text-gray-400 mt-0.5">加入 ' + esc(row.joinDate) + '</p></div>' +
                 '<div class="grid grid-cols-3 gap-2 text-[10px]">' +
                 metricMini('交易额', fmtCompactMoney(row.totalVol * scale)) +
                 metricMini('返佣', fmtMoney(row.rebate * scale)) +
                 metricMini('净入金', fmtCompactMoney(row.netDeposit, { signed: true })) +
                 '</div></div>';
         }).join('') || '<p class="text-center text-gray-400 text-[11px] py-8 font-bold">暂无直客</p>';
-        setLoadMore('team-load-more', sliced);
+        renderListEnd('team-list-end', sliced);
     }
 }
 
 function renderAnalytics() {
-    renderPeriodChips('analytics-period-chips', analyticsPeriod, 'setAnalyticsPeriod');
+    renderPeriodPicker('analytics-period-picker', analyticsPeriod, 'analytics');
     const scale = PERIOD_SCALE[analyticsPeriod] || 1;
     const scaled = computeOverviewScaled(scale);
     const kpi = document.getElementById('analytics-kpi-grid');
-    if (kpi) {
-        kpi.innerHTML =
-            kpiCard('团队交易额', fmtCompactMoney(scaled.vol), formatDeltaPct(scaled.volChange)) +
-            kpiCard('返佣收入', fmtMoney(scaled.rebate), formatDeltaPct(scaled.rebateChange)) +
-            kpiCard('团队人数', fmtNum(scaled.teamUsers), formatDeltaPct(scaled.usersChange)) +
-            kpiCard('交易人数', fmtNum(scaled.activeTraders), formatDeltaPct(scaled.activeTradersChange)) +
-            '<div class="col-span-2 kpi-card"><p class="kpi-label">团队净入金</p><p class="kpi-value ' + (scaled.net >= 0 ? 'text-green-600' : 'text-red-500') + '">' + fmtCompactMoney(scaled.net, { signed: true }) + '</p>' + formatDeltaPct(scaled.netDepositChange) + '</div>';
-    }
+    if (kpi) kpi.innerHTML = teamOverviewKpiPanel(scaled, true);
     const dimTabs = document.getElementById('analytics-dim-tabs');
     if (dimTabs) {
         dimTabs.innerHTML = ANALYTICS_METRICS.map(function (m) {
@@ -861,13 +1064,13 @@ function renderAnalyticsSections(scaled) {
     topHtml += '<p class="text-[10px] font-black text-gray-500 mb-2">合伙人</p>';
     topHtml += rankedSubs.map(function (row, idx) {
         return '<div class="flex items-center justify-between py-2 border-b border-gray-50 text-[11px]"><span class="font-black text-gray-400 w-6">' + (idx + 1) + '</span>' +
-            '<span class="flex-1 font-mono font-black truncate">' + esc(row.uid) + (row.remark ? ' · ' + esc(row.remark) : '') + '</span>' +
+            '<span class="flex-1 truncate">' + uidCopyHtml(row.uid, 'UID') + (row.remark ? ' <span class="text-gray-500 font-bold">· ' + esc(row.remark) + '</span>' : '') + '</span>' +
             '<span class="font-black shrink-0 ml-2">' + partnerMetric(row) + '</span></div>';
     }).join('') || '<p class="text-gray-400 text-[10px] py-2">暂无数据</p>';
     topHtml += '<p class="text-[10px] font-black text-gray-500 mb-2 mt-4">直属直客</p>';
     topHtml += rankedClients.map(function (row, idx) {
         return '<div class="flex items-center justify-between py-2 border-b border-gray-50 text-[11px]"><span class="font-black text-gray-400 w-6">' + (idx + 1) + '</span>' +
-            '<span class="flex-1 font-mono font-black truncate">' + esc(row.uid) + '</span>' +
+            '<span class="flex-1 truncate">' + uidCopyHtml(row.uid, 'UID') + '</span>' +
             '<span class="font-black shrink-0 ml-2">' + clientMetric(row) + '</span></div>';
     }).join('') || '<p class="text-gray-400 text-[10px] py-2">暂无数据</p>';
     topHtml += '</div>';
@@ -885,17 +1088,19 @@ function renderCommission() {
     const yesterday = settlementRecords.find(function (r) { return r.date === '2024-05-22'; });
     const kpiRow = document.getElementById('commission-kpi-row');
     if (kpiRow) {
-        kpiRow.innerHTML =
-            kpiCard('今日待审', fmtMoney(pendingToday || 450.82)) +
-            kpiCard('累计已发放', fmtMoney(settledTotal || 124500)) +
-            kpiCard('昨日返佣', fmtMoney(yesterday ? yesterday.rebate : 1120.5), '<p class="kpi-sub">' + (yesterday && yesterday.status === 'settled' ? '已发放' : '待审核') + '</p>');
+        kpiRow.innerHTML = commissionKpiStrip(
+            pendingToday || 450.82,
+            settledTotal || 2923,
+            yesterday ? yesterday.rebate : 868,
+            yesterday && yesterday.status === 'settled' ? '已发放' : '待审核'
+        );
     }
     let filtered = settlementRecords.filter(function (row) {
         if (settlementStatusFilter !== 'all' && row.status !== settlementStatusFilter) return false;
         if (settlementDateFilter && row.date !== settlementDateFilter) return false;
         return true;
     });
-    const sliced = slicePage(filtered, settlementPage, PAGE_SIZE);
+    const sliced = sliceAccumulated(filtered, settlementPage, PAGE_SIZE);
     settlementPage = sliced.page;
     const list = document.getElementById('commission-list');
     if (list) {
@@ -912,7 +1117,7 @@ function renderCommission() {
                 '</div>';
         }).join('') || '<p class="text-center text-gray-400 text-[11px] py-8 font-bold">暂无结算记录</p>';
     }
-    setLoadMore('commission-load-more', sliced);
+    renderListEnd('commission-list-end', sliced);
 }
 
 function renderCommissionDetail() {
@@ -922,58 +1127,58 @@ function renderCommissionDetail() {
     const kpi = document.getElementById('cd-kpi-grid');
     if (kpi && row) {
         const gross = settlementGrossRebate(row);
-        let violationCard = '<div class="kpi-card"><p class="kpi-label">违规扣除</p><p class="kpi-value text-amber-600">' +
-            (row.violationDeduction ? '-' + fmtMoney(row.violationDeduction) : '—') + '</p>';
-        if (row.violationReason) violationCard += '<p class="text-[9px] text-gray-500 mt-1 leading-relaxed">' + esc(row.violationReason) + '</p>';
-        violationCard += '</div>';
-        kpi.innerHTML =
-            kpiCard('团队交易额', fmtCompactMoney(row.vol)) +
-            kpiCard('应发返佣', fmtMoney(gross)) +
-            kpiCard('实发返佣', fmtMoney(row.rebate)) +
-            violationCard;
+        let violationExtra = '';
+        if (row.violationDeduction) {
+            violationExtra = '<button type="button" class="hint-dashed text-[9px] text-amber-700 font-bold mt-1"' +
+                clickHandler('openViolationDialog', row.violationReason || '违规扣除原因由后台配置') + '>查看说明</button>';
+        }
+        kpi.innerHTML = compactKpiPanel([
+            { label: '团队交易额', value: fmtCompactMoney(row.vol) },
+            { label: '应发返佣', value: fmtMoney(gross) },
+            { label: '实发返佣', value: fmtMoney(row.rebate) },
+            { label: '违规扣除', value: row.violationDeduction ? '-' + fmtMoney(row.violationDeduction) : '—', valueClass: 'text-amber-600', extra: violationExtra }
+        ]);
     }
     const summary = commissionDetailDate ? getCommissionSummaryForDate(commissionDetailDate) : [];
-    const sliced = slicePage(summary, commissionDetailPage, PAGE_SIZE);
+    const sliced = sliceAccumulated(summary, commissionDetailPage, PAGE_SIZE);
     commissionDetailPage = sliced.page;
     const list = document.getElementById('cd-list');
     if (list) {
         list.innerHTML = sliced.items.map(function (item) {
             const contact = item.email || item.wallet || '—';
             return '<div class="list-card">' +
-                '<div class="flex justify-between items-start mb-2"><div><p class="font-black font-mono text-[12px]">' + esc(item.uid) + '</p>' +
-                '<p class="text-[10px] text-gray-400">' + esc(contact) + '</p>' +
+                '<div class="flex justify-between items-start mb-2"><div>' + uidCopyHtml(item.uid, 'UID') +
+                '<p class="text-[10px] text-gray-400 mt-1">' + esc(contact) + '</p>' +
                 (item.remark ? '<p class="text-[10px] text-gray-500 font-bold">' + esc(item.remark) + '</p>' : '') +
                 '</div><span class="text-[10px] font-bold text-gray-600">' + esc(item.sourceType) + '</span></div>' +
                 '<div class="grid grid-cols-2 gap-2 text-[10px] mb-3">' +
                 metricMini('比例', item.ratio) + metricMini('交易额', fmtCompactMoney(item.vol)) +
                 metricMini('手续费', fmtMoney(item.fee)) + metricMini('返佣', fmtMoney(item.rebate)) +
                 '</div>' +
-                '<button type="button" class="w-full py-2 text-[11px] font-black text-blue-600 bg-blue-50 rounded-xl"' + clickHandler('openTradesSheet', item.uid) + '>交易返佣流水</button>' +
+                '<button type="button" class="w-full py-2 text-[11px] font-black text-blue-600 bg-blue-50 rounded-xl"' + clickHandler('openCommissionTrades', item.uid) + '>交易返佣流水</button>' +
                 '</div>';
         }).join('') || '<p class="text-center text-gray-400 text-[11px] py-8 font-bold">该结算日暂无返佣明细</p>';
     }
-    setLoadMore('cd-load-more', sliced);
+    renderListEnd('cd-list-end', sliced);
 }
 
-function renderTradesSheet() {
-    const title = document.getElementById('sheet-trades-title');
-    const body = document.getElementById('sheet-trades-body');
-    if (title) title.textContent = (commissionTradesUid || '—') + ' · ' + (commissionDetailDate || '') + ' · 交易返佣流水';
+function renderCommissionTrades() {
+    const subtitle = document.getElementById('ct-subtitle');
+    if (subtitle) subtitle.textContent = (commissionTradesUid || '—') + ' · ' + (commissionDetailDate || '') + ' · 交易返佣流水';
     const trades = getCommissionTradesForDateAndUid(commissionDetailDate, commissionTradesUid);
-    const sliced = slicePage(trades, commissionTradesPage, PAGE_SIZE);
+    const sliced = sliceAccumulated(trades, commissionTradesPage, PAGE_SIZE);
     commissionTradesPage = sliced.page;
-    if (body) {
-        body.innerHTML = sliced.items.map(function (t) {
+    const list = document.getElementById('ct-list');
+    if (list) {
+        list.innerHTML = sliced.items.map(function (t) {
             return '<div class="list-card py-3"><p class="text-[10px] text-gray-400 mb-1">' + esc(t.time) + '</p>' +
                 '<div class="grid grid-cols-2 gap-2 text-[10px]">' +
                 metricMini('交易额', fmtCompactMoney(t.vol)) + metricMini('返佣', fmtMoney(t.rebate)) +
                 metricMini('手续费', fmtMoney(rowFee(t, 'vol'))) + metricMini('比例', t.ratio) +
                 '</div></div>';
         }).join('') || '<p class="text-center text-gray-400 text-[11px] py-8 font-bold">暂无流水</p>';
-        if (sliced.hasMore) {
-            body.innerHTML += '<button type="button" class="load-more-btn mt-2" onclick="PartnerCenterApp.loadMoreTrades()">加载更多 (' + sliced.page + '/' + sliced.pages + ')</button>';
-        }
     }
+    renderListEnd('ct-list-end', sliced);
 }
 
 function renderDrill() {
@@ -992,13 +1197,14 @@ function renderDrill() {
     }
     const kpi = document.getElementById('drill-kpi');
     if (kpi) {
-        kpi.innerHTML =
-            kpiCard('团队交易额', fmtCompactMoney(o.teamVol * scale)) +
-            kpiCard('返佣收入', fmtMoney(o.totalRebate * scale)) +
-            kpiCard('团队人数', fmtNum(o.totalUsers)) +
-            kpiCard('交易人数', fmtNum(Math.round(o.activeUsers * Math.min(scale, 1.2)))) +
-            '<div class="col-span-2 kpi-card"><p class="kpi-label">团队净入金</p><p class="kpi-value ' + (o.teamNetDeposit >= 0 ? 'text-green-600' : 'text-red-500') + '">' +
-            fmtCompactMoney(o.teamNetDeposit * scale, { signed: true }) + '</p></div>';
+        const netClass = o.teamNetDeposit >= 0 ? 'text-green-600' : 'text-red-500';
+        kpi.innerHTML = compactKpiPanel([
+            { label: '团队交易额', value: fmtCompactMoney(o.teamVol * scale) },
+            { label: '返佣收入', value: fmtMoney(o.totalRebate * scale) },
+            { label: '团队人数', value: fmtNum(o.totalUsers) },
+            { label: '交易人数', value: fmtNum(Math.round(o.activeUsers * Math.min(scale, 1.2))) },
+            { label: '团队净入金', value: fmtCompactMoney(o.teamNetDeposit * scale, { signed: true }), valueClass: netClass, span2: true }
+        ]);
     }
     const subtabs = document.getElementById('drill-subtabs');
     if (subtabs) {
@@ -1011,26 +1217,30 @@ function renderDrill() {
     if (drillActiveTable === 'sub-agent') {
         listEl.innerHTML = (team.subPartners || []).map(function (row) {
             return '<div class="list-card">' +
-                '<div class="flex justify-between items-start mb-2"><div><p class="font-black font-mono text-[12px]">' + esc(row.uid) + '</p>' +
-                '<p class="text-[10px] text-gray-400 font-mono">' + esc(row.wallet) + '</p></div>' +
+                '<div class="flex justify-between items-start mb-2"><div>' +
+                (row.uid ? uidCopyHtml(row.uid, 'UID') : '<p class="font-black font-mono text-[12px]">' + esc(row.wallet) + '</p>') +
+                '<p class="text-[10px] text-gray-400 font-mono mt-1">' + esc(row.wallet) + '</p></div>' +
                 partnerSettlementStatusLabel(row.settlementStatus) + '</div>' +
                 '<div class="grid grid-cols-2 gap-2 text-[10px] mb-3">' +
                 metricMini('比例', row.ratio + '%') + metricMini('级差', row.gap + '%') +
                 metricMini('交易额', fmtCompactMoney(row.totalVol * scale)) + metricMini('人数', fmtNum(row.totalUsers)) +
                 '</div>' +
-                (row.hasTeam ? '<button type="button" class="text-[10px] font-black text-blue-600"' + clickHandler('openDrill', row.id) + '>继续穿透</button>' : '') +
+                (row.hasTeam ? '<button type="button" class="action-btn primary"' + clickHandler('openDrill', row.id) + '>查看团队</button>' : '') +
                 '</div>';
         }).join('') || '<p class="text-center text-gray-400 text-[11px] py-8 font-bold">暂无下级合伙人</p>';
+        renderListEnd('drill-list-end', { total: (team.subPartners || []).length, hasMore: false, page: 1, pages: 1 });
     } else {
         listEl.innerHTML = (team.directClients || []).map(function (row) {
-            return '<div class="list-card"><p class="font-black font-mono text-[12px]">' + esc(row.uid) + '</p>' +
-                '<p class="text-[10px] text-gray-400 font-mono">' + esc(row.wallet || row.email || '—') + '</p>' +
+            return '<div class="list-card">' +
+                (row.uid ? uidCopyHtml(row.uid, 'UID') : '<p class="font-black font-mono text-[12px]">' + esc(row.wallet || row.email || '—') + '</p>') +
+                '<p class="text-[10px] text-gray-400 font-mono mt-1">' + esc(row.wallet || row.email || '—') + '</p>' +
                 '<div class="grid grid-cols-3 gap-2 text-[10px] mt-2">' +
                 metricMini('交易额', fmtCompactMoney(row.totalVol * scale)) +
                 metricMini('返佣', fmtMoney(row.rebate * scale)) +
                 metricMini('净入金', fmtCompactMoney(row.netDeposit, { signed: true })) +
                 '</div></div>';
         }).join('') || '<p class="text-center text-gray-400 text-[11px] py-8 font-bold">暂无直客</p>';
+        renderListEnd('drill-list-end', { total: (team.directClients || []).length, hasMore: false, page: 1, pages: 1 });
     }
 }
 
@@ -1044,6 +1254,7 @@ function renderActiveView() {
 function showStack(mode) {
     stackMode = mode;
     document.getElementById('stack-commission-detail').classList.toggle('active', mode === 'commission-detail');
+    document.getElementById('stack-commission-trades').classList.toggle('active', mode === 'commission-trades');
     document.getElementById('stack-drill').classList.toggle('active', mode === 'drill');
     updateHeader();
 }
@@ -1051,6 +1262,7 @@ function showStack(mode) {
 function hideStacks() {
     stackMode = null;
     document.getElementById('stack-commission-detail').classList.remove('active');
+    document.getElementById('stack-commission-trades').classList.remove('active');
     document.getElementById('stack-drill').classList.remove('active');
     updateHeader();
 }
@@ -1076,29 +1288,17 @@ function renderCommissionFilterSheet() {
         '<button type="button" class="w-full bg-black text-white py-3 rounded-xl font-black text-[12px]" onclick="PartnerCenterApp.applyCommissionFilter()">应用筛选</button></div>';
 }
 
-function renderShareSheet() {
-    const body = document.getElementById('sheet-share-body');
-    if (!body) return;
-    const linkUrl = 'https://forx.finance/?ref=' + shareLinkCode;
-    body.innerHTML = '<div class="w-48 h-48 bg-slate-100 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center mb-4">' +
-        '<span class="text-[10px] text-gray-400 font-bold text-center">QR 占位<br>' + esc(shareLinkCode) + '</span></div>' +
-        '<p class="font-mono font-black text-lg mb-1">' + esc(shareLinkCode) + '</p>' +
-        '<p class="text-[10px] text-gray-400 mb-4 break-all">' + esc(linkUrl) + '</p>' +
-        '<div class="flex gap-2 w-full">' +
-        '<button type="button" class="flex-1 py-2 bg-slate-100 rounded-xl font-black text-[11px]"' + clickHandler('copyText', linkUrl, '邀请链接') + '>复制链接</button>' +
-        '<button type="button" class="flex-1 py-2 bg-black text-white rounded-xl font-black text-[11px]" onclick="alert(\'分享功能原型占位\')">分享</button></div>';
-}
-
-
     const app = {
         init: function () {
+            bindScrollLoaders();
             updateHeader();
             renderActiveView();
         },
 
         goBack: function () {
             if (stackMode) {
-                if (stackMode === 'commission-detail') app.closeCommissionDetail();
+                if (stackMode === 'commission-trades') app.closeCommissionTrades();
+                else if (stackMode === 'commission-detail') app.closeCommissionDetail();
                 else if (stackMode === 'drill') app.drillBack();
                 return;
             }
@@ -1122,16 +1322,32 @@ function renderShareSheet() {
 
         setLinksPeriod: function (p) { linksPeriod = p; linksPage = 1; renderLinks(); },
         setLinksSearch: function (q) { linksSearch = q || ''; linksPage = 1; renderLinks(); },
-        loadMoreLinks: function () { linksPage++; renderLinks(); },
+
+        openPeriodPicker: function (targetKey) {
+            periodPickerTarget = targetKey || 'links';
+            renderPeriodSheetBody();
+            openSheet('sheet-period');
+        },
+        selectPeriod: function (p) {
+            if (periodPickerTarget === 'team') {
+                overviewPeriod = p;
+                subPartnerPage = 1;
+                directClientPage = 1;
+                renderTeam();
+            } else if (periodPickerTarget === 'analytics') {
+                analyticsPeriod = p;
+                renderAnalytics();
+            } else {
+                linksPeriod = p;
+                linksPage = 1;
+                renderLinks();
+            }
+            closeAllSheets();
+        },
 
         setTeamPeriod: function (p) { overviewPeriod = p; subPartnerPage = 1; directClientPage = 1; renderTeam(); },
         setTeamSearch: function (q) { subPartnerSearch = q || ''; subPartnerPage = 1; directClientPage = 1; renderTeam(); },
         setTeamTable: function (table) { activeTeamTable = table; subPartnerPage = 1; directClientPage = 1; renderTeam(); },
-        loadMoreTeam: function () {
-            if (activeTeamTable === 'sub-agent') subPartnerPage++;
-            else directClientPage++;
-            renderTeam();
-        },
 
         setAnalyticsPeriod: function (p) { analyticsPeriod = p; renderAnalytics(); },
         setAnalyticsDim: function (dim) { analyticsDimTab = dim; renderAnalytics(); },
@@ -1143,7 +1359,6 @@ function renderShareSheet() {
         },
         openCommissionFilter: function () { renderCommissionFilterSheet(); openSheet('sheet-filter'); },
         applyCommissionFilter: function () { settlementPage = 1; closeAllSheets(); renderCommission(); },
-        loadMoreCommission: function () { settlementPage++; renderCommission(); },
 
         openCommissionDetail: function (date) {
             commissionDetailDate = date || '';
@@ -1155,15 +1370,21 @@ function renderShareSheet() {
             hideStacks();
             renderActiveView();
         },
-        loadMoreCommissionDetail: function () { commissionDetailPage++; renderCommissionDetail(); },
 
-        openTradesSheet: function (uid) {
+        openCommissionTrades: function (uid) {
             commissionTradesUid = uid || '';
             commissionTradesPage = 1;
-            renderTradesSheet();
-            openSheet('sheet-trades');
+            showStack('commission-trades');
+            renderCommissionTrades();
         },
-        loadMoreTrades: function () { commissionTradesPage++; renderTradesSheet(); },
+        closeCommissionTrades: function () {
+            showStack('commission-detail');
+            renderCommissionDetail();
+        },
+
+        openViolationDialog: function (reason) {
+            openInfoDialog('违规扣除说明', reason || '违规扣除原因由后台配置', '确认');
+        },
 
         openDrill: function (partnerId) {
             if (!ensureDrillTeam(partnerId)) return;
@@ -1185,7 +1406,10 @@ function renderShareSheet() {
         setDrillTable: function (table) { drillActiveTable = table; renderDrill(); },
 
         openCreateLink: function () {
-            if (countActiveInviteLinks() >= 50) { alert('使用中链接已达上限 50 个'); return; }
+            if (countActiveInviteLinks() >= 50) {
+                showToast('使用中链接已达上限 50 个');
+                return;
+            }
             document.getElementById('create-link-remark').value = '';
             document.getElementById('create-link-code').value = '';
             openSheet('sheet-create-link');
@@ -1193,52 +1417,92 @@ function renderShareSheet() {
         submitCreateLink: function () {
             const remark = (document.getElementById('create-link-remark').value || '').trim();
             const code = (document.getElementById('create-link-code').value || '').trim().toUpperCase();
-            if (!remark) { alert('请填写备注名称'); return; }
-            if (!/^[A-Z0-9]{6}$/.test(code)) { alert('邀请码须为 6 位字母或数字'); return; }
-            if (existingCodesList.indexOf(code) >= 0) { alert('邀请码已存在'); return; }
-            if (countActiveInviteLinks() >= 50) { alert('使用中链接已达上限 50 个'); return; }
+            if (!remark) { showToast('请填写备注名称'); return; }
+            if (!/^[A-Z0-9]{6}$/.test(code)) { showToast('邀请码须为 6 位字母或数字'); return; }
+            if (existingCodesList.indexOf(code) >= 0) { showToast('邀请码已存在'); return; }
+            if (countActiveInviteLinks() >= 50) { showToast('使用中链接已达上限 50 个'); return; }
             inviteLinksData.push({ remark: remark, code: code, directCount: 0, subPartnerCount: 0, totalVol: 0, totalFee: 0, rebateIncome: 0, netDeposit: 0, isDefault: false, disabled: false });
             existingCodesList.push(code);
             linksPage = 1;
             closeAllSheets();
             renderLinks();
-            alert('邀请链接已创建');
+            showToast('邀请链接已创建');
         },
 
         openShare: function (code) {
             shareLinkCode = code || '';
-            renderShareSheet();
-            openSheet('sheet-share');
+            const inner = document.getElementById('share-overlay-inner');
+            const overlay = document.getElementById('share-overlay');
+            if (inner) inner.innerHTML = sharePosterHtml(shareLinkCode);
+            if (overlay) overlay.classList.add('active');
+        },
+        closeShareOverlay: function (ev) {
+            if (ev && ev.target && ev.target.id !== 'share-overlay') return;
+            const overlay = document.getElementById('share-overlay');
+            if (overlay) overlay.classList.remove('active');
         },
 
         editLinkRemark: function (code) {
             const row = inviteLinksData.find(function (r) { return r.code === code; });
             if (!row) return;
-            const next = prompt('修改备注名称', row.remark);
-            if (next != null && next.trim()) { row.remark = next.trim(); renderLinks(); }
+            editLinkCode = code;
+            const input = document.getElementById('edit-link-remark');
+            if (input) input.value = row.remark;
+            openSheet('sheet-edit-link');
+        },
+        submitEditLinkRemark: function () {
+            const row = inviteLinksData.find(function (r) { return r.code === editLinkCode; });
+            const next = (document.getElementById('edit-link-remark').value || '').trim();
+            if (!row || !next) { showToast('请填写备注名称'); return; }
+            row.remark = next;
+            closeAllSheets();
+            renderLinks();
+            showToast('备注已更新');
         },
 
         toggleLink: function (code) {
             const row = inviteLinksData.find(function (r) { return r.code === code; });
             if (!row) return;
-            if (row.isDefault && !row.disabled) { alert('默认邀请链接不可停用'); return; }
-            if (row.disabled) {
-                if (countActiveInviteLinks() >= 50) { alert('使用中链接已达上限 50 个'); return; }
-                if (!confirm('确认启用链接「' + row.remark + '」？')) return;
-            } else {
-                if (!confirm('确认停用链接「' + row.remark + '」？')) return;
+            if (row.isDefault && !row.disabled) {
+                showToast('默认邀请链接不可停用');
+                return;
             }
-            row.disabled = !row.disabled;
-            renderLinks();
+            if (row.disabled) {
+                if (countActiveInviteLinks() >= 50) {
+                    showToast('使用中链接已达上限 50 个');
+                    return;
+                }
+                openConfirmDialog('启用链接', '确认启用链接「' + row.remark + '」？启用后将占用一个使用中名额。', function () {
+                    row.disabled = false;
+                    renderLinks();
+                    showToast('链接已启用');
+                });
+            } else {
+                openConfirmDialog('停用链接', '确认停用链接「' + row.remark + '」？停用后新用户将无法通过该链接注册。', function () {
+                    row.disabled = true;
+                    renderLinks();
+                    showToast('链接已停用');
+                });
+            }
         },
 
-        openAddPartner: function () { openSheet('sheet-add-partner'); },
+        openAddPartner: function () {
+            document.getElementById('add-partner-uid').value = '';
+            document.getElementById('add-partner-remark').value = '';
+            syncRatioControls('add-partner-ratio-input', 'add-partner-ratio-slider', 'add-partner-ratio-max', 50);
+            openSheet('sheet-add-partner');
+        },
+        syncAddPartnerRatio: function (val) {
+            syncRatioControls('add-partner-ratio-input', 'add-partner-ratio-slider', 'add-partner-ratio-max', val);
+        },
         submitAddPartner: function () {
             const uid = (document.getElementById('add-partner-uid').value || '').trim();
-            const ratio = parseInt(document.getElementById('add-partner-ratio').value, 10) || 0;
-            if (!uid) { alert('请填写 UID'); return; }
-            alert('已提交绑定申请：UID ' + uid + ' · 比例 ' + ratio + '%');
+            const remark = (document.getElementById('add-partner-remark').value || '').trim();
+            const ratio = syncRatioControls('add-partner-ratio-input', 'add-partner-ratio-slider', 'add-partner-ratio-max',
+                document.getElementById('add-partner-ratio-input').value);
+            if (!uid) { showToast('请填写 UID'); return; }
             closeAllSheets();
+            showToast('已提交绑定申请：UID ' + uid + (remark ? ' · ' + remark : '') + ' · 比例 ' + ratio + '%');
         },
 
         openAdjustRatio: function (partnerId) {
@@ -1246,22 +1510,26 @@ function renderShareSheet() {
             const partner = findSubPartner(partnerId);
             const target = document.getElementById('adjust-ratio-target');
             if (target && partner) target.textContent = (partner.remark || partner.name || partner.uid) + ' · 当前 ' + partner.ratio + '%';
-            const slider = document.getElementById('adjust-ratio-slider');
-            if (slider) slider.value = partner ? partner.ratio : 50;
-            app.onAdjustSlider(partner ? partner.ratio : 50);
+            syncRatioControls('adjust-ratio-input', 'adjust-ratio-slider', 'adjust-ratio-max', partner ? partner.ratio : 50);
             openSheet('sheet-adjust-ratio');
         },
-        onAdjustSlider: function (val) {
-            const display = document.getElementById('adjust-ratio-display');
-            if (display) display.textContent = val + '%';
+        syncAdjustRatio: function (val) {
+            syncRatioControls('adjust-ratio-input', 'adjust-ratio-slider', 'adjust-ratio-max', val);
         },
         submitAdjustRatio: function () {
-            const ratio = parseInt(document.getElementById('adjust-ratio-slider').value, 10) || 0;
+            const ratio = syncRatioControls('adjust-ratio-input', 'adjust-ratio-slider', 'adjust-ratio-max',
+                document.getElementById('adjust-ratio-input').value);
             const partner = findSubPartner(adjustRatioPartnerId);
-            if (partner) partner.ratio = Math.max(0, Math.min(MY_MAX_RATIO, ratio));
+            if (partner) partner.ratio = ratio;
             closeAllSheets();
-            alert('返佣比例已更新为 ' + ratio + '%');
+            showToast('返佣比例已更新为 ' + ratio + '%');
             renderTeam();
+        },
+
+        closeDialog: closeDialog,
+        confirmDialog: confirmDialog,
+        closeDialogOnOverlay: function (ev) {
+            if (ev && ev.target && ev.target.id === 'app-dialog') closeDialog();
         },
 
         copyText: copyText,

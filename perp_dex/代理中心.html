@@ -763,18 +763,22 @@
                 <p class="text-[10px] text-gray-400 font-bold">绑定后将按 UID 关联用户；钱包或邮箱登录用户均适用。</p>
             </div>
             <div class="space-y-2">
+                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">合伙人备注</label>
+                <input type="text" id="input-add-agent-remark" placeholder="例如：渠道-小王" class="w-full border border-gray-200 p-3 rounded-sm outline-none focus:border-blue-600 font-bold">
+            </div>
+            <div class="space-y-2">
                 <div class="flex justify-between items-center">
                     <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">配置返佣比例</label>
                     <span id="rebate-display" class="text-sm font-black text-blue-600">50%</span>
                 </div>
-                <input type="range" min="0" max="70" step="5" value="50" oninput="updateRangeValue(this.value)" class="w-full accent-black cursor-pointer">
-                <div class="flex justify-between text-[9px] font-bold text-gray-300"><span>0%</span><span>MAX: 70%</span></div>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="input-add-agent-ratio" min="0" max="70" step="1" value="50" oninput="onAddAgentRatioInput(this.value)" class="w-20 bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[13px] font-black text-center outline-none focus:ring-1 focus:ring-black">
+                    <span class="text-sm font-bold text-gray-400">%</span>
+                    <input type="range" id="input-add-agent-slider" min="0" max="70" step="1" value="50" oninput="onAddAgentRatioInput(this.value)" class="flex-1 accent-black cursor-pointer">
+                </div>
+                <div class="flex justify-between text-[9px] font-bold text-gray-300"><span>0%</span><span id="add-agent-ratio-max">最高 70%</span></div>
             </div>
-            <div class="space-y-2">
-                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">备注名称</label>
-                <input type="text" class="w-full border border-gray-200 p-3 rounded-sm outline-none focus:border-blue-600 font-bold">
-            </div>
-            <button onclick="alert('绑定成功'); toggleModal('modal-add-agent')" class="w-full bg-black text-white py-4 rounded-sm font-black uppercase hover:bg-gray-800 transition shadow-xl">确认绑定下级</button>
+            <button onclick="submitAddAgent()" class="w-full bg-black text-white py-4 rounded-sm font-black uppercase hover:bg-gray-800 transition shadow-xl">确认绑定下级</button>
         </div>
     </div>
 </div>
@@ -912,7 +916,7 @@
                     <span class="text-sm font-bold text-gray-400">%</span>
                     <input type="range" id="adjust-ratio-slider" min="0" max="70" step="1" value="50" oninput="PartnerCenter.onAdjustRatioInput(this.value)" class="flex-1 accent-black cursor-pointer">
                 </div>
-                <div class="flex justify-between text-[9px] font-bold text-gray-300"><span>0%</span><span>MAX: 70%</span></div>
+                <div class="flex justify-between text-[9px] font-bold text-gray-300"><span>0%</span><span>最高 70%</span></div>
             </div>
             <div id="adjust-ratio-warning" class="hidden bg-amber-50 border border-amber-200 rounded-sm p-3 text-[11px] text-amber-800 font-medium leading-relaxed"></div>
             <button type="button" onclick="PartnerCenter.submitAdjustRatio()" class="w-full bg-black text-white py-3.5 rounded-sm font-black uppercase hover:bg-gray-800 transition shadow-xl">确认调整</button>
@@ -997,8 +1001,22 @@
         if (e.target.id === id) toggleModal(id);
     }
 
-    function updateRangeValue(val) {
+    function onAddAgentRatioInput(val) {
+        val = Math.max(0, Math.min(70, parseInt(val, 10) || 0));
         document.getElementById('rebate-display').innerText = val + '%';
+        var input = document.getElementById('input-add-agent-ratio');
+        var slider = document.getElementById('input-add-agent-slider');
+        if (input) input.value = val;
+        if (slider) slider.value = val;
+    }
+
+    function submitAddAgent() {
+        var uid = (document.getElementById('input-add-agent-uid').value || '').trim();
+        var remark = (document.getElementById('input-add-agent-remark').value || '').trim();
+        var ratio = parseInt(document.getElementById('input-add-agent-ratio').value, 10) || 0;
+        if (!uid) { alert('请填写 UID'); return; }
+        alert('已提交绑定申请：UID ' + uid + (remark ? ' · ' + remark : '') + ' · 比例 ' + ratio + '%');
+        toggleModal('modal-add-agent');
     }
 
     // 查看团队 → 无限穿透（脱敏）
