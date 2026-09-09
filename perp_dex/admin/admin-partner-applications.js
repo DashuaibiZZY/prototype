@@ -199,6 +199,7 @@
 
     let appListPage = 1;
     let appListFilters = { q: '', contact: '', x: '', youtube: '' };
+    let appOverviewPeriod = '30D';
     let currentApplicationId = null;
     let appBindState = { applicationId: null, operatorSearch: '', operatorOpen: false };
     let appRejectState = { applicationId: null };
@@ -299,7 +300,7 @@
         const delta = appOverviewCompareDelta(current, pctChange);
         const cls = appOverviewCompareClass(delta);
         const pctSign = pctChange >= 0 ? '+' : '';
-        const deltaText = (delta >= 0 ? '+' : '-') + fmtMoney(Math.abs(delta)).replace('$', '$');
+        const deltaText = (delta >= 0 ? '+' : '-') + fmtMoney(Math.abs(delta)).replace(/^\$/, '$');
         return '<span class="' + cls + ' font-bold">' +
             deltaText + ' (' + pctSign + pctChange.toFixed(1) + '%) vs 上周期</span>';
     }
@@ -371,7 +372,7 @@
                 : 'bg-white/10 text-slate-200 px-3 py-1 rounded-full font-bold text-[10px]';
         }
         if (hintEl) {
-            const base = '上方概览按<strong>数据权限</strong>汇总申请单；周期内提交 / 通过 / 驳回按<strong>申请时间</strong>统计。<strong>待处理</strong>与<strong>高潜待审</strong>为当前快照，不随周期切换。';
+            const base = '上方概览按<strong>数据权限</strong>汇总申请单；周期内提交 / 通过 / 驳回按<strong>申请时间</strong>统计。<strong>待处理申请</strong>为当前快照，不随周期切换。';
             if (scope === 'personal') {
                 hintEl.innerHTML = base + ' <span class="text-slate-500">· 个人权限可见未分配负责 BD 的申请 + 本人负责 BD 的申请。</span>';
             } else {
@@ -396,21 +397,6 @@
 
         setText('app-overview-rejected', m.rejected.toLocaleString());
         setAppOverviewCompareHtml('app-overview-rejected-compare', formatAppOverviewCompareCount(m.rejected, cmp.rejected));
-
-        setText('app-overview-high-potential', m.highPotential.toLocaleString());
-        const highPct = m.backlog ? Math.round((m.highPotential / m.backlog) * 100) : 0;
-        setText('app-overview-high-potential-sub', m.backlog
-            ? ('占待处理 ' + highPct + '% · 月预估 ≥ $1M 或近30日 ≥ $500K')
-            : '无待处理申请');
-        setAppOverviewCompareHtml('app-overview-high-potential-compare', formatAppOverviewCompareCount(m.highPotential, cmp.highPotential));
-
-        setText('app-overview-avg-vol', m.backlog ? fmtMoney(m.avgVol) : '—');
-        setAppOverviewCompareHtml('app-overview-avg-vol-compare', m.backlog
-            ? formatAppOverviewCompareMoney(m.avgVol, cmp.avgVol)
-            : '<span class="text-slate-400 font-bold">—</span>');
-        setText('app-overview-partner-identity-sub', m.partnerIdentityBacklog
-            ? (m.partnerIdentityBacklog + ' 条待审已是合伙人身份 · 不可直接设一级')
-            : '无合伙人身份待审单');
 
         updateAppOverviewPeriodUi(period);
     }
@@ -920,5 +906,6 @@
             if (!combobox || combobox.contains(e.target)) return;
             closeOperatorDropdown();
         });
+        renderApplicationOverview();
     });
 })();
