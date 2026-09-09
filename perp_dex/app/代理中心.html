@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX APP · 合伙人管理中心</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #f3f4f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-shell { width: 375px; height: 812px; background: #000; border-radius: 50px; padding: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative; border: 4px solid #333; }
+        .screen { width: 100%; height: 100%; background: #fff; border-radius: 38px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+
+        .seg-tab { flex: 1; text-align: center; padding: 8px 4px; font-size: 11px; font-weight: 800; color: #9ca3af; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
+        .seg-tab.active { color: #000; border-color: #000; font-weight: 900; }
+
+        .period-chip { padding: 4px 10px; border-radius: 999px; font-size: 10px; font-weight: 800; color: #6b7280; background: #f3f4f6; border: 1px solid transparent; }
+        .period-chip.active { color: #000; background: #fff; border-color: #000; }
+
+        .kpi-card { background: #fff; border: 1px solid #f1f5f9; border-radius: 12px; padding: 12px 14px; }
+        .kpi-label { font-size: 9px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.04em; }
+        .kpi-value { font-size: 1.05rem; font-weight: 900; line-height: 1.2; margin-top: 4px; }
+        .kpi-sub { font-size: 9px; color: #9ca3af; margin-top: 4px; }
+
+        .list-card { background: #fff; border: 1px solid #f1f5f9; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; }
+        .list-card:active { background: #fafafa; }
+
+        .sub-tab { font-size: 12px; font-weight: 700; color: #9ca3af; padding-bottom: 6px; border-bottom: 2px solid transparent; }
+        .sub-tab.active { color: #000; border-color: #000; font-weight: 900; }
+
+        .hint-dashed { border-bottom: 1px dashed currentColor; cursor: help; }
+
+        .stack-page { position: absolute; inset: 0; background: #fff; z-index: 50; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.25s ease; }
+        .stack-page.active { transform: translateX(0); }
+
+        .bottom-sheet { position: absolute; bottom: 0; left: 0; right: 0; background: #fff; border-radius: 20px 20px 0 0; z-index: 110; transform: translateY(100%); transition: transform 0.28s ease; max-height: 85%; display: flex; flex-direction: column; }
+        .bottom-sheet.active { transform: translateY(0); }
+        .sheet-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; opacity: 0; visibility: hidden; transition: opacity 0.2s; }
+        .sheet-overlay.active { opacity: 1; visibility: visible; }
+
+        .load-more-btn { width: 100%; padding: 10px; text-align: center; font-size: 11px; font-weight: 800; color: #6b7280; border: 1px dashed #e5e7eb; border-radius: 10px; background: #fafafa; }
+        .analytics-chart-wrap { height: 140px; width: 100%; }
+        .analytics-chart-wrap svg { width: 100%; height: 100%; display: block; }
+        .section-card { border: 1px solid #f1f5f9; border-radius: 14px; padding: 14px; background: #fff; margin-bottom: 12px; }
+        .dim-tab { padding: 6px 12px; border-radius: 999px; font-size: 10px; font-weight: 800; color: #6b7280; background: #f3f4f6; white-space: nowrap; }
+        .dim-tab.active { background: #000; color: #fff; }
+    </style>
+</head>
+<body>
+
+<div class="phone-shell">
+    <div class="screen">
+
+        <!-- Status bar -->
+        <div class="px-6 pt-4 pb-1 flex justify-between items-center text-[11px] font-bold text-gray-900 shrink-0">
+            <span>18:58</span>
+            <div class="flex items-center space-x-1.5">
+                <div class="w-5 h-2.5 border border-black rounded-sm relative"><div class="absolute inset-0.5 bg-black w-3"></div></div>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <header class="flex items-center px-3 h-11 shrink-0 border-b border-gray-50">
+            <button type="button" id="app-header-back" class="p-2 -ml-1" onclick="PartnerCenterApp.goBack()">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <h1 id="app-header-title" class="flex-1 text-center text-[15px] font-black truncate px-2">合伙人中心</h1>
+            <div id="app-header-action" class="w-9 flex justify-end"></div>
+        </header>
+
+        <!-- Main segment tabs -->
+        <nav id="main-tabs" class="flex border-b border-gray-100 shrink-0 bg-white">
+            <button type="button" class="seg-tab active" data-tab="links" onclick="PartnerCenterApp.switchTab('links')">邀请链接</button>
+            <button type="button" class="seg-tab" data-tab="team" onclick="PartnerCenterApp.switchTab('team')">团队</button>
+            <button type="button" class="seg-tab" data-tab="analytics" onclick="PartnerCenterApp.switchTab('analytics')">数据</button>
+            <button type="button" class="seg-tab" data-tab="commission" onclick="PartnerCenterApp.switchTab('commission')">佣金</button>
+        </nav>
+
+        <!-- Hub scroll area -->
+        <div id="hub-scroll" class="flex-1 overflow-y-auto no-scrollbar bg-slate-50/80">
+
+            <!-- Links -->
+            <div id="view-links" class="view-panel px-4 py-3">
+                <div id="links-period-chips" class="flex gap-2 mb-3 overflow-x-auto no-scrollbar"></div>
+                <div id="links-summary" class="mb-3"></div>
+                <div class="flex gap-2 mb-3">
+                    <input type="search" id="links-search-input" placeholder="搜索备注或邀请码" class="flex-1 text-[11px] font-medium border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-black" oninput="PartnerCenterApp.setLinksSearch(this.value)">
+                </div>
+                <div id="links-list"></div>
+                <button type="button" id="links-load-more" class="load-more-btn mt-2 hidden" onclick="PartnerCenterApp.loadMoreLinks()">加载更多</button>
+            </div>
+
+            <!-- Team -->
+            <div id="view-team" class="view-panel px-4 py-3 hidden">
+                <div id="team-period-chips" class="flex gap-2 mb-3"></div>
+                <div id="team-identity" class="list-card mb-3"></div>
+                <div id="team-kpi-grid" class="grid grid-cols-2 gap-2 mb-3"></div>
+                <div id="team-subtabs" class="flex gap-5 mb-3 border-b border-gray-100 pb-1"></div>
+                <div class="flex gap-2 mb-3">
+                    <input type="search" id="team-search-input" placeholder="搜索 UID / 钱包" class="flex-1 text-[11px] font-medium border border-gray-200 rounded-xl px-3 py-2 outline-none" oninput="PartnerCenterApp.setTeamSearch(this.value)">
+                </div>
+                <div id="team-list"></div>
+                <button type="button" id="team-load-more" class="load-more-btn mt-2 hidden" onclick="PartnerCenterApp.loadMoreTeam()">加载更多</button>
+            </div>
+
+            <!-- Analytics -->
+            <div id="view-analytics" class="view-panel px-4 py-3 hidden">
+                <div id="analytics-period-chips" class="flex gap-2 mb-3"></div>
+                <div id="analytics-kpi-grid" class="grid grid-cols-2 gap-2 mb-3"></div>
+                <div id="analytics-dim-tabs" class="flex gap-2 mb-2 overflow-x-auto no-scrollbar"></div>
+                <p id="analytics-dim-hint" class="text-[10px] text-gray-500 font-medium mb-3 hidden leading-relaxed"></p>
+                <div id="analytics-sections"></div>
+            </div>
+
+            <!-- Commission -->
+            <div id="view-commission" class="view-panel px-4 py-3 hidden">
+                <div id="commission-kpi-row" class="grid grid-cols-1 gap-2 mb-3"></div>
+                <div class="flex gap-2 mb-3">
+                    <button type="button" class="period-chip flex-1" onclick="PartnerCenterApp.openCommissionFilter()">筛选</button>
+                </div>
+                <div id="commission-list"></div>
+                <button type="button" id="commission-load-more" class="load-more-btn mt-2 hidden" onclick="PartnerCenterApp.loadMoreCommission()">加载更多</button>
+            </div>
+        </div>
+
+        <!-- Stack: Commission Detail -->
+        <div id="stack-commission-detail" class="stack-page">
+            <header class="flex items-center px-3 h-11 shrink-0 border-b border-gray-50 bg-white">
+                <button type="button" class="p-2" onclick="PartnerCenterApp.closeCommissionDetail()">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <div class="flex-1 text-center">
+                    <p class="text-[15px] font-black">佣金详情</p>
+                    <p id="cd-subtitle" class="text-[10px] text-gray-400 font-medium"></p>
+                </div>
+                <div class="w-9"></div>
+            </header>
+            <div class="flex-1 overflow-y-auto no-scrollbar px-4 py-3 bg-slate-50/80">
+                <div id="cd-kpi-grid" class="grid grid-cols-2 gap-2 mb-3"></div>
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">当日返佣贡献</p>
+                <div id="cd-list"></div>
+                <button type="button" id="cd-load-more" class="load-more-btn mt-2 hidden" onclick="PartnerCenterApp.loadMoreCommissionDetail()">加载更多</button>
+            </div>
+        </div>
+
+        <!-- Stack: Drill -->
+        <div id="stack-drill" class="stack-page">
+            <header class="flex items-center px-3 h-11 shrink-0 border-b border-gray-50 bg-white">
+                <button type="button" class="p-2" onclick="PartnerCenterApp.drillBack()">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <div class="flex-1 text-center">
+                    <p class="text-[15px] font-black">团队穿透</p>
+                    <p id="drill-breadcrumb" class="text-[10px] text-gray-400 font-medium truncate px-2"></p>
+                </div>
+                <div class="w-9"></div>
+            </header>
+            <div class="flex-1 overflow-y-auto no-scrollbar px-4 py-3 bg-slate-50/80">
+                <div id="drill-identity" class="list-card mb-3"></div>
+                <div id="drill-kpi" class="grid grid-cols-2 gap-2 mb-3"></div>
+                <div id="drill-subtabs" class="flex gap-5 mb-3 border-b border-gray-100 pb-1"></div>
+                <div id="drill-list"></div>
+            </div>
+        </div>
+
+        <!-- Overlay + Sheets -->
+        <div id="sheet-overlay" class="sheet-overlay" onclick="PartnerCenterApp.closeAllSheets()"></div>
+
+        <div id="sheet-filter" class="bottom-sheet">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center shrink-0">
+                <span class="font-black text-sm">筛选</span>
+                <button type="button" class="text-gray-400 font-bold text-xs" onclick="PartnerCenterApp.closeAllSheets()">关闭</button>
+            </div>
+            <div id="sheet-filter-body" class="p-4 overflow-y-auto"></div>
+        </div>
+
+        <div id="sheet-create-link" class="bottom-sheet">
+            <div class="p-4 border-b border-gray-100 shrink-0"><span class="font-black text-sm">创建邀请链接</span></div>
+            <div class="p-4 space-y-3 overflow-y-auto">
+                <div><label class="text-[10px] font-bold text-gray-400">备注名称</label><input id="create-link-remark" class="w-full border rounded-xl px-3 py-2 mt-1 text-[12px]" placeholder="例如：推特推广"></div>
+                <div><label class="text-[10px] font-bold text-gray-400">邀请码（6位）</label><input id="create-link-code" maxlength="6" class="w-full border rounded-xl px-3 py-2 mt-1 text-[12px] font-mono uppercase" placeholder="ABC123"></div>
+                <button type="button" class="w-full bg-black text-white py-3 rounded-xl font-black text-[12px]" onclick="PartnerCenterApp.submitCreateLink()">确认创建</button>
+            </div>
+        </div>
+
+        <div id="sheet-share" class="bottom-sheet">
+            <div class="p-4 border-b border-gray-100 shrink-0"><span class="font-black text-sm">分享海报</span></div>
+            <div id="sheet-share-body" class="p-6 flex flex-col items-center overflow-y-auto"></div>
+        </div>
+
+        <div id="sheet-add-partner" class="bottom-sheet">
+            <div class="p-4 border-b border-gray-100 shrink-0"><span class="font-black text-sm">添加下级合伙人</span></div>
+            <div class="p-4 space-y-3 overflow-y-auto">
+                <div><label class="text-[10px] font-bold text-gray-400">用户 UID</label><input id="add-partner-uid" class="w-full border rounded-xl px-3 py-2 mt-1 text-[12px]" placeholder="10086000"></div>
+                <div><label class="text-[10px] font-bold text-gray-400">返佣比例</label><input id="add-partner-ratio" type="range" min="0" max="70" value="50" class="w-full mt-2" oninput="document.getElementById('add-partner-ratio-val').textContent=this.value+'%'"><p id="add-partner-ratio-val" class="text-center font-black text-lg mt-1">50%</p></div>
+                <button type="button" class="w-full bg-black text-white py-3 rounded-xl font-black text-[12px]" onclick="PartnerCenterApp.submitAddPartner()">确认绑定</button>
+            </div>
+        </div>
+
+        <div id="sheet-adjust-ratio" class="bottom-sheet">
+            <div class="p-4 border-b border-gray-100 shrink-0"><span class="font-black text-sm">调整返佣比例</span></div>
+            <div class="p-4 space-y-3 overflow-y-auto">
+                <p id="adjust-ratio-target" class="text-[11px] font-bold text-gray-600"></p>
+                <input id="adjust-ratio-slider" type="range" min="0" max="70" value="50" class="w-full" oninput="PartnerCenterApp.onAdjustSlider(this.value)">
+                <p id="adjust-ratio-display" class="text-center font-black text-2xl">50%</p>
+                <button type="button" class="w-full bg-black text-white py-3 rounded-xl font-black text-[12px]" onclick="PartnerCenterApp.submitAdjustRatio()">确认调整</button>
+            </div>
+        </div>
+
+        <div id="sheet-trades" class="bottom-sheet" style="max-height: 90%;">
+            <div class="p-4 border-b border-gray-100 shrink-0 flex justify-between items-center">
+                <span id="sheet-trades-title" class="font-black text-sm">交易返佣流水</span>
+                <button type="button" class="text-gray-400 text-xs font-bold" onclick="PartnerCenterApp.closeAllSheets()">关闭</button>
+            </div>
+            <div id="sheet-trades-body" class="p-4 overflow-y-auto flex-1"></div>
+        </div>
+
+    </div>
+</div>
+
+<script src="partner-center-app.js?v=partner-app-01"></script>
+<script>document.addEventListener('DOMContentLoaded', function () { PartnerCenterApp.init(); });</script>
+</body>
+</html>
