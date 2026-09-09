@@ -498,19 +498,9 @@
     }
 
     function renderAgentScopeBadge() {
-        var badge = document.getElementById('header-scope-badge');
         var hint = document.getElementById('list-scope-hint');
         var search = document.getElementById('list-search-input');
         var scope = getAgentDataScope();
-        if (badge) {
-            if (scope === 'global') {
-                badge.textContent = '数据权限: 全局';
-                badge.className = 'bg-violet-50 text-violet-700 px-3 py-1 rounded-full font-bold text-[11px]';
-            } else {
-                badge.textContent = '数据权限: 个人';
-                badge.className = 'bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-bold text-[11px]';
-            }
-        }
         if (hint) {
             var base = '团队指标均为该用户<strong>向下整伞</strong>汇总；净收入 = 伞下净手续费 − 由伞下交易触发的<strong>全部返佣</strong>（含向上级级差）。';
             if (scope === 'personal') {
@@ -652,7 +642,6 @@
         const cmp = getOverviewCompareConfig(period);
         const titleEl = document.getElementById('agent-overview-title');
         const subEl = document.getElementById('agent-overview-subtitle');
-        const chipEl = document.getElementById('agent-overview-scope-chip');
         const l1LabelEl = document.getElementById('agent-overview-l1-label');
         const l1SubEl = document.getElementById('agent-overview-l1-sub');
 
@@ -663,12 +652,6 @@
             subEl.textContent = scope === 'global'
                 ? ('全站 ' + m.l1Count + ' 个一级伞 · 周期 ' + period + ' · 各一级伞向下整伞合计')
                 : ('汇总本人负责 ' + m.l1Count + ' 个一级伞 · 配置运营 ' + CURRENT_OPERATOR + ' · 周期 ' + period);
-        }
-        if (chipEl) {
-            chipEl.textContent = scope === 'global' ? '数据权限: 全局' : '数据权限: 个人';
-            chipEl.className = scope === 'global'
-                ? 'bg-violet-500/20 text-violet-200 px-3 py-1 rounded-full font-bold text-[10px]'
-                : 'bg-white/10 text-slate-200 px-3 py-1 rounded-full font-bold text-[10px]';
         }
         if (l1LabelEl) {
             l1LabelEl.textContent = scope === 'global' ? '平台一级伞' : '管理一级伞';

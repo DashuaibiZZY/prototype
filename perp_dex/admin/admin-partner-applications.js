@@ -254,16 +254,9 @@
         const scope = getAppDataScope();
         const m = computeApplicationOverviewMetrics();
         const titleEl = document.getElementById('app-overview-title');
-        const chipEl = document.getElementById('app-overview-scope-chip');
 
         if (titleEl) {
             titleEl.textContent = scope === 'global' ? '平台合伙人申请概览' : '我的待审申请概览';
-        }
-        if (chipEl) {
-            chipEl.textContent = scope === 'global' ? '数据权限: 全局' : '数据权限: 个人';
-            chipEl.className = scope === 'global'
-                ? 'bg-violet-500/20 text-violet-200 px-3 py-1 rounded-full font-bold text-[10px]'
-                : 'bg-white/10 text-slate-200 px-3 py-1 rounded-full font-bold text-[10px]';
         }
 
         const setText = function (id, text) {
