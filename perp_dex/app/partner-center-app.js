@@ -2,7 +2,7 @@
  * 合伙人中心 App 原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-app-03';
+    const DATA_VERSION = 'partner-app-04';
     const LIST_END_HINT = '已展示全部记录';
     const SCROLL_LOAD_HINT = '继续下滑加载更多';
     const SOURCE_LABELS = ['自己产生', '直属直客', '合伙人级差'];
@@ -1071,23 +1071,44 @@ function renderLinks() {
                 '<p class="font-mono text-blue-600 text-[11px] font-bold mt-1">' + esc(row.code) +
                 ' <button type="button" class="text-gray-400 ml-1 inline-flex"' + clickHandler('copyText', row.code, '邀请码') + '><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg></button></p></div>' +
                 shareBtn + '</div>' +
-                '<div class="grid grid-cols-3 gap-2 text-[9px] mb-3">' +
-                metricMini('直邀', row.directCount) + metricMini('下级合伙人', row.subPartnerCount) + metricMini('交易额', fmtCompactMoney(vol)) +
-                metricMini('手续费', fmtMoney(fee)) + metricMini('返佣', fmtMoney(rebate)) + metricMini('净入金', fmtCompactMoney(row.netDeposit, { signed: true })) +
+                '<div class="metric-grid grid-cols-3 mb-3">' +
+                metricCell('直邀', fmtNum(row.directCount)) + metricCell('下级合伙人', fmtNum(row.subPartnerCount)) + metricCell('交易额', fmtCompactMoney(vol)) +
+                metricCell('手续费', fmtMoney(fee)) + metricCell('返佣', fmtMoney(rebate)) + metricCell('净入金', fmtCompactMoney(row.netDeposit, { signed: true })) +
                 '</div>' +
-                '<div class="flex flex-wrap gap-2">' +
-                '<button type="button" class="action-btn primary"' + disabledAttr + clickHandler('copyText', linkUrl, '邀请链接') + '>复制链接</button>' +
-                '<button type="button" class="action-btn"' + clickHandler('editLinkRemark', row.code) + '>修改</button>' +
-                (row.isDefault && !row.disabled ? '<span class="action-btn text-gray-400">默认</span>' :
-                    '<button type="button" class="action-btn danger"' + clickHandler('toggleLink', row.code) + '>' + (row.disabled ? '启用' : '停用') + '</button>') +
-                '</div></div>';
+                cardActionsRow(3,
+                    '<button type="button" class="action-btn primary"' + disabledAttr + clickHandler('copyText', linkUrl, '邀请链接') + '>复制链接</button>' +
+                    '<button type="button" class="action-btn"' + clickHandler('editLinkRemark', row.code) + '>修改</button>' +
+                    (row.isDefault && !row.disabled
+                        ? '<span class="action-btn-static">默认</span>'
+                        : '<button type="button" class="action-btn danger"' + clickHandler('toggleLink', row.code) + '>' + (row.disabled ? '启用' : '停用') + '</button>')
+                ) +
+                '</div>';
         }).join('') || '<p class="text-center text-gray-400 text-[11px] py-8 font-bold">暂无链接</p>';
     }
     renderListEnd('links-list-end', sliced);
 }
 
-function metricMini(label, value) {
-    return '<div class="bg-slate-50 rounded-lg p-2"><p class="text-gray-400 font-bold">' + esc(label) + '</p><p class="font-black text-gray-900 mt-0.5">' + value + '</p></div>';
+function metricCell(label, value, align) {
+    align = align || 'left';
+    const alignClass = align === 'center' ? ' text-center' : (align === 'right' ? ' text-right' : '');
+    return '<div class="metric-cell' + alignClass + '"><p class="metric-label">' + esc(label) + '</p><p class="metric-value">' + value + '</p></div>';
+}
+
+function metricCellHtml(label, valueHtml, align) {
+    align = align || 'left';
+    const alignClass = align === 'center' ? ' text-center' : (align === 'right' ? ' text-right' : '');
+    return '<div class="metric-cell' + alignClass + '"><p class="metric-label">' + esc(label) + '</p><div class="metric-value">' + valueHtml + '</div></div>';
+}
+
+function contactRemarkRow(contact, remark) {
+    return '<div class="flex justify-between items-center gap-2 mt-1 min-w-0">' +
+        '<p class="text-[10px] text-gray-400 font-mono truncate">' + esc(contact || '—') + '</p>' +
+        (remark ? '<span class="text-[10px] text-gray-500 font-bold shrink-0">' + esc(remark) + '</span>' : '') +
+        '</div>';
+}
+
+function cardActionsRow(cols, innerHtml) {
+    return '<div class="card-actions cols-' + cols + '">' + innerHtml + '</div>';
 }
 
 function renderTeam() {
@@ -1134,19 +1155,19 @@ function renderTeamList(scaled) {
         const sliced = sliceAccumulated(list, subPartnerPage, PAGE_SIZE);
         subPartnerPage = sliced.page;
         listEl.innerHTML = sliced.items.map(function (row) {
+            const adjustBtn = '<button type="button" class="action-btn"' + clickHandler('openAdjustRatio', row.id) + '>调整比例</button>';
+            const actions = row.hasTeam
+                ? cardActionsRow(2,
+                    '<button type="button" class="action-btn primary"' + clickHandler('openDrill', row.id) + '>查看团队</button>' + adjustBtn)
+                : cardActionsRow(1, adjustBtn);
             return '<div class="list-card">' +
-                '<div class="flex justify-between items-start mb-2"><div>' + uidCopyHtml(row.uid, 'UID') +
-                '<p class="text-[10px] text-gray-400 font-mono mt-1">' + esc(row.wallet) + '</p>' +
-                (row.remark ? '<p class="text-[10px] text-gray-500 font-bold mt-0.5">' + esc(row.remark) + '</p>' : '') +
+                '<div class="flex justify-between items-start mb-2"><div class="min-w-0 flex-1">' + uidCopyHtml(row.uid, 'UID') +
+                contactRemarkRow(row.wallet, row.remark) +
                 '</div>' + partnerSettlementStatusLabel(row.settlementStatus) + '</div>' +
-                '<div class="grid grid-cols-2 gap-2 text-[10px] mb-3">' +
-                metricMini('比例', row.ratio + '%') + metricMini('级差', row.gap + '%') +
-                metricMini('级差收入', fmtMoney(row.gapIncome * scale)) + metricMini('团队规模', fmtNum(row.totalUsers) + ' 人') +
-                '</div>' +
-                '<div class="flex gap-2">' +
-                (row.hasTeam ? '<button type="button" class="action-btn primary"' + clickHandler('openDrill', row.id) + '>查看团队</button>' : '') +
-                '<button type="button" class="action-btn"' + clickHandler('openAdjustRatio', row.id) + '>调整比例</button>' +
-                '</div></div>';
+                '<div class="metric-grid grid-cols-2 mb-3">' +
+                metricCell('比例', row.ratio + '%') + metricCell('级差', row.gap + '%') +
+                metricCell('级差收入', fmtMoney(row.gapIncome * scale)) + metricCell('团队规模', fmtNum(row.totalUsers) + ' 人') +
+                '</div>' + actions + '</div>';
         }).join('') || '<p class="text-center text-gray-400 text-[11px] py-8 font-bold">暂无下级合伙人</p>';
         renderListEnd('team-list-end', sliced);
     } else {
@@ -1159,11 +1180,12 @@ function renderTeamList(scaled) {
         listEl.innerHTML = sliced.items.map(function (row) {
             const contact = row.wallet || row.email || '—';
             return '<div class="list-card"><div class="mb-2">' + uidCopyHtml(row.uid, 'UID') +
-                '<p class="text-[10px] text-gray-400 mt-1">' + esc(contact) + '</p><p class="text-[10px] text-gray-400 mt-0.5">加入 ' + esc(row.joinDate) + '</p></div>' +
-                '<div class="grid grid-cols-3 gap-2 text-[10px]">' +
-                metricMini('交易额', fmtCompactMoney(row.totalVol * scale)) +
-                metricMini('返佣', fmtMoney(row.rebate * scale)) +
-                metricMini('净入金', fmtCompactMoney(row.netDeposit, { signed: true })) +
+                contactRemarkRow(contact, '') +
+                '<p class="text-[10px] text-gray-400 mt-0.5">加入 ' + esc(row.joinDate) + '</p></div>' +
+                '<div class="metric-grid grid-cols-3">' +
+                metricCell('交易额', fmtCompactMoney(row.totalVol * scale)) +
+                metricCell('返佣', fmtMoney(row.rebate * scale)) +
+                metricCell('净入金', fmtCompactMoney(row.netDeposit, { signed: true })) +
                 '</div></div>';
         }).join('') || '<p class="text-center text-gray-400 text-[11px] py-8 font-bold">暂无直客</p>';
         renderListEnd('team-list-end', sliced);
@@ -1301,10 +1323,10 @@ function renderCommission() {
             const rowBg = row.status === 'pending' ? ' border-amber-100 bg-amber-50/30' : '';
             return '<div class="list-card' + rowBg + '">' +
                 '<div class="flex justify-between items-center mb-2"><p class="font-black text-[13px]">' + esc(row.date) + '</p>' + settlementStatusLabel(row.status) + '</div>' +
-                '<div class="grid grid-cols-3 gap-2 text-[10px] mb-3">' +
-                metricMini('交易额', fmtCompactMoney(row.vol)) +
-                metricMini('手续费', fmtMoney(rowFee(row, 'vol'))) +
-                '<div class="bg-slate-50 rounded-lg p-2"><p class="text-gray-400 font-bold">返佣</p><div class="font-black text-gray-900 mt-0.5">' + rebateAmountHtml(row) + '</div></div>' +
+                '<div class="metric-grid grid-cols-3 mb-3">' +
+                metricCell('交易额', fmtCompactMoney(row.vol)) +
+                metricCell('手续费', fmtMoney(rowFee(row, 'vol'))) +
+                metricCellHtml('返佣', rebateAmountHtml(row)) +
                 '</div>' +
                 '<button type="button" class="w-full py-2 text-[11px] font-black text-blue-600 bg-blue-50 rounded-xl"' + clickHandler('openCommissionDetail', row.date) + '>佣金详情</button>' +
                 '</div>';
@@ -1340,13 +1362,12 @@ function renderCommissionDetail() {
         list.innerHTML = sliced.items.map(function (item) {
             const contact = item.email || item.wallet || '—';
             return '<div class="list-card">' +
-                '<div class="flex justify-between items-start mb-2"><div>' + uidCopyHtml(item.uid, 'UID') +
-                '<p class="text-[10px] text-gray-400 mt-1">' + esc(contact) + '</p>' +
-                (item.remark ? '<p class="text-[10px] text-gray-500 font-bold">' + esc(item.remark) + '</p>' : '') +
-                '</div><span class="text-[10px] font-bold text-gray-600">' + esc(item.sourceType) + '</span></div>' +
-                '<div class="grid grid-cols-2 gap-2 text-[10px] mb-3">' +
-                metricMini('比例', item.ratio) + metricMini('交易额', fmtCompactMoney(item.vol)) +
-                metricMini('手续费', fmtMoney(item.fee)) + metricMini('返佣', fmtMoney(item.rebate)) +
+                '<div class="flex justify-between items-start mb-2 gap-2"><div class="min-w-0 flex-1">' + uidCopyHtml(item.uid, 'UID') +
+                contactRemarkRow(contact, item.remark) +
+                '</div><span class="text-[10px] font-bold text-gray-600 shrink-0">' + esc(item.sourceType) + '</span></div>' +
+                '<div class="metric-grid grid-cols-2 mb-3">' +
+                metricCell('比例', item.ratio) + metricCell('交易额', fmtCompactMoney(item.vol)) +
+                metricCell('手续费', fmtMoney(item.fee)) + metricCell('返佣', fmtMoney(item.rebate)) +
                 '</div>' +
                 '<button type="button" class="w-full py-2 text-[11px] font-black text-blue-600 bg-blue-50 rounded-xl"' + clickHandler('openCommissionTrades', item.uid) + '>交易返佣流水</button>' +
                 '</div>';
@@ -1364,10 +1385,10 @@ function renderCommissionTrades() {
     const list = document.getElementById('ct-list');
     if (list) {
         list.innerHTML = sliced.items.map(function (t) {
-            return '<div class="list-card py-3"><p class="text-[10px] text-gray-400 mb-1">' + esc(t.time) + '</p>' +
-                '<div class="grid grid-cols-2 gap-2 text-[10px]">' +
-                metricMini('交易额', fmtCompactMoney(t.vol)) + metricMini('返佣', fmtMoney(t.rebate)) +
-                metricMini('手续费', fmtMoney(rowFee(t, 'vol'))) + metricMini('比例', t.ratio) +
+            return '<div class="list-card py-3"><p class="text-[10px] text-gray-400 mb-2">' + esc(t.time) + '</p>' +
+                '<div class="metric-grid grid-cols-2">' +
+                metricCell('交易额', fmtCompactMoney(t.vol)) + metricCell('返佣', fmtMoney(t.rebate)) +
+                metricCell('手续费', fmtMoney(rowFee(t, 'vol'))) + metricCell('比例', t.ratio) +
                 '</div></div>';
         }).join('') || '<p class="text-center text-gray-400 text-[11px] py-8 font-bold">暂无流水</p>';
     }
@@ -1409,28 +1430,30 @@ function renderDrill() {
     if (!listEl) return;
     if (drillActiveTable === 'sub-agent') {
         listEl.innerHTML = (team.subPartners || []).map(function (row) {
+            const remark = row.remark || row.name || '';
             return '<div class="list-card">' +
-                '<div class="flex justify-between items-start mb-2"><div>' +
+                '<div class="flex justify-between items-start mb-2"><div class="min-w-0 flex-1">' +
                 (row.uid ? uidCopyHtml(row.uid, 'UID') : '<p class="font-black font-mono text-[12px]">' + esc(row.wallet) + '</p>') +
-                '<p class="text-[10px] text-gray-400 font-mono mt-1">' + esc(row.wallet) + '</p></div>' +
-                partnerSettlementStatusLabel(row.settlementStatus) + '</div>' +
-                '<div class="grid grid-cols-2 gap-2 text-[10px] mb-3">' +
-                metricMini('比例', row.ratio + '%') + metricMini('级差', row.gap + '%') +
-                metricMini('交易额', fmtCompactMoney(row.totalVol * scale)) + metricMini('人数', fmtNum(row.totalUsers)) +
+                contactRemarkRow(row.wallet, remark) +
+                '</div>' + partnerSettlementStatusLabel(row.settlementStatus) + '</div>' +
+                '<div class="metric-grid grid-cols-2 mb-3">' +
+                metricCell('比例', row.ratio + '%') + metricCell('级差', row.gap + '%') +
+                metricCell('交易额', fmtCompactMoney(row.totalVol * scale)) + metricCell('人数', fmtNum(row.totalUsers)) +
                 '</div>' +
-                (row.hasTeam ? '<button type="button" class="action-btn primary"' + clickHandler('openDrill', row.id) + '>查看团队</button>' : '') +
+                (row.hasTeam ? cardActionsRow(1, '<button type="button" class="action-btn primary"' + clickHandler('openDrill', row.id) + '>查看团队</button>') : '') +
                 '</div>';
         }).join('') || '<p class="text-center text-gray-400 text-[11px] py-8 font-bold">暂无下级合伙人</p>';
         renderListEnd('drill-list-end', { total: (team.subPartners || []).length, hasMore: false, page: 1, pages: 1 });
     } else {
         listEl.innerHTML = (team.directClients || []).map(function (row) {
+            const contact = row.wallet || row.email || '—';
             return '<div class="list-card">' +
-                (row.uid ? uidCopyHtml(row.uid, 'UID') : '<p class="font-black font-mono text-[12px]">' + esc(row.wallet || row.email || '—') + '</p>') +
-                '<p class="text-[10px] text-gray-400 font-mono mt-1">' + esc(row.wallet || row.email || '—') + '</p>' +
-                '<div class="grid grid-cols-3 gap-2 text-[10px] mt-2">' +
-                metricMini('交易额', fmtCompactMoney(row.totalVol * scale)) +
-                metricMini('返佣', fmtMoney(row.rebate * scale)) +
-                metricMini('净入金', fmtCompactMoney(row.netDeposit, { signed: true })) +
+                (row.uid ? uidCopyHtml(row.uid, 'UID') : '<p class="font-black font-mono text-[12px]">' + esc(contact) + '</p>') +
+                contactRemarkRow(contact, '') +
+                '<div class="metric-grid grid-cols-3 mt-2">' +
+                metricCell('交易额', fmtCompactMoney(row.totalVol * scale)) +
+                metricCell('返佣', fmtMoney(row.rebate * scale)) +
+                metricCell('净入金', fmtCompactMoney(row.netDeposit, { signed: true })) +
                 '</div></div>';
         }).join('') || '<p class="text-center text-gray-400 text-[11px] py-8 font-bold">暂无直客</p>';
         renderListEnd('drill-list-end', { total: (team.directClients || []).length, hasMore: false, page: 1, pages: 1 });
