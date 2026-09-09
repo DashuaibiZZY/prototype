@@ -2,7 +2,7 @@
  * 合伙人中心（用户侧）原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-user-47';
+    const DATA_VERSION = 'partner-user-48';
     const SOURCE_LABELS = ['自己产生', '直属直客', '合伙人级差'];
     const SOURCE_COLORS = ['#93c5fd', '#3b82f6', '#1e3a8a'];
     const SOURCE_STYLES = [
@@ -10,7 +10,9 @@
         { fill: '#3b82f6', opacity: 0.82 },
         { fill: '#1e3a8a', opacity: 0.85 }
     ];
-    const USER_SCALE_TIP = '交易用户数据每天 UTC+8 0 点更新';
+    const ACTIVE_TRADERS_TIP = '交易用户数据每天 UTC+8 0 点更新';
+    const TEAM_NET_DEPOSIT_TIP = '团队净入金数据每天 UTC+8 0 点更新';
+    const USER_SCALE_TIP = ACTIVE_TRADERS_TIP;
     const PERIOD_SCALE = { '1D': 0.14, '1W': 1, '1M': 4.2, '3M': 12 };
     const LINKS_CHART_POINTS = { '1D': 24, '1W': 7, '1M': 30, '3M': 90 };
     const LINKS_CHART_LABEL_STEP = { '1D': 6, '1W': 1, '1M': 5, '3M': 15 };
@@ -967,6 +969,9 @@
         }
 
         const metricLabel = { vol: '交易额', rebate: '返佣', users: '人数', traders: '交易人数', net: '净入金' }[metric];
+        const metricHeader = metric === 'traders'
+            ? activeTradersHintHtml('交易人数')
+            : (metric === 'net' ? teamNetDepositHintHtml('净入金') : metricLabel);
 
         let subRows = '';
         rankedSubs.forEach(function (row, idx) {
@@ -993,10 +998,10 @@
             '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">' +
             '<div><p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">直属直客 · Top 10</p>' +
             '<table class="w-full text-left text-[11px]"><thead class="text-[10px] text-gray-400 font-black uppercase"><tr>' +
-            '<th class="pb-2 pr-2">#</th><th class="pb-2">UID</th><th class="pb-2 text-right">' + metricLabel + '</th></tr></thead><tbody class="divide-y divide-gray-50">' + clientRows + '</tbody></table></div>' +
+            '<th class="pb-2 pr-2">#</th><th class="pb-2">UID</th><th class="pb-2 text-right">' + metricHeader + '</th></tr></thead><tbody class="divide-y divide-gray-50">' + clientRows + '</tbody></table></div>' +
             '<div><p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">合伙人 · Top 10</p>' +
             '<table class="w-full text-left text-[11px]"><thead class="text-[10px] text-gray-400 font-black uppercase"><tr>' +
-            '<th class="pb-2 pr-2">#</th><th class="pb-2">UID / 备注</th><th class="pb-2 text-right">' + metricLabel + '</th></tr></thead><tbody class="divide-y divide-gray-50">' + subRows + '</tbody></table></div>' +
+            '<th class="pb-2 pr-2">#</th><th class="pb-2">UID / 备注</th><th class="pb-2 text-right">' + metricHeader + '</th></tr></thead><tbody class="divide-y divide-gray-50">' + subRows + '</tbody></table></div>' +
             '</div>';
     }
 
@@ -1511,11 +1516,23 @@
         updateDrillTableTabs();
     }
 
-    function userScaleHeaderHtml() {
+    function fieldHintHtml(label, tip) {
         return '<span class="user-scale-hint-wrap">' +
-            '<span class="user-scale-hint-label">用户规模</span>' +
-            '<span class="user-scale-hint-pop" role="tooltip">' + USER_SCALE_TIP + '</span>' +
+            '<span class="user-scale-hint-label">' + esc(label) + '</span>' +
+            '<span class="user-scale-hint-pop" role="tooltip">' + esc(tip) + '</span>' +
             '</span>';
+    }
+
+    function userScaleHeaderHtml() {
+        return fieldHintHtml('用户规模', ACTIVE_TRADERS_TIP);
+    }
+
+    function activeTradersHintHtml(label) {
+        return fieldHintHtml(label || '团队交易人数', ACTIVE_TRADERS_TIP);
+    }
+
+    function teamNetDepositHintHtml(label) {
+        return fieldHintHtml(label || '团队净入金', TEAM_NET_DEPOSIT_TIP);
     }
 
     function settlementStatusCell(row, scale, masked) {
@@ -1624,7 +1641,7 @@
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'gapIncome\')">贡献级差收入' + sortIconHtml('gapIncome', sortState) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'totalVol\')">总交易额' + sortIconHtml('totalVol', sortState) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'totalFee\')">手续费(USDC)' + sortIconHtml('totalFee', sortState) + '</th>' +
-                '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'netDeposit\')">总净入金' + sortIconHtml('netDeposit', sortState) + '</th>' +
+                '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'netDeposit\')">' + teamNetDepositHintHtml('总净入金') + sortIconHtml('netDeposit', sortState) + '</th>' +
                 '<th class="px-6 py-4 text-center cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'tradeUsers\')">' +
                 userScaleHeaderHtml() + sortIconHtml('tradeUsers', sortState) + '</th>' +
                 '<th class="px-6 py-4 text-right">操作</th>' +
@@ -1704,7 +1721,7 @@
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'totalVol\')">累计交易额' + sortIconHtml('totalVol', sortState) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'totalFee\')">手续费(USDC)' + sortIconHtml('totalFee', sortState) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'rebate\')">返佣金额' + sortIconHtml('rebate', sortState) + '</th>' +
-                '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'netDeposit\')">净入金' + sortIconHtml('netDeposit', sortState) + '</th>';
+                '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="' + sortFn + '(\'netDeposit\')">' + teamNetDepositHintHtml('净入金') + sortIconHtml('netDeposit', sortState) + '</th>';
             if (!masked) {
                 header += '<th class="px-6 py-4 text-right">操作</th>';
             }
@@ -1821,7 +1838,7 @@
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setLinksSort(\'totalVol\')">总交易额' + sortIconHtml('totalVol', linksSort) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setLinksSort(\'totalFee\')">手续费(USDC)' + sortIconHtml('totalFee', linksSort) + '</th>' +
                 '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setLinksSort(\'rebateIncome\')">合计返佣收入' + sortIconHtml('rebateIncome', linksSort) + '</th>' +
-                '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setLinksSort(\'netDeposit\')">总净入金' + sortIconHtml('netDeposit', linksSort) + '</th>' +
+                '<th class="px-6 py-4 text-right cursor-pointer hover:text-black select-none" onclick="PartnerCenter.setLinksSort(\'netDeposit\')">' + teamNetDepositHintHtml('总净入金') + sortIconHtml('netDeposit', linksSort) + '</th>' +
                 '<th class="px-6 py-4 text-center">状态</th>' +
                 '<th class="px-6 py-4 text-right">操作</th>' +
                 '</tr>';
