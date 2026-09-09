@@ -1446,9 +1446,10 @@ function renderDrill() {
         renderListEnd('drill-list-end', { total: (team.subPartners || []).length, hasMore: false, page: 1, pages: 1 });
     } else {
         listEl.innerHTML = (team.directClients || []).map(function (row) {
+            const contact = row.wallet || row.email || '—';
             return '<div class="list-card">' +
-                (row.uid ? uidCopyHtml(row.uid, 'UID') : '<p class="font-black font-mono text-[12px]">' + esc(row.wallet || row.email || '—') + '</p>') +
-                '<p class="text-[10px] text-gray-400 font-mono mt-1">' + esc(row.wallet || row.email || '—') + '</p>' +
+                (row.uid ? uidCopyHtml(row.uid, 'UID') : '<p class="font-black font-mono text-[12px]">' + esc(contact) + '</p>') +
+                contactRemarkRow(contact, '') +
                 '<div class="metric-grid grid-cols-3 mt-2">' +
                 metricCell('交易额', fmtCompactMoney(row.totalVol * scale)) +
                 metricCell('返佣', fmtMoney(row.rebate * scale)) +
