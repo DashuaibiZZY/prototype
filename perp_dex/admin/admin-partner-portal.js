@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-42';
+    const DATA_VERSION = 'partner-demo-44';
     /** 原型：从权限配置 u_ops（运营小王）读取合伙人管理数据范围 */
     const DEMO_PERM_USER_ID = 'u_ops';
     const CURRENT_OPERATOR = 'allen@forx.fi';
@@ -522,6 +522,109 @@
         if (search) {
             search.placeholder = scope === 'global' ? '全站一级伞内搜索' : '本人负责一级伞内搜索';
         }
+        renderAgentOverview();
+    }
+
+    function getOverviewScopeL1Ids() {
+        return LIST_IDS.filter(function (id) {
+            const u = getUser(id);
+            return u && u.level === 1 && isPartnerInDataScope(id);
+        });
+    }
+
+    function computeAgentOverviewMetrics(period) {
+        const ids = getOverviewScopeL1Ids();
+        const metrics = {
+            l1Count: ids.length,
+            vol: 0, fee: 0, rebate: 0, netIncome: 0,
+            netDeposit: 0, usersTotal: 0, usersActive: 0,
+            pendingSettlement: 0, frozenCount: 0, normalCount: 0,
+            operators: []
+        };
+        const opSet = {};
+        ids.forEach(function (id) {
+            const u = getUser(id);
+            if (!u) return;
+            const stats = getUserPeriodStats(u, period);
+            metrics.vol += stats.vol || 0;
+            metrics.fee += stats.fee || 0;
+            metrics.rebate += stats.rebate || 0;
+            metrics.netIncome += stats.netIncome || 0;
+            metrics.netDeposit += parseMoneyToNum(u.deposit);
+            metrics.usersTotal += u.usersTotal || 0;
+            metrics.usersActive += u.usersActive || 0;
+            metrics.pendingSettlement += u.pendingSettlement || 0;
+            if (hasPartnerFreeze(u.freezeStatus)) metrics.frozenCount++;
+            else metrics.normalCount++;
+            if (u.operator && !opSet[u.operator]) {
+                opSet[u.operator] = true;
+                metrics.operators.push(u.operator);
+            }
+        });
+        return metrics;
+    }
+
+    function renderAgentOverview() {
+        const scope = getAgentDataScope();
+        const period = listStatsPeriod || 'ALL';
+        const m = computeAgentOverviewMetrics(period);
+        const titleEl = document.getElementById('agent-overview-title');
+        const subEl = document.getElementById('agent-overview-subtitle');
+        const chipEl = document.getElementById('agent-overview-scope-chip');
+        const l1LabelEl = document.getElementById('agent-overview-l1-label');
+        const l1SubEl = document.getElementById('agent-overview-l1-sub');
+
+        if (titleEl) {
+            titleEl.textContent = scope === 'global' ? '平台合伙人数据概览' : '我的代理业绩概览';
+        }
+        if (subEl) {
+            subEl.textContent = scope === 'global'
+                ? ('全站 ' + m.l1Count + ' 个一级伞 · 周期 ' + period + ' · 各一级伞向下整伞合计')
+                : ('汇总本人负责 ' + m.l1Count + ' 个一级伞 · 配置运营 ' + CURRENT_OPERATOR + ' · 周期 ' + period);
+        }
+        if (chipEl) {
+            chipEl.textContent = scope === 'global' ? '数据权限: 全局' : '数据权限: 个人';
+            chipEl.className = scope === 'global'
+                ? 'bg-violet-500/20 text-violet-200 px-3 py-1 rounded-full font-bold text-[10px]'
+                : 'bg-white/10 text-slate-200 px-3 py-1 rounded-full font-bold text-[10px]';
+        }
+        if (l1LabelEl) {
+            l1LabelEl.textContent = scope === 'global' ? '平台一级伞' : '管理一级伞';
+        }
+        const setText = function (id, text) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        };
+        setText('agent-overview-l1-count', m.l1Count.toLocaleString());
+        if (l1SubEl) {
+            if (scope === 'global') {
+                l1SubEl.textContent = m.operators.length ? ('覆盖 ' + m.operators.length + ' 位负责 BD') : '—';
+            } else {
+                l1SubEl.textContent = m.normalCount + ' 正常 · ' + m.frozenCount + ' 冻结待结算';
+            }
+        }
+        setText('agent-overview-vol', fmtCompactMoney(m.vol));
+        setText('agent-overview-fee', fmtMoney(m.fee));
+        setText('agent-overview-rebate', fmtMoney(m.rebate));
+        setText('agent-overview-net-income', fmtMoney(m.netIncome));
+        const depEl = document.getElementById('agent-overview-net-deposit');
+        if (depEl) {
+            depEl.textContent = fmtSignedMoney(m.netDeposit);
+            depEl.className = 'text-2xl font-black flex-1 ' + (m.netDeposit >= 0 ? 'text-green-400' : 'text-red-300');
+        }
+        setText('agent-overview-users', m.usersActive.toLocaleString() + ' / ' + m.usersTotal.toLocaleString());
+        const pendingEl = document.getElementById('agent-overview-pending');
+        if (pendingEl) {
+            pendingEl.textContent = m.pendingSettlement ? fmtMoney(m.pendingSettlement) : '—';
+            pendingEl.className = 'text-2xl font-black flex-1' + (m.pendingSettlement ? ' text-amber-200' : '');
+        }
+        const pendingSubEl = document.getElementById('agent-overview-pending-sub');
+        if (pendingSubEl) {
+            pendingSubEl.textContent = m.frozenCount
+                ? (m.frozenCount + ' 个一级伞冻结待结算')
+                : '无冻结一级伞';
+        }
+        updatePeriodTabUi('list', period);
     }
 
     function getRootPartner(user) {
@@ -1389,14 +1492,21 @@
     function updatePeriodTabUi(prefix, period) {
         document.querySelectorAll('.' + prefix + '-period-btn').forEach(function (btn) {
             const active = btn.getAttribute('data-period') === period;
-            btn.className = prefix + '-period-btn px-3 py-1 rounded border text-[11px] font-bold' +
-                (active ? ' bg-slate-900 text-white border-slate-900' : ' border-slate-200 text-slate-600 hover:bg-slate-50');
+            const inOverview = btn.closest('#agent-mgmt-overview');
+            if (inOverview) {
+                btn.className = prefix + '-period-btn px-3 py-1 rounded border text-[11px] font-bold' +
+                    (active ? ' bg-white text-slate-900 border-white' : ' border-white/20 text-slate-200 hover:bg-white/10');
+            } else {
+                btn.className = prefix + '-period-btn px-3 py-1 rounded border text-[11px] font-bold' +
+                    (active ? ' bg-slate-900 text-white border-slate-900' : ' border-slate-200 text-slate-600 hover:bg-slate-50');
+            }
         });
     }
 
     function setListStatsPeriod(period) {
         listStatsPeriod = period || 'ALL';
         updatePeriodTabUi('list', listStatsPeriod);
+        renderAgentOverview();
         renderPartnerList();
     }
 
@@ -1854,6 +1964,9 @@
     function showList() {
         currentUserId = null;
         window.PartnerPortal_showPage('page-agent-mgmt');
+        renderAgentScopeBadge();
+        renderAgentOverview();
+        renderPartnerList();
     }
 
     function setListFilter(status) {
@@ -4349,6 +4462,7 @@
         }
         updatePeriodTabUi('list', listStatsPeriod);
         renderAgentScopeBadge();
+        renderAgentOverview();
         renderPartnerList();
         filterSettlementBatches();
         initSettlementDatePickers();
@@ -4356,6 +4470,7 @@
     });
     window.addEventListener('admin-perm-store-change', function () {
         renderAgentScopeBadge();
+        renderAgentOverview();
         renderPartnerList();
     });
     window.addEventListener('hashchange', applyHashTree);
