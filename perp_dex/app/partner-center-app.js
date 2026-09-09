@@ -133,18 +133,18 @@
     };
 
     const inviteLinksData = [
-        { remark: '預設連結', code: 'E6DL28G', directCount: 124, subPartnerCount: 42, totalVol: 5200000, totalFee: 5200, rebateIncome: 3640, netDeposit: 420000, isDefault: true, disabled: false },
-        { remark: '推特推廣-01', code: 'FORX99', directCount: 12, subPartnerCount: 0, totalVol: 850000, totalFee: 850, rebateIncome: 595, netDeposit: 62000, isDefault: false, disabled: false },
-        { remark: 'YouTube-KOL', code: 'YT2024', directCount: 56, subPartnerCount: 3, totalVol: 2100000, totalFee: 2100, rebateIncome: 1470, netDeposit: 185000, isDefault: false, disabled: false },
-        { remark: 'Discord社群', code: 'DSC001', directCount: 89, subPartnerCount: 5, totalVol: 1680000, totalFee: 1680, rebateIncome: 1176, netDeposit: 92000, isDefault: false, disabled: false },
-        { remark: '亞洲渠道-A', code: 'ASIA01', directCount: 34, subPartnerCount: 2, totalVol: 980000, totalFee: 980, rebateIncome: 686, netDeposit: 45000, isDefault: false, disabled: false },
-        { remark: '歐洲渠道-B', code: 'EUR002', directCount: 21, subPartnerCount: 1, totalVol: 720000, totalFee: 720, rebateIncome: 504, netDeposit: 38000, isDefault: false, disabled: false },
-        { remark: '線下活動-深圳', code: 'SZ2405', directCount: 45, subPartnerCount: 0, totalVol: 560000, totalFee: 560, rebateIncome: 392, netDeposit: 28000, isDefault: false, disabled: false },
-        { remark: '線下活動-新加坡', code: 'SG2406', directCount: 18, subPartnerCount: 0, totalVol: 430000, totalFee: 430, rebateIncome: 301, netDeposit: 22000, isDefault: false, disabled: false },
-        { remark: 'KOL合作-03', code: 'KOL003', directCount: 67, subPartnerCount: 4, totalVol: 1450000, totalFee: 1450, rebateIncome: 1015, netDeposit: 76000, isDefault: false, disabled: false },
-        { remark: '媒體投放-01', code: 'MED001', directCount: 9, subPartnerCount: 0, totalVol: 320000, totalFee: 320, rebateIncome: 224, netDeposit: 15000, isDefault: false, disabled: false },
-        { remark: '媒體投放-02', code: 'MED002', directCount: 14, subPartnerCount: 0, totalVol: 410000, totalFee: 410, rebateIncome: 287, netDeposit: 19000, isDefault: false, disabled: true },
-        { remark: '社群裂變', code: 'VIRAL1', directCount: 102, subPartnerCount: 6, totalVol: 2890000, totalFee: 2890, rebateIncome: 2023, netDeposit: 156000, isDefault: false, disabled: false }
+        { remark: '預設連結', code: 'E6DL28GX', directCount: 124, subPartnerCount: 42, totalVol: 5200000, totalFee: 5200, rebateIncome: 3640, netDeposit: 420000, isDefault: true, disabled: false },
+        { remark: '推特推廣-01', code: 'FORX99A', directCount: 12, subPartnerCount: 0, totalVol: 850000, totalFee: 850, rebateIncome: 595, netDeposit: 62000, isDefault: false, disabled: false },
+        { remark: 'YouTube-KOL', code: 'YT2024A', directCount: 56, subPartnerCount: 3, totalVol: 2100000, totalFee: 2100, rebateIncome: 1470, netDeposit: 185000, isDefault: false, disabled: false },
+        { remark: 'Discord社群', code: 'DSC001A', directCount: 89, subPartnerCount: 5, totalVol: 1680000, totalFee: 1680, rebateIncome: 1176, netDeposit: 92000, isDefault: false, disabled: false },
+        { remark: '亞洲渠道-A', code: 'ASIA01A', directCount: 34, subPartnerCount: 2, totalVol: 980000, totalFee: 980, rebateIncome: 686, netDeposit: 45000, isDefault: false, disabled: false },
+        { remark: '歐洲渠道-B', code: 'EUR002A', directCount: 21, subPartnerCount: 1, totalVol: 720000, totalFee: 720, rebateIncome: 504, netDeposit: 38000, isDefault: false, disabled: false },
+        { remark: '線下活動-深圳', code: 'SZ2405A', directCount: 45, subPartnerCount: 0, totalVol: 560000, totalFee: 560, rebateIncome: 392, netDeposit: 28000, isDefault: false, disabled: false },
+        { remark: '線下活動-新加坡', code: 'SG2406A', directCount: 18, subPartnerCount: 0, totalVol: 430000, totalFee: 430, rebateIncome: 301, netDeposit: 22000, isDefault: false, disabled: false },
+        { remark: 'KOL合作-03', code: 'KOL003A', directCount: 67, subPartnerCount: 4, totalVol: 1450000, totalFee: 1450, rebateIncome: 1015, netDeposit: 76000, isDefault: false, disabled: false },
+        { remark: '媒體投放-01', code: 'MED001A', directCount: 9, subPartnerCount: 0, totalVol: 320000, totalFee: 320, rebateIncome: 224, netDeposit: 15000, isDefault: false, disabled: false },
+        { remark: '媒體投放-02', code: 'MED002A', directCount: 14, subPartnerCount: 0, totalVol: 410000, totalFee: 410, rebateIncome: 287, netDeposit: 19000, isDefault: false, disabled: true },
+        { remark: '社群裂變', code: 'VIRAL1A', directCount: 102, subPartnerCount: 6, totalVol: 2890000, totalFee: 2890, rebateIncome: 2023, netDeposit: 156000, isDefault: false, disabled: false }
     ];
 
     const existingCodesList = inviteLinksData.map(function (r) { return r.code; });
@@ -1635,7 +1635,7 @@ function renderCommissionFilterSheet() {
             const remark = (document.getElementById('create-link-remark').value || '').trim();
             const code = (document.getElementById('create-link-code').value || '').trim().toUpperCase();
             if (!remark) { showToast('请填写备注名称'); return; }
-            if (!/^[A-Z0-9]{6}$/.test(code)) { showToast('邀请码须为 6 位字母或数字'); return; }
+            if (!/^[A-Z0-9]{7}$/.test(code)) { showToast('邀请码须为 7 位字母或数字'); return; }
             if (existingCodesList.indexOf(code) >= 0) { showToast('邀请码已存在'); return; }
             if (countActiveInviteLinks() >= 50) { showToast('使用中链接已达上限 50 个'); return; }
             inviteLinksData.push({ remark: remark, code: code, directCount: 0, subPartnerCount: 0, totalVol: 0, totalFee: 0, rebateIncome: 0, netDeposit: 0, isDefault: false, disabled: false });
