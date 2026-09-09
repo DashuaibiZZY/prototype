@@ -324,13 +324,20 @@
         teamNetDeposit: 1240000,
         selfNetDeposit: 12000,
         directClientNetDeposit: 86000,
-        partnerTeamNetDeposit: 1142000,
-        volChange: 12.4,
-        rebateChange: 8.6,
-        usersChange: 2.8,
-        activeTradersChange: 3.1,
-        netDepositChange: 5.2
+        partnerTeamNetDeposit: 1142000
     };
+
+    /** 团队数据分析 · 较上周期环比 %（原型 mock；团队人数保持正增长，其余可有涨跌） */
+    const ANALYTICS_PERIOD_COMPARE = {
+        '1D': { vol: -4.2, rebate: -6.8, users: 0.6, activeTraders: -2.1, netDeposit: -11.3 },
+        '1W': { vol: 12.4, rebate: -3.5, users: 2.8, activeTraders: -1.2, netDeposit: -4.8 },
+        '1M': { vol: -8.6, rebate: -5.2, users: 4.1, activeTraders: 3.6, netDeposit: 6.4 },
+        '3M': { vol: 15.2, rebate: 9.8, users: 6.2, activeTraders: -4.5, netDeposit: -9.1 }
+    };
+
+    function getAnalyticsCompare(period) {
+        return ANALYTICS_PERIOD_COMPARE[period] || ANALYTICS_PERIOD_COMPARE['1W'];
+    }
 
     function fmtCompactMoney(n, opts) {
         opts = opts || {};
@@ -558,7 +565,8 @@
             '</svg>';
     }
 
-    function computeOverviewScaled(scale) {
+    function computeOverviewScaled(scale, period) {
+        const cmp = period ? getAnalyticsCompare(period) : null;
         return {
             vol: overviewBase.teamVol * scale,
             rebate: overviewBase.totalRebate * scale,
@@ -580,11 +588,11 @@
             selfNetDeposit: overviewBase.selfNetDeposit * scale,
             directClientNetDeposit: overviewBase.directClientNetDeposit * scale,
             partnerTeamNetDeposit: overviewBase.partnerTeamNetDeposit * scale,
-            volChange: overviewBase.volChange,
-            rebateChange: overviewBase.rebateChange,
-            usersChange: overviewBase.usersChange,
-            activeTradersChange: overviewBase.activeTradersChange,
-            netDepositChange: overviewBase.netDepositChange
+            volChange: cmp ? cmp.vol : 0,
+            rebateChange: cmp ? cmp.rebate : 0,
+            usersChange: cmp ? cmp.users : 0,
+            activeTradersChange: cmp ? cmp.activeTraders : 0,
+            netDepositChange: cmp ? cmp.netDeposit : 0
         };
     }
 
@@ -609,10 +617,28 @@
         return { self: triple.self / total, direct: triple.direct / total, partner: triple.partner / total };
     }
 
-    function formatDeltaPct(value) {
-        const cls = value >= 0 ? 'kpi-delta-up' : 'kpi-delta-down';
-        const sign = value >= 0 ? '+' : '';
-        return '<span class="' + cls + '">' + sign + value + '% vs 上周期</span>';
+    function prevFromPctChange(current, pctChange) {
+        if (!pctChange) return current;
+        return current / (1 + pctChange / 100);
+    }
+
+    function formatDeltaCompare(current, pctChange, opts) {
+        opts = opts || {};
+        if (!pctChange) {
+            return '<span class="kpi-delta-flat">较上周期持平</span>';
+        }
+        const delta = current - prevFromPctChange(current, pctChange);
+        const cls = delta >= 0 ? 'kpi-delta-up' : 'kpi-delta-down';
+        const pctSign = pctChange >= 0 ? '+' : '';
+        let deltaText;
+        if (opts.kind === 'count') {
+            deltaText = (delta >= 0 ? '+' : '') + Math.round(delta).toLocaleString();
+        } else if (opts.compact) {
+            deltaText = fmtCompactMoney(delta, opts.signed ? { signed: true } : {});
+        } else {
+            deltaText = (delta >= 0 ? '+' : '-') + fmtMoney(Math.abs(delta));
+        }
+        return '<span class="' + cls + '">' + deltaText + ' (' + pctSign + pctChange.toFixed(1) + '%) vs 上周期</span>';
     }
 
     function buildSignedDistributedSeries(total, points, seed) {
@@ -1116,7 +1142,7 @@
 
     function renderAnalytics() {
         const scale = PERIOD_SCALE[analyticsPeriod] || 1;
-        const scaled = computeOverviewScaled(scale);
+        const scaled = computeOverviewScaled(scale, analyticsPeriod);
 
         const setText = function (id, text) {
             const el = document.getElementById(id);
@@ -1129,15 +1155,15 @@
         };
 
         setText('analytics-kpi-vol', fmtCompactMoney(scaled.vol));
-        setHtml('analytics-kpi-vol-delta', formatDeltaPct(scaled.volChange));
+        setHtml('analytics-kpi-vol-delta', formatDeltaCompare(scaled.vol, scaled.volChange, { compact: true }));
         setText('analytics-kpi-rebate', fmtMoney(scaled.rebate));
-        setHtml('analytics-kpi-rebate-delta', formatDeltaPct(scaled.rebateChange));
+        setHtml('analytics-kpi-rebate-delta', formatDeltaCompare(scaled.rebate, scaled.rebateChange));
         setText('analytics-kpi-team-users', fmtNum(scaled.teamUsers));
-        setHtml('analytics-kpi-team-users-delta', formatDeltaPct(scaled.usersChange));
+        setHtml('analytics-kpi-team-users-delta', formatDeltaCompare(scaled.teamUsers, scaled.usersChange, { kind: 'count' }));
         setText('analytics-kpi-active-traders', fmtNum(scaled.activeTraders));
-        setHtml('analytics-kpi-active-traders-delta', formatDeltaPct(scaled.activeTradersChange));
+        setHtml('analytics-kpi-active-traders-delta', formatDeltaCompare(scaled.activeTraders, scaled.activeTradersChange, { kind: 'count' }));
         setText('analytics-kpi-net', fmtCompactMoney(scaled.net, { signed: true }));
-        setHtml('analytics-kpi-net-delta', formatDeltaPct(scaled.netDepositChange));
+        setHtml('analytics-kpi-net-delta', formatDeltaCompare(scaled.net, scaled.netDepositChange, { compact: true, signed: true }));
         setText('analytics-chart-period-tag', analyticsPeriod);
 
         renderAnalyticsTabContent(scaled);

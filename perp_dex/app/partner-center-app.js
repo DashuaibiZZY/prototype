@@ -324,13 +324,19 @@
         teamNetDeposit: 1240000,
         selfNetDeposit: 12000,
         directClientNetDeposit: 86000,
-        partnerTeamNetDeposit: 1142000,
-        volChange: 12.4,
-        rebateChange: 8.6,
-        usersChange: 2.8,
-        activeTradersChange: 3.1,
-        netDepositChange: 5.2
+        partnerTeamNetDeposit: 1142000
     };
+
+    const ANALYTICS_PERIOD_COMPARE = {
+        '1D': { vol: -4.2, rebate: -6.8, users: 0.6, activeTraders: -2.1, netDeposit: -11.3 },
+        '1W': { vol: 12.4, rebate: -3.5, users: 2.8, activeTraders: -1.2, netDeposit: -4.8 },
+        '1M': { vol: -8.6, rebate: -5.2, users: 4.1, activeTraders: 3.6, netDeposit: 6.4 },
+        '3M': { vol: 15.2, rebate: 9.8, users: 6.2, activeTraders: -4.5, netDeposit: -9.1 }
+    };
+
+    function getAnalyticsCompare(period) {
+        return ANALYTICS_PERIOD_COMPARE[period] || ANALYTICS_PERIOD_COMPARE['1W'];
+    }
 
     function fmtCompactMoney(n, opts) {
         opts = opts || {};
@@ -478,11 +484,11 @@
         delta = delta || false;
         const netClass = scaled.net >= 0 ? 'text-green-600' : 'text-red-500';
         return compactKpiPanel([
-            { label: '团队交易额', value: fmtCompactMoney(scaled.vol), extra: delta ? formatDeltaPct(scaled.volChange) : '' },
-            { label: '返佣收入', value: fmtMoney(scaled.rebate), extra: delta ? formatDeltaPct(scaled.rebateChange) : '' },
-            { label: '团队人数', value: fmtNum(scaled.teamUsers), extra: delta ? formatDeltaPct(scaled.usersChange) : '' },
-            { label: '交易人数', value: fmtNum(scaled.activeTraders), extra: delta ? formatDeltaPct(scaled.activeTradersChange) : '' },
-            { label: '团队净入金', value: fmtCompactMoney(scaled.net, { signed: true }), valueClass: netClass, span2: true, extra: delta ? formatDeltaPct(scaled.netDepositChange) : '' }
+            { label: '团队交易额', value: fmtCompactMoney(scaled.vol), extra: delta ? formatDeltaCompare(scaled.vol, scaled.volChange, { compact: true }) : '' },
+            { label: '返佣收入', value: fmtMoney(scaled.rebate), extra: delta ? formatDeltaCompare(scaled.rebate, scaled.rebateChange) : '' },
+            { label: '团队人数', value: fmtNum(scaled.teamUsers), extra: delta ? formatDeltaCompare(scaled.teamUsers, scaled.usersChange, { kind: 'count' }) : '' },
+            { label: '交易人数', value: fmtNum(scaled.activeTraders), extra: delta ? formatDeltaCompare(scaled.activeTraders, scaled.activeTradersChange, { kind: 'count' }) : '' },
+            { label: '团队净入金', value: fmtCompactMoney(scaled.net, { signed: true }), valueClass: netClass, span2: true, extra: delta ? formatDeltaCompare(scaled.net, scaled.netDepositChange, { compact: true, signed: true }) : '' }
         ]);
     }
 
@@ -801,7 +807,8 @@
         return { items: items.slice(start, start + perPage), page: p, total: total, pages: pages, hasMore: p < pages };
     }
 
-    function computeOverviewScaled(scale) {
+    function computeOverviewScaled(scale, period) {
+        const cmp = period ? getAnalyticsCompare(period) : null;
         return {
             vol: overviewBase.teamVol * scale,
             rebate: overviewBase.totalRebate * scale,
@@ -823,11 +830,11 @@
             selfNetDeposit: overviewBase.selfNetDeposit * scale,
             directClientNetDeposit: overviewBase.directClientNetDeposit * scale,
             partnerTeamNetDeposit: overviewBase.partnerTeamNetDeposit * scale,
-            volChange: overviewBase.volChange,
-            rebateChange: overviewBase.rebateChange,
-            usersChange: overviewBase.usersChange,
-            activeTradersChange: overviewBase.activeTradersChange,
-            netDepositChange: overviewBase.netDepositChange
+            volChange: cmp ? cmp.vol : 0,
+            rebateChange: cmp ? cmp.rebate : 0,
+            usersChange: cmp ? cmp.users : 0,
+            activeTradersChange: cmp ? cmp.activeTraders : 0,
+            netDepositChange: cmp ? cmp.netDeposit : 0
         };
     }
 
@@ -844,10 +851,28 @@
         return { self: triple.self / total, direct: triple.direct / total, partner: triple.partner / total };
     }
 
-    function formatDeltaPct(value) {
-        const cls = value >= 0 ? 'text-green-600' : 'text-red-500';
-        const sign = value >= 0 ? '+' : '';
-        return '<span class="text-[9px] font-bold ' + cls + '">' + sign + value + '% vs 上周期</span>';
+    function prevFromPctChange(current, pctChange) {
+        if (!pctChange) return current;
+        return current / (1 + pctChange / 100);
+    }
+
+    function formatDeltaCompare(current, pctChange, opts) {
+        opts = opts || {};
+        if (!pctChange) {
+            return '<span class="text-[9px] font-bold text-gray-400">较上周期持平</span>';
+        }
+        const delta = current - prevFromPctChange(current, pctChange);
+        const cls = delta >= 0 ? 'text-green-600' : 'text-red-500';
+        const pctSign = pctChange >= 0 ? '+' : '';
+        let deltaText;
+        if (opts.kind === 'count') {
+            deltaText = (delta >= 0 ? '+' : '') + Math.round(delta).toLocaleString();
+        } else if (opts.compact) {
+            deltaText = fmtCompactMoney(delta, opts.signed ? { signed: true } : {});
+        } else {
+            deltaText = (delta >= 0 ? '+' : '-') + fmtMoney(Math.abs(delta));
+        }
+        return '<span class="text-[9px] font-bold ' + cls + '">' + deltaText + ' (' + pctSign + pctChange.toFixed(1) + '%) vs 上周期</span>';
     }
 
     function formatMetricValue(metric, value, opts) {
@@ -1194,7 +1219,7 @@ function renderTeamList(scaled) {
 
 function renderAnalytics() {
     const scale = PERIOD_SCALE[analyticsPeriod] || 1;
-    const scaled = computeOverviewScaled(scale);
+    const scaled = computeOverviewScaled(scale, analyticsPeriod);
     const kpi = document.getElementById('analytics-kpi-grid');
     if (kpi) kpi.innerHTML = teamOverviewKpiPanel(scaled, true);
     const dimTabs = document.getElementById('analytics-dim-tabs');
