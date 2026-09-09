@@ -10,6 +10,12 @@
             ]
         },
         {
+            title: '邀请返佣',
+            items: [
+                { key: 'invite-rebate', label: '邀请返佣管理', href: '邀请返佣后台.html' }
+            ]
+        },
+        {
             title: '合伙人中心',
             items: [
                 { key: 'agent-mgmt', label: '合伙人管理', href: '代理中心后台.html#agent' },
