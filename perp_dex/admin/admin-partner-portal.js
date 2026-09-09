@@ -70,7 +70,7 @@
             { date: '2024-05-22', vol: 1240000, rebate: 868, status: 'settled' },
             { date: '2024-05-21', vol: 980000, rebate: 686, status: 'settled' },
             { date: '2024-05-20', vol: 86800, rebate: 61, status: 'pending' },
-            { date: '2024-05-19', vol: 820000, rebate: 1003, violationDeduction: 342.23, status: 'pending' },
+            { date: '2024-05-19', vol: 820000, rebate: 1003, violationDeduction: 342.23, violationReason: '经风控核查，该结算日伞下存在异常刷单交易，按合伙人协议第 8.2 条扣减相应返佣。', status: 'pending' },
             { date: '2024-05-18', vol: 650000, rebate: 455, status: 'settled' },
             { date: '2024-05-17', vol: 420000, rebate: 294, status: 'pending' },
             { date: '2024-05-16', vol: 380000, rebate: 266, status: 'settled' },
@@ -252,7 +252,7 @@
 
     const SETTLEMENT_BATCH_DETAILS = {
         '2024-05-23': [
-            { id: 'sr1', wallet: '0xAbn...L1', uid: '100811', level: 1, ratio: 68, parentWallet: null, vol: '$1M', originalRebate: 6800, actualRebate: 6500, originalSettlementDate: '2024-05-23' },
+            { id: 'sr1', wallet: '0xAbn...L1', uid: '100811', level: 1, ratio: 68, parentWallet: null, vol: '$1M', originalRebate: 6800, actualRebate: 6500, deductionReason: '演示·渠道异常交易扣减', originalSettlementDate: '2024-05-23' },
             { id: 'sr2', wallet: '0xAbn...L4', uid: '100815', level: 4, ratio: 50, parentWallet: '0xAbn...L3', vol: '$128k', originalRebate: 640, actualRebate: 640, originalSettlementDate: '2024-05-23' },
             { id: 'sr3', wallet: '0xNorm...L1', uid: '100801', level: 1, ratio: 70, parentWallet: null, vol: '$2.1M', originalRebate: 4200, actualRebate: 4200, originalSettlementDate: '2024-05-23' }
         ],
@@ -814,9 +814,38 @@
     function userViewRebateCell(row) {
         let html = '<span class="font-black text-blue-600">' + fmtMoney(row.rebate) + '</span>';
         if (row.violationDeduction) {
-            html += '<span class="block text-[9px] text-red-600 font-bold mt-0.5">违规 −' + fmtMoney(row.violationDeduction) + '</span>';
+            const label = '违规 −' + fmtMoney(row.violationDeduction);
+            const tip = row.violationReason || '违规扣除原因由后台配置';
+            html += '<span class="block mt-0.5"><span class="user-scale-hint-wrap inline-flex">' +
+                '<span class="user-scale-hint-label text-[9px] text-red-600 font-bold">' + label + '</span>' +
+                '<span class="user-scale-hint-pop" role="tooltip">' + tip + '</span></span></span>';
         }
         return html;
+    }
+
+    function applyDeductionToUserViewSettlement(date, originalRebate, actualRebate, deductionReason) {
+        const rec = DEFAULT_USER_VIEW_SETTLEMENT.records.find(function (r) { return r.date === date; });
+        if (!rec) return;
+        const ded = Math.max(0, (originalRebate || 0) - (actualRebate || 0));
+        rec.rebate = actualRebate;
+        if (ded > 0.001) {
+            rec.violationDeduction = ded;
+            rec.violationReason = (deductionReason || '').trim() || '违规扣除原因由后台配置';
+        } else {
+            delete rec.violationDeduction;
+            delete rec.violationReason;
+        }
+    }
+
+    function applyDeductionToBatchRow(row, actualRebate, deductionReason) {
+        row.actualRebate = actualRebate;
+        const ded = Math.max(0, (row.originalRebate || 0) - actualRebate);
+        if (ded > 0.001) {
+            row.deductionReason = (deductionReason || '').trim();
+        } else {
+            row.deductionReason = '';
+        }
+        applyDeductionToUserViewSettlement(row.originalSettlementDate || currentBatchDate, row.originalRebate, actualRebate, row.deductionReason);
     }
 
     function renderPartnerSettlementSection(u, prefix) {
@@ -2230,7 +2259,8 @@
             const parentCell = r.parentWallet ? chip(r.parentWallet, 'wallet') : '<span class="text-slate-500">一级</span>';
             const origCell = '<span class="font-bold">' + fmtMoney(r.originalRebate) + '</span>';
             const actualCell = '<span class="text-blue-600 font-black">' + fmtMoney(r.actualRebate) + '</span>' +
-                (isRowModified(r) ? '<span class="block text-[9px] text-orange-600 font-bold mt-0.5">已调减</span>' : '');
+                (isRowModified(r) ? '<span class="block text-[9px] text-orange-600 font-bold mt-0.5">已调减</span>' : '') +
+                (r.deductionReason ? '<span class="block text-[9px] text-slate-500 font-medium mt-0.5 max-w-[220px] truncate" title="' + r.deductionReason.replace(/"/g, '&quot;') + '">' + r.deductionReason + '</span>' : '');
             const editBtn = '<button type="button" onclick="PartnerPortal.openEditActual(\'' + r.id + '\')" class="text-blue-600 font-bold hover:underline text-[10px]">修改</button>';
             return '<tr class="hover:bg-slate-50">' +
                 '<td class="px-4 py-4"><div class="font-bold">' + chip(r.wallet, 'wallet') + '</div><div class="mt-1">' + chip(r.uid, 'uid') + '</div></td>' +
@@ -2476,8 +2506,8 @@
             if (lines) lines.placeholder = '0xAbn...L4,2024-05-21,1856.40\n100815,2024-10-01,2300';
         } else {
             if (title) title.textContent = '批量修改批次实发佣金 · ' + currentBatchDate;
-            if (hint) hint.innerHTML = '每行：<strong>钱包或UID,实发金额</strong>。实发不得高于原始佣金。';
-            if (lines) lines.placeholder = '0xAbn...L1,6500\n100801,4200';
+            if (hint) hint.innerHTML = '每行：<strong>钱包或UID,实发金额,佣金扣除原因说明</strong>（第三列在实发低于原始佣金时必填）。也支持上传 CSV / TXT。实发不得高于原始佣金。';
+            if (lines) lines.placeholder = '100801,1003,经风控核查存在刷单违规\n0xAbn...L1,6500,渠道异常交易扣减';
         }
         if (lines) lines.value = '';
         const results = document.getElementById('batch-edit-results');
@@ -2543,12 +2573,13 @@
                 entries.push({ line: idx + 1, key: key, originalDate: originalDate, amount: amount });
             } else {
                 if (parts.length < 2) {
-                    entries.push({ line: idx + 1, key: line, amount: NaN, error: '格式错误，需：钱包或UID,实发金额' });
+                    entries.push({ line: idx + 1, key: line, amount: NaN, error: '格式错误，需：钱包或UID,实发金额[,佣金扣除原因说明]' });
                     return;
                 }
-                const amount = parseFloat(parts[parts.length - 1].replace(/[$,]/g, ''));
-                const key = parts.slice(0, parts.length - 1).join(',').trim();
-                entries.push({ line: idx + 1, key: key, amount: amount });
+                const amount = parseFloat(parts[1].replace(/[$,]/g, ''));
+                const key = parts[0].trim();
+                const reason = parts.slice(2).join(',').trim();
+                entries.push({ line: idx + 1, key: key, amount: amount, deductionReason: reason });
             }
         });
         return entries;
@@ -2587,8 +2618,13 @@
                     results.push({ key: row.wallet, amount: e.amount, status: 'fail', reason: '高于原始佣金 ' + fmtMoney(row.originalRebate) });
                     return;
                 }
-                row.actualRebate = e.amount;
-                results.push({ key: row.wallet + ' / ' + row.uid, amount: e.amount, status: 'ok', reason: '已更新' });
+                const ded = row.originalRebate - e.amount;
+                if (ded > 0.001 && !e.deductionReason) {
+                    results.push({ key: row.wallet + ' / ' + row.uid, amount: e.amount, status: 'fail', reason: '实发低于原始佣金时须填写扣除原因' });
+                    return;
+                }
+                applyDeductionToBatchRow(row, e.amount, e.deductionReason);
+                results.push({ key: row.wallet + ' / ' + row.uid, amount: e.amount, status: 'ok', reason: e.deductionReason ? '已更新（含扣除原因）' : '已更新' });
             }
         });
         return results;
@@ -2636,12 +2672,16 @@
         document.getElementById('edit-actual-hint').textContent = '原始佣金 ' + fmtMoney(row.originalRebate) + '，实发不得高于原始佣金。';
         document.getElementById('edit-actual-input').value = row.actualRebate;
         document.getElementById('edit-actual-input').max = row.originalRebate;
+        const reasonEl = document.getElementById('edit-actual-reason');
+        if (reasonEl) reasonEl.value = row.deductionReason || '';
         document.getElementById('modal-edit-actual').classList.remove('hidden');
     }
 
     function closeEditActualModal() {
         document.getElementById('modal-edit-actual').classList.add('hidden');
         batchEditRowIds = null;
+        const reasonEl = document.getElementById('edit-actual-reason');
+        if (reasonEl) reasonEl.value = '';
     }
 
     function saveEditActual() {
@@ -2655,7 +2695,13 @@
         if (batchEditRowIds.length === 1) {
             const row = targets[0];
             if (val > row.originalRebate) { alert('实发佣金不能高于原始佣金 ' + fmtMoney(row.originalRebate)); return; }
-            row.actualRebate = val;
+            const reasonEl = document.getElementById('edit-actual-reason');
+            const reason = reasonEl ? reasonEl.value.trim() : '';
+            if (val < row.originalRebate && !reason) {
+                alert('实发低于原始佣金时，请填写佣金扣除原因说明');
+                return;
+            }
+            applyDeductionToBatchRow(row, val, reason);
         } else {
             targets.forEach(function (row) {
                 const capped = Math.min(val, row.originalRebate);
