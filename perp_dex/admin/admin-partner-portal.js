@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-43';
+    const DATA_VERSION = 'partner-demo-44';
     /** 原型：从权限配置 u_ops（运营小王）读取合伙人管理数据范围 */
     const DEMO_PERM_USER_ID = 'u_ops';
     const CURRENT_OPERATOR = 'allen@forx.fi';
@@ -573,14 +573,13 @@
         const chipEl = document.getElementById('agent-overview-scope-chip');
         const l1LabelEl = document.getElementById('agent-overview-l1-label');
         const l1SubEl = document.getElementById('agent-overview-l1-sub');
-        const extraEl = document.getElementById('agent-overview-extra');
 
         if (titleEl) {
             titleEl.textContent = scope === 'global' ? '平台合伙人数据概览' : '我的代理业绩概览';
         }
         if (subEl) {
             subEl.textContent = scope === 'global'
-                ? ('汇总全站 ' + m.l1Count + ' 个一级伞 · 统计周期 ' + period + ' · 指标为各一级伞向下整伞合计')
+                ? ('全站 ' + m.l1Count + ' 个一级伞 · 周期 ' + period + ' · 各一级伞向下整伞合计')
                 : ('汇总本人负责 ' + m.l1Count + ' 个一级伞 · 配置运营 ' + CURRENT_OPERATOR + ' · 周期 ' + period);
         }
         if (chipEl) {
@@ -611,27 +610,19 @@
         const depEl = document.getElementById('agent-overview-net-deposit');
         if (depEl) {
             depEl.textContent = fmtSignedMoney(m.netDeposit);
-            depEl.className = 'text-2xl font-black ' + (m.netDeposit >= 0 ? 'text-green-400' : 'text-red-300');
+            depEl.className = 'text-2xl font-black flex-1 ' + (m.netDeposit >= 0 ? 'text-green-400' : 'text-red-300');
         }
         setText('agent-overview-users', m.usersActive.toLocaleString() + ' / ' + m.usersTotal.toLocaleString());
-        setText('agent-overview-pending', m.pendingSettlement ? fmtMoney(m.pendingSettlement) : '—');
+        const pendingEl = document.getElementById('agent-overview-pending');
+        if (pendingEl) {
+            pendingEl.textContent = m.pendingSettlement ? fmtMoney(m.pendingSettlement) : '—';
+            pendingEl.className = 'text-2xl font-black flex-1' + (m.pendingSettlement ? ' text-amber-200' : '');
+        }
         const pendingSubEl = document.getElementById('agent-overview-pending-sub');
         if (pendingSubEl) {
             pendingSubEl.textContent = m.frozenCount
-                ? (m.frozenCount + ' 个一级伞存在冻结待结算')
+                ? (m.frozenCount + ' 个一级伞冻结待结算')
                 : '无冻结一级伞';
-        }
-        if (extraEl) {
-            const parts = [
-                '<span>正常结算一级伞 <b class="text-green-300">' + m.normalCount + '</b></span>',
-                '<span>冻结待结算一级伞 <b class="text-amber-300">' + m.frozenCount + '</b></span>',
-                '<span>活跃交易用户 <b class="text-white">' + m.usersActive.toLocaleString() + '</b></span>',
-                '<span>伞下总用户 <b class="text-white">' + m.usersTotal.toLocaleString() + '</b></span>'
-            ];
-            if (scope === 'global' && m.operators.length) {
-                parts.push('<span>负责 BD：<b class="text-white">' + m.operators.join(' · ') + '</b></span>');
-            }
-            extraEl.innerHTML = parts.join('');
         }
         updatePeriodTabUi('list', period);
     }
