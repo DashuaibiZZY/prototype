@@ -1100,7 +1100,9 @@ function renderShareSheet() {
             if (stackMode) {
                 if (stackMode === 'commission-detail') app.closeCommissionDetail();
                 else if (stackMode === 'drill') app.drillBack();
+                return;
             }
+            window.location.href = '个人中心.html';
         },
 
         switchTab: function (tab) {
