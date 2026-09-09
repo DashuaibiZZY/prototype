@@ -3,7 +3,7 @@
  */
 (function () {
     const OPS_CAP = 80;
-    const DATA_VERSION = 'partner-demo-45';
+    const DATA_VERSION = 'partner-demo-46';
     /** 原型：从权限配置 u_ops（运营小王）读取合伙人管理数据范围 */
     const DEMO_PERM_USER_ID = 'u_ops';
     const CURRENT_OPERATOR = 'allen@forx.fi';
@@ -523,6 +523,9 @@
             search.placeholder = scope === 'global' ? '全站一级伞内搜索' : '本人负责一级伞内搜索';
         }
         renderAgentOverview();
+        if (window.PartnerApplications && PartnerApplications.renderApplicationOverview) {
+            PartnerApplications.renderApplicationOverview();
+        }
     }
 
     function getOverviewScopeL1Ids() {
@@ -4480,6 +4483,8 @@
         closeCommissionTradesModal: closeCommissionTradesModal,
         downloadSettlementReconciliationPackage: downloadSettlementReconciliationPackage,
         applyHashTree: applyHashTree, DATA_VERSION: DATA_VERSION,
+        getAgentDataScope: getAgentDataScope,
+        getCurrentOperatorEmail: function () { return CURRENT_OPERATOR; },
         applyPartnerApprovalEffect: applyPartnerApprovalEffect,
         applyL1BindFromApplication: applyL1BindFromApplication,
         previewBindPartnerFromUid: previewBindPartnerFromUid

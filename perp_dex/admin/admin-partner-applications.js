@@ -124,9 +124,78 @@
             inviteNetDeposit: 12000,
             status: 'rejected',
             rejectReason: '社群规模与推广经验资料不足，建议补充渠道证明后重新申请。',
-            appliedAt: '2026-08-20 11:00'
+            appliedAt: '2026-08-20 11:00',
+            resolvedAt: '2026-08-21 09:30'
+        },
+        {
+            id: 'APP20260815005',
+            uid: '100910',
+            wallet: '0xKol...Echo',
+            email: 'echo@forx.io',
+            loginMethod: 'email',
+            partnerIdentity: '普通用户',
+            adminOperator: 'allen@forx.fi',
+            socialFollowers: 68000,
+            communitySize: 4200,
+            monthlyVolEstimate: 980000,
+            contactChannel: 'Telegram',
+            contactAccount: '@echo_trade',
+            x: '@echo_forx',
+            youtube: '',
+            experience: '华语合约带单社群 4200 人，月推广成交稳定。',
+            attachments: [{ name: '社群截图.png', type: 'image' }],
+            vol30d: 720000,
+            inviteCount: 28,
+            inviteVol30d: 210000,
+            inviteVolTotal: 640000,
+            accountEquity: 42000,
+            netDeposit: 58000,
+            inviteNetDeposit: 145000,
+            status: 'approved',
+            appliedAt: '2026-08-15 10:20',
+            resolvedAt: '2026-08-16 15:00'
+        },
+        {
+            id: 'APP20260812006',
+            uid: '100905',
+            wallet: '0xKol...Fox',
+            email: '',
+            loginMethod: 'wallet',
+            partnerIdentity: '普通用户',
+            adminOperator: '',
+            socialFollowers: 210000,
+            communitySize: 9800,
+            monthlyVolEstimate: 3200000,
+            contactChannel: 'Telegram',
+            contactAccount: '@fox_alpha',
+            x: '@fox_perp',
+            youtube: 'FoxPerpCN',
+            experience: 'YouTube + TG 双渠道，月预估成交 300 万 USDT 以上。',
+            attachments: [
+                { name: '频道后台.png', type: 'image' },
+                { name: '流水证明.pdf', type: 'pdf' }
+            ],
+            vol30d: 2100000,
+            inviteCount: 86,
+            inviteVol30d: 680000,
+            inviteVolTotal: 1950000,
+            accountEquity: 128000,
+            netDeposit: 165000,
+            inviteNetDeposit: 380000,
+            status: 'pending',
+            appliedAt: '2026-08-12 08:00'
         }
     ];
+
+    const APP_OPERATOR = 'allen@forx.fi';
+    const APP_DEMO_TODAY = new Date('2026-08-28T12:00:00');
+    const APP_OVERVIEW_PERIOD_DAYS = { '7D': 7, '30D': 30, '90D': 90 };
+    const APP_OVERVIEW_COMPARE = {
+        '7D': { backlog: 1, submit: 33.3, approved: 0, rejected: 0, highPotential: 0, avgVol: 15.2 },
+        '30D': { backlog: 2, submit: 25, approved: 100, rejected: 0, highPotential: 50, avgVol: 8.6 },
+        '90D': { backlog: 3, submit: 40, approved: 100, rejected: -50, highPotential: 100, avgVol: 12.1 },
+        'ALL': { backlog: 4, submit: 50, approved: 100, rejected: 0, highPotential: 100, avgVol: 18.4 }
+    };
 
     let appListPage = 1;
     let appListFilters = { q: '', contact: '', x: '', youtube: '' };
@@ -152,6 +221,203 @@
 
     function getApplication(id) {
         return PARTNER_APPLICATIONS.find(function (a) { return a.id === id; });
+    }
+
+    function getAppDataScope() {
+        if (window.PartnerPortal && PartnerPortal.getAgentDataScope) return PartnerPortal.getAgentDataScope();
+        return 'personal';
+    }
+
+    function getAppOperatorEmail() {
+        if (window.PartnerPortal && PartnerPortal.getCurrentOperatorEmail) return PartnerPortal.getCurrentOperatorEmail();
+        return APP_OPERATOR;
+    }
+
+    function isApplicationInScope(app) {
+        if (!app) return false;
+        if (getAppDataScope() === 'global') return true;
+        const op = app.adminOperator || '';
+        return !op || op === getAppOperatorEmail();
+    }
+
+    function getScopedApplications() {
+        return PARTNER_APPLICATIONS.filter(isApplicationInScope);
+    }
+
+    function parseAppDate(str) {
+        if (!str) return null;
+        return new Date(String(str).replace(' ', 'T') + ':00');
+    }
+
+    function isDateInOverviewPeriod(dateStr, period) {
+        if (period === 'ALL') return true;
+        const d = parseAppDate(dateStr);
+        if (!d) return false;
+        const days = APP_OVERVIEW_PERIOD_DAYS[period];
+        if (!days) return true;
+        const start = new Date(APP_DEMO_TODAY);
+        start.setDate(start.getDate() - days);
+        return d >= start && d <= APP_DEMO_TODAY;
+    }
+
+    function isHighPotentialApp(app) {
+        return (app.monthlyVolEstimate || 0) >= 1000000 || (app.vol30d || 0) >= 500000;
+    }
+
+    function isBacklogApp(app) {
+        return app.status === 'pending' || app.status === 'reviewing';
+    }
+
+    function appOverviewCompareDelta(current, pctChange) {
+        if (!pctChange) return 0;
+        return current - current / (1 + pctChange / 100);
+    }
+
+    function appOverviewCompareClass(delta) {
+        if (delta > 0) return 'text-green-400';
+        if (delta < 0) return 'text-red-300';
+        return 'text-slate-400';
+    }
+
+    function formatAppOverviewCompareCount(current, pctChange) {
+        if (!pctChange) {
+            return '<span class="text-slate-400 font-bold">较上周期持平</span>';
+        }
+        const delta = appOverviewCompareDelta(current, pctChange);
+        const cls = appOverviewCompareClass(delta);
+        const deltaSign = delta >= 0 ? '+' : '';
+        const pctSign = pctChange >= 0 ? '+' : '';
+        return '<span class="' + cls + ' font-bold">' +
+            deltaSign + Math.round(delta).toLocaleString() +
+            ' (' + pctSign + pctChange.toFixed(1) + '%) vs 上周期</span>';
+    }
+
+    function formatAppOverviewCompareMoney(current, pctChange) {
+        if (!pctChange) {
+            return '<span class="text-slate-400 font-bold">较上周期持平</span>';
+        }
+        const delta = appOverviewCompareDelta(current, pctChange);
+        const cls = appOverviewCompareClass(delta);
+        const pctSign = pctChange >= 0 ? '+' : '';
+        const deltaText = (delta >= 0 ? '+' : '-') + fmtMoney(Math.abs(delta)).replace('$', '$');
+        return '<span class="' + cls + ' font-bold">' +
+            deltaText + ' (' + pctSign + pctChange.toFixed(1) + '%) vs 上周期</span>';
+    }
+
+    function setAppOverviewCompareHtml(id, html) {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = html;
+    }
+
+    function computeApplicationOverviewMetrics(period) {
+        const scoped = getScopedApplications();
+        const backlogApps = scoped.filter(isBacklogApp);
+        const pendingCount = scoped.filter(function (a) { return a.status === 'pending'; }).length;
+        const reviewingCount = scoped.filter(function (a) { return a.status === 'reviewing'; }).length;
+        const periodApps = scoped.filter(function (a) { return isDateInOverviewPeriod(a.appliedAt, period); });
+        const approvedCount = periodApps.filter(function (a) { return a.status === 'approved'; }).length;
+        const rejectedCount = periodApps.filter(function (a) { return a.status === 'rejected'; }).length;
+        const highPotential = backlogApps.filter(isHighPotentialApp).length;
+        const partnerIdentityBacklog = backlogApps.filter(function (a) { return isMultiLevelPartner(a.partnerIdentity); }).length;
+        let avgVol = 0;
+        if (backlogApps.length) {
+            const sum = backlogApps.reduce(function (s, a) { return s + (a.monthlyVolEstimate || 0); }, 0);
+            avgVol = sum / backlogApps.length;
+        }
+        return {
+            backlog: backlogApps.length,
+            pendingCount: pendingCount,
+            reviewingCount: reviewingCount,
+            submit: periodApps.length,
+            approved: approvedCount,
+            rejected: rejectedCount,
+            highPotential: highPotential,
+            partnerIdentityBacklog: partnerIdentityBacklog,
+            avgVol: avgVol,
+            totalScoped: scoped.length
+        };
+    }
+
+    function updateAppOverviewPeriodUi(period) {
+        document.querySelectorAll('.app-overview-period-btn').forEach(function (btn) {
+            const active = btn.getAttribute('data-period') === period;
+            btn.className = 'app-overview-period-btn px-3 py-1 rounded border text-[11px] font-bold ' +
+                (active ? 'bg-white text-slate-900 border-white' : 'border-white/20 text-slate-200 hover:bg-white/10');
+        });
+    }
+
+    function renderApplicationOverview() {
+        const scope = getAppDataScope();
+        const period = appOverviewPeriod || '30D';
+        const m = computeApplicationOverviewMetrics(period);
+        const cmp = APP_OVERVIEW_COMPARE[period] || APP_OVERVIEW_COMPARE['30D'];
+        const titleEl = document.getElementById('app-overview-title');
+        const subEl = document.getElementById('app-overview-subtitle');
+        const chipEl = document.getElementById('app-overview-scope-chip');
+        const hintEl = document.getElementById('app-list-scope-hint');
+
+        if (titleEl) {
+            titleEl.textContent = scope === 'global' ? '平台合伙人申请概览' : '我的待审申请概览';
+        }
+        if (subEl) {
+            subEl.textContent = scope === 'global'
+                ? ('全站 ' + m.totalScoped + ' 条申请记录 · 周期 ' + period + ' · 待处理为当前快照')
+                : ('可见 ' + m.totalScoped + ' 条 · 未分配或归属 ' + getAppOperatorEmail() + ' · 周期 ' + period);
+        }
+        if (chipEl) {
+            chipEl.textContent = scope === 'global' ? '数据权限: 全局' : '数据权限: 个人';
+            chipEl.className = scope === 'global'
+                ? 'bg-violet-500/20 text-violet-200 px-3 py-1 rounded-full font-bold text-[10px]'
+                : 'bg-white/10 text-slate-200 px-3 py-1 rounded-full font-bold text-[10px]';
+        }
+        if (hintEl) {
+            const base = '上方概览按<strong>数据权限</strong>汇总申请单；周期内提交 / 通过 / 驳回按<strong>申请时间</strong>统计。<strong>待处理</strong>与<strong>高潜待审</strong>为当前快照，不随周期切换。';
+            if (scope === 'personal') {
+                hintEl.innerHTML = base + ' <span class="text-slate-500">· 个人权限可见未分配负责 BD 的申请 + 本人负责 BD 的申请。</span>';
+            } else {
+                hintEl.innerHTML = base + ' <span class="text-slate-500">· 全局权限可见全部申请单。</span>';
+            }
+        }
+
+        const setText = function (id, text) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        };
+
+        setText('app-overview-backlog', m.backlog.toLocaleString());
+        setText('app-overview-backlog-sub', m.pendingCount + ' 待审核 · ' + m.reviewingCount + ' 审核中');
+        setAppOverviewCompareHtml('app-overview-backlog-compare', formatAppOverviewCompareCount(m.backlog, cmp.backlog));
+
+        setText('app-overview-submit', m.submit.toLocaleString());
+        setAppOverviewCompareHtml('app-overview-submit-compare', formatAppOverviewCompareCount(m.submit, cmp.submit));
+
+        setText('app-overview-approved', m.approved.toLocaleString());
+        setAppOverviewCompareHtml('app-overview-approved-compare', formatAppOverviewCompareCount(m.approved, cmp.approved));
+
+        setText('app-overview-rejected', m.rejected.toLocaleString());
+        setAppOverviewCompareHtml('app-overview-rejected-compare', formatAppOverviewCompareCount(m.rejected, cmp.rejected));
+
+        setText('app-overview-high-potential', m.highPotential.toLocaleString());
+        const highPct = m.backlog ? Math.round((m.highPotential / m.backlog) * 100) : 0;
+        setText('app-overview-high-potential-sub', m.backlog
+            ? ('占待处理 ' + highPct + '% · 月预估 ≥ $1M 或近30日 ≥ $500K')
+            : '无待处理申请');
+        setAppOverviewCompareHtml('app-overview-high-potential-compare', formatAppOverviewCompareCount(m.highPotential, cmp.highPotential));
+
+        setText('app-overview-avg-vol', m.backlog ? fmtMoney(m.avgVol) : '—');
+        setAppOverviewCompareHtml('app-overview-avg-vol-compare', m.backlog
+            ? formatAppOverviewCompareMoney(m.avgVol, cmp.avgVol)
+            : '<span class="text-slate-400 font-bold">—</span>');
+        setText('app-overview-partner-identity-sub', m.partnerIdentityBacklog
+            ? (m.partnerIdentityBacklog + ' 条待审已是合伙人身份 · 不可直接设一级')
+            : '无合伙人身份待审单');
+
+        updateAppOverviewPeriodUi(period);
+    }
+
+    function setAppOverviewPeriod(period) {
+        appOverviewPeriod = period;
+        renderApplicationOverview();
     }
 
     function matchesAppFilters(app) {
@@ -287,7 +553,9 @@
     }
 
     function renderApplicationList() {
-        const filtered = PARTNER_APPLICATIONS.filter(matchesAppFilters);
+        const filtered = PARTNER_APPLICATIONS.filter(function (a) {
+            return isApplicationInScope(a) && matchesAppFilters(a);
+        });
         const pageSize = 10;
         const total = filtered.length;
         const start = (appListPage - 1) * pageSize;
@@ -322,6 +590,7 @@
         if (window.AdminPagination) {
             AdminPagination.mount('partner-app-list-pagination', total, appListPage, 'partner-app-list', 10);
         }
+        renderApplicationOverview();
     }
 
     function renderApplicationDetail(id) {
@@ -604,6 +873,7 @@
         if (!reason) { alert('请填写驳回原因'); return; }
         app.status = 'rejected';
         app.rejectReason = reason;
+        app.resolvedAt = '2026-08-28 12:00';
         alert('演示：已驳回 UID ' + app.uid + ' 的合伙人计划申请');
         closeRejectModal();
         if (currentApplicationId) renderApplicationDetail(currentApplicationId);
@@ -629,8 +899,13 @@
         getCurrentId: function () { return currentApplicationId; },
         markApproved: function (applicationId) {
             const app = getApplication(applicationId);
-            if (app) app.status = 'approved';
-        }
+            if (app) {
+                app.status = 'approved';
+                app.resolvedAt = app.resolvedAt || '2026-08-28 12:00';
+            }
+        },
+        setAppOverviewPeriod: setAppOverviewPeriod,
+        renderApplicationOverview: renderApplicationOverview
     };
 
     document.addEventListener('DOMContentLoaded', function () {
