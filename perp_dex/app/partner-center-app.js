@@ -2,11 +2,16 @@
  * 合伙人中心 App 原型交互逻辑
  */
 (function () {
-    const DATA_VERSION = 'partner-app-02';
+    const DATA_VERSION = 'partner-app-03';
     const LIST_END_HINT = '已展示全部记录';
     const SCROLL_LOAD_HINT = '继续下滑加载更多';
     const SOURCE_LABELS = ['自己产生', '直属直客', '合伙人级差'];
     const SOURCE_COLORS = ['#93c5fd', '#3b82f6', '#1e3a8a'];
+    const SOURCE_STYLES = [
+        { fill: '#93c5fd', opacity: 0.88 },
+        { fill: '#3b82f6', opacity: 0.82 },
+        { fill: '#1e3a8a', opacity: 0.85 }
+    ];
     const ACTIVE_TRADERS_TIP = '交易用户数据每天 UTC+8 0 点更新';
     const TEAM_NET_DEPOSIT_TIP = '团队净入金数据每天 UTC+8 0 点更新';
     const PERIOD_SCALE = { '1D': 0.14, '1W': 1, '1M': 4.2, '3M': 12 };
@@ -481,12 +486,179 @@
         ]);
     }
 
-    function renderPeriodPicker(containerId, activePeriod, targetKey) {
-        const el = document.getElementById(containerId);
-        if (!el) return;
-        el.innerHTML = '<button type="button" class="period-picker-btn"' + clickHandler('openPeriodPicker', targetKey) + '>' +
-            '周期 · ' + esc(activePeriod) +
-            ' <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg></button>';
+    function compactAxisMoney(n) {
+        const abs = Math.abs(n);
+        if (abs >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+        if (abs >= 1000) return Math.round(n / 1000) + 'K';
+        return Math.round(n).toString();
+    }
+
+    function buildSignedDistributedSeries(total, points, seed) {
+        const rnd = createRng(seed);
+        const raw = [];
+        let sum = 0;
+        for (let i = 0; i < points; i++) {
+            const wave = Math.sin((i + 1) * 0.55) * 0.35;
+            const v = wave + (rnd() - 0.48) * 1.4;
+            raw.push(v);
+            sum += v;
+        }
+        if (Math.abs(sum) < 0.001) sum = sum >= 0 ? 1 : -1;
+        const scale = total / sum;
+        return raw.map(function (v) { return v * scale; });
+    }
+
+    function buildYAxisLabels(maxV, useMoneyAxis) {
+        const labels = [];
+        for (let g = 0; g <= 3; g++) {
+            const val = maxV * (1 - g / 3);
+            labels.push(useMoneyAxis ? compactAxisMoney(val) : fmtNum(Math.round(val)));
+        }
+        return labels;
+    }
+
+    function buildSignedYAxisLabels(minV, maxV, useMoneyAxis) {
+        const labels = [];
+        for (let g = 0; g <= 3; g++) {
+            const val = maxV - (maxV - minV) * (g / 3);
+            labels.push(useMoneyAxis ? compactAxisMoney(val) : fmtNum(Math.round(val)));
+        }
+        return labels;
+    }
+
+    function renderAnalyticsMultiLineChart(container, lineSeries, lineColors, period, useMoneyAxis) {
+        if (!container) return;
+        const points = lineSeries[0] ? lineSeries[0].length : 0;
+        if (!points) { container.innerHTML = ''; return; }
+        const W = 400, H = 160, pad = { l: 8, r: 10, t: 10, b: 22 };
+        const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+        let minV = 0, maxV = 0;
+        lineSeries.forEach(function (series) {
+            series.forEach(function (v) {
+                if (v < minV) minV = v;
+                if (v > maxV) maxV = v;
+            });
+        });
+        const span = maxV - minV || 1;
+        minV -= span * 0.12;
+        maxV += span * 0.12;
+        if (minV > 0) minV = 0;
+        if (maxV < 0) maxV = 0;
+        const xAt = function (i) { return pad.l + (points <= 1 ? pw / 2 : (i / (points - 1)) * pw); };
+        const yAt = function (v) { return pad.t + ph - ((v - minV) / (maxV - minV || 1)) * ph; };
+        let grid = '';
+        for (let g = 0; g <= 3; g++) {
+            const y = pad.t + (ph * g) / 3;
+            grid += '<line x1="' + pad.l + '" y1="' + y.toFixed(1) + '" x2="' + (W - pad.r) + '" y2="' + y.toFixed(1) + '" stroke="#f1f5f9" stroke-width="1"/>';
+        }
+        if (minV < 0 && maxV > 0) {
+            const zeroY = yAt(0);
+            grid += '<line x1="' + pad.l + '" y1="' + zeroY.toFixed(1) + '" x2="' + (W - pad.r) + '" y2="' + zeroY.toFixed(1) + '" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3 3"/>';
+        }
+        let labels = '';
+        for (let i = 0; i < points; i++) {
+            const text = formatLinksChartLabel(period, i, points);
+            if (!text) continue;
+            labels += '<text x="' + xAt(i).toFixed(1) + '" y="' + (H - 4) + '" text-anchor="middle" fill="#94a3b8" font-size="7" font-weight="700">' + esc(text) + '</text>';
+        }
+        let lines = '';
+        lineSeries.forEach(function (series, idx) {
+            const color = lineColors[idx] || '#3b82f6';
+            let path = '';
+            series.forEach(function (v, i) { path += (i ? ' L' : 'M') + xAt(i).toFixed(2) + ',' + yAt(v).toFixed(2); });
+            lines += '<path d="' + path + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+        });
+        const yAxisHtml = buildSignedYAxisLabels(minV, maxV, useMoneyAxis).map(function (label) {
+            return '<span>' + esc(label) + '</span>';
+        }).join('');
+        container.innerHTML = '<div class="analytics-chart-shell"><div class="analytics-chart-y-axis">' + yAxisHtml + '</div>' +
+            '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' + grid + lines + labels + '</svg></div>';
+    }
+
+    function renderAnalyticsStackedAreaChart(container, layerSeries, period, layerStyles, useMoneyAxis) {
+        if (!container) return;
+        const points = layerSeries[0] ? layerSeries[0].length : 0;
+        if (!points) { container.innerHTML = ''; return; }
+        const W = 400, H = 160, pad = { l: 8, r: 10, t: 10, b: 22 };
+        const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+        const totals = [];
+        for (let i = 0; i < points; i++) {
+            let sum = 0;
+            layerSeries.forEach(function (series) { sum += series[i]; });
+            totals.push(sum);
+        }
+        const maxV = Math.max.apply(null, totals) * 1.12 || 1;
+        const xAt = function (i) { return pad.l + (points <= 1 ? pw / 2 : (i / (points - 1)) * pw); };
+        const yAt = function (v) { return pad.t + ph - (v / maxV) * ph; };
+        function areaPath(bottom, top) {
+            let d = 'M' + xAt(0).toFixed(2) + ',' + yAt(bottom[0]).toFixed(2);
+            for (let i = 1; i < points; i++) d += ' L' + xAt(i).toFixed(2) + ',' + yAt(bottom[i]).toFixed(2);
+            for (let i = points - 1; i >= 0; i--) d += ' L' + xAt(i).toFixed(2) + ',' + yAt(top[i]).toFixed(2);
+            return d + ' Z';
+        }
+        const cumul = [];
+        layerSeries.forEach(function (_series, layerIdx) {
+            const bottom = layerIdx === 0 ? Array(points).fill(0) : cumul[layerIdx - 1].slice();
+            const top = bottom.map(function (b, i) { return b + layerSeries[layerIdx][i]; });
+            cumul.push(top);
+        });
+        let grid = '';
+        for (let g = 0; g <= 3; g++) {
+            const y = pad.t + (ph * g) / 3;
+            grid += '<line x1="' + pad.l + '" y1="' + y.toFixed(1) + '" x2="' + (W - pad.r) + '" y2="' + y.toFixed(1) + '" stroke="#f1f5f9" stroke-width="1"/>';
+        }
+        let labels = '';
+        totals.forEach(function (_v, i) {
+            const text = formatLinksChartLabel(period, i, points);
+            if (!text) return;
+            labels += '<text x="' + xAt(i).toFixed(1) + '" y="' + (H - 4) + '" text-anchor="middle" fill="#94a3b8" font-size="7" font-weight="700">' + esc(text) + '</text>';
+        });
+        let areas = '';
+        layerSeries.forEach(function (_series, layerIdx) {
+            const style = layerStyles[layerIdx] || { fill: '#3b82f6', opacity: 0.8 };
+            const bottom = layerIdx === 0 ? Array(points).fill(0) : cumul[layerIdx - 1];
+            areas += '<path d="' + areaPath(bottom, cumul[layerIdx]) + '" fill="' + style.fill + '" fill-opacity="' + (style.opacity || 0.8) + '"/>';
+        });
+        const yAxisHtml = buildYAxisLabels(maxV, useMoneyAxis).map(function (label) {
+            return '<span>' + esc(label) + '</span>';
+        }).join('');
+        container.innerHTML = '<div class="analytics-chart-shell"><div class="analytics-chart-y-axis">' + yAxisHtml + '</div>' +
+            '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' + grid + areas + labels + '</svg></div>';
+    }
+
+    function renderNetSourceLineChart(container, triple, period, seed) {
+        const pointCount = LINKS_CHART_POINTS[period] || 7;
+        renderAnalyticsMultiLineChart(container, [
+            buildSignedDistributedSeries(triple.self, pointCount, seed),
+            buildSignedDistributedSeries(triple.direct, pointCount, seed + 11),
+            buildSignedDistributedSeries(triple.partner, pointCount, seed + 23)
+        ], SOURCE_COLORS, period, true);
+    }
+
+    function renderStackedSourceChart(container, triple, period, seed, useMoneyAxis) {
+        const ratios = sourceRatios(triple);
+        const pointCount = LINKS_CHART_POINTS[period] || 7;
+        const totalSeries = buildDistributedSeries(triple.total, pointCount, seed);
+        renderAnalyticsStackedAreaChart(container, [
+            totalSeries.map(function (v) { return v * ratios.self; }),
+            totalSeries.map(function (v) { return v * ratios.direct; }),
+            totalSeries.map(function (v) { return v * ratios.partner; })
+        ], period, SOURCE_STYLES, useMoneyAxis);
+    }
+
+    function renderSourceLegendHtml() {
+        return '<div class="analytics-source-legend">' + SOURCE_LABELS.map(function (label, i) {
+            return '<span><i style="background:' + SOURCE_COLORS[i] + '"></i>' + esc(label) + '</span>';
+        }).join('') + '</div>';
+    }
+
+    function headerPeriodBtn(targetKey) {
+        return '<button type="button" class="header-text-btn"' + clickHandler('openPeriodPicker', targetKey) + '>周期</button>';
+    }
+
+    function headerFilterBtn() {
+        return '<button type="button" class="header-icon-btn" onclick="PartnerCenterApp.openCommissionFilter()" aria-label="筛选">' +
+            '<svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M3 4h18M7 12h10M10 20h4"/></svg></button>';
     }
 
     function renderPeriodSheetBody() {
@@ -853,9 +1025,13 @@
         if (title) title.textContent = '合伙人中心';
         if (action) {
             if (activeTab === 'links') {
-                action.innerHTML = '<button type="button" class="text-[11px] font-black text-blue-600" onclick="PartnerCenterApp.openCreateLink()">+</button>';
+                action.innerHTML = headerPeriodBtn('links');
             } else if (activeTab === 'team') {
-                action.innerHTML = '<button type="button" class="text-[11px] font-black text-blue-600" onclick="PartnerCenterApp.openAddPartner()">添加</button>';
+                action.innerHTML = headerPeriodBtn('team');
+            } else if (activeTab === 'analytics') {
+                action.innerHTML = headerPeriodBtn('analytics');
+            } else if (activeTab === 'commission') {
+                action.innerHTML = headerFilterBtn();
             } else {
                 action.innerHTML = '';
             }
@@ -864,7 +1040,6 @@
 
 
 function renderLinks() {
-    renderPeriodPicker('links-period-picker', linksPeriod, 'links');
     const scale = PERIOD_SCALE[linksPeriod] || 1;
     const summary = document.getElementById('links-summary');
     if (summary) {
@@ -916,7 +1091,6 @@ function metricMini(label, value) {
 }
 
 function renderTeam() {
-    renderPeriodPicker('team-period-picker', overviewPeriod, 'team');
     const scale = PERIOD_SCALE[overviewPeriod] || 1;
     const scaled = computeOverviewScaled(scale);
     const identity = document.getElementById('team-identity');
@@ -934,6 +1108,16 @@ function renderTeam() {
         subtabs.innerHTML =
             '<button type="button" class="sub-tab' + (activeTeamTable === 'sub-agent' ? ' active' : '') + '"' + clickHandler('setTeamTable', 'sub-agent') + '>直属下级合伙人</button>' +
             '<button type="button" class="sub-tab' + (activeTeamTable === 'direct-client' ? ' active' : '') + '"' + clickHandler('setTeamTable', 'direct-client') + '>自邀直客</button>';
+    }
+    const toolbar = document.getElementById('team-toolbar');
+    if (toolbar) {
+        if (activeTeamTable === 'sub-agent') {
+            toolbar.classList.remove('hidden');
+            toolbar.innerHTML = '<button type="button" class="inline-action-btn" onclick="PartnerCenterApp.openAddPartner()">+ 添加下级合伙人</button>';
+        } else {
+            toolbar.classList.add('hidden');
+            toolbar.innerHTML = '';
+        }
     }
     renderTeamList(scaled);
 }
@@ -987,7 +1171,6 @@ function renderTeamList(scaled) {
 }
 
 function renderAnalytics() {
-    renderPeriodPicker('analytics-period-picker', analyticsPeriod, 'analytics');
     const scale = PERIOD_SCALE[analyticsPeriod] || 1;
     const scaled = computeOverviewScaled(scale);
     const kpi = document.getElementById('analytics-kpi-grid');
@@ -1074,9 +1257,19 @@ function renderAnalyticsSections(scaled) {
             '<span class="font-black shrink-0 ml-2">' + clientMetric(row) + '</span></div>';
     }).join('') || '<p class="text-gray-400 text-[10px] py-2">暂无数据</p>';
     topHtml += '</div>';
-    sections.innerHTML = '<div class="section-card"><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">趋势 · ' + analyticsPeriod + '</p>' +
-        '<div class="analytics-chart-wrap" id="analytics-trend-chart"></div></div>' + distHtml + topHtml;
-    renderSimpleTrendChart(document.getElementById('analytics-trend-chart'), triple.total, analyticsPeriod, '#3b82f6');
+    const metricLabel = { vol: '交易额', rebate: '返佣', users: '人数', traders: '交易人数', net: '净入金' }[metric] || '趋势';
+    const seedMap = { '1D': 71, '1W': 83, '1M': 97, '3M': 113 };
+    const seed = (seedMap[analyticsPeriod] || 83) + ANALYTICS_METRICS.findIndex(function (m) { return m.key === metric; }) * 17;
+    const useMoney = metric === 'vol' || metric === 'rebate' || metric === 'net';
+    sections.innerHTML = '<div class="section-card"><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">' + esc(metricLabel) + ' · ' + analyticsPeriod + '</p>' +
+        '<div class="analytics-chart-wrap" id="analytics-trend-chart"></div>' +
+        renderSourceLegendHtml() + '</div>' + distHtml + topHtml;
+    const chartEl = document.getElementById('analytics-trend-chart');
+    if (metric === 'net') {
+        renderNetSourceLineChart(chartEl, triple, analyticsPeriod, seed);
+    } else {
+        renderStackedSourceChart(chartEl, triple, analyticsPeriod, seed, useMoney);
+    }
 }
 
 
@@ -1281,7 +1474,7 @@ function renderCommissionFilterSheet() {
         '<div class="flex gap-2 mt-2">' +
         ['all', 'pending', 'settled'].map(function (s) {
             const labels = { all: '全部', pending: '待审核', settled: '已发放' };
-            const cls = settlementStatusFilter === s ? 'period-chip active flex-1' : 'period-chip flex-1';
+            const cls = settlementStatusFilter === s ? 'filter-chip active flex-1 text-center py-2' : 'filter-chip flex-1 text-center py-2';
             return '<button type="button" class="' + cls + '"' + clickHandler('setSettlementStatusFilter', s) + '>' + labels[s] + '</button>';
         }).join('') +
         '</div></div>' +
@@ -1343,6 +1536,7 @@ function renderCommissionFilterSheet() {
                 renderLinks();
             }
             closeAllSheets();
+            updateHeader();
         },
 
         setTeamPeriod: function (p) { overviewPeriod = p; subPartnerPage = 1; directClientPage = 1; renderTeam(); },
