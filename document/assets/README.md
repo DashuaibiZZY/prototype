@@ -88,7 +88,7 @@ node scripts/push-doc-assets.mjs
 | `document/assets/指标设置-app/` | 《APP 端指标设置页》配图 |
 | `document/assets/导航栏/` | 《导航栏》（Web 顶部导航）配图 |
 | `document/assets/邀请返佣/` | 《邀请返佣（Web/APP）》配图 |
-| `document/assets/合伙人/` | 《邀请合伙人无限层返佣系统》分册（业务定义 / 后台 / Web / App 合伙人中心）配图 |
+| `document/assets/合伙人/` | 《邀请合伙人无限层返佣系统》（后台/Web 合伙人中心）配图 |
 | `document/assets/个人中心-app/` | 《APP 端个人中心》配图 |
 | `document/assets/登录充提-web/` | 《登录、划转与充提》（Web 钱包入口与充提）配图 |
 | `document/assets/活动中心-web/` | 活动中心 Web（我的活动、奖励记录弹窗） |
