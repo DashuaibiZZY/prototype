@@ -42,6 +42,7 @@
         .faq-item { border-bottom: 1px solid #f3f4f6; padding: 16px 0; }
         .faq-item:last-child { border-bottom: none; }
         .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; }
+        .dashed-underline { border-bottom: 1.5px dashed rgba(107, 114, 128, 0.55); display: inline-block; }
     </style>
 </head>
 <body>
@@ -58,6 +59,11 @@ const FRIENDS = [
     { uid: '10023456', addr: '0xd593...Dd2', reg: '2025-11-01', volTotal: '1,250,400.00', vol30: '50,400.00', commission: '+125.04' },
     { uid: '10023457', email: 'kol.demo@forx.io', reg: '2025-10-28', volTotal: '45,000.50', vol30: '12,000.50', commission: '+4.50' },
     { uid: '10023458', addr: '0x4e21...9C11', reg: '2025-10-15', volTotal: '12,800.00', vol30: '0.00', commission: '+1.28' }
+];
+
+const RECLAIM_RECORDS = [
+    { date: '2026-08-28', amount: '12.60', reason: '异常套利风控复核，扣减待结算返佣' },
+    { date: '2026-08-15', amount: '8.00', reason: '重复结算差错修正' }
 ];
 
 const FAQ_ITEMS = [
@@ -216,6 +222,7 @@ function dashboardHtml(placeholder = false) {
                 <div class="flex items-baseline space-x-1">
                     ${placeholder ? val('') : '<span class="text-2xl font-black text-green-400">124.52</span><span class="text-xs font-bold text-gray-500 uppercase">USDT</span>'}
                 </div>
+                ${placeholder ? '' : '<button type="button" class="text-[9px] text-gray-500 font-bold mt-2 dashed-underline hover:text-gray-400">待结算回收记录</button>'}
             </div>
             <div class="p-8 border-r border-white/5">
                 <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">直接推薦人數</p>
@@ -287,6 +294,39 @@ function tierSectionHtml(placeholder = false) {
         </div>`;
 }
 
+function reclaimRecordsModalHtml() {
+    const rows = RECLAIM_RECORDS.map(function (r) {
+        return '<tr class="border-b border-gray-50">' +
+            '<td class="px-4 py-3 font-bold text-gray-700 whitespace-nowrap">' + r.date + '</td>' +
+            '<td class="px-4 py-3 text-right font-black text-red-600 whitespace-nowrap">-' + r.amount + ' USDT</td>' +
+            '<td class="px-4 py-3 text-gray-600 leading-relaxed">' + r.reason + '</td></tr>';
+    }).join('');
+    return `
+        <div class="modal-overlay">
+            <div class="bg-white rounded-sm w-full max-w-[640px] shadow-2xl overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-sm font-black text-gray-900 uppercase tracking-widest">待结算回收记录</h3>
+                    <button type="button" class="text-gray-400 hover:text-gray-700 font-black text-lg leading-none">&times;</button>
+                </div>
+                <div class="max-h-[360px] overflow-y-auto">
+                    <table class="w-full text-left text-[12px]">
+                        <thead class="bg-gray-50 border-b border-gray-100 sticky top-0">
+                            <tr>
+                                <th class="px-4 py-3 text-[10px] font-black text-gray-400 uppercase">日期</th>
+                                <th class="px-4 py-3 text-[10px] font-black text-gray-400 uppercase text-right">回收待结算金额</th>
+                                <th class="px-4 py-3 text-[10px] font-black text-gray-400 uppercase">回收原因</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-100">
+                    <button type="button" class="w-full py-2.5 bg-black text-white rounded-sm text-[11px] font-black uppercase tracking-widest">关闭</button>
+                </div>
+            </div>
+        </div>`;
+}
+
 function shareModalHtml() {
     return `
         <div class="modal-overlay">
@@ -332,7 +372,7 @@ function shareModalHtml() {
 }
 
 function normalContentHtml(cfg = {}) {
-    const { sortField = null, sortOrder = 'desc', showShare = false } = cfg;
+    const { sortField = null, sortOrder = 'desc', showShare = false, showReclaimRecords = false } = cfg;
     return `
         <main class="flex-1 overflow-y-auto bg-white">
             <div class="max-w-[1200px] mx-auto p-8 space-y-6">
@@ -343,7 +383,8 @@ function normalContentHtml(cfg = {}) {
                 ${faqHtml()}
             </div>
         </main>
-        ${showShare ? shareModalHtml() : ''}`;
+        ${showShare ? shareModalHtml() : ''}
+        ${showReclaimRecords ? reclaimRecordsModalHtml() : ''}`;
 }
 
 function agentContentHtml() {
@@ -448,6 +489,11 @@ const STATES = [
         title: '② 普通用户 · 分享海报弹窗',
         desc: '点击「分享海報」：全屏遮罩 + 海报预览（品牌区 / 简介 / 图表 / 邀请码 + 二维码）+ 取消 / 分享海报',
         render: () => webFrameHtml(normalContentHtml({ showShare: true }))
+    },
+    {
+        title: '②b 普通用户 · 待结算回收记录',
+        desc: '点击「待结算回收记录」虚线入口：弹窗展示日期、回收待结算金额、回收原因',
+        render: () => webFrameHtml(normalContentHtml({ showReclaimRecords: true }))
     },
     {
         title: '③ 合伙人用户',
