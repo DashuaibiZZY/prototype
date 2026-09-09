@@ -6,7 +6,7 @@
 
 **App 原型（直邀好友明细）**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/app/邀请好友明细\.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/%E9%82%80%E8%AF%B7%E5%A5%BD%E5%8F%8B%E6%98%8E%E7%BB%86.html)
 
-**App 原型（合伙人管理中心）**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/app/代理中心\.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/%E4%BB%A3%E7%90%86%E4%B8%AD%E5%BF%83.html)（需求文档待《邀请合伙人无限层返佣系统》App 专章补充）
+**App 原型（合伙人管理中心）**：[https://dashuaibizzy\.github\.io/prototype/perp\_dex/app/代理中心\.html](https://dashuaibizzy.github.io/prototype/perp_dex/app/%E4%BB%A3%E7%90%86%E4%B8%AD%E5%BF%83.html)（需求见《[邀请合伙人无限层返佣系统](邀请合伙人无限层返佣系统.md)》§4 用户合伙人中心（App））
 
 ---
 
@@ -29,7 +29,7 @@ App 端**不**在「邀请返佣」页内区分普通用户 / 合伙人两种 UI
 - **Web**：合伙人访问邀请返佣 URL 时默认重定向至代理中心；若强行进入则展示占位态（见 §普通用户 / 代理用户角色分离 · Web 端）。  
 - **App**：合伙人用户**不出现**邀请返佣占位页；原型 `app/邀请返佣.html` 仅平铺普通用户及弹窗叠加态（分享海报、说明浮窗等），不含「合伙人用户」状态框。
 
-合伙人 App 页面各模块需求，后续与《邀请合伙人无限层返佣系统》Web §3 镜像补充至该文档 App 专章，本文不再单独展开。
+合伙人 App 页面各模块需求见《[邀请合伙人无限层返佣系统](邀请合伙人无限层返佣系统.md)》**§4 用户合伙人中心（App）**（与 Web §3 业务口径一致，本文不再单独展开）。
 
 ---
 
@@ -730,7 +730,7 @@ App 端**不**在「邀请返佣」页内区分普通用户 / 合伙人两种 UI
 #### 合伙人（代理）用户
 
 - **默认行为**：App 识别合伙人身份后，从「邀请返佣 / 合伙人中心」类入口**直接进入** `app/代理中心.html`，**不展示** `app/邀请返佣.html`。
-- **原型**：`app/邀请返佣.html` **不包含**合伙人占位态；合伙人页面原型见 `app/代理中心.html`，需求文档待《邀请合伙人无限层返佣系统》App 专章补充。
+- **原型**：`app/邀请返佣.html` **不包含**合伙人占位态；合伙人页面原型见 `app/代理中心.html`，需求见《[邀请合伙人无限层返佣系统](邀请合伙人无限层返佣系统.md)》§4。
 - **后端**：邀请返佣相关接口对合伙人仍返回空值/占位标识（与 Web 一致），但 App 前端因路由分流通常不会渲染邀请返佣页。
 
 #### 普通用户访问 App 端页面
