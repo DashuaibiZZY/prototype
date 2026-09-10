@@ -38,6 +38,7 @@
         },
         {
             title: '风控冻结',
+            hidden: true, // 模块暂缓开发；需要时去掉 hidden 即可恢复侧栏
             items: [
                 { key: 'freeze-settings', label: '用户冻结设置', href: '用户冻结设置.html' },
                 { key: 'freeze-log', label: '冻结操作记录', href: '冻结操作记录.html' }
@@ -85,7 +86,7 @@
         let html = '<div class="p-6 shrink-0"><span class="text-white font-black text-2xl tracking-tighter italic uppercase">ForX Admin</span></div>';
         html += '<nav class="flex-1 overflow-y-auto px-3 pb-4 space-y-4">';
 
-        MODULES.forEach(function (mod) {
+        MODULES.filter(function (mod) { return !mod.hidden; }).forEach(function (mod) {
             html += '<div><div class="px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">' + mod.title + '</div><div class="space-y-0.5">';
             mod.items.forEach(function (item) {
                 const isActive = item.key === key;
