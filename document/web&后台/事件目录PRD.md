@@ -455,6 +455,205 @@
 
 ---
 
-### 3.4 （待补充）
+### 3.4 费率
+
+**业务 PRD**：《[VIP 费率与后台配置](费率.md)》  
+**默认**：业务通知 · 站内信 + App Push
+
+| 序号 | 事件 | 说明 | 触发 | 接收人 | 幂等 |
+|---|---|---|---|---|---|
+| 1 | `fee_rate.vip.upgraded` | VIP 升级 | 每日 **UTC+8 24:00** 结算后，用户 **实际生效 VIP 等级** 较上一日升档 | 用户 UID | UID + 结算日 |
+| 2 | `fee_rate.vip.downgraded` | VIP 降级 | 每日 **UTC+8 24:00** 结算后，用户 **实际生效 VIP 等级** 较上一日降档（自然滑档） | 用户 UID | UID + 结算日 |
+| 3 | `fee_rate.vip_config.applied` | 设置 VIP 费率 | 运营 **指定 VIP 等级** 配置，三级审批 **全部通过** 并生效 | 目标 UID | 审批单 ID + UID |
+| 4 | `fee_rate.custom_config.applied` | 设置自定义费率 | 运营 **自定义 Maker/Taker** 配置，三级审批 **全部通过** 并生效 | 目标 UID | 审批单 ID + UID |
+| 5 | `fee_rate.config.expired` | 设置的费率失效 | 运营配置 **有效期到期**（到期日 **24:00 UTC+8**），自动恢复自然升降 | 目标 UID | UID + 运营配置记录 ID |
+
+**不发通知**：
+
+- 审批提交、驳回、重新提交等流转环节
+- 运营 **撤销费率设置**（即时恢复自然升降，不走审批）
+- 运营 **永久有效** 配置（无到期日，不发 `fee_rate.config.expired`）
+- 存在 **VIP 2–VIP 4 或自定义** 运营配置期间的自然升降评估（用户冻结在自然通道外）
+- **VIP 1 保底** 期间评估结果未升档、或未低于 VIP 1 的档位变化
+
+> **自然升降 vs 运营配置**：仅当用户处于 **自然升降通道**（无运营配置，或仅 **VIP 1 保底** 且发生升档）时，才可能触发 `fee_rate.vip.upgraded` / `fee_rate.vip.downgraded`。运营指定 **VIP 1** 保底期间 **只升不降**，不触发降级通知。
+
+---
+
+#### 1 · `fee_rate.vip.upgraded` · VIP 升级
+
+**允许消息模板使用的变量：**
+
+| 变量 | 字段说明 |
+|---|---|
+| `{{ uid }}` | 接收通知的用户 UID（用于敬语称呼） |
+| `{{ previous_level }}` | 升级前 VIP 等级（0–4） |
+| `{{ current_level }}` | 升级后 VIP 等级（0–4） |
+| `{{ previous_maker_rate }}` | 升级前 Maker 费率（%） |
+| `{{ previous_taker_rate }}` | 升级前 Taker 费率（%） |
+| `{{ current_maker_rate }}` | 升级后 Maker 费率（%） |
+| `{{ current_taker_rate }}` | 升级后 Taker 费率（%） |
+| `{{ volume_14d }}` | 近 14 日合约交易量（USD） |
+| `{{ effective_at }}` | 新等级生效时间（UTC+8） |
+| `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+
+**消息标题：** VIP 等级已升级
+
+**消息示例：**
+
+```
+尊敬的用户（UID：{{ uid }}），恭喜您的 VIP 等级已升级。
+
+原等级：VIP {{ previous_level }}（Maker {{ previous_maker_rate }}% / Taker {{ previous_taker_rate }}%）
+新等级：VIP {{ current_level }}（Maker {{ current_maker_rate }}% / Taker {{ current_taker_rate }}%）
+
+近 14 日交易量：{{ volume_14d }} USD
+生效时间：{{ effective_at }}（UTC+8）
+```
+
+**默认配置：** 业务通知 · 普通 · 站内信 + App Push
+
+---
+
+#### 2 · `fee_rate.vip.downgraded` · VIP 降级
+
+**允许消息模板使用的变量：**
+
+| 变量 | 字段说明 |
+|---|---|
+| `{{ uid }}` | 接收通知的用户 UID（用于敬语称呼） |
+| `{{ previous_level }}` | 降级前 VIP 等级（0–4） |
+| `{{ current_level }}` | 降级后 VIP 等级（0–4） |
+| `{{ previous_maker_rate }}` | 降级前 Maker 费率（%） |
+| `{{ previous_taker_rate }}` | 降级前 Taker 费率（%） |
+| `{{ current_maker_rate }}` | 降级后 Maker 费率（%） |
+| `{{ current_taker_rate }}` | 降级后 Taker 费率（%） |
+| `{{ volume_14d }}` | 近 14 日合约交易量（USD） |
+| `{{ effective_at }}` | 新等级生效时间（UTC+8） |
+| `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+
+**消息标题：** VIP 等级已调整
+
+**消息示例：**
+
+```
+尊敬的用户（UID：{{ uid }}），您的 VIP 等级已调整。
+
+原等级：VIP {{ previous_level }}（Maker {{ previous_maker_rate }}% / Taker {{ previous_taker_rate }}%）
+新等级：VIP {{ current_level }}（Maker {{ current_maker_rate }}% / Taker {{ current_taker_rate }}%）
+
+近 14 日交易量：{{ volume_14d }} USD
+继续交易可提升 VIP 等级，享受更低费率。
+生效时间：{{ effective_at }}（UTC+8）
+```
+
+**默认配置：** 业务通知 · 普通 · 站内信 + App Push
+
+---
+
+#### 3 · `fee_rate.vip_config.applied` · 设置 VIP 费率
+
+**允许消息模板使用的变量：**
+
+| 变量 | 字段说明 |
+|---|---|
+| `{{ uid }}` | 接收通知的用户 UID（用于敬语称呼） |
+| `{{ vip_level }}` | 运营指定的 VIP 等级（1–4） |
+| `{{ maker_rate }}` | 生效 Maker 费率（%） |
+| `{{ taker_rate }}` | 生效 Taker 费率（%） |
+| `{{ valid_days }}` | 有效期天数；永久有效时为空 |
+| `{{ valid_until }}` | 优惠到期时间（UTC+8）；永久有效时为空 |
+| `{{ effective_at }}` | 费率生效时间（UTC+8） |
+| `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+
+**消息标题：** VIP 费率优惠已生效
+
+**消息示例：**
+
+```
+尊敬的用户（UID：{{ uid }}），您的 VIP 费率优惠已生效。
+
+VIP 等级：VIP {{ vip_level }}
+Maker 费率：{{ maker_rate }}%
+Taker 费率：{{ taker_rate }}%
+
+生效时间：{{ effective_at }}（UTC+8）
+```
+
+> **说明**：配置了有效期天数时，正文补充一行 `优惠有效期至：{{ valid_until }}（UTC+8）`；永久有效则省略。
+
+**默认配置：** 业务通知 · 普通 · 站内信 + App Push + Email
+
+---
+
+#### 4 · `fee_rate.custom_config.applied` · 设置自定义费率
+
+**允许消息模板使用的变量：**
+
+| 变量 | 字段说明 |
+|---|---|
+| `{{ uid }}` | 接收通知的用户 UID（用于敬语称呼） |
+| `{{ maker_rate }}` | 生效 Maker 费率（%） |
+| `{{ taker_rate }}` | 生效 Taker 费率（%） |
+| `{{ valid_days }}` | 有效期天数；永久有效时为空 |
+| `{{ valid_until }}` | 优惠到期时间（UTC+8）；永久有效时为空 |
+| `{{ effective_at }}` | 费率生效时间（UTC+8） |
+| `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+
+**消息标题：** 专属费率优惠已生效
+
+**消息示例：**
+
+```
+尊敬的用户（UID：{{ uid }}），您的专属费率优惠已生效。
+
+Maker 费率：{{ maker_rate }}%
+Taker 费率：{{ taker_rate }}%
+
+生效时间：{{ effective_at }}（UTC+8）
+```
+
+> **说明**：配置了有效期天数时，正文补充一行 `优惠有效期至：{{ valid_until }}（UTC+8）`；永久有效则省略。
+
+**默认配置：** 业务通知 · 普通 · 站内信 + App Push + Email
+
+---
+
+#### 5 · `fee_rate.config.expired` · 设置的费率失效
+
+**允许消息模板使用的变量：**
+
+| 变量 | 字段说明 |
+|---|---|
+| `{{ uid }}` | 接收通知的用户 UID（用于敬语称呼） |
+| `{{ current_level }}` | 失效后按自然升降匹配的 VIP 等级（0–4） |
+| `{{ maker_rate }}` | 失效后生效 Maker 费率（%） |
+| `{{ taker_rate }}` | 失效后生效 Taker 费率（%） |
+| `{{ volume_14d }}` | 近 14 日合约交易量（USD） |
+| `{{ expired_at }}` | 运营配置失效时间（UTC+8） |
+| `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+
+**消息标题：** 费率优惠已失效
+
+**消息示例：**
+
+```
+尊敬的用户（UID：{{ uid }}），您的费率优惠已到期失效。
+
+已恢复按近 14 日交易量匹配的 VIP 等级计费。
+
+当前 VIP 等级：VIP {{ current_level }}
+Maker 费率：{{ maker_rate }}%
+Taker 费率：{{ taker_rate }}%
+
+近 14 日交易量：{{ volume_14d }} USD
+失效时间：{{ expired_at }}（UTC+8）
+```
+
+**默认配置：** 业务通知 · 普通 · 站内信 + App Push
+
+---
+
+### 3.5 （待补充）
 
 下一业务分类在此追加（如充提、合约、积分…），结构同 §3.1。
