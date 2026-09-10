@@ -4259,7 +4259,7 @@
                     attachmentPreviews: attachmentPreviews
                 }
             });
-            alert(crossBd ? '已提交风控+老板审批（演示）。审批通过后将即刻生效。' : '已提交风控审核（演示）。审批通过后将即刻生效。');
+            alert(crossBd ? '已提交风控+老板审批（演示）。老板可在后台或 Lark 审批，通过后即刻生效。' : '已提交风控审核（演示）。审批通过后将即刻生效。');
         } else {
             alert('审批模块未加载（演示）');
         }
