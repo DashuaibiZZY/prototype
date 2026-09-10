@@ -14,7 +14,7 @@
 | 事件编号 | 每个分类内事件按 **1、2、3…** 顺序编号，与后台事件目录序号一致 |
 | 版本 | 目录 **只增不改**；变更已上线事件 → 原名 + `v2`、`v3`… |
 | 模板变量 | 统一 `{{ variable }}`；须说明变量代表的业务字段 |
-| 用户文案 | 面向用户的消息 **正文首句须带敬语**，统一以 `尊敬的用户（UID：{{ uid }}），` 开头（平台无用户昵称，称呼用 UID） |
+| 用户文案 | 每条事件须配置 **消息标题** + **消息正文**；正文首句须带敬语，统一以 `尊敬的用户（UID：{{ uid }}），` 开头（平台无用户昵称，称呼用 UID） |
 | 业务 PRD 写什么 | **何时触发、发给谁** |
 | 业务 PRD 怎么引用 | `见《事件目录PRD》§3.x` |
 
@@ -70,6 +70,8 @@
 | `{{ effective_at }}` | 新等级生效时间（UTC+8） |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8） |
 
+**消息标题：** 邀请等级已升级
+
 **消息示例：**
 
 ```
@@ -107,6 +109,8 @@
 | `{{ direct_client_volume_required }}` | 当前等级门槛要求的累计交易量（USDT） |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8） |
 
+**消息标题：** 邀请等级保护已开启
+
 **消息示例：**
 
 ```
@@ -143,6 +147,8 @@
 | `{{ effective_at }}` | 新等级生效时间（UTC+8） |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8） |
 
+**消息标题：** 邀请等级已调整
+
 **消息示例：**
 
 ```
@@ -176,6 +182,8 @@
 | `{{ remaining_pending }}` | 回收后剩余待结算返佣余额 |
 | `{{ reclaim_instruction_id }}` | 回收指令 ID（系统内部，可用于幂等） |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+
+**消息标题：** 待结算返佣已调整
 
 **消息示例：**
 
@@ -222,6 +230,8 @@
 | `{{ effective_at }}` | 合伙人资格生效时间（UTC+8） |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8） |
 
+**消息标题：** 合伙人资格已开通
+
 **消息示例：**
 
 ```
@@ -253,6 +263,8 @@
 | `{{ effective_at }}` | 迁移生效时间（UTC+8） |
 | `{{ migrate_approval_id }}` | 迁移审批单 ID（如 APR…） |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+
+**消息标题：** 下级返佣关系已迁移
 
 **消息示例：**
 
@@ -288,6 +300,8 @@
 | `{{ deduction_reason }}` | 佣金扣除原因说明（后台「修改实发」填写，与用户端「违规 −$XX」同源） |
 | `{{ settlement_batch_id }}` | 佣金对账批次 ID |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+
+**消息标题：** 合伙人佣金违规扣减
 
 **消息示例：**
 
@@ -331,23 +345,20 @@
 | 变量 | 字段说明 |
 |---|---|
 | `{{ uid }}` | 接收通知的用户 UID（用于敬语称呼） |
-| `{{ amount }}` | 体验金面额 |
-| `{{ currency }}` | 金额币种（如 USDT） |
+| `{{ amount }}` | 体验金面额（USDC） |
 | `{{ coupon_id }}` | 卡券 ID |
-| `{{ activity_name }}` | 关联活动名称 |
-| `{{ card_group_name }}` | 关联合约体验金卡组名称 |
 | `{{ activate_deadline }}` | 卡券激活截止时间（UTC+8） |
 | `{{ grant_batch_id }}` | 发放批次 / 审批单关联 ID |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+
+**消息标题：** 合约体验金已发放
 
 **消息示例：**
 
 ```
 尊敬的用户（UID：{{ uid }}），您的合约体验金已发放。
 
-体验金面额：{{ amount }} {{ currency }}
-关联活动：{{ activity_name }}
-卡组：{{ card_group_name }}
+体验金面额：{{ amount }} USDC
 
 请在 {{ activate_deadline }}（UTC+8）前前往卡券中心激活使用。
 到账时间：{{ occurred_at }}
@@ -364,20 +375,19 @@
 | 变量 | 字段说明 |
 |---|---|
 | `{{ uid }}` | 接收通知的用户 UID（用于敬语称呼） |
-| `{{ amount }}` | 过期作废的体验金面额 |
-| `{{ currency }}` | 金额币种（如 USDT） |
+| `{{ amount }}` | 过期作废的体验金面额（USDC） |
 | `{{ coupon_id }}` | 卡券 ID |
-| `{{ activity_name }}` | 关联活动名称 |
 | `{{ activate_deadline }}` | 原卡券激活截止时间（UTC+8） |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+
+**消息标题：** 体验金已过期未使用
 
 **消息示例：**
 
 ```
 尊敬的用户（UID：{{ uid }}），您的体验金卡券已过期未使用。
 
-体验金面额：{{ amount }} {{ currency }}
-关联活动：{{ activity_name }}
+体验金面额：{{ amount }} USDC
 
 该卡券未在 {{ activate_deadline }}（UTC+8）前激活，已自动作废。
 如有新的体验金活动，请关注卡券中心。
@@ -394,20 +404,19 @@
 | 变量 | 字段说明 |
 |---|---|
 | `{{ uid }}` | 接收通知的用户 UID（用于敬语称呼） |
-| `{{ amount }}` | 本次激活注入合约账户的体验金面额 |
-| `{{ currency }}` | 金额币种（如 USDT） |
+| `{{ amount }}` | 本次激活注入合约账户的体验金面额（USDC） |
 | `{{ coupon_id }}` | 卡券 ID |
-| `{{ activity_name }}` | 关联活动名称 |
 | `{{ position_valid_until }}` | 开仓有效期截止时间 / 回收截止时间（UTC+8） |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+
+**消息标题：** 体验金已激活
 
 **消息示例：**
 
 ```
 尊敬的用户（UID：{{ uid }}），您的体验金已激活。
 
-体验金面额：{{ amount }} {{ currency }}
-关联活动：{{ activity_name }}
+体验金面额：{{ amount }} USDC
 
 体验金已注入合约账户，请在 {{ position_valid_until }}（UTC+8）前完成交易使用。
 激活时间：{{ occurred_at }}
@@ -425,19 +434,18 @@
 |---|---|
 | `{{ uid }}` | 接收通知的用户 UID（用于敬语称呼） |
 | `{{ coupon_id }}` | 卡券 ID |
-| `{{ activity_name }}` | 关联活动名称 |
-| `{{ reclaimed_amount }}` | 本次回收的体验金金额 |
-| `{{ currency }}` | 金额币种（如 USDT） |
+| `{{ reclaimed_amount }}` | 本次回收的体验金金额（USDC） |
 | `{{ position_valid_until }}` | 开仓有效期截止时间（UTC+8） |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+
+**消息标题：** 体验金已到期回收
 
 **消息示例：**
 
 ```
 尊敬的用户（UID：{{ uid }}），您的体验金已到期回收。
 
-关联活动：{{ activity_name }}
-回收金额：{{ reclaimed_amount }} {{ currency }}
+回收金额：{{ reclaimed_amount }} USDC
 
 开仓有效期已于 {{ position_valid_until }}（UTC+8）结束，剩余体验金已从合约账户回收。
 回收时间：{{ occurred_at }}
