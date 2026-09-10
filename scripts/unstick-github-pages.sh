@@ -26,6 +26,19 @@ echo "Listing recent $ENVIRONMENT deployments..."
 gh api --paginate "repos/$REPO/deployments?environment=$ENVIRONMENT" --jq '.[] | {id, sha, ref, created_at}' | head -40
 
 echo ""
+echo "Cancelling stale Pages deployments via Pages API..."
+gh api --paginate "repos/$REPO/deployments?environment=$ENVIRONMENT" --jq '.[].sha' | sort -u | while read -r sha; do
+  status="$(gh api "repos/$REPO/pages/deployments/${sha}" --jq '.status // empty' 2>/dev/null || echo "")"
+  echo "pages deployment ${sha:0:7} status: ${status:-unknown}"
+  case "$status" in
+    succeed|deployment_cancelled|deployment_failed|deployment_lost|deployment_content_failed|deployment_attempt_error|'') ;;
+    *)
+      gh api --method POST "repos/$REPO/pages/deployments/${sha}/cancel" || true
+      ;;
+  esac
+done
+
+echo ""
 echo "Marking non-success deployments as inactive, then deleting where allowed..."
 gh api --paginate "repos/$REPO/deployments?environment=$ENVIRONMENT" --jq '.[].id' | while read -r dep_id; do
   state="$(gh api "repos/$REPO/deployments/${dep_id}/statuses?per_page=1" --jq '.[0].state // empty')"
