@@ -71,6 +71,17 @@
         '10106789': true
     };
 
+    const FEE_CUSTOM_POSITION_CHECK_MESSAGES = {
+        applicant: '自定义费率将在老板终审环节校验目标用户 {uid} 是否持有永续合约持仓。若 {uid} 当前仍有持仓，老板无法审批通过，新费率也不会生效。请提前告知目标用户需先平仓并确认无任何永续合约持仓后再提交。',
+        bossBlock: '目标用户 {uid} 当前仍有永续合约持仓。自定义费率须在用户无任何合约持仓时方可审批通过并生效。请驳回申请，或由申请人 {applicant} 联系用户平仓后重新提交。'
+    };
+
+    function formatFeeCheckMessage(template, params) {
+        return String(template || '').replace(/\{(\w+)\}/g, function (_, key) {
+            return params && params[key] != null ? String(params[key]) : '{' + key + '}';
+        });
+    }
+
     function getFeeUserHasOpenPosition(uid) {
         return !!FEE_USER_OPEN_POSITION[String(uid)];
     }
@@ -1260,11 +1271,18 @@
 
     window.getFeeUserHasOpenPosition = getFeeUserHasOpenPosition;
 
+    window.getFeeCustomPositionApplicantMessage = function (uid) {
+        return formatFeeCheckMessage(FEE_CUSTOM_POSITION_CHECK_MESSAGES.applicant, { uid: uid || '—' });
+    };
+
     window.getFeeConfigBossBlockReason = function (app) {
         if (!app || app.type !== 'fee_config' || app.status !== 'pending_boss') return null;
         if (!app.payload || app.payload.feeMode !== 'custom') return null;
         if (getFeeUserHasOpenPosition(app.payload.uid)) {
-            return '目标用户 ' + app.payload.uid + ' 当前仍有永续合约持仓。自定义费率须在用户无任何合约持仓时方可审批通过并生效。请驳回申请，或由申请人联系用户平仓后重新提交。';
+            return formatFeeCheckMessage(FEE_CUSTOM_POSITION_CHECK_MESSAGES.bossBlock, {
+                uid: app.payload.uid || '—',
+                applicant: app.applicant || '—'
+            });
         }
         return null;
     };
