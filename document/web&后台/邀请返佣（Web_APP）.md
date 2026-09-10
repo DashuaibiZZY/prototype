@@ -120,7 +120,7 @@ App 端**不**在「邀请返佣」页内区分普通用户 / 合伙人两种 UI
 
             - 降级后，若后续再次达标，可重新升级。
 
-        - **系统通知**：等级升级、降级保护开启、确定降级三类场景发送消息，事件定义与模板见 [消息中心 · 邀请返佣事件](https://ksgf73ukjokp.sg.larksuite.com/wiki/BiTown38EipLF3k8TJllGd35gHc)（仓库副本：`消息中心-邀请返佣事件.md`）。缓冲期第 5、7 天倒计时 **不发** 系统通知。
+        - **系统通知**：等级升级、降级保护开启、确定降级、待结算回收四类场景发送消息，见《[事件目录PRD](事件目录PRD.md)》§3.1（[Lark](https://ksgf73ukjokp.sg.larksuite.com/wiki/BiTown38EipLF3k8TJllGd35gHc)）。缓冲期第 5、7 天倒计时 **不发** 系统通知。
 
     - 更新后的等级，从今日（T\+1 日）**00:00（UTC+8）** 起生效。
 
@@ -846,5 +846,5 @@ App 端**不**在「邀请返佣」页内区分普通用户 / 合伙人两种 UI
 
 回收指令 **提交时** 不发送通知、不写入用户端回收记录；仅在 **0:00 批次执行成功** 后触发事件 `invite_rebate.reclaimed` 并同步展示对外记录。若批次执行失败（如用户待结算余额不足），不发送通知、不写入记录，指令进入失败重试 / 人工处理队列。
 
-事件变量、消息模板与幂等规则见 [消息中心 · 邀请返佣事件](https://ksgf73ukjokp.sg.larksuite.com/wiki/BiTown38EipLF3k8TJllGd35gHc)（仓库副本：`消息中心-邀请返佣事件.md` §4）。
+事件变量、消息模板与幂等规则见《[事件目录PRD](事件目录PRD.md)》§3.1 · `invite_rebate.reclaimed`（[Lark](https://ksgf73ukjokp.sg.larksuite.com/wiki/BiTown38EipLF3k8TJllGd35gHc)）。
 
