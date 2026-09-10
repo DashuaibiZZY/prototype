@@ -217,8 +217,7 @@
 | 变量 | 字段说明 |
 |---|---|
 | `{{ uid }}` | 接收通知的用户 UID（新一级合伙人，用于敬语称呼） |
-| `{{ partner_level }}` | 合伙人层级（成为代理后为 L1） |
-| `{{ rebate_ratio }}` | 一级合伙人返佣比例（%） |
+| `{{ rebate_ratio }}` | 合伙人返佣比例（%） |
 | `{{ activation_source }}` | 开通来源：`partner_application`（计划审核）/ `admin_bind`（后台绑定） |
 | `{{ effective_at }}` | 合伙人资格生效时间（UTC+8） |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8） |
@@ -228,11 +227,12 @@
 ```
 尊敬的用户（UID：{{ uid }}），您的合伙人资格已开通。
 
-合伙人层级：{{ partner_level }}
-一级合伙人返佣比例：{{ rebate_ratio }}%
+返佣比例：{{ rebate_ratio }}%
 
 请前往「合伙人管理中心」查看邀请链接与团队数据。
 生效时间：{{ effective_at }}（UTC+8）
+
+诚邀您继续拓展团队，邀请更多伙伴加入，共创更高返佣收益。
 ```
 
 **默认配置：** 业务通知 · 普通 · 站内信 + App Push + Email
@@ -263,7 +263,6 @@
 迁移范围：{{ migrate_scope }}
 新上级 UID：{{ new_superior_uid }}
 
-生效后，该主体及其随迁移带走的伞不再为您产生新的交易额与返佣贡献；历史已归属数据保留。
 生效时间：{{ effective_at }}（UTC+8）
 审批单号：{{ migrate_approval_id }}
 ```
