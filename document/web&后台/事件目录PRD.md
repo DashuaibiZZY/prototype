@@ -308,6 +308,145 @@
 
 ---
 
-### 3.3 （待补充）
+### 3.3 体验金
+
+**业务 PRD**：《[合约体验金&卡券中心页（后台/Web/APP）](合约体验金&卡券中心页（后台_Web_APP）.md)》  
+**默认**：奖励通知 · 站内信 + App Push
+
+| 序号 | 事件 | 说明 | 触发 | 接收人 | 幂等 |
+|---|---|---|---|---|---|
+| 1 | `trial_fund.credited` | 发放 | 批量发放 **审批通过** 后，卡券写入用户卡券中心（状态「可使用」） | 收券 UID | 发放批次 ID + UID + 卡券 ID |
+| 2 | `trial_fund.unused_expired` | 未使用过期 | **卡券有效期** 到期，用户未激活（状态「可使用」→「已过期」） | 收券 UID | UID + 卡券 ID |
+| 3 | `trial_fund.activated` | 使用体验金 | 用户在卡券中心 **激活** 成功（状态「可使用」→「已使用」） | 用户 UID | UID + 卡券 ID |
+| 4 | `trial_fund.position_expired_reclaimed` | 体验金到期回收 | **开仓有效期** 到期，系统回收该卡券剩余体验金（状态「已使用」→「已失效」） | 用户 UID | UID + 卡券 ID + 回收流水 ID |
+
+**不发通知**：划转回收、亏损/费用上限回收、风控强制回收、到期前提醒（卡券/开仓倒计时）本期不做。
+
+---
+
+#### 1 · `trial_fund.credited` · 发放
+
+**允许消息模板使用的变量：**
+
+| 变量 | 字段说明 |
+|---|---|
+| `{{ uid }}` | 接收通知的用户 UID（用于敬语称呼） |
+| `{{ amount }}` | 体验金面额 |
+| `{{ currency }}` | 金额币种（如 USDT） |
+| `{{ coupon_id }}` | 卡券 ID |
+| `{{ activity_name }}` | 关联活动名称 |
+| `{{ card_group_name }}` | 关联合约体验金卡组名称 |
+| `{{ activate_deadline }}` | 卡券激活截止时间（UTC+8） |
+| `{{ grant_batch_id }}` | 发放批次 / 审批单关联 ID |
+| `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+
+**消息示例：**
+
+```
+尊敬的用户（UID：{{ uid }}），您的合约体验金已发放。
+
+体验金面额：{{ amount }} {{ currency }}
+关联活动：{{ activity_name }}
+卡组：{{ card_group_name }}
+
+请在 {{ activate_deadline }}（UTC+8）前前往卡券中心激活使用。
+到账时间：{{ occurred_at }}
+```
+
+**默认配置：** 奖励通知 · 普通 · 站内信 + App Push + Email
+
+---
+
+#### 2 · `trial_fund.unused_expired` · 未使用过期
+
+**允许消息模板使用的变量：**
+
+| 变量 | 字段说明 |
+|---|---|
+| `{{ uid }}` | 接收通知的用户 UID（用于敬语称呼） |
+| `{{ amount }}` | 过期作废的体验金面额 |
+| `{{ currency }}` | 金额币种（如 USDT） |
+| `{{ coupon_id }}` | 卡券 ID |
+| `{{ activity_name }}` | 关联活动名称 |
+| `{{ activate_deadline }}` | 原卡券激活截止时间（UTC+8） |
+| `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+
+**消息示例：**
+
+```
+尊敬的用户（UID：{{ uid }}），您的体验金卡券已过期未使用。
+
+体验金面额：{{ amount }} {{ currency }}
+关联活动：{{ activity_name }}
+
+该卡券未在 {{ activate_deadline }}（UTC+8）前激活，已自动作废。
+如有新的体验金活动，请关注卡券中心。
+```
+
+**默认配置：** 业务通知 · 普通 · 站内信 + App Push
+
+---
+
+#### 3 · `trial_fund.activated` · 使用体验金
+
+**允许消息模板使用的变量：**
+
+| 变量 | 字段说明 |
+|---|---|
+| `{{ uid }}` | 接收通知的用户 UID（用于敬语称呼） |
+| `{{ amount }}` | 本次激活注入合约账户的体验金面额 |
+| `{{ currency }}` | 金额币种（如 USDT） |
+| `{{ coupon_id }}` | 卡券 ID |
+| `{{ activity_name }}` | 关联活动名称 |
+| `{{ position_valid_until }}` | 开仓有效期截止时间 / 回收截止时间（UTC+8） |
+| `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+
+**消息示例：**
+
+```
+尊敬的用户（UID：{{ uid }}），您的体验金已激活。
+
+体验金面额：{{ amount }} {{ currency }}
+关联活动：{{ activity_name }}
+
+体验金已注入合约账户，请在 {{ position_valid_until }}（UTC+8）前完成交易使用。
+激活时间：{{ occurred_at }}
+```
+
+**默认配置：** 业务通知 · 普通 · 站内信 + App Push
+
+---
+
+#### 4 · `trial_fund.position_expired_reclaimed` · 体验金到期回收
+
+**允许消息模板使用的变量：**
+
+| 变量 | 字段说明 |
+|---|---|
+| `{{ uid }}` | 接收通知的用户 UID（用于敬语称呼） |
+| `{{ coupon_id }}` | 卡券 ID |
+| `{{ activity_name }}` | 关联活动名称 |
+| `{{ reclaimed_amount }}` | 本次回收的体验金金额 |
+| `{{ currency }}` | 金额币种（如 USDT） |
+| `{{ position_valid_until }}` | 开仓有效期截止时间（UTC+8） |
+| `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+
+**消息示例：**
+
+```
+尊敬的用户（UID：{{ uid }}），您的体验金已到期回收。
+
+关联活动：{{ activity_name }}
+回收金额：{{ reclaimed_amount }} {{ currency }}
+
+开仓有效期已于 {{ position_valid_until }}（UTC+8）结束，剩余体验金已从合约账户回收。
+回收时间：{{ occurred_at }}
+```
+
+**默认配置：** 业务通知 · 普通 · 站内信 + App Push
+
+---
+
+### 3.4 （待补充）
 
 下一业务分类在此追加（如充提、合约、积分…），结构同 §3.1。
