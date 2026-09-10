@@ -73,7 +73,7 @@
 **消息示例：**
 
 ```
-尊敬的 {{ uid }}，恭喜您的邀请等级已升级。
+尊敬的用户（UID：{{ uid }}），恭喜您的邀请等级已升级。
 
 原等级：Lv{{ previous_level }}（{{ previous_rebate_ratio }}%）
 新等级：Lv{{ current_level }}（{{ current_rebate_ratio }}%）
@@ -110,7 +110,7 @@
 **消息示例：**
 
 ```
-尊敬的 {{ uid }}，您的邀请等级保护已开启。
+尊敬的用户（UID：{{ uid }}），您的邀请等级保护已开启。
 
 近期活跃好友或交易量暂未达标，我们将为您保留当前返佣比例 7 天，请抓紧邀请好友交易吧。
 
@@ -146,7 +146,7 @@
 **消息示例：**
 
 ```
-尊敬的 {{ uid }}，您的邀请等级已调整。
+尊敬的用户（UID：{{ uid }}），您的邀请等级已调整。
 
 返佣比例已从 {{ previous_rebate_ratio }}% 调整为 {{ current_rebate_ratio }}%。
 继续邀请好友提升交易量，随时可以升回来。
@@ -180,7 +180,7 @@
 **消息示例：**
 
 ```
-尊敬的 {{ uid }}，您的邀请返佣待结算金额已调整。
+尊敬的用户（UID：{{ uid }}），您的邀请返佣待结算金额已调整。
 
 回收待结算金额：{{ reclaim_amount }} {{ currency }}
 回收原因：{{ reclaim_reason }}
@@ -195,6 +195,120 @@
 
 ---
 
-### 3.2 （待补充）
+### 3.2 合伙人
+
+**业务 PRD**：《[邀请合伙人无限层返佣系统](邀请合伙人无限层返佣系统.md)》（业务定义 · 后台管理 · 用户合伙人中心）  
+**默认**：业务通知 · 站内信 + App Push
+
+| 序号 | 事件 | 说明 | 触发 | 接收人 | 幂等 |
+|---|---|---|---|---|---|
+| 1 | `partner.agent.activated` | 成为代理 | 合伙人计划审核通过并「设置成一级代理」生效，或后台「新增一级合伙人」绑定/审批通过生效 | 新一级合伙人 UID | UID + 生效批次 ID |
+| 2 | `partner.rebate_migrate.superior_notified` | 原上级 · 下级迁移 | 返佣关系迁移 **风控审批通过并即刻生效** | 迁移前 **原上级** UID | 迁移审批单 ID |
+| 3 | `partner.violation.deducted` | 违规扣除 | 佣金对账批次中对合伙人 **调减实发** 且填写扣除原因后生效 | 被扣减合伙人 UID | UID + 结算日 + 批次 ID |
+
+**不发通知**：合伙人计划驳回、审批流转（运营/风控侧）、日结放款到账（本期不做）。
+
+---
+
+#### 1 · `partner.agent.activated` · 成为代理
+
+**允许消息模板使用的变量：**
+
+| 变量 | 字段说明 |
+|---|---|
+| `{{ uid }}` | 接收通知的用户 UID（新一级合伙人，用于敬语称呼） |
+| `{{ partner_level }}` | 合伙人层级（成为代理后为 L1） |
+| `{{ rebate_ratio }}` | 一级合伙人返佣比例（%） |
+| `{{ activation_source }}` | 开通来源：`partner_application`（计划审核）/ `admin_bind`（后台绑定） |
+| `{{ effective_at }}` | 合伙人资格生效时间（UTC+8） |
+| `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+
+**消息示例：**
+
+```
+尊敬的用户（UID：{{ uid }}），您的合伙人资格已开通。
+
+合伙人层级：{{ partner_level }}
+一级合伙人返佣比例：{{ rebate_ratio }}%
+
+请前往「合伙人管理中心」查看邀请链接与团队数据。
+生效时间：{{ effective_at }}（UTC+8）
+```
+
+**默认配置：** 业务通知 · 普通 · 站内信 + App Push + Email
+
+---
+
+#### 2 · `partner.rebate_migrate.superior_notified` · 原上级 · 下级迁移
+
+**允许消息模板使用的变量：**
+
+| 变量 | 字段说明 |
+|---|---|
+| `{{ uid }}` | 接收通知的用户 UID（迁移前原上级，用于敬语称呼） |
+| `{{ migrated_subject_uid }}` | 被迁移主体 UID（普通用户 / 直客 / N 级代理 / 一级代理） |
+| `{{ migrated_subject_type }}` | 被迁移主体类型（如：普通用户、N 级代理、一级代理） |
+| `{{ migrate_scope }}` | 迁移范围（如：本人、整伞迁移） |
+| `{{ new_superior_uid }}` | 迁移后新上级 UID |
+| `{{ effective_at }}` | 迁移生效时间（UTC+8） |
+| `{{ migrate_approval_id }}` | 迁移审批单 ID（如 APR…） |
+| `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+
+**消息示例：**
+
+```
+尊敬的用户（UID：{{ uid }}），您的下级已完成返佣关系迁移。
+
+被迁移主体 UID：{{ migrated_subject_uid }}（{{ migrated_subject_type }}）
+迁移范围：{{ migrate_scope }}
+新上级 UID：{{ new_superior_uid }}
+
+生效后，该主体及其随迁移带走的伞不再为您产生新的交易额与返佣贡献；历史已归属数据保留。
+生效时间：{{ effective_at }}（UTC+8）
+审批单号：{{ migrate_approval_id }}
+```
+
+**默认配置：** 业务通知 · 普通 · 站内信 + App Push
+
+> **说明**：仅通知 **原上级**；迁移主体、新上级的通知本期不做。
+
+---
+
+#### 3 · `partner.violation.deducted` · 违规扣除
+
+**允许消息模板使用的变量：**
+
+| 变量 | 字段说明 |
+|---|---|
+| `{{ uid }}` | 接收通知的用户 UID（被扣减合伙人，用于敬语称呼） |
+| `{{ settlement_date }}` | 结算日（UTC+8，如 2026-09-09） |
+| `{{ original_rebate }}` | 调减前应发返佣金额 |
+| `{{ violation_deduction }}` | 违规扣减金额（正数，展示绝对值） |
+| `{{ actual_rebate }}` | 调减后实发返佣金额 |
+| `{{ currency }}` | 金额币种（如 USDC） |
+| `{{ deduction_reason }}` | 佣金扣除原因说明（后台「修改实发」填写，与用户端「违规 −$XX」同源） |
+| `{{ settlement_batch_id }}` | 佣金对账批次 ID |
+| `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+
+**消息示例：**
+
+```
+尊敬的用户（UID：{{ uid }}），您的合伙人佣金存在违规扣减。
+
+结算日：{{ settlement_date }}（UTC+8）
+应发返佣：{{ original_rebate }} {{ currency }}
+违规扣减：{{ violation_deduction }} {{ currency }}
+实发返佣：{{ actual_rebate }} {{ currency }}
+
+扣减原因：{{ deduction_reason }}
+
+请前往合伙人管理中心「佣金管理」查看详情。
+```
+
+**默认配置：** 业务通知 · 较高 · 站内信 + App Push
+
+---
+
+### 3.3 （待补充）
 
 下一业务分类在此追加（如充提、合约、积分…），结构同 §3.1。
