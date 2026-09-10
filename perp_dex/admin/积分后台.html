@@ -65,6 +65,7 @@
             </div>
 
             <div id="pool-config-card" class="card p-6 space-y-6">
+                <div id="poolConfigPendingBanner" class="hidden rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-900 leading-relaxed"></div>
                 <div>
                     <h3 class="font-bold text-slate-800">每周积分总池与瓜分规则</h3>
                     <p class="text-xs text-slate-400 mt-1">总池、六维度子池占比及有效持仓最小时长一并配置；提交后进入审批（<b>风控审核 → 老板审批</b>）。</p>
@@ -183,7 +184,7 @@
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-2">申请备注</label>
                         <textarea id="poolConfigRemark" rows="2" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none" placeholder="请填写变更原因及审批依据"></textarea>
                     </div>
-                    <button onclick="openPoolConfigConfirmModal()" class="w-full bg-slate-900 text-white py-3.5 rounded-lg text-sm font-bold hover:bg-slate-800">提交审批申请</button>
+                    <button id="btn-pool-config-submit" type="button" onclick="openPoolConfigConfirmModal()" class="w-full bg-slate-900 text-white py-3.5 rounded-lg text-sm font-bold hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-slate-900">提交审批申请</button>
                 </div>
             </div>
 
@@ -1035,6 +1036,7 @@
         document.getElementById('userBackBtn').classList.add('hidden');
         if (updateHash !== false && location.hash !== '#' + key) location.hash = key;
         if (window.initAdminSidebar) initAdminSidebar(meta.sidebar, '登录身份: 积分管理员');
+        if (key === 'config' && typeof renderPoolConfigAdminUI === 'function') renderPoolConfigAdminUI();
     }
 
     function showPointsUsers() {
@@ -1265,7 +1267,55 @@
         return changes;
     }
 
+    function getPointsProgramPendingApproval() {
+        if (typeof getPointsProgramPending === 'function' && getPointsProgramPending()) return getPointsProgramPending();
+        if (typeof getPendingApprovalByType === 'function') return getPendingApprovalByType('points_program_switch');
+        return null;
+    }
+
+    function getPointsPoolPendingApproval() {
+        if (typeof getPendingApprovalByType === 'function') return getPendingApprovalByType('points_pool_config');
+        return null;
+    }
+
+    function setPoolConfigFormDisabled(disabled) {
+        var card = document.getElementById('pool-config-card');
+        if (!card) return;
+        card.querySelectorAll('input, select, textarea, button').forEach(function (el) {
+            if (el.id === 'btn-pool-config-submit') return;
+            el.disabled = disabled;
+            if (disabled) el.classList.add('opacity-60', 'cursor-not-allowed');
+            else el.classList.remove('opacity-60', 'cursor-not-allowed');
+        });
+        var submitBtn = document.getElementById('btn-pool-config-submit');
+        if (submitBtn) {
+            submitBtn.disabled = disabled;
+        }
+    }
+
+    function renderPoolConfigAdminUI() {
+        var pending = getPointsPoolPendingApproval();
+        var banner = document.getElementById('poolConfigPendingBanner');
+        if (banner) {
+            if (pending) {
+                banner.classList.remove('hidden');
+                banner.innerHTML = '当前有积分总池配置审批单 <b>' + (pending.id || '—') + '</b> 审批中（' + (typeof getApprovalStatusLabel === 'function' ? getApprovalStatusLabel(pending.status) : pending.status) + '），暂无法提交新的修改。';
+            } else {
+                banner.classList.add('hidden');
+                banner.innerHTML = '';
+            }
+        }
+        setPoolConfigFormDisabled(!!pending);
+        renderPointsProgramAdminUI();
+    }
+
+    window.renderPoolConfigAdminUI = renderPoolConfigAdminUI;
+
     function openPoolConfigConfirmModal() {
+        if (getPointsPoolPendingApproval()) {
+            alert('当前有积分总池配置审批单审批中，请等待处理完成后再提交');
+            return;
+        }
         const sum = getDimPctSum();
         if (sum !== 100) {
             alert('六维度占比合计须恰好等于 100%，当前为 ' + sum + '%。请调整后再提交。');
@@ -1337,6 +1387,7 @@
         closePoolConfigConfirmModal();
         applyPoolConfigToForm(savedPoolConfig);
         document.getElementById('poolConfigRemark').value = '';
+        renderPoolConfigAdminUI();
         alert('积分总池配置已提交审批，等待风控审核 → 老板审批');
     }
 
@@ -1347,18 +1398,29 @@
     function renderPointsProgramAdminUI() {
         var status = getPointsProgramStatus();
         var enabled = status.enabled !== false;
-        var pending = typeof getPointsProgramPending === 'function' ? getPointsProgramPending() : null;
+        var pendingApproval = typeof getPendingApprovalByType === 'function' ? getPendingApprovalByType('points_program_switch') : null;
+        var pending = getPointsProgramPendingApproval();
         var toggle = document.getElementById('pointsProgramToggle');
         if (toggle) {
             toggle.checked = enabled;
             toggle.disabled = !!pending;
+        }
+        var confirmBtn = document.getElementById('btn-points-program-confirm');
+        if (confirmBtn) {
+            confirmBtn.disabled = !!pending;
+            confirmBtn.classList.toggle('opacity-40', !!pending);
+            confirmBtn.classList.toggle('cursor-not-allowed', !!pending);
+        }
+        var card = document.getElementById('points-program-card');
+        if (card) {
+            card.classList.toggle('opacity-60', !!pending);
         }
         var badge = document.getElementById('pointsProgramStatusBadge');
         var label = document.getElementById('pointsProgramToggleLabel');
         var hint = document.getElementById('pointsProgramEffectHint');
         if (badge) {
             if (pending) {
-                badge.textContent = '审批中 → ' + (pending.afterEnabled ? '开启' : '关闭');
+                badge.textContent = '审批中 → ' + ((pending.afterEnabled != null ? pending.afterEnabled : (pendingApproval && pendingApproval.payload ? pendingApproval.payload.afterEnabled : null)) ? '开启' : '关闭');
                 badge.className = 'inline-block px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700';
             } else {
                 badge.textContent = enabled ? '发放中' : '已暂停';
@@ -1368,7 +1430,7 @@
         if (label) label.textContent = enabled ? '开启' : '关闭';
         if (hint) {
             hint.textContent = pending
-                ? '变更已提交审批，老板通过后生效。目标状态：' + (pending.afterEnabled ? '开启' : '关闭')
+                ? '当前有积分计划总开关审批单' + (pendingApproval && pendingApproval.id ? ' ' + pendingApproval.id : '') + ' 审批中，暂无法发起新的变更。目标状态：' + ((pending.afterEnabled != null ? pending.afterEnabled : (pendingApproval && pendingApproval.payload ? pendingApproval.payload.afterEnabled : null)) ? '开启' : '关闭')
                 : formatProgramEffectHint(enabled);
         }
     }
@@ -1376,7 +1438,7 @@
     window.renderPointsProgramAdminUI = renderPointsProgramAdminUI;
 
     window.onPointsProgramToggleChange = function (input) {
-        if (typeof getPointsProgramPending === 'function' && getPointsProgramPending()) {
+        if (getPointsProgramPendingApproval()) {
             input.checked = !input.checked;
             alert('已有积分计划开关变更在审批中，请等待处理完成');
             return;
@@ -1420,6 +1482,10 @@
             alert('已有积分计划开关变更在审批中');
             return;
         }
+        if (getPointsProgramPendingApproval()) {
+            alert('已有积分计划开关变更在审批中');
+            return;
+        }
         var remark = document.getElementById('pointsProgramRemark').value.trim();
         if (!remark) { alert('请填写申请备注'); return; }
         var nextEnabled = payload.afterEnabled;
@@ -1456,11 +1522,11 @@
         pendingPointsProgramEnabled = null;
         window._pendingProgramSwitch = null;
         document.getElementById('modal-points-program-confirm').classList.add('hidden');
-        renderPointsProgramAdminUI();
+        renderPoolConfigAdminUI();
         alert('积分计划总开关已提交审批，等待风控审核 → 老板审批');
     };
 
-    renderPointsProgramAdminUI();
+    renderPoolConfigAdminUI();
 
     let manualInputMode = 'lines';
     const POINTS_BATCH_MAX = 1000;

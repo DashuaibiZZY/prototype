@@ -66,6 +66,15 @@
         }
     };
 
+    const FEE_USER_OPEN_POSITION = {
+        '10031592': true,
+        '10106789': true
+    };
+
+    function getFeeUserHasOpenPosition(uid) {
+        return !!FEE_USER_OPEN_POSITION[String(uid)];
+    }
+
     const TYPE_LABELS = {
         trial_issue: '体验金发放',
         points_manual: '积分手动发放',
@@ -705,6 +714,35 @@
                 timeline: [{ at: '2026-08-29 15:00', actor: 'Mkt_Allen', action: '提交申请', note: '跨 BD 调整 bob 伞下代理比例' }]
             },
             {
+                id: 'APR20260724024',
+                type: 'fee_config',
+                title: '用户费率配置',
+                applicant: 'Fee_Admin',
+                status: 'pending_boss',
+                createdAt: '2026-07-24 16:20',
+                remark: '做市商专属自定义费率',
+                summary: 'UID 10106789 · 自定义 · 45 天有效',
+                payload: {
+                    activityMode: 'custom',
+                    activityName: 'VIP 费率优惠',
+                    uid: '10106789',
+                    wallet: '0xfedc...ba98',
+                    feeMode: 'custom',
+                    vipLevel: null,
+                    taker: '0.018%',
+                    maker: '0.006%',
+                    validDays: 45,
+                    attachments: ['其他所VIP证明.png'],
+                    attachmentPreviews: { '其他所VIP证明.png': feeImg }
+                },
+                lark: { id: 'LARK-20260724-9012', status: 'pending', url: 'https://www.feishu.cn/approval/admin/preview/LARK-20260724-9012', syncedAt: '2026-07-24 18:05' },
+                timeline: [
+                    { at: '2026-07-24 16:20', actor: 'Fee_Admin', action: '提交申请', note: '做市商专属自定义费率' },
+                    { at: '2026-07-24 17:00', actor: 'Risk_Control', action: '风控通过', note: '材料齐全' },
+                    { at: '2026-07-24 18:05', actor: 'System', action: '已同步 Lark 审批', note: '等待老板审批' }
+                ]
+            },
+            {
                 id: 'APR20260727021',
                 type: 'fee_config',
                 title: '用户费率配置',
@@ -1220,6 +1258,23 @@
 
     window.getApprovalAppById = getAppById;
 
+    window.getFeeUserHasOpenPosition = getFeeUserHasOpenPosition;
+
+    window.getFeeConfigBossBlockReason = function (app) {
+        if (!app || app.type !== 'fee_config' || app.status !== 'pending_boss') return null;
+        if (!app.payload || app.payload.feeMode !== 'custom') return null;
+        if (getFeeUserHasOpenPosition(app.payload.uid)) {
+            return '目标用户 ' + app.payload.uid + ' 当前仍有永续合约持仓。自定义费率须在用户无任何合约持仓时方可审批通过并生效。请驳回申请，或由申请人联系用户平仓后重新提交。';
+        }
+        return null;
+    };
+
+    window.getPendingApprovalByType = function (type) {
+        return getApps().find(function (a) {
+            return a.type === type && a.status !== 'approved' && a.status !== 'rejected';
+        }) || null;
+    };
+
     window.getApprovalViewRole = function () {
         return sessionStorage.getItem(ROLE_KEY) || 'risk';
     };
@@ -1299,6 +1354,11 @@
     };
 
     window.approveApplication = function (id, role, note) {
+        const appBefore = getAppById(id);
+        if (role === 'boss' && appBefore && appBefore.status === 'pending_boss') {
+            const blockReason = getFeeConfigBossBlockReason(appBefore);
+            if (blockReason) return { blocked: true, message: blockReason, app: appBefore };
+        }
         const actorMap = { cross: 'Mkt_Cross', risk: 'Risk_Control', boss: 'Boss' };
         const actionMap = {
             cross: '市场运营交叉审核通过',
@@ -1338,6 +1398,10 @@
                 }
             }
         });
+        if (result && (result.type === 'points_pool_config' || result.type === 'points_program_switch') &&
+            typeof window.renderPoolConfigAdminUI === 'function') {
+            window.renderPoolConfigAdminUI();
+        }
         if (result && result.status === 'approved' &&
             (result.type === 'partner_l1_bind' || result.type === 'partner_l1_bind_cross' || result.type === 'partner_ratio_change' || result.type === 'partner_rebate_migrate') &&
             typeof window.applyPartnerApprovalEffect === 'function') {
@@ -1348,7 +1412,7 @@
 
     window.rejectApplication = function (id, role, note) {
         const actorMap = { cross: 'Mkt_Cross', risk: 'Risk_Control', boss: 'Boss' };
-        return updateApp(id, function (app) {
+        const result = updateApp(id, function (app) {
             if (app.lark) app.lark.status = 'rejected';
             app.status = 'rejected';
             if (app.type === 'points_program_switch' && typeof window.clearPointsProgramPending === 'function') {
@@ -1361,9 +1425,16 @@
                 note: note || ''
             });
         });
+        if (typeof window.renderPoolConfigAdminUI === 'function') window.renderPoolConfigAdminUI();
+        return result;
     };
 
     window.simulateLarkApprove = function (id) {
+        const appBefore = getAppById(id);
+        if (appBefore && appBefore.status === 'pending_boss') {
+            const blockReason = getFeeConfigBossBlockReason(appBefore);
+            if (blockReason) return { blocked: true, message: blockReason, app: appBefore };
+        }
         const result = updateApp(id, function (app) {
             if (!app.lark || app.status !== 'pending_boss') return;
             app.lark.status = 'approved';
@@ -1379,6 +1450,10 @@
             (result.type === 'partner_l1_bind' || result.type === 'partner_l1_bind_cross' || result.type === 'partner_ratio_change' || result.type === 'partner_rebate_migrate') &&
             typeof window.applyPartnerApprovalEffect === 'function') {
             window.applyPartnerApprovalEffect(result);
+        }
+        if (result && (result.type === 'points_pool_config' || result.type === 'points_program_switch') &&
+            typeof window.renderPoolConfigAdminUI === 'function') {
+            window.renderPoolConfigAdminUI();
         }
         return result;
     };
