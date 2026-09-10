@@ -5,6 +5,7 @@
 (function (global) {
     var STORAGE_KEY = 'forx_points_program_status';
     var PENDING_KEY = 'forx_points_program_pending';
+    var POOL_CONFIG_PENDING_KEY = 'forx_points_pool_config_pending';
 
     function defaultStatus() {
         return {
@@ -30,6 +31,25 @@
     function clearPointsProgramPending() {
         setPointsProgramPending(null);
         if (typeof global.renderPointsProgramAdminUI === 'function') global.renderPointsProgramAdminUI();
+    }
+
+    function getPointsPoolConfigPending() {
+        try {
+            var raw = global.localStorage && global.localStorage.getItem(POOL_CONFIG_PENDING_KEY);
+            if (raw) return JSON.parse(raw);
+        } catch (e) { /* ignore */ }
+        return null;
+    }
+
+    function setPointsPoolConfigPending(data) {
+        if (!global.localStorage) return;
+        if (data) global.localStorage.setItem(POOL_CONFIG_PENDING_KEY, JSON.stringify(data));
+        else global.localStorage.removeItem(POOL_CONFIG_PENDING_KEY);
+    }
+
+    function clearPointsPoolConfigPending() {
+        setPointsPoolConfigPending(null);
+        if (typeof global.renderPoolConfigAdminUI === 'function') global.renderPoolConfigAdminUI();
     }
 
     function loadStatus() {
@@ -122,6 +142,9 @@
     global.setPointsProgramEnabled = setPointsProgramEnabled;
     global.clearPointsProgramPending = clearPointsProgramPending;
     global.setPointsProgramPending = setPointsProgramPending;
+    global.getPointsPoolConfigPending = getPointsPoolConfigPending;
+    global.setPointsPoolConfigPending = setPointsPoolConfigPending;
+    global.clearPointsPoolConfigPending = clearPointsPoolConfigPending;
     global.formatProgramEffectHint = formatProgramEffectHint;
     global.renderPausedBannerHtml = renderPausedBannerHtml;
     global.applyPointsProgramUI = applyPointsProgramUI;

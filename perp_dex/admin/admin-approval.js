@@ -1275,6 +1275,21 @@
         }) || null;
     };
 
+    window.getPendingApprovalsByType = function (type) {
+        return getApps().filter(function (a) {
+            return a.type === type && a.status !== 'approved' && a.status !== 'rejected';
+        });
+    };
+
+    function applyPointsPoolConfigAfterApproval(app) {
+        if (!app || app.type !== 'points_pool_config' || !app.payload || !app.payload.after) return;
+        try {
+            localStorage.setItem('forx_points_pool_saved_config', JSON.stringify(app.payload.after));
+        } catch (e) { /* ignore */ }
+        if (typeof window.applySavedPoolConfig === 'function') window.applySavedPoolConfig(app.payload.after);
+        if (typeof window.clearPointsPoolConfigPending === 'function') window.clearPointsPoolConfigPending();
+    }
+
     window.getApprovalViewRole = function () {
         return sessionStorage.getItem(ROLE_KEY) || 'risk';
     };
@@ -1315,6 +1330,9 @@
         const apps = getApps();
         apps.unshift(app);
         saveApps(apps);
+        if (opts.type === 'points_pool_config' && typeof window.setPointsPoolConfigPending === 'function') {
+            window.setPointsPoolConfigPending({ id: app.id, status: app.status });
+        }
         if (opts.onSubmit) opts.onSubmit(app);
         return app;
     };
@@ -1377,12 +1395,7 @@
             else if (role === 'risk' && app.status === 'pending_risk') {
                 if (profile.afterRisk === 'approved') {
                     app.status = 'approved';
-                    if (app.type === 'points_pool_config' && app.payload && app.payload.after) {
-                        try {
-                            localStorage.setItem('forx_points_pool_saved_config', JSON.stringify(app.payload.after));
-                        } catch (e) { /* ignore */ }
-                        if (typeof window.applySavedPoolConfig === 'function') window.applySavedPoolConfig(app.payload.after);
-                    }
+                    if (app.type === 'points_pool_config') applyPointsPoolConfigAfterApproval(app);
                 } else {
                     app.status = 'pending_boss';
                     if (profile.larkOnRisk) pushLarkApproval(app);
@@ -1396,6 +1409,7 @@
                     }
                     if (typeof window.clearPointsProgramPending === 'function') window.clearPointsProgramPending();
                 }
+                if (app.type === 'points_pool_config') applyPointsPoolConfigAfterApproval(app);
             }
         });
         if (result && (result.type === 'points_pool_config' || result.type === 'points_program_switch') &&
@@ -1417,6 +1431,9 @@
             app.status = 'rejected';
             if (app.type === 'points_program_switch' && typeof window.clearPointsProgramPending === 'function') {
                 window.clearPointsProgramPending();
+            }
+            if (app.type === 'points_pool_config' && typeof window.clearPointsPoolConfigPending === 'function') {
+                window.clearPointsPoolConfigPending();
             }
             app.timeline.push({
                 at: new Date().toISOString().slice(0, 16).replace('T', ' '),
@@ -1445,6 +1462,13 @@
                 action: '老板审批通过',
                 note: '通过 Lark 审批完成'
             });
+            if (app.type === 'points_program_switch' && app.payload && typeof app.payload.afterEnabled === 'boolean') {
+                if (typeof window.setPointsProgramEnabled === 'function') {
+                    window.setPointsProgramEnabled(app.payload.afterEnabled);
+                }
+                if (typeof window.clearPointsProgramPending === 'function') window.clearPointsProgramPending();
+            }
+            if (app.type === 'points_pool_config') applyPointsPoolConfigAfterApproval(app);
         });
         if (result && result.status === 'approved' &&
             (result.type === 'partner_l1_bind' || result.type === 'partner_l1_bind_cross' || result.type === 'partner_ratio_change' || result.type === 'partner_rebate_migrate') &&

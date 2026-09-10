@@ -1274,8 +1274,27 @@
     }
 
     function getPointsPoolPendingApproval() {
-        if (typeof getPendingApprovalByType === 'function') return getPendingApprovalByType('points_pool_config');
+        var fromApps = typeof getPendingApprovalByType === 'function' ? getPendingApprovalByType('points_pool_config') : null;
+        var fromLocal = typeof getPointsPoolConfigPending === 'function' ? getPointsPoolConfigPending() : null;
+        if (fromApps) {
+            if (!fromLocal || fromLocal.id !== fromApps.id) {
+                if (typeof setPointsPoolConfigPending === 'function') {
+                    setPointsPoolConfigPending({ id: fromApps.id, status: fromApps.status });
+                }
+            }
+            return fromApps;
+        }
+        if (fromLocal && typeof clearPointsPoolConfigPending === 'function') {
+            clearPointsPoolConfigPending();
+        }
         return null;
+    }
+
+    function getPointsPoolPendingCount() {
+        if (typeof getPendingApprovalsByType === 'function') {
+            return getPendingApprovalsByType('points_pool_config').length;
+        }
+        return getPointsPoolPendingApproval() ? 1 : 0;
     }
 
     function setPoolConfigFormDisabled(disabled) {
@@ -1290,16 +1309,25 @@
         var submitBtn = document.getElementById('btn-pool-config-submit');
         if (submitBtn) {
             submitBtn.disabled = disabled;
+            submitBtn.classList.toggle('opacity-40', disabled);
+            submitBtn.classList.toggle('cursor-not-allowed', disabled);
+        }
+        var card = document.getElementById('pool-config-card');
+        if (card) {
+            card.classList.toggle('opacity-60', disabled);
         }
     }
 
     function renderPoolConfigAdminUI() {
         var pending = getPointsPoolPendingApproval();
+        var pendingCount = getPointsPoolPendingCount();
         var banner = document.getElementById('poolConfigPendingBanner');
         if (banner) {
             if (pending) {
                 banner.classList.remove('hidden');
-                banner.innerHTML = '当前有积分总池配置审批单 <b>' + (pending.id || '—') + '</b> 审批中（' + (typeof getApprovalStatusLabel === 'function' ? getApprovalStatusLabel(pending.status) : pending.status) + '），暂无法提交新的修改。';
+                var statusLabel = typeof getApprovalStatusLabel === 'function' ? getApprovalStatusLabel(pending.status) : pending.status;
+                var countHint = pendingCount > 1 ? '（共 ' + pendingCount + ' 单审批中，最早单号 ' + (pending.id || '—') + '）' : '';
+                banner.innerHTML = '当前有积分总池配置审批单 <b>' + (pending.id || '—') + '</b> 审批中（' + statusLabel + '）' + countHint + '，暂无法提交新的修改。';
             } else {
                 banner.classList.add('hidden');
                 banner.innerHTML = '';
@@ -1372,6 +1400,9 @@
             remark: remark,
             payload: payload,
             onSubmit: function (created) {
+                if (typeof setPointsPoolConfigPending === 'function') {
+                    setPointsPoolConfigPending({ id: created.id, status: created.status });
+                }
                 POINTS_LOGS.unshift({
                     time: created.createdAt,
                     operator: 'Points_Admin',
