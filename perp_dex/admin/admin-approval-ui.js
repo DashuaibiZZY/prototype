@@ -478,7 +478,7 @@
         root.innerHTML =
             '<div id="' + rootId + '-list" class="space-y-6">' +
             '<div class="flex flex-wrap justify-between items-start gap-4">' +
-            '<div><h2 class="text-lg font-bold text-slate-700">' + title + '</h2><p class="text-sm text-slate-400 mt-1">本模块审批在此处理，支持查看原数据及 Lark 老板审批联动</p></div>' +
+            '<div><h2 class="text-lg font-bold text-slate-700">' + title + '</h2><p class="text-sm text-slate-400 mt-1">风控 / 老板审批均可在本页操作；老板节点同步 Lark，<b>后台与 Lark 均可审批</b></p></div>' +
             '<div class="flex flex-wrap gap-2 items-center">' + roleTabsHtml +
             '</div></div>' +
             '<section class="card p-5"><div class="grid ' + gridCols + ' gap-4 items-end">' +
@@ -609,6 +609,10 @@
     window.moduleApprovalOpenDetail = function (rootId, id, pushHash) {
         const state = instances[rootId];
         if (!state) return;
+        const app = getApprovalAppById(id);
+        if (app && app.status === 'pending_boss') {
+            moduleApprovalSwitchRole(rootId, 'boss');
+        }
         state.detailId = id;
         state.view = 'detail';
         document.getElementById(rootId + '-list').classList.add('hidden');
@@ -632,7 +636,7 @@
         const opts = state ? state.options : {};
         let readonlyHint = '当前审批已结束或无需您处理';
         if (app.status === 'pending_risk' && role !== 'risk') readonlyHint = '等待风控审核';
-        else if (app.status === 'pending_boss' && role !== 'boss') readonlyHint = '等待老板审批（可在 Lark 完成）';
+        else if (app.status === 'pending_boss' && role !== 'boss') readonlyHint = '等待老板审批（后台或 Lark 均可操作）';
 
         const isSimpleConfig = app.type === 'points_pool_config' || app.type === 'points_program_switch';
         const exportDetailBtn = opts.showExportDetail && !isSimpleConfig
@@ -673,9 +677,9 @@
             '<section class="card p-6"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-slate-800">' + dataSectionTitle + '</h3>' + exportDetailBtn + '</div>' +
             dataSectionBody + '</section>' +
             '<section class="card p-6"><h3 class="font-bold mb-4">审批时间线</h3>' + renderTimeline(app) + '</section></div>' +
-            '<div class="space-y-6"><section class="card p-6"><h3 class="font-bold mb-4">审批进度</h3><div>' + renderApprovalFlow(app.status, false, app) + '</div>' + (app.lark ? renderLarkApprovalCard(app) : '') + '</section>' +
+            '<div class="space-y-6"><section class="card p-6"><h3 class="font-bold mb-4">审批进度</h3><div>' + renderApprovalFlow(app.status, false, app) + '</div>' + (app.lark ? renderLarkApprovalCard(app, rootId) : '') + '</section>' +
             (bossBlocked ? '<section class="card p-6 border border-amber-200 bg-amber-50/70"><p class="text-sm text-amber-900/90 leading-relaxed">' + bossBlockReason + '</p></section>' : '') +
-            (canAct ? '<section class="card p-6"><h3 class="font-bold mb-4">审批操作</h3><textarea id="' + rootId + '-note" rows="3" class="w-full border border-slate-200 rounded-lg p-3 text-sm mb-4" placeholder="审批意见（驳回时必填）"></textarea><div class="flex gap-2"><button type="button" onclick="moduleApprovalReject(\'' + rootId + '\',\'' + app.id + '\')" class="flex-1 py-2.5 border border-red-200 text-red-600 rounded-lg text-sm font-bold">驳回</button><button type="button" onclick="moduleApprovalApprove(\'' + rootId + '\',\'' + app.id + '\')" class="flex-1 py-2.5 rounded-lg text-sm font-bold ' + (bossBlocked ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-green-600 text-white') + '"' + (bossBlocked ? ' disabled' : '') + '>通过</button></div></section>' :
+            (canAct ? '<section class="card p-6"><h3 class="font-bold mb-4">审批操作</h3><p class="text-[11px] text-slate-500 mb-3">老板节点：可直接在本页通过 / 驳回，亦可在 Lark 完成（状态同步）。</p><textarea id="' + rootId + '-note" rows="3" class="w-full border border-slate-200 rounded-lg p-3 text-sm mb-4" placeholder="审批意见（驳回时必填）"></textarea><div class="flex gap-2"><button type="button" onclick="moduleApprovalReject(\'' + rootId + '\',\'' + app.id + '\')" class="flex-1 py-2.5 border border-red-200 text-red-600 rounded-lg text-sm font-bold">驳回</button><button type="button" onclick="moduleApprovalApprove(\'' + rootId + '\',\'' + app.id + '\')" class="flex-1 py-2.5 rounded-lg text-sm font-bold ' + (bossBlocked ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-green-600 text-white') + '"' + (bossBlocked ? ' disabled' : '') + '>通过</button></div></section>' :
                 '<section class="card p-6"><p class="text-sm text-slate-500 text-center">' + readonlyHint + '</p></section>') +
             resubmitSection +
             '</div></div>';
@@ -709,6 +713,20 @@
         if (pushHash !== false && state.hashList) location.hash = state.hashList;
         moduleApprovalRenderList(rootId);
         if (state.onBackList) state.onBackList();
+    };
+
+    window.moduleApprovalSimulateLarkApprove = function (rootId, id) {
+        const result = simulateLarkApprove(id);
+        if (result && result.blocked) {
+            alert(result.message);
+            moduleApprovalShowDetail(rootId, id);
+            return;
+        }
+        if (result && result.status === 'approved') {
+            alert('审批已通过');
+        }
+        moduleApprovalShowDetail(rootId, id);
+        moduleApprovalRenderList(rootId);
     };
 
     window.moduleApprovalApprove = function (rootId, id) {
@@ -765,7 +783,8 @@
         state.hashList = listHash || 'approval';
         state.hashDetailPrefix = detailPrefix || 'approval-detail';
         if (hash.indexOf(state.hashDetailPrefix + '=') === 0) {
-            moduleApprovalOpenDetail(rootId, hash.replace(state.hashDetailPrefix + '=', ''), false);
+            const appId = hash.replace(state.hashDetailPrefix + '=', '');
+            moduleApprovalOpenDetail(rootId, appId, false);
             return true;
         }
         if (hash === state.hashList || hash === 'approval') {

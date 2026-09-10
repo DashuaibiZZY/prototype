@@ -5,7 +5,7 @@
 (function () {
     const STORAGE_KEY = 'forx_approval_applications';
     const ROLE_KEY = 'forx_approval_view_role';
-    const SEED_VERSION = '2026-09-01-approval-risk-boss-v1';
+    const SEED_VERSION = '2026-09-10-approval-fee-position-demo-v1';
     const SEED_VERSION_KEY = 'forx_approval_seed_v';
 
     const STEPS = [
@@ -1073,14 +1073,31 @@
         ];
     }
 
+    function ensureCriticalDemos() {
+        const criticalIds = ['APR20260724024'];
+        const seeds = buildSeedData().map(migrateLegacyStatus);
+        const apps = getApps();
+        let changed = false;
+        criticalIds.forEach(function (id) {
+            if (apps.some(function (a) { return a.id === id; })) return;
+            const seed = seeds.find(function (a) { return a.id === id; });
+            if (!seed) return;
+            apps.unshift(JSON.parse(JSON.stringify(seed)));
+            changed = true;
+        });
+        if (changed) saveApps(apps);
+    }
+
     function seedIfEmpty() {
         if (localStorage.getItem(SEED_VERSION_KEY) === SEED_VERSION) {
             const apps = getApps().map(migrateLegacyStatus);
             if (apps.length) saveApps(apps);
+            ensureCriticalDemos();
             return;
         }
         saveApps(buildSeedData().map(migrateLegacyStatus));
         localStorage.setItem(SEED_VERSION_KEY, SEED_VERSION);
+        ensureCriticalDemos();
     }
 
     function renderApprovalFlow(status, compact, appOrProfile) {
@@ -1114,18 +1131,21 @@
         return html;
     }
 
-    function renderLarkCard(app) {
+    function renderLarkCard(app, rootId) {
         if (!app || !app.lark) return '';
         const lark = app.lark;
         const statusText = lark.status === 'approved' ? '已通过' : lark.status === 'rejected' ? '已驳回' : '待审批';
         const statusCls = lark.status === 'approved' ? 'ok' : lark.status === 'rejected' ? 'err' : 'wait';
+        const larkBtn = app.status === 'pending_boss' && lark.status === 'pending'
+            ? '<button type="button" onclick="moduleApprovalSimulateLarkApprove(\'' + (rootId || '') + '\',\'' + app.id + '\')" class="flex-1 py-2 bg-[#3370ff] text-white rounded-lg text-xs font-bold hover:opacity-90">模拟 Lark 通过</button>'
+            : '';
         return '<div class="lark-card">' +
             '<div class="lark-card-head"><span class="lark-badge">Lark</span><span class="font-bold text-slate-800">老板审批已同步至飞书</span></div>' +
             '<p class="text-[11px] text-slate-500 mt-2">审批单号：<span class="font-mono font-bold">' + lark.id + '</span> · 状态：<span class="approval-note ' + statusCls + '" style="display:inline;margin:0">' + statusText + '</span></p>' +
-            '<p class="text-[10px] text-slate-400 mt-1">同步时间 ' + (lark.syncedAt || '—') + ' · 老板可在 Lark 完成审批，后台亦支持操作</p>' +
+            '<p class="text-[10px] text-slate-400 mt-1">同步时间 ' + (lark.syncedAt || '—') + ' · 老板可在 <b>Lark 或本页后台</b> 任一端审批，两端状态同步</p>' +
             '<div class="flex gap-2 mt-3">' +
             '<a href="' + (lark.url || '#') + '" target="_blank" class="flex-1 text-center py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50">在 Lark 中查看</a>' +
-            (app.status === 'pending_boss' && lark.status === 'pending' ? '<button type="button" onclick="simulateLarkApprove(\'' + app.id + '\')" class="flex-1 py-2 bg-[#3370ff] text-white rounded-lg text-xs font-bold hover:opacity-90">模拟 Lark 通过</button>' : '') +
+            larkBtn +
             '</div></div>';
     }
 
@@ -1241,9 +1261,9 @@
 
     window.getApprovalFlowProfile = getFlowProfile;
 
-    window.renderLarkApprovalCard = function (app) {
+    window.renderLarkApprovalCard = function (app, rootId) {
         injectStyles();
-        return renderLarkCard(app);
+        return renderLarkCard(app, rootId);
     };
 
     window.getApprovalTypeLabel = function (type) {
