@@ -43,7 +43,7 @@ for sha in "${SHAS[@]}"; do
   fi
   status="$(api_get "${API}/pages/deployments/${sha}" | jq -r '.status // empty' 2>/dev/null || echo "")"
   echo "  ${sha:0:7}: pages_status=${status:-unknown}"
-  if echo "${status}" | grep -Eq "${TERMINAL_PAGES}"; then
+  if [ "${status}" = "succeed" ]; then
     continue
   fi
   echo "  -> cancel ${sha}"
@@ -60,8 +60,8 @@ while read -r dep_id sha; do
   fi
   echo "  deployment ${dep_id} (${sha:0:7}) state=${state} -> inactive"
   api_post "${API}/deployments/${dep_id}/statuses" \
-    -f state=inactive \
-    -f description="release pages deployment lock before deploy-pages"
+    --data-urlencode "state=inactive" \
+    --data-urlencode "description=release pages deployment lock before deploy-pages"
 done < <(api_get "${API}/deployments?environment=github-pages&per_page=20" | jq -r '.[] | "\(.id) \(.sha)"')
 
 echo ""
