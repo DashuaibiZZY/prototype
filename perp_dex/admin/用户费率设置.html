@@ -202,13 +202,7 @@
 
 <div id="customFeePositionModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/50">
     <div class="bg-white w-[480px] rounded-xl p-6 shadow-2xl">
-        <h3 class="text-base font-bold text-slate-800 mb-2">提交前请确认 · 自定义费率审批说明</h3>
-        <div class="text-xs text-slate-600 leading-relaxed space-y-3 mb-5">
-            <p>自定义费率在 <b>老板终审</b> 环节会校验目标用户是否持有合约持仓。</p>
-            <p>若用户当前仍有持仓，老板 <b>无法审批通过</b>，新费率也不会生效。</p>
-            <p>请 <b>提前告知目标用户</b>：需先平仓并确认 <b>无任何永续合约持仓</b> 后，再提请老板审批。</p>
-            <p class="text-slate-500">建议在与用户沟通完成后再提交申请。</p>
-        </div>
+        <p id="customFeePositionMessage" class="text-sm text-slate-700 leading-relaxed mb-5"></p>
         <div class="flex gap-3">
             <button onclick="closeCustomFeePositionModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
             <button onclick="proceedCustomFeeConfirm()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">已知悉，继续提交</button>
@@ -532,6 +526,10 @@
         if (!act.valid) { showToast(act.message); return; }
 
         if (draftConfig.feeMode === 'custom') {
+            const msg = typeof getFeeCustomPositionApplicantMessage === 'function'
+                ? getFeeCustomPositionApplicantMessage(currentUserId)
+                : '自定义费率将在老板终审环节校验目标用户是否持有永续合约持仓。';
+            document.getElementById('customFeePositionMessage').textContent = msg;
             document.getElementById('customFeePositionModal').classList.remove('hidden');
             document.getElementById('customFeePositionModal').classList.add('flex');
             return;
