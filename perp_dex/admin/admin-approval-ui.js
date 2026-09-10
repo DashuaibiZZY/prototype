@@ -631,8 +631,6 @@
         if (!app || !detailEl) return;
         const role = getApprovalViewRole();
         const canAct = canApproveApplication(app, role);
-        const bossBlockReason = (typeof getFeeConfigBossBlockReason === 'function') ? getFeeConfigBossBlockReason(app) : null;
-        const bossBlocked = !!(canAct && role === 'boss' && bossBlockReason);
         const opts = state ? state.options : {};
         let readonlyHint = '当前审批已结束或无需您处理';
         if (app.status === 'pending_risk' && role !== 'risk') readonlyHint = '等待风控审核';
@@ -687,8 +685,7 @@
             dataSectionBody + '</section>' +
             '<section class="card p-6"><h3 class="font-bold mb-4">审批时间线</h3>' + renderTimeline(app) + '</section></div>' +
             '<div class="space-y-6"><section class="card p-6"><h3 class="font-bold mb-4">审批进度</h3><div>' + renderApprovalFlow(app.status, false, app) + '</div>' + bossChannelCard + '</section>' +
-            (bossBlocked ? '<section class="card p-6 border border-amber-200 bg-amber-50/70"><p class="text-sm text-amber-900/90 leading-relaxed">' + bossBlockReason + '</p></section>' : '') +
-            (canAct ? '<section class="card p-6"><h3 class="font-bold mb-4">审批操作</h3>' + actHint + '<textarea id="' + rootId + '-note" rows="3" class="w-full border border-slate-200 rounded-lg p-3 text-sm mb-4" placeholder="审批意见（驳回时必填）"></textarea><div class="flex gap-2"><button type="button" onclick="moduleApprovalReject(\'' + rootId + '\',\'' + app.id + '\')" class="flex-1 py-2.5 border border-red-200 text-red-600 rounded-lg text-sm font-bold">驳回</button><button type="button" onclick="moduleApprovalApprove(\'' + rootId + '\',\'' + app.id + '\')" class="flex-1 py-2.5 rounded-lg text-sm font-bold ' + (bossBlocked ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-green-600 text-white') + '"' + (bossBlocked ? ' disabled' : '') + '>通过</button></div></section>' :
+            (canAct ? '<section class="card p-6"><h3 class="font-bold mb-4">审批操作</h3>' + actHint + '<textarea id="' + rootId + '-note" rows="3" class="w-full border border-slate-200 rounded-lg p-3 text-sm mb-4" placeholder="审批意见（驳回时必填）"></textarea><div class="flex gap-2"><button type="button" onclick="moduleApprovalReject(\'' + rootId + '\',\'' + app.id + '\')" class="flex-1 py-2.5 border border-red-200 text-red-600 rounded-lg text-sm font-bold">驳回</button><button type="button" onclick="moduleApprovalApprove(\'' + rootId + '\',\'' + app.id + '\')" class="flex-1 py-2.5 rounded-lg text-sm font-bold bg-green-600 text-white">通过</button></div></section>' :
                 '<section class="card p-6"><p class="text-sm text-slate-500 text-center">' + readonlyHint + '</p></section>') +
             resubmitSection +
             '</div></div>';
