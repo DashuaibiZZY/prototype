@@ -642,7 +642,26 @@
 <script src="admin-copy-chip.js"></script>
 <script src="admin-sidebar.js"></script>
 <script>
-    initModuleApproval({ type: 'fee_config', rootId: 'fee-approval-root', title: '用户费率审批', showExportList: false, showExportDetail: false, detailImagePreview: true, singleUserConfig: true, currentApplicant: 'Fee_Admin', allowResubmit: true });
+    initModuleApproval({
+        type: 'fee_config',
+        rootId: 'fee-approval-root',
+        title: '用户费率审批',
+        showExportList: false,
+        showExportDetail: false,
+        detailImagePreview: true,
+        singleUserConfig: true,
+        currentApplicant: 'Fee_Admin',
+        allowResubmit: true,
+        onReady: function () {
+            const list = document.getElementById('fee-approval-root-list');
+            if (!list || document.getElementById('fee-approval-demo-hint')) return;
+            const hint = document.createElement('div');
+            hint.id = 'fee-approval-demo-hint';
+            hint.className = 'rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900 leading-relaxed';
+            hint.innerHTML = '原型演示 · <b>自定义费率 + 目标用户有持仓</b>：审批单 <a href="#approval-detail=APR20260724024" class="font-mono font-bold text-blue-700 underline">APR20260724024</a>（UID 10106789 · 待老板审批；打开后自动切换老板视角，尝试「通过」可见持仓拦截）';
+            list.insertBefore(hint, list.firstChild);
+        }
+    });
 
     function showFeePage(page) {
         const isApproval = page === 'approval';
