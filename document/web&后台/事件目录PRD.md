@@ -976,7 +976,9 @@ Taker 费率：{{ taker_rate }}%
 | `{{ uid }}` | 接收通知的用户 UID |
 | `{{ symbol }}` | 交易对（如 `BTCUSDC`） |
 | `{{ margin_mode }}` | 保证金模式：`cross` / `isolated` |
+| `{{ margin_mode_label }}` | 保证金模式展示文案：全仓 / 逐仓 |
 | `{{ position_side }}` | 被减仓方向：`long` / `short` |
+| `{{ position_side_label }}` | 仓位方向展示文案：做多 / 做空 |
 | `{{ adl_qty }}` | 阶梯减仓数量 |
 | `{{ adl_price }}` | 减仓成交均价 |
 | `{{ adl_pnl }}` | 本次减仓实现盈亏（USDC，可正可负） |
