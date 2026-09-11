@@ -14,7 +14,7 @@
 | 事件编号 | 每个分类内事件按 **1、2、3…** 顺序编号，与后台事件目录序号一致 |
 | 版本 | 目录 **只增不改**；变更已上线事件 → 原名 + `v2`、`v3`… |
 | 模板变量 | 统一 `{{ variable }}`；须说明变量代表的业务字段 |
-| 金额单位 | 平台统一 **USDC**；模板正文直接写 USDC，**不设** `{{ currency }}` 变量 |
+| 金额单位 | 平台统一 **USDC**；**金额**类字段正文写 USDC，**不设** `{{ currency }}` 变量；**价格**类字段（如标记价格）正文 **不追加** USDC |
 | 触达渠道 | 仅 **站内信** + **App Push**（不支持 Email / SMS 等） |
 | 文案结构 | **站内信**与 **Push 分别配置**；Push 须更短（短标题 + 一句正文），不得复用站内信全文 |
 | 站内信 | 须配置 **标题** + **正文**；正文首句须带敬语，统一以 `尊敬的用户，` 开头（不在正文展示 UID） |
@@ -932,7 +932,7 @@ Taker 费率：{{ taker_rate }}%
 | `{{ position_side }}` | 仓位方向：`long` / `short` |
 | `{{ position_side_label }}` | 仓位方向展示文案：做多 / 做空 |
 | `{{ liquidated_qty }}` | 强平数量 |
-| `{{ mark_price }}` | 触发时标记价格（USDC） |
+| `{{ mark_price }}` | 触发时标记价格 |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8，系统字段，正文不展示） |
 
 **站内信标题：** 合约仓位已强平
@@ -945,7 +945,7 @@ Taker 费率：{{ taker_rate }}%
 交易对：{{ symbol }}（{{ margin_mode_label }} · {{ position_side_label }}）
 强平数量：{{ liquidated_qty }}
 
-因保证金率低于 100%，系统已对该仓位执行强平。触发时标记价格：{{ mark_price }} USDC
+因保证金率低于 100%，系统已对该仓位执行强平。触发时标记价格：{{ mark_price }}
 
 请合理控制杠杆与仓位，避免再次触发强平。
 ```
@@ -973,7 +973,7 @@ Taker 费率：{{ taker_rate }}%
 | `{{ position_side }}` | 被减仓方向：`long` / `short` |
 | `{{ position_side_label }}` | 仓位方向展示文案：做多 / 做空 |
 | `{{ adl_qty }}` | 阶梯减仓数量 |
-| `{{ mark_price }}` | 触发时标记价格（USDC） |
+| `{{ mark_price }}` | 触发时标记价格 |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8，系统字段，正文不展示） |
 
 **站内信标题：** 阶梯减仓（ADL）通知
@@ -986,7 +986,7 @@ Taker 费率：{{ taker_rate }}%
 交易对：{{ symbol }}（{{ margin_mode_label }} · {{ position_side_label }}）
 减仓数量：{{ adl_qty }}
 
-因市场极端波动，系统通过 ADL 机制对您的仓位进行了部分减仓。当前标记价格：{{ mark_price }} USDC
+因市场极端波动，系统通过 ADL 机制对您的仓位进行了部分减仓。当前标记价格：{{ mark_price }}
 
 请留意账户风险与剩余持仓。
 ```
