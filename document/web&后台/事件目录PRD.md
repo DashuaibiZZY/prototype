@@ -14,6 +14,7 @@
 | 事件编号 | 每个分类内事件按 **1、2、3…** 顺序编号，与后台事件目录序号一致 |
 | 版本 | 目录 **只增不改**；变更已上线事件 → 原名 + `v2`、`v3`… |
 | 模板变量 | 统一 `{{ variable }}`；须说明变量代表的业务字段 |
+| 金额单位 | 平台统一 **USDC**；模板正文直接写 USDC，**不设** `{{ currency }}` 变量 |
 | 触达渠道 | 仅 **站内信** + **App Push**（不支持 Email / SMS 等） |
 | 文案结构 | **站内信**与 **Push 分别配置**；Push 须更短（短标题 + 一句正文），不得复用站内信全文 |
 | 站内信 | 须配置 **标题** + **正文**；正文首句须带敬语，统一以 `尊敬的用户，` 开头（不在正文展示 UID） |
@@ -199,8 +200,7 @@
 | 变量 | 字段说明 |
 |---|---|
 | `{{ uid }}` | 接收通知的用户 UID |
-| `{{ reclaim_amount }}` | 本次回收的待结算返佣金额 |
-| `{{ currency }}` | 金额币种（如 USDC） |
+| `{{ reclaim_amount }}` | 本次回收的待结算返佣金额（USDC） |
 | `{{ reclaim_reason }}` | 回收原因（运营在后台填写） |
 | `{{ executed_at }}` | 日结批次执行完成时间（UTC+8） |
 | `{{ remaining_pending }}` | 回收后剩余待结算返佣余额 |
@@ -214,18 +214,18 @@
 ```
 尊敬的用户，您的邀请返佣待结算金额已调整。
 
-回收待结算金额：{{ reclaim_amount }} {{ currency }}
+回收待结算金额：{{ reclaim_amount }} USDC
 回收原因：{{ reclaim_reason }}
 执行时间：{{ executed_at }}（UTC+8）
 
-调整后剩余待结算返佣：{{ remaining_pending }} {{ currency }}
+调整后剩余待结算返佣：{{ remaining_pending }} USDC
 
 如有疑问，请联系在线客服或查看邀请返佣页「待结算收益」说明。
 ```
 
 **Push 标题：** 待结算返佣已调整
 
-**Push 正文：** 待结算返佣 {{ reclaim_amount }} {{ currency }} 已回收
+**Push 正文：** 待结算返佣 {{ reclaim_amount }} USDC 已回收
 
 **默认配置：** 业务通知 · 较高 · 站内信 + App Push · 批次执行失败 **不发**
 
@@ -337,8 +337,7 @@
 | `{{ settlement_date }}` | 结算日（UTC+8，如 2026-09-09） |
 | `{{ original_rebate }}` | 调减前应发返佣金额 |
 | `{{ violation_deduction }}` | 违规扣减金额（正数，展示绝对值） |
-| `{{ actual_rebate }}` | 调减后实发返佣金额 |
-| `{{ currency }}` | 金额币种（如 USDC） |
+| `{{ actual_rebate }}` | 调减后实发返佣金额（USDC） |
 | `{{ deduction_reason }}` | 佣金扣除原因说明（后台「修改实发」填写，与用户端「违规 −$XX」同源） |
 | `{{ settlement_batch_id }}` | 佣金对账批次 ID |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8） |
@@ -351,9 +350,9 @@
 尊敬的用户，您的合伙人佣金存在违规扣减。
 
 结算日：{{ settlement_date }}（UTC+8）
-应发返佣：{{ original_rebate }} {{ currency }}
-违规扣减：{{ violation_deduction }} {{ currency }}
-实发返佣：{{ actual_rebate }} {{ currency }}
+应发返佣：{{ original_rebate }} USDC
+违规扣减：{{ violation_deduction }} USDC
+实发返佣：{{ actual_rebate }} USDC
 
 扣减原因：{{ deduction_reason }}
 
@@ -362,7 +361,7 @@
 
 **Push 标题：** 佣金违规扣减
 
-**Push 正文：** {{ settlement_date }} 结算佣金扣减 {{ violation_deduction }} {{ currency }}
+**Push 正文：** {{ settlement_date }} 结算佣金扣减 {{ violation_deduction }} USDC
 
 **默认配置：** 业务通知 · 较高 · 站内信 + App Push
 
@@ -933,8 +932,7 @@ Taker 费率：{{ taker_rate }}%
 | `{{ position_side }}` | 仓位方向：`long` / `short` |
 | `{{ position_side_label }}` | 仓位方向展示文案：做多 / 做空 |
 | `{{ liquidated_qty }}` | 强平数量 |
-| `{{ mark_price }}` | 触发时标记价格 |
-| `{{ currency }}` | 计价币种（如 USDC） |
+| `{{ mark_price }}` | 触发时标记价格（USDC） |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8，系统字段，正文不展示） |
 
 **站内信标题：** 合约仓位已强平
@@ -947,7 +945,7 @@ Taker 费率：{{ taker_rate }}%
 交易对：{{ symbol }}（{{ margin_mode_label }} · {{ position_side_label }}）
 强平数量：{{ liquidated_qty }}
 
-因保证金率低于 100%，系统已对该仓位执行强平。触发时标记价格：{{ mark_price }} {{ currency }}
+因保证金率低于 100%，系统已对该仓位执行强平。触发时标记价格：{{ mark_price }} USDC
 
 请合理控制杠杆与仓位，避免再次触发强平。
 ```
@@ -975,8 +973,7 @@ Taker 费率：{{ taker_rate }}%
 | `{{ position_side }}` | 被减仓方向：`long` / `short` |
 | `{{ position_side_label }}` | 仓位方向展示文案：做多 / 做空 |
 | `{{ adl_qty }}` | 阶梯减仓数量 |
-| `{{ mark_price }}` | 触发时标记价格 |
-| `{{ currency }}` | 计价币种（如 USDC） |
+| `{{ mark_price }}` | 触发时标记价格（USDC） |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8，系统字段，正文不展示） |
 
 **站内信标题：** 阶梯减仓（ADL）通知
@@ -989,7 +986,7 @@ Taker 费率：{{ taker_rate }}%
 交易对：{{ symbol }}（{{ margin_mode_label }} · {{ position_side_label }}）
 减仓数量：{{ adl_qty }}
 
-因市场极端波动，系统通过 ADL 机制对您的仓位进行了部分减仓。当前标记价格：{{ mark_price }} {{ currency }}
+因市场极端波动，系统通过 ADL 机制对您的仓位进行了部分减仓。当前标记价格：{{ mark_price }} USDC
 
 请留意账户风险与剩余持仓。
 ```
