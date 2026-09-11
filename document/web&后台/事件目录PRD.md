@@ -933,11 +933,9 @@ Taker 费率：{{ taker_rate }}%
 | `{{ position_side }}` | 仓位方向：`long` / `short` |
 | `{{ position_side_label }}` | 仓位方向展示文案：做多 / 做空 |
 | `{{ liquidated_qty }}` | 强平数量 |
-| `{{ liquidated_price }}` | 强平成交均价 |
-| `{{ liquidation_fee }}` | 强平清算费用 |
+| `{{ mark_price }}` | 触发时标记价格 |
 | `{{ currency }}` | 计价币种（如 USDC） |
-| `{{ margin_ratio }}` | 强平触发时保证金率（%） |
-| `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+| `{{ occurred_at }}` | 事件发生时间（UTC+8，系统字段，正文不展示） |
 
 **站内信标题：** 合约仓位已强平
 
@@ -948,18 +946,15 @@ Taker 费率：{{ taker_rate }}%
 
 交易对：{{ symbol }}（{{ margin_mode_label }} · {{ position_side_label }}）
 强平数量：{{ liquidated_qty }}
-成交均价：{{ liquidated_price }} {{ currency }}
-清算费用：{{ liquidation_fee }} {{ currency }}
 
-触发时保证金率：{{ margin_ratio }}%（强平线 100%）
-强平时间：{{ occurred_at }}（UTC+8）
+因保证金率低于 100%，系统已对该仓位执行强平。触发时标记价格：{{ mark_price }} {{ currency }}
 
 请合理控制杠杆与仓位，避免再次触发强平。
 ```
 
 **Push 标题：** 合约强平通知
 
-**Push 正文：** {{ symbol }} 仓位已强平，保证金率 {{ margin_ratio }}%
+**Push 正文：** {{ symbol }} 仓位已强平，请关注持仓风险
 
 **默认配置：** 业务通知 · 较高 · 站内信 + App Push
 
@@ -980,10 +975,9 @@ Taker 费率：{{ taker_rate }}%
 | `{{ position_side }}` | 被减仓方向：`long` / `short` |
 | `{{ position_side_label }}` | 仓位方向展示文案：做多 / 做空 |
 | `{{ adl_qty }}` | 阶梯减仓数量 |
-| `{{ adl_price }}` | 减仓成交均价 |
-| `{{ adl_pnl }}` | 本次减仓实现盈亏（USDC，可正可负） |
+| `{{ mark_price }}` | 触发时标记价格 |
 | `{{ currency }}` | 计价币种（如 USDC） |
-| `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+| `{{ occurred_at }}` | 事件发生时间（UTC+8，系统字段，正文不展示） |
 
 **站内信标题：** 阶梯减仓（ADL）通知
 
@@ -994,16 +988,15 @@ Taker 费率：{{ taker_rate }}%
 
 交易对：{{ symbol }}（{{ margin_mode_label }} · {{ position_side_label }}）
 减仓数量：{{ adl_qty }}
-成交均价：{{ adl_price }} {{ currency }}
-实现盈亏：{{ adl_pnl }} {{ currency }}
 
-因市场极端波动，系统通过 ADL 机制对您的仓位进行了部分减仓。请留意账户风险与剩余持仓。
-减仓时间：{{ occurred_at }}（UTC+8）
+因市场极端波动，系统通过 ADL 机制对您的仓位进行了部分减仓。当前标记价格：{{ mark_price }} {{ currency }}
+
+请留意账户风险与剩余持仓。
 ```
 
 **Push 标题：** 阶梯减仓通知
 
-**Push 正文：** {{ symbol }} ADL 减仓 {{ adl_qty }}，请留意持仓风险
+**Push 正文：** {{ symbol }} ADL 已减仓，请留意持仓风险
 
 **默认配置：** 业务通知 · 较高 · 站内信 + App Push
 
@@ -1018,12 +1011,11 @@ Taker 费率：{{ taker_rate }}%
 | 变量 | 字段说明 |
 |---|---|
 | `{{ uid }}` | 接收通知的用户 UID |
-| `{{ margin_ratio }}` | 触发时保证金率（%） |
 | `{{ warning_threshold }}` | 本档预警阈值（固定 `150`） |
 | `{{ liquidation_threshold }}` | 强平阈值（固定 `100`） |
 | `{{ margin_mode }}` | 保证金模式：`cross` / `isolated`（逐仓时可带 `{{ symbol }}`） |
 | `{{ symbol }}` | 触发关联交易对；全仓账户级预警时可为空 |
-| `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+| `{{ occurred_at }}` | 事件发生时间（UTC+8，系统字段，正文不展示） |
 
 **站内信标题：** 强平风险升高
 
@@ -1032,17 +1024,14 @@ Taker 费率：{{ taker_rate }}%
 ```
 尊敬的用户，您的合约账户风险急剧升高。
 
-当前保证金率：{{ margin_ratio }}%（预警线 ≤150%，强平线 100%）
+您的保证金率已低于 150%（强平线为 100%）。建议立即减仓或追加保证金，避免继续下跌触发强平。
 
-建议立即减仓或追加保证金，避免继续下跌触发强平。
 请前往合约交易页查看持仓与保证金情况。
-
-预警时间：{{ occurred_at }}（UTC+8）
 ```
 
 **Push 标题：** 强平风险升高
 
-**Push 正文：** 保证金率 {{ margin_ratio }}%，请减仓或追加保证金
+**Push 正文：** 保证金率低于 150%，请减仓或追加保证金
 
 **默认配置：** 业务通知 · 较高 · 站内信 + App Push
 
@@ -1057,12 +1046,11 @@ Taker 费率：{{ taker_rate }}%
 | 变量 | 字段说明 |
 |---|---|
 | `{{ uid }}` | 接收通知的用户 UID |
-| `{{ margin_ratio }}` | 触发时保证金率（%） |
 | `{{ warning_threshold }}` | 本档预警阈值（固定 `110`） |
 | `{{ liquidation_threshold }}` | 强平阈值（固定 `100`） |
 | `{{ margin_mode }}` | 保证金模式：`cross` / `isolated` |
 | `{{ symbol }}` | 触发关联交易对；全仓账户级预警时可为空 |
-| `{{ occurred_at }}` | 事件发生时间（UTC+8） |
+| `{{ occurred_at }}` | 事件发生时间（UTC+8，系统字段，正文不展示） |
 
 **站内信标题：** 强平风险紧急
 
@@ -1071,17 +1059,14 @@ Taker 费率：{{ taker_rate }}%
 ```
 尊敬的用户，您的合约账户已接近强平线，请立即处理。
 
-当前保证金率：{{ margin_ratio }}%（紧急线 ≤110%，强平线 100%）
+您的保证金率已低于 110%（强平线为 100%）。请立即减仓或追加保证金，否则将很快触发强制平仓。
 
-请立即减仓或追加保证金，否则将很快触发强制平仓。
 请尽快前往合约交易页处理持仓。
-
-预警时间：{{ occurred_at }}（UTC+8）
 ```
 
 **Push 标题：** 强平风险紧急
 
-**Push 正文：** 保证金率 {{ margin_ratio }}%，请立即减仓或追加保证金
+**Push 正文：** 保证金率低于 110%，请立即处理
 
 **默认配置：** 业务通知 · 紧急 · 站内信 + App Push
 
