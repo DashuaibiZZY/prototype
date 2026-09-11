@@ -430,24 +430,27 @@
 | `{{ coupon_id }}` | 卡券 ID |
 | `{{ activate_deadline }}` | 卡券激活截止时间（UTC+8） |
 | `{{ grant_batch_id }}` | 发放批次 / 审批单关联 ID |
+| `{{ activity_name }}` | 关联活动名称（按用户语言展示；平台活动取活动名，自定义发放取运营填写的奖励名称） |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8） |
 
-**站内信标题：** 合约体验金已发放
+**站内信标题：** {{ activity_name }} 奖励到账啦
 
 **站内信正文：**
 
 ```
-尊敬的用户，您的合约体验金已发放。
+尊敬的用户，{{ activity_name }} 的体验金奖励已到账啦。
 
 体验金面额：{{ amount }} USDC
 
 请在 {{ activate_deadline }}（UTC+8）前前往卡券中心激活使用。
-到账时间：{{ occurred_at }}
+到账时间：{{ occurred_at }}（UTC+8）
 ```
 
-**Push 标题：** 体验金已发放
+**Push 标题：** 体验金奖励到账
 
-**Push 正文：** {{ amount }} USDC 体验金已到账，请前往卡券中心激活
+**Push 正文：** {{ activity_name }} {{ amount }} USDC 已发放，请激活
+
+> **奖励记录**：须同步写入活动中心 → 我的活动 → 奖励记录，奖励名称取 `{{ activity_name }}`。
 
 **默认配置：** 奖励通知 · 普通 · 站内信 + App Push
 
@@ -681,14 +684,15 @@
 | `{{ valid_days }}` | 有效期天数；永久有效时为空 |
 | `{{ valid_until }}` | 优惠到期时间（UTC+8）；永久有效时为空 |
 | `{{ effective_at }}` | 费率生效时间（UTC+8） |
+| `{{ activity_name }}` | 关联活动名称（按用户语言展示；平台活动取活动名，自定义发放取运营填写的奖励名称） |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8） |
 
-**站内信标题：** VIP 费率优惠已生效
+**站内信标题：** {{ activity_name }} 费率优惠已生效
 
 **站内信正文：**
 
 ```
-尊敬的用户，您的 VIP 费率优惠已生效。
+尊敬的用户，{{ activity_name }} 的 VIP 费率优惠已为您生效。
 
 VIP 等级：VIP {{ vip_level }}
 Maker 费率：{{ maker_rate }}%
@@ -699,9 +703,11 @@ Taker 费率：{{ taker_rate }}%
 
 > **说明**：配置了有效期天数时，正文补充一行 `优惠有效期至：{{ valid_until }}（UTC+8）`；永久有效则省略。
 
-**Push 标题：** VIP 费率优惠生效
+**Push 标题：** 费率优惠生效
 
-**Push 正文：** VIP {{ vip_level }} 费率已生效
+**Push 正文：** {{ activity_name }} VIP {{ vip_level }} 已生效
+
+> **奖励记录**：须同步写入活动中心 → 我的活动 → 奖励记录，奖励名称取 `{{ activity_name }}`。
 
 **默认配置：** 业务通知 · 普通 · 站内信 + App Push
 
@@ -721,14 +727,15 @@ Taker 费率：{{ taker_rate }}%
 | `{{ valid_days }}` | 有效期天数；永久有效时为空 |
 | `{{ valid_until }}` | 优惠到期时间（UTC+8）；永久有效时为空 |
 | `{{ effective_at }}` | 费率生效时间（UTC+8） |
+| `{{ activity_name }}` | 关联活动名称（按用户语言展示；平台活动取活动名，自定义发放取运营填写的奖励名称） |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8） |
 
-**站内信标题：** 专属费率优惠已生效
+**站内信标题：** {{ activity_name }} 费率优惠已生效
 
 **站内信正文：**
 
 ```
-尊敬的用户，您的专属费率优惠已生效。
+尊敬的用户，{{ activity_name }} 的专属费率优惠已为您生效。
 
 Maker 费率：{{ maker_rate }}%
 Taker 费率：{{ taker_rate }}%
@@ -740,7 +747,9 @@ Taker 费率：{{ taker_rate }}%
 
 **Push 标题：** 专属费率优惠生效
 
-**Push 正文：** Maker {{ maker_rate }}% / Taker {{ taker_rate }}% 已生效
+**Push 正文：** {{ activity_name }} Maker {{ maker_rate }}% 已生效
+
+> **奖励记录**：须同步写入活动中心 → 我的活动 → 奖励记录，奖励名称取 `{{ activity_name }}`。
 
 **默认配置：** 业务通知 · 普通 · 站内信 + App Push
 
@@ -859,15 +868,16 @@ Taker 费率：{{ taker_rate }}%
 | `{{ uid }}` | 接收通知的用户 UID |
 | `{{ points_amount }}` | 本次发放的积分数量 |
 | `{{ grant_batch_id }}` | 发放批次 / 审批单关联 ID |
+| `{{ activity_name }}` | 关联活动名称（按用户语言展示；平台活动取活动名，自定义发放取运营填写的奖励名称） |
 | `{{ effective_at }}` | 积分入账时间（UTC+8） |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8） |
 
-**站内信标题：** 积分已到账
+**站内信标题：** {{ activity_name }} 积分奖励到账啦
 
 **站内信正文：**
 
 ```
-尊敬的用户，您有新的积分已到账。
+尊敬的用户，{{ activity_name }} 的积分奖励已到账啦。
 
 发放积分：+{{ points_amount }} Pts
 
@@ -875,9 +885,11 @@ Taker 费率：{{ taker_rate }}%
 到账时间：{{ effective_at }}（UTC+8）
 ```
 
-**Push 标题：** 积分已到账
+**Push 标题：** 积分奖励到账
 
-**Push 正文：** +{{ points_amount }} Pts 积分已发放
+**Push 正文：** {{ activity_name }} +{{ points_amount }} Pts 已到账
+
+> **奖励记录**：须同步写入活动中心 → 我的活动 → 奖励记录，奖励名称取 `{{ activity_name }}`。
 
 **默认配置：** 奖励通知 · 普通 · 站内信 + App Push
 
@@ -894,15 +906,16 @@ Taker 费率：{{ taker_rate }}%
 | `{{ uid }}` | 接收通知的用户 UID |
 | `{{ bonus_multiplier }}` | 生效的自定义加成系数（如 `1.5`） |
 | `{{ config_batch_id }}` | 配置批次 / 审批单关联 ID |
+| `{{ activity_name }}` | 关联活动名称（按用户语言展示；平台活动取活动名，自定义发放取运营填写的奖励名称） |
 | `{{ effective_at }}` | 加成生效时间（UTC+8） |
 | `{{ occurred_at }}` | 事件发生时间（UTC+8） |
 
-**站内信标题：** 积分加成优惠已生效
+**站内信标题：** {{ activity_name }} 加成优惠已生效
 
 **站内信正文：**
 
 ```
-尊敬的用户，您的积分加成优惠已生效。
+尊敬的用户，{{ activity_name }} 的积分加成优惠已为您生效。
 
 加成系数：{{ bonus_multiplier }}x
 
@@ -912,7 +925,9 @@ Taker 费率：{{ taker_rate }}%
 
 **Push 标题：** 积分加成优惠生效
 
-**Push 正文：** 加成 {{ bonus_multiplier }}x 已生效
+**Push 正文：** {{ activity_name }} 加成 {{ bonus_multiplier }}x 已生效
+
+> **奖励记录**：须同步写入活动中心 → 我的活动 → 奖励记录，奖励名称取 `{{ activity_name }}`。
 
 **默认配置：** 业务通知 · 普通 · 站内信 + App Push
 
@@ -1189,6 +1204,279 @@ ADL 说明：
 
 ---
 
-### 3.7 （待补充）
+### 3.7 充提
+
+**业务 PRD**：《[登录、划转与充提](登录、划转与充提.md)》  
+**默认**：资金通知 · 站内信 + App Push
+
+> **变量说明**：充提为链上多资产场景，金额正文保留 `{{ currency }}`；与 §1 平台 USDC 统一口径的例外。
+
+| 序号 | 事件 | 说明 | 触发 | 接收人 | 幂等 |
+|---|---|---|---|---|---|
+| 1 | `deposit.credited` | 充值到账 | 链上充值 **入账确认**（`confirmed`），资金账户余额增加 | 充值 UID | UID + 充值流水 ID |
+| 2 | `withdrawal.succeeded` | 提现成功 | 链上提现 **完成**（`completed`），资金已从账户划出 | 提现 UID | UID + 提现流水 ID |
+| 3 | `withdrawal.failed` | 提现失败 | 链上提现 **失败**（`failed`），资金已退回或标记失败终态 | 提现 UID | UID + 提现流水 ID |
+| 4 | `deposit.signature.pending` | 入金授权待签名 | 已连接钱包充值流程生成 **待签名** 入金交易，等待用户授权 | 用户 UID | UID + 待签名交易 ID |
+| 5 | `deposit.conversion_signature.pending` | 入金兑换授权待签名 | 入金 **兑换** 流程生成待签名交易，等待用户授权 | 用户 UID | UID + 待签名交易 ID |
+
+**不发通知**：充值/提现处理中（`pending` / `processing`）、用户取消签名、站内划转、导出钱包等（本期不做）。
+
+---
+
+#### 1 · `deposit.credited` · 充值到账
+
+**业务触发：** 《[登录、划转与充提](登录、划转与充提.md)》§4.5 **充值状态与入账** · 第三方回调入账确认（`confirmed`），交易达到要求确认数，资金账户余额增加。
+
+**允许消息模板使用的变量：**
+
+| 变量 | 字段说明 |
+|---|---|
+| `{{ uid }}` | 接收通知的用户 UID |
+| `{{ amount }}` | 到账金额 |
+| `{{ currency }}` | 到账资产类型（如 USDT、USDC） |
+| `{{ network }}` | 充值网络 / 链（如 Ethereum、Arbitrum） |
+| `{{ occurred_at }}` | 到账时间（UTC+8） |
+
+**站内信标题：** 充值已到账
+
+**站内信正文：**
+
+```
+尊敬的用户，您的充值已到账。
+
+到账金额：{{ amount }} {{ currency }}
+充值网络：{{ network }}
+到账时间：{{ occurred_at }}（UTC+8）
+
+请前往资产页查看余额。
+```
+
+**Push 标题：** 充值到账
+
+**Push 正文：** {{ amount }} {{ currency }} 充值已到账
+
+**默认配置：** 资金通知 · 普通 · 站内信 + App Push
+
+---
+
+#### 2 · `withdrawal.succeeded` · 提现成功
+
+**业务触发：** 《[登录、划转与充提](登录、划转与充提.md)》§5.5 **提现状态** · 链上提现处理完成（`completed`），资金已从账户划出。
+
+**允许消息模板使用的变量：**
+
+| 变量 | 字段说明 |
+|---|---|
+| `{{ uid }}` | 接收通知的用户 UID |
+| `{{ amount }}` | 提现申请金额 |
+| `{{ fee }}` | 链上 / 平台手续费 |
+| `{{ actual_amount }}` | 实际到账金额（提现金额 − 手续费） |
+| `{{ currency }}` | 提现资产类型 |
+| `{{ network }}` | 提现网络 / 链 |
+| `{{ masked_address }}` | 脱敏后的提现地址 |
+| `{{ occurred_at }}` | 完成时间（UTC+8） |
+
+**站内信标题：** 提现已成功
+
+**站内信正文：**
+
+```
+尊敬的用户，您的提现已成功。
+
+提现金额：{{ amount }} {{ currency }}
+手续费：{{ fee }} {{ currency }}
+实际到账：{{ actual_amount }} {{ currency }}
+提现网络：{{ network }}
+提现地址：{{ masked_address }}
+完成时间：{{ occurred_at }}（UTC+8）
+```
+
+**Push 标题：** 提现成功
+
+**Push 正文：** {{ actual_amount }} {{ currency }} 已提现至 {{ network }}
+
+**默认配置：** 资金通知 · 普通 · 站内信 + App Push
+
+---
+
+#### 3 · `withdrawal.failed` · 提现失败
+
+**业务触发：** 《[登录、划转与充提](登录、划转与充提.md)》§5.6 **提现失败处理** · 收到第三方 `failed` 回调，提现记录更新为失败终态，资金解冻退回。
+
+**允许消息模板使用的变量：**
+
+| 变量 | 字段说明 |
+|---|---|
+| `{{ uid }}` | 接收通知的用户 UID |
+| `{{ amount }}` | 提现申请金额 |
+| `{{ currency }}` | 提现资产类型 |
+| `{{ network }}` | 提现网络 / 链 |
+| `{{ masked_address }}` | 脱敏后的提现地址 |
+| `{{ failure_reason }}` | 失败原因（对用户可见文案） |
+| `{{ refund_status }}` | 资金退回状态（如：已退回账户） |
+| `{{ refund_amount }}` | 退回金额 |
+| `{{ occurred_at }}` | 失败时间（UTC+8） |
+
+**站内信标题：** 提现未成功
+
+**站内信正文：**
+
+```
+尊敬的用户，您的提现未能完成。
+
+提现金额：{{ amount }} {{ currency }}
+提现网络：{{ network }}
+失败原因：{{ failure_reason }}
+
+资金状态：{{ refund_status }}
+退回金额：{{ refund_amount }} {{ currency }}
+失败时间：{{ occurred_at }}（UTC+8）
+
+如有疑问，可通过帮助中心或在线客服联系我们。
+```
+
+**Push 标题：** 提现失败
+
+**Push 正文：** {{ amount }} {{ currency }} 提现未成功，资金已退回
+
+**默认配置：** 业务通知 · 较高 · 站内信 + App Push
+
+---
+
+#### 4 · `deposit.signature.pending` · 入金授权待签名
+
+**业务触发：** 《[登录、划转与充提](登录、划转与充提.md)》§4.3 **从已连接钱包充值** · 后端生成待签名入金交易，等待用户在钱包中完成授权签名。
+
+**允许消息模板使用的变量：**
+
+| 变量 | 字段说明 |
+|---|---|
+| `{{ uid }}` | 接收通知的用户 UID |
+| `{{ amount }}` | 入金资产金额 |
+| `{{ currency }}` | 入金资产类型 |
+| `{{ network }}` | 交易网络 / 链 |
+| `{{ masked_wallet_address }}` | 脱敏后的签名钱包地址 |
+| `{{ signing_url }}` | 前往完成签名的跳转链接（App 深链或 Web URL） |
+| `{{ expires_at }}` | 签名截止时间（UTC+8） |
+| `{{ occurred_at }}` | 待签名交易创建时间（UTC+8，系统字段，正文不展示） |
+
+**站内信标题：** 入金待签名
+
+**站内信正文：**
+
+```
+尊敬的用户，您有一笔入金交易待签名授权。
+
+资产金额：{{ amount }} {{ currency }}
+交易网络：{{ network }}
+签名钱包：{{ masked_wallet_address }}
+签名截止：{{ expires_at }}（UTC+8）
+
+请尽快完成签名，逾期将失效。前往授权：{{ signing_url }}
+```
+
+**Push 标题：** 入金待签名
+
+**Push 正文：** {{ amount }} {{ currency }} 入金待授权，请尽快签名
+
+**默认配置：** 业务通知 · 较高 · 站内信 + App Push
+
+---
+
+#### 5 · `deposit.conversion_signature.pending` · 入金兑换授权待签名
+
+**业务触发：** 《[登录、划转与充提](登录、划转与充提.md)》§4.3 **从已连接钱包充值** · 入金涉及资产兑换时，生成待签名兑换交易，等待用户授权。
+
+**允许消息模板使用的变量：**
+
+| 变量 | 字段说明 |
+|---|---|
+| `{{ uid }}` | 接收通知的用户 UID |
+| `{{ source_amount }}` | 兑换源资产金额 |
+| `{{ source_currency }}` | 兑换源资产类型 |
+| `{{ target_amount }}` | 预计获得的目标资产金额 |
+| `{{ target_currency }}` | 目标资产类型 |
+| `{{ reference_rate }}` | 参考汇率 |
+| `{{ network }}` | 交易网络 / 链 |
+| `{{ masked_wallet_address }}` | 脱敏后的签名钱包地址 |
+| `{{ quote_expires_at }}` | 报价有效期（UTC+8） |
+| `{{ expires_at }}` | 签名截止时间（UTC+8） |
+| `{{ signing_url }}` | 前往完成签名的跳转链接 |
+| `{{ occurred_at }}` | 待签名交易创建时间（UTC+8，系统字段，正文不展示） |
+
+**站内信标题：** 入金兑换待签名
+
+**站内信正文：**
+
+```
+尊敬的用户，您有一笔入金兑换交易待签名。
+
+兑换金额：{{ source_amount }} {{ source_currency }}
+预计获得：{{ target_amount }} {{ target_currency }}
+参考汇率：{{ reference_rate }}
+交易网络：{{ network }}
+签名钱包：{{ masked_wallet_address }}
+报价有效期：{{ quote_expires_at }}（UTC+8）
+签名截止：{{ expires_at }}（UTC+8）
+
+请尽快完成签名。前往签名：{{ signing_url }}
+```
+
+**Push 标题：** 入金兑换待签名
+
+**Push 正文：** {{ source_amount }} {{ source_currency }} 兑换待签名，请尽快处理
+
+**默认配置：** 业务通知 · 较高 · 站内信 + App Push
+
+---
+
+### 3.8 现金奖励
+
+**默认**：奖励通知 · 站内信 + App Push
+
+> **变量说明**：现金奖励为链上 / 多资产到账场景，金额正文保留 `{{ currency }}`。
+
+| 序号 | 事件 | 说明 | 触发 | 接收人 | 幂等 |
+|---|---|---|---|---|---|
+| 1 | `cash_reward.credited` | 现金奖励到账 | 运营发放或活动结算的 **现金奖励** 写入用户账户 | 用户 UID | UID + 奖励流水 ID |
+
+---
+
+#### 1 · `cash_reward.credited` · 现金奖励到账
+
+**业务触发：** 运营 **现金奖励发放** 审批通过并入账，或活动结算完成后现金奖励写入用户资金账户（具体业务 PRD 待补充）。
+
+**允许消息模板使用的变量：**
+
+| 变量 | 字段说明 |
+|---|---|
+| `{{ uid }}` | 接收通知的用户 UID |
+| `{{ amount }}` | 到账金额 |
+| `{{ currency }}` | 到账资产类型 |
+| `{{ reward_source }}` | 奖励来源（活动名 / 发放说明，对用户可见文案） |
+| `{{ occurred_at }}` | 到账时间（UTC+8） |
+
+**站内信标题：** {{ reward_source }} 奖励到账啦
+
+**站内信正文：**
+
+```
+尊敬的用户，{{ reward_source }} 的现金奖励已到账啦。
+
+到账金额：{{ amount }} {{ currency }}
+到账时间：{{ occurred_at }}（UTC+8）
+
+请前往资产页查看余额。
+```
+
+**Push 标题：** 现金奖励到账
+
+**Push 正文：** {{ reward_source }} {{ amount }} {{ currency }} 已到账
+
+**默认配置：** 奖励通知 · 普通 · 站内信 + App Push
+
+---
+
+### 3.9 （待补充）
 
 下一业务分类在此追加，结构同 §3.1。
