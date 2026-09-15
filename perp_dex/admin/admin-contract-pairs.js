@@ -143,11 +143,60 @@
         var uploadBtn = document.getElementById('btn-icon-mode-upload');
         var urlPanel = document.getElementById('icon-panel-url');
         var uploadPanel = document.getElementById('icon-panel-upload');
-        if (urlBtn) urlBtn.classList.toggle('active', iconInputMode === 'url');
-        if (uploadBtn) uploadBtn.classList.toggle('active', iconInputMode === 'upload');
-        if (urlPanel) urlPanel.classList.toggle('hidden', iconInputMode !== 'url');
-        if (uploadPanel) uploadPanel.classList.toggle('hidden', iconInputMode !== 'upload');
+        var modeHint = document.getElementById('icon-mode-hint');
+        if (urlBtn) {
+            urlBtn.classList.toggle('active', iconInputMode === 'url');
+            urlBtn.setAttribute('aria-selected', iconInputMode === 'url' ? 'true' : 'false');
+        }
+        if (uploadBtn) {
+            uploadBtn.classList.toggle('active', iconInputMode === 'upload');
+            uploadBtn.setAttribute('aria-selected', iconInputMode === 'upload' ? 'true' : 'false');
+        }
+        if (urlPanel) urlPanel.classList.toggle('icon-panel-hidden', iconInputMode !== 'url');
+        if (uploadPanel) uploadPanel.classList.toggle('icon-panel-hidden', iconInputMode !== 'upload');
+        if (modeHint) {
+            modeHint.textContent = iconInputMode === 'upload'
+                ? '当前方式：本地上传（PNG / JPG）'
+                : '当前方式：URL 链接';
+        }
         updateIconPreview();
+    }
+
+    function bindIconControls() {
+        var urlBtn = document.getElementById('btn-icon-mode-url');
+        var uploadBtn = document.getElementById('btn-icon-mode-upload');
+        var pickBtn = document.getElementById('btn-pick-icon-file');
+        var fileInput = document.getElementById('form-icon-file');
+        if (urlBtn && !urlBtn.dataset.bound) {
+            urlBtn.dataset.bound = '1';
+            urlBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                setIconInputMode('url');
+            });
+        }
+        if (uploadBtn && !uploadBtn.dataset.bound) {
+            uploadBtn.dataset.bound = '1';
+            uploadBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                setIconInputMode('upload');
+            });
+        }
+        if (pickBtn && fileInput && !pickBtn.dataset.bound) {
+            pickBtn.dataset.bound = '1';
+            pickBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                fileInput.click();
+            });
+        }
+        if (fileInput && !fileInput.dataset.bound) {
+            fileInput.dataset.bound = '1';
+            fileInput.addEventListener('change', function (e) {
+                handleIconFileSelect(e.target.files && e.target.files[0]);
+            });
+        }
     }
 
     function updateIconPreview() {
@@ -157,12 +206,12 @@
         if (!wrap || !img || !label) return;
         var value = getIconUrlValue(false);
         if (!value) {
-            wrap.classList.add('hidden');
+            wrap.classList.add('icon-panel-hidden');
             img.removeAttribute('src');
             label.textContent = '';
             return;
         }
-        wrap.classList.remove('hidden');
+        wrap.classList.remove('icon-panel-hidden');
         img.src = value;
         if (iconInputMode === 'upload' && iconUploadFileName) {
             label.textContent = '已上传：' + iconUploadFileName;
@@ -677,6 +726,7 @@
         var pair = isNew ? emptyPair() : clone(findPair(productName));
         if (!pair && !isNew) return;
         loadForm(pair);
+        bindIconControls();
         showView('view-form');
         location.hash = isNew ? '#new' : '#edit=' + encodeURIComponent(productName);
     }
@@ -813,8 +863,6 @@
             if (action === 'save-pair') saveForm();
             if (action === 'close-save-confirm') closeSaveConfirmModal();
             if (action === 'confirm-save-pair') confirmSavePair();
-            if (action === 'icon-mode-url') setIconInputMode('url');
-            if (action === 'icon-mode-upload') setIconInputMode('upload');
             if (action === 'edit-pair') openForm(false, t.getAttribute('data-name'));
             if (action === 'add-margin') {
                 var rows = readMarginFromDom();
@@ -876,9 +924,6 @@
             if (e.target.id === 'form-base-coin') {
                 syncCoinDescriptionFromOverview(e.target.value, true);
             }
-            if (e.target.id === 'form-icon-file') {
-                handleIconFileSelect(e.target.files && e.target.files[0]);
-            }
         });
 
         document.body.addEventListener('input', function (e) {
@@ -894,9 +939,15 @@
 
     function init() {
         bindEvents();
+        bindIconControls();
         window.addEventListener('hashchange', applyRoute);
         applyRoute();
     }
 
     global.initContractPairsAdmin = init;
+    global.setContractPairIconMode = setIconInputMode;
+    global.pickContractPairIconFile = function () {
+        var fileInput = document.getElementById('form-icon-file');
+        if (fileInput) fileInput.click();
+    };
 })(window);
