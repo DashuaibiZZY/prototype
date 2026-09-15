@@ -148,7 +148,6 @@
         var uploadRadio = document.getElementById('icon-radio-upload');
         if (urlRadio) urlRadio.checked = iconInputMode === 'url';
         if (uploadRadio) uploadRadio.checked = iconInputMode === 'upload';
-        updateIconPreview();
     }
 
     function bindIconControls() {
@@ -160,7 +159,6 @@
             radio.dataset.bound = '1';
             radio.addEventListener('change', function () {
                 syncIconInputModeFromDom();
-                updateIconPreview();
             });
         });
         if (fileInput && !fileInput.dataset.bound) {
@@ -168,29 +166,6 @@
             fileInput.addEventListener('change', function (e) {
                 handleIconFileSelect(e.target.files && e.target.files[0]);
             });
-        }
-    }
-
-    function updateIconPreview() {
-        var wrap = document.getElementById('icon-preview-wrap');
-        var img = document.getElementById('icon-preview');
-        var label = document.getElementById('icon-preview-label');
-        if (!wrap || !img || !label) return;
-        var value = getIconUrlValue(false);
-        if (!value) {
-            wrap.classList.add('icon-panel-hidden');
-            img.removeAttribute('src');
-            label.textContent = '';
-            return;
-        }
-        wrap.classList.remove('icon-panel-hidden');
-        img.src = value;
-        if (iconInputMode === 'upload' && iconUploadFileName) {
-            label.textContent = '已上传：' + iconUploadFileName;
-        } else if (isIconDataUrl(value)) {
-            label.textContent = '已上传图片（本地预览）';
-        } else {
-            label.textContent = value;
         }
     }
 
@@ -225,7 +200,6 @@
         } else {
             setIconInputMode('url');
         }
-        updateIconPreview();
     }
 
     function handleIconFileSelect(file) {
@@ -235,7 +209,6 @@
         if (!typeOk && !extOk) {
             alert('仅支持 PNG、JPG 格式图片');
             resetIconUploadState();
-            updateIconPreview();
             return;
         }
         var reader = new FileReader();
@@ -245,7 +218,6 @@
             setField('form-icon-url', iconUploadDataUrl);
             var fileNameEl = document.getElementById('form-icon-file-name');
             if (fileNameEl) fileNameEl.textContent = file.name;
-            updateIconPreview();
         };
         reader.readAsDataURL(file);
     }
@@ -884,9 +856,6 @@
         document.body.addEventListener('input', function (e) {
             if (e.target.matches('[data-index="weight"]')) {
                 renderIndexRows(readIndexFromDom());
-            }
-            if (e.target.id === 'form-icon-url') {
-                updateIconPreview();
             }
         });
 
