@@ -313,13 +313,14 @@
         if (hint) hint.textContent = '共 ' + pairs.length + ' 条 · 计价市场 ' + selectedMarket;
         if (!tbody) return;
         if (!pairs.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400 font-bold">暂无交易对，点击「+ 新增交易对」添加</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-slate-400 font-bold">暂无交易对，点击「+ 新增交易对」添加</td></tr>';
             return;
         }
         tbody.innerHTML = pairs.map(function (p) {
             return '<tr class="hover:bg-slate-50/80">' +
                 '<td class="px-6 py-4 font-black text-slate-800">' + p.product_name + '</td>' +
                 '<td class="px-6 py-4 text-center">' + fmtBool(p.front_hidden) + '</td>' +
+                '<td class="px-6 py-4 text-center"><span class="status-pill ' + (p.status === 'enabled' ? 'status-on' : 'status-off') + '">' + fmtStatus(p.status) + '</span></td>' +
                 '<td class="px-6 py-4 text-slate-600">' + fmtDateTime(p.allow_trade_start_time) + '</td>' +
                 '<td class="px-6 py-4 text-slate-500">' + fmtDateTime(p.create_time) + '</td>' +
                 '<td class="px-6 py-4 text-slate-500">' + fmtDateTime(p.update_time) + '</td>' +
@@ -332,43 +333,32 @@
         return String(n).padStart(2, '0');
     }
 
-    function renderFundingInitHourSelect(selectedHour) {
-        var select = document.getElementById('form-fr-init-hour');
-        if (!select) return;
-        var opts = [];
-        for (var h = 0; h < 24; h += 1) {
-            opts.push('<option value="' + h + '">' + pad2(h) + ':00</option>');
-        }
-        select.innerHTML = opts.join('');
-        if (selectedHour != null && selectedHour !== '') select.value = String(selectedHour);
-    }
-
-    function timestampToDateHour(ts) {
-        if (!ts && ts !== 0) return { date: '', hour: '0' };
+    function timestampToDatetimeLocal(ts) {
+        if (!ts && ts !== 0) return '';
         var d = new Date(Number(ts) * 1000);
-        if (isNaN(d.getTime())) return { date: '', hour: '0' };
-        return {
-            date: d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()),
-            hour: String(d.getHours())
-        };
+        if (isNaN(d.getTime())) return '';
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + 'T' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
     }
 
-    function dateHourToTimestamp(dateStr, hourStr) {
-        if (!dateStr) return 0;
-        var parts = dateStr.split('-');
-        if (parts.length !== 3) return 0;
-        var d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]), Number(hourStr || 0), 0, 0, 0);
+    function datetimeLocalToTimestamp(val) {
+        if (!val) return 0;
+        var d = new Date(val);
+        if (isNaN(d.getTime())) return 0;
         return Math.floor(d.getTime() / 1000);
     }
 
-    function setFundingInitFields(ts) {
-        var parts = timestampToDateHour(ts);
-        setField('form-fr-init-date', parts.date);
-        renderFundingInitHourSelect(parts.hour);
+    function setFundingInitField(ts) {
+        setField('form-fr-init-ts', timestampToDatetimeLocal(ts));
     }
 
     function getFundingInitTimestamp() {
-        return dateHourToTimestamp(getField('form-fr-init-date'), getField('form-fr-init-hour'));
+        return datetimeLocalToTimestamp(getField('form-fr-init-ts'));
+    }
+
+    function isLimitConfigOnlyEdit() {
+        if (!editingProduct) return false;
+        var pair = findPair(editingProduct);
+        return !!(pair && pair.status === 'enabled');
     }
 
     function updateCoinDescriptionCount() {
@@ -487,26 +477,34 @@
         var root = document.getElementById('view-form');
         var hint = document.getElementById('limit-config-edit-hint');
         if (!root) return;
-        var isEdit = !!editingProduct;
-        if (hint) hint.classList.toggle('hidden', !isEdit);
+
+        var restrictToLimitConfig = isLimitConfigOnlyEdit();
+        if (hint) hint.classList.toggle('hidden', !restrictToLimitConfig);
+
+        root.querySelectorAll('[data-form-section]').forEach(function (section) {
+            var isLimit = section.id === 'section-limit-config';
+            section.classList.toggle('form-section-readonly', restrictToLimitConfig && !isLimit);
+        });
 
         root.querySelectorAll('input[id], select[id], textarea[id]').forEach(function (el) {
-            if (!isEdit) {
+            if (!restrictToLimitConfig) {
                 if (el.id !== 'form-product-name') el.disabled = false;
                 return;
             }
             el.disabled = LIMIT_CONFIG_EDITABLE_IDS.indexOf(el.id) < 0;
         });
 
-        if (isEdit) {
+        if (editingProduct) {
             var productName = document.getElementById('form-product-name');
-            var priceUnit = document.getElementById('form-lc-price-unit');
             if (productName) productName.disabled = true;
+        }
+        if (restrictToLimitConfig) {
+            var priceUnit = document.getElementById('form-lc-price-unit');
             if (priceUnit) priceUnit.disabled = true;
         }
 
         root.querySelectorAll('button[data-action]').forEach(function (btn) {
-            if (!isEdit) {
+            if (!restrictToLimitConfig) {
                 btn.disabled = false;
                 return;
             }
@@ -514,18 +512,18 @@
         });
 
         var pickBtn = document.getElementById('btn-pick-icon-file');
-        if (pickBtn) pickBtn.disabled = isEdit;
+        if (pickBtn) pickBtn.disabled = restrictToLimitConfig;
 
         ['icon-radio-url', 'icon-radio-upload'].forEach(function (id) {
             var radio = document.getElementById(id);
-            if (radio) radio.disabled = isEdit;
+            if (radio) radio.disabled = restrictToLimitConfig;
         });
 
         root.querySelectorAll('#margin-tier-body input, #margin-tier-body button, #index-source-body input, #index-source-body select, #index-source-body button, #tag-checkbox-wrap input').forEach(function (el) {
-            if (isEdit) el.disabled = true;
+            if (restrictToLimitConfig) el.disabled = true;
         });
 
-        if (isEdit) updateAddIndexButton(readIndexFromDom());
+        if (restrictToLimitConfig) updateAddIndexButton(readIndexFromDom());
     }
 
     function collectLimitConfigFromForm(existingLimitConfig) {
@@ -599,7 +597,7 @@
         setField('form-fr-min', fc.funds_rate_min);
         setField('form-fr-interests', fc.funds_rate_interests);
         setField('form-fr-interval', fc.funds_interval_hour);
-        setFundingInitFields(fc.funds_init_ts);
+        setFundingInitField(fc.funds_init_ts);
 
         var ac = pair.account_config || {};
         setField('form-ac-risk-min', ac.risk_account_min);
@@ -683,7 +681,7 @@
             return null;
         }
         var existingPair = editingProduct ? findPair(editingProduct) : null;
-        if (editingProduct && existingPair) {
+        if (editingProduct && existingPair && existingPair.status === 'enabled') {
             var updated = clone(existingPair);
             updated.update_time = new Date().toISOString().slice(0, 19).replace('T', ' ');
             updated.limit_config = collectLimitConfigFromForm(existingPair.limit_config || {});
@@ -904,20 +902,20 @@
             if (action === 'confirm-save-pair') confirmSavePair();
             if (action === 'edit-pair') openForm(false, t.getAttribute('data-name'));
             if (action === 'add-margin') {
-                if (editingProduct) return;
+                if (isLimitConfigOnlyEdit()) return;
                 var rows = readMarginFromDom();
                 rows.push({ min_quantity: '0', max_quantity: '0', max_level: 10, maintenance_margin_rate: '0.01' });
                 renderMarginRows(rows);
             }
             if (action === 'remove-margin') {
-                if (editingProduct) return;
+                if (isLimitConfigOnlyEdit()) return;
                 var idx = Number(t.getAttribute('data-idx'));
                 var mrows = readMarginFromDom();
                 mrows.splice(idx, 1);
                 renderMarginRows(mrows);
             }
             if (action === 'add-index') {
-                if (editingProduct) return;
+                if (isLimitConfigOnlyEdit()) return;
                 var irows = readIndexFromDom();
                 if (irows.length >= MAX_INDEX_SOURCES) {
                     alert('指数源最多 ' + MAX_INDEX_SOURCES + ' 个');
@@ -934,13 +932,13 @@
                 renderIndexRows(irows);
             }
             if (action === 'remove-index') {
-                if (editingProduct) return;
+                if (isLimitConfigOnlyEdit()) return;
                 var iidx = Number(t.getAttribute('data-idx'));
                 var ir = readIndexFromDom();
                 ir.splice(iidx, 1);
                 renderIndexRows(ir);
             }
-            if (action === 'edit-tags') { if (!editingProduct) openTagModal(); }
+            if (action === 'edit-tags') { if (!isLimitConfigOnlyEdit()) openTagModal(); }
             if (action === 'close-tag-modal') closeTagModal();
             if (action === 'save-tags') saveTagsFromModal();
             if (action === 'add-tag-row') addTagInModal();
@@ -981,7 +979,6 @@
     }
 
     function init() {
-        renderFundingInitHourSelect(0);
         bindEvents();
         bindIconControls();
         window.addEventListener('hashchange', applyRoute);
