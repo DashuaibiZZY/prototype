@@ -29,7 +29,7 @@
     var TAG_OPTIONS = ['perpetual', 'hot', 'new', 'meme'];
 
     /** 原型版本号：列表角标可核对是否加载到最新脚本 */
-    var MODULE_BUILD = '20260915-fsm';
+    var MODULE_BUILD = '20260915-times';
 
     var STATUS_LABELS = {
         pending: '待启用',
@@ -440,12 +440,77 @@
         return Math.floor(d.getTime() / 1000);
     }
 
-    function setFundingInitField(ts) {
-        setField('form-fr-init-ts', timestampToDatetimeLocal(ts));
+    function getNowDatetimeLocalMin() {
+        return timestampToDatetimeLocal(Math.floor(Date.now() / 1000));
     }
 
-    function getFundingInitTimestamp() {
-        return datetimeLocalToTimestamp(getField('form-fr-init-ts'));
+    function isFutureDatetimeLocal(val) {
+        return datetimeLocalToTimestamp(val) > Math.floor(Date.now() / 1000);
+    }
+
+    function transitionNeedsAllowTradeStart(fromStatus, nextStatus) {
+        return nextStatus === 'enabled' && (fromStatus === 'pending' || fromStatus === 'disabled');
+    }
+
+    function transitionNeedsFundsInit(fromStatus, nextStatus) {
+        return nextStatus === 'enabled' && fromStatus === 'pending';
+    }
+
+    function updateTimeDisplayFields(pair) {
+        var allowEl = document.getElementById('form-allow-trade-start-display');
+        var fundsEl = document.getElementById('form-funds-init-display');
+        if (allowEl) allowEl.textContent = fmtDateTime(pair.allow_trade_start_time) || '—';
+        if (fundsEl) {
+            var ts = (pair.funding_rate_config || {}).funds_init_ts;
+            fundsEl.textContent = ts ? fmtDateTime(timestampToDatetimeLocal(ts)) : '—';
+        }
+    }
+
+    function resetStatusTransitionFields() {
+        var fields = document.getElementById('status-transition-fields');
+        var allowWrap = document.getElementById('status-allow-trade-start-wrap');
+        var fundsWrap = document.getElementById('status-funds-init-wrap');
+        var allowInput = document.getElementById('status-allow-trade-start');
+        var fundsInput = document.getElementById('status-funds-init-ts');
+        if (fields) fields.classList.add('hidden');
+        if (allowWrap) allowWrap.classList.add('hidden');
+        if (fundsWrap) fundsWrap.classList.add('hidden');
+        if (allowInput) allowInput.value = '';
+        if (fundsInput) fundsInput.value = '';
+    }
+
+    function configureStatusTransitionFields(pair, fromStatus, nextStatus) {
+        resetStatusTransitionFields();
+        var showAllow = transitionNeedsAllowTradeStart(fromStatus, nextStatus);
+        var showFunds = transitionNeedsFundsInit(fromStatus, nextStatus);
+        if (!showAllow && !showFunds) return;
+
+        var fields = document.getElementById('status-transition-fields');
+        if (fields) fields.classList.remove('hidden');
+
+        var minVal = getNowDatetimeLocalMin();
+        if (showAllow) {
+            var allowWrap = document.getElementById('status-allow-trade-start-wrap');
+            var allowInput = document.getElementById('status-allow-trade-start');
+            if (allowWrap) allowWrap.classList.remove('hidden');
+            if (allowInput) {
+                allowInput.min = minVal;
+                allowInput.value = pair.allow_trade_start_time && isFutureDatetimeLocal(pair.allow_trade_start_time)
+                    ? pair.allow_trade_start_time
+                    : '';
+            }
+        }
+        if (showFunds) {
+            var fundsWrap = document.getElementById('status-funds-init-wrap');
+            var fundsInput = document.getElementById('status-funds-init-ts');
+            if (fundsWrap) fundsWrap.classList.remove('hidden');
+            if (fundsInput) {
+                fundsInput.min = minVal;
+                var ts = (pair.funding_rate_config || {}).funds_init_ts;
+                var local = ts ? timestampToDatetimeLocal(ts) : '';
+                fundsInput.value = local && isFutureDatetimeLocal(local) ? local : '';
+            }
+        }
     }
 
     function isLimitConfigOnlyEdit() {
@@ -462,17 +527,19 @@
             alert('当前状态不支持该操作');
             return;
         }
-        pendingStatusTransition = { name: productName, next: nextStatus, label: label };
+        pendingStatusTransition = { name: productName, next: nextStatus, label: label, from: pair.status };
         var modal = document.getElementById('status-action-modal');
         var text = document.getElementById('status-action-text');
         if (text) {
             text.textContent = '确认对交易对「' + productName + '」执行「' + label + '」？状态将由「' + fmtStatus(pair.status) + '」变更为「' + fmtStatus(nextStatus) + '」。';
         }
+        configureStatusTransitionFields(pair, pair.status, nextStatus);
         if (modal) modal.classList.remove('hidden');
     }
 
     function closeStatusTransitionModal() {
         pendingStatusTransition = null;
+        resetStatusTransitionFields();
         var modal = document.getElementById('status-action-modal');
         if (modal) modal.classList.add('hidden');
     }
@@ -484,7 +551,36 @@
             closeStatusTransitionModal();
             return;
         }
-        pair.status = pendingStatusTransition.next;
+        var fromStatus = pendingStatusTransition.from;
+        var nextStatus = pendingStatusTransition.next;
+
+        if (transitionNeedsAllowTradeStart(fromStatus, nextStatus)) {
+            var allowVal = getField('status-allow-trade-start');
+            if (!allowVal) {
+                alert('请填写允许交易开始时间');
+                return;
+            }
+            if (!isFutureDatetimeLocal(allowVal)) {
+                alert('允许交易开始时间须晚于当前时间');
+                return;
+            }
+            pair.allow_trade_start_time = allowVal;
+        }
+        if (transitionNeedsFundsInit(fromStatus, nextStatus)) {
+            var fundsVal = getField('status-funds-init-ts');
+            if (!fundsVal) {
+                alert('请填写首次结算时间');
+                return;
+            }
+            if (!isFutureDatetimeLocal(fundsVal)) {
+                alert('首次结算时间须晚于当前时间');
+                return;
+            }
+            if (!pair.funding_rate_config) pair.funding_rate_config = {};
+            pair.funding_rate_config.funds_init_ts = datetimeLocalToTimestamp(fundsVal);
+        }
+
+        pair.status = nextStatus;
         pair.update_time = new Date().toISOString().slice(0, 19).replace('T', ' ');
         closeStatusTransitionModal();
         alert('状态已更新为「' + fmtStatus(pair.status) + '」（原型演示）');
@@ -724,7 +820,7 @@
         setField('form-front-hidden', pair.front_hidden);
         setField('form-quote-enable', pair.quote_enable);
         setField('form-quote-sort', pair.quote_sort);
-        setField('form-allow-trade-start', pair.allow_trade_start_time);
+        updateTimeDisplayFields(pair);
         setField('form-sort', pair.sort);
         setField('form-depth-level', pair.depth_level);
         var lc = pair.limit_config || {};
@@ -745,7 +841,6 @@
         setField('form-fr-min', fc.funds_rate_min);
         setField('form-fr-interests', fc.funds_rate_interests);
         setField('form-fr-interval', fc.funds_interval_hour);
-        setFundingInitField(fc.funds_init_ts);
 
         var ac = pair.account_config || {};
         setField('form-ac-risk-min', ac.risk_account_min);
@@ -859,6 +954,10 @@
             alert('币种描述最多 ' + MAX_COIN_DESCRIPTION_LEN + ' 字符');
             return null;
         }
+        var preservedAllowTradeStart = editingProduct && existingPair ? existingPair.allow_trade_start_time : '';
+        var preservedFundsInitTs = editingProduct && existingPair
+            ? ((existingPair.funding_rate_config || {}).funds_init_ts || 0)
+            : 0;
         return {
             product_name: name,
             icon_url: getIconUrlValue(true),
@@ -875,7 +974,7 @@
             quote_sort: Number(getField('form-quote-sort')),
             create_time: editingProduct && existingPair ? existingPair.create_time : new Date().toISOString().slice(0, 19).replace('T', ' '),
             update_time: new Date().toISOString().slice(0, 19).replace('T', ' '),
-            allow_trade_start_time: getField('form-allow-trade-start'),
+            allow_trade_start_time: preservedAllowTradeStart,
             sort: Number(getField('form-sort')),
             depth_level: Number(getField('form-depth-level')),
             tags: readTagsFromDom(),
@@ -887,7 +986,7 @@
                 funds_rate_min: getField('form-fr-min').trim(),
                 funds_rate_interests: getField('form-fr-interests').trim(),
                 funds_interval_hour: Number(getField('form-fr-interval')),
-                funds_init_ts: getFundingInitTimestamp()
+                funds_init_ts: preservedFundsInitTs
             },
             account_config: {
                 risk_account_min: getField('form-ac-risk-min').trim(),
