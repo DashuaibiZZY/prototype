@@ -100,6 +100,16 @@
                 var p = defaultPair('ARBUSDC', 'ARB');
                 p.status = 'pending';
                 return p;
+            })(),
+            (function () {
+                var p = defaultPair('DOGEUSDC', 'DOGE');
+                p.status = 'pre_deliver';
+                return p;
+            })(),
+            (function () {
+                var p = defaultPair('BNBUSDC', 'BNB');
+                p.status = 'delivering';
+                return p;
             })()
         ]
     };
@@ -722,7 +732,7 @@
         renderTagCheckboxes(pair.tags || []);
 
         document.getElementById('form-page-title').textContent = editingProduct ? '编辑交易对 · ' + editingProduct : '新增交易对';
-        document.getElementById('form-market-badge').textContent = '计价市场 · ' + selectedMarket;
+        document.getElementById('form-market-badge').textContent = '计价市场 · ' + selectedMarket + (editingProduct ? ' · 状态 ' + fmtStatus(pair.status) : '');
         applyFormEditRestrictions();
     }
 
