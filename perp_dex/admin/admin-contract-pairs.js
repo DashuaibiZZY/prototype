@@ -7,10 +7,24 @@
     var COIN_CONFIG = [
         { symbol: 'USDC', name: 'USD Coin', status: 'enabled', selectable: true },
         { symbol: 'USDT', name: 'Tether USD', status: 'enabled', selectable: false },
-        { symbol: 'BTC', name: 'Bitcoin', status: 'enabled', selectable: false }
+        { symbol: 'BTC', name: 'Bitcoin', status: 'enabled', selectable: false },
+        { symbol: 'ETH', name: 'Ethereum', status: 'enabled', selectable: false },
+        { symbol: 'SOL', name: 'Solana', status: 'enabled', selectable: false },
+        { symbol: 'BNB', name: 'BNB', status: 'enabled', selectable: false },
+        { symbol: 'XRP', name: 'Ripple', status: 'enabled', selectable: false },
+        { symbol: 'DOGE', name: 'Dogecoin', status: 'enabled', selectable: false },
+        { symbol: 'NEW', name: 'New Coin', status: 'enabled', selectable: false }
     ];
 
     var INDEX_SOURCE_OPTIONS = ['binance', 'okx', 'bybit', 'hyperliquid'];
+    var MAX_INDEX_SOURCES = 4;
+
+    var TAG_PRICE_CALCULATE_TYPES = [
+        { value: 1, label: '采取中位数' },
+        { value: 2, label: '采用最新价' },
+        { value: 3, label: '采用中间价合理价' },
+        { value: 4, label: '采用资金费率溢价' }
+    ];
 
     var TAG_OPTIONS = ['perpetual', 'hot', 'new', 'meme'];
 
@@ -50,7 +64,7 @@
             ],
             front_hidden: false,
             status: 'enabled',
-            quote_enable: true,
+            quote_enable: false,
             quote_sort: 1,
             create_time: '2026-09-01 10:00:00',
             update_time: '2026-09-10 14:30:00',
@@ -70,7 +84,7 @@
                 max_book_num: 200
             },
             funding_rate_config: {
-                is_mm_admin: true,
+                is_mm_admin: false,
                 funds_rate_precision: 6,
                 funds_rate_max: '0.0075',
                 funds_rate_min: '-0.0075',
@@ -165,7 +179,7 @@
         if (hint) hint.textContent = '共 ' + pairs.length + ' 条 · 计价市场 ' + selectedMarket;
         if (!tbody) return;
         if (!pairs.length) {
-            tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-12 text-center text-slate-400 font-bold">暂无交易对，点击「+ 新增交易对」添加</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-slate-400 font-bold">暂无交易对，点击「+ 新增交易对」添加</td></tr>';
             return;
         }
         tbody.innerHTML = pairs.map(function (p) {
@@ -174,9 +188,41 @@
                 '<td class="px-6 py-4 text-center">' + fmtBool(p.front_hidden) + '</td>' +
                 '<td class="px-6 py-4 text-center"><span class="status-pill ' + (p.status === 'enabled' ? 'status-on' : 'status-off') + '">' + fmtStatus(p.status) + '</span></td>' +
                 '<td class="px-6 py-4 text-slate-600">' + fmtDateTime(p.allow_trade_start_time) + '</td>' +
+                '<td class="px-6 py-4 text-slate-500">' + fmtDateTime(p.create_time) + '</td>' +
+                '<td class="px-6 py-4 text-slate-500">' + fmtDateTime(p.update_time) + '</td>' +
                 '<td class="px-6 py-4 text-right"><button type="button" class="text-blue-600 font-black hover:underline" data-action="edit-pair" data-name="' + p.product_name + '">编辑</button></td>' +
                 '</tr>';
         }).join('');
+    }
+
+    function renderBaseCoinSelect(selected) {
+        var select = document.getElementById('form-base-coin');
+        if (!select) return;
+        select.innerHTML = COIN_CONFIG.map(function (c) {
+            var sel = selected && c.symbol === selected ? ' selected' : '';
+            return '<option value="' + c.symbol + '"' + sel + '>' + c.symbol + ' · ' + c.name + '</option>';
+        }).join('');
+        if (selected) select.value = selected;
+    }
+
+    function renderTagPriceCalcTypeSelect(selected) {
+        var select = document.getElementById('form-tp-calc-type');
+        if (!select) return;
+        select.innerHTML = TAG_PRICE_CALCULATE_TYPES.map(function (t) {
+            return '<option value="' + t.value + '">' + t.value + ' · ' + t.label + '</option>';
+        }).join('');
+        if (selected != null) select.value = String(selected);
+    }
+
+    function updateAddIndexButton(rows) {
+        var btn = document.getElementById('btn-add-index');
+        if (!btn) return;
+        var count = (rows || []).length;
+        var atMax = count >= MAX_INDEX_SOURCES;
+        btn.disabled = atMax;
+        btn.classList.toggle('opacity-40', atMax);
+        btn.classList.toggle('cursor-not-allowed', atMax);
+        btn.title = atMax ? '最多添加 ' + MAX_INDEX_SOURCES + ' 个指数源' : '';
     }
 
     function emptyPair() {
@@ -208,27 +254,39 @@
         }).join('');
     }
 
+    function buildIndexSourceOptions(rows, idx) {
+        var used = {};
+        (rows || []).forEach(function (r, i) {
+            if (i !== idx && r.source_name) used[r.source_name] = true;
+        });
+        var current = rows[idx] && rows[idx].source_name;
+        return INDEX_SOURCE_OPTIONS.filter(function (s) {
+            return !used[s] || s === current;
+        }).map(function (s) {
+            return '<option value="' + s + '"' + (current === s ? ' selected' : '') + '>' + s + '</option>';
+        }).join('');
+    }
+
     function renderIndexRows(rows) {
         var tbody = document.getElementById('index-source-body');
         var weightHint = document.getElementById('index-weight-hint');
         if (!tbody) return;
-        var total = (rows || []).reduce(function (s, r) { return s + (Number(r.weight) || 0); }, 0);
+        rows = rows || [];
+        var total = rows.reduce(function (s, r) { return s + (Number(r.weight) || 0); }, 0);
         if (weightHint) {
             weightHint.textContent = '权重合计 ' + total + '%' + (total === 100 ? '' : '（须等于 100%）');
             weightHint.className = 'text-[10px] font-bold ' + (total === 100 ? 'text-green-600' : 'text-red-500');
         }
-        tbody.innerHTML = (rows || []).map(function (row, idx) {
-            var opts = INDEX_SOURCE_OPTIONS.map(function (s) {
-                return '<option value="' + s + '"' + (row.source_name === s ? ' selected' : '') + '>' + s + '</option>';
-            }).join('');
+        tbody.innerHTML = rows.map(function (row, idx) {
             return '<tr>' +
                 '<td><input class="field-input w-20" type="number" data-index="weight" data-idx="' + idx + '" value="' + row.weight + '"></td>' +
-                '<td><select class="field-input" data-index="source_name" data-idx="' + idx + '">' + opts + '</select></td>' +
+                '<td><select class="field-input" data-index="source_name" data-idx="' + idx + '">' + buildIndexSourceOptions(rows, idx) + '</select></td>' +
                 '<td><input class="field-input" data-index="sub_base_coin_name" data-idx="' + idx + '" value="' + row.sub_base_coin_name + '"></td>' +
                 '<td><input class="field-input" data-index="sub_value_coin_name" data-idx="' + idx + '" value="' + row.sub_value_coin_name + '"></td>' +
                 '<td class="text-right"><button type="button" class="text-red-500 font-bold" data-action="remove-index" data-idx="' + idx + '">删除</button></td>' +
                 '</tr>';
         }).join('');
+        updateAddIndexButton(rows);
     }
 
     function renderTagCheckboxes(selected) {
@@ -259,7 +317,7 @@
         setField('form-product-name', pair.product_name);
         setField('form-icon-url', pair.icon_url);
         setField('form-swap-value', pair.swap_value);
-        setField('form-base-coin', pair.base_coin_name);
+        renderBaseCoinSelect(pair.base_coin_name);
         setField('form-coin-precision', pair.coin_precision);
         setField('form-quote-precision', pair.quote_precision);
         setField('form-price-precision', pair.price_precision);
@@ -270,9 +328,6 @@
         setField('form-allow-trade-start', pair.allow_trade_start_time);
         setField('form-sort', pair.sort);
         setField('form-depth-level', pair.depth_level);
-        setField('form-create-time', pair.create_time || '—');
-        setField('form-update-time', pair.update_time || '—');
-
         var lc = pair.limit_config || {};
         setField('form-lc-market-max-deeps', lc.market_max_deeps);
         setField('form-lc-price-unit', lc.price_unit);
@@ -304,7 +359,7 @@
 
         var tp = pair.tag_price_config || {};
         setField('form-tp-basis-cycle', tp.basis_move_cycle);
-        setField('form-tp-calc-type', tp.tag_price_calculate_type);
+        renderTagPriceCalcTypeSelect(tp.tag_price_calculate_type);
 
         var fee = pair.fee_rate_config || {};
         setField('form-fee-enable', fee.enable);
@@ -316,7 +371,6 @@
 
         document.getElementById('form-page-title').textContent = editingProduct ? '编辑交易对 · ' + editingProduct : '新增交易对';
         document.getElementById('form-market-badge').textContent = '计价市场 · ' + selectedMarket;
-        document.getElementById('form-meta-wrap').classList.toggle('hidden', !editingProduct);
     }
 
     function readMarginFromDom() {
@@ -358,11 +412,22 @@
 
     function collectForm() {
         var sources = readIndexFromDom();
+        if (sources.length > MAX_INDEX_SOURCES) {
+            alert('指数源最多 ' + MAX_INDEX_SOURCES + ' 个');
+            return null;
+        }
+        var sourceNames = sources.map(function (r) { return r.source_name; });
+        var dupSource = sourceNames.filter(function (s, i) { return sourceNames.indexOf(s) !== i; })[0];
+        if (dupSource) {
+            alert('指数源 source_name 不可重复：' + dupSource);
+            return null;
+        }
         var weightSum = sources.reduce(function (s, r) { return s + (Number(r.weight) || 0); }, 0);
         if (getField('form-ic-enable') && weightSum !== 100) {
             alert('指数源权重合计须为 100%，当前为 ' + weightSum + '%');
             return null;
         }
+        var existingPair = editingProduct ? findPair(editingProduct) : null;
         var name = getField('form-product-name').trim().toUpperCase();
         if (!name) {
             alert('请填写产品名称');
@@ -385,7 +450,7 @@
             status: getField('form-status'),
             quote_enable: getField('form-quote-enable'),
             quote_sort: Number(getField('form-quote-sort')),
-            create_time: editingProduct ? getField('form-create-time') : new Date().toISOString().slice(0, 19).replace('T', ' '),
+            create_time: editingProduct && existingPair ? existingPair.create_time : new Date().toISOString().slice(0, 19).replace('T', ' '),
             update_time: new Date().toISOString().slice(0, 19).replace('T', ' '),
             allow_trade_start_time: getField('form-allow-trade-start'),
             sort: Number(getField('form-sort')),
@@ -580,7 +645,18 @@
             }
             if (action === 'add-index') {
                 var irows = readIndexFromDom();
-                irows.push({ weight: 0, source_name: 'binance', sub_base_coin_name: getField('form-base-coin') || 'BTC', sub_value_coin_name: 'USDT' });
+                if (irows.length >= MAX_INDEX_SOURCES) {
+                    alert('指数源最多 ' + MAX_INDEX_SOURCES + ' 个');
+                    return;
+                }
+                var usedSources = {};
+                irows.forEach(function (r) { usedSources[r.source_name] = true; });
+                var nextSource = INDEX_SOURCE_OPTIONS.filter(function (s) { return !usedSources[s]; })[0];
+                if (!nextSource) {
+                    alert('已无可用指数源');
+                    return;
+                }
+                irows.push({ weight: 0, source_name: nextSource, sub_base_coin_name: getField('form-base-coin') || 'BTC', sub_value_coin_name: 'USDT' });
                 renderIndexRows(irows);
             }
             if (action === 'remove-index') {
@@ -602,6 +678,12 @@
 
         document.body.addEventListener('input', function (e) {
             if (e.target.matches('[data-index="weight"]')) {
+                renderIndexRows(readIndexFromDom());
+            }
+        });
+
+        document.body.addEventListener('change', function (e) {
+            if (e.target.matches('[data-index="source_name"]')) {
                 renderIndexRows(readIndexFromDom());
             }
         });
