@@ -19,7 +19,7 @@
         .status-off { background: #fee2e2; color: #991b1b; }
         .admin-subview { display: flex; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; }
         .admin-subview.hidden { display: none !important; }
-        #tag-modal.hidden { display: none !important; }
+        #tag-modal.hidden, #save-confirm-modal.hidden { display: none !important; }
         .toggle-switch { position: relative; display: inline-flex; align-items: center; cursor: pointer; flex-shrink: 0; }
         .toggle-switch input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
         .toggle-track { width: 44px; height: 24px; background: #e2e8f0; border-radius: 999px; position: relative; transition: background 0.2s; }
@@ -28,6 +28,9 @@
         .toggle-switch input:checked + .toggle-track::after { transform: translateX(20px); border-color: #fff; }
         .toggle-switch input:disabled + .toggle-track { opacity: 0.45; cursor: not-allowed; }
         .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid #f1f5f9; border-radius: 6px; background: #fafafa; }
+        .icon-mode-btn { padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 10px; font-weight: 800; color: #64748b; background: #fff; }
+        .icon-mode-btn.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+        #tag-modal.hidden, #save-confirm-modal.hidden { display: none !important; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -111,7 +114,29 @@
                 <h3 class="section-title">基础信息</h3>
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="input-label">产品名称 product_name</label><input id="form-product-name" class="field-input font-black" placeholder="如 BTCUSDC"></div>
-                    <div><label class="input-label">图标 URL icon_url</label><input id="form-icon-url" class="field-input" placeholder="https://..."></div>
+                    <div class="col-span-2">
+                        <label class="input-label">图标 icon_url</label>
+                        <div class="flex flex-wrap gap-2 mb-2">
+                            <button type="button" class="icon-mode-btn active" data-action="icon-mode-url" id="btn-icon-mode-url">URL 链接</button>
+                            <button type="button" class="icon-mode-btn" data-action="icon-mode-upload" id="btn-icon-mode-upload">本地上传</button>
+                        </div>
+                        <div id="icon-panel-url">
+                            <input id="form-icon-url" class="field-input" placeholder="https://static.example.com/icons/btc.png">
+                            <p class="text-[9px] text-slate-400 mt-1 italic">方式 1：直接输入图片 URL</p>
+                        </div>
+                        <div id="icon-panel-upload" class="hidden">
+                            <label class="flex flex-col items-start gap-2 cursor-pointer">
+                                <span class="px-3 py-2 border border-dashed border-slate-300 rounded bg-slate-50 text-[11px] font-bold text-slate-600 hover:border-blue-400 hover:text-blue-600">选择 PNG / JPG 图片</span>
+                                <input id="form-icon-file" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" class="hidden">
+                            </label>
+                            <p id="form-icon-file-name" class="text-[10px] text-slate-500 font-bold mt-1">未选择文件</p>
+                            <p class="text-[9px] text-slate-400 mt-1 italic">方式 2：上传 PNG、JPG 格式图片（原型演示将转为本地预览地址）</p>
+                        </div>
+                        <div id="icon-preview-wrap" class="mt-3 flex items-center gap-3 hidden">
+                            <img id="icon-preview" alt="图标预览" class="w-10 h-10 rounded border border-slate-200 object-cover bg-white">
+                            <span id="icon-preview-label" class="text-[10px] text-slate-500 font-bold truncate max-w-md"></span>
+                        </div>
+                    </div>
                     <div><label class="input-label">面值 swap_value</label><input id="form-swap-value" class="field-input" placeholder="0.001"></div>
                     <div class="col-span-2">
                         <label class="input-label">基础币种 base_coin_name</label>
@@ -286,6 +311,22 @@
         <div class="flex justify-end gap-2 pt-2 border-t">
             <button type="button" data-action="close-tag-modal" class="px-4 py-2 border border-slate-200 font-bold rounded-sm">取消</button>
             <button type="button" data-action="save-tags" class="px-5 py-2 bg-blue-600 text-white font-black rounded-sm">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 保存确认弹窗 -->
+<div id="save-confirm-modal" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-lg shadow-2xl w-full max-w-md p-6 space-y-4">
+        <div class="flex justify-between items-center">
+            <h3 class="font-black text-slate-800 uppercase">确认提交</h3>
+            <button type="button" data-action="close-save-confirm" class="text-slate-400 hover:text-black text-xl leading-none">&times;</button>
+        </div>
+        <p id="save-confirm-text" class="text-[12px] text-slate-600 leading-relaxed font-medium"></p>
+        <p class="hint-box">请确认配置无误后再提交，避免误触保存。</p>
+        <div class="flex justify-end gap-2 pt-2 border-t">
+            <button type="button" data-action="close-save-confirm" class="px-4 py-2 border border-slate-200 font-bold rounded-sm">返回修改</button>
+            <button type="button" data-action="confirm-save-pair" class="px-5 py-2 bg-blue-600 text-white font-black rounded-sm">确认提交</button>
         </div>
     </div>
 </div>
