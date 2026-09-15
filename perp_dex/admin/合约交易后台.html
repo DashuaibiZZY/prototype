@@ -85,7 +85,6 @@
                     <tr>
                         <th class="px-6 py-4">交易对</th>
                         <th class="px-6 py-4 text-center">前端是否隐藏</th>
-                        <th class="px-6 py-4 text-center">交易对状态</th>
                         <th class="px-6 py-4">允许交易开始时间</th>
                         <th class="px-6 py-4">创建时间</th>
                         <th class="px-6 py-4">更新时间</th>
@@ -142,8 +141,8 @@
                     <div><label class="input-label">面值 swap_value</label><input id="form-swap-value" class="field-input" placeholder="0.001"></div>
                     <div class="col-span-2">
                         <label class="input-label">基础币种 base_coin_name</label>
-                        <select id="form-base-coin" class="field-input bg-white font-bold max-w-md"></select>
-                        <p class="text-[9px] text-slate-400 mt-1 italic">原型：选项来自<strong>币种配置表</strong>；<strong>不支持选择</strong>与当前计价资产相同的币种。</p>
+                        <input id="form-base-coin" class="field-input font-black max-w-md" placeholder="如 BTC">
+                        <p class="text-[9px] text-slate-400 mt-1 italic"><strong>不支持</strong>与当前计价资产相同的币种。</p>
                         <div class="mt-3 max-w-xl">
                             <div class="flex justify-between items-end gap-2 mb-1">
                                 <label class="input-label mb-0">币种描述 Description</label>
@@ -187,7 +186,6 @@
                         <span class="text-[11px] font-bold text-slate-700">前端隐藏 front_hidden</span>
                         <label class="toggle-switch"><input id="form-front-hidden" type="checkbox"><span class="toggle-track"></span></label>
                     </div>
-                    <div><label class="input-label">交易对状态 status</label><select id="form-status" class="field-input bg-white"><option value="enabled">enabled · 启用</option><option value="disabled">disabled · 禁用</option></select></div>
                     <div class="toggle-row">
                         <span class="text-[11px] font-bold text-slate-700">APP首屏行情开关 quote_enable</span>
                         <label class="toggle-switch"><input id="form-quote-enable" type="checkbox"><span class="toggle-track"></span></label>
@@ -207,8 +205,9 @@
             </section>
 
             <!-- 限制配置 -->
-            <section class="section-card space-y-4">
+            <section id="section-limit-config" class="section-card space-y-4">
                 <h3 class="section-title">限制配置 limit_config</h3>
+                <p id="limit-config-edit-hint" class="hint-box hidden">编辑状态下仅可修改本模块字段；<strong>最小步进 price_unit</strong> 不可修改。</p>
                 <div class="grid grid-cols-3 gap-4">
                     <div><label class="input-label">市价最大吃深度 market_max_deeps</label><input id="form-lc-market-max-deeps" type="number" class="field-input"></div>
                     <div><label class="input-label">最小步进 price_unit</label><input id="form-lc-price-unit" type="number" class="field-input"></div>
@@ -216,7 +215,7 @@
                     <div><label class="input-label">熔断系数 circuit_rate</label><input id="form-lc-circuit-rate" class="field-input"></div>
                     <div><label class="input-label">单笔最大成交价值 max_once_limit_cost</label><input id="form-lc-max-once" class="field-input"></div>
                     <div><label class="input-label">单笔最小成交价值 min_once_limit_cost</label><input id="form-lc-min-once" class="field-input"></div>
-                    <div><label class="input-label">市价拆单价值 split_market_cost</label><input id="form-lc-split-market" class="field-input"></div>
+                    <div><label class="input-label">市价拆单基础币种数量 split_market_cost</label><input id="form-lc-split-market" class="field-input"></div>
                     <div><label class="input-label">最大持仓数量 max_hold_amount</label><input id="form-lc-max-hold" class="field-input"></div>
                     <div><label class="input-label">最大挂单数 max_book_num</label><input id="form-lc-max-book" type="number" class="field-input"></div>
                 </div>
@@ -235,7 +234,14 @@
                     <div><label class="input-label">下限 funds_rate_min</label><input id="form-fr-min" class="field-input"></div>
                     <div><label class="input-label">利息基准 funds_rate_interests</label><input id="form-fr-interests" class="field-input"></div>
                     <div><label class="input-label">结算周期(小时) funds_interval_hour</label><input id="form-fr-interval" type="number" class="field-input"></div>
-                    <div><label class="input-label">首次结算时间戳 funds_init_ts</label><input id="form-fr-init-ts" type="number" class="field-input"></div>
+                    <div class="col-span-2">
+                        <label class="input-label">首次结算时间 funds_init_ts</label>
+                        <div class="flex flex-wrap gap-2 max-w-md">
+                            <input id="form-fr-init-date" type="date" class="field-input flex-1 min-w-[140px]">
+                            <select id="form-fr-init-hour" class="field-input w-24 bg-white font-bold"></select>
+                        </div>
+                        <p class="text-[9px] text-slate-400 mt-1 italic">选择日期 + 小时（整点），保存为时间戳</p>
+                    </div>
                 </div>
             </section>
 
@@ -289,7 +295,10 @@
             <!-- 手续费率 -->
             <section class="section-card space-y-4">
                 <h3 class="section-title">手续费率 fee_rate_config</h3>
-                <label class="flex items-center gap-2 font-bold mb-2"><input id="form-fee-enable" type="checkbox" checked> 启用交易对费率 enable</label>
+                <div class="toggle-row max-w-md mb-2">
+                    <span class="text-[11px] font-bold text-slate-700">启用交易对费率 enable</span>
+                    <label class="toggle-switch"><input id="form-fee-enable" type="checkbox" checked><span class="toggle-track"></span></label>
+                </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="input-label">Taker 费率 taker_fee</label><input id="form-fee-taker" class="field-input"></div>
                     <div><label class="input-label">Maker 费率 maker_fee</label><input id="form-fee-maker" class="field-input"></div>
