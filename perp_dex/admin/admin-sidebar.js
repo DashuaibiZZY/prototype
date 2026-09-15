@@ -45,6 +45,12 @@
             ]
         },
         {
+            title: '合约交易',
+            items: [
+                { key: 'contract-pairs', label: '交易对配置', href: '合约交易后台.html' }
+            ]
+        },
+        {
             title: '排行榜',
             items: [
                 { key: 'leaderboard', label: '排行榜用户数据配置', href: '排行榜后台.html' }
