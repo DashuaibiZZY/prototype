@@ -45,9 +45,13 @@
             { next: 'pre_deliver', label: '进入交割准备' }
         ],
         pre_deliver: [{ next: 'delivering', label: '开始交割' }],
-        delivering: [{ next: 'disabled', label: '交割完成' }],
         disabled: [{ next: 'enabled', label: '重新上线' }]
     };
+
+    /** 交割中：无列表操作，由系统完成交割后自动变为下线 */
+    var NO_OPERATION_STATUSES = { delivering: true };
+    var LIMIT_CONFIG_EDIT_HINT = '当前状态仅可修改限制配置 limit_config；<strong>最小步进 price_unit</strong> 不可修改。暂停、下线状态支持编辑全部字段。';
+    var DELIVERING_LOCK_HINT = '交割中不可操作，系统交割完成后将自动变为「下线」。';
 
     var FULL_EDIT_STATUSES = { paused: true, disabled: true };
     var MAX_COIN_DESCRIPTION_LEN = 50;
@@ -348,7 +352,19 @@
         return !!(pair && FULL_EDIT_STATUSES[pair.status]);
     }
 
+    function isNoOperationStatus(pair) {
+        return !!(pair && NO_OPERATION_STATUSES[pair.status]);
+    }
+
+    function isDeliveringLocked() {
+        if (!editingProduct) return false;
+        return isNoOperationStatus(findPair(editingProduct));
+    }
+
     function renderPairActionButtons(pair) {
+        if (isNoOperationStatus(pair)) {
+            return '<span class="text-[10px] text-slate-400 font-bold italic">等待交割完成</span>';
+        }
         var transitions = STATUS_TRANSITIONS[pair.status] || [];
         var btns = transitions.map(function (t) {
             return '<button type="button" class="pair-action-btn pair-action-primary" data-action="pair-transition" data-name="' + pair.product_name + '" data-next="' + t.next + '" data-label="' + t.label + '">' + t.label + '</button>';
@@ -589,15 +605,29 @@
         var hint = document.getElementById('limit-config-edit-hint');
         if (!root) return;
 
-        var restrictToLimitConfig = isLimitConfigOnlyEdit();
-        if (hint) hint.classList.toggle('hidden', !restrictToLimitConfig);
+        var deliveringLocked = isDeliveringLocked();
+        var restrictToLimitConfig = !deliveringLocked && isLimitConfigOnlyEdit();
+        if (hint) {
+            if (deliveringLocked) {
+                hint.innerHTML = DELIVERING_LOCK_HINT;
+                hint.classList.remove('hidden');
+            } else {
+                hint.innerHTML = LIMIT_CONFIG_EDIT_HINT;
+                hint.classList.toggle('hidden', !restrictToLimitConfig);
+            }
+        }
 
         root.querySelectorAll('[data-form-section]').forEach(function (section) {
             var isLimit = section.id === 'section-limit-config';
-            section.classList.toggle('form-section-readonly', restrictToLimitConfig && !isLimit);
+            section.classList.toggle('form-section-readonly', (deliveringLocked || restrictToLimitConfig) && !isLimit);
+            if (deliveringLocked) section.classList.add('form-section-readonly');
         });
 
         root.querySelectorAll('input[id], select[id], textarea[id]').forEach(function (el) {
+            if (deliveringLocked) {
+                el.disabled = true;
+                return;
+            }
             if (!restrictToLimitConfig) {
                 if (el.id !== 'form-product-name') el.disabled = false;
                 return;
@@ -615,6 +645,10 @@
         }
 
         root.querySelectorAll('button[data-action]').forEach(function (btn) {
+            if (deliveringLocked) {
+                btn.disabled = btn.getAttribute('data-action') !== 'back-list';
+                return;
+            }
             if (!restrictToLimitConfig) {
                 btn.disabled = false;
                 return;
@@ -623,15 +657,15 @@
         });
 
         var pickBtn = document.getElementById('btn-pick-icon-file');
-        if (pickBtn) pickBtn.disabled = restrictToLimitConfig;
+        if (pickBtn) pickBtn.disabled = deliveringLocked || restrictToLimitConfig;
 
         ['icon-radio-url', 'icon-radio-upload'].forEach(function (id) {
             var radio = document.getElementById(id);
-            if (radio) radio.disabled = restrictToLimitConfig;
+            if (radio) radio.disabled = deliveringLocked || restrictToLimitConfig;
         });
 
         root.querySelectorAll('#margin-tier-body input, #margin-tier-body button, #index-source-body input, #index-source-body select, #index-source-body button, #tag-checkbox-wrap input').forEach(function (el) {
-            if (restrictToLimitConfig) el.disabled = true;
+            if (deliveringLocked || restrictToLimitConfig) el.disabled = true;
         });
 
         if (restrictToLimitConfig) updateAddIndexButton(readIndexFromDom());
@@ -792,6 +826,10 @@
             return null;
         }
         var existingPair = editingProduct ? findPair(editingProduct) : null;
+        if (editingProduct && existingPair && isNoOperationStatus(existingPair)) {
+            alert('交割中不可操作，请等待系统交割完成后自动变为「下线」。');
+            return null;
+        }
         if (editingProduct && existingPair && !isFullEditAllowed(existingPair)) {
             var updated = clone(existingPair);
             updated.update_time = new Date().toISOString().slice(0, 19).replace('T', ' ');
@@ -873,6 +911,11 @@
         editingProduct = isNew ? null : productName;
         var pair = isNew ? emptyPair() : clone(findPair(productName));
         if (!pair && !isNew) return;
+        if (!isNew && isNoOperationStatus(pair)) {
+            alert('交割中不可操作，请等待系统交割完成后自动变为「下线」。');
+            goList();
+            return;
+        }
         loadForm(pair);
         bindIconControls();
         showView('view-form');
