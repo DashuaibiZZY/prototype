@@ -28,6 +28,9 @@
 
     var TAG_OPTIONS = ['perpetual', 'hot', 'new', 'meme'];
 
+    /** 原型版本号：列表角标可核对是否加载到最新脚本 */
+    var MODULE_BUILD = '20260915-fsm';
+
     var STATUS_LABELS = {
         pending: '待启用',
         enabled: '启用',
@@ -400,7 +403,7 @@
         var marketLabel = document.getElementById('current-market-label');
         if (marketLabel) marketLabel.textContent = selectedMarket;
         var pairs = getPairs();
-        if (hint) hint.textContent = '共 ' + pairs.length + ' 条 · 计价市场 ' + selectedMarket;
+        if (hint) hint.textContent = '共 ' + pairs.length + ' 条 · 计价市场 ' + selectedMarket + ' · ' + MODULE_BUILD;
         if (!tbody) return;
         if (!pairs.length) {
             tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-slate-400 font-bold">暂无交易对，点击「+ 新增交易对」添加</td></tr>';
