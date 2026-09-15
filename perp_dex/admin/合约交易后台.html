@@ -11,6 +11,9 @@
         .field-input { border: 1px solid #e2e8f0; border-radius: 4px; padding: 6px 10px; font-size: 11px; outline: none; width: 100%; transition: border-color 0.2s; }
         .field-input:focus { border-color: #3b82f6; }
         .field-input:disabled { background: #f8fafc; color: #64748b; cursor: not-allowed; }
+        .form-section-readonly { opacity: 0.52; pointer-events: none; user-select: none; filter: grayscale(0.12); }
+        .form-section-readonly .field-input,
+        .form-section-readonly .toggle-track { background: #f1f5f9; }
         .section-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
         .section-title { font-size: 12px; font-weight: 900; color: #334155; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9; }
         .hint-box { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 4px; padding: 10px 12px; font-size: 10px; color: #64748b; line-height: 1.6; }
@@ -85,6 +88,7 @@
                     <tr>
                         <th class="px-6 py-4">交易对</th>
                         <th class="px-6 py-4 text-center">前端是否隐藏</th>
+                        <th class="px-6 py-4 text-center">状态</th>
                         <th class="px-6 py-4">允许交易开始时间</th>
                         <th class="px-6 py-4">创建时间</th>
                         <th class="px-6 py-4">更新时间</th>
@@ -115,7 +119,7 @@
         <div class="flex-1 overflow-y-auto p-8 space-y-4 max-w-5xl">
 
             <!-- 基础信息 -->
-            <section class="section-card space-y-4">
+            <section class="section-card space-y-4" data-form-section id="section-basic-info">
                 <h3 class="section-title">基础信息</h3>
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="input-label">产品名称 product_name</label><input id="form-product-name" class="field-input font-black" placeholder="如 BTCUSDC"></div>
@@ -159,7 +163,7 @@
             </section>
 
             <!-- 维护保证金率阶梯 -->
-            <section class="section-card space-y-4">
+            <section class="section-card space-y-4" data-form-section id="section-margin">
                 <div class="flex justify-between items-center">
                     <h3 class="section-title mb-0 border-0 pb-0">维护保证金率阶梯 maintenance_margin_rate</h3>
                     <button type="button" data-action="add-margin" class="px-3 py-1 bg-slate-900 text-white font-black rounded-sm text-[10px]">+ 添加档位</button>
@@ -179,7 +183,7 @@
             </section>
 
             <!-- 展示与状态 -->
-            <section class="section-card space-y-4">
+            <section class="section-card space-y-4" data-form-section id="section-display">
                 <h3 class="section-title">展示与状态</h3>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="toggle-row">
@@ -205,9 +209,9 @@
             </section>
 
             <!-- 限制配置 -->
-            <section id="section-limit-config" class="section-card space-y-4">
+            <section id="section-limit-config" class="section-card space-y-4" data-form-section>
                 <h3 class="section-title">限制配置 limit_config</h3>
-                <p id="limit-config-edit-hint" class="hint-box hidden">编辑状态下仅可修改本模块字段；<strong>最小步进 price_unit</strong> 不可修改。</p>
+                <p id="limit-config-edit-hint" class="hint-box hidden">交易对已<strong>启用</strong>：仅可修改限制配置 limit_config；<strong>最小步进 price_unit</strong> 不可修改。</p>
                 <div class="grid grid-cols-3 gap-4">
                     <div><label class="input-label">市价最大吃深度 market_max_deeps</label><input id="form-lc-market-max-deeps" type="number" class="field-input"></div>
                     <div><label class="input-label">最小步进 price_unit</label><input id="form-lc-price-unit" type="number" class="field-input"></div>
@@ -222,7 +226,7 @@
             </section>
 
             <!-- 资金费率 -->
-            <section class="section-card space-y-4">
+            <section class="section-card space-y-4" data-form-section id="section-funding">
                 <h3 class="section-title">资金费率 funding_rate_config</h3>
                 <div class="grid grid-cols-3 gap-4">
                     <div class="toggle-row col-span-3 max-w-md">
@@ -234,19 +238,12 @@
                     <div><label class="input-label">下限 funds_rate_min</label><input id="form-fr-min" class="field-input"></div>
                     <div><label class="input-label">利息基准 funds_rate_interests</label><input id="form-fr-interests" class="field-input"></div>
                     <div><label class="input-label">结算周期(小时) funds_interval_hour</label><input id="form-fr-interval" type="number" class="field-input"></div>
-                    <div class="col-span-2">
-                        <label class="input-label">首次结算时间 funds_init_ts</label>
-                        <div class="flex flex-wrap gap-2 max-w-md">
-                            <input id="form-fr-init-date" type="date" class="field-input flex-1 min-w-[140px]">
-                            <select id="form-fr-init-hour" class="field-input w-24 bg-white font-bold"></select>
-                        </div>
-                        <p class="text-[9px] text-slate-400 mt-1 italic">选择日期 + 小时（整点），保存为时间戳</p>
-                    </div>
+                    <div class="col-span-2"><label class="input-label">首次结算时间 funds_init_ts</label><input id="form-fr-init-ts" type="datetime-local" class="field-input max-w-md"></div>
                 </div>
             </section>
 
             <!-- 账户配置 -->
-            <section class="section-card space-y-4">
+            <section class="section-card space-y-4" data-form-section id="section-account">
                 <h3 class="section-title">账户配置 account_config</h3>
                 <div class="grid grid-cols-3 gap-4">
                     <div><label class="input-label">风险账户最小余额 risk_account_min</label><input id="form-ac-risk-min" class="field-input"></div>
@@ -256,7 +253,7 @@
             </section>
 
             <!-- 指数配置 -->
-            <section class="section-card space-y-4">
+            <section class="section-card space-y-4" data-form-section id="section-index">
                 <div class="flex justify-between items-center">
                     <div>
                         <h3 class="section-title mb-1 border-0 pb-0">指数配置 index_config</h3>
@@ -284,7 +281,7 @@
             </section>
 
             <!-- 标记价格 -->
-            <section class="section-card space-y-4">
+            <section class="section-card space-y-4" data-form-section id="section-tag-price">
                 <h3 class="section-title">标记价格 tag_price_config</h3>
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="input-label">基差移动周期 basis_move_cycle</label><input id="form-tp-basis-cycle" type="number" class="field-input"></div>
@@ -293,7 +290,7 @@
             </section>
 
             <!-- 手续费率 -->
-            <section class="section-card space-y-4">
+            <section class="section-card space-y-4" data-form-section id="section-fee">
                 <h3 class="section-title">手续费率 fee_rate_config</h3>
                 <div class="toggle-row max-w-md mb-2">
                     <span class="text-[11px] font-bold text-slate-700">启用交易对费率 enable</span>
