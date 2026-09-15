@@ -29,6 +29,19 @@
     var TAG_OPTIONS = ['perpetual', 'hot', 'new', 'meme'];
 
     var STATUS_LABELS = { enabled: '启用', disabled: '禁用' };
+    var MAX_COIN_DESCRIPTION_LEN = 50;
+
+    /** CoinOverview 表（原型 mock）· Description 币种描述 */
+    var COIN_OVERVIEW = {
+        BTC: '比特币，首个去中心化加密货币',
+        ETH: '以太坊，智能合约平台原生代币',
+        SOL: 'Solana 公链原生代币，高性能 Layer1',
+        BNB: 'BNB Chain 生态原生代币',
+        XRP: 'Ripple 网络用于跨境支付的数字资产',
+        DOGE: '基于 meme 文化的开源加密货币',
+        USDT: '与美元 1:1 锚定的稳定币',
+        NEW: ''
+    };
 
     var pairsByMarket = {
         USDC: [
@@ -54,6 +67,7 @@
             icon_url: 'https://static.example.com/icons/' + baseCoin.toLowerCase() + '.png',
             swap_value: '0.001',
             base_coin_name: baseCoin,
+            coin_description: COIN_OVERVIEW[baseCoin] || '',
             coin_precision: 4,
             quote_precision: 2,
             price_precision: 1,
@@ -195,14 +209,41 @@
         }).join('');
     }
 
+    function getBaseCoinOptions() {
+        return COIN_CONFIG.filter(function (c) {
+            return c.symbol !== selectedMarket;
+        });
+    }
+
     function renderBaseCoinSelect(selected) {
         var select = document.getElementById('form-base-coin');
         if (!select) return;
-        select.innerHTML = COIN_CONFIG.map(function (c) {
+        var options = getBaseCoinOptions();
+        select.innerHTML = options.map(function (c) {
             var sel = selected && c.symbol === selected ? ' selected' : '';
             return '<option value="' + c.symbol + '"' + sel + '>' + c.symbol + ' · ' + c.name + '</option>';
         }).join('');
-        if (selected) select.value = selected;
+        if (selected && selected !== selectedMarket) select.value = selected;
+        else if (options.length) select.value = options[0].symbol;
+    }
+
+    function updateCoinDescriptionCount() {
+        var el = document.getElementById('form-coin-description');
+        var counter = document.getElementById('form-coin-desc-count');
+        if (!el || !counter) return;
+        var len = (el.value || '').length;
+        counter.textContent = len + '/' + MAX_COIN_DESCRIPTION_LEN;
+        counter.className = 'text-[9px] font-bold ' + (len >= MAX_COIN_DESCRIPTION_LEN ? 'text-amber-600' : 'text-slate-400');
+    }
+
+    function syncCoinDescriptionFromOverview(symbol, force) {
+        var el = document.getElementById('form-coin-description');
+        if (!el) return;
+        if (!force && el.dataset.userEdited === '1') return;
+        var desc = COIN_OVERVIEW[symbol] || '';
+        el.value = desc.slice(0, MAX_COIN_DESCRIPTION_LEN);
+        el.dataset.userEdited = '0';
+        updateCoinDescriptionCount();
     }
 
     function renderTagPriceCalcTypeSelect(selected) {
@@ -318,6 +359,15 @@
         setField('form-icon-url', pair.icon_url);
         setField('form-swap-value', pair.swap_value);
         renderBaseCoinSelect(pair.base_coin_name);
+        var descEl = document.getElementById('form-coin-description');
+        if (descEl) {
+            descEl.value = (pair.coin_description || '').slice(0, MAX_COIN_DESCRIPTION_LEN);
+            descEl.dataset.userEdited = pair.coin_description ? '1' : '0';
+            if (!pair.coin_description) {
+                syncCoinDescriptionFromOverview(getField('form-base-coin'), true);
+            }
+        }
+        updateCoinDescriptionCount();
         setField('form-coin-precision', pair.coin_precision);
         setField('form-quote-precision', pair.quote_precision);
         setField('form-price-precision', pair.price_precision);
@@ -437,11 +487,22 @@
             alert('该产品名称已存在');
             return null;
         }
+        var baseCoin = getField('form-base-coin').trim().toUpperCase();
+        if (baseCoin === selectedMarket) {
+            alert('基础币种不能与计价资产 ' + selectedMarket + ' 相同');
+            return null;
+        }
+        var coinDescription = getField('form-coin-description').trim();
+        if (coinDescription.length > MAX_COIN_DESCRIPTION_LEN) {
+            alert('币种描述最多 ' + MAX_COIN_DESCRIPTION_LEN + ' 字符');
+            return null;
+        }
         return {
             product_name: name,
             icon_url: getField('form-icon-url').trim(),
             swap_value: getField('form-swap-value').trim(),
-            base_coin_name: getField('form-base-coin').trim().toUpperCase(),
+            base_coin_name: baseCoin,
+            coin_description: coinDescription,
             coin_precision: Number(getField('form-coin-precision')),
             quote_precision: Number(getField('form-quote-precision')),
             price_precision: Number(getField('form-price-precision')),
@@ -507,6 +568,10 @@
     }
 
     function saveForm() {
+        var confirmMsg = editingProduct
+            ? '确认提交对交易对「' + editingProduct + '」的修改？'
+            : '确认提交新增交易对？';
+        if (!confirm(confirmMsg)) return;
         var data = collectForm();
         if (!data) return;
         var list = getPairs();
@@ -685,6 +750,19 @@
         document.body.addEventListener('change', function (e) {
             if (e.target.matches('[data-index="source_name"]')) {
                 renderIndexRows(readIndexFromDom());
+            }
+            if (e.target.id === 'form-base-coin') {
+                syncCoinDescriptionFromOverview(e.target.value, true);
+            }
+        });
+
+        document.body.addEventListener('input', function (e) {
+            if (e.target.id === 'form-coin-description') {
+                e.target.dataset.userEdited = '1';
+                if (e.target.value.length > MAX_COIN_DESCRIPTION_LEN) {
+                    e.target.value = e.target.value.slice(0, MAX_COIN_DESCRIPTION_LEN);
+                }
+                updateCoinDescriptionCount();
             }
         });
     }
