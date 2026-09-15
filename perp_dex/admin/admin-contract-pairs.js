@@ -60,6 +60,9 @@
     var selectedMarket = '';
     var editingProduct = null;
     var tagModalOpen = false;
+    var iconInputMode = 'url';
+    var iconUploadDataUrl = '';
+    var iconUploadFileName = '';
 
     function defaultPair(productName, baseCoin) {
         return {
@@ -128,6 +131,117 @@
                 maker_fee: '0.0002'
             }
         };
+    }
+
+    function isIconDataUrl(url) {
+        return /^data:image\/(png|jpe?g);/i.test(url || '');
+    }
+
+    function setIconInputMode(mode) {
+        iconInputMode = mode === 'upload' ? 'upload' : 'url';
+        var urlBtn = document.getElementById('btn-icon-mode-url');
+        var uploadBtn = document.getElementById('btn-icon-mode-upload');
+        var urlPanel = document.getElementById('icon-panel-url');
+        var uploadPanel = document.getElementById('icon-panel-upload');
+        if (urlBtn) urlBtn.classList.toggle('active', iconInputMode === 'url');
+        if (uploadBtn) uploadBtn.classList.toggle('active', iconInputMode === 'upload');
+        if (urlPanel) urlPanel.classList.toggle('hidden', iconInputMode !== 'url');
+        if (uploadPanel) uploadPanel.classList.toggle('hidden', iconInputMode !== 'upload');
+        updateIconPreview();
+    }
+
+    function updateIconPreview() {
+        var wrap = document.getElementById('icon-preview-wrap');
+        var img = document.getElementById('icon-preview');
+        var label = document.getElementById('icon-preview-label');
+        if (!wrap || !img || !label) return;
+        var value = getIconUrlValue(false);
+        if (!value) {
+            wrap.classList.add('hidden');
+            img.removeAttribute('src');
+            label.textContent = '';
+            return;
+        }
+        wrap.classList.remove('hidden');
+        img.src = value;
+        if (iconInputMode === 'upload' && iconUploadFileName) {
+            label.textContent = '已上传：' + iconUploadFileName;
+        } else if (isIconDataUrl(value)) {
+            label.textContent = '已上传图片（本地预览）';
+        } else {
+            label.textContent = value;
+        }
+    }
+
+    function getIconUrlValue(requireValue) {
+        if (iconInputMode === 'upload') {
+            if (iconUploadDataUrl) return iconUploadDataUrl;
+            var existing = getField('form-icon-url').trim();
+            if (isIconDataUrl(existing)) return existing;
+            if (requireValue) return '';
+            return existing;
+        }
+        return getField('form-icon-url').trim();
+    }
+
+    function resetIconUploadState() {
+        iconUploadDataUrl = '';
+        iconUploadFileName = '';
+        var fileInput = document.getElementById('form-icon-file');
+        var fileNameEl = document.getElementById('form-icon-file-name');
+        if (fileInput) fileInput.value = '';
+        if (fileNameEl) fileNameEl.textContent = '未选择文件';
+    }
+
+    function loadIconFields(iconUrl) {
+        var url = iconUrl || '';
+        resetIconUploadState();
+        setField('form-icon-url', isIconDataUrl(url) ? '' : url);
+        if (isIconDataUrl(url)) {
+            iconUploadDataUrl = url;
+            iconUploadFileName = '已保存图片';
+            setIconInputMode('upload');
+        } else {
+            setIconInputMode('url');
+        }
+        updateIconPreview();
+    }
+
+    function handleIconFileSelect(file) {
+        if (!file) return;
+        var typeOk = file.type === 'image/png' || file.type === 'image/jpeg';
+        var extOk = /\.(png|jpe?g)$/i.test(file.name || '');
+        if (!typeOk && !extOk) {
+            alert('仅支持 PNG、JPG 格式图片');
+            resetIconUploadState();
+            updateIconPreview();
+            return;
+        }
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+            iconUploadDataUrl = ev.target.result;
+            iconUploadFileName = file.name;
+            setField('form-icon-url', iconUploadDataUrl);
+            var fileNameEl = document.getElementById('form-icon-file-name');
+            if (fileNameEl) fileNameEl.textContent = file.name;
+            updateIconPreview();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function openSaveConfirmModal() {
+        var modal = document.getElementById('save-confirm-modal');
+        var text = document.getElementById('save-confirm-text');
+        if (!modal || !text) return;
+        text.textContent = editingProduct
+            ? '确认提交对交易对「' + editingProduct + '」的修改？提交后将更新配置。'
+            : '确认提交新增交易对？提交后将写入当前市场配置。';
+        modal.classList.remove('hidden');
+    }
+
+    function closeSaveConfirmModal() {
+        var modal = document.getElementById('save-confirm-modal');
+        if (modal) modal.classList.add('hidden');
     }
 
     function getStoredMarket() {
@@ -356,7 +470,7 @@
     function loadForm(pair) {
         document.getElementById('form-product-name').disabled = !!editingProduct;
         setField('form-product-name', pair.product_name);
-        setField('form-icon-url', pair.icon_url);
+        loadIconFields(pair.icon_url);
         setField('form-swap-value', pair.swap_value);
         renderBaseCoinSelect(pair.base_coin_name);
         var descEl = document.getElementById('form-coin-description');
@@ -499,7 +613,7 @@
         }
         return {
             product_name: name,
-            icon_url: getField('form-icon-url').trim(),
+            icon_url: getIconUrlValue(true),
             swap_value: getField('form-swap-value').trim(),
             base_coin_name: baseCoin,
             coin_description: coinDescription,
@@ -568,10 +682,11 @@
     }
 
     function saveForm() {
-        var confirmMsg = editingProduct
-            ? '确认提交对交易对「' + editingProduct + '」的修改？'
-            : '确认提交新增交易对？';
-        if (!confirm(confirmMsg)) return;
+        openSaveConfirmModal();
+    }
+
+    function confirmSavePair() {
+        closeSaveConfirmModal();
         var data = collectForm();
         if (!data) return;
         var list = getPairs();
@@ -696,6 +811,10 @@
             if (action === 'add-pair') { location.hash = '#new'; applyRoute(); }
             if (action === 'back-list') goList();
             if (action === 'save-pair') saveForm();
+            if (action === 'close-save-confirm') closeSaveConfirmModal();
+            if (action === 'confirm-save-pair') confirmSavePair();
+            if (action === 'icon-mode-url') setIconInputMode('url');
+            if (action === 'icon-mode-upload') setIconInputMode('upload');
             if (action === 'edit-pair') openForm(false, t.getAttribute('data-name'));
             if (action === 'add-margin') {
                 var rows = readMarginFromDom();
@@ -745,6 +864,9 @@
             if (e.target.matches('[data-index="weight"]')) {
                 renderIndexRows(readIndexFromDom());
             }
+            if (e.target.id === 'form-icon-url') {
+                updateIconPreview();
+            }
         });
 
         document.body.addEventListener('change', function (e) {
@@ -753,6 +875,9 @@
             }
             if (e.target.id === 'form-base-coin') {
                 syncCoinDescriptionFromOverview(e.target.value, true);
+            }
+            if (e.target.id === 'form-icon-file') {
+                handleIconFileSelect(e.target.files && e.target.files[0]);
             }
         });
 
