@@ -137,60 +137,32 @@
         return /^data:image\/(png|jpe?g);/i.test(url || '');
     }
 
+    function syncIconInputModeFromDom() {
+        var uploadRadio = document.getElementById('icon-radio-upload');
+        iconInputMode = uploadRadio && uploadRadio.checked ? 'upload' : 'url';
+    }
+
     function setIconInputMode(mode) {
         iconInputMode = mode === 'upload' ? 'upload' : 'url';
-        var urlBtn = document.getElementById('btn-icon-mode-url');
-        var uploadBtn = document.getElementById('btn-icon-mode-upload');
-        var urlPanel = document.getElementById('icon-panel-url');
-        var uploadPanel = document.getElementById('icon-panel-upload');
-        var modeHint = document.getElementById('icon-mode-hint');
-        if (urlBtn) {
-            urlBtn.classList.toggle('active', iconInputMode === 'url');
-            urlBtn.setAttribute('aria-selected', iconInputMode === 'url' ? 'true' : 'false');
-        }
-        if (uploadBtn) {
-            uploadBtn.classList.toggle('active', iconInputMode === 'upload');
-            uploadBtn.setAttribute('aria-selected', iconInputMode === 'upload' ? 'true' : 'false');
-        }
-        if (urlPanel) urlPanel.classList.toggle('icon-panel-hidden', iconInputMode !== 'url');
-        if (uploadPanel) uploadPanel.classList.toggle('icon-panel-hidden', iconInputMode !== 'upload');
-        if (modeHint) {
-            modeHint.textContent = iconInputMode === 'upload'
-                ? '当前方式：本地上传（PNG / JPG）'
-                : '当前方式：URL 链接';
-        }
+        var urlRadio = document.getElementById('icon-radio-url');
+        var uploadRadio = document.getElementById('icon-radio-upload');
+        if (urlRadio) urlRadio.checked = iconInputMode === 'url';
+        if (uploadRadio) uploadRadio.checked = iconInputMode === 'upload';
         updateIconPreview();
     }
 
     function bindIconControls() {
-        var urlBtn = document.getElementById('btn-icon-mode-url');
-        var uploadBtn = document.getElementById('btn-icon-mode-upload');
-        var pickBtn = document.getElementById('btn-pick-icon-file');
+        var urlRadio = document.getElementById('icon-radio-url');
+        var uploadRadio = document.getElementById('icon-radio-upload');
         var fileInput = document.getElementById('form-icon-file');
-        if (urlBtn && !urlBtn.dataset.bound) {
-            urlBtn.dataset.bound = '1';
-            urlBtn.addEventListener('click', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                setIconInputMode('url');
+        [urlRadio, uploadRadio].forEach(function (radio) {
+            if (!radio || radio.dataset.bound) return;
+            radio.dataset.bound = '1';
+            radio.addEventListener('change', function () {
+                syncIconInputModeFromDom();
+                updateIconPreview();
             });
-        }
-        if (uploadBtn && !uploadBtn.dataset.bound) {
-            uploadBtn.dataset.bound = '1';
-            uploadBtn.addEventListener('click', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                setIconInputMode('upload');
-            });
-        }
-        if (pickBtn && fileInput && !pickBtn.dataset.bound) {
-            pickBtn.dataset.bound = '1';
-            pickBtn.addEventListener('click', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                fileInput.click();
-            });
-        }
+        });
         if (fileInput && !fileInput.dataset.bound) {
             fileInput.dataset.bound = '1';
             fileInput.addEventListener('change', function (e) {
@@ -624,6 +596,7 @@
     }
 
     function collectForm() {
+        syncIconInputModeFromDom();
         var sources = readIndexFromDom();
         if (sources.length > MAX_INDEX_SOURCES) {
             alert('指数源最多 ' + MAX_INDEX_SOURCES + ' 个');
@@ -945,9 +918,4 @@
     }
 
     global.initContractPairsAdmin = init;
-    global.setContractPairIconMode = setIconInputMode;
-    global.pickContractPairIconFile = function () {
-        var fileInput = document.getElementById('form-icon-file');
-        if (fileInput) fileInput.click();
-    };
 })(window);
