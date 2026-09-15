@@ -28,7 +28,32 @@
 
     var TAG_OPTIONS = ['perpetual', 'hot', 'new', 'meme'];
 
-    var STATUS_LABELS = { enabled: '启用', disabled: '禁用' };
+    var STATUS_LABELS = {
+        pending: '待启用',
+        enabled: '启用',
+        paused: '暂停',
+        pre_deliver: '待交割',
+        delivering: '交割中',
+        disabled: '下线'
+    };
+
+    var STATUS_TRANSITIONS = {
+        pending: [{ next: 'enabled', label: '上线启用' }],
+        enabled: [{ next: 'paused', label: '暂停交易' }],
+        paused: [
+            { next: 'enabled', label: '恢复交易' },
+            { next: 'pre_deliver', label: '进入交割准备' }
+        ],
+        pre_deliver: [{ next: 'delivering', label: '开始交割' }],
+        disabled: [{ next: 'enabled', label: '重新上线' }]
+    };
+
+    /** 交割中：无列表操作，由系统完成交割后自动变为下线 */
+    var NO_OPERATION_STATUSES = { delivering: true };
+    var LIMIT_CONFIG_EDIT_HINT = '当前状态仅可修改限制配置 limit_config；<strong>最小步进 price_unit</strong> 不可修改。暂停、下线状态支持编辑全部字段。';
+    var DELIVERING_LOCK_HINT = '交割中不可操作，系统交割完成后将自动变为「下线」。';
+
+    var FULL_EDIT_STATUSES = { paused: true, disabled: true };
     var MAX_COIN_DESCRIPTION_LEN = 50;
 
     var LIMIT_CONFIG_EDITABLE_IDS = [
@@ -58,13 +83,36 @@
 
     var pairsByMarket = {
         USDC: [
-            defaultPair('BTCUSDC', 'BTC'),
-            defaultPair('ETHUSDC', 'ETH'),
+            (function () {
+                var p = defaultPair('BTCUSDC', 'BTC');
+                p.status = 'enabled';
+                return p;
+            })(),
+            (function () {
+                var p = defaultPair('ETHUSDC', 'ETH');
+                p.status = 'paused';
+                return p;
+            })(),
             (function () {
                 var p = defaultPair('SOLUSDC', 'SOL');
                 p.front_hidden = true;
                 p.status = 'disabled';
                 p.allow_trade_start_time = '2026-10-01T08:00';
+                return p;
+            })(),
+            (function () {
+                var p = defaultPair('ARBUSDC', 'ARB');
+                p.status = 'pending';
+                return p;
+            })(),
+            (function () {
+                var p = defaultPair('DOGEUSDC', 'DOGE');
+                p.status = 'pre_deliver';
+                return p;
+            })(),
+            (function () {
+                var p = defaultPair('BNBUSDC', 'BNB');
+                p.status = 'delivering';
                 return p;
             })()
         ]
@@ -76,6 +124,7 @@
     var iconInputMode = 'url';
     var iconUploadDataUrl = '';
     var iconUploadFileName = '';
+    var pendingStatusTransition = null;
 
     function defaultPair(productName, baseCoin) {
         return {
@@ -93,7 +142,7 @@
                 { min_quantity: '200', max_quantity: '0', max_level: 10, maintenance_margin_rate: '0.01' }
             ],
             front_hidden: false,
-            status: 'enabled',
+            status: 'pending',
             quote_enable: false,
             quote_sort: 1,
             create_time: '2026-09-01 10:00:00',
@@ -280,7 +329,48 @@
     }
 
     function fmtStatus(s) {
-        return STATUS_LABELS[s] || s;
+        return STATUS_LABELS[s] || s || '—';
+    }
+
+    function getStatusPillClass(status) {
+        var map = {
+            pending: 'status-pending',
+            enabled: 'status-enabled',
+            paused: 'status-paused',
+            pre_deliver: 'status-pre-deliver',
+            delivering: 'status-delivering',
+            disabled: 'status-disabled'
+        };
+        return map[status] || 'status-off';
+    }
+
+    function fmtStatusPill(status) {
+        return '<span class="status-pill ' + getStatusPillClass(status) + '">' + fmtStatus(status) + '</span>';
+    }
+
+    function isFullEditAllowed(pair) {
+        return !!(pair && FULL_EDIT_STATUSES[pair.status]);
+    }
+
+    function isNoOperationStatus(pair) {
+        return !!(pair && NO_OPERATION_STATUSES[pair.status]);
+    }
+
+    function isDeliveringLocked() {
+        if (!editingProduct) return false;
+        return isNoOperationStatus(findPair(editingProduct));
+    }
+
+    function renderPairActionButtons(pair) {
+        if (isNoOperationStatus(pair)) {
+            return '<span class="text-[10px] text-slate-400 font-bold italic">等待交割完成</span>';
+        }
+        var transitions = STATUS_TRANSITIONS[pair.status] || [];
+        var btns = transitions.map(function (t) {
+            return '<button type="button" class="pair-action-btn pair-action-primary" data-action="pair-transition" data-name="' + pair.product_name + '" data-next="' + t.next + '" data-label="' + t.label + '">' + t.label + '</button>';
+        }).join('');
+        btns += '<button type="button" class="pair-action-btn pair-action-muted" data-action="edit-pair" data-name="' + pair.product_name + '">编辑</button>';
+        return '<div class="flex flex-wrap justify-end gap-x-2 gap-y-1">' + btns + '</div>';
     }
 
     function fmtDateTime(v) {
@@ -320,11 +410,11 @@
             return '<tr class="hover:bg-slate-50/80">' +
                 '<td class="px-6 py-4 font-black text-slate-800">' + p.product_name + '</td>' +
                 '<td class="px-6 py-4 text-center">' + fmtBool(p.front_hidden) + '</td>' +
-                '<td class="px-6 py-4 text-center"><span class="status-pill ' + (p.status === 'enabled' ? 'status-on' : 'status-off') + '">' + fmtStatus(p.status) + '</span></td>' +
+                '<td class="px-6 py-4 text-center">' + fmtStatusPill(p.status) + '</td>' +
                 '<td class="px-6 py-4 text-slate-600">' + fmtDateTime(p.allow_trade_start_time) + '</td>' +
                 '<td class="px-6 py-4 text-slate-500">' + fmtDateTime(p.create_time) + '</td>' +
                 '<td class="px-6 py-4 text-slate-500">' + fmtDateTime(p.update_time) + '</td>' +
-                '<td class="px-6 py-4 text-right"><button type="button" class="text-blue-600 font-black hover:underline" data-action="edit-pair" data-name="' + p.product_name + '">编辑</button></td>' +
+                '<td class="px-6 py-4 text-right">' + renderPairActionButtons(p) + '</td>' +
                 '</tr>';
         }).join('');
     }
@@ -358,7 +448,44 @@
     function isLimitConfigOnlyEdit() {
         if (!editingProduct) return false;
         var pair = findPair(editingProduct);
-        return !!(pair && pair.status === 'enabled');
+        return !!(pair && !isFullEditAllowed(pair));
+    }
+
+    function openStatusTransitionModal(productName, nextStatus, label) {
+        var pair = findPair(productName);
+        if (!pair) return;
+        var allowed = (STATUS_TRANSITIONS[pair.status] || []).some(function (t) { return t.next === nextStatus; });
+        if (!allowed) {
+            alert('当前状态不支持该操作');
+            return;
+        }
+        pendingStatusTransition = { name: productName, next: nextStatus, label: label };
+        var modal = document.getElementById('status-action-modal');
+        var text = document.getElementById('status-action-text');
+        if (text) {
+            text.textContent = '确认对交易对「' + productName + '」执行「' + label + '」？状态将由「' + fmtStatus(pair.status) + '」变更为「' + fmtStatus(nextStatus) + '」。';
+        }
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeStatusTransitionModal() {
+        pendingStatusTransition = null;
+        var modal = document.getElementById('status-action-modal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    function confirmStatusTransition() {
+        if (!pendingStatusTransition) return;
+        var pair = findPair(pendingStatusTransition.name);
+        if (!pair) {
+            closeStatusTransitionModal();
+            return;
+        }
+        pair.status = pendingStatusTransition.next;
+        pair.update_time = new Date().toISOString().slice(0, 19).replace('T', ' ');
+        closeStatusTransitionModal();
+        alert('状态已更新为「' + fmtStatus(pair.status) + '」（原型演示）');
+        renderList();
     }
 
     function updateCoinDescriptionCount() {
@@ -478,15 +605,29 @@
         var hint = document.getElementById('limit-config-edit-hint');
         if (!root) return;
 
-        var restrictToLimitConfig = isLimitConfigOnlyEdit();
-        if (hint) hint.classList.toggle('hidden', !restrictToLimitConfig);
+        var deliveringLocked = isDeliveringLocked();
+        var restrictToLimitConfig = !deliveringLocked && isLimitConfigOnlyEdit();
+        if (hint) {
+            if (deliveringLocked) {
+                hint.innerHTML = DELIVERING_LOCK_HINT;
+                hint.classList.remove('hidden');
+            } else {
+                hint.innerHTML = LIMIT_CONFIG_EDIT_HINT;
+                hint.classList.toggle('hidden', !restrictToLimitConfig);
+            }
+        }
 
         root.querySelectorAll('[data-form-section]').forEach(function (section) {
             var isLimit = section.id === 'section-limit-config';
-            section.classList.toggle('form-section-readonly', restrictToLimitConfig && !isLimit);
+            section.classList.toggle('form-section-readonly', (deliveringLocked || restrictToLimitConfig) && !isLimit);
+            if (deliveringLocked) section.classList.add('form-section-readonly');
         });
 
         root.querySelectorAll('input[id], select[id], textarea[id]').forEach(function (el) {
+            if (deliveringLocked) {
+                el.disabled = true;
+                return;
+            }
             if (!restrictToLimitConfig) {
                 if (el.id !== 'form-product-name') el.disabled = false;
                 return;
@@ -504,6 +645,10 @@
         }
 
         root.querySelectorAll('button[data-action]').forEach(function (btn) {
+            if (deliveringLocked) {
+                btn.disabled = btn.getAttribute('data-action') !== 'back-list';
+                return;
+            }
             if (!restrictToLimitConfig) {
                 btn.disabled = false;
                 return;
@@ -512,15 +657,15 @@
         });
 
         var pickBtn = document.getElementById('btn-pick-icon-file');
-        if (pickBtn) pickBtn.disabled = restrictToLimitConfig;
+        if (pickBtn) pickBtn.disabled = deliveringLocked || restrictToLimitConfig;
 
         ['icon-radio-url', 'icon-radio-upload'].forEach(function (id) {
             var radio = document.getElementById(id);
-            if (radio) radio.disabled = restrictToLimitConfig;
+            if (radio) radio.disabled = deliveringLocked || restrictToLimitConfig;
         });
 
         root.querySelectorAll('#margin-tier-body input, #margin-tier-body button, #index-source-body input, #index-source-body select, #index-source-body button, #tag-checkbox-wrap input').forEach(function (el) {
-            if (restrictToLimitConfig) el.disabled = true;
+            if (deliveringLocked || restrictToLimitConfig) el.disabled = true;
         });
 
         if (restrictToLimitConfig) updateAddIndexButton(readIndexFromDom());
@@ -621,7 +766,7 @@
         renderTagCheckboxes(pair.tags || []);
 
         document.getElementById('form-page-title').textContent = editingProduct ? '编辑交易对 · ' + editingProduct : '新增交易对';
-        document.getElementById('form-market-badge').textContent = '计价市场 · ' + selectedMarket;
+        document.getElementById('form-market-badge').textContent = '计价市场 · ' + selectedMarket + (editingProduct ? ' · 状态 ' + fmtStatus(pair.status) : '');
         applyFormEditRestrictions();
     }
 
@@ -681,7 +826,11 @@
             return null;
         }
         var existingPair = editingProduct ? findPair(editingProduct) : null;
-        if (editingProduct && existingPair && existingPair.status === 'enabled') {
+        if (editingProduct && existingPair && isNoOperationStatus(existingPair)) {
+            alert('交割中不可操作，请等待系统交割完成后自动变为「下线」。');
+            return null;
+        }
+        if (editingProduct && existingPair && !isFullEditAllowed(existingPair)) {
             var updated = clone(existingPair);
             updated.update_time = new Date().toISOString().slice(0, 19).replace('T', ' ');
             updated.limit_config = collectLimitConfigFromForm(existingPair.limit_config || {});
@@ -718,7 +867,7 @@
             price_precision: Number(getField('form-price-precision')),
             maintenance_margin_rate: readMarginFromDom(),
             front_hidden: getField('form-front-hidden'),
-            status: existingPair ? existingPair.status : 'enabled',
+            status: editingProduct && existingPair ? existingPair.status : 'pending',
             quote_enable: getField('form-quote-enable'),
             quote_sort: Number(getField('form-quote-sort')),
             create_time: editingProduct && existingPair ? existingPair.create_time : new Date().toISOString().slice(0, 19).replace('T', ' '),
@@ -762,6 +911,11 @@
         editingProduct = isNew ? null : productName;
         var pair = isNew ? emptyPair() : clone(findPair(productName));
         if (!pair && !isNew) return;
+        if (!isNew && isNoOperationStatus(pair)) {
+            alert('交割中不可操作，请等待系统交割完成后自动变为「下线」。');
+            goList();
+            return;
+        }
         loadForm(pair);
         bindIconControls();
         showView('view-form');
@@ -901,6 +1055,9 @@
             if (action === 'close-save-confirm') closeSaveConfirmModal();
             if (action === 'confirm-save-pair') confirmSavePair();
             if (action === 'edit-pair') openForm(false, t.getAttribute('data-name'));
+            if (action === 'pair-transition') openStatusTransitionModal(t.getAttribute('data-name'), t.getAttribute('data-next'), t.getAttribute('data-label'));
+            if (action === 'close-status-transition') closeStatusTransitionModal();
+            if (action === 'confirm-status-transition') confirmStatusTransition();
             if (action === 'add-margin') {
                 if (isLimitConfigOnlyEdit()) return;
                 var rows = readMarginFromDom();

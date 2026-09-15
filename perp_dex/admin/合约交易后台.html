@@ -17,12 +17,22 @@
         .section-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
         .section-title { font-size: 12px; font-weight: 900; color: #334155; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9; }
         .hint-box { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 4px; padding: 10px 12px; font-size: 10px; color: #64748b; line-height: 1.6; }
-        .status-pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 800; }
+        .status-pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 800; white-space: nowrap; }
         .status-on { background: #dcfce7; color: #166534; }
         .status-off { background: #fee2e2; color: #991b1b; }
+        .status-pending { background: #fef3c7; color: #b45309; }
+        .status-enabled { background: #dcfce7; color: #166534; }
+        .status-paused { background: #ffedd5; color: #c2410c; }
+        .status-pre-deliver { background: #e0e7ff; color: #4338ca; }
+        .status-delivering { background: #dbeafe; color: #1d4ed8; }
+        .status-disabled { background: #f1f5f9; color: #64748b; }
+        .pair-action-btn { font-weight: 800; font-size: 10px; white-space: nowrap; }
+        .pair-action-btn:hover { text-decoration: underline; }
+        .pair-action-primary { color: #2563eb; }
+        .pair-action-muted { color: #64748b; }
         .admin-subview { display: flex; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; }
         .admin-subview.hidden { display: none !important; }
-        #tag-modal.hidden, #save-confirm-modal.hidden { display: none !important; }
+        #tag-modal.hidden, #save-confirm-modal.hidden, #status-action-modal.hidden { display: none !important; }
         .toggle-switch { position: relative; display: inline-flex; align-items: center; cursor: pointer; flex-shrink: 0; }
         .toggle-switch input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
         .toggle-track { width: 44px; height: 24px; background: #e2e8f0; border-radius: 999px; position: relative; transition: background 0.2s; }
@@ -211,7 +221,7 @@
             <!-- 限制配置 -->
             <section id="section-limit-config" class="section-card space-y-4" data-form-section>
                 <h3 class="section-title">限制配置 limit_config</h3>
-                <p id="limit-config-edit-hint" class="hint-box hidden">交易对已<strong>启用</strong>：仅可修改限制配置 limit_config；<strong>最小步进 price_unit</strong> 不可修改。</p>
+                <p id="limit-config-edit-hint" class="hint-box hidden">当前状态仅可修改限制配置 limit_config；<strong>最小步进 price_unit</strong> 不可修改。暂停、下线状态支持编辑全部字段。</p>
                 <div class="grid grid-cols-3 gap-4">
                     <div><label class="input-label">市价最大吃深度 market_max_deeps</label><input id="form-lc-market-max-deeps" type="number" class="field-input"></div>
                     <div><label class="input-label">最小步进 price_unit</label><input id="form-lc-price-unit" type="number" class="field-input"></div>
@@ -335,6 +345,22 @@
         <div class="flex justify-end gap-2 pt-2 border-t">
             <button type="button" data-action="close-save-confirm" class="px-4 py-2 border border-slate-200 font-bold rounded-sm">返回修改</button>
             <button type="button" data-action="confirm-save-pair" class="px-5 py-2 bg-blue-600 text-white font-black rounded-sm">确认提交</button>
+        </div>
+    </div>
+</div>
+
+<!-- 状态流转确认弹窗 -->
+<div id="status-action-modal" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-lg shadow-2xl w-full max-w-md p-6 space-y-4">
+        <div class="flex justify-between items-center">
+            <h3 class="font-black text-slate-800 uppercase">确认状态变更</h3>
+            <button type="button" data-action="close-status-transition" class="text-slate-400 hover:text-black text-xl leading-none">&times;</button>
+        </div>
+        <p id="status-action-text" class="text-[12px] text-slate-600 leading-relaxed font-medium"></p>
+        <p class="hint-box">请确认状态流转符合业务流程后再提交。</p>
+        <div class="flex justify-end gap-2 pt-2 border-t">
+            <button type="button" data-action="close-status-transition" class="px-4 py-2 border border-slate-200 font-bold rounded-sm">取消</button>
+            <button type="button" data-action="confirm-status-transition" class="px-5 py-2 bg-blue-600 text-white font-black rounded-sm">确认</button>
         </div>
     </div>
 </div>
