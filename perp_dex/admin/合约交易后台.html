@@ -28,10 +28,15 @@
         .toggle-switch input:checked + .toggle-track::after { transform: translateX(20px); border-color: #fff; }
         .toggle-switch input:disabled + .toggle-track { opacity: 0.45; cursor: not-allowed; }
         .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid #f1f5f9; border-radius: 6px; background: #fafafa; }
-        .icon-mode-btn { padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 10px; font-weight: 800; color: #64748b; background: #fff; cursor: pointer; }
-        .icon-mode-btn.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+        .icon-mode-btn { padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 10px; font-weight: 800; color: #64748b; background: #fff; cursor: pointer; display: inline-block; }
         .icon-mode-tabs { display: inline-flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
-        .icon-mode-hint { font-size: 10px; font-weight: 800; color: #2563eb; margin-bottom: 8px; }
+        .icon-radio { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+        .icon-mode-root { position: relative; }
+        .icon-panel-upload { display: none; }
+        #icon-radio-upload:checked ~ #icon-panel-url { display: none; }
+        #icon-radio-upload:checked ~ #icon-panel-upload { display: block; }
+        #icon-radio-url:checked ~ .icon-mode-tabs label[for="icon-radio-url"],
+        #icon-radio-upload:checked ~ .icon-mode-tabs label[for="icon-radio-upload"] { background: #2563eb; border-color: #2563eb; color: #fff; }
         .icon-panel-hidden { display: none !important; }
     </style>
 </head>
@@ -116,19 +121,20 @@
                 <h3 class="section-title">基础信息</h3>
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="input-label">产品名称 product_name</label><input id="form-product-name" class="field-input font-black" placeholder="如 BTCUSDC"></div>
-                    <div class="col-span-2">
+                    <div class="col-span-2 icon-mode-root">
                         <label class="input-label">图标 icon_url</label>
-                        <p id="icon-mode-hint" class="icon-mode-hint">当前方式：URL 链接</p>
-                        <div class="icon-mode-tabs" role="tablist" aria-label="图标来源">
-                            <button type="button" role="tab" aria-selected="true" class="icon-mode-btn active" id="btn-icon-mode-url">URL 链接</button>
-                            <button type="button" role="tab" aria-selected="false" class="icon-mode-btn" id="btn-icon-mode-upload">本地上传</button>
+                        <input type="radio" name="icon-mode" id="icon-radio-url" class="icon-radio" value="url" checked>
+                        <input type="radio" name="icon-mode" id="icon-radio-upload" class="icon-radio" value="upload">
+                        <div class="icon-mode-tabs">
+                            <label for="icon-radio-url" class="icon-mode-btn">URL 链接</label>
+                            <label for="icon-radio-upload" class="icon-mode-btn">本地上传</label>
                         </div>
                         <div id="icon-panel-url">
                             <input id="form-icon-url" class="field-input" placeholder="https://static.example.com/icons/btc.png">
                             <p class="text-[9px] text-slate-400 mt-1 italic">方式 1：直接输入图片 URL</p>
                         </div>
-                        <div id="icon-panel-upload" class="icon-panel-hidden">
-                            <button type="button" id="btn-pick-icon-file" class="px-3 py-2 border border-dashed border-slate-300 rounded bg-slate-50 text-[11px] font-bold text-slate-600 hover:border-blue-400 hover:text-blue-600">选择 PNG / JPG 图片</button>
+                        <div id="icon-panel-upload" class="icon-panel-upload">
+                            <button type="button" id="btn-pick-icon-file" class="px-3 py-2 border border-dashed border-slate-300 rounded bg-slate-50 text-[11px] font-bold text-slate-600 hover:border-blue-400 hover:text-blue-600" onclick="document.getElementById('form-icon-file').click()">选择 PNG / JPG 图片</button>
                             <input id="form-icon-file" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" class="hidden" tabindex="-1">
                             <p id="form-icon-file-name" class="text-[10px] text-slate-500 font-bold mt-2">未选择文件</p>
                             <p class="text-[9px] text-slate-400 mt-1 italic">方式 2：上传 PNG、JPG 格式图片（原型演示将转为本地预览地址）</p>
