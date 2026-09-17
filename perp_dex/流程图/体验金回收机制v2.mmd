@@ -1,87 +1,37 @@
-sequenceDiagram
-    autonumber
+flowchart TB
+    START(["触发回收<br/>· 开仓有效期到期<br/>· 划转转出（交易→资金）<br/>· 亏损/费用达上限<br/>· 风控回收"])
 
-    box rgba(240,249,255,0.6) 用户行为
-        actor U as 用户
-    end
-    box rgba(255,247,237,0.6) 卡券状态机
-        participant CX as 卡券 X
-        participant CY as 卡券 Y
-    end
-    box rgba(240,253,244,0.6) 合约账户 · 数据标记 · 流水
-        participant AC as 合约账户
-        participant POS as 仓位切片
-        participant PR as pending_reclaim
-        participant LG as 流水
-    end
+    START --> S1{可用体验金 > 0 ?}
 
-    Note over U,LG: ━━ 0 · 正常使用（回收前）━━
-    U->>CX: 激活卡券 X
-    Note over CX: 可使用 → 已使用
-    CX->>AC: avail_amt += 面额
-    U->>POS: 开仓占用
-    Note over AC: avail↓ occ↑ · occ_tag=active
-    Note over POS: 切片 X·active（例 10U 全占用）
+    S1 -->|是| S1A["① 立刻回收全部「可用」<br/>卡券：仍使用中 → 即将失效<br/>记流水：到期/划转/上限…"]
+    S1 -->|否| S2
+    S1A --> S2
 
-    Note over U,LG: ━━ 1 · 触发回收标记 ①②③ ━━<br/>触发源：到期 / 划转转出 / 上限 / 风控（逻辑相同）
-    U->>AC: 【可选】划转转出 交易→资金 · 二次确认
+    S2{占用体验金 > 0 ?}
 
-    rect rgb(255,243,224)
-        Note over AC,LG: ① 可用保证金内体验金全回收
-        alt Avail_X > 0
-            AC->>AC: avail_amt → 0
-            AC->>LG: 回收流水（到期·可用 / 划转·可用 / 上限·可用）
-            Note over CX: 仍 已使用（②③未完成）
-        else Avail_X = 0
-            Note over AC: 跳过 ①（例：10U 全在 Occ）
-        end
+    S2 -->|是| S2A["② 占用标记「已过期」<br/>待回收金额 += 占用额<br/>❌ 不减仓 ❌ 不抽保证金 ❌ 不强平<br/>仓位数量不变"]
+    S2 -->|否| S3
+    S2A --> S3
 
-        Note over AC,LG: ② Occ 标记 · ❌不减仓 ❌不抽保证金 ❌不强平
-        alt Occ_X > 0
-            AC->>POS: slice_occ_tag active → expired
-            AC->>PR: pending_reclaim += Occ_X
-            Note over POS: 仓位数量不变 · 切片 X·expired
-        else Occ_X = 0
-            Note over PR: pending 不变
-        end
+    S3["③ 卡券状态 → 已失效<br/>不再用该券扣手续费/亏损"]
 
-        Note over AC,LG: ③ 卡券失效
-        AC->>CX: deduct_frozen=true · 停止记扣亏/扣费
-        CX->>CX: 已使用 → 已失效（待释放子态）
-        Note over CX: pending>0 则 已失效·待释放<br/>pending=0 则 已失效·终态
-    end
+    S3 --> TOUT{本次是划转转出 ?}
+    TOUT -->|是| TOUTA["弹窗确认后 · 放行划转<br/>（可划转金额不含体验金）"]
+    TOUT -->|否| WAIT
+    TOUTA --> WAIT
 
-    opt 触发源 = 划转转出
-        AC-->>U: 划转放行（可划转不含体验金）
-        Note over U: Occ 仍占仓 · 等 pending 清算
-    end
+    WAIT{待回收金额 > 0 ?}
 
-    Note over U,LG: ━━ 2 · pending 清算（仅 pending>0）━━<br/>三事件任一发生 → 即刻回收 · 直至 pending=0
+    WAIT -->|否| END(["结束"])
+    WAIT -->|是| EVT{"阶段二：用户任一动作<br/>→ 能收多少立刻收多少<br/>→ 直到待回收 = 0"}
 
-    loop pending_reclaim > 0
-        alt 2a · 用户平仓 / 减仓
-            U->>POS: 平仓
-            POS->>AC: 释放 expired 切片（例 5U）
-            AC->>PR: 对应金额即刻回收 · pending↓ · occ↓
-            AC->>LG: 回收流水（占用释放）
-            Note over CX: 已失效 · pending↓
-        else 2b · 划转本金入合约 资金→交易
-            U->>AC: 划入本金
-            AC->>PR: 可用保证金↑ · 扫 pending 即刻回收
-            AC->>LG: 回收流水（pending 清算）
-            Note over AC: 不改 POS 切片 · 仅 pending↓
-        else 2c · 激活新卡券 Y
-            U->>CY: 激活卡券 Y
-            CY->>CY: 可使用 → 已使用
-            CY->>AC: avail_Y += 面额（例 10U）
-            AC->>POS: expired 切片归属 X→Y · tag→active
-            AC->>PR: pending -= 已替换 Occ（例 5U）
-            AC->>LG: 体验金注入 + 替换回收
-            Note over CX: X 已失效 · occ_X↓ pending↓
-            Note over CY: Y 已使用 · avail/occ 重新分配
-        end
-    end
+    EVT -->|平仓 / 减仓| E1["释放的过期占用<br/>→ 立刻回收<br/>记流水"]
+    EVT -->|本金划入合约<br/>（资金→交易）| E2["账户有可用保证金<br/>→ 扫待回收 · 立刻回收"]
+    EVT -->|激活新体验金| E3["新券注入<br/>+ 替换仓位里过期占用归属<br/>（不增减仓）"]
 
-    Note over U,LG: ━━ 3 · 终态 ━━
-    Note over CX: 已失效 · avail=0 occ=0 pending=0
-    Note over AC: 无 pending · 无 expired 切片待回收
+    E1 --> CHK{待回收 = 0 ?}
+    E2 --> CHK
+    E3 --> CHK
+
+    CHK -->|否| EVT
+    CHK -->|是| END
