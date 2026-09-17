@@ -1,28 +1,28 @@
 flowchart TB
-    START([触发回收 · 指定卡券 X]) --> CALC["计算 Avail_X / Occ_X<br/>────────<br/>卡券: 已使用<br/>数据: occ_tag=active"]
+    START([触发回收 · 指定卡券 X<br/>到期 / 划转转出 / 上限 / 风控…]) --> CALC["计算 Avail_X / Occ_X<br/>卡券: 已使用 · occ_tag=active"]
 
     CALC --> R1{Avail_X > 0 ?}
 
-    R1 -->|是| R1A["① 扣减可用体验金 Avail_X<br/>写「体验金回收」流水<br/>────────<br/>卡券: 仍 已使用<br/>数据: Avail_X→0<br/>occ_tag 不变"]
+    R1 -->|是| R1A["① 可用保证金内体验金全回收 Avail_X<br/>写回收流水<br/>卡券: 仍 已使用 · Avail→0"]
     R1 -->|否| R2
     R1A --> R2
 
-    R2["② Occ_X > 0 → occ_tag: active → expired<br/>❌ 不减仓 ❌ 不抽保证金 ❌ 不强平<br/>────────<br/>卡券: 仍 已使用<br/>数据: Occ_X 不变<br/>pending_reclaim += Occ_X"]
+    R2["② Occ 不足部分: occ_tag active→expired<br/>pending_reclaim += Occ_X<br/>❌ 不减仓 ❌ 不抽保证金"]
     R2 --> R3
 
-    R3["③ 卡券状态 → 已失效<br/>────────<br/>卡券: 已失效<br/>数据: 停止向 X 记扣亏/扣费<br/>Occ_X 仍挂在仓位切片"]
+    R3["③ 卡券 → 已失效 · deduct_frozen<br/>（划转转出在此步后放行划转）"]
 
-    R3 --> WAIT{Occ_X 待释放？<br/>pending_reclaim > 0 ?}
+    R3 --> WAIT{pending_reclaim > 0 ?}
 
-    WAIT -->|否 pending=0| END(["结束 · 终态<br/>卡券: 已失效<br/>数据: Avail=0 Occ=0"])
+    WAIT -->|否| END(["终态 · Avail=0 Occ=0 pending=0"])
 
-    WAIT -->|是| EVT{后续用户行为}
+    WAIT -->|是| EVT{pending 清算事件<br/>≠ 划转转出}
 
-    EVT -->|平仓/减仓释放| E1["释放保证金切片<br/>expired 切片 → 待回收池<br/>即刻扣减并写回收流水<br/>────────<br/>卡券: 已失效<br/>数据: Occ_X↓ pending_reclaim↓<br/>至 0 则终态"]
-    EVT -->|划入本金| E2["账户可用保证金增加<br/>扫描 pending_reclaim 队列<br/>能扣则即刻回收<br/>────────<br/>卡券: 已失效<br/>数据: pending_reclaim↓<br/>（不替占仓位 Occ）"]
-    EVT -->|激活新卡券 Y| E3["Y 注入 Avail_Y<br/>用 Y 替换 Occ_X 归属<br/>expired 切片 → Y·active<br/>────────<br/>卡券 X: 已失效 pending↓<br/>卡券 Y: 已使用<br/>数据: Occ_X→0 Occ_Y↑"]
+    EVT -->|平仓/减仓| E1["Occ 释放 → pending 即刻回收"]
+    EVT -->|划转本金入合约| E2["可用保证金↑ → pending 即刻回收<br/>不改 Occ 切片"]
+    EVT -->|激活新卡券 Y| E3["替换 Occ 归属 · pending↓"]
 
-    E1 --> CHECK{pending_reclaim = 0 ?}
+    E1 --> CHECK{pending = 0 ?}
     E2 --> CHECK
     E3 --> CHECK
 
