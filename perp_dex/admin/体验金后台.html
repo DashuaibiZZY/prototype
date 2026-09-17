@@ -26,7 +26,7 @@
     .group-option:hover { border-color: #93c5fd; }
     .group-option.selected { border-color: #3b82f6; background: #eff6ff; }
     .group-option .g-name { font-weight: 700; font-size: 12px; color: #1e293b; }
-    .group-option .g-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 8px; margin-top: 6px; font-size: 10px; }
+    .group-option .g-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 8px; margin-top: 6px; font-size: 10px; }
     .group-option .g-grid span { color: #94a3b8; }
     .group-option .g-grid b { color: #334155; font-weight: 600; }
     .risk-tag-normal { background: #f1f5f9; color: #64748b; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
@@ -83,8 +83,6 @@
             <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">卡组名称</th>
             <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">卡券有效期</th>
             <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">开仓有效期</th>
-            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">亏损抵扣上限</th>
-            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">费用抵扣上限</th>
             <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-right">操作</th>
           </tr>
           </thead>
@@ -219,7 +217,7 @@
       <div class="card overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 font-bold text-slate-700">卡券列表与使用记录</div>
         <div class="overflow-x-auto">
-          <table class="w-full text-left min-w-[1000px] text-sm">
+          <table class="w-full text-left min-w-[900px] text-sm">
             <thead class="bg-slate-50 border-b border-slate-200">
             <tr>
               <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">卡券ID</th>
@@ -230,8 +228,6 @@
               <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">发放活动</th>
               <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">发放时间</th>
               <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">激活/开仓截止</th>
-              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">亏损抵扣</th>
-              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase text-right">费用抵扣</th>
               <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">操作</th>
             </tr>
             </thead>
@@ -340,28 +336,6 @@
         <div>
           <label class="block text-xs font-bold text-slate-500 uppercase mb-2">开仓有效期 (天)</label>
           <input id="configFormOpenDays" type="number" min="1" class="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none">
-        </div>
-      </div>
-      <div class="p-4 bg-slate-50 rounded-xl space-y-3">
-        <div class="flex justify-between items-center">
-          <label class="text-sm font-bold text-slate-700">亏损抵扣上限</label>
-          <label class="switch"><input id="configFormLossEnabled" type="checkbox" onchange="toggleConfigInput(this, 'cfg-loss-limit')"><span class="slider"></span></label>
-        </div>
-        <div id="cfg-loss-limit" class="hidden flex items-center gap-3">
-          <span class="text-xs text-slate-500 whitespace-nowrap">累计亏损达面额的</span>
-          <div class="relative w-24"><input id="configFormLossPct" type="number" min="1" max="100" value="20" class="w-full border border-slate-200 rounded-lg p-2 text-sm pr-6 outline-none"><span class="absolute right-2 top-2 text-xs text-slate-400">%</span></div>
-          <span class="text-xs text-slate-500">时强制回收</span>
-        </div>
-      </div>
-      <div class="p-4 bg-slate-50 rounded-xl space-y-3">
-        <div class="flex justify-between items-center">
-          <label class="text-sm font-bold text-slate-700">费用抵扣上限</label>
-          <label class="switch"><input id="configFormFeeEnabled" type="checkbox" onchange="toggleConfigInput(this, 'cfg-fee-limit')"><span class="slider"></span></label>
-        </div>
-        <div id="cfg-fee-limit" class="hidden flex items-center gap-3">
-          <span class="text-xs text-slate-500 whitespace-nowrap">累计手续费/资金费达面额的</span>
-          <div class="relative w-24"><input id="configFormFeePct" type="number" min="1" max="100" value="20" class="w-full border border-slate-200 rounded-lg p-2 text-sm pr-6 outline-none"><span class="absolute right-2 top-2 text-xs text-slate-400">%</span></div>
-          <span class="text-xs text-slate-500">时强制回收</span>
         </div>
       </div>
     </div>
@@ -487,7 +461,7 @@
       <h3 class="text-xl font-bold mb-2 text-center">确认强制回收？</h3>
       <p id="recycleConfirmText" class="text-sm text-slate-500 text-center mb-4"></p>
       <div class="bg-red-50 rounded-xl p-4 text-xs text-red-600">
-        <p class="font-bold">此操作不可逆。若体验金被持仓占用，可能直接影响用户仓位。</p>
+        <p class="font-bold">此操作不可逆。若体验金被持仓占用，剩余额度将标记为待回收。</p>
       </div>
       <div class="mt-4">
         <label class="block text-xs font-bold text-slate-500 uppercase mb-2">操作备注（必填）</label>
@@ -507,14 +481,14 @@
 <script src="admin-approval-ui.js"></script>
 <script>
   let CARD_GROUPS = [
-    { id: 'g0', name: '默认组', couponValidDays: 7, openValidDays: 7, lossEnabled: true, lossPct: 20, feeEnabled: true, feePct: 20, isDefault: true },
-    { id: 'g1', name: '标准新人礼包组', couponValidDays: 7, openValidDays: 30, lossEnabled: true, lossPct: 20, feeEnabled: false, feePct: 0 },
-    { id: 'g2', name: 'KOL大额专属组', couponValidDays: 14, openValidDays: 60, lossEnabled: true, lossPct: 30, feeEnabled: true, feePct: 15 },
-    { id: 'g3', name: '交易大赛奖励组', couponValidDays: 10, openValidDays: 45, lossEnabled: true, lossPct: 25, feeEnabled: false, feePct: 0 },
-    { id: 'g4', name: '社区活动体验组', couponValidDays: 5, openValidDays: 21, lossEnabled: true, lossPct: 15, feeEnabled: true, feePct: 10 },
-    { id: 'g5', name: 'VIP 专属体验组', couponValidDays: 30, openValidDays: 90, lossEnabled: true, lossPct: 35, feeEnabled: true, feePct: 20 },
-    { id: 'g6', name: '限时拉新活动组', couponValidDays: 3, openValidDays: 14, lossEnabled: false, lossPct: 0, feeEnabled: false, feePct: 0 },
-    { id: 'g7', name: '机构合作体验组', couponValidDays: 21, openValidDays: 60, lossEnabled: true, lossPct: 40, feeEnabled: true, feePct: 25 }
+    { id: 'g0', name: '默认组', couponValidDays: 7, openValidDays: 7, isDefault: true },
+    { id: 'g1', name: '标准新人礼包组', couponValidDays: 7, openValidDays: 30 },
+    { id: 'g2', name: 'KOL大额专属组', couponValidDays: 14, openValidDays: 60 },
+    { id: 'g3', name: '交易大赛奖励组', couponValidDays: 10, openValidDays: 45 },
+    { id: 'g4', name: '社区活动体验组', couponValidDays: 5, openValidDays: 21 },
+    { id: 'g5', name: 'VIP 专属体验组', couponValidDays: 30, openValidDays: 90 },
+    { id: 'g6', name: '限时拉新活动组', couponValidDays: 3, openValidDays: 14 },
+    { id: 'g7', name: '机构合作体验组', couponValidDays: 21, openValidDays: 60 }
   ];
   const CARD_GROUP_ACTIVITY_BINDINGS = {
     g1: [{ type: 'platform', id: 'ACT202605001', name: '新用户注册礼包' }],
@@ -534,19 +508,19 @@
       totalIssued: 1285600, issuedUserCount: 8426, totalLossDeduct: 186420, totalFeeDeduct: 52880,
       inUseBalance: 312400, availableBalance: 458200, activeHolderCount: 2156,
       riskRecycle: 18600,
-      autoRecycle: { expired: 28400, invalid: 12800, lossLimit: 35200, feeLimit: 9800 }
+      autoRecycle: { unusedExpired: 28400, invalid: 12800 }
     },
     '7d': {
       totalIssued: 86400, issuedUserCount: 428, totalLossDeduct: 12480, totalFeeDeduct: 3620,
       inUseBalance: 312400, availableBalance: 458200, activeHolderCount: 2156,
       riskRecycle: 2400,
-      autoRecycle: { expired: 3200, invalid: 1800, lossLimit: 4100, feeLimit: 1100 }
+      autoRecycle: { unusedExpired: 3200, invalid: 1800 }
     },
     '30d': {
       totalIssued: 312800, issuedUserCount: 1682, totalLossDeduct: 48200, totalFeeDeduct: 14280,
       inUseBalance: 312400, availableBalance: 458200, activeHolderCount: 2156,
       riskRecycle: 6800,
-      autoRecycle: { expired: 11200, invalid: 5400, lossLimit: 15800, feeLimit: 4200 }
+      autoRecycle: { unusedExpired: 11200, invalid: 5400 }
     }
   };
 
@@ -558,16 +532,16 @@
 
   const USER_COUPONS = {
     '100234': [
-      { id: 'CPN001', total: 100, balance: 80, status: 'used', group: '标准新人礼包组', activity: '社区 KOL 合作激励', issuedAt: '2026-07-10 10:00', activateDeadline: '2026-07-17', openDeadline: '2026-08-09', lossUsed: 15, lossLimit: 20, feeUsed: 5, feeLimit: 10 },
-      { id: 'CPN002', total: 50, balance: 50, status: 'available', group: '标准新人礼包组', activity: '社区 KOL 合作激励', issuedAt: '2026-07-18 14:30', activateDeadline: '2026-07-25', openDeadline: '2026-08-17', lossUsed: 0, lossLimit: 10, feeUsed: 0, feeLimit: 5 },
-      { id: 'CPN003', total: 200, balance: 70, status: 'used', group: 'KOL大额专属组', activity: 'KOL 专属活动', issuedAt: '2026-07-05 11:20', activateDeadline: '2026-07-19', openDeadline: '2026-09-03', lossUsed: 45, lossLimit: 60, feeUsed: 12, feeLimit: 30 }
+      { id: 'CPN001', total: 100, balance: 80, status: 'used', group: '标准新人礼包组', activity: '社区 KOL 合作激励', issuedAt: '2026-07-10 10:00', activateDeadline: '2026-07-17', openDeadline: '2026-08-09' },
+      { id: 'CPN002', total: 50, balance: 50, status: 'available', group: '标准新人礼包组', activity: '社区 KOL 合作激励', issuedAt: '2026-07-18 14:30', activateDeadline: '2026-07-25', openDeadline: '2026-08-17' },
+      { id: 'CPN003', total: 200, balance: 70, status: 'used', group: 'KOL大额专属组', activity: 'KOL 专属活动', issuedAt: '2026-07-05 11:20', activateDeadline: '2026-07-19', openDeadline: '2026-09-03' }
     ],
     '100891': [
-      { id: 'CPN010', total: 250, balance: 250, status: 'available', group: '标准新人礼包组', activity: '新用户注册礼包', issuedAt: '2026-07-20 09:15', activateDeadline: '2026-07-27', openDeadline: '2026-08-19', lossUsed: 0, lossLimit: 50, feeUsed: 0, feeLimit: 25 },
-      { id: 'CPN011', total: 250, balance: 250, status: 'available', group: '标准新人礼包组', activity: '新用户注册礼包', issuedAt: '2026-07-20 09:15', activateDeadline: '2026-07-27', openDeadline: '2026-08-19', lossUsed: 0, lossLimit: 50, feeUsed: 0, feeLimit: 25 }
+      { id: 'CPN010', total: 250, balance: 250, status: 'available', group: '标准新人礼包组', activity: '新用户注册礼包', issuedAt: '2026-07-20 09:15', activateDeadline: '2026-07-27', openDeadline: '2026-08-19' },
+      { id: 'CPN011', total: 250, balance: 250, status: 'available', group: '标准新人礼包组', activity: '新用户注册礼包', issuedAt: '2026-07-20 09:15', activateDeadline: '2026-07-27', openDeadline: '2026-08-19' }
     ],
     '101205': [
-      { id: 'CPN020', total: 150, balance: 0, status: 'expired', group: '标准新人礼包组', activity: '交易大赛奖励', issuedAt: '2026-06-01 12:00', activateDeadline: '2026-06-08', openDeadline: '2026-07-01', lossUsed: 0, lossLimit: 30, feeUsed: 0, feeLimit: 15 }
+      { id: 'CPN020', total: 150, balance: 0, status: 'expired', group: '标准新人礼包组', activity: '交易大赛奖励', issuedAt: '2026-06-01 12:00', activateDeadline: '2026-06-08', openDeadline: '2026-07-01' }
     ]
   };
 
@@ -617,13 +591,6 @@
     approval: { id: 'page-approval', title: '体验金发放审批', sidebar: 'trial-approval' }
   };
 
-  function toggleConfigInput(checkbox, targetId) {
-    const el = document.getElementById(targetId);
-    if (!el) return;
-    el.classList.toggle('hidden', !checkbox.checked);
-    el.classList.toggle('flex', checkbox.checked);
-  }
-
   function renderTrialOverview() {
     const period = document.getElementById('trialOverviewPeriod').value;
     const s = TRIAL_OVERVIEW_STATS[period] || TRIAL_OVERVIEW_STATS.all;
@@ -646,14 +613,12 @@
       return '<div class="min-w-0 px-1"><p class="text-[9px] font-bold text-slate-500 uppercase truncate">' + c.label + '</p><p class="text-sm font-black ' + (c.color || 'text-slate-800') + ' truncate" title="' + c.value + '">' + c.value + '</p></div>';
     }).join('');
     const ar = s.autoRecycle;
-    const autoTotal = ar.expired + ar.invalid + ar.lossLimit + ar.feeLimit;
+    const autoTotal = ar.unusedExpired + ar.invalid;
     const autoHtml = '<div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600">' +
       '<span class="font-bold text-slate-500">自动回收</span>' +
       '<span class="text-[10px] text-slate-400">' + periodSub + '</span>' +
-      '<span>已过期 <b class="text-slate-800">' + ar.expired.toLocaleString() + '</b></span>' +
+      '<span>未使用过期 <b class="text-slate-800">' + ar.unusedExpired.toLocaleString() + '</b></span>' +
       '<span>已失效 <b class="text-slate-800">' + ar.invalid.toLocaleString() + '</b></span>' +
-      '<span>亏损上限 <b class="text-slate-800">' + ar.lossLimit.toLocaleString() + '</b></span>' +
-      '<span>费用上限 <b class="text-slate-800">' + ar.feeLimit.toLocaleString() + '</b></span>' +
       '<span>合计 <b class="text-red-600">' + autoTotal.toLocaleString() + ' U</b></span>' +
       '</div>';
     let recycleHtml = autoHtml +
@@ -712,10 +677,6 @@
     renderUserCoupons(uid);
   }
 
-  function formatDeduct(used, limit) {
-    return used + '（已用）/' + limit + '（上限）';
-  }
-
   function renderConfigTable() {
     const q = (document.getElementById('configFilterName').value || '').trim().toLowerCase();
     const list = CARD_GROUPS.filter(function (g) { return !q || g.name.toLowerCase().indexOf(q) !== -1; });
@@ -724,8 +685,8 @@
     document.getElementById('configTableBody').innerHTML = sliced.items.length ? sliced.items.map(function (g) {
       const nameCell = g.name + (g.isDefault ? '<span class="default-group-badge">系统默认</span>' : '');
       const deleteBtn = g.isDefault ? '' : ' <button type="button" onclick="openDeleteGroupConfirm(\'' + g.id + '\')" class="text-red-600 font-bold ml-2">删除</button>';
-      return '<tr class="hover:bg-slate-50"><td class="px-6 py-4 font-bold">' + nameCell + '</td><td class="px-6 py-4">' + g.couponValidDays + ' 天</td><td class="px-6 py-4">' + g.openValidDays + ' 天</td><td class="px-6 py-4 text-green-600 font-bold">' + (g.lossEnabled ? '开启 (' + g.lossPct + '%)' : '关闭') + '</td><td class="px-6 py-4">' + (g.feeEnabled ? '开启 (' + g.feePct + '%)' : '关闭') + '</td><td class="px-6 py-4 text-right"><button type="button" onclick="openConfigModal(\'' + g.id + '\')" class="text-blue-600 font-bold">编辑</button>' + deleteBtn + '</td></tr>';
-    }).join('') : '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">无匹配卡组</td></tr>';
+      return '<tr class="hover:bg-slate-50"><td class="px-6 py-4 font-bold">' + nameCell + '</td><td class="px-6 py-4">' + g.couponValidDays + ' 天</td><td class="px-6 py-4">' + g.openValidDays + ' 天</td><td class="px-6 py-4 text-right"><button type="button" onclick="openConfigModal(\'' + g.id + '\')" class="text-blue-600 font-bold">编辑</button>' + deleteBtn + '</td></tr>';
+    }).join('') : '<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400">无匹配卡组</td></tr>';
     trialMountPag('trial-config-pagination', sliced.total, trialConfigPage, 'trial-config');
   }
 
@@ -783,14 +744,6 @@
     document.getElementById('configFormName').readOnly = !!(g && g.isDefault);
     document.getElementById('configFormCouponDays').value = g ? g.couponValidDays : '';
     document.getElementById('configFormOpenDays').value = g ? g.openValidDays : '';
-    const lossEnabled = document.getElementById('configFormLossEnabled');
-    lossEnabled.checked = g ? g.lossEnabled : true;
-    document.getElementById('configFormLossPct').value = g ? g.lossPct : 20;
-    toggleConfigInput(lossEnabled, 'cfg-loss-limit');
-    const feeEnabled = document.getElementById('configFormFeeEnabled');
-    feeEnabled.checked = g ? g.feeEnabled : false;
-    document.getElementById('configFormFeePct').value = g ? g.feePct : 20;
-    toggleConfigInput(feeEnabled, 'cfg-fee-limit');
     openModal('modal-new-config');
   }
 
@@ -798,23 +751,13 @@
     const name = document.getElementById('configFormName').value.trim();
     const couponValidDays = parseInt(document.getElementById('configFormCouponDays').value, 10);
     const openValidDays = parseInt(document.getElementById('configFormOpenDays').value, 10);
-    const lossEnabled = document.getElementById('configFormLossEnabled').checked;
-    const lossPct = parseInt(document.getElementById('configFormLossPct').value, 10) || 0;
-    const feeEnabled = document.getElementById('configFormFeeEnabled').checked;
-    const feePct = parseInt(document.getElementById('configFormFeePct').value, 10) || 0;
     if (!name) { alert('请填写卡组配置名称'); return; }
     if (!couponValidDays || couponValidDays < 1) { alert('请填写有效的卡券有效期'); return; }
     if (!openValidDays || openValidDays < 1) { alert('请填写有效的开仓有效期'); return; }
-    if (lossEnabled && (!lossPct || lossPct < 1 || lossPct > 100)) { alert('请填写有效的亏损抵扣比例（1-100）'); return; }
-    if (feeEnabled && (!feePct || feePct < 1 || feePct > 100)) { alert('请填写有效的费用抵扣比例（1-100）'); return; }
     const payload = {
       name: name,
       couponValidDays: couponValidDays,
-      openValidDays: openValidDays,
-      lossEnabled: lossEnabled,
-      lossPct: lossEnabled ? lossPct : 0,
-      feeEnabled: feeEnabled,
-      feePct: feeEnabled ? feePct : 0
+      openValidDays: openValidDays
     };
     if (editingGroupId) {
       const g = CARD_GROUPS.find(function (x) { return x.id === editingGroupId; });
@@ -891,9 +834,7 @@
     const pageItems = filtered.slice(start, start + GROUP_PAGE_SIZE);
     document.getElementById('cardGroupSelector').innerHTML = pageItems.map(function (g) {
       const sel = g.id === selectedGroupId ? ' selected' : '';
-      const loss = g.lossEnabled ? '开启 ' + g.lossPct + '%' : '关闭';
-      const fee = g.feeEnabled ? '开启 ' + g.feePct + '%' : '关闭';
-      return '<div class="group-option' + sel + '" onclick="selectCardGroup(\'' + g.id + '\')"><div class="g-name">' + g.name + '</div><div class="g-grid"><div><span>卡券有效期 </span><b>' + g.couponValidDays + '天</b></div><div><span>开仓有效期 </span><b>' + g.openValidDays + '天</b></div><div><span>亏损抵扣 </span><b>' + loss + '</b></div><div><span>费用抵扣 </span><b>' + fee + '</b></div></div></div>';
+      return '<div class="group-option' + sel + '" onclick="selectCardGroup(\'' + g.id + '\')"><div class="g-name">' + g.name + '</div><div class="g-grid"><div><span>卡券有效期 </span><b>' + g.couponValidDays + '天</b></div><div><span>开仓有效期 </span><b>' + g.openValidDays + '天</b></div></div></div>';
     }).join('') || '<p class="text-center text-slate-400 py-4 text-xs">无匹配卡组</p>';
     document.getElementById('groupPagination').innerHTML = '<span>共 ' + filtered.length + ' 个 · 第 ' + groupSearchPage + '/' + totalPages + ' 页</span><div class="flex gap-1"><button onclick="changeGroupPage(-1)" class="px-2 py-1 border rounded' + (groupSearchPage <= 1 ? ' opacity-40' : '') + '" ' + (groupSearchPage <= 1 ? 'disabled' : '') + '>上一页</button><button onclick="changeGroupPage(1)" class="px-2 py-1 border rounded' + (groupSearchPage >= totalPages ? ' opacity-40' : '') + '" ' + (groupSearchPage >= totalPages ? 'disabled' : '') + '>下一页</button></div>';
   }
@@ -974,8 +915,8 @@
     trialCouponPage = couponSliced.page;
     document.getElementById('userCouponTableBody').innerHTML = couponSliced.items.length ? couponSliced.items.map(function (c) {
       const canRecycle = c.status === 'available' || c.status === 'used';
-      return '<tr class="hover:bg-slate-50"><td class="px-4 py-3 font-mono font-bold">' + c.id + '</td><td class="px-3 py-3">' + c.total + ' U</td><td class="px-3 py-3 font-bold">' + c.balance + ' U</td><td class="px-3 py-3"><span class="status-tag status-' + c.status + '">' + statusText(c.status) + '</span></td><td class="px-3 py-3">' + c.group + '</td><td class="px-3 py-3">' + c.activity + '</td><td class="px-3 py-3 text-slate-500">' + c.issuedAt + '</td><td class="px-3 py-3 text-xs text-slate-500">' + c.activateDeadline + ' / ' + c.openDeadline + '</td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(c.lossUsed, c.lossLimit) + '</td><td class="px-3 py-3 text-right text-xs">' + formatDeduct(c.feeUsed, c.feeLimit) + '</td><td class="px-4 py-3 text-right">' + (canRecycle ? '<button onclick="recycleSingleCoupon(\'' + c.id + '\')" class="text-red-600 font-bold">回收</button>' : '-') + '</td></tr>';
-    }).join('') : '<tr><td colspan="11" class="px-4 py-8 text-center text-slate-400">暂无卡券</td></tr>';
+      return '<tr class="hover:bg-slate-50"><td class="px-4 py-3 font-mono font-bold">' + c.id + '</td><td class="px-3 py-3">' + c.total + ' U</td><td class="px-3 py-3 font-bold">' + c.balance + ' U</td><td class="px-3 py-3"><span class="status-tag status-' + c.status + '">' + statusText(c.status) + '</span></td><td class="px-3 py-3">' + c.group + '</td><td class="px-3 py-3">' + c.activity + '</td><td class="px-3 py-3 text-slate-500">' + c.issuedAt + '</td><td class="px-3 py-3 text-xs text-slate-500">' + c.activateDeadline + ' / ' + c.openDeadline + '</td><td class="px-4 py-3 text-right">' + (canRecycle ? '<button onclick="recycleSingleCoupon(\'' + c.id + '\')" class="text-red-600 font-bold">回收</button>' : '-') + '</td></tr>';
+    }).join('') : '<tr><td colspan="9" class="px-4 py-8 text-center text-slate-400">暂无卡券</td></tr>';
     trialMountPag('trial-coupon-pagination', couponSliced.total, trialCouponPage, 'trial-coupons');
     let usageRows = [];
     coupons.forEach(function (c) {
@@ -1136,11 +1077,7 @@
       id: group.id,
       name: group.name,
       couponValidDays: group.couponValidDays,
-      openValidDays: group.openValidDays,
-      lossEnabled: group.lossEnabled,
-      lossPct: group.lossPct,
-      feeEnabled: group.feeEnabled,
-      feePct: group.feePct
+      openValidDays: group.openValidDays
     };
   }
 

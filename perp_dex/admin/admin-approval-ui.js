@@ -293,9 +293,7 @@
         const rows = [
             ['卡组名称', g.name],
             ['卡券激活有效期', g.couponValidDays + ' 天'],
-            ['开仓有效期', g.openValidDays + ' 天'],
-            ['亏损抵扣', g.lossEnabled ? '启用 · ' + g.lossPct + '%' : '未启用'],
-            ['手续费抵扣', g.feeEnabled ? '启用 · ' + g.feePct + '%' : '未启用']
+            ['开仓有效期', g.openValidDays + ' 天']
         ];
         const body = rows.map(function (r) {
             return '<div class="flex justify-between items-center py-2 border-b border-blue-100 last:border-0"><span class="text-slate-600">' + r[0] + '</span><span class="font-bold text-slate-800">' + r[1] + '</span></div>';
