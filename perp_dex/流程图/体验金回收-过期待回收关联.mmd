@@ -1,4 +1,24 @@
 flowchart TB
+    subgraph LEGEND["统一配色表"]
+        direction TB
+        subgraph L_C["卡券状态（4）"]
+            direction LR
+            LC1["可使用"]
+            LC2["已使用"]
+            LC3["已过期"]
+            LC4["已失效"]
+        end
+        subgraph L_D["数据状态（6）"]
+            direction LR
+            LD1["未可用保证金"]
+            LD2["占用保证金"]
+            LD3["过期待回收"]
+            LD4["已回收"]
+            LD5["已消耗费用"]
+            LD6["已消耗亏损"]
+        end
+    end
+
     O["体验金占用保证金<br/>卡券 = 已使用"]
 
     subgraph 新增["过期待回收 ＋ 新增（仅触发回收）"]
@@ -26,6 +46,8 @@ flowchart TB
         N3["③ Step1 · ⑤ Step1"]
     end
 
+    LEGEND ~~~ O
+
     O -->|"触发回收<br/>过期待回收 += 占用额"| PENDING
     P1 --> PENDING
     P2 --> PENDING
@@ -36,13 +58,28 @@ flowchart TB
     M2 --> R
     M3 --> R
 
+    classDef cAvail fill:#ecfdf5,stroke:#10b981,color:#065f46
     classDef cUsed fill:#eff6ff,stroke:#3b82f6,color:#1e40af
+    classDef cExpired fill:#f3f4f6,stroke:#9ca3af,color:#374151
     classDef cInvalid fill:#fff7ed,stroke:#f97316,color:#9a3412
+    classDef dAvail fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
     classDef dOcc fill:#e0e7ff,stroke:#4f46e5,color:#312e81
     classDef dPending fill:#ffedd5,stroke:#ea580c,color:#9a3412
     classDef dReclaimed fill:#dcfce7,stroke:#16a34a,color:#14532d
+    classDef dFee fill:#fce7f3,stroke:#db2777,color:#831843
+    classDef dLoss fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
     classDef neutral fill:#f8fafc,stroke:#cbd5e1,color:#334155
 
+    class LC1 cAvail
+    class LC2 cUsed
+    class LC3 cExpired
+    class LC4 cInvalid
+    class LD1 dAvail
+    class LD2 dOcc
+    class LD3 dPending
+    class LD4 dReclaimed
+    class LD5 dFee
+    class LD6 dLoss
     class O dOcc
     class PENDING dPending
     class R dReclaimed
