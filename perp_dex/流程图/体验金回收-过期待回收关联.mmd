@@ -1,24 +1,20 @@
 flowchart TB
-    subgraph 占用侧["体验金占用保证金"]
-        O["占用 > 0<br/>卡券 = 已使用"]
-    end
+    O["体验金占用保证金<br/>卡券 = 已使用"]
 
     subgraph 新增["过期待回收 ＋ 新增（仅触发回收）"]
         direction TB
         P1["③ 划转转出 · Step2"]
         P2["⑥ 开仓有效期到期 · Step2"]
         P3["上限 / 风控 · 同 Step2"]
-        RULE1["规则：过期待回收 += 当时占用额<br/>占用 → 0 · 卡券 → 已失效"]
     end
 
-    PENDING["过期待回收占用保证金<br/>（卡券 = 已失效）"]
+    PENDING["过期待回收占用保证金<br/>卡券 = 已失效"]
 
     subgraph 减少["过期待回收 － 减少（仅清算）"]
         direction TB
         M1["② 激活新券 · Step2–3"]
         M2["④ 平仓 · Step2b（券已失效）"]
         M3["⑤ 本金划入 · Step2"]
-        RULE2["规则：过期待回收 ↓<br/>等量记入 已回收"]
     end
 
     R["已回收体验金金额"]
@@ -30,19 +26,24 @@ flowchart TB
         N3["③ Step1 · ⑤ Step1"]
     end
 
-    O -->|"触发回收"| PENDING
-    P1 --> RULE1
-    P2 --> RULE1
-    P3 --> RULE1
-    RULE1 --> PENDING
+    O -->|"触发回收<br/>过期待回收 += 占用额"| PENDING
+    P1 --> PENDING
+    P2 --> PENDING
+    P3 --> PENDING
 
-    PENDING -->|"清算"| R
-    M1 --> RULE2
-    M2 --> RULE2
-    M3 --> RULE2
-    RULE2 --> R
+    PENDING -->|"清算<br/>过期待回收 ↓ → 已回收"| R
+    M1 --> R
+    M2 --> R
+    M3 --> R
 
-    style PENDING fill:#fff7ed,stroke:#fdba74
-    style 新增 fill:#fef2f2,stroke:#fca5a5
-    style 减少 fill:#ecfdf5,stroke:#6ee7b7
-    style 不变 fill:#f8fafc,stroke:#cbd5e1
+    classDef cUsed fill:#eff6ff,stroke:#3b82f6,color:#1e40af
+    classDef cInvalid fill:#fff7ed,stroke:#f97316,color:#9a3412
+    classDef dOcc fill:#e0e7ff,stroke:#4f46e5,color:#312e81
+    classDef dPending fill:#ffedd5,stroke:#ea580c,color:#9a3412
+    classDef dReclaimed fill:#dcfce7,stroke:#16a34a,color:#14532d
+    classDef neutral fill:#f8fafc,stroke:#cbd5e1,color:#334155
+
+    class O dOcc
+    class PENDING dPending
+    class R dReclaimed
+    class P1,P2,P3,M1,M2,M3,N1,N2,N3 neutral

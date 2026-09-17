@@ -1,38 +1,38 @@
 flowchart TB
-    subgraph G1["① 首次激活 · 过期待回收 — 始终 0"]
+    subgraph G1["① 首次激活"]
         direction TB
-        G1P["前置<br/>【卡券】可使用<br/>【数据】未可用=0 · 占用=0<br/>【过期待回收】— 不变（=0）"]
-        G1S1["Step1 · 激活<br/>【卡券】可使用 → 已使用<br/>【数据】未可用 += 面额<br/>【过期待回收】— 不变"]
-        G1S2["Step2 · 开仓<br/>【卡券】已使用<br/>【数据】未可用 ↓ · 占用 ↑<br/>【过期待回收】— 不变"]
+        G1P["前置<br/>【卡券】可使用<br/>【数据】未可用=0 · 占用=0"]
+        G1S1["Step1 · 激活<br/>【卡券】可使用 → 已使用<br/>【数据】未可用 += 面额"]
+        G1S2["Step2 · 开仓<br/>【卡券】已使用<br/>【数据】未可用 ↓ · 占用 ↑"]
         G1P --> G1S1 --> G1S2
     end
 
     subgraph G2["② 激活新券 · 过期待回收 －"]
         direction TB
-        G2P["前置<br/>【卡券】A 已失效 · B 可使用<br/>【过期待回收】A > 0"]
-        G2S1["Step1 · 激活 B<br/>【过期待回收】— 不变"]
-        G2S2["Step2 · 替换归属<br/>【过期待回收】A －（替换掉的占用额）<br/>B 占用 ↑"]
-        G2S3["Step3 · 继续清算<br/>【过期待回收】A －（剩余可收部分）"]
-        G2S4["Step4 · 收完<br/>【过期待回收】A = 0"]
+        G2P["前置<br/>【卡券】A 已失效 · B 可使用<br/>【数据】A 过期待回收 > 0"]
+        G2S1["Step1 · 激活 B<br/>【数据】B 未可用 += 面额"]
+        G2S2["Step2 · 替换归属<br/>【数据】A 过期待回收 ↓ · B 占用 ↑"]
+        G2S3["Step3 · 继续清算<br/>【数据】→ 已回收 · A 过期待回收 ↓"]
+        G2S4["Step4 · 收完<br/>【数据】A 过期待回收 = 0"]
         G2P --> G2S1 --> G2S2 --> G2S3 --> G2S4
     end
 
     subgraph G3["③ 划转转出 · 过期待回收 ＋"]
         direction TB
-        G3P["前置<br/>【过期待回收】— 不变（=0）"]
-        G3S1["Step1 · 收未可用<br/>【过期待回收】— 不变"]
-        G3S2["Step2 · 标占用<br/>【过期待回收】＋ 占用额（若占用>0）<br/>占用 → 0"]
-        G3S3["Step3 · 放行划转<br/>【过期待回收】— 不变 · 等 ②④⑤ 减"]
+        G3P["前置<br/>【卡券】已使用<br/>【数据】过期待回收 = 0"]
+        G3S1["Step1 · 收未可用<br/>【数据】未可用 → 已回收"]
+        G3S2["Step2 · 标占用<br/>【卡券】→ 已失效<br/>【数据】占用 → 过期待回收"]
+        G3S3["Step3 · 放行划转<br/>【卡券】已失效"]
         G3P --> G3S1 --> G3S2 --> G3S3
     end
 
-    subgraph G4["④ 平仓 · 分两种"]
+    subgraph G4["④ 平仓"]
         direction TB
-        G4P["前置<br/>【过期待回收】0 或 >0"]
-        G4S1["Step1 · 结算<br/>【过期待回收】— 不变"]
-        G4S2["Step2a · 券仍有效<br/>【过期待回收】— 不变（仍为 0）"]
-        G4S3["Step2b · 券已失效<br/>【过期待回收】－ 释放额"]
-        G4S4["Step3 · 收完<br/>【过期待回收】= 0"]
+        G4P["前置<br/>【卡券】已使用 或 已失效"]
+        G4S1["Step1 · 结算<br/>【数据】已消耗费用 ↑ · 已消耗亏损 ↑"]
+        G4S2["Step2a · 券仍有效<br/>【数据】占用 ↓ → 未可用/已消耗"]
+        G4S3["Step2b · 券已失效<br/>【数据】过期待回收 ↓ → 已回收"]
+        G4S4["Step3 · 收完<br/>【数据】过期待回收 = 0"]
         G4P --> G4S1
         G4S1 --> G4S2
         G4S1 --> G4S3
@@ -41,25 +41,55 @@ flowchart TB
 
     subgraph G5["⑤ 本金划入 · 过期待回收 －"]
         direction TB
-        G5P["前置<br/>【过期待回收】> 0"]
-        G5S1["Step1 · 划入<br/>【过期待回收】— 不变"]
-        G5S2["Step2 · 清算<br/>【过期待回收】－ 可收部分"]
-        G5S3["Step3 · 收完<br/>【过期待回收】= 0"]
+        G5P["前置<br/>【卡券】已失效<br/>【数据】过期待回收 > 0"]
+        G5S1["Step1 · 划入<br/>【数据】账户可用 ↑"]
+        G5S2["Step2 · 清算<br/>【数据】过期待回收 ↓ → 已回收"]
+        G5S3["Step3 · 收完<br/>【数据】过期待回收 = 0"]
         G5P --> G5S1 --> G5S2 --> G5S3
     end
 
-    subgraph G6["⑥ 到期 · 过期待回收 ＋（同③）"]
+    subgraph G6["⑥ 到期 · 同③ Step1–2"]
         direction TB
-        G6P["前置<br/>【过期待回收】— 不变（=0）"]
-        G6S1["Step1 · 收未可用<br/>【过期待回收】— 不变"]
-        G6S2["Step2 · 标占用<br/>【过期待回收】＋ 占用额（若占用>0）"]
-        G6S3["Step3 · 后续<br/>【过期待回收】>0 → 等 ②④⑤ 减"]
+        G6P["前置<br/>【卡券】已使用"]
+        G6S1["Step1 · 收未可用<br/>【数据】未可用 → 已回收"]
+        G6S2["Step2 · 标占用<br/>【卡券】→ 已失效<br/>【数据】占用 → 过期待回收"]
+        G6S3["Step3 · 后续<br/>【数据】等 ②④⑤ 收完"]
         G6P --> G6S1 --> G6S2 --> G6S3
     end
 
-    style G2S2 fill:#ecfdf5
-    style G2S3 fill:#ecfdf5
-    style G3S2 fill:#fef2f2
-    style G4S3 fill:#ecfdf5
-    style G5S2 fill:#ecfdf5
-    style G6S2 fill:#fef2f2
+    classDef cAvail fill:#ecfdf5,stroke:#10b981,color:#065f46
+    classDef cUsed fill:#eff6ff,stroke:#3b82f6,color:#1e40af
+    classDef cInvalid fill:#fff7ed,stroke:#f97316,color:#9a3412
+    classDef dAvail fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
+    classDef dOcc fill:#e0e7ff,stroke:#4f46e5,color:#312e81
+    classDef dPending fill:#ffedd5,stroke:#ea580c,color:#9a3412
+    classDef dReclaimed fill:#dcfce7,stroke:#16a34a,color:#14532d
+    classDef dFee fill:#fce7f3,stroke:#db2777,color:#831843
+    classDef dLoss fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
+    classDef neutral fill:#f8fafc,stroke:#cbd5e1,color:#334155
+
+    class G1P cAvail
+    class G1S1 dAvail
+    class G1S2 dOcc
+    class G2P dPending
+    class G2S1 dAvail
+    class G2S2 dPending
+    class G2S3 dReclaimed
+    class G2S4 dReclaimed
+    class G3P cUsed
+    class G3S1 dReclaimed
+    class G3S2 dPending
+    class G3S3 cInvalid
+    class G4P neutral
+    class G4S1 dFee
+    class G4S2 dOcc
+    class G4S3 dPending
+    class G4S4 dReclaimed
+    class G5P dPending
+    class G5S1 neutral
+    class G5S2 dReclaimed
+    class G5S3 dReclaimed
+    class G6P cUsed
+    class G6S1 dReclaimed
+    class G6S2 dPending
+    class G6S3 dPending
