@@ -280,8 +280,7 @@
                     cardGroup: 'KOL大额专属组',
                     cardGroupId: 'g2',
                     cardGroupDetails: {
-                        id: 'g2', name: 'KOL大额专属组', couponValidDays: 14, openValidDays: 60,
-                        lossEnabled: true, lossPct: 30, feeEnabled: true, feePct: 15
+                        id: 'g2', name: 'KOL大额专属组', couponValidDays: 14, openValidDays: 60
                     },
                     recipientCount: 78,
                     totalAmount: '7,880 USDT',
