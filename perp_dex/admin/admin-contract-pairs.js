@@ -116,6 +116,7 @@
             (function () {
                 var p = defaultPair('BNBUSDC', 'BNB');
                 p.status = 'delivering';
+                p.delivery_price = '612.40';
                 return p;
             })()
         ]
@@ -456,6 +457,10 @@
         return nextStatus === 'enabled' && fromStatus === 'pending';
     }
 
+    function transitionNeedsDeliveryPrice(fromStatus, nextStatus) {
+        return fromStatus === 'pre_deliver' && nextStatus === 'delivering';
+    }
+
     function updateTimeDisplayFields(pair) {
         var allowEl = document.getElementById('form-allow-trade-start-display');
         var fundsEl = document.getElementById('form-funds-init-display');
@@ -472,18 +477,31 @@
         var fundsWrap = document.getElementById('status-funds-init-wrap');
         var allowInput = document.getElementById('status-allow-trade-start');
         var fundsInput = document.getElementById('status-funds-init-ts');
+        var deliveryWrap = document.getElementById('status-delivery-price-wrap');
+        var deliveryInput = document.getElementById('status-delivery-price');
         if (fields) fields.classList.add('hidden');
         if (allowWrap) allowWrap.classList.add('hidden');
         if (fundsWrap) fundsWrap.classList.add('hidden');
+        if (deliveryWrap) deliveryWrap.classList.add('hidden');
         if (allowInput) allowInput.value = '';
         if (fundsInput) fundsInput.value = '';
+        if (deliveryInput) deliveryInput.value = '';
+    }
+
+    function parsePositiveDecimal(str) {
+        var s = String(str || '').trim();
+        if (!s || !/^\d+(\.\d+)?$/.test(s)) return null;
+        var n = Number(s);
+        if (!isFinite(n) || n <= 0) return null;
+        return s;
     }
 
     function configureStatusTransitionFields(pair, fromStatus, nextStatus) {
         resetStatusTransitionFields();
         var showAllow = transitionNeedsAllowTradeStart(fromStatus, nextStatus);
         var showFunds = transitionNeedsFundsInit(fromStatus, nextStatus);
-        if (!showAllow && !showFunds) return;
+        var showDeliveryPrice = transitionNeedsDeliveryPrice(fromStatus, nextStatus);
+        if (!showAllow && !showFunds && !showDeliveryPrice) return;
 
         var fields = document.getElementById('status-transition-fields');
         if (fields) fields.classList.remove('hidden');
@@ -509,6 +527,14 @@
                 var ts = (pair.funding_rate_config || {}).funds_init_ts;
                 var local = ts ? timestampToDatetimeLocal(ts) : '';
                 fundsInput.value = local && isFutureDatetimeLocal(local) ? local : '';
+            }
+        }
+        if (showDeliveryPrice) {
+            var deliveryWrap = document.getElementById('status-delivery-price-wrap');
+            var deliveryInput = document.getElementById('status-delivery-price');
+            if (deliveryWrap) deliveryWrap.classList.remove('hidden');
+            if (deliveryInput) {
+                deliveryInput.value = pair.delivery_price != null && pair.delivery_price !== '' ? String(pair.delivery_price) : '';
             }
         }
     }
@@ -578,6 +604,14 @@
             }
             if (!pair.funding_rate_config) pair.funding_rate_config = {};
             pair.funding_rate_config.funds_init_ts = datetimeLocalToTimestamp(fundsVal);
+        }
+        if (transitionNeedsDeliveryPrice(fromStatus, nextStatus)) {
+            var deliveryVal = parsePositiveDecimal(getField('status-delivery-price'));
+            if (!deliveryVal) {
+                alert('请填写有效的交割价格（须为正数）');
+                return;
+            }
+            pair.delivery_price = deliveryVal;
         }
 
         pair.status = nextStatus;
