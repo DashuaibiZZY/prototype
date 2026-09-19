@@ -1,4 +1,4 @@
-# VIP 费率与后台配置
+# VIP & 费率
 
 # 0. 文档概述
 
@@ -38,6 +38,29 @@
 | VIP 2 | ≥ $25M 且 < $100M | 0.010% | 0.034% |
 | VIP 3 | ≥ $100M 且 < $500M | 0.006% | 0.029% |
 | VIP 4 | ≥ $500M | 0.004% | 0.026% |
+
+### 14 天交易量门槛 · 前端文案拼接
+
+用户端 VIP 费率表（APP / Web）在拉取 **VIP 阶梯配置接口** 后，表格列 **14 天交易量门槛 (USD)**（繁体界面可为 **14天交易量門檻 (USD)**）**不由后端直接返回整段文案**，而是由前端按每档 **`volume14dUsd`**（该 VIP 等级的 **14 日交易量下限**，数值，单位 USD）与 **下一档** 的门槛拼接。
+
+**预处理：**
+
+1. 取接口返回的档位列表，按 **`level` 升序** 排序（VIP 0 → VIP N）。
+2. 金额展示建议使用紧凑格式（与原型一致）：≥ 100 万显示为 `$5M`、 `$25M` 等（原型 `ForxVipTierApi.formatUsdCompact`）。
+
+**拼接规则（共 3 种，对排序后下标 `i` 的当前档 `tier`，下一档 `next = sorted[i + 1]`）：**
+
+| 情况 | 条件 | 展示文案模板 | 参考示例（默认五档配置） |
+|---|---|---|---|
+| **最低档** | `tier.level === 0` 且存在 `next` | `< {format(next.volume14dUsd)}` | VIP 0 → `< $5M` |
+| **中间档** | 存在 `next` | `≥ {format(tier.volume14dUsd)} 且 < {format(next.volume14dUsd)}` | VIP 1 → `≥ $5M 且 < $25M` |
+| **最高档** | 无 `next` | `≥ {format(tier.volume14dUsd)}` | VIP 4 → `≥ $500M` |
+
+**说明：**
+
+- 后台「VIP 配置」表单字段为 **14 天交易量门槛 (USDC)**，与接口 **`volume14dUsd`** 为同一套数值；用户端列标题仍用 **USD** 时，仅改展示币种文案，**数值与拼接逻辑不变**。
+- 档位数量可变（不限于 VIP 0–4）：始终对 **排序后的整表** 应用上表三种情况；**仅 `level === 0` 使用「小于下一档」**，最后一档始终为 **≥ 当前档下限**。
+- 原型实现：`perp_dex/shared/forx-vip-tier-api.js` · `formatVolumeThresholdLabel(tier, index, sorted)`，供 `getTiersForDisplay()` 与各端 VIP 表渲染复用。
 
 ### 用户端展示说明
 
