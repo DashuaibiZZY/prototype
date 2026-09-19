@@ -673,6 +673,7 @@
 </template>
 
 
+<script src="shared/forx-vip-tier-api.js?v=20260919-vip-config-v2"></script>
 <script>
 function webChrome() {
     return `<div class="web-chrome">
@@ -830,9 +831,6 @@ function buildVipModalHtml(opts = {}) {
     const guest = !!opts.guest;
     const display = opts.visible ? 'flex' : 'none';
     const volRowClass = guest ? 'hidden' : '';
-    const vip2Row = guest
-        ? '<tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 2</td><td class="px-4 py-3 border-b border-gray-50">≥ $25M 且 &lt; $100M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.010%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.034%</td></tr>'
-        : '<tr class="bg-yellow-50/50" data-vip-current-row><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">VIP 2</td><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">≥ $25M 且 &lt; $100M</td><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">0.010%</td><td class="px-4 py-3 border-b border-yellow-100 text-right font-black text-yellow-700">0.034%</td></tr>';
     return `<!-- VIP 費率詳情彈窗 -->
 <div class="modal-overlay portfolio-vip-modal" data-vip-modal-guest="${guest}" style="display: ${display}; background: rgba(0,0,0,0.6); z-index: 2000; position: absolute; inset: 0; align-items: center; justify-content: center;">
     <div class="bg-white w-[560px] max-h-[90vh] overflow-y-auto rounded-lg shadow-2xl border border-gray-100 animate-in zoom-in duration-200">
@@ -854,13 +852,7 @@ function buildVipModalHtml(opts = {}) {
                     <th class="px-4 py-3 border-b border-gray-100 text-right">Taker 費率</th>
                 </tr>
                 </thead>
-                <tbody class="text-[11px] font-bold text-gray-700">
-                <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 0</td><td class="px-4 py-3 border-b border-gray-50">&lt; $5M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.015%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.045%</td></tr>
-                <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 1</td><td class="px-4 py-3 border-b border-gray-50">≥ $5M 且 &lt; $25M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.013%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.039%</td></tr>
-                ${vip2Row}
-                <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 3</td><td class="px-4 py-3 border-b border-gray-50">≥ $100M 且 &lt; $500M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.006%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.029%</td></tr>
-                <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 4</td><td class="px-4 py-3 border-b border-gray-50">≥ $500M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.004%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.026%</td></tr>
-                </tbody>
+                <tbody class="text-[11px] font-bold text-gray-700" data-vip-tier-tbody></tbody>
             </table>
             ${buildVipBenefitsHtml()}
             <div class="mt-6 bg-gray-50 p-4 rounded-sm border border-gray-100">
@@ -889,6 +881,11 @@ function openPortfolioVipModal(frame, guest) {
     const volRow = modal.querySelector('[data-vip-14d-row]');
     if (volRow) volRow.classList.toggle('hidden', guest);
     modal.style.display = 'flex';
+    if (window.ForxVipTierApi) {
+        ForxVipTierApi.fetchVipTierTable().then(function () {
+            ForxVipTierApi.renderFeeTableBody(modal.querySelector('[data-vip-tier-tbody]'), { currentLevel: guest ? null : 2, guest: guest });
+        });
+    }
 }
 
 function wirePortfolioVipButtons() {
