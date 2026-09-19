@@ -60,11 +60,7 @@
                     <select id="filterLevel" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="all">全部</option>
                         <option value="natural">自然升降</option>
-                        <option value="vip1">VIP 1</option>
-                        <option value="vip2">VIP 2</option>
-                        <option value="vip3">VIP 3</option>
-                        <option value="vip4">VIP 4</option>
-                        <option value="custom">自定义</option>
+                        <!-- VIP 等级选项由 VIP 配置动态生成 -->
                     </select>
                 </div>
                 <div class="flex gap-2">
@@ -131,7 +127,7 @@
 
         <section class="card p-5">
             <h3 class="text-sm font-bold text-slate-800 mb-1">用户费率配置</h3>
-            <p class="text-[11px] text-slate-400 mb-4">手动配置仅支持 VIP 1–4 或自定义费率（VIP 0 由交易量自动判定）</p>
+            <p class="text-[11px] text-slate-400 mb-4">手动配置可选 VIP 等级来自 <a href="VIP配置.html" class="text-blue-600 font-bold hover:underline">VIP 配置</a>（不含 VIP 0；VIP 0 由交易量自动判定），或选择自定义费率</p>
             <div class="flex bg-slate-100 p-1 rounded-lg w-fit mb-4">
                 <button id="feeTabVip" onclick="switchFeeMode('vip')" class="fee-mode-tab active">VIP 等级</button>
                 <button id="feeTabCustom" onclick="switchFeeMode('custom')" class="fee-mode-tab">自定义费率</button>
@@ -223,17 +219,44 @@
 </div>
 <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-lg text-sm font-bold shadow-xl z-[70] hidden"></div>
 
+<script src="admin-vip-config-store.js?v=20260919-vip-config"></script>
 <script src="admin-pagination.js"></script>
 <script>
-    const VIP_TIERS = [
-        { level: 0, name: 'VIP 0', threshold: '< $5M',       taker: 0.00045, maker: 0.00015 },
-        { level: 1, name: 'VIP 1', threshold: '≥ $5M',       taker: 0.00039, maker: 0.00013 },
-        { level: 2, name: 'VIP 2', threshold: '≥ $25M',      taker: 0.00034, maker: 0.00010 },
-        { level: 3, name: 'VIP 3', threshold: '≥ $100M',     taker: 0.00029, maker: 0.00006 },
-        { level: 4, name: 'VIP 4', threshold: '≥ $500M',     taker: 0.00026, maker: 0.00004 }
-    ];
+    let VIP_TIERS = [];
+    let VIP_PRESETS = [];
 
-    const VIP_PRESETS = VIP_TIERS.filter(v => v.level >= 1);
+    function refreshVipTiersFromStore() {
+        if (window.ForxAdminVipConfig) {
+            VIP_TIERS = ForxAdminVipConfig.getTiersForDisplay();
+        } else {
+            VIP_TIERS = [
+                { level: 0, name: 'VIP 0', threshold: '< $5M', taker: 0.00045, maker: 0.00015 },
+                { level: 1, name: 'VIP 1', threshold: '≥ $5M', taker: 0.00039, maker: 0.00013 },
+                { level: 2, name: 'VIP 2', threshold: '≥ $25M', taker: 0.00034, maker: 0.00010 },
+                { level: 3, name: 'VIP 3', threshold: '≥ $100M', taker: 0.00029, maker: 0.00006 },
+                { level: 4, name: 'VIP 4', threshold: '≥ $500M', taker: 0.00026, maker: 0.00004 }
+            ];
+        }
+        VIP_PRESETS = VIP_TIERS.filter(function (v) { return v.level >= 1; });
+        syncFilterLevelOptions();
+    }
+
+    function syncFilterLevelOptions() {
+        var select = document.getElementById('filterLevel');
+        if (!select) return;
+        var current = select.value;
+        var html = '<option value="all">全部</option><option value="natural">自然升降</option>';
+        VIP_PRESETS.forEach(function (v) {
+            html += '<option value="vip' + v.level + '">' + v.name + '</option>';
+        });
+        html += '<option value="custom">自定义</option>';
+        select.innerHTML = html;
+        if ([].some.call(select.options, function (o) { return o.value === current; })) {
+            select.value = current;
+        } else {
+            select.value = 'all';
+        }
+    }
 
     const FEE_LOG_KEY = 'forx_fee_operation_logs';
     const OPERATOR = 'Fee_Admin';
@@ -272,6 +295,7 @@
     }
 
     function calcVolumeTier(volume14d) {
+        if (window.ForxAdminVipConfig) return ForxAdminVipConfig.calcVolumeTier(volume14d);
         if (volume14d >= 500000000) return 4;
         if (volume14d >= 100000000) return 3;
         if (volume14d >= 25000000) return 2;
@@ -627,6 +651,7 @@
         setTimeout(() => el.classList.add('hidden'), 2500);
     }
 
+    refreshVipTiersFromStore();
     renderVipRefTable();
     renderUserTable();
     if (window.AdminPagination) {

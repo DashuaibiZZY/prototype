@@ -83,7 +83,7 @@
                 pagePerms: pageMap({
                     'trial.config': 'write', 'trial.issue': 'write', 'trial.users': 'read', 'trial.approval': 'read', 'trial.logs': 'read',
                     'leaderboard': 'write',
-                    'fee.settings': 'write', 'fee.approval': 'read', 'fee.log': 'read',
+                    'fee.vipConfig': 'write', 'fee.settings': 'write', 'fee.approval': 'read', 'fee.log': 'read',
                     'points.manual': 'write', 'points.config': 'write', 'points.bonus': 'write', 'points.approval': 'read', 'points.overview': 'read', 'points.logs': 'read', 'points.users': 'read',
                     'agent.mgmt': 'write', 'agent.applications': 'write', 'agent.migrate': 'write', 'agent.approval': 'read', 'agent.settlement': 'read', 'agent.logs': 'read'
                 }),

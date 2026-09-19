@@ -57,8 +57,9 @@
             ]
         },
         {
-            title: '费率',
+            title: 'VIP & 费率',
             items: [
+                { key: 'fee-vip-config', label: 'VIP 配置', href: 'VIP配置.html' },
                 { key: 'fee-settings', label: '用户费率设置', href: '用户费率设置.html' },
                 { key: 'fee-approval', label: '费率审批', href: '用户费率设置.html#approval' },
                 { key: 'fee-log', label: '费率操作记录', href: '费率操作记录.html' }
