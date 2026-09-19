@@ -3,19 +3,6 @@
 
     var STORAGE_MARKET_KEY = 'forx_admin_contract_quote_market';
 
-    /** 币种配置表（原型 mock；仅 USDC 可选为市场计价货币） */
-    var COIN_CONFIG = [
-        { symbol: 'USDC', name: 'USD Coin', status: 'enabled', selectable: true },
-        { symbol: 'USDT', name: 'Tether USD', status: 'enabled', selectable: false },
-        { symbol: 'BTC', name: 'Bitcoin', status: 'enabled', selectable: false },
-        { symbol: 'ETH', name: 'Ethereum', status: 'enabled', selectable: false },
-        { symbol: 'SOL', name: 'Solana', status: 'enabled', selectable: false },
-        { symbol: 'BNB', name: 'BNB', status: 'enabled', selectable: false },
-        { symbol: 'XRP', name: 'Ripple', status: 'enabled', selectable: false },
-        { symbol: 'DOGE', name: 'Dogecoin', status: 'enabled', selectable: false },
-        { symbol: 'NEW', name: 'New Coin', status: 'enabled', selectable: false }
-    ];
-
     var INDEX_SOURCE_OPTIONS = ['binance', 'okx', 'bybit', 'hyperliquid'];
     var MAX_INDEX_SOURCES = 4;
 
@@ -29,7 +16,7 @@
     var TAG_OPTIONS = ['perpetual', 'hot', 'new', 'meme'];
 
     /** 原型版本号：列表角标可核对是否加载到最新脚本 */
-    var MODULE_BUILD = '20260919-list-filter';
+    var MODULE_BUILD = '20260919-quote-coin';
 
     var STATUS_LABELS = {
         pending: '待启用',
@@ -119,7 +106,8 @@
                 p.delivery_price = '612.40';
                 return p;
             })()
-        ]
+        ],
+        USDT: []
     };
 
     var selectedMarket = '';
@@ -312,6 +300,12 @@
         try { sessionStorage.setItem(STORAGE_MARKET_KEY, symbol); } catch (e) { /* noop */ }
     }
 
+    function resolveStoredMarket() {
+        var stored = getStoredMarket();
+        if (stored && isContractMarketQuoteCoin(stored)) return stored;
+        return '';
+    }
+
     function getPairs() {
         if (!selectedMarket) return [];
         if (!pairsByMarket[selectedMarket]) pairsByMarket[selectedMarket] = [];
@@ -383,20 +377,50 @@
         return String(v).replace('T', ' ');
     }
 
+    function getCoinConfigList() {
+        if (global.ForxAdminCoinConfig && global.ForxAdminCoinConfig.getCoinConfigList) {
+            return global.ForxAdminCoinConfig.getCoinConfigList();
+        }
+        return [{ symbol: 'USDC', name: 'USD Coin', status: 'enabled', contract_market_enabled: true }];
+    }
+
+    function isContractMarketQuoteCoin(symbol) {
+        if (global.ForxAdminCoinConfig && global.ForxAdminCoinConfig.isContractMarketQuoteCoin) {
+            return global.ForxAdminCoinConfig.isContractMarketQuoteCoin(symbol);
+        }
+        return String(symbol || '').toUpperCase() === 'USDC';
+    }
+
+    function deriveProductName(baseCoin, quoteMarket) {
+        return String(baseCoin || '').trim().toUpperCase() + String(quoteMarket || '').trim().toUpperCase();
+    }
+
+    function syncMarketConfirmButton() {
+        var select = document.getElementById('market-coin-select');
+        var btn = document.getElementById('btn-market-confirm');
+        if (!select || !btn) return;
+        btn.disabled = !isContractMarketQuoteCoin(select.value);
+    }
+
     function renderMarketView() {
         var select = document.getElementById('market-coin-select');
         if (!select) return;
-        select.innerHTML = COIN_CONFIG.map(function (c) {
-            var disabled = !c.selectable ? ' disabled' : '';
-            var hint = c.selectable ? '' : '（不可选）';
+        var coins = getCoinConfigList().filter(function (c) { return c.status === 'enabled'; });
+        var quoteCoins = coins.filter(function (c) { return c.contract_market_enabled; });
+        select.innerHTML = coins.map(function (c) {
+            var selectable = !!c.contract_market_enabled;
+            var disabled = selectable ? '' : ' disabled';
+            var hint = selectable ? '' : '（未开启交易市场）';
             return '<option value="' + c.symbol + '"' + disabled + '>' + c.symbol + ' · ' + c.name + hint + '</option>';
         }).join('');
-        select.value = 'USDC';
-        var btn = document.getElementById('btn-market-confirm');
-        if (btn) btn.disabled = select.value !== 'USDC';
-        select.onchange = function () {
-            if (btn) btn.disabled = select.value !== 'USDC';
-        };
+        var preferred = quoteCoins.some(function (c) { return c.symbol === 'USDC'; }) ? 'USDC' : (quoteCoins[0] && quoteCoins[0].symbol);
+        if (preferred && select.querySelector('option[value="' + preferred + '"]:not([disabled])')) {
+            select.value = preferred;
+        } else if (quoteCoins[0]) {
+            select.value = quoteCoins[0].symbol;
+        }
+        select.onchange = syncMarketConfirmButton;
+        syncMarketConfirmButton();
     }
 
     function getFilteredPairs() {
@@ -707,7 +731,6 @@
 
     function emptyPair() {
         var base = defaultPair('NEWUSDC', 'NEW');
-        base.product_name = '';
         base.create_time = '';
         base.update_time = '';
         base.allow_trade_start_time = '';
@@ -807,16 +830,12 @@
                 return;
             }
             if (!restrictToLimitConfig) {
-                if (el.id !== 'form-product-name') el.disabled = false;
+                el.disabled = false;
                 return;
             }
             el.disabled = LIMIT_CONFIG_EDITABLE_IDS.indexOf(el.id) < 0;
         });
 
-        if (editingProduct) {
-            var productName = document.getElementById('form-product-name');
-            if (productName) productName.disabled = true;
-        }
         if (restrictToLimitConfig) {
             var priceUnit = document.getElementById('form-lc-price-unit');
             if (priceUnit) priceUnit.disabled = true;
@@ -879,8 +898,6 @@
     }
 
     function loadForm(pair) {
-        document.getElementById('form-product-name').disabled = !!editingProduct;
-        setField('form-product-name', pair.product_name);
         loadIconFields(pair.icon_url);
         setField('form-swap-value', pair.swap_value);
         setField('form-base-coin', pair.base_coin_name);
@@ -1014,18 +1031,18 @@
             return updated;
         }
 
-        var name = getField('form-product-name').trim().toUpperCase();
-        if (!name) {
-            alert('请填写产品名称');
-            return null;
-        }
-        if (!editingProduct && findPair(name)) {
-            alert('该产品名称已存在');
-            return null;
-        }
         var baseCoin = getField('form-base-coin').trim().toUpperCase();
+        if (!baseCoin) {
+            alert('请填写基础币种');
+            return null;
+        }
         if (baseCoin === selectedMarket) {
             alert('基础币种不能与计价资产 ' + selectedMarket + ' 相同');
+            return null;
+        }
+        var name = editingProduct ? editingProduct : deriveProductName(baseCoin, selectedMarket);
+        if (!editingProduct && findPair(name)) {
+            alert('交易对 ' + name + ' 已存在');
             return null;
         }
         var coinDescription = getField('form-coin-description').trim();
@@ -1134,8 +1151,8 @@
 
     function confirmMarket() {
         var select = document.getElementById('market-coin-select');
-        if (!select || select.value !== 'USDC') {
-            alert('当前仅支持选择 USDC 作为市场计价货币');
+        if (!select || !isContractMarketQuoteCoin(select.value)) {
+            alert('请选择已在币种配置中开启交易市场的计价货币');
             return;
         }
         selectedMarket = select.value;
@@ -1189,7 +1206,7 @@
 
     function applyRoute() {
         var hash = (location.hash || '').replace('#', '');
-        selectedMarket = getStoredMarket();
+        selectedMarket = resolveStoredMarket();
 
         if (hash === 'market' || !selectedMarket) {
             if (!selectedMarket || hash === 'market') {
@@ -1200,20 +1217,20 @@
         }
 
         if (hash.indexOf('edit=') === 0) {
-            selectedMarket = getStoredMarket();
+            selectedMarket = resolveStoredMarket();
             if (!selectedMarket) { goMarket(); return; }
             openForm(false, decodeURIComponent(hash.slice(5)));
             return;
         }
 
         if (hash === 'new') {
-            selectedMarket = getStoredMarket();
+            selectedMarket = resolveStoredMarket();
             if (!selectedMarket) { goMarket(); return; }
             openForm(true);
             return;
         }
 
-        selectedMarket = getStoredMarket();
+        selectedMarket = resolveStoredMarket();
         if (!selectedMarket) {
             renderMarketView();
             showView('view-market');
