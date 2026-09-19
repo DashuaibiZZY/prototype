@@ -117,7 +117,7 @@
                 pagePerms: pageMap({
                     'freeze.settings': 'write', 'freeze.log': 'read',
                     'trial.users': 'read', 'trial.approval': 'read', 'trial.logs': 'read',
-                    'fee.settings': 'read', 'fee.approval': 'read', 'fee.log': 'read',
+                    'fee.vipConfig': 'read', 'fee.settings': 'read', 'fee.approval': 'read', 'fee.log': 'read',
                     'points.approval': 'read', 'points.logs': 'read',
                     'agent.approval': 'read', 'agent.logs': 'read'
                 })
