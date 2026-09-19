@@ -14,7 +14,6 @@
         .table-scroll { overflow-x: auto; }
         .vip-config-table th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; font-weight: 800; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
         .vip-config-table td { border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
-        .field-input:disabled { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -25,34 +24,41 @@
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
         <div>
             <h1 class="text-xl font-bold text-slate-800">VIP 配置</h1>
-            <p class="text-xs text-slate-400 mt-0.5">VIP 阶梯费率与提币风控限制 · 固定 VIP 0 起逐级递增，不支持插入新等级</p>
+            <p class="text-xs text-slate-400 mt-0.5">系统默认仅 VIP 0；可新增更高等级 · 变更须风控 → 老板审批后生效</p>
         </div>
         <div class="flex items-center gap-3">
+            <a href="用户费率设置.html#approval" class="text-xs font-bold text-blue-600 hover:underline">费率审批</a>
             <span class="text-sm text-slate-500">Fee_Admin</span>
-            <div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">FA</div>
         </div>
     </header>
 
     <div class="flex-1 overflow-y-auto p-8 space-y-6">
+        <div id="vip-config-pending-banner" class="hidden rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900 leading-relaxed"></div>
+
         <section class="hint-box">
-            <p><strong>阶梯规则：</strong>等级从 VIP 0 固定至最高档，不可新增或插入中间等级。</p>
-            <p class="mt-2"><strong>费率：</strong>随等级升高，Taker / Maker 费率须<strong>逐级不升</strong>（可相等，不可高于上一档）。</p>
-            <p class="mt-2"><strong>提币风控：</strong>「单日个人最大提现额度」「单日提现次数审核阈值」须<strong>逐级不降</strong>（可相等，不可低于上一档）。</p>
-            <p class="mt-2"><strong>用户费率设置</strong>中可指定的 VIP 等级与本页配置同步；保存后即时写入原型 localStorage。</p>
+            <p><strong>默认：</strong>仅 <strong>VIP 0</strong>（Taker 0.045% · Maker 0.015% · 单日提现 3000 USD · 次数阈值 5 · 强制人工审核关闭）。</p>
+            <p class="mt-2"><strong>新增等级：</strong>点击「新增 VIP 等级」追加下一档；<strong>已生效等级不可删除</strong>（审批通过后的档位永久保留）。</p>
+            <p class="mt-2"><strong>审批：</strong>提交后进入 <strong>风控 → 老板</strong> 审批；审批进行中不可改配置（与积分总池一致）。</p>
+            <p class="mt-2"><strong>校验：</strong>费率逐级不升；提现额度与次数阈值逐级不降；14 天交易量门槛逐级递增（VIP 0 恒为 0）。</p>
         </section>
 
         <div id="vip-config-errors" class="hidden rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800"></div>
 
-        <section class="card overflow-hidden">
+        <section class="card overflow-hidden" id="vip-config-card">
             <div class="px-6 py-4 border-b border-slate-100 flex flex-wrap justify-between items-center gap-3">
                 <h2 class="text-sm font-bold text-slate-800">VIP 等级阶梯表</h2>
-                <div class="flex gap-2">
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" id="btn-add-vip-tier" class="px-4 py-2 border border-blue-200 text-blue-700 rounded-lg text-sm font-bold hover:bg-blue-50">+ 新增 VIP 等级</button>
                     <button type="button" id="btn-reset-vip-config" class="px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50">取消修改</button>
-                    <button type="button" id="btn-save-vip-config" class="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700">保存配置</button>
+                    <button type="button" id="btn-open-vip-save-confirm" class="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700">提交审批</button>
                 </div>
             </div>
+            <div class="px-6 py-3 border-b border-slate-50">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">申请备注（必填）</label>
+                <textarea id="vip-config-remark" rows="2" placeholder="说明本次 VIP 阶梯 / 费率 / 提币风控调整原因…" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+            </div>
             <div class="table-scroll px-2 pb-2">
-                <table class="vip-config-table w-full text-left min-w-[960px]">
+                <table class="vip-config-table w-full text-left min-w-[1020px]">
                     <thead>
                     <tr>
                         <th class="px-3 py-3">等级</th>
@@ -62,6 +68,7 @@
                         <th class="px-3 py-3">单日个人最大提现额度（USD）</th>
                         <th class="px-3 py-3">单日提现次数审核阈值</th>
                         <th class="px-3 py-3 text-center">是否强制人工审核</th>
+                        <th class="px-3 py-3 text-center">操作</th>
                     </tr>
                     </thead>
                     <tbody id="vip-config-body"></tbody>
@@ -71,10 +78,42 @@
     </div>
 </main>
 
+<div id="modal-vip-config-confirm" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-[640px] max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="px-6 py-5 border-b shrink-0">
+            <h3 class="text-lg font-bold">确认提交 VIP 配置审批</h3>
+            <p class="text-xs text-slate-400 mt-1">请核对变更前后差异，确认后进入风控 → 老板审批</p>
+        </div>
+        <div class="p-6 overflow-y-auto flex-1 space-y-4 text-sm">
+            <div class="bg-slate-50 rounded-lg p-4 flex justify-between">
+                <span class="text-slate-500">变更项数</span>
+                <span id="vipConfirmChangeCount" class="font-black text-blue-600">—</span>
+            </div>
+            <div class="border border-slate-200 rounded-lg overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50 border-b"><tr>
+                        <th class="px-4 py-2 text-xs font-bold text-slate-500 text-left">配置项</th>
+                        <th class="px-4 py-2 text-xs font-bold text-slate-500 text-left">变更前</th>
+                        <th class="px-4 py-2 text-xs font-bold text-slate-500 text-left">变更后</th>
+                    </tr></thead>
+                    <tbody id="vipConfirmDiffBody" class="divide-y"></tbody>
+                </table>
+            </div>
+            <div id="vipConfigApprovalFlow"></div>
+        </div>
+        <div class="p-5 bg-slate-50 flex gap-3 shrink-0">
+            <button type="button" id="btn-vip-confirm-cancel" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button type="button" id="btn-vip-confirm-submit" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">确认提交审批</button>
+        </div>
+    </div>
+</div>
+
 <div id="vip-config-toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-lg text-sm font-bold shadow-xl z-50 hidden"></div>
 
-<script src="admin-vip-config-store.js?v=20260919-vip-config"></script>
-<script src="admin-vip-config-page.js?v=20260919-vip-config"></script>
+<script src="../shared/forx-vip-tier-api.js?v=20260919-vip-config-v2"></script>
+<script src="admin-vip-config-store.js?v=20260919-vip-config-v2"></script>
+<script src="admin-approval.js?v=20260919-vip-config-v2"></script>
+<script src="admin-vip-config-page.js?v=20260919-vip-config-v2"></script>
 <script src="admin-sidebar.js"></script>
 <script>
     initAdminSidebar('fee-vip-config', '登录身份: 费率管理员');

@@ -148,7 +148,7 @@
                 lastLogin: '2026-07-17 11:20',
                 pagePerms: pageMap({
                     'agent.mgmt': 'write', 'agent.applications': 'read', 'agent.migrate': 'read', 'agent.approval': 'read', 'agent.settlement': 'write', 'agent.logs': 'read',
-                    'fee.settings': 'read', 'fee.approval': 'read', 'fee.log': 'read'
+                    'fee.vipConfig': 'read', 'fee.settings': 'read', 'fee.approval': 'read', 'fee.log': 'read'
                 }),
                 agentMaxRebate: 80,
                 agentDataScope: 'global'
