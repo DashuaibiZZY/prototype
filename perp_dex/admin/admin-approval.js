@@ -1432,6 +1432,9 @@
         const apps = getApps();
         apps.unshift(app);
         saveApps(apps);
+        if (app.type === 'vip_tier_config' && typeof window.setVipTierConfigPending === 'function') {
+            window.setVipTierConfigPending({ id: app.id, status: app.status });
+        }
         if (opts.onSubmit) opts.onSubmit(app);
         return app;
     };
