@@ -508,9 +508,12 @@
             `近 14 日交易额 ${formatMoney(user.volume14d)} → 自动对应 ${getTierByLevel(volTier).name}`;
         const mode = user.adminOverride ? user.feeMode : 'vip';
         switchFeeMode(mode === 'custom' ? 'custom' : 'vip');
-        const selectVip = user.adminOverride && user.feeMode === 'vip' && user.vip >= 1 ? user.vip : 1;
+        const initialVip = user.adminOverride && user.feeMode === 'vip' && user.vip >= 1 ? user.vip : 1;
         if (user.adminOverride && user.feeMode === 'vip' && user.vip < 1) draftConfig.vip = 1;
-        renderVipPresets(user.adminOverride && user.feeMode === 'vip' ? selectVip : 1);
+        renderVipPresets(user.adminOverride && user.feeMode === 'vip' ? initialVip : 1);
+        if (mode !== 'custom' && VIP_PRESETS.length) {
+            selectVip(Number(document.getElementById('feeVipLevelSelect').value));
+        }
         document.getElementById('customTaker').value = (user.taker * 100).toFixed(3);
         document.getElementById('customMaker').value = (user.maker * 100).toFixed(3);
         document.getElementById('revokeFeeBtn').classList.toggle('hidden', !user.adminOverride);
