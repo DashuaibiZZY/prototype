@@ -18,9 +18,10 @@
         { id: 'freeze.settings', module: '风控冻结', label: '用户冻结设置', writeHint: '配置/解除冻结' },
         { id: 'freeze.log', module: '风控冻结', label: '冻结操作记录', writeHint: '审计只读' },
         { id: 'leaderboard', module: '排行榜', label: '排行榜用户数据配置', writeHint: '配置用户与榜单指标' },
-        { id: 'fee.settings', module: '费率', label: '用户费率设置', writeHint: '提交费率审批' },
-        { id: 'fee.approval', module: '费率', label: '费率审批', writeHint: '只读查看；审批走敏感组' },
-        { id: 'fee.log', module: '费率', label: '费率操作记录', writeHint: '审计只读' },
+        { id: 'fee.vipConfig', module: 'VIP & 费率', label: 'VIP 配置', writeHint: '保存 VIP 阶梯与提币风控配置' },
+        { id: 'fee.settings', module: 'VIP & 费率', label: '用户费率设置', writeHint: '提交费率审批' },
+        { id: 'fee.approval', module: 'VIP & 费率', label: '费率审批', writeHint: '只读查看；审批走敏感组' },
+        { id: 'fee.log', module: 'VIP & 费率', label: '费率操作记录', writeHint: '审计只读' },
         { id: 'points.overview', module: '积分', label: '积分发放总览', writeHint: '统计只读' },
         { id: 'points.config', module: '积分', label: '每周积分总池设置', writeHint: '提交总池配置审批' },
         { id: 'points.bonus', module: '积分', label: '积分加成配置', writeHint: '提交加成审批' },
@@ -39,8 +40,8 @@
         { id: 'trial.recycle', module: '体验金', type: 'recycle', label: '体验金 · 强制回收组', description: '仅组内人员可执行体验金强制回收。' },
         { id: 'points.approve.risk', module: '积分', type: 'approve', label: '积分 · 风控审核组', description: '积分「待风控审核」纯随机派单。' },
         { id: 'points.approve.boss', module: '积分', type: 'approve', label: '积分 · BOSS 审核组', description: '积分「待老板审批」纯随机派单。' },
-        { id: 'fee.approve.risk', module: '费率', type: 'approve', label: '费率 · 风控审核组', description: '费率「待风控审核」纯随机派单。' },
-        { id: 'fee.approve.boss', module: '费率', type: 'approve', label: '费率 · BOSS 审核组', description: '费率「待老板审批」纯随机派单。' }
+        { id: 'fee.approve.risk', module: 'VIP & 费率', type: 'approve', label: '费率 · 风控审核组', description: '费率「待风控审核」纯随机派单。' },
+        { id: 'fee.approve.boss', module: 'VIP & 费率', type: 'approve', label: '费率 · BOSS 审核组', description: '费率「待老板审批」纯随机派单。' }
     ];
 
     function getPagesByModule() {
