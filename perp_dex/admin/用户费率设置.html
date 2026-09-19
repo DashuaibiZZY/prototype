@@ -439,7 +439,7 @@
         }
         select.disabled = false;
         select.innerHTML = VIP_PRESETS.map(function (v) {
-            var label = v.name + ' · ' + v.threshold + ' · Taker ' + formatFeePct(v.taker) + ' / Maker ' + formatFeePct(v.maker);
+            var label = v.name + ' · Taker ' + formatFeePct(v.taker) + ' / Maker ' + formatFeePct(v.maker);
             return '<option value="' + v.level + '">' + label + '</option>';
         }).join('');
         var level = selectedVip != null ? Number(selectedVip) : VIP_PRESETS[0].level;
@@ -447,19 +447,11 @@
             level = VIP_PRESETS[0].level;
         }
         select.value = String(level);
-        updateFeeVipLevelHint(level);
+        if (hint) hint.classList.add('hidden');
     }
 
     function updateFeeVipLevelHint(level) {
-        var hint = document.getElementById('feeVipLevelHint');
-        var preset = VIP_PRESETS.find(function (v) { return v.level === Number(level); });
-        if (!hint) return;
-        if (!preset) {
-            hint.classList.add('hidden');
-            return;
-        }
-        hint.classList.remove('hidden');
-        hint.textContent = preset.name + '：14 天门槛 ' + preset.threshold + '；Taker ' + formatFeePct(preset.taker) + ' · Maker ' + formatFeePct(preset.maker);
+        /* 费率已在下拉选项中展示，无需额外说明行 */
     }
 
     function onFeeVipLevelChange() {
@@ -551,7 +543,6 @@
         draftConfig.maker = preset.maker;
         const select = document.getElementById('feeVipLevelSelect');
         if (select && select.value !== String(level)) select.value = String(level);
-        updateFeeVipLevelHint(level);
     }
 
     document.getElementById('customTaker').addEventListener('input', (e) => {

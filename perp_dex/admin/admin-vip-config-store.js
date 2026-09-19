@@ -105,10 +105,10 @@
             }
             if (!a) return;
             var fields = [
-                { key: 'volume14dUsd', label: '14 天交易量要求（USD）', fmt: function (v) { return level === 0 ? '0' : String(v); } },
+                { key: 'volume14dUsd', label: '14 天交易量要求（USDC）', fmt: function (v) { return level === 0 ? '0' : String(v); } },
                 { key: 'taker', label: 'Taker 费率', fmt: formatRatePct },
                 { key: 'maker', label: 'Maker 费率', fmt: formatRatePct },
-                { key: 'dailyMaxWithdrawUsd', label: '单日个人最大提现额度（USD）', fmt: function (v) { return String(v); } },
+                { key: 'dailyMaxWithdrawUsd', label: '单日个人最大提现额度（USDC）', fmt: function (v) { return String(v); } },
                 { key: 'dailyWithdrawCountAuditThreshold', label: '单日提现次数审核阈值', fmt: function (v) { return String(v); } },
                 { key: 'forceManualReview', label: '是否强制人工审核', fmt: formatManual }
             ];
