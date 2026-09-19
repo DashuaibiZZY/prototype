@@ -3376,13 +3376,7 @@
                     <th class="px-4 py-3 border-b border-gray-100 text-right">Taker 費率</th>
                 </tr>
                 </thead>
-                <tbody class="text-[11px] font-bold text-gray-700">
-                <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 0</td><td class="px-4 py-3 border-b border-gray-50">&lt; $5M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.015%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.045%</td></tr>
-                <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 1</td><td class="px-4 py-3 border-b border-gray-50">≥ $5M 且 &lt; $25M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.013%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.039%</td></tr>
-                <tr class="bg-yellow-50/50" data-vip-current-row><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">VIP 2</td><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">≥ $25M 且 &lt; $100M</td><td class="px-4 py-3 border-b border-yellow-100 font-black text-yellow-700">0.010%</td><td class="px-4 py-3 border-b border-yellow-100 text-right font-black text-yellow-700">0.034%</td></tr>
-                <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 3</td><td class="px-4 py-3 border-b border-gray-50">≥ $100M 且 &lt; $500M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.006%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.029%</td></tr>
-                <tr class="hover:bg-gray-50"><td class="px-4 py-3 border-b border-gray-50">VIP 4</td><td class="px-4 py-3 border-b border-gray-50">≥ $500M</td><td class="px-4 py-3 border-b border-gray-50 font-mono">0.004%</td><td class="px-4 py-3 border-b border-gray-50 text-right font-mono">0.026%</td></tr>
-                </tbody>
+                <tbody class="text-[11px] font-bold text-gray-700" data-vip-tier-tbody></tbody>
             </table>
             <div class="mt-6">
                 <h4 class="text-[10px] font-black uppercase text-gray-500 mb-3 tracking-wider">VIP 专属权益</h4>
@@ -3422,6 +3416,7 @@
     </div>
 </div>
 
+<script src="shared/forx-vip-tier-api.js?v=20260919-vip-config-v2"></script>
 <script src="position-flow-module.js?v=2026-09-07-fund-bill"></script>
 <script src="position-close-module.js?v=2026-09-02-base-order-polish"></script>
 <script>
@@ -3448,6 +3443,11 @@
     function openVipModal() {
         const m = document.getElementById('vip-modal');
         if (m) m.style.display = 'flex';
+        if (window.ForxVipTierApi) {
+            ForxVipTierApi.fetchVipTierTable().then(function () {
+                ForxVipTierApi.renderFeeTableBody(document.querySelector('#vip-modal [data-vip-tier-tbody]'), { currentLevel: 2 });
+            });
+        }
     }
 
     function closeVipModal() {

@@ -21,6 +21,7 @@
         points_bonus_config: 'risk_boss',
         points_pool_config: 'risk_boss',
         points_program_switch: 'risk_boss',
+        vip_tier_config: 'risk_boss',
         fee_config: 'risk_boss',
         partner_l1_bind: 'risk_boss',
         partner_l1_bind_cross: 'risk_boss',
@@ -92,6 +93,7 @@
         fee_config: '用户费率配置',
         points_bonus_config: '积分加成配置',
         points_pool_config: '积分总池配置',
+        vip_tier_config: 'VIP 配置',
         points_program_switch: '积分计划总开关',
         partner_l1_bind: '一级合伙人绑定（超上限）',
         partner_l1_bind_cross: '一级合伙人绑定（跨权限）',
@@ -1339,6 +1341,17 @@
         if (typeof window.clearPointsPoolConfigPending === 'function') window.clearPointsPoolConfigPending();
     }
 
+    function applyVipTierConfigAfterApproval(app) {
+        if (!app || app.type !== 'vip_tier_config' || !app.payload || !app.payload.after || !app.payload.after.tiers) return;
+        if (window.ForxAdminVipConfig && window.ForxAdminVipConfig.saveVipTierRows) {
+            window.ForxAdminVipConfig.saveVipTierRows(app.payload.after.tiers);
+        } else if (window.ForxVipTierApi && window.ForxVipTierApi.savePublishedTiers) {
+            window.ForxVipTierApi.savePublishedTiers(app.payload.after.tiers);
+        }
+        if (typeof window.clearVipTierConfigPending === 'function') window.clearVipTierConfigPending();
+        if (typeof window.applySavedVipTierConfig === 'function') window.applySavedVipTierConfig();
+    }
+
     window.getApprovalViewRole = function () {
         return sessionStorage.getItem(ROLE_KEY) || 'risk';
     };
@@ -1382,6 +1395,9 @@
         if (opts.type === 'points_pool_config' && typeof window.setPointsPoolConfigPending === 'function') {
             window.setPointsPoolConfigPending({ id: app.id, status: app.status });
         }
+        if (opts.type === 'vip_tier_config' && typeof window.setVipTierConfigPending === 'function') {
+            window.setVipTierConfigPending({ id: app.id, status: app.status });
+        }
         if (opts.onSubmit) opts.onSubmit(app);
         return app;
     };
@@ -1416,6 +1432,9 @@
         const apps = getApps();
         apps.unshift(app);
         saveApps(apps);
+        if (app.type === 'vip_tier_config' && typeof window.setVipTierConfigPending === 'function') {
+            window.setVipTierConfigPending({ id: app.id, status: app.status });
+        }
         if (opts.onSubmit) opts.onSubmit(app);
         return app;
     };
@@ -1460,11 +1479,15 @@
                     if (typeof window.clearPointsProgramPending === 'function') window.clearPointsProgramPending();
                 }
                 if (app.type === 'points_pool_config') applyPointsPoolConfigAfterApproval(app);
+                if (app.type === 'vip_tier_config') applyVipTierConfigAfterApproval(app);
             }
         });
-        if (result && (result.type === 'points_pool_config' || result.type === 'points_program_switch') &&
+        if (result && (result.type === 'points_pool_config' || result.type === 'points_program_switch' || result.type === 'vip_tier_config') &&
             typeof window.renderPoolConfigAdminUI === 'function') {
             window.renderPoolConfigAdminUI();
+        }
+        if (result && result.type === 'vip_tier_config' && typeof window.renderVipConfigAdminUI === 'function') {
+            window.renderVipConfigAdminUI();
         }
         if (result && result.status === 'approved' &&
             (result.type === 'partner_l1_bind' || result.type === 'partner_l1_bind_cross' || result.type === 'partner_ratio_change' || result.type === 'partner_rebate_migrate') &&
@@ -1485,6 +1508,9 @@
             if (app.type === 'points_pool_config' && typeof window.clearPointsPoolConfigPending === 'function') {
                 window.clearPointsPoolConfigPending();
             }
+            if (app.type === 'vip_tier_config' && typeof window.clearVipTierConfigPending === 'function') {
+                window.clearVipTierConfigPending();
+            }
             app.timeline.push({
                 at: new Date().toISOString().slice(0, 16).replace('T', ' '),
                 actor: actorMap[role] || role,
@@ -1493,6 +1519,7 @@
             });
         });
         if (typeof window.renderPoolConfigAdminUI === 'function') window.renderPoolConfigAdminUI();
+        if (typeof window.renderVipConfigAdminUI === 'function') window.renderVipConfigAdminUI();
         return result;
     };
 
@@ -1542,6 +1569,12 @@
                 rows.push([r.uid, r.naturalBonus, r.newBonus, r.anomaly ? 'yes' : 'no']);
             });
         } else if (app.type === 'points_pool_config' && p.changes) {
+            rows.push([]);
+            rows.push(['配置项', '变更前', '变更后']);
+            p.changes.forEach(function (c) {
+                rows.push([c.field, c.before, c.after]);
+            });
+        } else if (app.type === 'vip_tier_config' && p.changes) {
             rows.push([]);
             rows.push(['配置项', '变更前', '变更后']);
             p.changes.forEach(function (c) {

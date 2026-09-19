@@ -1,169 +1,74 @@
 /**
- * VIP 等级配置（原型）· 费率 + 提币风控阶梯
- * 与用户费率设置、用户端 VIP 表共用 localStorage
+ * 后台 VIP 配置 · 校验、变更对比、审批 pending（依赖 forx-vip-tier-api.js）
  */
 (function (global) {
     'use strict';
 
-    var STORE_KEY = 'forx_admin_vip_config_v1';
+    var PENDING_KEY = 'forx_vip_tier_config_pending';
 
-    var DEFAULT_TIERS = [
-        {
-            level: 0,
-            volume14dUsd: 0,
-            taker: 0.00045,
-            maker: 0.00015,
-            dailyMaxWithdrawUsd: 50000,
-            dailyWithdrawCountAuditThreshold: 3,
-            forceManualReview: false
-        },
-        {
-            level: 1,
-            volume14dUsd: 5000000,
-            taker: 0.00039,
-            maker: 0.00013,
-            dailyMaxWithdrawUsd: 200000,
-            dailyWithdrawCountAuditThreshold: 5,
-            forceManualReview: false
-        },
-        {
-            level: 2,
-            volume14dUsd: 25000000,
-            taker: 0.00034,
-            maker: 0.00010,
-            dailyMaxWithdrawUsd: 500000,
-            dailyWithdrawCountAuditThreshold: 8,
-            forceManualReview: false
-        },
-        {
-            level: 3,
-            volume14dUsd: 100000000,
-            taker: 0.00029,
-            maker: 0.00006,
-            dailyMaxWithdrawUsd: 2000000,
-            dailyWithdrawCountAuditThreshold: 12,
-            forceManualReview: false
-        },
-        {
-            level: 4,
-            volume14dUsd: 500000000,
-            taker: 0.00026,
-            maker: 0.00004,
-            dailyMaxWithdrawUsd: 10000000,
-            dailyWithdrawCountAuditThreshold: 20,
-            forceManualReview: true
-        }
-    ];
-
-    function cloneTiers(list) {
-        return JSON.parse(JSON.stringify(list || []));
-    }
-
-    function formatUsdCompact(n) {
-        var v = Number(n);
-        if (!isFinite(v)) return '—';
-        if (v >= 1000000000) return '$' + (v / 1000000000).toFixed(2) + 'B';
-        if (v >= 1000000) return '$' + (v / 1000000).toFixed(0) + 'M';
-        if (v >= 1000) return '$' + (v / 1000).toFixed(0) + 'K';
-        return '$' + v.toLocaleString('en-US');
-    }
-
-    function formatVolumeThresholdLabel(tier, index, sorted) {
-        var min = Number(tier.volume14dUsd) || 0;
-        var next = sorted[index + 1];
-        if (tier.level === 0 && next) {
-            return '< ' + formatUsdCompact(next.volume14dUsd);
-        }
-        if (!next) {
-            return '≥ ' + formatUsdCompact(min);
-        }
-        return '≥ ' + formatUsdCompact(min) + ' 且 < ' + formatUsdCompact(next.volume14dUsd);
-    }
-
-    function normalizeTier(row, fallbackLevel) {
-        if (!row || row.level == null) return null;
-        var level = Number(row.level);
-        if (!isFinite(level)) return null;
-        return {
-            level: level,
-            volume14dUsd: level === 0 ? 0 : Math.max(0, Number(row.volume14dUsd) || 0),
-            taker: Math.max(0, Number(row.taker) || 0),
-            maker: Math.max(0, Number(row.maker) || 0),
-            dailyMaxWithdrawUsd: Math.max(0, Number(row.dailyMaxWithdrawUsd) || 0),
-            dailyWithdrawCountAuditThreshold: Math.max(0, Math.floor(Number(row.dailyWithdrawCountAuditThreshold) || 0)),
-            forceManualReview: !!row.forceManualReview
-        };
-    }
-
-    function mergeWithDefaults(stored) {
-        var byLevel = {};
-        DEFAULT_TIERS.forEach(function (t) { byLevel[t.level] = cloneTiers([t])[0]; });
-        (stored || []).forEach(function (row) {
-            var n = normalizeTier(row);
-            if (n == null || byLevel[n.level] == null) return;
-            byLevel[n.level] = n;
-        });
-        return DEFAULT_TIERS.map(function (t) { return byLevel[t.level]; });
-    }
-
-    function readRawTiers() {
-        try {
-            var raw = localStorage.getItem(STORE_KEY);
-            if (!raw) return null;
-            var parsed = JSON.parse(raw);
-            return parsed && parsed.tiers ? parsed.tiers : null;
-        } catch (e) {
-            return null;
-        }
+    function api() {
+        return global.ForxVipTierApi;
     }
 
     function getVipTierRows() {
-        return mergeWithDefaults(readRawTiers());
+        if (api()) return api().getPublishedTiers();
+        return [];
     }
 
     function saveVipTierRows(tiers) {
-        var merged = mergeWithDefaults(tiers);
-        try {
-            localStorage.setItem(STORE_KEY, JSON.stringify({ tiers: merged, updatedAt: new Date().toISOString() }));
-        } catch (e) { /* noop */ }
-        return merged;
+        if (api()) return api().savePublishedTiers(tiers);
+        return tiers;
     }
 
     function getTiersForDisplay() {
-        var sorted = getVipTierRows().slice().sort(function (a, b) { return a.level - b.level; });
-        return sorted.map(function (tier, index) {
-            return {
-                level: tier.level,
-                name: 'VIP ' + tier.level,
-                threshold: formatVolumeThresholdLabel(tier, index, sorted),
-                volume14dUsd: tier.volume14dUsd,
-                taker: tier.taker,
-                maker: tier.maker,
-                dailyMaxWithdrawUsd: tier.dailyMaxWithdrawUsd,
-                dailyWithdrawCountAuditThreshold: tier.dailyWithdrawCountAuditThreshold,
-                forceManualReview: tier.forceManualReview
-            };
-        });
+        if (api()) return api().getTiersForDisplay();
+        return [];
     }
 
     function calcVolumeTier(volume14d) {
-        var vol = Number(volume14d) || 0;
-        var sorted = getVipTierRows().slice().sort(function (a, b) { return b.level - a.level; });
-        for (var i = 0; i < sorted.length; i++) {
-            if (vol >= sorted[i].volume14dUsd) return sorted[i].level;
-        }
+        if (api()) return api().calcVolumeTier(volume14d);
         return 0;
+    }
+
+    function formatUsdCompact(n) {
+        if (api()) return api().formatUsdCompact(n);
+        return String(n);
+    }
+
+    function formatRatePct(rate) {
+        return (Number(rate) * 100).toFixed(4).replace(/\.?0+$/, '') + '%';
+    }
+
+    function formatManual(v) {
+        return v ? '开启' : '关闭';
+    }
+
+    function tierSnapshotLine(tier) {
+        if (!tier) return '—';
+        return '14d≥' + (tier.volume14dUsd || 0) + ' · Taker ' + formatRatePct(tier.taker) +
+            ' · Maker ' + formatRatePct(tier.maker) + ' · 提现 ' + tier.dailyMaxWithdrawUsd +
+            ' · 次数 ' + tier.dailyWithdrawCountAuditThreshold + ' · 人工 ' + formatManual(tier.forceManualReview);
     }
 
     function validateVipTierRows(tiers) {
         var errors = [];
-        var list = mergeWithDefaults(tiers).slice().sort(function (a, b) { return a.level - b.level; });
-        if (list[0] && list[0].volume14dUsd !== 0) {
+        var list = (tiers || []).slice().sort(function (a, b) { return a.level - b.level; });
+        if (!list.length || list[0].level !== 0) {
+            errors.push('须包含 VIP 0');
+            return { ok: false, errors: errors };
+        }
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].level !== i) {
+                errors.push('VIP 等级须从 0 起连续编号，不可跳档');
+                break;
+            }
+        }
+        if (list[0].volume14dUsd !== 0) {
             errors.push('VIP 0 的 14 天交易量要求须为 0');
         }
-        for (var i = 1; i < list.length; i++) {
-            var prev = list[i - 1];
-            var cur = list[i];
+        for (var j = 1; j < list.length; j++) {
+            var prev = list[j - 1];
+            var cur = list[j];
             if (cur.volume14dUsd <= prev.volume14dUsd) {
                 errors.push('VIP ' + cur.level + ' 的 14 天交易量要求须大于 VIP ' + prev.level);
             }
@@ -183,13 +88,77 @@
         return { ok: errors.length === 0, errors: errors };
     }
 
+    function buildVipTierConfigChanges(beforeTiers, afterTiers) {
+        var beforeMap = {};
+        (beforeTiers || []).forEach(function (t) { beforeMap[t.level] = t; });
+        var afterMap = {};
+        (afterTiers || []).forEach(function (t) { afterMap[t.level] = t; });
+        var levels = {};
+        (beforeTiers || []).concat(afterTiers || []).forEach(function (t) { levels[t.level] = true; });
+        var changes = [];
+        Object.keys(levels).map(Number).sort(function (a, b) { return a - b; }).forEach(function (level) {
+            var b = beforeMap[level];
+            var a = afterMap[level];
+            if (!b && a) {
+                changes.push({ field: 'VIP ' + level + ' · 新增等级', before: '—', after: tierSnapshotLine(a) });
+                return;
+            }
+            if (!a) return;
+            var fields = [
+                { key: 'volume14dUsd', label: '14 天交易量要求（USD）', fmt: function (v) { return level === 0 ? '0' : String(v); } },
+                { key: 'taker', label: 'Taker 费率', fmt: formatRatePct },
+                { key: 'maker', label: 'Maker 费率', fmt: formatRatePct },
+                { key: 'dailyMaxWithdrawUsd', label: '单日个人最大提现额度（USD）', fmt: function (v) { return String(v); } },
+                { key: 'dailyWithdrawCountAuditThreshold', label: '单日提现次数审核阈值', fmt: function (v) { return String(v); } },
+                { key: 'forceManualReview', label: '是否强制人工审核', fmt: formatManual }
+            ];
+            fields.forEach(function (f) {
+                var bv = b ? b[f.key] : undefined;
+                var av = a[f.key];
+                if (bv === av) return;
+                if (f.key === 'forceManualReview' && !!bv === !!av) return;
+                changes.push({
+                    field: 'VIP ' + level + ' · ' + f.label,
+                    before: b ? f.fmt(bv) : '—',
+                    after: f.fmt(av)
+                });
+            });
+        });
+        return changes;
+    }
+
+    function setVipTierConfigPending(data) {
+        try {
+            if (!data) localStorage.removeItem(PENDING_KEY);
+            else localStorage.setItem(PENDING_KEY, JSON.stringify(data));
+        } catch (e) { /* noop */ }
+    }
+
+    function getVipTierConfigPendingLocal() {
+        try {
+            var raw = localStorage.getItem(PENDING_KEY);
+            return raw ? JSON.parse(raw) : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function clearVipTierConfigPending() {
+        setVipTierConfigPending(null);
+    }
+
+    global.setVipTierConfigPending = setVipTierConfigPending;
+    global.getVipTierConfigPendingLocal = getVipTierConfigPendingLocal;
+    global.clearVipTierConfigPending = clearVipTierConfigPending;
+
     global.ForxAdminVipConfig = {
-        STORE_KEY: STORE_KEY,
+        PENDING_KEY: PENDING_KEY,
         getVipTierRows: getVipTierRows,
         saveVipTierRows: saveVipTierRows,
         getTiersForDisplay: getTiersForDisplay,
         calcVolumeTier: calcVolumeTier,
         validateVipTierRows: validateVipTierRows,
+        buildVipTierConfigChanges: buildVipTierConfigChanges,
         formatUsdCompact: formatUsdCompact
     };
 })(window);

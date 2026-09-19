@@ -286,6 +286,22 @@
         return '<div class="col-span-2"><div class="border border-slate-200 rounded-lg px-4 py-2 text-sm">' + listHtml + '</div></div>';
     }
 
+    function renderVipTierConfigDetailSection(app) {
+        if (app.type !== 'vip_tier_config') return '';
+        var p = app.payload || {};
+        var changeMap = {};
+        (p.changes || []).forEach(function (c) { changeMap[c.field] = c; });
+        var rowsHtml = (p.changes || []).map(function (c) {
+            return '<div class="flex justify-between items-start gap-4 py-2.5 border-b border-slate-100 last:border-0">' +
+                '<span class="text-slate-600 shrink-0">' + c.field + '</span>' +
+                '<span class="text-right"><span class="text-slate-400">' + c.before + '</span>' +
+                ' <span class="text-slate-300 mx-1">→</span> <span class="text-blue-600 font-bold">' + c.after + '</span></span></div>';
+        }).join('');
+        if (!rowsHtml) rowsHtml = '<p class="text-slate-400 py-2">无变更明细</p>';
+        return '<div class="col-span-2"><p class="text-[10px] font-bold text-slate-500 uppercase mb-2">变更对比</p>' +
+            '<div class="border border-slate-200 rounded-lg px-4 py-2 text-sm">' + rowsHtml + '</div></div>';
+    }
+
     function renderTrialCardGroupDetailSection(app) {
         const p = app.payload || {};
         const g = p.cardGroupDetails || (window.TRIAL_CARD_GROUPS || []).find(function (x) { return x.id === p.cardGroupId; });
@@ -321,6 +337,9 @@
         }
         if (app.type === 'points_pool_config' || app.type === 'points_program_switch') {
             return '已驳回的申请可由申请人基于<strong>原配置变更</strong>重新发起，审批流将从头开始；<strong>仅可修改申请备注</strong>。';
+        }
+        if (app.type === 'vip_tier_config') {
+            return '已驳回的申请可由申请人基于<strong>原 VIP 阶梯变更</strong>重新发起，审批流将从头开始；<strong>仅可修改申请备注</strong>。';
         }
         return '已驳回的申请可由申请人基于<strong>原名单与配置</strong>重新发起，审批流将从头开始；<strong>仅可修改申请备注</strong>。';
     }
@@ -634,13 +653,15 @@
         if (app.status === 'pending_risk' && role !== 'risk') readonlyHint = '等待风控审核';
         else if (app.status === 'pending_boss' && role !== 'boss') readonlyHint = '等待老板审批（后台或 Lark 均可操作）';
 
-        const isSimpleConfig = app.type === 'points_pool_config' || app.type === 'points_program_switch';
+        const isSimpleConfig = app.type === 'points_pool_config' || app.type === 'points_program_switch' || app.type === 'vip_tier_config';
         const exportDetailBtn = opts.showExportDetail && !isSimpleConfig
             ? '<button type="button" onclick="exportApprovalDetailCsv(getApprovalAppById(\'' + app.id + '\'))" class="text-xs font-bold text-blue-600 hover:underline">导出原数据</button>'
             : '';
         const dataSectionTitle = isSimpleConfig ? '配置内容' : '申请原数据';
         const dataSectionBody = app.type === 'points_pool_config'
             ? '<div class="text-sm">' + renderPoolConfigDetailSection(app) + '</div>'
+            : app.type === 'vip_tier_config'
+                ? '<div class="text-sm grid grid-cols-2 gap-3">' + renderVipTierConfigDetailSection(app) + '</div>'
             : app.type === 'points_program_switch'
                 ? '<div class="text-sm">' + renderProgramSwitchDetailSection(app) + '</div>'
                 : app.type === 'partner_rebate_migrate'

@@ -96,12 +96,7 @@
                                     <th>Taker 费率</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr><td>VIP 0</td><td>&lt; $5M</td><td>0.015%</td><td>0.045%</td></tr>
-                                <tr><td>VIP 1</td><td>≥ $5M 且 &lt; $25M</td><td>0.013%</td><td>0.039%</td></tr>
-                                <tr class="current-row"><td>VIP 2</td><td>≥ $25M 且 &lt; $100M</td><td>0.010%</td><td>0.034%</td></tr>
-                                <tr><td>VIP 3</td><td>≥ $100M 且 &lt; $500M</td><td>0.006%</td><td>0.029%</td></tr>
-                                <tr><td>VIP 4</td><td>≥ $500M</td><td>0.004%</td><td>0.026%</td></tr>
+                            <tbody id="app-vip-tier-tbody">
                             </tbody>
                         </table>
                     </div>
@@ -173,6 +168,27 @@
         </div>
     </div>
 </div>
+
+<script src="../shared/forx-vip-tier-api.js?v=20260919-vip-config-v2"></script>
+<script>
+(function () {
+    var DEMO_LEVEL = 2;
+    function renderAppVipTable() {
+        if (!window.ForxVipTierApi) return;
+        var tbody = document.getElementById('app-vip-tier-tbody');
+        if (!tbody) return;
+        ForxVipTierApi.fetchVipTierTable().then(function () {
+            var tiers = ForxVipTierApi.getTiersForDisplay();
+            tbody.innerHTML = tiers.map(function (t) {
+                var cls = t.level === DEMO_LEVEL ? ' class="current-row"' : '';
+                return '<tr' + cls + '><td>' + t.name + '</td><td>' + t.threshold + '</td><td>' +
+                    ForxVipTierApi.formatFeePct(t.maker) + '</td><td>' + ForxVipTierApi.formatFeePct(t.taker) + '</td></tr>';
+            }).join('');
+        });
+    }
+    renderAppVipTable();
+})();
+</script>
 
 </body>
 </html>
