@@ -29,7 +29,7 @@
     var TAG_OPTIONS = ['perpetual', 'hot', 'new', 'meme'];
 
     /** 原型版本号：列表角标可核对是否加载到最新脚本 */
-    var MODULE_BUILD = '20260915-times';
+    var MODULE_BUILD = '20260919-list-filter';
 
     var STATUS_LABELS = {
         pending: '待启用',
@@ -129,6 +129,7 @@
     var iconUploadDataUrl = '';
     var iconUploadFileName = '';
     var pendingStatusTransition = null;
+    var pairListFilters = { name: '', status: 'all' };
 
     function defaultPair(productName, baseCoin) {
         return {
@@ -398,16 +399,60 @@
         };
     }
 
+    function getFilteredPairs() {
+        var pairs = getPairs();
+        var nameQ = (pairListFilters.name || '').trim().toLowerCase();
+        var statusQ = pairListFilters.status || 'all';
+        return pairs.filter(function (p) {
+            if (nameQ && String(p.product_name || '').toLowerCase().indexOf(nameQ) === -1) return false;
+            if (statusQ !== 'all' && p.status !== statusQ) return false;
+            return true;
+        });
+    }
+
+    function syncPairListFilterInputsFromState() {
+        var nameEl = document.getElementById('pair-filter-name');
+        var statusEl = document.getElementById('pair-filter-status');
+        if (nameEl) nameEl.value = pairListFilters.name || '';
+        if (statusEl) statusEl.value = pairListFilters.status || 'all';
+    }
+
+    function readPairListFiltersFromDom() {
+        pairListFilters.name = (document.getElementById('pair-filter-name') && document.getElementById('pair-filter-name').value || '').trim();
+        pairListFilters.status = document.getElementById('pair-filter-status') ? document.getElementById('pair-filter-status').value : 'all';
+    }
+
+    function applyPairListFilters() {
+        readPairListFiltersFromDom();
+        renderList();
+    }
+
+    function resetPairListFilters() {
+        pairListFilters = { name: '', status: 'all' };
+        syncPairListFilterInputsFromState();
+        renderList();
+    }
+
     function renderList() {
         var tbody = document.getElementById('pair-list-body');
         var hint = document.getElementById('pair-list-hint');
         var marketLabel = document.getElementById('current-market-label');
         if (marketLabel) marketLabel.textContent = selectedMarket;
-        var pairs = getPairs();
-        if (hint) hint.textContent = '共 ' + pairs.length + ' 条 · 计价市场 ' + selectedMarket + ' · ' + MODULE_BUILD;
+        var allPairs = getPairs();
+        var pairs = getFilteredPairs();
+        if (hint) {
+            var filtered = pairs.length !== allPairs.length;
+            hint.textContent = filtered
+                ? ('匹配 ' + pairs.length + ' / 共 ' + allPairs.length + ' 条 · 计价市场 ' + selectedMarket + ' · ' + MODULE_BUILD)
+                : ('共 ' + allPairs.length + ' 条 · 计价市场 ' + selectedMarket + ' · ' + MODULE_BUILD);
+        }
         if (!tbody) return;
-        if (!pairs.length) {
+        if (!allPairs.length) {
             tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-slate-400 font-bold">暂无交易对，点击「+ 新增交易对」添加</td></tr>';
+            return;
+        }
+        if (!pairs.length) {
+            tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-slate-400 font-bold">未找到匹配交易对</td></tr>';
             return;
         }
         tbody.innerHTML = pairs.map(function (p) {
@@ -1175,6 +1220,7 @@
             return;
         }
         renderList();
+        syncPairListFilterInputsFromState();
         showView('view-list');
     }
 
@@ -1186,6 +1232,8 @@
             if (action === 'confirm-market') confirmMarket();
             if (action === 'switch-market') switchMarket();
             if (action === 'add-pair') { location.hash = '#new'; applyRoute(); }
+            if (action === 'filter-pair-list') applyPairListFilters();
+            if (action === 'reset-pair-list-filter') resetPairListFilters();
             if (action === 'back-list') goList();
             if (action === 'save-pair') saveForm();
             if (action === 'close-save-confirm') closeSaveConfirmModal();
@@ -1242,22 +1290,16 @@
             }
         });
 
+        document.body.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter') return;
+            if (!document.getElementById('view-list') || document.getElementById('view-list').classList.contains('hidden')) return;
+            if (e.target.id === 'pair-filter-name') applyPairListFilters();
+        });
+
         document.body.addEventListener('input', function (e) {
             if (e.target.matches('[data-index="weight"]')) {
                 renderIndexRows(readIndexFromDom());
             }
-        });
-
-        document.body.addEventListener('change', function (e) {
-            if (e.target.matches('[data-index="source_name"]')) {
-                renderIndexRows(readIndexFromDom());
-            }
-            if (e.target.id === 'form-base-coin') {
-                syncCoinDescriptionFromOverview(e.target.value.trim().toUpperCase(), true);
-            }
-        });
-
-        document.body.addEventListener('input', function (e) {
             if (e.target.id === 'form-base-coin') {
                 syncCoinDescriptionFromOverview(e.target.value.trim().toUpperCase(), false);
             }
@@ -1267,6 +1309,15 @@
                     e.target.value = e.target.value.slice(0, MAX_COIN_DESCRIPTION_LEN);
                 }
                 updateCoinDescriptionCount();
+            }
+        });
+
+        document.body.addEventListener('change', function (e) {
+            if (e.target.matches('[data-index="source_name"]')) {
+                renderIndexRows(readIndexFromDom());
+            }
+            if (e.target.id === 'form-base-coin') {
+                syncCoinDescriptionFromOverview(e.target.value.trim().toUpperCase(), true);
             }
         });
     }
