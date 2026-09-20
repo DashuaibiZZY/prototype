@@ -499,7 +499,7 @@
   };
 
   const TRIAL_USERS = [
-    { uid: '100234', wallet: '0xd5a2b8c91f3e4d567890abcdef1234567890ab8f3c', email: '', totalIssued: 350, inactiveFace: 50, activatedFace: 300, totalRemaining: 200, cumLossDeduct: 45, cumFeeDeduct: 12, reclaimedTotal: 0, activity: '社区 KOL 合作激励', issuedAt: '2026-07-18 14:30' },
+    { uid: '100234', wallet: '0xd5a2b8c91f3e4d567890abcdef1234567890ab8f3c', email: '', totalIssued: 410, inactiveFace: 50, activatedFace: 300, totalRemaining: 200, cumLossDeduct: 53, cumFeeDeduct: 19, reclaimedTotal: 45, activity: '社区 KOL 合作激励', issuedAt: '2026-07-18 14:30' },
     { uid: '100891', wallet: '', email: 'kol.partner@forx.io', totalIssued: 500, inactiveFace: 500, activatedFace: 0, totalRemaining: 500, cumLossDeduct: 0, cumFeeDeduct: 0, reclaimedTotal: 0, activity: '新用户注册礼包', issuedAt: '2026-07-20 09:15' },
     { uid: '101205', wallet: '0x1a2b3c4d5e6f7890abcdef1234567890abcdef12', email: '', totalIssued: 150, inactiveFace: 0, activatedFace: 150, totalRemaining: 0, cumLossDeduct: 28, cumFeeDeduct: 6, reclaimedTotal: 150, activity: '交易大赛奖励', issuedAt: '2026-06-28 16:00' }
   ];
@@ -508,7 +508,8 @@
     '100234': [
       { id: 'CPN001', total: 100, balance: 80, cumLossDeduct: 15, cumFeeDeduct: 0, reclaimedTotal: 0, status: 'used', group: '标准新人礼包组', activity: '社区 KOL 合作激励', issuedAt: '2026-07-10 10:00', activateDeadline: '2026-07-17', openDeadline: '2026-08-09' },
       { id: 'CPN002', total: 50, balance: 50, cumLossDeduct: 0, cumFeeDeduct: 0, reclaimedTotal: 0, status: 'available', group: '标准新人礼包组', activity: '社区 KOL 合作激励', issuedAt: '2026-07-18 14:30', activateDeadline: '2026-07-25', openDeadline: '2026-08-17' },
-      { id: 'CPN003', total: 200, balance: 70, cumLossDeduct: 30, cumFeeDeduct: 12, reclaimedTotal: 0, status: 'used', group: 'KOL大额专属组', activity: 'KOL 专属活动', issuedAt: '2026-07-05 11:20', activateDeadline: '2026-07-19', openDeadline: '2026-09-03' }
+      { id: 'CPN003', total: 200, balance: 70, cumLossDeduct: 30, cumFeeDeduct: 12, reclaimedTotal: 0, status: 'used', group: 'KOL大额专属组', activity: 'KOL 专属活动', issuedAt: '2026-07-05 11:20', activateDeadline: '2026-07-19', openDeadline: '2026-09-03' },
+      { id: 'CPN004', total: 60, balance: 0, cumLossDeduct: 8, cumFeeDeduct: 7, reclaimedTotal: 45, status: 'recycled', group: '标准新人礼包组', activity: '社区 KOL 合作激励', issuedAt: '2026-06-15 09:00', activateDeadline: '2026-06-22', openDeadline: '2026-07-15' }
     ],
     '100891': [
       { id: 'CPN010', total: 250, balance: 250, cumLossDeduct: 0, cumFeeDeduct: 0, reclaimedTotal: 0, status: 'available', group: '标准新人礼包组', activity: '新用户注册礼包', issuedAt: '2026-07-20 09:15', activateDeadline: '2026-07-27', openDeadline: '2026-08-19' },
@@ -528,6 +529,12 @@
     'CPN003': [
       { time: '2026-07-06 10:00', type: '激活', amount: '-', position: '-' },
       { time: '2026-07-08 16:20', type: '费用抵扣', amount: '-12 USDT', position: 'POS-90112' }
+    ],
+    'CPN004': [
+      { time: '2026-06-16 10:00', type: '激活', amount: '-', position: '-' },
+      { time: '2026-06-18 11:20', type: '费用抵扣', amount: '-7 USDT', position: 'POS-55102' },
+      { time: '2026-06-20 15:40', type: '亏损抵扣', amount: '-8 USDT', position: 'POS-55102' },
+      { time: '2026-06-21 16:00', type: '回收', amount: '-45 USDT', position: '-' }
     ],
     'CPN020': [
       { time: '2026-06-02 09:00', type: '激活', amount: '-', position: '-' },
@@ -842,6 +849,15 @@
     return Number(n).toLocaleString() + ' U';
   }
 
+  function nowUsageTime() {
+    return new Date().toISOString().slice(0, 16).replace('T', ' ');
+  }
+
+  function appendCouponUsageRow(couponId, row) {
+    if (!COUPON_USAGE[couponId]) COUPON_USAGE[couponId] = [];
+    COUPON_USAGE[couponId].push(row);
+  }
+
   function renderTrialUserTable(list) {
     const sliced = trialSlice(list, trialUserListPage);
     trialUserListPage = sliced.page;
@@ -968,11 +984,16 @@
       user.inactiveFace = 0; user.activatedFace = 0; user.totalRemaining = 0;
       (USER_COUPONS[uid] || []).forEach(function (c) {
         if (c.status === 'available' || c.status === 'used') {
-          user.reclaimedTotal = (user.reclaimedTotal || 0) + c.balance;
-          c.reclaimedTotal = (c.reclaimedTotal || 0) + c.balance;
+          const reclaimAmt = c.balance;
+          user.reclaimedTotal = (user.reclaimedTotal || 0) + reclaimAmt;
+          c.reclaimedTotal = (c.reclaimedTotal || 0) + reclaimAmt;
+          if (reclaimAmt > 0) {
+            appendCouponUsageRow(c.id, { time: nowUsageTime(), type: '回收', amount: '-' + reclaimAmt + ' USDT', position: '-' });
+          }
           c.status = 'recycled'; c.balance = 0;
         }
       });
+      if (currentDetailUid === uid) renderUserCoupons(uid);
       renderTrialUserTable(TRIAL_USERS);
       renderTrialLogs(TRIAL_LOGS);
       alert('回收成功，已写入操作记录');
@@ -995,6 +1016,9 @@
       c.status = 'recycled';
       c.reclaimedTotal = (c.reclaimedTotal || 0) + recycleAmount;
       c.balance = 0;
+      if (recycleAmount > 0) {
+        appendCouponUsageRow(couponId, { time: nowUsageTime(), type: '回收', amount: '-' + recycleAmount + ' USDT', position: '-' });
+      }
       const user = TRIAL_USERS.find(function (u) { return u.uid === currentDetailUid; });
       if (user) {
         if (wasAvailable) user.inactiveFace = Math.max(0, user.inactiveFace - c.total);
