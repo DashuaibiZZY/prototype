@@ -23,9 +23,6 @@
         .upload-box:hover { border-color: #93c5fd; background: #f8fafc; }
         .upload-box.has-file { border-color: #3b82f6; background: #eff6ff; border-style: solid; }
         .upload-box input { display: none; }
-        .vip-ref-table { width: 100%; font-size: 10px; border-collapse: collapse; }
-        .vip-ref-table th, .vip-ref-table td { border: 1px solid #e2e8f0; padding: 6px 8px; text-align: left; }
-        .vip-ref-table th { background: #f8fafc; color: #64748b; font-weight: 700; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -112,16 +109,6 @@
         <button onclick="closeDrawer()" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 text-lg">&times;</button>
     </div>
     <div class="flex-1 overflow-y-auto px-6 py-5 space-y-6">
-        <section class="card p-5">
-            <h3 class="text-sm font-bold text-slate-800 mb-2">VIP 费率参考表</h3>
-            <table class="vip-ref-table">
-                <thead>
-                <tr><th>等级</th><th>14 天交易量门槛</th><th>Maker</th><th>Taker</th></tr>
-                </thead>
-                <tbody id="vipRefTableBody"></tbody>
-            </table>
-        </section>
-
         <section class="card p-5">
             <h3 class="text-sm font-bold text-slate-800 mb-4">用户费率配置</h3>
             <div id="feeCustomPanel" class="grid grid-cols-2 gap-4">
@@ -331,17 +318,6 @@
     function volumeTierLabel(volume14d) {
         const level = calcVolumeTier(volume14d);
         return `<span class="tier-badge volume">VIP ${level}</span>`;
-    }
-
-    function renderVipRefTable() {
-        document.getElementById('vipRefTableBody').innerHTML = VIP_TIERS.map(v => `
-            <tr>
-                <td class="font-bold">${v.name}</td>
-                <td>${v.threshold}</td>
-                <td>${formatFeePct(v.maker)}</td>
-                <td>${formatFeePct(v.taker)}</td>
-            </tr>
-        `).join('');
     }
 
     function renderUserTable() {
@@ -594,7 +570,6 @@
     }
 
     refreshVipTiersFromStore();
-    renderVipRefTable();
     renderUserTable();
     if (window.AdminPagination) {
         AdminPagination.register('fee-users', function (p) { feeUserListPage = p; renderUserTable(); });
