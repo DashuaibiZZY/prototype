@@ -1157,9 +1157,14 @@
         </div>
 
         <!-- ===== 分享盈亏海报 ===== -->
-        <div id="modal-share-pnl" class="hidden absolute inset-0 z-[150] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 rounded-[38px]">
-            <div class="bg-white w-full rounded-2xl overflow-hidden shadow-2xl flex flex-col">
-                <div id="pnl-poster" class="bg-white p-6 space-y-6 relative">
+        <div id="modal-share-pnl" class="hidden absolute inset-0 z-[150] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 rounded-[38px]">
+            <div class="bg-white w-full max-w-[340px] rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[92%]">
+                <div class="px-3 pt-3 pb-2 border-b border-gray-100 shrink-0">
+                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-2">海报模版</p>
+                    <div class="grid grid-cols-4 gap-1.5" data-pnl-template-picker></div>
+                </div>
+                <div class="overflow-y-auto min-h-0">
+                <div id="pnl-poster" class="pnl-poster--classic bg-white p-6 space-y-6 relative">
                     <div class="flex items-center space-x-2">
                         <div class="w-6 h-6 bg-black rounded flex items-center justify-center text-white font-black text-xs italic">F</div>
                         <span class="font-black text-base tracking-tighter">ForX</span>
@@ -1206,7 +1211,8 @@
                         <p class="text-[9px] text-gray-400 font-bold uppercase tracking-tight">鏈上交易加密貨幣、黃金和股票</p>
                     </div>
                 </div>
-                <div class="p-4 bg-gray-50 flex space-x-3 border-t border-gray-100">
+                </div>
+                <div class="p-4 bg-gray-50 flex space-x-3 border-t border-gray-100 shrink-0">
                     <button type="button" onclick="closeSharePnl()" class="flex-1 py-3 border border-gray-200 bg-white rounded-xl font-black text-xs text-gray-400 uppercase">取消</button>
                     <button type="button" onclick="alert('海報已保存至相冊')" class="flex-1 py-3 bg-black text-white rounded-xl font-black text-xs shadow-lg uppercase active:scale-95 transition-all">分享海報</button>
                 </div>
@@ -1552,6 +1558,7 @@
     </div>
 </div>
 
+<script src="../shared/pnl-share-poster.js?v=20260920-poster-templates"></script>
 <script>
     let currentSide = 'open';
     let currentOrderMode = 'limit';
@@ -1688,6 +1695,7 @@
 
     function openSharePnl() {
         document.getElementById('modal-share-pnl').classList.remove('hidden');
+        if (window.ForxPnlSharePoster) ForxPnlSharePoster.onShareOpen();
     }
     function closeSharePnl() {
         document.getElementById('modal-share-pnl').classList.add('hidden');
@@ -3491,6 +3499,7 @@
     document.addEventListener('click', function (e) {
         if (!e.target.closest('#tpsl-mode-dropdown-wrap')) closeTPSLModeDropdown();
     });
+    if (window.ForxPnlSharePoster) ForxPnlSharePoster.init();
 </script>
 </body>
 </html>
