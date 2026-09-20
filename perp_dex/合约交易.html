@@ -1370,13 +1370,17 @@
                         <div class="flex justify-between"><span class="text-gray-400">可開</span><span id="stat-max-open-long" class="font-bold">1,397.50 USDC</span></div>
                         <div class="flex justify-between"><span class="text-gray-400">可開</span><span id="stat-max-open-short" class="font-bold">1,397.50 USDC</span></div>
                     </div>
-                    <div class="pt-1 text-[8px] text-gray-400">
-                        手續費率:
-                        <span class="market-hint-wrap dashed-hint cursor-pointer" onclick="openVipModal()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openVipModal();}">
-                            <span class="text-amber-600 font-black">VIP 2</span>
-                            <span class="text-gray-700 font-bold">吃單 0.034% / 掛單 0.010%</span>
-                            <div class="market-hint-tip" style="min-width:200px;">点击查看 ForX 合约交易 VIP 费率表</div>
-                        </span>
+                    <div class="pt-1 text-[8px] text-gray-400 leading-relaxed">
+                        <div>
+                            手續費率:
+                            <span class="market-hint-wrap dashed-hint cursor-pointer" onclick="openVipModal()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openVipModal();}">
+                                <span id="terminal-fee-level" class="text-amber-600 font-black">VIP 2</span>
+                                <span id="terminal-fee-custom" class="hidden text-purple-600 font-black">自定義費率</span>
+                                <span id="terminal-fee-rates" class="text-gray-700 font-bold">吃單 0.034% / 掛單 0.010%</span>
+                                <div class="market-hint-tip" style="min-width:200px;">点击查看 ForX 合约交易 VIP 费率表</div>
+                            </span>
+                        </div>
+                        <p id="terminal-fee-valid-until" class="hidden text-[7px] text-gray-400 mt-0.5 pl-[3.5em]">費率有效期至 2026-10-20 24:00 (UTC+8)</p>
                     </div>
                 </div>
             </div>
@@ -3444,10 +3448,55 @@
         const m = document.getElementById('vip-modal');
         if (m) m.style.display = 'flex';
         if (window.ForxVipTierApi) {
+            const custom = typeof terminalFeeDemoMode !== 'undefined' && terminalFeeDemoMode !== 'natural';
             ForxVipTierApi.fetchVipTierTable().then(function () {
-                ForxVipTierApi.renderFeeTableBody(document.querySelector('#vip-modal [data-vip-tier-tbody]'), { currentLevel: 2 });
+                ForxVipTierApi.renderFeeTableBody(document.querySelector('#vip-modal [data-vip-tier-tbody]'), { currentLevel: custom ? null : 2 });
             });
         }
+    }
+
+    var terminalFeeDemoMode = 'natural';
+    var TERMINAL_CUSTOM_VALID_UNTIL = '2026-10-20';
+    var TERMINAL_FEE_RATES = {
+        natural: { taker: '0.034%', maker: '0.010%' },
+        custom: { taker: '0.020%', maker: '0.008%' }
+    };
+
+    function setTerminalFeeDemoBtnStyles(active) {
+        var map = {
+            natural: document.getElementById('terminalFeeDemoNatural'),
+            custom: document.getElementById('terminalFeeDemoCustom'),
+            customPermanent: document.getElementById('terminalFeeDemoCustomPermanent')
+        };
+        Object.keys(map).forEach(function (key) {
+            var btn = map[key];
+            if (!btn) return;
+            btn.className = key === active
+                ? 'px-3 py-1 rounded-full bg-gray-900 text-white'
+                : 'px-3 py-1 rounded-full text-gray-600 hover:bg-gray-100';
+        });
+    }
+
+    function applyTerminalFeeDemo(mode) {
+        terminalFeeDemoMode = mode === 'natural' ? 'natural' : 'custom';
+        var natural = mode === 'natural';
+        var levelEl = document.getElementById('terminal-fee-level');
+        var customEl = document.getElementById('terminal-fee-custom');
+        var ratesEl = document.getElementById('terminal-fee-rates');
+        var validEl = document.getElementById('terminal-fee-valid-until');
+        if (levelEl) levelEl.classList.toggle('hidden', !natural);
+        if (customEl) customEl.classList.toggle('hidden', natural);
+        var rates = natural ? TERMINAL_FEE_RATES.natural : TERMINAL_FEE_RATES.custom;
+        if (ratesEl) ratesEl.textContent = '吃單 ' + rates.taker + ' / 掛單 ' + rates.maker;
+        if (validEl) {
+            if (mode === 'custom') {
+                validEl.textContent = '費率有效期至 ' + TERMINAL_CUSTOM_VALID_UNTIL + ' 24:00 (UTC+8)';
+                validEl.classList.remove('hidden');
+            } else {
+                validEl.classList.add('hidden');
+            }
+        }
+        setTerminalFeeDemoBtnStyles(mode);
     }
 
     function closeVipModal() {
@@ -5796,7 +5845,21 @@
         if (typeof PositionClose !== 'undefined') {
             PositionClose.refreshCloseQtyDisplay();
         }
+        applyTerminalFeeDemo('natural');
+        var tfn = document.getElementById('terminalFeeDemoNatural');
+        var tfc = document.getElementById('terminalFeeDemoCustom');
+        var tfcp = document.getElementById('terminalFeeDemoCustomPermanent');
+        if (tfn) tfn.addEventListener('click', function () { applyTerminalFeeDemo('natural'); });
+        if (tfc) tfc.addEventListener('click', function () { applyTerminalFeeDemo('custom'); });
+        if (tfcp) tfcp.addEventListener('click', function () { applyTerminalFeeDemo('customPermanent'); });
     });
 </script>
+
+<div id="terminal-fee-demo-bar" class="fixed bottom-6 left-1/2 -translate-x-1/2 flex flex-wrap justify-center gap-2 bg-white/95 border border-gray-200 rounded-full px-3 py-2 shadow-lg text-[11px] font-bold z-[9999] max-w-[min(96vw,520px)]" aria-label="原型演示：交易终端手续费率展示">
+    <span class="text-[9px] text-gray-400 font-bold self-center px-1 hidden sm:inline">交易终端·手續費率</span>
+    <button type="button" id="terminalFeeDemoNatural" class="px-3 py-1 rounded-full bg-gray-900 text-white">自然升降 VIP</button>
+    <button type="button" id="terminalFeeDemoCustom" class="px-3 py-1 rounded-full text-gray-600 hover:bg-gray-100">自定义·有有效期</button>
+    <button type="button" id="terminalFeeDemoCustomPermanent" class="px-3 py-1 rounded-full text-gray-600 hover:bg-gray-100">自定义·永久</button>
+</div>
 </body>
 </html>
