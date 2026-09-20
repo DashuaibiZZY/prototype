@@ -67,6 +67,7 @@
                             <p class="text-[18px] font-black text-amber-600 mt-0.5" id="vipTakerRate">0.034%</p>
                         </div>
                     </div>
+                    <p id="vipFeeValidUntil" class="hidden text-[10px] text-gray-500 mt-2 leading-relaxed">费率有效期至 2026-10-20 24:00 (UTC+8)</p>
                     <div class="mt-3 pt-3 border-t border-gray-50" id="vipProgressBlock">
                         <div class="flex justify-between items-center mb-1.5">
                             <span class="text-[10px] font-bold text-gray-600">升级 VIP 3</span>
@@ -170,9 +171,10 @@
     </div>
 </div>
 
-<div class="fixed bottom-6 left-1/2 -translate-x-1/2 flex gap-2 bg-white/95 border border-gray-200 rounded-full px-3 py-2 shadow-lg text-[11px] font-bold z-50">
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 flex flex-wrap justify-center gap-2 bg-white/95 border border-gray-200 rounded-full px-3 py-2 shadow-lg text-[11px] font-bold z-50 max-w-[340px]">
     <button type="button" id="demoNaturalBtn" class="px-3 py-1 rounded-full bg-gray-900 text-white">自然升降 VIP</button>
-    <button type="button" id="demoCustomBtn" class="px-3 py-1 rounded-full text-gray-600 hover:bg-gray-100">运营自定义费率</button>
+    <button type="button" id="demoCustomBtn" class="px-3 py-1 rounded-full text-gray-600 hover:bg-gray-100">自定义·有有效期</button>
+    <button type="button" id="demoCustomPermanentBtn" class="px-3 py-1 rounded-full text-gray-600 hover:bg-gray-100">自定义·永久</button>
 </div>
 
 <script src="../shared/forx-vip-tier-api.js?v=20260919-vip-config-v2"></script>
@@ -194,15 +196,38 @@
             }).join('');
         });
     }
+    var DEMO_CUSTOM_VALID_UNTIL = '2026-10-20';
+    function setDemoBtnStyles(active) {
+        var map = {
+            natural: document.getElementById('demoNaturalBtn'),
+            custom: document.getElementById('demoCustomBtn'),
+            customPermanent: document.getElementById('demoCustomPermanentBtn')
+        };
+        Object.keys(map).forEach(function (key) {
+            var btn = map[key];
+            if (!btn) return;
+            btn.className = key === active
+                ? 'px-3 py-1 rounded-full bg-gray-900 text-white'
+                : 'px-3 py-1 rounded-full text-gray-600 hover:bg-gray-100';
+        });
+    }
     function applyDemoMode(mode) {
-        demoMode = mode;
+        demoMode = mode === 'natural' ? 'natural' : 'custom';
         var natural = mode === 'natural';
         document.getElementById('vipCardTitle').textContent = natural ? '当前 VIP 等级' : '当前合约费率';
         document.getElementById('vipLevelBadge').classList.toggle('hidden', !natural);
         document.getElementById('vipCustomBadge').classList.toggle('hidden', natural);
         document.getElementById('vipProgressBlock').classList.toggle('hidden', !natural);
-        document.getElementById('demoNaturalBtn').className = natural ? 'px-3 py-1 rounded-full bg-gray-900 text-white' : 'px-3 py-1 rounded-full text-gray-600 hover:bg-gray-100';
-        document.getElementById('demoCustomBtn').className = natural ? 'px-3 py-1 rounded-full text-gray-600 hover:bg-gray-100' : 'px-3 py-1 rounded-full bg-gray-900 text-white';
+        var validEl = document.getElementById('vipFeeValidUntil');
+        if (validEl) {
+            if (mode === 'custom') {
+                validEl.textContent = '费率有效期至 ' + DEMO_CUSTOM_VALID_UNTIL + ' 24:00 (UTC+8)';
+                validEl.classList.remove('hidden');
+            } else {
+                validEl.classList.add('hidden');
+            }
+        }
+        setDemoBtnStyles(mode);
         if (!natural) {
             document.getElementById('vipMakerRate').textContent = '0.008%';
             document.getElementById('vipTakerRate').textContent = '0.020%';
@@ -214,6 +239,7 @@
     }
     document.getElementById('demoNaturalBtn').addEventListener('click', function () { applyDemoMode('natural'); });
     document.getElementById('demoCustomBtn').addEventListener('click', function () { applyDemoMode('custom'); });
+    document.getElementById('demoCustomPermanentBtn').addEventListener('click', function () { applyDemoMode('customPermanent'); });
     renderAppVipTable();
 })();
 </script>
