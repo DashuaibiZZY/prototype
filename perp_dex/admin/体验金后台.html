@@ -137,31 +137,14 @@
       <section class="card p-3 space-y-2">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wide">数据总览</h3>
-          <select id="trialOverviewPeriod" onchange="renderTrialOverview()" class="border border-slate-200 rounded px-2 py-1 text-xs bg-white outline-none">
-            <option value="all">全部</option>
-            <option value="7d">近 7 天</option>
-            <option value="30d">近 30 天</option>
-          </select>
         </div>
         <div id="trialOverviewStatsGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2"></div>
       </section>
       <section class="card p-5">
-        <div class="grid grid-cols-4 gap-4 items-end">
-          <div>
+        <div class="grid grid-cols-3 gap-4 items-end max-w-3xl">
+          <div class="col-span-2">
             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID / 钱包 / 邮箱</label>
             <input id="userFilterWallet" type="text" placeholder="输入 UID、钱包或邮箱" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
-          </div>
-          <div>
-            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">活动名称</label>
-            <input id="userFilterActivity" type="text" placeholder="模糊匹配" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
-          </div>
-          <div>
-            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">持卡状态</label>
-            <select id="userFilterStatus" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none bg-white">
-              <option value="all">全部</option>
-              <option value="has_balance">有剩余体验金</option>
-              <option value="in_use">有使用中卡券</option>
-            </select>
           </div>
           <div class="flex gap-2">
             <button onclick="applyUserFilters()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold">查询</button>
@@ -248,8 +231,7 @@
               <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">卡券ID</th>
               <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">类型</th>
               <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">金额变动</th>
-              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">关联订单/仓位</th>
-              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">备注</th>
+              <th class="px-3 py-3 text-xs font-bold text-slate-500 uppercase">关联仓位</th>
             </tr>
             </thead>
             <tbody id="couponUsageTableBody" class="divide-y divide-slate-50"></tbody>
@@ -506,36 +488,14 @@
   const GROUP_PAGE_SIZE = 5;
 
   const TRIAL_OVERVIEW_STATS = {
-    all: {
-      totalIssued: 1285600,
-      inactiveFaceTotal: 458200,
-      activatedFaceTotal: 612400,
-      totalRemaining: 770600,
-      totalLossDeduct: 186420,
-      totalFeeDeduct: 52880,
-      totalReclaimed: 156800,
-      activeHolderCount: 2156
-    },
-    '7d': {
-      totalIssued: 86400,
-      inactiveFaceTotal: 458200,
-      activatedFaceTotal: 612400,
-      totalRemaining: 770600,
-      totalLossDeduct: 12480,
-      totalFeeDeduct: 3620,
-      totalReclaimed: 8200,
-      activeHolderCount: 2156
-    },
-    '30d': {
-      totalIssued: 312800,
-      inactiveFaceTotal: 458200,
-      activatedFaceTotal: 612400,
-      totalRemaining: 770600,
-      totalLossDeduct: 48200,
-      totalFeeDeduct: 14280,
-      totalReclaimed: 28400,
-      activeHolderCount: 2156
-    }
+    totalIssued: 1285600,
+    inactiveFaceTotal: 458200,
+    activatedFaceTotal: 612400,
+    totalRemaining: 770600,
+    totalLossDeduct: 186420,
+    totalFeeDeduct: 52880,
+    totalReclaimed: 156800,
+    activeHolderCount: 2156
   };
 
   const TRIAL_USERS = [
@@ -561,13 +521,19 @@
 
   const COUPON_USAGE = {
     'CPN001': [
-      { time: '2026-07-12 08:22', type: '激活', amount: '-', order: '-', note: '用户激活卡券' },
-      { time: '2026-07-12 09:05', type: '开仓抵扣', amount: '-20 USDT', order: 'ORD-88231', note: 'BTC 永续开仓保证金抵扣' },
-      { time: '2026-07-15 14:30', type: '亏损抵扣', amount: '-15 USDT', order: 'POS-44102', note: '平仓亏损抵扣' }
+      { time: '2026-07-12 08:22', type: '激活', amount: '-', position: '-' },
+      { time: '2026-07-12 09:05', type: '费用抵扣', amount: '-5 USDT', position: 'POS-88231' },
+      { time: '2026-07-15 14:30', type: '亏损抵扣', amount: '-15 USDT', position: 'POS-44102' }
     ],
     'CPN003': [
-      { time: '2026-07-06 10:00', type: '激活', amount: '-', order: '-', note: '用户激活卡券' },
-      { time: '2026-07-08 16:20', type: '手续费抵扣', amount: '-12 USDT', order: 'ORD-90112', note: 'Taker 手续费抵扣' }
+      { time: '2026-07-06 10:00', type: '激活', amount: '-', position: '-' },
+      { time: '2026-07-08 16:20', type: '费用抵扣', amount: '-12 USDT', position: 'POS-90112' }
+    ],
+    'CPN020': [
+      { time: '2026-06-02 09:00', type: '激活', amount: '-', position: '-' },
+      { time: '2026-06-28 16:00', type: '亏损抵扣', amount: '-28 USDT', position: 'POS-22001' },
+      { time: '2026-06-28 16:01', type: '费用抵扣', amount: '-6 USDT', position: 'POS-22001' },
+      { time: '2026-07-01 00:00', type: '回收', amount: '-116 USDT', position: '-' }
     ]
   };
 
@@ -606,21 +572,16 @@
   };
 
   function renderTrialOverview() {
-    const period = document.getElementById('trialOverviewPeriod').value;
-    const s = TRIAL_OVERVIEW_STATS[period] || TRIAL_OVERVIEW_STATS.all;
-    const periodIssuedLabel = period === 'all' ? '累计发放' : '发放体验金';
-    const periodLossLabel = period === 'all' ? '累计亏损抵扣' : '亏损抵扣';
-    const periodFeeLabel = period === 'all' ? '累计费用抵扣' : '费用抵扣';
-    const periodReclaimedLabel = period === 'all' ? '已回收体验金总额' : '回收体验金';
+    const s = TRIAL_OVERVIEW_STATS;
     const fmtU = function (n) { return n.toLocaleString() + ' U'; };
     document.getElementById('trialOverviewStatsGrid').innerHTML = [
-      { label: periodIssuedLabel, value: fmtU(s.totalIssued), color: 'text-slate-800' },
+      { label: '累计发放', value: fmtU(s.totalIssued), color: 'text-slate-800' },
       { label: '未激活体验金面值总额', value: fmtU(s.inactiveFaceTotal), color: 'text-amber-600' },
       { label: '已激活体验金面值总额', value: fmtU(s.activatedFaceTotal), color: 'text-emerald-600' },
       { label: '当前剩余总体验金', value: fmtU(s.totalRemaining), color: 'text-blue-600', hint: '可使用保证金+占用中保证金' },
-      { label: periodLossLabel, value: fmtU(s.totalLossDeduct), color: 'text-slate-700' },
-      { label: periodFeeLabel, value: fmtU(s.totalFeeDeduct), color: 'text-slate-700' },
-      { label: periodReclaimedLabel, value: fmtU(s.totalReclaimed), color: 'text-red-600' },
+      { label: '累计亏损抵扣', value: fmtU(s.totalLossDeduct), color: 'text-slate-700' },
+      { label: '累计费用抵扣', value: fmtU(s.totalFeeDeduct), color: 'text-slate-700' },
+      { label: '已回收体验金总额', value: fmtU(s.totalReclaimed), color: 'text-red-600' },
       { label: '当前持卡总人数', value: s.activeHolderCount.toLocaleString(), color: 'text-slate-700', hint: '仍有剩余或待激活体验金的用户' }
     ].map(function (c) {
       const hintAttr = c.hint ? ' title="' + c.hint + '"' : '';
@@ -918,30 +879,25 @@
     let usageRows = [];
     coupons.forEach(function (c) {
       (COUPON_USAGE[c.id] || []).forEach(function (row) {
-        usageRows.push({ time: row.time, couponId: c.id, type: row.type, amount: row.amount, order: row.order, note: row.note });
+        usageRows.push({ time: row.time, couponId: c.id, type: row.type, amount: row.amount, position: row.position || '-' });
       });
     });
     usageRows.sort(function (a, b) { return b.time.localeCompare(a.time); });
     const usageSliced = trialSlice(usageRows, trialUsagePage);
     trialUsagePage = usageSliced.page;
     document.getElementById('couponUsageTableBody').innerHTML = usageSliced.items.length ? usageSliced.items.map(function (r) {
-      return '<tr><td class="px-4 py-3">' + r.time + '</td><td class="px-3 py-3 font-mono">' + r.couponId + '</td><td class="px-3 py-3">' + r.type + '</td><td class="px-3 py-3 font-bold">' + r.amount + '</td><td class="px-3 py-3 font-mono text-xs">' + r.order + '</td><td class="px-3 py-3 text-slate-500">' + r.note + '</td></tr>';
-    }).join('') : '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">暂无使用流水</td></tr>';
+      return '<tr><td class="px-4 py-3">' + r.time + '</td><td class="px-3 py-3 font-mono">' + r.couponId + '</td><td class="px-3 py-3">' + r.type + '</td><td class="px-3 py-3 font-bold">' + r.amount + '</td><td class="px-3 py-3 font-mono text-xs">' + r.position + '</td></tr>';
+    }).join('') : '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-400">暂无使用流水</td></tr>';
     trialMountPag('trial-usage-pagination', usageSliced.total, trialUsagePage, 'trial-usage');
   }
 
   function applyUserFilters() {
     const wallet = document.getElementById('userFilterWallet').value.trim().toLowerCase();
-    const activity = document.getElementById('userFilterActivity').value.trim();
-    const status = document.getElementById('userFilterStatus').value;
     let list = TRIAL_USERS.filter(function (u) {
       if (wallet) {
         const hay = [u.uid, u.wallet, u.email].join(' ').toLowerCase();
         if (hay.indexOf(wallet) === -1) return false;
       }
-      if (activity && u.activity.indexOf(activity) === -1) return false;
-      if (status === 'has_balance' && u.totalRemaining <= 0) return false;
-      if (status === 'in_use' && u.activatedFace <= 0) return false;
       return true;
     });
     trialUserListPage = 1;
@@ -949,8 +905,7 @@
   }
 
   function resetUserFilters() {
-    ['userFilterWallet', 'userFilterActivity'].forEach(function (id) { document.getElementById(id).value = ''; });
-    document.getElementById('userFilterStatus').value = 'all';
+    document.getElementById('userFilterWallet').value = '';
     trialUserListPage = 1;
     renderTrialUserTable(TRIAL_USERS);
   }
