@@ -5509,6 +5509,7 @@
     }
 
     const marketTagTabs = [
+        { key: 'fav', label: '自选', priority: -1 },
         { key: 'all', label: '全部', priority: 0 },
         { key: 'new', label: '新币上线', priority: 1 },
         { key: 'hot', label: '热门', priority: 2 },
@@ -5539,6 +5540,14 @@
     function filterMarketListRows(modal, tabKey) {
         const rows = [...modal.querySelectorAll('[data-market-pair]')];
         const tag = tabKey || modal.dataset.activeTag || 'all';
+
+        if (tag === 'fav') {
+            rows.forEach(row => {
+                const pair = row.dataset.marketPair;
+                row.classList.toggle('hidden', !marketFavorites.has(pair));
+            });
+            return;
+        }
 
         if (tag === 'all') {
             rows.forEach(row => row.classList.remove('hidden'));
