@@ -69,6 +69,9 @@
 
         <!-- 2. 分类标签 Tab（单层） -->
         <div id="market-tabs" class="cat-tab-row no-scrollbar"></div>
+        <div id="fav-toolbar" class="hidden px-5 pb-1 flex justify-end items-center">
+            <a href="编辑自选.html" class="text-[11px] font-black text-gray-500 active:opacity-70">编辑自选</a>
+        </div>
 
         <!-- 3. 表頭字段 -->
         <div id="markets-list-header" class="flex justify-between items-center px-5 py-3 text-[10px] text-gray-400 font-bold uppercase tracking-wider relative">
@@ -80,9 +83,14 @@
                 <span>最新價</span>
                 <div class="sort-icon"><div class="sort-arrow arrow-up"></div><div class="sort-arrow arrow-down"></div></div>
             </button>
-            <div class="flex items-center justify-end w-20 space-x-2">
+            <div class="flex items-center justify-end w-24 space-x-1">
                 <span>今日漲跌</span>
                 <div class="sort-icon"><div class="sort-arrow arrow-up"></div><div class="sort-arrow arrow-down"></div></div>
+                <a href="编辑自选.html" id="edit-fav-btn" class="hidden ml-1 p-0.5" title="编辑自选" aria-label="编辑自选">
+                    <svg class="w-3.5 h-3.5 text-gray-400 hover:text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                </a>
             </div>
         </div>
 
@@ -151,7 +159,10 @@
 </div>
 
 <!-- 外部懸浮按鈕 -->
-<div class="fixed bottom-10 right-10">
+<div class="fixed bottom-10 right-10 flex flex-col items-end gap-2">
+    <button type="button" onclick="toggleFavEmptyDemo()" class="bg-gray-900 text-white px-4 py-2 rounded-full text-[10px] font-black shadow-lg uppercase tracking-wide">
+        原型 · 自选空态
+    </button>
     <button onclick="toggleNetworkError()" class="bg-red-600 text-white px-6 py-3 rounded-full text-xs font-black shadow-2xl hover:bg-red-700 transition-all uppercase italic tracking-widest">
         模拟网络异常
     </button>
@@ -159,12 +170,18 @@
 
 <script>
     const marketTagTabs = [
+        { key: 'fav', label: '自选', system: true, priority: -1 },
         { key: 'all', label: '全部', system: true, priority: 0 },
         { key: 'new', label: '新币上线', system: true, priority: 1 },
         { key: 'hot', label: '热门', system: true, priority: 2 },
         { key: 'main', label: '主流币', system: false, priority: 3 },
         { key: 'ai', label: 'AI', system: false, priority: 4 }
     ];
+
+    /** 自选顺序（与详情页星标、编辑自选页一致） */
+    const favPairOrder = ['BTCUSDT', 'ETHUSDT', 'SNDKUSDT', 'BNBUSDT'];
+    const favPairs = new Set(favPairOrder);
+    let favEmptyDemo = false;
 
     function sortByTabPriority(tabs) {
         return [...tabs].sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
@@ -222,20 +239,56 @@
         if (jumpView === 'gainers' || jumpView === 'losers') {
             return [...marketData].sort((a, b) => jumpView === 'gainers' ? b.changeNum - a.changeNum : a.changeNum - b.changeNum);
         }
+        if (currentTagTab === 'fav') {
+            if (favEmptyDemo || favPairs.size === 0) return [];
+            const orderMap = new Map(favPairOrder.map((n, i) => [n, i]));
+            return marketData
+                .filter(item => favPairs.has(item.name))
+                .sort((a, b) => (orderMap.get(a.name) ?? 99) - (orderMap.get(b.name) ?? 99));
+        }
         if (currentTagTab === 'all') return marketData;
         if (currentTagTab === 'hot') return getHotList(HOT_LIST_LIMIT);
         if (currentTagTab === 'new') return getNewList();
         return marketData.filter(item => item.tags.includes(currentTagTab));
     }
 
+    function renderFavEmptyState() {
+        return `
+            <div class="pt-20 pb-8 text-center px-4">
+                <div class="w-16 h-16 mx-auto bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                </div>
+                <p class="text-sm font-black text-gray-900">暂无自选</p>
+                <p class="text-[11px] text-gray-400 mt-2 leading-relaxed">在列表或行情详情页点击星标添加<br>添加后将显示在本 Tab</p>
+                <a href="行情详情.html" class="inline-block mt-6 px-6 py-2.5 bg-black text-white rounded-full text-[11px] font-black">去添加自选</a>
+            </div>`;
+    }
+
+    function updateFavChrome() {
+        const onFav = currentTagTab === 'fav';
+        const toolbar = document.getElementById('fav-toolbar');
+        const editBtn = document.getElementById('edit-fav-btn');
+        const hasFav = !favEmptyDemo && favPairs.size > 0;
+        if (toolbar) toolbar.classList.toggle('hidden', !onFav || !hasFav);
+        if (editBtn) editBtn.classList.toggle('hidden', !onFav || !hasFav);
+    }
+
     function renderMarketList() {
         const listContainer = document.getElementById('content-list');
+        updateFavChrome();
         const data = getFilteredMarketData();
+        if (currentTagTab === 'fav' && data.length === 0) {
+            listContainer.innerHTML = renderFavEmptyState();
+            return;
+        }
         listContainer.innerHTML = data.map(item => `
         <a href="行情详情.html" class="flex justify-between items-center py-1 fade-in">
-            <div>
-                <p class="font-black text-sm text-gray-900">${item.name}</p>
-                <p class="text-[10px] text-gray-400 font-medium">${item.vol} USDT</p>
+            <div class="flex items-center gap-1.5 min-w-0">
+                ${currentTagTab === 'fav' ? '<svg class="w-3 h-3 shrink-0 text-yellow-400" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/></svg>' : ''}
+                <div>
+                    <p class="font-black text-sm text-gray-900">${item.name}</p>
+                    <p class="text-[10px] text-gray-400 font-medium">${item.vol} USDT</p>
+                </div>
             </div>
             <div class="text-right flex-1 pr-6">
                 <p class="font-bold text-sm text-gray-900">${item.price}</p>
@@ -252,6 +305,12 @@
         currentTagTab = tab;
         renderMarketTagTabs();
         renderMarketList();
+    }
+
+    function toggleFavEmptyDemo() {
+        favEmptyDemo = !favEmptyDemo;
+        if (currentTagTab !== 'fav') switchMarketTagTab('fav');
+        else renderMarketList();
     }
 
     function initMarketFromQuery() {
