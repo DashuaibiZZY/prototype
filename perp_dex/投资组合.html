@@ -291,6 +291,7 @@
                                 <div><p class="text-[9px] text-gray-500 font-bold uppercase">Maker 費率</p><p class="text-sm font-black text-green-400" data-portfolio-vip-maker>0.010%</p></div>
                                 <div><p class="text-[9px] text-gray-500 font-bold uppercase">Taker 費率</p><p class="text-sm font-black text-green-400" data-portfolio-vip-taker>0.034%</p></div>
                             </div>
+                            <p class="hidden text-[9px] text-gray-400 font-bold mt-1 leading-relaxed" data-portfolio-vip-valid-until></p>
                             <div class="pt-2" data-portfolio-vip-progress>
                                 <div class="flex justify-between items-end mb-2">
                                     <p class="text-[9px] text-gray-500 font-bold uppercase">升級進度 <span class="text-white ml-1">18%</span></p>
@@ -720,12 +721,25 @@ function applyGuestState(root) {
     if (marginRatio) marginRatio.className = 'text-2xl font-black text-gray-400';
     root.dataset.guest = 'true';
     q(root, '[data-portfolio-vip-progress]')?.classList.add('hidden');
+    setCustomFeeValidUntil(root, null);
     const feeBtn = q(root, '[data-portfolio-vip-fee-btn]');
     if (feeBtn) feeBtn.className = 'text-[10px] font-black text-gray-400 border border-gray-700 px-2 py-1 rounded-sm hover:text-yellow-500 hover:border-yellow-500 transition-colors uppercase cursor-pointer';
     q(root, '[data-portfolio-chart-panel]')?.classList.add('opacity-30');
     q(root, '[data-portfolio-guest-hint]')?.classList.remove('hidden');
     q(root, '[data-portfolio-referral-hint]')?.classList.remove('hidden');
     q(root, '[data-portfolio-data-table]')?.classList.add('hidden');
+}
+
+function setCustomFeeValidUntil(root, dateStr) {
+    const el = q(root, '[data-portfolio-vip-valid-until]');
+    if (!el) return;
+    if (dateStr) {
+        el.textContent = '費率有效期至 ' + dateStr + ' 24:00 (UTC+8)';
+        el.classList.remove('hidden');
+    } else {
+        el.textContent = '';
+        el.classList.add('hidden');
+    }
 }
 
 function applyCustomFeeState(root, opts) {
@@ -739,6 +753,7 @@ function applyCustomFeeState(root, opts) {
     const setText = (sel, text) => { const el = q(root, sel); if (el) el.textContent = text; };
     setText('[data-portfolio-vip-maker]', maker);
     setText('[data-portfolio-vip-taker]', taker);
+    setCustomFeeValidUntil(root, opts.customValidUntil || null);
 }
 
 function applyLoggedInState(root, opts = {}) {
@@ -770,6 +785,7 @@ function applyLoggedInState(root, opts = {}) {
     q(root, '[data-portfolio-vip-level-wrap]')?.classList.remove('hidden');
     const customWrap = q(root, '[data-portfolio-vip-custom-wrap]');
     if (customWrap) { customWrap.classList.add('hidden'); customWrap.classList.remove('flex'); }
+    setCustomFeeValidUntil(root, null);
     const feeBtn = q(root, '[data-portfolio-vip-fee-btn]');
     if (feeBtn) feeBtn.className = 'text-[10px] font-black text-gray-400 border border-gray-700 px-2 py-1 rounded-sm hover:text-yellow-500 hover:border-yellow-500 transition-colors uppercase cursor-pointer';
     q(root, '[data-portfolio-chart-panel]')?.classList.remove('opacity-30');
@@ -939,8 +955,13 @@ const STATES = [
         render: () => renderPortfolio({ guest: false })
     },
     {
-        title: '②b 已登录 · 运营自定义费率',
-        desc: '生效运营自定义 Maker/Taker 时：不展示 VIP 等级与升级进度；仍展示近 14 天交易量与当前 Maker/Taker；费率表弹窗不高亮 VIP 档位',
+        title: '②b 已登录 · 运营自定义费率（有有效期）',
+        desc: '自定义 Maker/Taker；Maker/Taker 下方展示「費率有效期至 YYYY-MM-DD 24:00 (UTC+8)」',
+        render: () => renderPortfolio({ guest: false, customFee: true, customMaker: '0.008%', customTaker: '0.020%', customValidUntil: '2026-10-20' })
+    },
+    {
+        title: '②c 已登录 · 运营自定义费率（永久）',
+        desc: '运营配置未填写有效期天数时，不展示费率到期文案',
         render: () => renderPortfolio({ guest: false, customFee: true, customMaker: '0.008%', customTaker: '0.020%' })
     },
     {
