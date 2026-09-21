@@ -566,9 +566,9 @@
     };
 
     function renderUidCell(row) {
-        var chip = global.AdminCopyChip ? global.AdminCopyChip.userIdentity({ uid: row.uid, wallet: row.wallet }) :
-            '<span class="font-black block">' + row.uid + '</span><span class="text-[10px] text-slate-400">' + row.wallet + '</span>';
-        return chip + '<span class="virtual-badge mt-1 inline-block">虚拟</span>';
+        var uidHtml = global.AdminCopyChip ? global.AdminCopyChip.uid(row.uid) :
+            '<span class="font-black">' + row.uid + '</span>';
+        return '<div>' + uidHtml + '<span class="virtual-badge mt-1 inline-block">虚拟</span></div>';
     }
 
     function renderTable() {

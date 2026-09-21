@@ -219,8 +219,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">结算周 / 活动</label>
-                        <input id="weeklyFilterLabel" type="text" placeholder="如 W29 或活动名" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">发放日</label>
+                        <input id="weeklyFilterGrantDate" type="text" placeholder="如 2026-07-21" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID / 钱包</label>
@@ -238,10 +238,8 @@
                         <tr>
                             <th class="px-4 py-3 text-xs font-bold text-slate-500">发放时间</th>
                             <th class="px-3 py-3 text-xs font-bold text-slate-500">类型</th>
-                            <th class="px-3 py-3 text-xs font-bold text-slate-500">结算周 / 活动</th>
-                            <th class="px-3 py-3 text-xs font-bold text-slate-500 text-right">计划发放</th>
-                            <th class="px-3 py-3 text-xs font-bold text-slate-500 text-right">实发积分</th>
-                            <th class="px-3 py-3 text-xs font-bold text-slate-500 text-right">影子分摊</th>
+                            <th class="px-3 py-3 text-xs font-bold text-slate-500">积分发放日</th>
+                            <th class="px-3 py-3 text-xs font-bold text-slate-500 text-right">发放积分数量</th>
                             <th class="px-3 py-3 text-xs font-bold text-slate-500 text-right">用户数</th>
                             <th class="px-4 py-3 text-xs font-bold text-slate-500 text-right">操作</th>
                         </tr>
@@ -282,7 +280,6 @@
                             <tr>
                                 <th class="px-3 py-2 text-xs font-bold text-slate-500">UID</th>
                                 <th class="px-3 py-2 text-xs font-bold text-slate-500">钱包/邮箱</th>
-                                <th class="px-3 py-2 text-xs font-bold text-slate-500">类型</th>
                                 <th class="px-3 py-2 text-xs font-bold text-slate-500 text-center">加成</th>
                                 <th class="px-3 py-2 text-xs font-bold text-slate-500 text-right">本周合计</th>
                                 <th class="px-3 py-2 text-xs font-bold text-slate-500 text-right">交易(原/占比/分)</th>
@@ -775,6 +772,14 @@
         return d.raw + ' · ' + d.pct + ' · ' + d.points;
     }
 
+    function batchGrantDate(b) {
+        return b.grantDate || (b.time ? String(b.time).slice(0, 10) : '—');
+    }
+
+    function batchPointsAmount(b) {
+        return b.pointsAmount != null ? b.pointsAmount : (b.actual != null ? b.actual : b.planned);
+    }
+
     function renderPointsOverview() {
         const period = document.getElementById('overviewPeriod').value;
         const s = OVERVIEW_STATS[period] || OVERVIEW_STATS.all;
@@ -795,13 +800,6 @@
             '<span>系统周结算 <b class="text-slate-800">' + s.system.toLocaleString() + '</b> <span class="text-slate-400">(' + (s.system / srcTotal * 100).toFixed(1) + '%)</span></span>' +
             '<span>手动发放 <b class="text-slate-800">' + s.manual.toLocaleString() + '</b> <span class="text-slate-400">(' + (s.manual / srcTotal * 100).toFixed(1) + '%)</span></span>' +
             '<span>新人任务 <b class="text-slate-800">' + s.newbie.toLocaleString() + '</b> <span class="text-slate-400">(' + (s.newbie / srcTotal * 100).toFixed(1) + '%)</span></span>' +
-            '</div>' +
-            '<div class="flex flex-wrap items-center gap-x-4 gap-y-1">' +
-            '<span class="font-bold text-slate-500">最近一周</span>' +
-            '<span>计划总池 <b class="text-slate-800">' + s.planned.toLocaleString() + '</b></span>' +
-            '<span>实发 <b class="text-blue-600">' + s.actual.toLocaleString() + '</b></span>' +
-            '<span>影子分摊 <b class="text-amber-600">' + s.shadow.toLocaleString() + '</b></span>' +
-            '<span>占比 <b class="text-slate-800">' + s.shadowPct + '%</b></span>' +
             '</div>';
     }
 
@@ -825,11 +823,10 @@
         weeklyBatchPage = sliced.page;
         document.getElementById('weeklyBatchTableBody').innerHTML = sliced.items.map(function (b) {
             const typeTag = b.type === 'system' ? '<span class="status-tag tag-system">系统周结算</span>' : '<span class="status-tag tag-manual">手动发放</span>';
-            const shadow = b.type === 'system' ? b.shadow.toLocaleString() : '—';
-            const users = b.realUserCount + ' / ' + b.shadowUserCount;
-            return '<tr class="hover:bg-slate-50"><td class="px-4 py-3">' + b.time + '</td><td class="px-3 py-3">' + typeTag + '</td><td class="px-3 py-3 font-bold">' + b.label + '</td>' +
-                '<td class="px-3 py-3 text-right">' + b.planned.toLocaleString() + '</td><td class="px-3 py-3 text-right font-bold text-blue-600">' + b.actual.toLocaleString() + '</td>' +
-                '<td class="px-3 py-3 text-right text-amber-600">' + shadow + '</td>' +
+            const users = (b.userCount != null ? b.userCount : b.realUserCount).toLocaleString();
+            const pts = batchPointsAmount(b);
+            return '<tr class="hover:bg-slate-50"><td class="px-4 py-3">' + b.time + '</td><td class="px-3 py-3">' + typeTag + '</td><td class="px-3 py-3 font-bold">' + batchGrantDate(b) + '</td>' +
+                '<td class="px-3 py-3 text-right font-bold text-blue-600">' + pts.toLocaleString() + '</td>' +
                 '<td class="px-3 py-3 text-right text-xs">' + users + '</td>' +
                 '<td class="px-4 py-3 text-right"><button onclick="showWeeklyDetail(\'' + b.id + '\')" class="text-blue-600 font-bold hover:underline">查看详情</button></td></tr>';
         }).join('');
@@ -838,11 +835,11 @@
 
     function applyWeeklyFilters() {
         const type = document.getElementById('weeklyFilterType').value;
-        const label = document.getElementById('weeklyFilterLabel').value.trim().toLowerCase();
+        const grantDateQ = document.getElementById('weeklyFilterGrantDate').value.trim();
         const userQ = document.getElementById('weeklyFilterUser').value.trim().toLowerCase();
         filteredWeeklyBatches = WEEKLY_BATCHES.filter(function (b) {
             if (type !== 'all' && b.type !== type) return false;
-            if (label && b.label.toLowerCase().indexOf(label) === -1) return false;
+            if (grantDateQ && batchGrantDate(b).indexOf(grantDateQ) === -1) return false;
             if (userQ) {
                 const hit = b.recipients.some(function (r) {
                     return r.uid.toLowerCase().indexOf(userQ) !== -1 || r.wallet.toLowerCase().indexOf(userQ) !== -1;
@@ -857,7 +854,7 @@
 
     function resetWeeklyFilters() {
         document.getElementById('weeklyFilterType').value = 'all';
-        document.getElementById('weeklyFilterLabel').value = '';
+        document.getElementById('weeklyFilterGrantDate').value = '';
         document.getElementById('weeklyFilterUser').value = '';
         filteredWeeklyBatches = WEEKLY_BATCHES.slice();
         weeklyBatchPage = 1;
@@ -886,14 +883,12 @@
         if (batch.poolPct) {
             poolSnap = '<p class="text-xs text-slate-500 mt-2">子池占比 ' + batch.poolPct.trade + '/' + batch.poolPct.position + '/' + batch.poolPct.loss + '/' + batch.poolPct.profit + '/' + batch.poolPct.balance + '/' + batch.poolPct.invite + ' · 有效持仓最小时长 ' + batch.minHolding + '</p>';
         }
+        const pts = batchPointsAmount(batch);
         document.getElementById('weeklyDetailSummary').innerHTML =
-            '<div class="flex flex-wrap justify-between gap-4"><div><p class="text-xs text-slate-400">' + batch.id + ' · ' + typeLabel + ' · ' + batch.time + '</p><p class="text-lg font-black mt-1">' + batch.label + '</p>' + poolSnap + '</div>' +
-            '<div class="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">' +
-            '<div class="flex justify-between gap-4"><span class="text-slate-500">计划发放</span><b>' + batch.planned.toLocaleString() + '</b></div>' +
-            '<div class="flex justify-between gap-4"><span class="text-slate-500">实发积分</span><b class="text-blue-600">' + batch.actual.toLocaleString() + '</b></div>' +
-            '<div class="flex justify-between gap-4"><span class="text-slate-500">影子分摊</span><b class="text-amber-600">' + (batch.shadow ? batch.shadow.toLocaleString() : '—') + '</b></div>' +
-            '<div class="flex justify-between gap-4"><span class="text-slate-500">真实 / 影子用户</span><b>' + batch.realUserCount + ' / ' + batch.shadowUserCount + '</b></div>' +
-            '<div class="flex justify-between gap-4"><span class="text-slate-500">审批单</span><b>' + (batch.approvalId || '—') + '</b></div></div></div>';
+            '<div class="flex flex-wrap justify-between gap-4"><div><p class="text-xs text-slate-400">' + batch.id + ' · ' + typeLabel + '</p><p class="text-lg font-black mt-1">' + batch.label + '</p>' + poolSnap + '</div>' +
+            '<div class="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-3 text-sm min-w-[240px]">' +
+            '<div class="flex justify-between gap-4"><span class="text-slate-500">发放积分数量</span><b class="text-blue-600 text-lg">' + pts.toLocaleString() + '</b></div>' +
+            '<div class="flex justify-between gap-4"><span class="text-slate-500">发放时间</span><b>' + batch.time + '</b></div></div></div>';
 
         document.getElementById('weeklyDetailFilterUser').value = '';
         document.getElementById('weeklyDetailFilterType').value = 'all';
@@ -919,12 +914,11 @@
         const sliced = ptsSlice(filteredWeeklyDetailRows, weeklyDetailPage);
         weeklyDetailPage = sliced.page;
         document.getElementById('weeklyDetailTableBody').innerHTML = sliced.items.map(function (r) {
-            const typeTag = r.userType === 'shadow' ? '<span class="status-tag tag-config">影子</span>' : '<span class="text-slate-500">真实</span>';
             const contact = weeklyContactCell(r);
             if (isManual || r.manual) {
-                return '<tr class="hover:bg-slate-50"><td class="px-3 py-2 font-mono font-bold">' + r.uid + '</td><td class="px-3 py-2 font-mono">' + contact + '</td><td class="px-3 py-2">' + typeTag + '</td><td class="px-3 py-2 text-center">—</td><td class="px-3 py-2 text-right font-bold text-green-600">+' + r.total + '</td><td colspan="6" class="px-3 py-2 text-slate-400">手动发放，无六维拆分</td></tr>';
+                return '<tr class="hover:bg-slate-50"><td class="px-3 py-2 font-mono font-bold">' + r.uid + '</td><td class="px-3 py-2 font-mono">' + contact + '</td><td class="px-3 py-2 text-center">—</td><td class="px-3 py-2 text-right font-bold text-green-600">+' + r.total + '</td><td colspan="6" class="px-3 py-2 text-slate-400">手动发放，无六维拆分</td></tr>';
             }
-            return '<tr class="hover:bg-slate-50' + (r.userType === 'shadow' ? ' bg-amber-50/40' : '') + '"><td class="px-3 py-2 font-mono font-bold">' + r.uid + '</td><td class="px-3 py-2 font-mono">' + contact + '</td><td class="px-3 py-2">' + typeTag + '</td><td class="px-3 py-2 text-center font-bold">' + r.multiplier + '</td><td class="px-3 py-2 text-right font-bold">' + r.total + '</td>' +
+            return '<tr class="hover:bg-slate-50' + (r.userType === 'shadow' ? ' bg-amber-50/40' : '') + '"><td class="px-3 py-2 font-mono font-bold">' + r.uid + '</td><td class="px-3 py-2 font-mono">' + contact + '</td><td class="px-3 py-2 text-center font-bold">' + r.multiplier + '</td><td class="px-3 py-2 text-right font-bold">' + r.total + '</td>' +
                 DIM_META.map(function (m) { return '<td class="px-3 py-2 text-right text-slate-600">' + formatDimCell(r.dims[m.key]) + '</td>'; }).join('') + '</tr>';
         }).join('');
         ptsMountPag('weekly-detail-pagination', sliced.total, weeklyDetailPage, 'pts-weekly-detail');
