@@ -647,6 +647,21 @@
     </div>
 </div>
 
+<!-- 撤销自定义积分加成 -->
+<div id="modal-revoke-custom-bonus" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-[420px] overflow-hidden">
+        <div class="px-6 py-5 border-b">
+            <h3 class="text-lg font-bold text-slate-800">撤销自定义积分加成？</h3>
+            <p class="text-sm text-slate-500 mt-2 leading-relaxed">确认后，该用户将不再使用运营配置的加成系数，后续周结算按<strong>自然等级加成</strong>参与瓜分（随伞下周交易额升降档）。</p>
+            <p class="text-xs text-slate-400 mt-2">仅对当前已生效的自定义配置生效；撤销操作写入操作记录。</p>
+        </div>
+        <div class="p-5 bg-slate-50 flex gap-3">
+            <button type="button" onclick="closeRevokeCustomBonusModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">取消</button>
+            <button type="button" onclick="confirmRevokeCustomBonus()" class="flex-1 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold">确认撤销</button>
+        </div>
+    </div>
+</div>
+
 <script src="../shared/points-program.js"></script>
 <script src="admin-approval.js"></script>
 <script src="admin-pagination.js"></script>
@@ -1055,13 +1070,68 @@
         return '<span class="status-tag tag-natural-bonus">自然等级 ' + u.naturalMultiplier + 'x</span>';
     }
 
+    function syncPointsUserEffectiveBonus(u) {
+        if (u.bonusType === 'custom' && u.customBonus != null) {
+            u.multiplier = u.customBonus + 'x';
+            return;
+        }
+        u.bonusType = 'natural';
+        u.customBonus = null;
+        u.multiplier = u.naturalMultiplier + 'x';
+    }
+
+    let revokeCustomBonusUid = null;
+
+    function openRevokeCustomBonusModal(uid) {
+        const user = POINTS_USERS.find(function (u) { return u.uid === uid; });
+        if (!user || user.bonusType !== 'custom') return;
+        revokeCustomBonusUid = uid;
+        document.getElementById('modal-revoke-custom-bonus').classList.remove('hidden');
+    }
+
+    function closeRevokeCustomBonusModal() {
+        revokeCustomBonusUid = null;
+        document.getElementById('modal-revoke-custom-bonus').classList.add('hidden');
+    }
+
+    function confirmRevokeCustomBonus() {
+        const uid = revokeCustomBonusUid;
+        const user = POINTS_USERS.find(function (u) { return u.uid === uid; });
+        if (!user || user.bonusType !== 'custom') {
+            closeRevokeCustomBonusModal();
+            return;
+        }
+        const before = '自定义 ' + user.customBonus + 'x';
+        syncPointsUserEffectiveBonus(user);
+        const after = '自然等级 ' + user.naturalMultiplier + 'x';
+        POINTS_LOGS.unshift({
+            time: new Date().toISOString().slice(0, 16).replace('T', ' '),
+            operator: 'Points_Admin',
+            type: '规则配置',
+            user: user.uid + ' / ' + (user.wallet ? shortWallet(user.wallet) : (user.email || '—')),
+            detail: '撤销自定义积分加成 · ' + before + ' → ' + after,
+            points: '-',
+            remark: '用户积分查询 · 即时生效'
+        });
+        closeRevokeCustomBonusModal();
+        if (currentPtsUid === uid) {
+            showPointsUserDetail(uid);
+        }
+        applyPtsUserFilters();
+        alert('已撤销自定义积分加成，用户恢复自然等级加成');
+    }
+
     function renderPointsUserTable(list) {
         const sliced = ptsSlice(list, pointsUserPage);
         pointsUserPage = sliced.page;
         document.getElementById('pointsUserTableBody').innerHTML = sliced.items.map(function (u) {
             const uidCell = window.AdminCopyChip ? AdminCopyChip.uid(u.uid) : u.uid;
             const walletCell = window.AdminCopyChip ? AdminCopyChip.wallet(u.wallet) : (u.wallet.length > 14 ? u.wallet.slice(0, 6) + '...' + u.wallet.slice(-4) : u.wallet);
-            return '<tr class="hover:bg-slate-50"><td class="px-4 py-3"><div class="font-bold">' + uidCell + '</div><div class="text-[10px] text-slate-400 font-mono mt-0.5">' + walletCell + '</div></td><td class="px-3 py-3 text-right font-black text-blue-600">' + u.balance.toLocaleString() + '</td><td class="px-3 py-3 text-center font-bold">' + u.multiplier + '</td><td class="px-3 py-3 text-center">' + bonusTypeLabel(u) + '</td><td class="px-3 py-3 text-right">' + u.umbrellaVolume + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.trade.toLocaleString() + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.position.toLocaleString() + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.invite.toLocaleString() + '</td><td class="px-3 py-3 text-right font-bold">' + u.lastWeek.total.toLocaleString() + '</td><td class="px-4 py-3 text-right"><button onclick="showPointsUserDetail(\'' + u.uid + '\')" class="text-blue-600 font-bold">查看流水</button></td></tr>';
+            const revokeBtn = u.bonusType === 'custom'
+                ? '<button type="button" onclick="openRevokeCustomBonusModal(\'' + u.uid + '\')" class="text-red-600 font-bold hover:underline ml-2">撤销自定义加成</button>'
+                : '';
+            const actions = '<button type="button" onclick="showPointsUserDetail(\'' + u.uid + '\')" class="text-blue-600 font-bold">查看流水</button>' + revokeBtn;
+            return '<tr class="hover:bg-slate-50"><td class="px-4 py-3"><div class="font-bold">' + uidCell + '</div><div class="text-[10px] text-slate-400 font-mono mt-0.5">' + walletCell + '</div></td><td class="px-3 py-3 text-right font-black text-blue-600">' + u.balance.toLocaleString() + '</td><td class="px-3 py-3 text-center font-bold">' + u.multiplier + '</td><td class="px-3 py-3 text-center">' + bonusTypeLabel(u) + '</td><td class="px-3 py-3 text-right">' + u.umbrellaVolume + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.trade.toLocaleString() + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.position.toLocaleString() + '</td><td class="px-3 py-3 text-right">' + u.lastWeek.invite.toLocaleString() + '</td><td class="px-3 py-3 text-right font-bold">' + u.lastWeek.total.toLocaleString() + '</td><td class="px-4 py-3 text-right whitespace-nowrap">' + actions + '</td></tr>';
         }).join('');
         ptsMountPag('points-user-pagination', sliced.total, pointsUserPage, 'pts-users');
     }
