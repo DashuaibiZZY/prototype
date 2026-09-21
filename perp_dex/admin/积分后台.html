@@ -192,16 +192,9 @@
         <!-- 积分发放总览 -->
         <div id="page-overview" class="hidden space-y-4">
             <section class="card p-3 space-y-2">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wide">数据总览</h3>
-                    <select id="overviewPeriod" onchange="renderPointsOverview()" class="border border-slate-200 rounded px-2 py-1 text-xs bg-white outline-none">
-                        <option value="all">全部</option>
-                        <option value="30d">近 30 天</option>
-                        <option value="90d">近 90 天</option>
-                    </select>
-                </div>
-                <div id="overviewStatsGrid" class="grid grid-cols-5 gap-2"></div>
-                <div id="overviewExtraRow" class="pt-2 border-t border-slate-100 space-y-1.5 text-xs text-slate-600"></div>
+                <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wide">数据总览</h3>
+                <div id="overviewStatsGrid" class="space-y-3"></div>
+                <div id="overviewExtraRow" class="pt-2 border-t border-slate-100 space-y-2 text-xs text-slate-600"></div>
             </section>
 
             <div>
@@ -209,7 +202,7 @@
                 <p class="text-xs text-slate-400 mt-0.5">点击「查看详情」进入发放明细（明细页支持下载 CSV）</p>
             </div>
             <section class="card p-5">
-                <div class="grid grid-cols-5 gap-4 items-end">
+                <div class="grid grid-cols-3 gap-4 items-end max-w-2xl">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">发放类型</label>
                         <select id="weeklyFilterType" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none">
@@ -222,11 +215,7 @@
                         <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">发放日</label>
                         <input id="weeklyFilterGrantDate" type="text" placeholder="如 2026-07-21" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
                     </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID / 钱包</label>
-                        <input id="weeklyFilterUser" type="text" placeholder="筛含该用户的批次" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none">
-                    </div>
-                    <div class="flex gap-2 col-span-2">
+                    <div class="flex gap-2">
                         <button onclick="applyWeeklyFilters()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold">查询</button>
                         <button onclick="resetWeeklyFilters()" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">重置</button>
                     </div>
@@ -677,9 +666,11 @@
     ];
 
     const OVERVIEW_STATS = {
-        all: { total: 28542000, real: 24156800, shadow: 3284200, realUsers: 18452, shadowUsers: 4256, system: 24890000, manual: 2850000, newbie: 380000, planned: 1000000, actual: 982156, shadowPct: 32.8 },
-        '30d': { total: 4208000, real: 3581200, shadow: 486800, realUsers: 8920, shadowUsers: 4256, system: 3600000, manual: 450000, newbie: 58000, planned: 1000000, actual: 982156, shadowPct: 32.8 },
-        '90d': { total: 11250000, real: 9584000, shadow: 1366000, realUsers: 14230, shadowUsers: 4256, system: 10200000, manual: 850000, newbie: 120000, planned: 1000000, actual: 982156, shadowPct: 32.8 }
+        total: 28542000,
+        system: 24890000,
+        manual: 2850000,
+        newbie: 380000,
+        usersWithPoints: 18452
     };
 
     function makeDim(raw, pct, points) {
@@ -781,22 +772,16 @@
     }
 
     function renderPointsOverview() {
-        const period = document.getElementById('overviewPeriod').value;
-        const s = OVERVIEW_STATS[period] || OVERVIEW_STATS.all;
-        const periodSub = period === 'all' ? '历史' : (period === '30d' ? '近30天' : '近90天');
-        document.getElementById('overviewStatsGrid').innerHTML = [
-            { label: '发放总积分', value: s.total.toLocaleString(), color: 'text-slate-800' },
-            { label: '真实用户', value: s.real.toLocaleString(), color: 'text-blue-600' },
-            { label: '影子分摊', value: s.shadow.toLocaleString(), color: 'text-amber-600' },
-            { label: '真实用户人数', value: s.realUsers.toLocaleString(), color: 'text-slate-700' },
-            { label: '影子用户人数', value: s.shadowUsers.toLocaleString(), color: 'text-slate-600' }
-        ].map(function (c) {
-            return '<div class="min-w-0 px-1"><p class="text-[9px] font-bold text-slate-500 uppercase truncate">' + c.label + '</p><p class="text-sm font-black ' + (c.color || 'text-slate-800') + ' truncate">' + c.value + '</p></div>';
-        }).join('');
+        const s = OVERVIEW_STATS;
+        document.getElementById('overviewStatsGrid').innerHTML =
+            '<div><p class="text-[9px] font-bold text-slate-500 uppercase">发放总积分</p>' +
+            '<p class="text-2xl font-black text-slate-900 tracking-tight">' + s.total.toLocaleString() + '</p></div>' +
+            '<div><p class="text-[9px] font-bold text-slate-500 uppercase">积分大于 0 总用户数</p>' +
+            '<p class="text-lg font-black text-slate-800">' + s.usersWithPoints.toLocaleString() + '</p></div>';
         const srcTotal = s.system + s.manual + s.newbie;
         document.getElementById('overviewExtraRow').innerHTML =
             '<div class="flex flex-wrap items-center gap-x-4 gap-y-1">' +
-            '<span class="font-bold text-slate-500">' + periodSub + ' 来源</span>' +
+            '<span class="font-bold text-slate-500">历史 来源</span>' +
             '<span>系统周结算 <b class="text-slate-800">' + s.system.toLocaleString() + '</b> <span class="text-slate-400">(' + (s.system / srcTotal * 100).toFixed(1) + '%)</span></span>' +
             '<span>手动发放 <b class="text-slate-800">' + s.manual.toLocaleString() + '</b> <span class="text-slate-400">(' + (s.manual / srcTotal * 100).toFixed(1) + '%)</span></span>' +
             '<span>新人任务 <b class="text-slate-800">' + s.newbie.toLocaleString() + '</b> <span class="text-slate-400">(' + (s.newbie / srcTotal * 100).toFixed(1) + '%)</span></span>' +
@@ -836,16 +821,9 @@
     function applyWeeklyFilters() {
         const type = document.getElementById('weeklyFilterType').value;
         const grantDateQ = document.getElementById('weeklyFilterGrantDate').value.trim();
-        const userQ = document.getElementById('weeklyFilterUser').value.trim().toLowerCase();
         filteredWeeklyBatches = WEEKLY_BATCHES.filter(function (b) {
             if (type !== 'all' && b.type !== type) return false;
             if (grantDateQ && batchGrantDate(b).indexOf(grantDateQ) === -1) return false;
-            if (userQ) {
-                const hit = b.recipients.some(function (r) {
-                    return r.uid.toLowerCase().indexOf(userQ) !== -1 || r.wallet.toLowerCase().indexOf(userQ) !== -1;
-                });
-                if (!hit) return false;
-            }
             return true;
         });
         weeklyBatchPage = 1;
@@ -855,7 +833,6 @@
     function resetWeeklyFilters() {
         document.getElementById('weeklyFilterType').value = 'all';
         document.getElementById('weeklyFilterGrantDate').value = '';
-        document.getElementById('weeklyFilterUser').value = '';
         filteredWeeklyBatches = WEEKLY_BATCHES.slice();
         weeklyBatchPage = 1;
         renderWeeklyBatchTable(filteredWeeklyBatches);
