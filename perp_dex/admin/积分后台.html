@@ -191,10 +191,9 @@
 
         <!-- 积分发放总览 -->
         <div id="page-overview" class="hidden space-y-4">
-            <section class="card p-3 space-y-2">
-                <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wide">数据总览</h3>
-                <div id="overviewStatsGrid" class="space-y-3"></div>
-                <div id="overviewExtraRow" class="pt-2 border-t border-slate-100 space-y-2 text-xs text-slate-600"></div>
+            <section class="card p-4">
+                <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wide mb-3">数据总览</h3>
+                <div id="overviewPanel"></div>
             </section>
 
             <div>
@@ -774,18 +773,29 @@
     function renderPointsOverview() {
         const s = OVERVIEW_STATS;
         const srcTotal = s.system + s.manual + s.newbie;
-        document.getElementById('overviewStatsGrid').innerHTML =
-            '<div><p class="text-[9px] font-bold text-slate-500 uppercase">发放总积分</p>' +
-            '<p class="text-2xl font-black text-slate-900 tracking-tight">' + s.total.toLocaleString() + '</p></div>';
-        document.getElementById('overviewExtraRow').innerHTML =
-            '<div class="flex flex-wrap items-center gap-x-4 gap-y-1">' +
-            '<span class="font-bold text-slate-500">历史 来源</span>' +
-            '<span>系统周结算 <b class="text-slate-800">' + s.system.toLocaleString() + '</b> <span class="text-slate-400">(' + (s.system / srcTotal * 100).toFixed(1) + '%)</span></span>' +
-            '<span>手动发放 <b class="text-slate-800">' + s.manual.toLocaleString() + '</b> <span class="text-slate-400">(' + (s.manual / srcTotal * 100).toFixed(1) + '%)</span></span>' +
-            '<span>新人任务 <b class="text-slate-800">' + s.newbie.toLocaleString() + '</b> <span class="text-slate-400">(' + (s.newbie / srcTotal * 100).toFixed(1) + '%)</span></span>' +
-            '</div>' +
-            '<div><p class="text-[9px] font-bold text-slate-500 uppercase mt-2">积分大于 0 总用户数</p>' +
-            '<p class="text-lg font-black text-slate-800">' + s.usersWithPoints.toLocaleString() + '</p></div>';
+        function sourceRow(label, value) {
+            const pct = (value / srcTotal * 100).toFixed(1);
+            return '<div class="flex items-center justify-between gap-4 py-1.5">' +
+                '<span class="text-slate-600">' + label + '</span>' +
+                '<span class="font-bold tabular-nums text-slate-800">' + value.toLocaleString() +
+                ' <span class="text-slate-400 font-semibold">(' + pct + '%)</span></span></div>';
+        }
+        document.getElementById('overviewPanel').innerHTML =
+            '<div class="flex flex-col md:flex-row md:items-stretch gap-6 md:gap-0">' +
+            '<div class="flex-1 min-w-0 md:pr-8">' +
+            '<p class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">发放总积分</p>' +
+            '<p class="text-3xl font-black text-slate-900 tracking-tight mt-1 tabular-nums">' + s.total.toLocaleString() + '</p>' +
+            '<div class="mt-4 pt-4 border-t border-slate-100">' +
+            '<p class="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-2">历史 来源 <span class="normal-case font-semibold text-slate-400">（组成明细）</span></p>' +
+            '<div class="rounded-lg bg-slate-50/80 border border-slate-100 px-3 py-1 divide-y divide-slate-100/80 text-xs">' +
+            sourceRow('系统周结算', s.system) +
+            sourceRow('手动发放', s.manual) +
+            sourceRow('新人任务', s.newbie) +
+            '</div></div></div>' +
+            '<div class="md:w-52 shrink-0 md:border-l md:border-slate-100 md:pl-8 flex flex-col justify-center py-1 md:py-4">' +
+            '<p class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">积分大于 0 总用户数</p>' +
+            '<p class="text-3xl font-black text-blue-600 tracking-tight mt-2 tabular-nums">' + s.usersWithPoints.toLocaleString() + '</p>' +
+            '</div></div>';
     }
 
     function downloadCsv(filename, rows) {
