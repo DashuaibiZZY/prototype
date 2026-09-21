@@ -25,7 +25,7 @@
         { id: 'points.overview', module: '积分', label: '积分发放总览', writeHint: '统计只读' },
         { id: 'points.config', module: '积分', label: '每周积分总池设置', writeHint: '提交总池配置审批' },
         { id: 'points.bonus', module: '积分', label: '积分加成配置', writeHint: '提交加成审批' },
-        { id: 'points.users', module: '积分', label: '用户积分查询', writeHint: '查询只读' },
+        { id: 'points.users', module: '积分', label: '用户积分查询', writeHint: '查询；可撤销单用户自定义加成' },
         { id: 'points.manual', module: '积分', label: '手动发放积分', writeHint: '提交手动发放审批' },
         { id: 'points.approval', module: '积分', label: '积分审核', writeHint: '只读查看；审批走敏感组' },
         { id: 'points.logs', module: '积分', label: '操作记录', writeHint: '审计只读' }
