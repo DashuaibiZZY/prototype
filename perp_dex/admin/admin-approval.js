@@ -1668,7 +1668,6 @@
             ['申请人', app.applicant],
             ['申请时间', app.createdAt],
             ['状态', statusLabel(app.status)],
-            ['摘要', app.summary],
             ['活动信息', formatActivity(app.payload)],
             ['申请备注', app.remark]
         ];
