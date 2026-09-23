@@ -4208,8 +4208,8 @@
     }
 
     function formatMigratePartnerLevelIdentity(level) {
-        if (level == null || level === '') return 'N级合伙人';
-        return 'N级合伙人 · 系统 L' + level;
+        if (level == null || level === '') return '合伙人';
+        return level + '级合伙人';
     }
 
     function buildMigrateApprovalIdentityFields(preview, plainRole, needsRatio, ratioVal, target) {
