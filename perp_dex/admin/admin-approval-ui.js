@@ -60,6 +60,10 @@
 
     function enrichFeeConfigPayload(p) {
         if (!p) return p;
+        if (p.volume30d == null && p.currentTaker == null && window.ForxFeeApprovalMetrics && typeof window.ForxFeeApprovalMetrics.resolve === 'function') {
+            var fromUser = window.ForxFeeApprovalMetrics.resolve(p.uid, p.taker, p.maker);
+            if (fromUser) Object.assign(p, fromUser);
+        }
         var curT = parseFeeRateDecimal(p.currentTaker);
         var curM = parseFeeRateDecimal(p.currentMaker);
         var tgtT = parseFeeRateDecimal(p.taker);
