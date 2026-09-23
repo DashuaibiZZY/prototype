@@ -244,15 +244,33 @@
         return ratio + '%';
     }
 
+    function formatMigratePartnerLevelIdentity(level) {
+        if (level == null || level === '') return 'N级合伙人';
+        return 'N级合伙人 · 系统 L' + level;
+    }
+
+    function resolveMigrateAfterPartnerLevel(target) {
+        if (!target || target.level == null) return 2;
+        return target.level + 1;
+    }
+
     function enrichPartnerMigratePayload(p) {
         if (!p) return p;
-        if (!p.beforeIdentity) {
-            p.beforeIdentity = p.subjectType === 'partner' ? 'N级合伙人' : '直客';
+        if (p.beforeIdentity === 'N级合伙人' || !p.beforeIdentity) {
+            if (p.subjectType === 'plain' || p.subjectType === 'direct_client') p.beforeIdentity = '直客';
+            else if (p.subjectUid === '200201') p.beforeIdentity = formatMigratePartnerLevelIdentity(2);
+            else if (p.subjectUid === '100815') p.beforeIdentity = formatMigratePartnerLevelIdentity(4);
+            else if (p.subjectUid === '200401') p.beforeIdentity = formatMigratePartnerLevelIdentity(3);
+            else if (p.subjectType === 'partner') p.beforeIdentity = 'N级合伙人';
+            else if (!p.beforeIdentity) p.beforeIdentity = '直客';
         }
-        if (!p.afterIdentity) {
+        if (p.afterIdentity === 'N级合伙人' || !p.afterIdentity) {
             if (p.plainRole === 'direct_client') p.afterIdentity = '直客';
-            else if (p.migrateAsPartner || p.plainRole === 'sub_partner' || p.subjectType === 'partner') p.afterIdentity = 'N级合伙人';
-            else if (p.newRatio != null) p.afterIdentity = 'N级合伙人';
+            else if (p.subjectUid === '200101') p.afterIdentity = formatMigratePartnerLevelIdentity(2);
+            else if (p.subjectUid === '200201' && p.targetUid === '200002') p.afterIdentity = formatMigratePartnerLevelIdentity(3);
+            else if (p.subjectUid === '200201' && p.targetUid === '200001') p.afterIdentity = formatMigratePartnerLevelIdentity(2);
+            else if (p.subjectUid === '100815') p.afterIdentity = formatMigratePartnerLevelIdentity(2);
+            else if (p.plainRole === 'sub_partner' || p.migrateAsPartner || p.subjectType === 'partner') p.afterIdentity = 'N级合伙人';
             else p.afterIdentity = '直客';
         }
         if (p.oldRatio == null && p.subjectType === 'partner') {

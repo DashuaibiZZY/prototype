@@ -4207,13 +4207,24 @@
         openMigrateConfirmModal();
     }
 
-    function buildMigrateApprovalIdentityFields(preview, plainRole, needsRatio, ratioVal) {
-        var beforeIdentity = preview.type === 'partner' ? 'N级合伙人' : '直客';
+    function formatMigratePartnerLevelIdentity(level) {
+        if (level == null || level === '') return 'N级合伙人';
+        return 'N级合伙人 · 系统 L' + level;
+    }
+
+    function buildMigrateApprovalIdentityFields(preview, plainRole, needsRatio, ratioVal, target) {
+        var beforeIdentity = '直客';
+        if (preview.type === 'partner' && preview.partnerUser && preview.partnerUser.level != null) {
+            beforeIdentity = formatMigratePartnerLevelIdentity(preview.partnerUser.level);
+        } else if (preview.subtype === 'direct_client') {
+            beforeIdentity = '直客';
+        }
         var afterIdentity = '直客';
-        if (preview.type === 'partner') afterIdentity = 'N级合伙人';
-        else if (plainRole === 'sub_partner') afterIdentity = 'N级合伙人';
-        else if (plainRole === 'direct_client') afterIdentity = '直客';
-        else if (needsRatio && ratioVal != null) afterIdentity = 'N级合伙人';
+        if (plainRole === 'direct_client') {
+            afterIdentity = '直客';
+        } else if (target && (preview.type === 'partner' || plainRole === 'sub_partner' || (needsRatio && ratioVal != null))) {
+            afterIdentity = formatMigratePartnerLevelIdentity((target.level != null ? target.level : 1) + 1);
+        }
         var oldRatio = null;
         if (preview.type === 'partner' && preview.partnerUser && preview.partnerUser.ratio != null) {
             oldRatio = preview.partnerUser.ratio;
@@ -4232,7 +4243,7 @@
         const subjectWallet = p.type === 'plain' ? p.plainUser.wallet : p.partnerUser.wallet;
         const subjectUid = p.type === 'plain' ? p.plainUser.uid : p.partnerUser.uid;
         const plainRole = p.type === 'plain' ? p.plainRole : null;
-        const identityFields = buildMigrateApprovalIdentityFields(p, plainRole, needsRatio, ratioVal);
+        const identityFields = buildMigrateApprovalIdentityFields(p, plainRole, needsRatio, ratioVal, target);
         const roleSummary = plainRole === 'direct_client' ? '下级直客' : (plainRole === 'sub_partner' ? '下级代理' : '');
         const summarySuffix = needsRatio ? ratioVal + '%' : roleSummary;
         if (typeof submitApprovalApplication === 'function') {
