@@ -208,6 +208,103 @@
         };
     }
 
+    var FEE_METRICS_PAYLOAD_KEYS = [
+        'currentTaker', 'currentMaker', 'volume30d',
+        'takerFeeIncome30d', 'makerFeeIncome30d',
+        'revenueImpactTaker', 'revenueImpactMaker'
+    ];
+    const FEE_METRICS_MIGRATION_KEY = 'forx_approval_fee_metrics_v1';
+
+    function parseFeeRateDecimal(v) {
+        if (v == null || v === '') return NaN;
+        if (typeof v === 'number') return v;
+        var s = String(v).trim();
+        if (s.endsWith('%')) return parseFloat(s.slice(0, -1)) / 100;
+        var n = parseFloat(s);
+        return n > 0 && n < 0.01 ? n : n / 100;
+    }
+
+    function feePayloadMissingMetrics(payload) {
+        if (!payload) return true;
+        return payload.volume30d == null && payload.currentTaker == null && payload.feeIncome30d == null;
+    }
+
+    function mergeFeeMetricsFields(target, source) {
+        if (!target || !source) return;
+        FEE_METRICS_PAYLOAD_KEYS.forEach(function (k) {
+            if (target[k] == null && source[k] != null) target[k] = source[k];
+        });
+    }
+
+    function recomputeFeeRevenueImpact(payload) {
+        if (!payload || payload.takerFeeIncome30d == null) return;
+        var curT = parseFeeRateDecimal(payload.currentTaker);
+        var curM = parseFeeRateDecimal(payload.currentMaker);
+        var tgtT = parseFeeRateDecimal(payload.taker);
+        var tgtM = parseFeeRateDecimal(payload.maker);
+        if (!isNaN(curT) && !isNaN(tgtT)) {
+            payload.revenueImpactTaker = (tgtT - curT) * payload.takerFeeIncome30d;
+        }
+        if (!isNaN(curM) && !isNaN(tgtM)) {
+            payload.revenueImpactMaker = (tgtM - curM) * payload.makerFeeIncome30d;
+        }
+    }
+
+    function synthesizeFeeMetricsForPayload(payload) {
+        if (!payload || !payload.taker || !payload.maker) return false;
+        var curT = parseFeeRateDecimal(payload.currentTaker);
+        var curM = parseFeeRateDecimal(payload.currentMaker);
+        if (isNaN(curT)) curT = 0.00039;
+        if (isNaN(curM)) curM = 0.00013;
+        var vol = payload.volume30d != null ? payload.volume30d : 5000000;
+        var income = payload.feeIncome30d != null ? payload.feeIncome30d : Math.round(vol * curT * 0.55);
+        var snap = feeApprovalSnapshot(curT, curM, payload.taker, payload.maker, vol, income);
+        mergeFeeMetricsFields(payload, snap);
+        return true;
+    }
+
+    function migrateFeeConfigApprovalPayloads(apps) {
+        var seeds = buildSeedData();
+        var seedPayloadById = {};
+        var seedPayloadByUid = {};
+        seeds.forEach(function (s) {
+            if (s.type !== 'fee_config' || !s.payload) return;
+            seedPayloadById[s.id] = s.payload;
+            if (s.payload.uid) seedPayloadByUid[s.payload.uid] = s.payload;
+        });
+        var changed = false;
+        apps.forEach(function (app) {
+            if (app.type !== 'fee_config' || !app.payload) return;
+            if (!feePayloadMissingMetrics(app.payload)) {
+                recomputeFeeRevenueImpact(app.payload);
+                return;
+            }
+            var p = app.payload;
+            if (seedPayloadById[app.id]) {
+                mergeFeeMetricsFields(p, seedPayloadById[app.id]);
+                recomputeFeeRevenueImpact(p);
+                changed = true;
+                return;
+            }
+            if (p.uid && seedPayloadByUid[p.uid]) {
+                mergeFeeMetricsFields(p, seedPayloadByUid[p.uid]);
+                recomputeFeeRevenueImpact(p);
+                changed = true;
+                return;
+            }
+            if (synthesizeFeeMetricsForPayload(p)) changed = true;
+        });
+        return changed;
+    }
+
+    function ensureFeeConfigMetricsMigration() {
+        if (localStorage.getItem(FEE_METRICS_MIGRATION_KEY) === 'done') return;
+        var apps = getApps().map(migrateLegacyStatus);
+        var changed = migrateFeeConfigApprovalPayloads(apps);
+        if (changed) saveApps(apps);
+        localStorage.setItem(FEE_METRICS_MIGRATION_KEY, 'done');
+    }
+
     function buildSeedData() {
         const feeImg = feeAttachmentPreview();
         const partnerImg1 = partnerAttachmentPreview('KOL 合作协议.png');
@@ -1113,11 +1210,13 @@
             const apps = getApps().map(migrateLegacyStatus);
             if (apps.length) saveApps(apps);
             ensureCriticalDemos();
+            ensureFeeConfigMetricsMigration();
             return;
         }
         saveApps(buildSeedData().map(migrateLegacyStatus));
         localStorage.setItem(SEED_VERSION_KEY, SEED_VERSION);
         ensureCriticalDemos();
+        ensureFeeConfigMetricsMigration();
     }
 
     function renderApprovalFlow(status, compact, appOrProfile) {

@@ -287,6 +287,27 @@
         };
     }
 
+    window.ForxFeeApprovalMetrics = {
+        resolve: function (uid, takerStr, makerStr) {
+            if (!uid) return null;
+            var user = users.find(function (u) { return u.uid === uid; });
+            if (!user) return null;
+            var tgtT = parseFeeRateDecimal(takerStr);
+            var tgtM = parseFeeRateDecimal(makerStr);
+            if (isNaN(tgtT) || isNaN(tgtM)) return null;
+            return buildFeeApprovalMetrics(user, tgtT, tgtM);
+        }
+    };
+
+    function parseFeeRateDecimal(v) {
+        if (v == null || v === '') return NaN;
+        if (typeof v === 'number') return v;
+        var s = String(v).trim();
+        if (s.endsWith('%')) return parseFloat(s.slice(0, -1)) / 100;
+        var n = parseFloat(s);
+        return n > 0 && n < 0.01 ? n : n / 100;
+    }
+
     function applyNaturalRates(user) {
         const tier = getTierByLevel(calcVolumeTier(user.volume14d));
         user.feeMode = 'natural';
@@ -551,9 +572,9 @@
         AdminPagination.register('fee-users', function (p) { feeUserListPage = p; renderUserTable(); });
     }
 </script>
-<script src="admin-approval.js"></script>
+<script src="admin-approval.js?v=20260923-fee-metrics"></script>
 <script src="admin-activity-picker.js"></script>
-<script src="admin-approval-ui.js"></script>
+<script src="admin-approval-ui.js?v=20260923-fee-metrics"></script>
 <script src="admin-permission-registry.js"></script>
 <script src="admin-permission-store.js"></script>
 <script src="admin-permissions.js"></script>
