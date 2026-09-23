@@ -37,6 +37,18 @@
         return hasPct ? n / 100 : n;
     }
 
+    function formatFeeUsdPlain(n, signed) {
+        n = Number(n) || 0;
+        var body = '$' + Math.abs(n).toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
+        if (signed) {
+            if (n < 0) return '-' + body;
+            if (n > 0) return '+' + body;
+            return body;
+        }
+        if (n < 0) return '-' + body;
+        return body;
+    }
+
     function formatFeeUsd(n) {
         n = Number(n) || 0;
         var abs = Math.abs(n);
@@ -72,11 +84,17 @@
             p.takerFeeIncome30d = Math.round(p.feeIncome30d * 0.62);
             p.makerFeeIncome30d = p.feeIncome30d - p.takerFeeIncome30d;
         }
-        if (p.revenueImpactTaker == null && p.takerFeeIncome30d != null) {
-            p.revenueImpactTaker = (tgtT - curT) * p.takerFeeIncome30d;
+        var impactFn = typeof window.computeFeeRevenueImpactSide === 'function'
+            ? window.computeFeeRevenueImpactSide
+            : function (cur, tgt, inc) {
+                if (!inc || !cur) return null;
+                return inc * (tgt / cur - 1);
+            };
+        if (p.takerFeeIncome30d != null && curT > 0) {
+            p.revenueImpactTaker = impactFn(curT, tgtT, p.takerFeeIncome30d);
         }
-        if (p.revenueImpactMaker == null && p.makerFeeIncome30d != null) {
-            p.revenueImpactMaker = (tgtM - curM) * p.makerFeeIncome30d;
+        if (p.makerFeeIncome30d != null && curM > 0) {
+            p.revenueImpactMaker = impactFn(curM, tgtM, p.makerFeeIncome30d);
         }
         return p;
     }
@@ -144,11 +162,11 @@
             rows.push(['UID', p.uid]);
             rows.push(['当前费率', 'Taker ' + (fp.currentTaker || '—') + ' · Maker ' + (fp.currentMaker || '—')]);
             rows.push(['近 30 日总交易额', fp.volume30d != null ? formatFeeVolumeUsd(fp.volume30d) : '—']);
-            rows.push(['近 30 日 Taker 手续费收入', fp.takerFeeIncome30d != null ? formatFeeVolumeUsd(fp.takerFeeIncome30d) : '—']);
-            rows.push(['近 30 日 Maker 手续费收入', fp.makerFeeIncome30d != null ? formatFeeVolumeUsd(fp.makerFeeIncome30d) : '—']);
+            rows.push(['近 30 日 Taker 手续费收入', fp.takerFeeIncome30d != null ? formatFeeUsdPlain(fp.takerFeeIncome30d) : '—']);
+            rows.push(['近 30 日 Maker 手续费收入', fp.makerFeeIncome30d != null ? formatFeeUsdPlain(fp.makerFeeIncome30d) : '—']);
             rows.push(['申请 Taker / Maker', (p.taker || '—') + ' / ' + (p.maker || '—')]);
-            rows.push(['月收入影响 · Taker', fp.revenueImpactTaker != null ? formatFeeUsd(fp.revenueImpactTaker) : '—']);
-            rows.push(['月收入影响 · Maker', fp.revenueImpactMaker != null ? formatFeeUsd(fp.revenueImpactMaker) : '—']);
+            rows.push(['月收入影响 · Taker', fp.revenueImpactTaker != null ? formatFeeUsdPlain(fp.revenueImpactTaker, true) : '—']);
+            rows.push(['月收入影响 · Maker', fp.revenueImpactMaker != null ? formatFeeUsdPlain(fp.revenueImpactMaker, true) : '—']);
             rows.push(['费率模式', '自定义'], ['有效期', p.validDays ? p.validDays + ' 天（到期日 24:00:00（UTC+8）失效）' : '永久有效']);
             if (opts && opts.detailImagePreview && p.attachments && p.attachments.length) {
                 const previews = p.attachmentPreviews || {};

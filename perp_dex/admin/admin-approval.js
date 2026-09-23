@@ -192,19 +192,27 @@
         return 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="480" height="280"><rect fill="#e8f0fe" width="480" height="280"/><text x="24" y="48" font-size="18" fill="#1e3a5f" font-family="sans-serif">' + label + '</text><text x="24" y="88" font-size="14" fill="#64748b" font-family="sans-serif">渠道协议 / 谈判依据截图（演示）</text></svg>');
     }
 
+    function computeFeeRevenueImpactSide(currentRate, targetRate, sideIncome30d) {
+        var cur = parseFeeRateDecimal(currentRate);
+        var tgt = parseFeeRateDecimal(targetRate);
+        var inc = Number(sideIncome30d);
+        if (!isFinite(inc) || !cur || cur <= 0 || isNaN(tgt)) return null;
+        return inc * (tgt / cur - 1);
+    }
+
     function feeApprovalSnapshot(curT, curM, tgtTaker, tgtMaker, volume30d, feeIncome30d) {
         var takerInc = Math.round(feeIncome30d * 0.62);
         var makerInc = feeIncome30d - takerInc;
-        var tgtT = parseFloat(String(tgtTaker).replace('%', '')) / 100;
-        var tgtM = parseFloat(String(tgtMaker).replace('%', '')) / 100;
+        var tgtT = parseFeeRateDecimal(tgtTaker);
+        var tgtM = parseFeeRateDecimal(tgtMaker);
         return {
             currentTaker: (curT * 100).toFixed(3) + '%',
             currentMaker: (curM * 100).toFixed(3) + '%',
             volume30d: volume30d,
             takerFeeIncome30d: takerInc,
             makerFeeIncome30d: makerInc,
-            revenueImpactTaker: (tgtT - curT) * takerInc,
-            revenueImpactMaker: (tgtM - curM) * makerInc
+            revenueImpactTaker: computeFeeRevenueImpactSide(curT, tgtT, takerInc),
+            revenueImpactMaker: computeFeeRevenueImpactSide(curM, tgtM, makerInc)
         };
     }
 
@@ -213,7 +221,7 @@
         'takerFeeIncome30d', 'makerFeeIncome30d',
         'revenueImpactTaker', 'revenueImpactMaker'
     ];
-    const FEE_METRICS_MIGRATION_KEY = 'forx_approval_fee_metrics_v1';
+    const FEE_METRICS_MIGRATION_KEY = 'forx_approval_fee_metrics_v2';
 
     function parseFeeRateDecimal(v) {
         if (v == null || v === '') return NaN;
@@ -237,16 +245,16 @@
     }
 
     function recomputeFeeRevenueImpact(payload) {
-        if (!payload || payload.takerFeeIncome30d == null) return;
-        var curT = parseFeeRateDecimal(payload.currentTaker);
-        var curM = parseFeeRateDecimal(payload.currentMaker);
-        var tgtT = parseFeeRateDecimal(payload.taker);
-        var tgtM = parseFeeRateDecimal(payload.maker);
-        if (!isNaN(curT) && !isNaN(tgtT)) {
-            payload.revenueImpactTaker = (tgtT - curT) * payload.takerFeeIncome30d;
+        if (!payload) return;
+        if (payload.takerFeeIncome30d != null) {
+            payload.revenueImpactTaker = computeFeeRevenueImpactSide(
+                payload.currentTaker, payload.taker, payload.takerFeeIncome30d
+            );
         }
-        if (!isNaN(curM) && !isNaN(tgtM)) {
-            payload.revenueImpactMaker = (tgtM - curM) * payload.makerFeeIncome30d;
+        if (payload.makerFeeIncome30d != null) {
+            payload.revenueImpactMaker = computeFeeRevenueImpactSide(
+                payload.currentMaker, payload.maker, payload.makerFeeIncome30d
+            );
         }
     }
 
@@ -275,24 +283,18 @@
         var changed = false;
         apps.forEach(function (app) {
             if (app.type !== 'fee_config' || !app.payload) return;
-            if (!feePayloadMissingMetrics(app.payload)) {
-                recomputeFeeRevenueImpact(app.payload);
-                return;
-            }
             var p = app.payload;
-            if (seedPayloadById[app.id]) {
-                mergeFeeMetricsFields(p, seedPayloadById[app.id]);
-                recomputeFeeRevenueImpact(p);
-                changed = true;
-                return;
+            if (feePayloadMissingMetrics(p)) {
+                if (seedPayloadById[app.id]) {
+                    mergeFeeMetricsFields(p, seedPayloadById[app.id]);
+                } else if (p.uid && seedPayloadByUid[p.uid]) {
+                    mergeFeeMetricsFields(p, seedPayloadByUid[p.uid]);
+                } else {
+                    synthesizeFeeMetricsForPayload(p);
+                }
             }
-            if (p.uid && seedPayloadByUid[p.uid]) {
-                mergeFeeMetricsFields(p, seedPayloadByUid[p.uid]);
-                recomputeFeeRevenueImpact(p);
-                changed = true;
-                return;
-            }
-            if (synthesizeFeeMetricsForPayload(p)) changed = true;
+            recomputeFeeRevenueImpact(p);
+            changed = true;
         });
         return changed;
     }
@@ -1384,6 +1386,8 @@
     };
 
     window.getApprovalFlowProfile = getFlowProfile;
+
+    window.computeFeeRevenueImpactSide = computeFeeRevenueImpactSide;
 
     window.getApprovalSubmittedMessage = function () {
         return '审批申请已提交，等待风控审核 → 老板审批（老板可在后台或 Lark 审批）';
