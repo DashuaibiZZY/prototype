@@ -245,8 +245,18 @@
     }
 
     function formatMigratePartnerLevelIdentity(level) {
-        if (level == null || level === '') return 'N级合伙人';
-        return 'N级合伙人 · 系统 L' + level;
+        if (level == null || level === '') return '合伙人';
+        return level + '级合伙人';
+    }
+
+    function normalizeMigrateIdentityLabel(label, levelFallback) {
+        if (!label || label === 'N级合伙人') {
+            return levelFallback != null ? formatMigratePartnerLevelIdentity(levelFallback) : '合伙人';
+        }
+        if (label === '直客') return '直客';
+        var m = String(label).match(/系统\s*L(\d+)/i);
+        if (m) return formatMigratePartnerLevelIdentity(parseInt(m[1], 10));
+        return label;
     }
 
     function resolveMigrateAfterPartnerLevel(target) {
@@ -256,23 +266,28 @@
 
     function enrichPartnerMigratePayload(p) {
         if (!p) return p;
-        if (p.beforeIdentity === 'N级合伙人' || !p.beforeIdentity) {
+        if (p.beforeIdentity === 'N级合伙人' || !p.beforeIdentity || String(p.beforeIdentity).indexOf('系统 L') >= 0) {
             if (p.subjectType === 'plain' || p.subjectType === 'direct_client') p.beforeIdentity = '直客';
             else if (p.subjectUid === '200201') p.beforeIdentity = formatMigratePartnerLevelIdentity(2);
             else if (p.subjectUid === '100815') p.beforeIdentity = formatMigratePartnerLevelIdentity(4);
             else if (p.subjectUid === '200401') p.beforeIdentity = formatMigratePartnerLevelIdentity(3);
-            else if (p.subjectType === 'partner') p.beforeIdentity = 'N级合伙人';
+            else if (p.subjectType === 'partner') p.beforeIdentity = '合伙人';
             else if (!p.beforeIdentity) p.beforeIdentity = '直客';
+            else p.beforeIdentity = normalizeMigrateIdentityLabel(p.beforeIdentity, null);
         }
-        if (p.afterIdentity === 'N级合伙人' || !p.afterIdentity) {
+        if (p.afterIdentity === 'N级合伙人' || !p.afterIdentity || String(p.afterIdentity).indexOf('系统 L') >= 0) {
             if (p.plainRole === 'direct_client') p.afterIdentity = '直客';
             else if (p.subjectUid === '200101') p.afterIdentity = formatMigratePartnerLevelIdentity(2);
             else if (p.subjectUid === '200201' && p.targetUid === '200002') p.afterIdentity = formatMigratePartnerLevelIdentity(3);
             else if (p.subjectUid === '200201' && p.targetUid === '200001') p.afterIdentity = formatMigratePartnerLevelIdentity(2);
             else if (p.subjectUid === '100815') p.afterIdentity = formatMigratePartnerLevelIdentity(2);
-            else if (p.plainRole === 'sub_partner' || p.migrateAsPartner || p.subjectType === 'partner') p.afterIdentity = 'N级合伙人';
+            else if (p.plainRole === 'sub_partner' || p.migrateAsPartner || p.subjectType === 'partner') p.afterIdentity = '合伙人';
             else p.afterIdentity = '直客';
+        } else {
+            p.afterIdentity = normalizeMigrateIdentityLabel(p.afterIdentity, null);
         }
+        p.beforeIdentity = normalizeMigrateIdentityLabel(p.beforeIdentity, null);
+        p.afterIdentity = normalizeMigrateIdentityLabel(p.afterIdentity, null);
         if (p.oldRatio == null && p.subjectType === 'partner') {
             if (p.subjectUid === '200201') p.oldRatio = 58;
             else if (p.subjectUid === '100815') p.oldRatio = 50;
