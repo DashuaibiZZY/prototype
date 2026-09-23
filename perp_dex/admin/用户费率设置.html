@@ -267,6 +267,26 @@
         return `${formatFeePct(taker)} / ${formatFeePct(maker)}`;
     }
 
+    function splitFeeIncome30d(total) {
+        var taker = Math.round((total || 0) * 0.62);
+        return { taker: taker, maker: (total || 0) - taker };
+    }
+
+    function buildFeeApprovalMetrics(user, targetTaker, targetMaker) {
+        var split = splitFeeIncome30d(user.feeIncome30d);
+        var takerInc = user.takerFeeIncome30d != null ? user.takerFeeIncome30d : split.taker;
+        var makerInc = user.makerFeeIncome30d != null ? user.makerFeeIncome30d : split.maker;
+        return {
+            currentTaker: formatFeePct(user.taker),
+            currentMaker: formatFeePct(user.maker),
+            volume30d: user.volume30d,
+            takerFeeIncome30d: takerInc,
+            makerFeeIncome30d: makerInc,
+            revenueImpactTaker: (targetTaker - user.taker) * takerInc,
+            revenueImpactMaker: (targetMaker - user.maker) * makerInc
+        };
+    }
+
     function applyNaturalRates(user) {
         const tier = getTierByLevel(calcVolumeTier(user.volume14d));
         user.feeMode = 'natural';
@@ -450,7 +470,7 @@
         const validDays = validDaysRaw ? parseInt(validDaysRaw, 10) : null;
         if (user && draftConfig && act.valid) {
             const configLabel = '自定义 ' + formatFee(draftConfig.taker, draftConfig.maker);
-            const feePayload = {
+            const feePayload = Object.assign({
                 activityMode: act.activityMode,
                 activityId: act.activityId,
                 activityName: act.activityName,
@@ -463,7 +483,7 @@
                 validDays: validDays,
                 attachments: [uploadState.proof].filter(Boolean),
                 attachmentPreviews: uploadState.proof ? { [uploadState.proof]: uploadState.proofDataUrl || '' } : {}
-            };
+            }, buildFeeApprovalMetrics(user, draftConfig.taker, draftConfig.maker));
             const summaryExtra = validDays ? ' · ' + validDays + ' 天有效' : '';
             submitApprovalApplication({
                 type: 'fee_config',

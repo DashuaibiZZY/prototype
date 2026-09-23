@@ -192,6 +192,22 @@
         return 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="480" height="280"><rect fill="#e8f0fe" width="480" height="280"/><text x="24" y="48" font-size="18" fill="#1e3a5f" font-family="sans-serif">' + label + '</text><text x="24" y="88" font-size="14" fill="#64748b" font-family="sans-serif">渠道协议 / 谈判依据截图（演示）</text></svg>');
     }
 
+    function feeApprovalSnapshot(curT, curM, tgtTaker, tgtMaker, volume30d, feeIncome30d) {
+        var takerInc = Math.round(feeIncome30d * 0.62);
+        var makerInc = feeIncome30d - takerInc;
+        var tgtT = parseFloat(String(tgtTaker).replace('%', '')) / 100;
+        var tgtM = parseFloat(String(tgtMaker).replace('%', '')) / 100;
+        return {
+            currentTaker: (curT * 100).toFixed(3) + '%',
+            currentMaker: (curM * 100).toFixed(3) + '%',
+            volume30d: volume30d,
+            takerFeeIncome30d: takerInc,
+            makerFeeIncome30d: makerInc,
+            revenueImpactTaker: (tgtT - curT) * takerInc,
+            revenueImpactMaker: (tgtM - curM) * makerInc
+        };
+    }
+
     function buildSeedData() {
         const feeImg = feeAttachmentPreview();
         const partnerImg1 = partnerAttachmentPreview('KOL 合作协议.png');
@@ -737,7 +753,7 @@
                 createdAt: '2026-07-24 16:20',
                 remark: '做市商专属自定义费率',
                 summary: 'UID 10106789 · 自定义 · 45 天有效',
-                payload: {
+                payload: Object.assign({
                     activityMode: 'custom',
                     activityName: 'VIP 费率优惠',
                     uid: '10106789',
@@ -749,7 +765,7 @@
                     validDays: 45,
                     attachments: ['其他所VIP证明.png'],
                     attachmentPreviews: { '其他所VIP证明.png': feeImg }
-                },
+                }, feeApprovalSnapshot(0.00018, 0.00006, '0.018%', '0.006%', 2100000, 7600)),
                 lark: { id: 'LARK-20260724-9012', status: 'pending', url: 'https://www.feishu.cn/approval/admin/preview/LARK-20260724-9012', syncedAt: '2026-07-24 18:05' },
                 timeline: [
                     { at: '2026-07-24 16:20', actor: 'Fee_Admin', action: '提交申请', note: '做市商专属自定义费率' },
@@ -766,7 +782,7 @@
                 createdAt: '2026-07-27 10:00',
                 remark: 'VIP3 大客户申请',
                 summary: 'UID 10028471 · 自定义 · 90 天有效',
-                payload: {
+                payload: Object.assign({
                     activityMode: 'custom',
                     activityName: 'VIP3 费率优惠',
                     uid: '10028471',
@@ -778,7 +794,7 @@
                     validDays: 90,
                     attachments: ['币安VIP证明.png'],
                     attachmentPreviews: { '币安VIP证明.png': feeImg }
-                },
+                }, feeApprovalSnapshot(0.00034, 0.00010, '0.029%', '0.006%', 8900000, 32800)),
                 timeline: [{ at: '2026-07-27 10:00', actor: 'Fee_Admin', action: '提交申请', note: 'VIP3 大客户申请' }]
             },
             {
@@ -790,7 +806,7 @@
                 createdAt: '2026-07-26 11:30',
                 remark: '做市商专属费率',
                 summary: 'UID 10019833 · 自定义 · 180 天有效',
-                payload: {
+                payload: Object.assign({
                     activityMode: 'platform',
                     activityId: 'ACT202605004',
                     activityName: '做市商专属费率',
@@ -803,7 +819,7 @@
                     validDays: 180,
                     attachments: ['做市商协议.png'],
                     attachmentPreviews: { '做市商协议.png': feeImg }
-                },
+                }, feeApprovalSnapshot(0.00026, 0.00004, '0.030%', '0.000%', 125000000, 438000)),
                 timeline: [
                     { at: '2026-07-26 11:30', actor: 'Fee_Admin', action: '提交申请', note: '做市商专属费率' },
                     { at: '2026-07-26 14:00', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '协议已核实' }
@@ -818,7 +834,7 @@
                 createdAt: '2026-07-25 09:15',
                 remark: '大客户 VIP2 费率申请',
                 summary: 'UID 10031592 · VIP 2 · 30 天有效',
-                payload: {
+                payload: Object.assign({
                     activityMode: 'platform',
                     activityId: 'ACT202605002',
                     activityName: '新手成长任务',
@@ -831,7 +847,7 @@
                     validDays: 30,
                     attachments: ['币安VIP证明.png'],
                     attachmentPreviews: { '币安VIP证明.png': feeImg }
-                },
+                }, feeApprovalSnapshot(0.00020, 0.00008, '0.034%', '0.010%', 1200000, 4200)),
                 lark: { id: 'LARK-20260725-8831', status: 'pending', url: 'https://www.feishu.cn/approval/admin/preview/LARK-20260725-8831', syncedAt: '2026-07-25 13:40' },
                 timeline: [
                     { at: '2026-07-25 09:15', actor: 'Fee_Admin', action: '提交申请', note: '大客户 VIP2 费率申请' },
@@ -1009,7 +1025,7 @@
                 createdAt: '2026-07-21 09:30',
                 remark: 'VIP1 费率申请',
                 summary: 'UID 10045201 · VIP 1 · 60 天有效',
-                payload: {
+                payload: Object.assign({
                     activityMode: 'custom',
                     activityName: 'VIP1 费率优惠',
                     uid: '10045201',
@@ -1021,7 +1037,7 @@
                     validDays: 60,
                     attachments: ['VIP证明.png'],
                     attachmentPreviews: { 'VIP证明.png': feeImg }
-                },
+                }, feeApprovalSnapshot(0.00045, 0.00015, '0.040%', '0.015%', 2800000, 9800)),
                 timeline: [
                     { at: '2026-07-21 09:30', actor: 'Fee_Admin', action: '提交申请', note: 'VIP1 费率申请' },
                     { at: '2026-07-21 10:15', actor: 'Mkt_Cross', action: '驳回', note: '附件不清晰，请重新上传证明后提交' }
