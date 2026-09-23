@@ -1649,11 +1649,11 @@
     };
 
     window.exportApprovalListCsv = function (list) {
-        const rows = [['审批单号', '业务类型', '申请人', '申请时间', '状态', '摘要', '活动信息', '申请备注']];
+        const rows = [['审批单号', '业务类型', '申请人', '申请时间', '状态', '活动信息', '申请备注']];
         (list || getApps()).forEach(function (a) {
             rows.push([
                 a.id, TYPE_LABELS[a.type] || a.type, a.applicant, a.createdAt,
-                statusLabel(a.status), a.summary, formatActivity(a.payload), a.remark
+                statusLabel(a.status), formatActivity(a.payload), a.remark
             ]);
         });
         downloadCsv('approval_list_' + Date.now() + '.csv', rows);
@@ -1668,7 +1668,6 @@
             ['申请人', app.applicant],
             ['申请时间', app.createdAt],
             ['状态', statusLabel(app.status)],
-            ['摘要', app.summary],
             ['活动信息', formatActivity(app.payload)],
             ['申请备注', app.remark]
         ];
