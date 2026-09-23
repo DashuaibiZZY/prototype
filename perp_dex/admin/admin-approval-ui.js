@@ -27,6 +27,56 @@
         return state.recipientFilters[appId];
     }
 
+    function parseFeeRateDecimal(v) {
+        if (v == null || v === '') return 0;
+        if (typeof v === 'number') return v;
+        var s = String(v).trim();
+        var hasPct = s.indexOf('%') !== -1;
+        var n = parseFloat(s.replace('%', ''));
+        if (isNaN(n)) return 0;
+        return hasPct ? n / 100 : n;
+    }
+
+    function formatFeeUsd(n) {
+        n = Number(n) || 0;
+        var abs = Math.abs(n);
+        var body;
+        if (abs >= 1000000000) body = '$' + (abs / 1000000000).toFixed(2) + 'B';
+        else if (abs >= 1000000) body = '$' + (abs / 1000000).toFixed(2) + 'M';
+        else if (abs >= 1000) body = '$' + (abs / 1000).toFixed(1) + 'K';
+        else body = '$' + abs.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+        if (n < 0) return '-' + body;
+        if (n > 0) return '+' + body;
+        return body;
+    }
+
+    function formatFeeVolumeUsd(n) {
+        n = Number(n) || 0;
+        if (n >= 1000000000) return '$' + (n / 1000000000).toFixed(2) + 'B';
+        if (n >= 1000000) return '$' + (n / 1000000).toFixed(2) + 'M';
+        if (n >= 1000) return '$' + (n / 1000).toFixed(1) + 'K';
+        return '$' + n.toLocaleString('en-US');
+    }
+
+    function enrichFeeConfigPayload(p) {
+        if (!p) return p;
+        var curT = parseFeeRateDecimal(p.currentTaker);
+        var curM = parseFeeRateDecimal(p.currentMaker);
+        var tgtT = parseFeeRateDecimal(p.taker);
+        var tgtM = parseFeeRateDecimal(p.maker);
+        if (p.takerFeeIncome30d == null && p.feeIncome30d != null) {
+            p.takerFeeIncome30d = Math.round(p.feeIncome30d * 0.62);
+            p.makerFeeIncome30d = p.feeIncome30d - p.takerFeeIncome30d;
+        }
+        if (p.revenueImpactTaker == null && p.takerFeeIncome30d != null) {
+            p.revenueImpactTaker = (tgtT - curT) * p.takerFeeIncome30d;
+        }
+        if (p.revenueImpactMaker == null && p.makerFeeIncome30d != null) {
+            p.revenueImpactMaker = (tgtM - curM) * p.makerFeeIncome30d;
+        }
+        return p;
+    }
+
     function recipientSectionId(rootId, appId) {
         return rootId + '-recipients-' + String(appId).replace(/[^a-zA-Z0-9]/g, '_');
     }
@@ -86,7 +136,16 @@
         } else if (app.type === 'points_bonus_config') {
             rows.push(['加成系数', p.bonusMultiplier ? p.bonusMultiplier + 'x' : '—'], ['配置人数', p.recipientCount], ['异常人数', p.anomalyCount || 0]);
         } else if (app.type === 'fee_config') {
-            rows.push(['UID', p.uid], ['费率模式', '自定义'], ['Taker', p.taker], ['Maker', p.maker], ['有效期', p.validDays ? p.validDays + ' 天（到期日 24:00:00（UTC+8）失效）' : '永久有效']);
+            var fp = enrichFeeConfigPayload(Object.assign({}, p));
+            rows.push(['UID', p.uid]);
+            rows.push(['当前费率', 'Taker ' + (fp.currentTaker || '—') + ' · Maker ' + (fp.currentMaker || '—')]);
+            rows.push(['近 30 日总交易额', fp.volume30d != null ? formatFeeVolumeUsd(fp.volume30d) : '—']);
+            rows.push(['近 30 日 Taker 手续费收入', fp.takerFeeIncome30d != null ? formatFeeVolumeUsd(fp.takerFeeIncome30d) : '—']);
+            rows.push(['近 30 日 Maker 手续费收入', fp.makerFeeIncome30d != null ? formatFeeVolumeUsd(fp.makerFeeIncome30d) : '—']);
+            rows.push(['申请 Taker / Maker', (p.taker || '—') + ' / ' + (p.maker || '—')]);
+            rows.push(['月收入影响 · Taker', fp.revenueImpactTaker != null ? formatFeeUsd(fp.revenueImpactTaker) : '—']);
+            rows.push(['月收入影响 · Maker', fp.revenueImpactMaker != null ? formatFeeUsd(fp.revenueImpactMaker) : '—']);
+            rows.push(['费率模式', '自定义'], ['有效期', p.validDays ? p.validDays + ' 天（到期日 24:00:00（UTC+8）失效）' : '永久有效']);
             if (opts && opts.detailImagePreview && p.attachments && p.attachments.length) {
                 const previews = p.attachmentPreviews || {};
                 rows.push(['附件', p.attachments.map(function (name) {
