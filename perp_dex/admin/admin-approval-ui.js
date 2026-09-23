@@ -592,7 +592,7 @@
             '<th class="px-4 py-3 text-xs font-bold text-slate-500">审批单号</th>' + typeHeader +
             '<th class="px-3 py-3 text-xs font-bold text-slate-500">申请人</th><th class="px-3 py-3 text-xs font-bold text-slate-500">申请时间</th>' +
             walletUidHeaders + activityHeader +
-            '<th class="px-3 py-3 text-xs font-bold text-slate-500">摘要</th><th class="px-3 py-3 text-xs font-bold text-slate-500">状态</th><th class="px-4 py-3 text-xs font-bold text-slate-500 text-right">操作</th>' +
+            '<th class="px-3 py-3 text-xs font-bold text-slate-500">状态</th><th class="px-4 py-3 text-xs font-bold text-slate-500 text-right">操作</th>' +
             '</tr></thead><tbody id="' + rootId + '-tbody" class="divide-y divide-slate-50"></tbody></table>' +
             '<div id="' + rootId + '-empty" class="hidden py-16 text-center text-slate-400 text-sm">暂无审批记录</div>' +
             '<div id="' + rootId + '-pagination"></div></div></div>' +
@@ -693,7 +693,6 @@
             return '<tr class="hover:bg-slate-50"><td class="px-4 py-3 font-mono text-[11px] font-bold">' + app.id + '</td>' + typeCell +
                 '<td class="px-3 py-3">' + app.applicant + '</td><td class="px-3 py-3 text-slate-500">' + app.createdAt + '</td>' +
                 walletUidCells + activityCell +
-                '<td class="px-3 py-3 max-w-[160px] truncate" title="' + (app.summary || '') + '">' + (app.summary || '—') + '</td>' +
                 '<td class="px-3 py-3"><span class="' + statusPillClass(app.status) + '">' + getApprovalStatusLabel(app.status) + '</span></td>' +
                 '<td class="px-4 py-3 text-right space-x-2"><button type="button" onclick="moduleApprovalOpenDetail(\'' + rootId + '\',\'' + app.id + '\')" class="text-blue-600 font-bold hover:underline">查看</button>' +
                 (actionable ? '<button type="button" onclick="moduleApprovalOpenDetail(\'' + rootId + '\',\'' + app.id + '\')" class="text-green-600 font-bold hover:underline">审批</button>' : '') +
