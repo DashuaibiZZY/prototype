@@ -44,18 +44,10 @@
 
     <div class="flex-1 overflow-y-auto p-8 space-y-6" id="page-fee-settings">
         <section class="card p-5">
-            <div class="grid grid-cols-4 gap-4 items-end">
+            <div class="grid grid-cols-3 gap-4 items-end max-w-2xl">
                 <div class="col-span-2">
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID / 钱包地址</label>
                     <input id="filterUser" type="text" placeholder="输入 UID 或钱包地址" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">配置等级</label>
-                    <select id="filterLevel" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="all">全部</option>
-                        <option value="natural">自然升降</option>
-                        <!-- VIP 等级选项由 VIP 配置动态生成 -->
-                    </select>
                 </div>
                 <div class="flex gap-2">
                     <button onclick="applyFilters()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-slate-800">查询</button>
@@ -67,22 +59,17 @@
         <section class="card overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                 <span class="text-sm font-bold text-slate-700">用户列表 <span id="userCount" class="text-slate-400 font-medium"></span></span>
-                <span class="text-[10px] text-slate-400">交易量对应等级按近 14 日交易额自动计算</span>
+                <span class="text-[10px] text-slate-400">交易量对应等级：自然升降按近 14 日交易额；已配置自定义时显示「自定义」</span>
             </div>
             <div class="table-scroll">
-                <table class="w-full text-left min-w-[1100px]">
+                <table class="w-full text-left min-w-[720px]">
                     <thead class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase">
                     <tr>
                         <th class="px-4 py-3">UID</th>
                         <th class="px-3 py-3">钱包地址</th>
-                        <th class="px-3 py-3 text-center">配置等级</th>
                         <th class="px-3 py-3 text-center">交易量对应等级</th>
                         <th class="px-3 py-3 text-center">费率 (Taker / Maker)</th>
                         <th class="px-3 py-3 text-center">有效期天数</th>
-                        <th class="px-3 py-3 text-right">近30日交易额</th>
-                        <th class="px-3 py-3 text-right">近30日手续费收入</th>
-                        <th class="px-3 py-3 text-right">近14日交易额</th>
-                        <th class="px-3 py-3 text-right">近14日手续费收入</th>
                         <th class="px-4 py-3 text-right">操作</th>
                     </tr>
                     </thead>
@@ -103,8 +90,7 @@
     <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between shrink-0">
         <div>
             <h2 class="text-base font-bold text-slate-800">费率配置</h2>
-            <p id="drawerUserMeta" class="text-xs text-slate-400 mt-1 font-mono"></p>
-            <p id="drawerVolumeTier" class="text-[11px] text-blue-600 font-bold mt-1"></p>
+            <p id="drawerUserMeta" class="text-xs text-slate-500 mt-1"></p>
         </div>
         <button onclick="closeDrawer()" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 text-lg">&times;</button>
     </div>
@@ -138,8 +124,8 @@
             <div>
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">用户价值证明（其他交易所截图）<span class="text-red-500">*</span></label>
                 <label class="upload-box" id="proofUploadBox">
-                    <input type="file" id="proofFile" accept="image/*" onchange="onFileSelect('proof', this)">
-                    <div id="proofUploadText" class="text-[11px] text-slate-500">点击上传其他交易所交易量 / VIP 等级截图</div>
+                    <input type="file" id="proofFile" accept=".png,.jpg,.jpeg,image/png,image/jpeg" onchange="onFileSelect('proof', this)">
+                    <div id="proofUploadText" class="text-[11px] text-slate-500">点击上传 PNG / JPG 截图（其他交易所交易量或 VIP 等级）</div>
                 </label>
             </div>
         </section>
@@ -214,20 +200,6 @@
                 { level: 3, name: 'VIP 3', threshold: '≥ $100M', taker: 0.00029, maker: 0.00006 },
                 { level: 4, name: 'VIP 4', threshold: '≥ $500M', taker: 0.00026, maker: 0.00004 }
             ];
-        }
-        syncFilterLevelOptions();
-    }
-
-    function syncFilterLevelOptions() {
-        var select = document.getElementById('filterLevel');
-        if (!select) return;
-        var current = select.value;
-        var html = '<option value="all">全部</option><option value="natural">自然升降</option><option value="custom">自定义</option>';
-        select.innerHTML = html;
-        if ([].some.call(select.options, function (o) { return o.value === current; })) {
-            select.value = current;
-        } else {
-            select.value = 'all';
         }
     }
 
@@ -310,14 +282,10 @@
         localStorage.setItem(FEE_LOG_KEY, JSON.stringify(logs.slice(0, 200)));
     }
 
-    function configLevelLabel(u) {
-        if (!u.adminOverride) return '<span class="tier-badge" style="background:#ecfdf5;color:#059669">自然升降</span>';
-        return '<span class="tier-badge custom">自定义</span>';
-    }
-
-    function volumeTierLabel(volume14d) {
-        const level = calcVolumeTier(volume14d);
-        return `<span class="tier-badge volume">VIP ${level}</span>`;
+    function volumeTierLabel(u) {
+        if (u.adminOverride) return '<span class="tier-badge custom">自定义</span>';
+        const level = calcVolumeTier(u.volume14d);
+        return '<span class="tier-badge volume">VIP ' + level + '</span>';
     }
 
     function renderUserTable() {
@@ -326,7 +294,7 @@
         feeUserListPage = sliced.page;
         document.getElementById('userCount').textContent = `(${filteredUsers.length})`;
         if (!filteredUsers.length) {
-            tbody.innerHTML = '<tr><td colspan="10" class="px-6 py-12 text-center text-slate-400">未找到匹配用户</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">未找到匹配用户</td></tr>';
             feeMountPag('fee-user-pagination', 0, 1, 'fee-users');
             return;
         }
@@ -334,14 +302,9 @@
             <tr class="hover:bg-slate-50">
                 <td class="px-4 py-4">${window.AdminCopyChip ? AdminCopyChip.uid(u.uid) : u.uid}</td>
                 <td class="px-3 py-4">${window.AdminCopyChip ? AdminCopyChip.wallet(u.wallet) : u.wallet}</td>
-                <td class="px-3 py-4 text-center">${configLevelLabel(u)}</td>
-                <td class="px-3 py-4 text-center">${volumeTierLabel(u.volume14d)}</td>
+                <td class="px-3 py-4 text-center">${volumeTierLabel(u)}</td>
                 <td class="px-3 py-4 text-center font-mono text-[11px]">${formatFee(u.taker, u.maker)}</td>
                 <td class="px-3 py-4 text-center font-bold text-slate-600">${u.validDays != null ? u.validDays + ' 天' : '-'}</td>
-                <td class="px-3 py-4 text-right font-bold text-slate-700">${formatMoney(u.volume30d)}</td>
-                <td class="px-3 py-4 text-right font-bold text-blue-600">${formatMoney(u.feeIncome30d)}</td>
-                <td class="px-3 py-4 text-right font-bold text-slate-600">${formatMoney(u.volume14d)}</td>
-                <td class="px-3 py-4 text-right font-bold text-blue-500">${formatMoney(u.feeIncome14d)}</td>
                 <td class="px-4 py-4 text-right space-x-2 whitespace-nowrap">
                     <button onclick="openDrawer('${u.uid}')" class="text-blue-600 font-bold hover:underline">配置费率</button>
                     ${u.adminOverride ? `<button onclick="openRevokeModal('${u.uid}')" class="text-red-500 font-bold hover:underline ml-2">撤销</button>` : ''}
@@ -351,19 +314,10 @@
         feeMountPag('fee-user-pagination', sliced.total, feeUserListPage, 'fee-users');
     }
 
-    function matchLevelFilter(u, levelFilter) {
-        if (levelFilter === 'all') return true;
-        if (levelFilter === 'natural') return !u.adminOverride;
-        if (levelFilter === 'custom') return u.adminOverride;
-        return true;
-    }
-
     function applyFilters() {
         const userQ = document.getElementById('filterUser').value.trim().toLowerCase();
-        const levelFilter = document.getElementById('filterLevel').value;
         filteredUsers = users.filter(u => {
             if (userQ && !u.wallet.toLowerCase().includes(userQ) && !u.uid.includes(userQ)) return false;
-            if (!matchLevelFilter(u, levelFilter)) return false;
             return true;
         });
         feeUserListPage = 1;
@@ -372,7 +326,6 @@
 
     function resetFilters() {
         document.getElementById('filterUser').value = '';
-        document.getElementById('filterLevel').value = 'all';
         filteredUsers = [...users];
         feeUserListPage = 1;
         renderUserTable();
@@ -386,7 +339,7 @@
         if (input) input.value = '';
         if (box) box.classList.remove('has-file');
         if (text) {
-            text.textContent = '点击上传其他交易所交易量 / VIP 等级截图';
+            text.textContent = '点击上传 PNG / JPG 截图（其他交易所交易量或 VIP 等级）';
             text.className = 'text-[11px] text-slate-500';
         }
     }
@@ -394,6 +347,12 @@
     function onFileSelect(type, input) {
         const file = input.files[0];
         if (!file) return;
+        const ok = /\.(png|jpe?g)$/i.test(file.name) || file.type === 'image/png' || file.type === 'image/jpeg';
+        if (!ok) {
+            alert('请上传 PNG 或 JPG 格式图片');
+            input.value = '';
+            return;
+        }
         uploadState[type] = file.name;
         const reader = new FileReader();
         reader.onload = function (e) {
@@ -412,10 +371,7 @@
         if (!user) return;
         currentUserId = uid;
         draftConfig = { feeMode: 'custom', taker: user.taker, maker: user.maker };
-        const volTier = calcVolumeTier(user.volume14d);
-        document.getElementById('drawerUserMeta').innerHTML = (window.AdminCopyChip ? AdminCopyChip.uid(user.uid) + ' · ' + AdminCopyChip.wallet(user.wallet) : `UID ${user.uid} · ${user.wallet}`);
-        document.getElementById('drawerVolumeTier').textContent =
-            `近 14 日交易额 ${formatMoney(user.volume14d)} → 自动对应 ${getTierByLevel(volTier).name}`;
+        document.getElementById('drawerUserMeta').innerHTML = window.AdminCopyChip ? AdminCopyChip.uid(user.uid) : ('UID ' + user.uid);
         document.getElementById('customTaker').value = (user.taker * 100).toFixed(3);
         document.getElementById('customMaker').value = (user.maker * 100).toFixed(3);
         document.getElementById('revokeFeeBtn').classList.toggle('hidden', !user.adminOverride);
