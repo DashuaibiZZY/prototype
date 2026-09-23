@@ -4207,6 +4207,20 @@
         openMigrateConfirmModal();
     }
 
+    function buildMigrateApprovalIdentityFields(preview, plainRole, needsRatio, ratioVal) {
+        var beforeIdentity = preview.type === 'partner' ? 'N级合伙人' : '直客';
+        var afterIdentity = '直客';
+        if (preview.type === 'partner') afterIdentity = 'N级合伙人';
+        else if (plainRole === 'sub_partner') afterIdentity = 'N级合伙人';
+        else if (plainRole === 'direct_client') afterIdentity = '直客';
+        else if (needsRatio && ratioVal != null) afterIdentity = 'N级合伙人';
+        var oldRatio = null;
+        if (preview.type === 'partner' && preview.partnerUser && preview.partnerUser.ratio != null) {
+            oldRatio = preview.partnerUser.ratio;
+        }
+        return { beforeIdentity: beforeIdentity, afterIdentity: afterIdentity, oldRatio: oldRatio };
+    }
+
     function confirmMigrateSubmit() {
         closeMigrateConfirmModal();
         if (!migrateState.preview || migrateState.validationErrors.length) return;
@@ -4218,6 +4232,7 @@
         const subjectWallet = p.type === 'plain' ? p.plainUser.wallet : p.partnerUser.wallet;
         const subjectUid = p.type === 'plain' ? p.plainUser.uid : p.partnerUser.uid;
         const plainRole = p.type === 'plain' ? p.plainRole : null;
+        const identityFields = buildMigrateApprovalIdentityFields(p, plainRole, needsRatio, ratioVal);
         const roleSummary = plainRole === 'direct_client' ? '下级直客' : (plainRole === 'sub_partner' ? '下级代理' : '');
         const summarySuffix = needsRatio ? ratioVal + '%' : roleSummary;
         if (typeof submitApprovalApplication === 'function') {
@@ -4250,6 +4265,9 @@
                     targetWallet: target.wallet,
                     targetUid: target.uid || '',
                     targetKind: classifyMigrateTargetKind(target),
+                    oldRatio: identityFields.oldRatio,
+                    beforeIdentity: identityFields.beforeIdentity,
+                    afterIdentity: identityFields.afterIdentity,
                     newRatio: needsRatio ? ratioVal : null,
                     opsCap: OPS_CAP,
                     crossBd: !!crossBd,

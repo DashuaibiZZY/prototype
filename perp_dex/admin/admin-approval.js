@@ -717,7 +717,13 @@
                     subjectType: 'partner',
                     targetWallet: '0xTo...L1',
                     targetUid: '200001',
-                    newRatio: 58
+                    oldRatio: 58,
+                    beforeIdentity: 'N级合伙人',
+                    afterIdentity: 'N级合伙人',
+                    newRatio: 58,
+                    migrateAsPartner: true,
+                    attachments: ['迁移方案说明.png'],
+                    attachmentPreviews: { '迁移方案说明.png': partnerImg1 }
                 },
                 timeline: [{ at: '2026-08-11 09:30', actor: 'Mkt_Allen', action: '提交申请', note: '代理整伞迁移' }]
             },
@@ -737,7 +743,11 @@
                     subjectType: 'partner',
                     targetWallet: '0xTo...L2',
                     targetUid: '200002',
-                    newRatio: 52
+                    oldRatio: 58,
+                    beforeIdentity: 'N级合伙人',
+                    afterIdentity: 'N级合伙人',
+                    newRatio: 52,
+                    migrateAsPartner: true
                 },
                 timeline: [{ at: '2026-08-11 10:15', actor: 'Mkt_Bob', action: '提交申请', note: '正常代理整伞迁移' }]
             },
@@ -757,7 +767,11 @@
                     subjectType: 'plain',
                     targetWallet: '0xTo...L1',
                     targetUid: '200001',
-                    newRatio: 45
+                    oldRatio: null,
+                    beforeIdentity: '直客',
+                    afterIdentity: 'N级合伙人',
+                    newRatio: 45,
+                    migrateAsPartner: true
                 },
                 timeline: [
                     { at: '2026-08-10 16:40', actor: 'Mkt_Allen', action: '提交申请', note: '普通用户引流迁移' },
@@ -807,10 +821,16 @@
                     subjectType: 'partner',
                     targetWallet: '0xTo...L1',
                     targetUid: '200001',
+                    oldRatio: 50,
+                    beforeIdentity: 'N级合伙人',
+                    afterIdentity: 'N级合伙人',
                     newRatio: 50,
+                    migrateAsPartner: true,
                     crossBd: true,
                     originalBd: 'bob@forx.fi',
-                    crossBdReason: '华南线渠道整合，主体原归属 bob@forx.fi 伞下'
+                    crossBdReason: '华南线渠道整合，主体原归属 bob@forx.fi 伞下',
+                    attachments: ['跨BD迁移依据.png'],
+                    attachmentPreviews: { '跨BD迁移依据.png': partnerImg2 }
                 },
                 lark: { id: 'LARK-20260829-3301', status: 'pending', url: 'https://www.feishu.cn/approval/admin/preview/LARK-20260829-3301', syncedAt: '2026-08-29 14:00' },
                 timeline: [
@@ -1182,7 +1202,11 @@
                     subjectType: 'partner',
                     targetWallet: '0xTo...L1',
                     targetUid: '200001',
-                    newRatio: 62
+                    oldRatio: 65,
+                    beforeIdentity: 'N级合伙人',
+                    afterIdentity: 'N级合伙人',
+                    newRatio: 62,
+                    migrateAsPartner: true
                 },
                 timeline: [
                     { at: '2026-08-12 14:30', actor: 'Mkt_Bob', action: '提交申请', note: '整伞迁移至新一级' },
