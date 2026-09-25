@@ -1200,6 +1200,24 @@
     let currentSecondary = 'basic';
     let currentFilterModalType = '';
 
+    function getFunnelBtnHtml() {
+        return `<button onclick="openFilterModal('date')" class="p-2 text-gray-400 hover:text-black transition-colors relative shrink-0"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"/></svg></button>`;
+    }
+
+    function updateCurrentFilters(funnelBtn) {
+        const triangle = `<svg class="w-2 h-2 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M5 7l5 5 5-5z"/></svg>`;
+        const filterGroup = document.getElementById('filter-group');
+        const fb = funnelBtn || getFunnelBtnHtml();
+        let filters = `<button onclick="openFilterModal('contract')" class="filter-btn">合約 ${triangle}</button>`;
+        if (currentSecondary === 'basic') {
+            filters += `<button onclick="openFilterModal('orderType')" class="filter-btn">訂單類型 ${triangle}</button>`;
+        }
+        filterGroup.innerHTML = `
+        <div class="flex items-center flex-1 overflow-x-auto no-scrollbar space-x-2">${filters}</div>
+        ${fb}
+    `;
+    }
+
     // 2. 修改切換邏輯
     function switchPrimary(tab) {
         currentPrimary = tab;
@@ -1219,13 +1237,7 @@
 
         // 2. 定義元件模板
         const triangle = `<svg class="w-2 h-2 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M5 7l5 5 5-5z"/></svg>`;
-
-        // funnelBtn 必須在 switchPrimary 內部定義，才能讀取 tab 參數
-        const funnelBtn = `
-        <button onclick="openFilterModal('date')" class="p-2 text-gray-400 hover:text-black transition-colors relative shrink-0">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"/>
-            </svg>`;
+        const funnelBtn = getFunnelBtnHtml();
 
         // 3. 根據標籤切換佈局
         if (tab === 'current' || tab === 'history') {
@@ -1242,14 +1254,9 @@
 
             // 渲染篩選器
             if (tab === 'history') {
-                updateHistoryFilters(funnelBtn); // 傳入 funnelBtn
+                updateHistoryFilters(funnelBtn);
             } else {
-                filterGroup.innerHTML = `
-                <div class="flex items-center flex-1 overflow-x-auto no-scrollbar space-x-2">
-                    <button onclick="openFilterModal('contract')" class="filter-btn">合約 ${triangle}</button>
-                    <button onclick="openFilterModal('orderType')" class="filter-btn">訂單類型 ${triangle}</button>
-                </div>
-            `;
+                updateCurrentFilters(funnelBtn);
             }
         } else {
             secondaryBar.style.display = 'none'; // 隱藏二級標籤
@@ -1278,6 +1285,7 @@
     function updateHistoryFilters(funnelBtn) {
         const triangle = `<svg class="w-2 h-2 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M5 7l5 5 5-5z"/></svg>`;
         const filterGroup = document.getElementById('filter-group');
+        const fb = funnelBtn || getFunnelBtnHtml();
 
         let filters = '';
         if (currentSecondary === 'basic') {
@@ -1288,7 +1296,7 @@
 
         filterGroup.innerHTML = `
         <div class="flex items-center flex-1 overflow-x-auto no-scrollbar space-x-2">${filters}</div>
-        ${funnelBtn}
+        ${fb}
     `;
     }
 
@@ -1296,7 +1304,8 @@
         currentSecondary = sub;
         document.getElementById('s-basic').classList.toggle('active', sub === 'basic');
         document.getElementById('s-tpsl').classList.toggle('active', sub === 'tpsl');
-        if (currentPrimary === 'history') updateHistoryFilters(); // 同步更新篩選欄
+        if (currentPrimary === 'history') updateHistoryFilters();
+        else if (currentPrimary === 'current') updateCurrentFilters();
         renderList();
     }
 
@@ -1391,6 +1400,16 @@
                 </div>
             `;
             case 'orderType': // 3. 訂單類型
+                if (currentPrimary === 'current' && currentSecondary === 'basic') {
+                    return `
+                <h3 class="text-center font-black text-sm mb-8 uppercase tracking-widest">訂單類型</h3>
+                <div class="grid grid-cols-2 gap-3 pb-10">
+                    <div class="filter-option-btn active" onclick="closeFilterModal()">全部</div>
+                    <div class="filter-option-btn" onclick="closeFilterModal()">限价单</div>
+                    <div class="filter-option-btn" onclick="closeFilterModal()">只挂单(Post Only)</div>
+                </div>
+            `;
+                }
                 return `
                 <h3 class="text-center font-black text-sm mb-8 uppercase tracking-widest">訂單類型</h3>
                 <div class="grid grid-cols-2 gap-3 pb-10">
