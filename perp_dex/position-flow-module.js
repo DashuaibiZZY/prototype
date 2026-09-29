@@ -86,7 +86,7 @@
         {
             time: '2024-05-24 16:18:41', symbol: SYMBOL_BNBUSDC_ISOLATED,
             dir: '卖出开空', dirClass: 'text-red-500',
-            price: '628.80', qty: '0.50', avg: '628.10', filled: '0.20', timeInForce: 'FOK',
+            price: '628.80', qty: '0.50', avg: '628.10', filled: '0.20', timeInForce: 'Post Only',
             tpslTp: null, tpslSl: null,
             status: '部分成交', statusClass: 'text-gray-600', orderId: 'OR_ADV_882921',
             titleSymbol: 'BNBUSDC', titleDir: '卖出开空 逐仓 20x', titleDirClass: 'text-red-500',
@@ -470,7 +470,7 @@
             '<td class="px-4 py-3 font-mono font-bold whitespace-nowrap">' + row.qty + '</td>' +
             '<td class="px-4 py-3 font-mono whitespace-nowrap">' + row.avg + '</td>' +
             '<td class="px-4 py-3 font-mono whitespace-nowrap">' + row.filled + '</td>' +
-            (opts.includeTimeInForce ? '<td class="px-4 py-3 whitespace-nowrap text-gray-600">' + (row.timeInForce || '--') + '</td>' : '') +
+            (opts.includeTimeInForce ? '<td class="px-4 py-3 whitespace-nowrap text-gray-600">' + (opts.tifValue != null ? opts.tifValue : (row.timeInForce || '--')) + '</td>' : '') +
             (opts.includeFeePnl ? '<td class="px-4 py-3 font-mono whitespace-nowrap">' + (row.fee || '--') + '</td>' +
             '<td class="px-4 py-3 whitespace-nowrap">' + renderOrderPnlCell(row) + '</td>' : '') +
             (opts.includeTpsl ? '<td class="px-4 py-3 align-top whitespace-nowrap">' + renderBaseOrderTpslCell(row, { withSetup: opts.withTpslSetup }) + '</td>' : '') +
@@ -489,7 +489,7 @@
     function renderCurrentOrderAdvancedRows() {
         return CURRENT_ORDER_ADVANCED.map(function (r) {
             return '<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">' +
-                renderBaseOrderCoreCells(r, { includeTpsl: true, withTpslSetup: true, includeTimeInForce: true }) + renderBaseOrderActionCell(r.orderId) +
+                renderBaseOrderCoreCells(r, { includeTpsl: true, withTpslSetup: true, includeTimeInForce: true, tifValue: 'Post Only' }) + renderBaseOrderActionCell(r.orderId) +
                 '</tr>';
         }).join('');
     }
