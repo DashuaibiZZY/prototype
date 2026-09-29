@@ -46,7 +46,11 @@
 
     const CURRENT_ORDER_BASE_HEADER = '<th class="px-4 py-2">合約</th><th class="px-4 py-2">委託時間</th><th class="px-4 py-2">交易方向</th><th class="px-4 py-2">委託價</th><th class="px-4 py-2">委託數量</th><th class="px-4 py-2">成交均價</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2 text-blue-600">止盈止损</th><th class="px-4 py-2">訂單狀態</th><th class="px-4 py-2">訂單編號</th>';
 
+    const CURRENT_ORDER_ADVANCED_HEADER = '<th class="px-4 py-2">合約</th><th class="px-4 py-2">委託時間</th><th class="px-4 py-2">交易方向</th><th class="px-4 py-2">委託價</th><th class="px-4 py-2">委託數量</th><th class="px-4 py-2">成交均價</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">生效类型</th><th class="px-4 py-2 text-blue-600">止盈止损</th><th class="px-4 py-2">訂單狀態</th><th class="px-4 py-2">訂單編號</th>';
+
     const HIST_ORDER_BASE_HEADER = '<th class="px-4 py-2">合約</th><th class="px-4 py-2">委託時間</th><th class="px-4 py-2">交易方向</th><th class="px-4 py-2">委託價</th><th class="px-4 py-2">委託數量</th><th class="px-4 py-2">成交均價</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">手續費</th><th class="px-4 py-2">盈亏 (ROE%)</th><th class="px-4 py-2">訂單狀態</th><th class="px-4 py-2">訂單編號</th><th class="px-4 py-2">流水详情</th>';
+
+    const HIST_ORDER_ADVANCED_HEADER = '<th class="px-4 py-2">合約</th><th class="px-4 py-2">委託時間</th><th class="px-4 py-2">交易方向</th><th class="px-4 py-2">委託價</th><th class="px-4 py-2">委託數量</th><th class="px-4 py-2">成交均價</th><th class="px-4 py-2">成交數量</th><th class="px-4 py-2">生效类型</th><th class="px-4 py-2">手續費</th><th class="px-4 py-2">盈亏 (ROE%)</th><th class="px-4 py-2">訂單狀態</th><th class="px-4 py-2">訂單編號</th><th class="px-4 py-2">流水详情</th>';
 
     const CURRENT_ORDER_BASE = [
         {
@@ -73,7 +77,7 @@
         {
             time: '2024-05-24 16:05:22', symbol: SYMBOL_BTCUSDC_ISOLATED,
             dir: '买入开多', dirClass: 'text-green-500',
-            price: '65,120.0', qty: '0.15', avg: '--', filled: '0.00',
+            price: '65,120.0', qty: '0.15', avg: '--', filled: '0.00', timeInForce: 'Post Only',
             tpslTp: '68,500.0', tpslSl: '63,800.0',
             status: '未成交', statusClass: 'text-blue-600', orderId: 'OR_ADV_882920',
             titleSymbol: 'BTCUSDC', titleDir: '买入开多 逐仓 10x', titleDirClass: 'text-green-500',
@@ -82,7 +86,7 @@
         {
             time: '2024-05-24 16:18:41', symbol: SYMBOL_BNBUSDC_ISOLATED,
             dir: '卖出开空', dirClass: 'text-red-500',
-            price: '628.80', qty: '0.50', avg: '628.10', filled: '0.20',
+            price: '628.80', qty: '0.50', avg: '628.10', filled: '0.20', timeInForce: 'FOK',
             tpslTp: null, tpslSl: null,
             status: '部分成交', statusClass: 'text-gray-600', orderId: 'OR_ADV_882921',
             titleSymbol: 'BNBUSDC', titleDir: '卖出开空 逐仓 20x', titleDirClass: 'text-red-500',
@@ -99,8 +103,8 @@
     ];
 
     const HIST_ORDER_ADVANCED = [
-        { time: '2026-06-15 09:40:11', symbol: SYMBOL_BTCUSDC_ISOLATED, dir: '买入开多', dirClass: 'text-green-500', price: '64,850.0', qty: '0.18', avg: '64,820.0', filled: '0.18', fee: '0.583 USDC', pnl: '+42.10 USDC', pnlRoe: '(+6.12%)', pnlClass: 'text-green-500', status: '全部成交', statusClass: 'text-gray-900', orderId: 'OR_ADV_1041927386001' },
-        { time: '2026-06-14 16:22:08', symbol: SYMBOL_BNBUSDC_ISOLATED, dir: '卖出开空', dirClass: 'text-red-500', price: '632.00', qty: '0.60', avg: '631.50', filled: '0.25', fee: '0.158 USDC', pnl: '-12.40 USDC', pnlRoe: '(-4.05%)', pnlClass: 'text-red-500', status: '部分成交', statusClass: 'text-gray-600', orderId: 'OR_ADV_1041927386002' },
+        { time: '2026-06-15 09:40:11', symbol: SYMBOL_BTCUSDC_ISOLATED, dir: '买入开多', dirClass: 'text-green-500', price: '64,850.0', qty: '0.18', avg: '64,820.0', filled: '0.18', timeInForce: 'Post Only', fee: '0.583 USDC', pnl: '+42.10 USDC', pnlRoe: '(+6.12%)', pnlClass: 'text-green-500', status: '全部成交', statusClass: 'text-gray-900', orderId: 'OR_ADV_1041927386001' },
+        { time: '2026-06-14 16:22:08', symbol: SYMBOL_BNBUSDC_ISOLATED, dir: '卖出开空', dirClass: 'text-red-500', price: '632.00', qty: '0.60', avg: '631.50', filled: '0.25', timeInForce: 'IOC', fee: '0.158 USDC', pnl: '-12.40 USDC', pnlRoe: '(-4.05%)', pnlClass: 'text-red-500', status: '部分成交', statusClass: 'text-gray-600', orderId: 'OR_ADV_1041927386002' },
     ];
 
     function buildFillRows(count, basePrice, baseQty) {
@@ -466,6 +470,7 @@
             '<td class="px-4 py-3 font-mono font-bold whitespace-nowrap">' + row.qty + '</td>' +
             '<td class="px-4 py-3 font-mono whitespace-nowrap">' + row.avg + '</td>' +
             '<td class="px-4 py-3 font-mono whitespace-nowrap">' + row.filled + '</td>' +
+            (opts.includeTimeInForce ? '<td class="px-4 py-3 whitespace-nowrap text-gray-600">' + (row.timeInForce || '--') + '</td>' : '') +
             (opts.includeFeePnl ? '<td class="px-4 py-3 font-mono whitespace-nowrap">' + (row.fee || '--') + '</td>' +
             '<td class="px-4 py-3 whitespace-nowrap">' + renderOrderPnlCell(row) + '</td>' : '') +
             (opts.includeTpsl ? '<td class="px-4 py-3 align-top whitespace-nowrap">' + renderBaseOrderTpslCell(row, { withSetup: opts.withTpslSetup }) + '</td>' : '') +
@@ -484,7 +489,7 @@
     function renderCurrentOrderAdvancedRows() {
         return CURRENT_ORDER_ADVANCED.map(function (r) {
             return '<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">' +
-                renderBaseOrderCoreCells(r, { includeTpsl: true, withTpslSetup: true }) + renderBaseOrderActionCell(r.orderId) +
+                renderBaseOrderCoreCells(r, { includeTpsl: true, withTpslSetup: true, includeTimeInForce: true }) + renderBaseOrderActionCell(r.orderId) +
                 '</tr>';
         }).join('');
     }
@@ -504,7 +509,7 @@
         return HIST_ORDER_ADVANCED.map(function (r) {
             const esc = String(r.orderId).replace(/'/g, "\\'");
             return '<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-[11px]">' +
-                renderBaseOrderCoreCells(r, { includeTpsl: false, includeFeePnl: true }) +
+                renderBaseOrderCoreCells(r, { includeTpsl: false, includeFeePnl: true, includeTimeInForce: true }) +
                 '<td class="px-4 py-3 whitespace-nowrap">' +
                 '<button type="button" class="' + BTN_BASE + ' text-blue-600" onclick="openOrderFillDetail(\'' + esc + '\')">查看详情</button>' +
                 '</td></tr>';
@@ -598,8 +603,11 @@
         PNL_BREAKDOWN_EXTRA: PNL_BREAKDOWN_EXTRA,
 
         renderHistOrderHeader: function (subTab) {
-            if (subTab === 'base' || subTab === 'adv') {
+            if (subTab === 'base') {
                 return HIST_ORDER_BASE_HEADER;
+            }
+            if (subTab === 'adv') {
+                return HIST_ORDER_ADVANCED_HEADER;
             }
             return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">委託時間</th><th class="px-4 py-2">交易方向</th><th class="px-4 py-2">數量</th><th class="px-4 py-2">觸發價格</th><th class="px-4 py-2">委託價格</th><th class="px-4 py-2">訂單狀態</th><th class="px-4 py-2">訂單編號</th>';
         },
@@ -609,7 +617,7 @@
         },
 
         renderCurrentOrderAdvancedHeader: function () {
-            return CURRENT_ORDER_BASE_HEADER + CANCEL_ALL_ADV_TH;
+            return CURRENT_ORDER_ADVANCED_HEADER + CANCEL_ALL_ADV_TH;
         },
 
         renderCurrentOrderBaseBody: function () {
