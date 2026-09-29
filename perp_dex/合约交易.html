@@ -1419,6 +1419,7 @@
             <div id="order-subtabs" class="flex space-x-4 px-4 py-2 border-b border-gray-50 bg-white text-[10px] font-bold hidden shrink-0">
                 <button id="subtab-order-base" onclick="event.stopPropagation(); switchOrderSubTab('base')" class="tab-active cursor-pointer pb-1">限價｜市價 (2)</button>
                 <button id="subtab-order-tpsl" onclick="event.stopPropagation(); switchOrderSubTab('tpsl')" class="cursor-pointer pb-1 text-gray-400 hover:text-black">止盈止損單 (2)</button>
+                <button id="subtab-order-adv" onclick="event.stopPropagation(); switchOrderSubTab('adv')" class="cursor-pointer pb-1 text-gray-400 hover:text-black">高级限价 (2)</button>
             </div>
 
             <!-- 历史委托筛选栏（限价｜市价/止盈止损单共用容器，由JS控制内部显示） -->
@@ -3419,7 +3420,7 @@
 
 <script src="shared/pnl-share-poster.js?v=20260920-poster-templates"></script>
 <script src="shared/forx-vip-tier-api.js?v=20260919-vip-config-v2"></script>
-<script src="position-flow-module.js?v=2026-09-29-funding-fee-no-dir"></script>
+<script src="position-flow-module.js?v=2026-09-29-order-adv-subtab"></script>
 <script src="position-close-module.js?v=2026-09-02-base-order-polish"></script>
 <script>
     // ==================== 通用工具 ====================
@@ -4527,8 +4528,10 @@
             if (subtabsEl) subtabsEl.classList.remove('hidden');
             const baseBtn = document.getElementById('subtab-order-base');
             const tpslBtn = document.getElementById('subtab-order-tpsl');
+            const advBtn = document.getElementById('subtab-order-adv');
             if (baseBtn) baseBtn.innerText = tabId === 'order' ? '限價｜市價 (2)' : '限價｜市價';
             if (tpslBtn) tpslBtn.innerText = tabId === 'order' ? '止盈止損單 (2)' : '止盈止損單';
+            if (advBtn) advBtn.innerText = tabId === 'order' ? '高级限价 (2)' : '高级限价';
             switchOrderSubTab('base');
         } else {
             if (subtabsEl) subtabsEl.classList.add('hidden');
@@ -4541,13 +4544,21 @@
         currentOrderSubTab = type;
         const baseBtn = document.getElementById('subtab-order-base');
         const tpslBtn = document.getElementById('subtab-order-tpsl');
-        if (baseBtn && tpslBtn) {
-            if (type === 'base') {
-                baseBtn.className = 'tab-active cursor-pointer pb-1';
-                tpslBtn.className = 'cursor-pointer pb-1 text-gray-400 hover:text-black';
+        const advBtn = document.getElementById('subtab-order-adv');
+        const isOrderTab = currentDataTab === 'order';
+        const setInactive = 'cursor-pointer pb-1 text-gray-400 hover:text-black';
+        if (baseBtn && tpslBtn && advBtn) {
+            baseBtn.className = type === 'base' ? 'tab-active cursor-pointer pb-1' : setInactive;
+            tpslBtn.className = type === 'tpsl' ? 'tab-active cursor-pointer pb-1' : setInactive;
+            advBtn.className = type === 'adv' ? 'tab-active cursor-pointer pb-1' : setInactive;
+            if (isOrderTab) {
+                baseBtn.innerText = '限價｜市價 (2)';
+                tpslBtn.innerText = '止盈止損單 (2)';
+                advBtn.innerText = '高级限价 (2)';
             } else {
-                baseBtn.className = 'cursor-pointer pb-1 text-gray-400 hover:text-black';
-                tpslBtn.className = 'tab-active cursor-pointer pb-1';
+                baseBtn.innerText = '限價｜市價';
+                tpslBtn.innerText = '止盈止損單';
+                advBtn.innerText = '高级限价';
             }
         }
         updateHistOrderStatusFilter(type);
@@ -4633,10 +4644,14 @@
         </tr>`;
         } else if (tabId === 'order') {
             document.getElementById('hist-order-filters')?.classList.add('hidden');
-            if (currentOrderSubTab === 'base') {
+            if (currentOrderSubTab === 'base' || currentOrderSubTab === 'adv') {
                 if (window.PositionFlow && typeof PositionFlow.renderOrderTabTable === 'function' &&
-                    PositionFlow.renderOrderTabTable('current', 'base', h, b)) {
+                    PositionFlow.renderOrderTabTable('current', currentOrderSubTab, h, b)) {
                     /* rendered by module */
+                } else if (window.PositionFlow && currentOrderSubTab === 'adv' &&
+                    typeof PositionFlow.renderCurrentOrderAdvancedHeader === 'function') {
+                    h.innerHTML = PositionFlow.renderCurrentOrderAdvancedHeader();
+                    b.innerHTML = PositionFlow.renderCurrentOrderAdvancedBody();
                 } else if (window.PositionFlow && typeof PositionFlow.renderCurrentOrderBaseHeader === 'function') {
                     h.innerHTML = PositionFlow.renderCurrentOrderBaseHeader();
                     b.innerHTML = PositionFlow.renderCurrentOrderBaseBody();
@@ -4647,10 +4662,10 @@
         } else if (tabId === 'hist-order') {
             document.getElementById('hist-order-filters')?.classList.remove('hidden');
             const extraFilters = document.getElementById('hist-order-extra-filters');
-            if (currentOrderSubTab === 'base') {
+            if (currentOrderSubTab === 'base' || currentOrderSubTab === 'adv') {
                 if (extraFilters) extraFilters.style.display = 'flex';
-                h.innerHTML = PositionFlow.renderHistOrderHeader('base');
-                b.innerHTML = PositionFlow.renderHistOrderBody('base');
+                h.innerHTML = PositionFlow.renderHistOrderHeader(currentOrderSubTab);
+                b.innerHTML = PositionFlow.renderHistOrderBody(currentOrderSubTab);
             } else {
                 if (extraFilters) extraFilters.style.display = 'none';
                 if (!PositionFlow.renderOrderTabTable('hist', 'tpsl', h, b)) {
@@ -4819,7 +4834,9 @@
         if (hint) {
             hint.textContent = orderType === 'tpsl'
                 ? '此操作將撤銷所有止盈止損單'
-                : '此操作將撤銷所有限價｜市價';
+                : (orderType === 'adv'
+                    ? '此操作將撤銷所有高级限价'
+                    : '此操作將撤銷所有限價｜市價');
         }
         toggleModal('modal-cancel-all');
     }
