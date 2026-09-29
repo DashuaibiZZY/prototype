@@ -322,10 +322,10 @@
     ];
 
     const FUNDING_FEES = [
-        { time: '2026-06-15 08:00:00', symbol: 'BNBUSDT', dir: '多頭支付空頭', fee: '-0.45202481 USDC', feeClass: 'text-red-500' },
-        { time: '2026-06-14 08:00:00', symbol: 'BTCUSDT', dir: '空頭支付多頭', fee: '+0.12840000 USDC', feeClass: 'text-green-500' },
-        { time: '2026-06-13 08:00:00', symbol: 'ETHUSDT', dir: '多頭支付空頭', fee: '-0.08620000 USDC', feeClass: 'text-red-500' },
-        { time: '2026-06-12 08:00:00', symbol: 'SOLUSDT', dir: '多頭支付空頭', fee: '-0.03150000 USDC', feeClass: 'text-red-500' },
+        { time: '2026-06-15 08:00:00', symbol: 'BNBUSDT', fee: '-0.45202481 USDC', feeClass: 'text-red-500' },
+        { time: '2026-06-14 08:00:00', symbol: 'BTCUSDT', fee: '+0.12840000 USDC', feeClass: 'text-green-500' },
+        { time: '2026-06-13 08:00:00', symbol: 'ETHUSDT', fee: '-0.08620000 USDC', feeClass: 'text-red-500' },
+        { time: '2026-06-12 08:00:00', symbol: 'SOLUSDT', fee: '-0.03150000 USDC', feeClass: 'text-red-500' },
     ];
 
     const PNL_BREAKDOWN_EXTRA = {
@@ -540,7 +540,6 @@
             return `<tr class="border-b border-gray-50 text-[11px]">
                 <td class="px-4 py-3 text-gray-400 whitespace-nowrap">${r.time}</td>
                 <td class="px-4 py-3 font-bold whitespace-nowrap">${r.symbol}</td>
-                <td class="px-4 py-3 whitespace-nowrap ${r.feeClass.includes('green') ? 'text-green-500' : 'text-green-500'}">${r.dir}</td>
                 <td class="px-4 py-3 font-mono whitespace-nowrap ${r.feeClass}">${r.fee}</td>
             </tr>`;
         }).join('');
@@ -694,7 +693,7 @@
         },
 
         renderFundingFeeHeader: function () {
-            return '<th class="px-4 py-2">時間</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">方向</th><th class="px-4 py-2">資金費用</th>';
+            return '<th class="px-4 py-2">時間</th><th class="px-4 py-2">合約</th><th class="px-4 py-2">資金費用</th>';
         },
 
         renderFundingFeeBody: function () {
