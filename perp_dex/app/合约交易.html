@@ -83,7 +83,7 @@
         input[type=range].accent-green::-webkit-slider-thumb { background: #22c55e; }
         input[type=range].accent-red::-webkit-slider-thumb { background: #ef4444; }
 
-        .tab-secondary { color: #9ca3af; font-weight: 700; font-size: 12px; transition: all 0.2s; }
+        .tab-secondary { color: #9ca3af; font-weight: 700; font-size: 11px; transition: all 0.2s; }
         .tab-secondary.active { color: #000; font-weight: 900; }
         .order-card { background: white; border-bottom: 1px solid #f3f4f6; padding: 16px 20px; transition: background 0.2s; }
         .order-card:active { background: #f9fafb; }
@@ -541,9 +541,10 @@
                 <!-- 當前委託 -->
                 <div id="orders-panel" class="hidden">
                     <div id="order-secondary-tabs" class="flex items-center justify-between px-4 py-2">
-                        <div class="flex space-x-6">
-                            <button onclick="switchOrderSecondary('basic')" id="s-basic" class="tab-secondary active text-[14px]">限價｜市價 (2)</button>
-                            <button onclick="switchOrderSecondary('tpsl')" id="s-tpsl" class="tab-secondary text-[14px]">止盈止損單 (2)</button>
+                        <div class="flex space-x-4 overflow-x-auto">
+                            <button onclick="switchOrderSecondary('basic')" id="s-basic" class="tab-secondary active shrink-0 text-[11px]">限價｜市價 (2)</button>
+                            <button onclick="switchOrderSecondary('tpsl')" id="s-tpsl" class="tab-secondary shrink-0 text-[11px]">止盈止損單 (2)</button>
+                            <button onclick="switchOrderSecondary('adv')" id="s-adv" class="tab-secondary shrink-0 text-[11px]">高级限价 (2)</button>
                         </div>
                     </div>
                     <div id="order-filter-bar" class="px-4 py-2 flex justify-between items-center border-b border-gray-50">
@@ -598,24 +599,27 @@
                         <div class="text-[13px] font-bold text-gray-900">市價委讬</div>
                         <div class="text-[10px] text-gray-400 mt-1 leading-snug">以可成交的最优价格快速买入或卖出</div>
                     </div>
-                    <div class="sheet-option-rich" onclick="selectOrderMode('post-only')">
-                        <div class="text-[13px] font-bold text-gray-900">只挂单（Post Only）</div>
-                        <div class="text-[10px] text-gray-400 mt-1 leading-snug">订单不会立即在市场成交，否则将会被取消</div>
-                    </div>
-                    <div class="sheet-option-rich" onclick="selectOrderMode('fok')">
-                        <div class="text-[13px] font-bold text-gray-900">限价（FOK）</div>
-                        <div class="text-[10px] text-gray-400 mt-1 leading-snug">订单仅会全部成交或立即取消</div>
-                    </div>
-                    <div class="sheet-option-rich" onclick="selectOrderMode('ioc')">
-                        <div class="text-[13px] font-bold text-gray-900">限价（IOC）</div>
-                        <div class="text-[10px] text-gray-400 mt-1 leading-snug">立即成交，并取消剩余未成交的订单</div>
-                    </div>
                 </div>
                 <div class="order-type-section-label">止盈止损委托单</div>
                 <div class="order-type-options">
                     <div class="sheet-option-rich" onclick="selectOrderMode('profit-loss')">
                         <div class="text-[13px] font-bold text-gray-900">止盈止损</div>
                         <div class="text-[10px] text-gray-400 mt-1 leading-snug">预先设置触发价格和委托价，当市场达到触发价时会按照委托价下单</div>
+                    </div>
+                </div>
+                <div class="order-type-section-label">高级限价委托</div>
+                <div class="order-type-options">
+                    <div class="sheet-option-rich" onclick="selectOrderMode('post-only')">
+                        <div class="text-[13px] font-bold text-gray-900">只挂单（Post Only）</div>
+                        <div class="text-[10px] text-gray-400 mt-1 leading-snug">订单不会立即在市场成交，否则将会被取消</div>
+                    </div>
+                    <div class="sheet-option-rich" onclick="selectOrderMode('fok')">
+                        <div class="text-[13px] font-bold text-gray-900">FOK</div>
+                        <div class="text-[10px] text-gray-400 mt-1 leading-snug">订单仅会全部成交或立即取消</div>
+                    </div>
+                    <div class="sheet-option-rich" onclick="selectOrderMode('ioc')">
+                        <div class="text-[13px] font-bold text-gray-900">IOC</div>
+                        <div class="text-[10px] text-gray-400 mt-1 leading-snug">立即成交，并取消剩余未成交的订单</div>
                     </div>
                 </div>
                 <div class="p-4 sticky bottom-0 bg-white border-t border-gray-50"><button onclick="closeSheet('order-type-sheet')" class="w-full py-3 text-[13px] font-bold text-gray-400 bg-gray-50 rounded-xl">取消</button></div>
@@ -1639,9 +1643,9 @@
     const orderTypeLabels = {
         limit: '限價委讬',
         market: '市價委讬',
-        'post-only': '只挂单',
-        fok: '限价（FOK）',
-        ioc: '限价（IOC）',
+        'post-only': '只挂单（Post Only）',
+        fok: 'FOK',
+        ioc: 'IOC',
         'profit-loss': '止盈止損',
     };
 
@@ -1945,7 +1949,6 @@
                 <div class="flex justify-between items-start mb-3">
                     <div class="flex items-center flex-wrap gap-1.5 min-w-0">
                         <span class="font-black text-[13px]">BNBUSDC</span>
-                        <span class="tif-tag">只挂单(Post Only)</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <button type="button" onclick="openModifyBaseOrderSheet('OR_882910')" class="text-blue-500 p-1 active:opacity-60" aria-label="修改参数">
@@ -2073,6 +2076,69 @@
                     <span class="font-black font-mono text-right">2,375</span>
                 </div>
             </div>
+        `,
+        adv: `
+            <div class="order-card">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                        <span class="font-black text-[13px]">BNBUSDC</span>
+                        <span class="tif-tag">只挂单(Post Only)</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button type="button" onclick="openModifyBaseOrderSheet('OR_882910')" class="text-blue-500 p-1 active:opacity-60" aria-label="修改参数">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                        <button onclick="alert('已撤銷該委託')" class="bg-gray-100 text-gray-900 text-[10px] font-black px-3 py-1 rounded-sm">撤單</button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between gap-2 mb-4">
+                    <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                    <span class="bg-red-100 text-red-600 text-[10px] px-1 font-black rounded-sm">平多</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">全仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">3X</span>
+                    </div>
+                    <span class="text-gray-300 font-medium text-[10px] shrink-0">06/11 18:59:34</span>
+                </div>
+                <div class="grid grid-cols-2 gap-y-2 text-[11px]">
+                    <div class="flex flex-col"><span class="text-gray-400 font-bold uppercase text-[9px]">成交數量 / 數量 (USDC)</span><span class="font-black font-mono">0.00 / 620</span></div>
+                    <div class="flex flex-col text-right"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black font-mono">620.00</span></div>
+                </div>
+                <div class="flex justify-between items-center text-[11px] mt-3">
+                    <span class="text-gray-400 font-bold uppercase text-[9px]">止盈/止損</span>
+                    <div class="flex items-center gap-1.5 font-black font-mono">
+                        <span id="order-adv-tpsl-display">500/600</span>
+                        <button type="button" onclick="openOrderAttachTPSLSheet()" class="text-blue-500 p-0.5 active:opacity-60" aria-label="设置止盈止损">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="order-card">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                        <span class="font-black text-[13px]">SOLUSDT</span>
+                        <span class="tif-tag">FOK</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button type="button" onclick="openModifyBaseOrderSheet('OR_882915')" class="text-blue-500 p-1 active:opacity-60" aria-label="修改参数">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                        <button onclick="alert('已撤銷該委託')" class="bg-gray-100 text-gray-900 text-[10px] font-black px-3 py-1 rounded-sm">撤單</button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between gap-2 mb-4">
+                    <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                    <span class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">开多</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">逐仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">10X</span>
+                    </div>
+                    <span class="text-gray-300 font-medium text-[10px] shrink-0">06/11 20:01:08</span>
+                </div>
+                <div class="grid grid-cols-2 gap-y-2 text-[11px]">
+                    <div class="flex flex-col"><span class="text-gray-400 font-bold uppercase text-[9px]">成交數量 / 數量 (USDT)</span><span class="font-black font-mono">0.00 / 120</span></div>
+                    <div class="flex flex-col text-right"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black font-mono">198.50</span></div>
+                </div>
+            </div>
         `
     };
 
@@ -2091,6 +2157,15 @@
             lastPrice: '2,382.50',
             price: '2380.00',
             qty: '850',
+            unit: 'USDT',
+            tpslTp: '',
+            tpslSl: '',
+        },
+        OR_882915: {
+            titleHtml: 'SOLUSDT <span class="text-green-500">開多 逐仓 10x</span>',
+            lastPrice: '198.20',
+            price: '198.50',
+            qty: '120',
             unit: 'USDT',
             tpslTp: '',
             tpslSl: '',
@@ -2530,8 +2605,9 @@
 
     function switchOrderSecondary(sub) {
         currentOrderSecondary = sub;
-        document.getElementById('s-basic').classList.toggle('active', sub === 'basic');
-        document.getElementById('s-tpsl').classList.toggle('active', sub === 'tpsl');
+        document.getElementById('s-basic')?.classList.toggle('active', sub === 'basic');
+        document.getElementById('s-tpsl')?.classList.toggle('active', sub === 'tpsl');
+        document.getElementById('s-adv')?.classList.toggle('active', sub === 'adv');
         renderOrderList();
     }
 
@@ -2552,10 +2628,12 @@
         const tabOrd = document.getElementById('tab-orders');
         const sBasic = document.getElementById('s-basic');
         const sTpsl = document.getElementById('s-tpsl');
+        const sAdv = document.getElementById('s-adv');
         if (tabPos) tabPos.textContent = `當前持倉(${posCount})`;
         if (tabOrd) tabOrd.textContent = `當前委託(${ordCount})`;
         if (sBasic) sBasic.textContent = `限價｜市價 (${isGuestMode ? 0 : 2})`;
         if (sTpsl) sTpsl.textContent = `止盈止損單 (${isGuestMode ? 0 : 2})`;
+        if (sAdv) sAdv.textContent = `高级限价 (${isGuestMode ? 0 : 2})`;
     }
 
     function openOrderFilterModal(type) {
@@ -2581,6 +2659,7 @@
                 <div class="space-y-4 pb-8">
                     <div class="py-3 border-b border-gray-50 font-black text-sm cursor-pointer" onclick="selectCancelType('all')">全部</div>
                     <div class="py-3 border-b border-gray-50 font-bold text-gray-500 text-sm cursor-pointer" onclick="selectCancelType('limit')">限價｜市價</div>
+                    <div class="py-3 border-b border-gray-50 font-bold text-gray-500 text-sm cursor-pointer" onclick="selectCancelType('adv')">高级限价</div>
                     <div class="py-3 border-b border-gray-50 font-bold text-gray-500 text-sm cursor-pointer" onclick="selectCancelType('tpsl')">止盈止损</div>
                 </div>
             `;
