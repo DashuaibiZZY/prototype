@@ -1216,6 +1216,39 @@
                     <span id="tab-profit-loss" onclick="switchOrderMode('profit-loss')" class="hover:text-black cursor-pointer pb-1">止盈止损</span>
                 </div>
 
+                <!-- 止盈止损 Tab：委托类型（止盈止损 / 高级限价委托） -->
+                <div id="pl-subtype-bar" class="hidden mb-2">
+                    <div class="relative" onclick="togglePLSubtypeDropdown(event)">
+                        <div class="flex items-center justify-between bg-gray-50 border border-gray-100 h-8 px-2 cursor-pointer text-[9px] font-bold text-gray-600">
+                            <span id="pl-subtype-value">止盈止损</span>
+                            <svg width="8" height="8" class="ml-1 shrink-0" viewBox="0 0 16 16"><path d="M8 11.2L3.2 6.4h9.6L8 11.2z" fill="currentColor"></path></svg>
+                        </div>
+                        <div id="pl-subtype-dropdown" class="absolute top-full left-0 w-full bg-white border border-gray-200 shadow rounded-sm text-[10px] hidden z-50">
+                            <div class="px-3 py-2 hover:bg-gray-100 cursor-pointer" onclick="setPLSubtype('tpsl'); event.stopPropagation();">止盈止损</div>
+                            <div class="px-3 py-2 hover:bg-gray-100 cursor-pointer" onclick="setPLSubtype('adv-limit'); event.stopPropagation();">高级限价委托</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 高级限价：生效机制（止盈止损 Tab · 高级限价委托） -->
+                <div id="adv-limit-mechanism" class="hidden mb-2">
+                    <div class="flex items-center text-[9px] font-bold text-gray-500 mb-1">
+                        <span class="market-hint-wrap dashed-hint cursor-help relative">生效机制
+                            <div class="market-hint-tip adv-mechanism-tip">您将始终以挂单者身份成交订单，如果以非挂单者身份匹配到了订单，则您的订单会自动撤销。</div>
+                        </span>
+                    </div>
+                    <div id="adv-mechanism-selector" onclick="toggleAdvMechanismDropdown(event)"
+                         class="flex items-center justify-between bg-gray-50 border border-gray-100 h-8 px-2 cursor-pointer text-[9px] font-bold text-gray-600 relative">
+                        <span id="adv-mechanism-value">Post Only</span>
+                        <svg width="8" height="8" class="ml-1 shrink-0" viewBox="0 0 16 16"><path d="M8 11.2L3.2 6.4h9.6L8 11.2z" fill="currentColor"></path></svg>
+                        <div id="adv-mechanism-dropdown" class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 shadow rounded-sm text-[10px] hidden z-50">
+                            <div class="px-3 py-1.5 hover:bg-gray-100 cursor-pointer" data-adv-tif="Post Only" onclick="selectAdvMechanism(this, event)">Post Only(只挂单)</div>
+                            <div class="px-3 py-1.5 hover:bg-gray-100 cursor-pointer" data-adv-tif="FOK" onclick="selectAdvMechanism(this, event)">FOK(全部成交否则取消)</div>
+                            <div class="px-3 py-1.5 hover:bg-gray-100 cursor-pointer" data-adv-tif="IOC" onclick="selectAdvMechanism(this, event)">IOC(立即成交或取消)</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="price-input-container" class="flex gap-1.5 mb-2">
                     <div id="price-field" class="flex-1 bg-gray-50 border border-gray-100 h-8 flex items-center px-2 relative">
                         <span class="text-[9px] text-gray-400 mr-2 shrink-0">價格</span>
@@ -1301,12 +1334,11 @@
                      onclick="toggleGtcDropdown(event)"
                      class="flex items-center text-[9px] font-bold text-gray-500 mb-2 cursor-pointer relative"
                      style="overflow: visible !important;">
-                    生效时间&nbsp;&nbsp;<span id="gtc-value">GTC</span>
+                    生效时间&nbsp;&nbsp;<span id="gtc-value">Post only</span>
                     <svg width="8" height="8" class="ml-1" viewBox="0 0 16 16"><path d="M8 11.2L3.2 6.4h9.6L8 11.2z" fill="currentColor"></path></svg>
                     <div id="gtc-dropdown"
                          class="absolute top-full left-0 mt-1 bg-white border border-gray-200 shadow rounded-sm text-[10px] hidden z-50 w-48"
                          style="pointer-events: auto;">
-                        <div class="px-3 py-1.5 hover:bg-gray-100 cursor-pointer" data-tif="GTC" onclick="selectGtc(this, event)">GTC (一直有效直至取消)</div>
                         <div class="px-3 py-1.5 hover:bg-gray-100 cursor-pointer" data-tif="Post only" onclick="selectGtc(this, event)">Post only (只挂单)</div>
                         <div class="px-3 py-1.5 hover:bg-gray-100 cursor-pointer" data-tif="FOK" onclick="selectGtc(this, event)">FOK (全部成交否则取消)</div>
                         <div class="px-3 py-1.5 hover:bg-gray-100 cursor-pointer" data-tif="IOC" onclick="selectGtc(this, event)">IOC (立即成交或取消)</div>
@@ -3803,6 +3835,8 @@
     // ==================== 交易终端 ====================
     let currentSide = 'open';
     let currentOrderMode = 'limit';
+    let currentPLSubType = 'tpsl'; // tpsl | adv-limit（仅止盈止损 Tab）
+    let currentAdvMechanism = 'Post Only';
 
     function switchPositionSide(side) {
         currentSide = side;
@@ -3821,7 +3855,9 @@
             if (tpslSection) tpslSection.style.display = 'none';
         }
         if (currentOrderMode === 'profit-loss') {
-            renderTPSLTriggers();
+            if (currentPLSubType === 'tpsl') {
+                renderTPSLTriggers();
+            }
         }
     }
 
@@ -4049,12 +4085,74 @@
         updateTPSLEstimates();
     }
 
+    function applyProfitLossSubTypeUI() {
+        const priceContainer = document.getElementById('price-input-container');
+        const tpslContainer = document.getElementById('tpsl-order-container');
+        const gtcSelector = document.getElementById('gtc-selector');
+        const advMechanism = document.getElementById('adv-limit-mechanism');
+        const bestBtn = document.getElementById('btn-best-price');
+        const plBar = document.getElementById('pl-subtype-bar');
+        if (plBar) plBar.classList.remove('hidden');
+
+        if (currentPLSubType === 'adv-limit') {
+            if (tpslContainer) tpslContainer.classList.add('hidden');
+            if (priceContainer) priceContainer.classList.remove('hidden');
+            if (advMechanism) advMechanism.classList.remove('hidden');
+            if (gtcSelector) gtcSelector.classList.add('hidden');
+            if (bestBtn) bestBtn.classList.remove('hidden');
+            const priceInput = document.getElementById('price-input');
+            if (priceInput) {
+                priceInput.disabled = false;
+                priceInput.value = priceInput.value === '市價' || priceInput.value === '市价' ? DEFAULT_LIMIT_PRICE : (priceInput.value || DEFAULT_LIMIT_PRICE);
+                priceInput.classList.remove('text-center');
+            }
+        } else {
+            if (advMechanism) advMechanism.classList.add('hidden');
+            if (priceContainer) priceContainer.classList.add('hidden');
+            if (tpslContainer) tpslContainer.classList.remove('hidden');
+            if (gtcSelector) gtcSelector.classList.add('hidden');
+            if (bestBtn) bestBtn.classList.remove('hidden');
+            renderTPSLTriggers();
+        }
+    }
+
+    function togglePLSubtypeDropdown(e) {
+        e.stopPropagation();
+        document.getElementById('pl-subtype-dropdown')?.classList.toggle('hidden');
+    }
+
+    function setPLSubtype(type) {
+        currentPLSubType = type;
+        const label = document.getElementById('pl-subtype-value');
+        if (label) label.innerText = type === 'adv-limit' ? '高级限价委托' : '止盈止损';
+        document.getElementById('pl-subtype-dropdown')?.classList.add('hidden');
+        if (currentOrderMode === 'profit-loss') {
+            applyProfitLossSubTypeUI();
+        }
+        renderOrderButtons();
+    }
+
+    function toggleAdvMechanismDropdown(e) {
+        e.stopPropagation();
+        document.getElementById('adv-mechanism-dropdown')?.classList.toggle('hidden');
+    }
+
+    function selectAdvMechanism(el, e) {
+        e.stopPropagation();
+        currentAdvMechanism = el.getAttribute('data-adv-tif') || 'Post Only';
+        const valEl = document.getElementById('adv-mechanism-value');
+        if (valEl) valEl.innerText = currentAdvMechanism;
+        document.getElementById('adv-mechanism-dropdown')?.classList.add('hidden');
+    }
+
     // 订单模式切换扩展
     function switchOrderMode(mode) {
         currentOrderMode = mode;
         const priceContainer = document.getElementById('price-input-container');
         const tpslContainer = document.getElementById('tpsl-order-container');
         const gtcSelector = document.getElementById('gtc-selector');
+        const advMechanism = document.getElementById('adv-limit-mechanism');
+        const plBar = document.getElementById('pl-subtype-bar');
         const bestBtn = document.getElementById('btn-best-price');
         const tabLimit = document.getElementById('tab-limit');
         const tabMarket = document.getElementById('tab-market');
@@ -4067,6 +4165,8 @@
         };
 
         if (mode === 'limit') {
+            if (plBar) plBar.classList.add('hidden');
+            if (advMechanism) advMechanism.classList.add('hidden');
             priceContainer.classList.remove('hidden');
             tpslContainer.classList.add('hidden');
             if (gtcSelector) gtcSelector.classList.remove('hidden');
@@ -4088,6 +4188,8 @@
             }
             if (bestBtn) bestBtn.classList.remove('hidden');
         } else if (mode === 'market') {
+            if (plBar) plBar.classList.add('hidden');
+            if (advMechanism) advMechanism.classList.add('hidden');
             priceContainer.classList.remove('hidden');
             tpslContainer.classList.add('hidden');
             if (gtcSelector) gtcSelector.classList.add('hidden');
@@ -4103,22 +4205,10 @@
             }
             if (bestBtn) bestBtn.classList.add('hidden');
         } else if (mode === 'profit-loss') {
-            priceContainer.classList.add('hidden');
-            tpslContainer.classList.remove('hidden');
-            if (gtcSelector) gtcSelector.classList.add('hidden');
             setTabStyle(tabLimit, false);
             setTabStyle(tabMarket, false);
             setTabStyle(tabPL, true);
-            // 恢复价格输入框（防止从市价切过来时残留状态）
-            const priceInput = document.getElementById('price-input');
-            if (priceInput) {
-                priceInput.disabled = false;
-                priceInput.value = '65432.1';
-                priceInput.classList.remove('text-center');
-            }
-            if (bestBtn) bestBtn.classList.remove('hidden');
-            // 渲染止盈止损内容
-            renderTPSLTriggers();
+            applyProfitLossSubTypeUI();
         }
         // 更新下单按钮
         renderOrderButtons();
@@ -4304,7 +4394,7 @@
     // 选项点击：终端仅展示英文缩写
     function selectGtc(el, e) {
         e.stopPropagation();
-        const shortLabel = el.getAttribute('data-tif') || 'GTC';
+        const shortLabel = el.getAttribute('data-tif') || 'Post only';
         document.getElementById('gtc-value').innerText = shortLabel;
         document.getElementById('gtc-dropdown').classList.add('hidden');
     }
