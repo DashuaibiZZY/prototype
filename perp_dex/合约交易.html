@@ -3419,7 +3419,7 @@
 
 <script src="shared/pnl-share-poster.js?v=20260920-poster-templates"></script>
 <script src="shared/forx-vip-tier-api.js?v=20260919-vip-config-v2"></script>
-<script src="position-flow-module.js?v=2026-09-07-fund-bill"></script>
+<script src="position-flow-module.js?v=2026-09-29-funding-fee-no-dir"></script>
 <script src="position-close-module.js?v=2026-09-02-base-order-polish"></script>
 <script>
     // ==================== 通用工具 ====================
@@ -3557,6 +3557,26 @@
             renderTableForTab(currentDataTab);
         }
     };
+
+    /** 資金費用 Tab：時間 / 合約 / 資金費用（无「方向」列，与 PRD §3.7 一致） */
+    const WEB_FUNDING_FEE_DEMO_ROWS = [
+        { time: '2026-06-15 08:00:00', symbol: 'BNBUSDT', fee: '-0.45202481 USDC', feeClass: 'text-red-500' },
+        { time: '2026-06-14 08:00:00', symbol: 'BTCUSDT', fee: '+0.12840000 USDC', feeClass: 'text-green-500' },
+        { time: '2026-06-13 08:00:00', symbol: 'ETHUSDT', fee: '-0.08620000 USDC', feeClass: 'text-red-500' },
+        { time: '2026-06-12 08:00:00', symbol: 'SOLUSDT', fee: '-0.03150000 USDC', feeClass: 'text-red-500' },
+    ];
+
+    function renderWebFundingFeeTable(headerEl, bodyEl) {
+        if (!headerEl || !bodyEl) return;
+        headerEl.innerHTML = '<th class="px-3 py-2 font-medium">時間</th><th class="px-3 py-2 font-medium">合約</th><th class="px-3 py-2 font-medium">資金費用</th>';
+        bodyEl.innerHTML = WEB_FUNDING_FEE_DEMO_ROWS.map(function (r) {
+            return '<tr class="hover:bg-gray-50 transition-colors border-b border-gray-50 text-[10px]">' +
+                '<td class="px-3 py-2.5 whitespace-nowrap text-gray-400">' + r.time + '</td>' +
+                '<td class="px-3 py-2.5 whitespace-nowrap font-bold text-gray-900">' + r.symbol + '</td>' +
+                '<td class="px-3 py-2.5 whitespace-nowrap font-mono font-bold ' + r.feeClass + '">' + r.fee + '</td>' +
+                '</tr>';
+        }).join('');
+    }
 
     function formatSignedUsdt(n) {
         return (n >= 0 ? '+' : '') + n.toFixed(2) + ' USDC';
@@ -4658,8 +4678,7 @@
             b.innerHTML = PositionFlow.renderAssetLogBody();
         } else if (tabId === 'funding-fee') {
             document.getElementById('funding-fee-filters')?.classList.remove('hidden');
-            h.innerHTML = PositionFlow.renderFundingFeeHeader();
-            b.innerHTML = PositionFlow.renderFundingFeeBody();
+            renderWebFundingFeeTable(h, b);
         }
     }
 
