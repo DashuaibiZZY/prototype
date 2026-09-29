@@ -1209,25 +1209,20 @@
                     <button id="btn-close" onclick="switchPositionSide('close')" class="flex-1 py-1 font-bold text-gray-400">平倉</button>
                 </div>
 
-                <!-- 订单类型 (限价/市价) -->
+                <!-- 订单类型 (限价/市价/止盈止损·高级限价) -->
                 <div class="flex items-center space-x-3 text-[10px] font-bold text-gray-400 mb-3 border-b border-gray-50 pb-1">
                     <span id="tab-limit" onclick="switchOrderMode('limit')" class="text-black border-b-2 border-black pb-1 cursor-pointer">限价委托</span>
                     <span id="tab-market" onclick="switchOrderMode('market')" class="hover:text-black cursor-pointer pb-1">市价委托</span>
-                    <span id="tab-profit-loss" onclick="switchOrderMode('profit-loss')" class="hover:text-black cursor-pointer pb-1">止盈止损</span>
-                </div>
-
-                <!-- 止盈止损 Tab：委托类型（止盈止损 / 高级限价委托） -->
-                <div id="pl-subtype-bar" class="hidden mb-2">
-                    <div class="relative" onclick="togglePLSubtypeDropdown(event)">
-                        <div class="flex items-center justify-between bg-gray-50 border border-gray-100 h-8 px-2 cursor-pointer text-[9px] font-bold text-gray-600">
-                            <span id="pl-subtype-value">止盈止损</span>
-                            <svg width="8" height="8" class="ml-1 shrink-0" viewBox="0 0 16 16"><path d="M8 11.2L3.2 6.4h9.6L8 11.2z" fill="currentColor"></path></svg>
+                    <span id="tab-pl-wrap" onclick="switchOrderMode('profit-loss')" class="relative inline-flex items-center hover:text-black cursor-pointer pb-1 text-gray-400">
+                        <span id="tab-pl-label">止盈止损</span>
+                        <span class="ml-0.5 inline-flex items-center shrink-0" onclick="onPLTabCaretClick(event)" aria-hidden="true">
+                            <svg width="8" height="8" viewBox="0 0 16 16"><path d="M8 11.2L3.2 6.4h9.6L8 11.2z" fill="currentColor"></path></svg>
+                        </span>
+                        <div id="pl-subtype-dropdown" class="absolute top-full left-0 mt-1 bg-white border border-gray-200 shadow rounded-sm text-[10px] hidden z-50 whitespace-nowrap min-w-[7.5rem] font-bold">
+                            <div class="px-3 py-2 hover:bg-gray-100 cursor-pointer text-gray-600" onclick="setPLSubtype('tpsl'); event.stopPropagation();">止盈止损</div>
+                            <div class="px-3 py-2 hover:bg-gray-100 cursor-pointer text-gray-600" onclick="setPLSubtype('adv-limit'); event.stopPropagation();">高级限价委托</div>
                         </div>
-                        <div id="pl-subtype-dropdown" class="absolute top-full left-0 w-full bg-white border border-gray-200 shadow rounded-sm text-[10px] hidden z-50">
-                            <div class="px-3 py-2 hover:bg-gray-100 cursor-pointer" onclick="setPLSubtype('tpsl'); event.stopPropagation();">止盈止损</div>
-                            <div class="px-3 py-2 hover:bg-gray-100 cursor-pointer" onclick="setPLSubtype('adv-limit'); event.stopPropagation();">高级限价委托</div>
-                        </div>
-                    </div>
+                    </span>
                 </div>
 
                 <!-- 高级限价：生效机制（止盈止损 Tab · 高级限价委托） -->
@@ -1327,22 +1322,6 @@
                     <span class="font-bold">12,450.00 USDC
                 <span onclick="openDepositModal()" class="text-blue-500 font-bold text-base cursor-pointer ml-0.5 align-middle leading-none">+</span>
             </span>
-                </div>
-
-                <!-- 生效时间选择器（仅限价） -->
-                <div id="gtc-selector"
-                     onclick="toggleGtcDropdown(event)"
-                     class="flex items-center text-[9px] font-bold text-gray-500 mb-2 cursor-pointer relative"
-                     style="overflow: visible !important;">
-                    生效时间&nbsp;&nbsp;<span id="gtc-value">Post only</span>
-                    <svg width="8" height="8" class="ml-1" viewBox="0 0 16 16"><path d="M8 11.2L3.2 6.4h9.6L8 11.2z" fill="currentColor"></path></svg>
-                    <div id="gtc-dropdown"
-                         class="absolute top-full left-0 mt-1 bg-white border border-gray-200 shadow rounded-sm text-[10px] hidden z-50 w-48"
-                         style="pointer-events: auto;">
-                        <div class="px-3 py-1.5 hover:bg-gray-100 cursor-pointer" data-tif="Post only" onclick="selectGtc(this, event)">Post only (只挂单)</div>
-                        <div class="px-3 py-1.5 hover:bg-gray-100 cursor-pointer" data-tif="FOK" onclick="selectGtc(this, event)">FOK (全部成交否则取消)</div>
-                        <div class="px-3 py-1.5 hover:bg-gray-100 cursor-pointer" data-tif="IOC" onclick="selectGtc(this, event)">IOC (立即成交或取消)</div>
-                    </div>
                 </div>
 
                 <!-- 止盈止損 (開倉時顯示) -->
@@ -4085,20 +4064,22 @@
         updateTPSLEstimates();
     }
 
+    function updatePLTabLabel() {
+        const label = document.getElementById('tab-pl-label');
+        if (label) label.innerText = currentPLSubType === 'adv-limit' ? '高级限价委托' : '止盈止损';
+    }
+
     function applyProfitLossSubTypeUI() {
         const priceContainer = document.getElementById('price-input-container');
         const tpslContainer = document.getElementById('tpsl-order-container');
-        const gtcSelector = document.getElementById('gtc-selector');
         const advMechanism = document.getElementById('adv-limit-mechanism');
         const bestBtn = document.getElementById('btn-best-price');
-        const plBar = document.getElementById('pl-subtype-bar');
-        if (plBar) plBar.classList.remove('hidden');
+        updatePLTabLabel();
 
         if (currentPLSubType === 'adv-limit') {
             if (tpslContainer) tpslContainer.classList.add('hidden');
             if (priceContainer) priceContainer.classList.remove('hidden');
             if (advMechanism) advMechanism.classList.remove('hidden');
-            if (gtcSelector) gtcSelector.classList.add('hidden');
             if (bestBtn) bestBtn.classList.remove('hidden');
             const priceInput = document.getElementById('price-input');
             if (priceInput) {
@@ -4110,7 +4091,6 @@
             if (advMechanism) advMechanism.classList.add('hidden');
             if (priceContainer) priceContainer.classList.add('hidden');
             if (tpslContainer) tpslContainer.classList.remove('hidden');
-            if (gtcSelector) gtcSelector.classList.add('hidden');
             if (bestBtn) bestBtn.classList.remove('hidden');
             renderTPSLTriggers();
         }
@@ -4121,13 +4101,21 @@
         document.getElementById('pl-subtype-dropdown')?.classList.toggle('hidden');
     }
 
+    function onPLTabCaretClick(e) {
+        e.stopPropagation();
+        if (currentOrderMode !== 'profit-loss') {
+            switchOrderMode('profit-loss');
+        }
+        togglePLSubtypeDropdown(e);
+    }
+
     function setPLSubtype(type) {
         currentPLSubType = type;
-        const label = document.getElementById('pl-subtype-value');
-        if (label) label.innerText = type === 'adv-limit' ? '高级限价委托' : '止盈止损';
         document.getElementById('pl-subtype-dropdown')?.classList.add('hidden');
         if (currentOrderMode === 'profit-loss') {
             applyProfitLossSubTypeUI();
+        } else {
+            updatePLTabLabel();
         }
         renderOrderButtons();
     }
@@ -4150,29 +4138,34 @@
         currentOrderMode = mode;
         const priceContainer = document.getElementById('price-input-container');
         const tpslContainer = document.getElementById('tpsl-order-container');
-        const gtcSelector = document.getElementById('gtc-selector');
         const advMechanism = document.getElementById('adv-limit-mechanism');
-        const plBar = document.getElementById('pl-subtype-bar');
         const bestBtn = document.getElementById('btn-best-price');
         const tabLimit = document.getElementById('tab-limit');
         const tabMarket = document.getElementById('tab-market');
-        const tabPL = document.getElementById('tab-profit-loss');
+        const tabPLWrap = document.getElementById('tab-pl-wrap');
+
+        document.getElementById('pl-subtype-dropdown')?.classList.add('hidden');
 
         // 重置所有 tab 样式
         const setTabStyle = (el, active) => {
+            if (!el) return;
             if (active) el.className = "text-black border-b-2 border-black pb-1 cursor-pointer";
             else el.className = "hover:text-black cursor-pointer pb-1 text-gray-400";
         };
+        const setPLTabStyle = (active) => {
+            if (!tabPLWrap) return;
+            if (active) tabPLWrap.className = "relative inline-flex items-center text-black border-b-2 border-black pb-1 cursor-pointer";
+            else tabPLWrap.className = "relative inline-flex items-center hover:text-black cursor-pointer pb-1 text-gray-400";
+        };
 
         if (mode === 'limit') {
-            if (plBar) plBar.classList.add('hidden');
             if (advMechanism) advMechanism.classList.add('hidden');
             priceContainer.classList.remove('hidden');
             tpslContainer.classList.add('hidden');
-            if (gtcSelector) gtcSelector.classList.remove('hidden');
             setTabStyle(tabLimit, true);
             setTabStyle(tabMarket, false);
-            setTabStyle(tabPL, false);
+            setPLTabStyle(false);
+            updatePLTabLabel();
             const priceInput = document.getElementById('price-input');
             if (priceInput) {
                 priceInput.disabled = false;
@@ -4188,14 +4181,13 @@
             }
             if (bestBtn) bestBtn.classList.remove('hidden');
         } else if (mode === 'market') {
-            if (plBar) plBar.classList.add('hidden');
             if (advMechanism) advMechanism.classList.add('hidden');
             priceContainer.classList.remove('hidden');
             tpslContainer.classList.add('hidden');
-            if (gtcSelector) gtcSelector.classList.add('hidden');
             setTabStyle(tabLimit, false);
             setTabStyle(tabMarket, true);
-            setTabStyle(tabPL, false);
+            setPLTabStyle(false);
+            updatePLTabLabel();
             // 市价模式输入框置灰
             const priceInput = document.getElementById('price-input');
             if (priceInput) {
@@ -4207,7 +4199,7 @@
         } else if (mode === 'profit-loss') {
             setTabStyle(tabLimit, false);
             setTabStyle(tabMarket, false);
-            setTabStyle(tabPL, true);
+            setPLTabStyle(true);
             applyProfitLossSubTypeUI();
         }
         // 更新下单按钮
@@ -4382,22 +4374,6 @@
         if (checkbox.checked) updateTPSLEstimates();
     }
 
-    // 生效时间下拉控制
-    function toggleGtcDropdown(e) {
-        e.stopPropagation();
-        const dropdown = document.getElementById('gtc-dropdown');
-        if (dropdown) {
-            dropdown.classList.toggle('hidden');
-        }
-    }
-
-    // 选项点击：终端仅展示英文缩写
-    function selectGtc(el, e) {
-        e.stopPropagation();
-        const shortLabel = el.getAttribute('data-tif') || 'Post only';
-        document.getElementById('gtc-value').innerText = shortLabel;
-        document.getElementById('gtc-dropdown').classList.add('hidden');
-    }
 
     function openDepositModal(modalTitle) {
         const title = modalTitle || '選擇充幣方式';
@@ -4983,11 +4959,6 @@
         }
         if (!e.target.closest('[onclick^="toggleMultiSelect"]') && !e.target.closest('.absolute.top-full') && !e.target.closest('.kline-period-more-wrap')) {
             document.querySelectorAll('[id$="-dropdown"]').forEach(el => el.classList.add('hidden'));
-        }
-        const gtcSelector = document.getElementById('gtc-selector');
-        const gtcDropdown = document.getElementById('gtc-dropdown');
-        if (gtcSelector && gtcDropdown && !gtcSelector.contains(e.target)) {
-            gtcDropdown.classList.add('hidden');
         }
         const qtyDropdown = document.getElementById('qty-unit-dropdown');
         if (qtyDropdown && !qtyDropdown.contains(e.target) && !e.target.closest('[onclick="toggleQtyUnitDropdown(event)"]')) {
