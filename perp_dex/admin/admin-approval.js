@@ -1273,28 +1273,13 @@
             } else {
                 html += '<p class="approval-note wait">等待风控审核…</p>';
             }
-        } else if (status === 'pending_boss') html += '<p class="approval-note wait">风控已通过，等待老板在 Lark 审批…</p>';
+        } else if (status === 'pending_boss') html += '<p class="approval-note wait">等待老板审批…</p>';
         return html;
     }
 
+    /** 待老板审批阶段：后台详情不渲染 Lark 联动卡片（审批在 Lark 完成）。 */
     function renderLarkCard(app, rootId) {
-        if (!app || app.status !== 'pending_boss') return '';
-        if (!app.lark) {
-            return '<div class="lark-card">' +
-                '<div class="lark-card-head"><span class="lark-badge">老板</span><span class="font-bold text-slate-800">待老板审批</span></div>' +
-                '<p class="text-[11px] text-slate-600 mt-2 leading-relaxed">风控已通过。老板审批须在 <b>Lark</b> 完成，本页仅查看进度。</p></div>';
-        }
-        const lark = app.lark;
-        const statusText = lark.status === 'approved' ? '已通过' : lark.status === 'rejected' ? '已驳回' : '待审批';
-        const statusCls = lark.status === 'approved' ? 'ok' : lark.status === 'rejected' ? 'err' : 'wait';
-        const larkBtn = app.status === 'pending_boss' && lark.status === 'pending'
-            ? '<button type="button" onclick="moduleApprovalSimulateLarkApprove(\'' + (rootId || '') + '\',\'' + app.id + '\')" class="flex-1 py-2 bg-[#3370ff] text-white rounded-lg text-xs font-bold hover:opacity-90">模拟 Lark 通过</button>'
-            : '';
-        return '<div class="lark-card">' +
-            '<div class="lark-card-head"><span class="lark-badge">Lark</span><span class="font-bold text-slate-800">老板审批已同步至飞书</span></div>' +
-            '<p class="text-[11px] text-slate-500 mt-2">审批单号：<span class="font-mono font-bold">' + lark.id + '</span> · 状态：<span class="approval-note ' + statusCls + '" style="display:inline;margin:0">' + statusText + '</span></p>' +
-            '<p class="text-[10px] text-slate-400 mt-1">请在 Lark 完成通过 / 驳回；本页不提供老板审批操作。</p>' +
-            (larkBtn ? '<div class="flex gap-2 mt-3">' + larkBtn + '</div>' : '');
+        return '';
     }
 
     function injectStyles() {
