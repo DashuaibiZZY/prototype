@@ -638,7 +638,7 @@
         root.innerHTML =
             '<div id="' + rootId + '-list" class="space-y-6">' +
             '<div class="flex flex-wrap justify-between items-start gap-4">' +
-            '<div><h2 class="text-lg font-bold text-slate-700">' + title + '</h2><p class="text-sm text-slate-400 mt-1">风控在本页通过 / 驳回；老板节点同步 Lark，<b>须在 Lark 完成审批</b>（本页仅查看）</p></div>' +
+            '<div><h2 class="text-lg font-bold text-slate-700">' + title + '</h2><p class="text-sm text-slate-400 mt-1">风控在本页通过 / 驳回；<b>待老板审批</b>阶段本页不展示 Lark 卡片与审批操作</p></div>' +
             '<div class="flex flex-wrap gap-2 items-center">' + roleTabsHtml +
             '</div></div>' +
             '<section class="card p-5"><div class="grid ' + gridCols + ' gap-4 items-end">' +
@@ -793,8 +793,7 @@
         const opts = state ? state.options : {};
         let readonlyHint = '当前审批已结束或无需您处理';
         if (app.status === 'pending_risk' && role !== 'risk') readonlyHint = '等待风控审核';
-        else if (app.status === 'pending_boss' && role === 'boss') readonlyHint = '请在 Lark 完成老板审批（本页不提供通过 / 驳回）';
-        else if (app.status === 'pending_boss') readonlyHint = '等待老板在 Lark 审批';
+        else if (app.status === 'pending_boss') readonlyHint = '等待老板审批';
 
         const isSimpleConfig = app.type === 'points_pool_config' || app.type === 'points_program_switch' || app.type === 'vip_tier_config';
         const exportDetailBtn = opts.showExportDetail && !isSimpleConfig
@@ -831,7 +830,7 @@
         if (canAct && role === 'risk') {
             actHint = '<p class="text-[11px] text-slate-500 mb-3">风控节点：在本页通过 / 驳回。</p>';
         }
-        var bossChannelCard = (app.status === 'pending_boss' || app.lark) && typeof renderLarkApprovalCard === 'function'
+        var bossChannelCard = app.status !== 'pending_boss' && app.lark && typeof renderLarkApprovalCard === 'function'
             ? renderLarkApprovalCard(app, rootId)
             : '';
 
@@ -846,7 +845,7 @@
             '<section class="card p-6"><h3 class="font-bold mb-4">审批时间线</h3>' + renderTimeline(app) + '</section></div>' +
             '<div class="space-y-6"><section class="card p-6"><h3 class="font-bold mb-4">审批进度</h3><div>' + renderApprovalFlow(app.status, false, app) + '</div>' + bossChannelCard + '</section>' +
             (canAct ? '<section class="card p-6"><h3 class="font-bold mb-4">审批操作</h3>' + actHint + '<textarea id="' + rootId + '-note" rows="3" class="w-full border border-slate-200 rounded-lg p-3 text-sm mb-4" placeholder="审批意见（驳回时必填）"></textarea><div class="flex gap-2"><button type="button" onclick="moduleApprovalReject(\'' + rootId + '\',\'' + app.id + '\')" class="flex-1 py-2.5 border border-red-200 text-red-600 rounded-lg text-sm font-bold">驳回</button><button type="button" onclick="moduleApprovalApprove(\'' + rootId + '\',\'' + app.id + '\')" class="flex-1 py-2.5 rounded-lg text-sm font-bold bg-green-600 text-white">通过</button></div></section>' :
-                '<section class="card p-6"><p class="text-sm text-slate-500 text-center">' + readonlyHint + '</p></section>') +
+                (app.status === 'pending_boss' ? '' : '<section class="card p-6"><p class="text-sm text-slate-500 text-center">' + readonlyHint + '</p></section>')) +
             resubmitSection +
             '</div></div>';
     };
