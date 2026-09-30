@@ -145,6 +145,13 @@
         if (activityBtn) activityBtn.disabled = locked;
     }
 
+    function formatRankingDataTime(row) {
+        if (!row) return '—';
+        if (row.dataTime && row.dataTime !== '—') return row.dataTime;
+        if (row.effectiveAt && row.effectiveAt !== '立即生效') return row.effectiveAt;
+        return '—';
+    }
+
     function setBatchEffectiveControlsLocked(locked) {
         var controls = document.getElementById('batch-effective-controls');
         var readonly = document.getElementById('batch-effective-readonly');
@@ -154,13 +161,7 @@
             var row = editingId != null ? configRows.find(function (r) { return Number(r.id) === Number(editingId); }) : null;
             var valEl = document.getElementById('batch-effective-readonly-value');
             if (valEl && row) {
-                if (row.effectiveAt === '立即生效') {
-                    valEl.textContent = '立即生效（数据时间：' + row.dataTime + '）';
-                } else if (row.dataTime === '—') {
-                    valEl.textContent = '指定日期：' + row.effectiveAt + '（待写入）';
-                } else {
-                    valEl.textContent = '指定日期：' + row.effectiveAt + '（数据时间：' + row.dataTime + '）';
-                }
+                valEl.textContent = formatRankingDataTime(row);
             }
         } else {
             if (controls) controls.classList.remove('hidden');
@@ -595,7 +596,7 @@
                 '<td class="px-6 py-4">' + scope + '</td>' +
                 '<td class="px-6 py-4 text-right space-y-0.5">' + metrics + '</td>' +
                 '<td class="px-6 py-4 text-center text-[10px] text-violet-700 font-bold">' + dim + '</td>' +
-                '<td class="px-6 py-4 text-[10px] text-slate-500"><div>' + row.dataTime + '</div><div class="text-slate-400">' + row.effectiveAt + '</div></td>' +
+                '<td class="px-6 py-4 text-[10px] text-slate-500 font-mono">' + formatRankingDataTime(row) + '</td>' +
                 '<td class="px-6 py-4 text-right">' +
                 '<button type="button" data-ranking-action="edit" data-id="' + row.id + '" class="text-blue-600 font-black hover:underline">编辑</button>' +
                 '</td></tr>';

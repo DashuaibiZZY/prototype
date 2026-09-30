@@ -379,7 +379,7 @@
                     { at: '2026-07-25 11:00', actor: 'Trial_Admin', action: '提交申请', note: 'VIP 召回活动' },
                     { at: '2026-07-25 12:30', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '通过' },
                     { at: '2026-07-25 14:00', actor: 'Risk_Control', action: '风控通过', note: '风险可控' },
-                    { at: '2026-07-25 15:30', actor: 'System', action: '已同步 Lark 审批', note: '等待老板审批（后台或 Lark 均可操作）' }
+                    { at: '2026-07-25 15:30', actor: 'System', action: '已同步 Lark 审批', note: '等待老板在 Lark 审批' }
                 ]
             },
             {
@@ -507,7 +507,7 @@
                     { at: '2026-07-24 10:00', actor: 'Points_Admin', action: '提交申请', note: '签到活动补发' },
                     { at: '2026-07-24 11:30', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '通过' },
                     { at: '2026-07-24 13:00', actor: 'Risk_Control', action: '风控通过', note: '通过' },
-                    { at: '2026-07-24 14:20', actor: 'System', action: '已同步 Lark 审批', note: '等待老板审批（后台或 Lark 均可操作）' }
+                    { at: '2026-07-24 14:20', actor: 'System', action: '已同步 Lark 审批', note: '等待老板在 Lark 审批' }
                 ]
             },
             {
@@ -598,7 +598,7 @@
                 timeline: [
                     { at: '2026-08-03 14:00', actor: 'Mkt_Bob', action: '提交申请', note: '海外做市商 85% 谈判' },
                     { at: '2026-08-03 15:20', actor: 'Risk_Control', action: '风控通过', note: '已核实协议与历史交易量' },
-                    { at: '2026-08-03 16:10', actor: 'System', action: '已同步 Lark 审批', note: '等待老板审批（后台或 Lark 均可操作）' }
+                    { at: '2026-08-03 16:10', actor: 'System', action: '已同步 Lark 审批', note: '等待老板在 Lark 审批' }
                 ]
             },
             {
@@ -651,7 +651,7 @@
                 timeline: [
                     { at: '2026-08-05 10:00', actor: 'Mkt_Bob', action: '提交申请', note: 'VIP 渠道 88% 特批' },
                     { at: '2026-08-05 12:30', actor: 'Risk_Control', action: '风控通过', note: '风险敞口可接受' },
-                    { at: '2026-08-05 14:20', actor: 'System', action: '已同步 Lark 审批', note: '等待老板审批（后台或 Lark 均可操作）' }
+                    { at: '2026-08-05 14:20', actor: 'System', action: '已同步 Lark 审批', note: '等待老板在 Lark 审批' }
                 ]
             },
             {
@@ -837,7 +837,7 @@
                 timeline: [
                     { at: '2026-08-29 11:30', actor: 'Mkt_Allen', action: '提交申请', note: '跨 BD 整伞迁移' },
                     { at: '2026-08-29 13:10', actor: 'Risk_Control', action: '风控通过', note: '已核实原归属 BD 与商务原因' },
-                    { at: '2026-08-29 14:00', actor: 'System', action: '已同步 Lark 审批', note: '等待老板审批（后台或 Lark 均可操作）' }
+                    { at: '2026-08-29 14:00', actor: 'System', action: '已同步 Lark 审批', note: '等待老板在 Lark 审批' }
                 ]
             },
             {
@@ -890,7 +890,7 @@
                 timeline: [
                     { at: '2026-07-24 16:20', actor: 'Fee_Admin', action: '提交申请', note: '做市商专属自定义费率' },
                     { at: '2026-07-24 17:00', actor: 'Risk_Control', action: '风控通过', note: '材料齐全' },
-                    { at: '2026-07-24 18:05', actor: 'System', action: '已同步 Lark 审批', note: '等待老板审批（后台或 Lark 均可操作）' }
+                    { at: '2026-07-24 18:05', actor: 'System', action: '已同步 Lark 审批', note: '等待老板在 Lark 审批' }
                 ]
             },
             {
@@ -973,7 +973,7 @@
                     { at: '2026-07-25 09:15', actor: 'Fee_Admin', action: '提交申请', note: '大客户 VIP2 费率申请' },
                     { at: '2026-07-25 10:05', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '大客户专属费率' },
                     { at: '2026-07-25 11:20', actor: 'Risk_Control', action: '风控通过', note: '风险可控' },
-                    { at: '2026-07-25 13:40', actor: 'System', action: '已同步 Lark 审批', note: '等待老板审批（后台或 Lark 均可操作）' }
+                    { at: '2026-07-25 13:40', actor: 'System', action: '已同步 Lark 审批', note: '等待老板在 Lark 审批' }
                 ]
             },
             {
@@ -1273,7 +1273,7 @@
             } else {
                 html += '<p class="approval-note wait">等待风控审核…</p>';
             }
-        } else if (status === 'pending_boss') html += '<p class="approval-note wait">风控已通过，等待老板审批（后台或 Lark）…</p>';
+        } else if (status === 'pending_boss') html += '<p class="approval-note wait">风控已通过，等待老板在 Lark 审批…</p>';
         return html;
     }
 
@@ -1282,7 +1282,7 @@
         if (!app.lark) {
             return '<div class="lark-card">' +
                 '<div class="lark-card-head"><span class="lark-badge">老板</span><span class="font-bold text-slate-800">待老板审批</span></div>' +
-                '<p class="text-[11px] text-slate-600 mt-2 leading-relaxed">风控已通过。老板可在本页「审批操作」直接通过 / 驳回；审批单同步 Lark 后亦可在飞书完成，<b>后台与 Lark 状态同步</b>。</p></div>';
+                '<p class="text-[11px] text-slate-600 mt-2 leading-relaxed">风控已通过。老板审批须在 <b>Lark</b> 完成，本页仅查看进度。</p></div>';
         }
         const lark = app.lark;
         const statusText = lark.status === 'approved' ? '已通过' : lark.status === 'rejected' ? '已驳回' : '待审批';
@@ -1293,11 +1293,8 @@
         return '<div class="lark-card">' +
             '<div class="lark-card-head"><span class="lark-badge">Lark</span><span class="font-bold text-slate-800">老板审批已同步至飞书</span></div>' +
             '<p class="text-[11px] text-slate-500 mt-2">审批单号：<span class="font-mono font-bold">' + lark.id + '</span> · 状态：<span class="approval-note ' + statusCls + '" style="display:inline;margin:0">' + statusText + '</span></p>' +
-            '<p class="text-[10px] text-slate-400 mt-1">同步时间 ' + (lark.syncedAt || '—') + ' · 老板可在 <b>Lark 或本页后台</b> 任一端审批，两端状态同步</p>' +
-            '<div class="flex gap-2 mt-3">' +
-            '<a href="' + (lark.url || '#') + '" target="_blank" class="flex-1 text-center py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50">在 Lark 中查看</a>' +
-            larkBtn +
-            '</div></div>';
+            '<p class="text-[10px] text-slate-400 mt-1">请在 Lark 完成通过 / 驳回；本页不提供老板审批操作。</p>' +
+            (larkBtn ? '<div class="flex gap-2 mt-3">' + larkBtn + '</div>' : '');
     }
 
     function injectStyles() {
@@ -1353,7 +1350,6 @@
         if (!app || app.status === 'approved' || app.status === 'rejected') return false;
         if (role === 'cross' && app.status === 'pending_cross') return true;
         if (role === 'risk' && app.status === 'pending_risk') return true;
-        if (role === 'boss' && app.status === 'pending_boss') return true;
         return false;
     }
 
@@ -1372,7 +1368,7 @@
             at: app.lark.syncedAt,
             actor: 'System',
             action: '已同步 Lark 审批',
-            note: '等待老板审批（后台或 Lark 均可操作）'
+            note: '等待老板在 Lark 审批'
         });
     }
 
@@ -1415,7 +1411,7 @@
     window.computeFeeRevenueImpactSide = computeFeeRevenueImpactSide;
 
     window.getApprovalSubmittedMessage = function () {
-        return '审批申请已提交，等待风控审核 → 老板审批（老板可在后台或 Lark 审批）';
+        return '审批申请已提交，等待风控审核 → 老板审批（老板须在 Lark 审批）';
     };
 
     window.renderLarkApprovalCard = function (app, rootId) {

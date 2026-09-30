@@ -638,7 +638,7 @@
         root.innerHTML =
             '<div id="' + rootId + '-list" class="space-y-6">' +
             '<div class="flex flex-wrap justify-between items-start gap-4">' +
-            '<div><h2 class="text-lg font-bold text-slate-700">' + title + '</h2><p class="text-sm text-slate-400 mt-1">风控 / 老板审批均可在本页操作；老板节点同步 Lark，<b>后台与 Lark 均可审批</b></p></div>' +
+            '<div><h2 class="text-lg font-bold text-slate-700">' + title + '</h2><p class="text-sm text-slate-400 mt-1">风控在本页通过 / 驳回；老板节点同步 Lark，<b>须在 Lark 完成审批</b>（本页仅查看）</p></div>' +
             '<div class="flex flex-wrap gap-2 items-center">' + roleTabsHtml +
             '</div></div>' +
             '<section class="card p-5"><div class="grid ' + gridCols + ' gap-4 items-end">' +
@@ -793,7 +793,8 @@
         const opts = state ? state.options : {};
         let readonlyHint = '当前审批已结束或无需您处理';
         if (app.status === 'pending_risk' && role !== 'risk') readonlyHint = '等待风控审核';
-        else if (app.status === 'pending_boss' && role !== 'boss') readonlyHint = '等待老板审批（后台或 Lark 均可操作）';
+        else if (app.status === 'pending_boss' && role === 'boss') readonlyHint = '请在 Lark 完成老板审批（本页不提供通过 / 驳回）';
+        else if (app.status === 'pending_boss') readonlyHint = '等待老板在 Lark 审批';
 
         const isSimpleConfig = app.type === 'points_pool_config' || app.type === 'points_program_switch' || app.type === 'vip_tier_config';
         const exportDetailBtn = opts.showExportDetail && !isSimpleConfig
@@ -829,8 +830,6 @@
         var actHint = '';
         if (canAct && role === 'risk') {
             actHint = '<p class="text-[11px] text-slate-500 mb-3">风控节点：在本页通过 / 驳回。</p>';
-        } else if (canAct && role === 'boss') {
-            actHint = '<p class="text-[11px] text-slate-500 mb-3">老板节点：本页「通过 / 驳回」与 Lark 审批 <b>均可操作</b>，两端状态同步。</p>';
         }
         var bossChannelCard = (app.status === 'pending_boss' || app.lark) && typeof renderLarkApprovalCard === 'function'
             ? renderLarkApprovalCard(app, rootId)
