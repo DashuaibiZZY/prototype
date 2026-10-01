@@ -38,38 +38,38 @@
 
             <h3 class="text-[11px] font-black text-gray-900 uppercase tracking-[0.2em] mb-4">交易規則</h3>
 
-            <div class="grid grid-cols-2 gap-y-6 gap-x-8">
+            <div id="trading-rules-grid" class="grid grid-cols-2 gap-y-6 gap-x-8">
                 <div class="space-y-1">
                     <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">市場</p>
                     <p id="info-market" class="text-[13px] font-black text-gray-900">BTCUSDT</p>
                 </div>
                 <div class="space-y-1">
                     <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">最大槓桿</p>
-                    <p class="text-[13px] font-black text-gray-900">100x</p>
+                    <p id="info-max-leverage" class="text-[13px] font-black text-gray-900">100x</p>
                 </div>
                 <div class="space-y-1">
-                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">最小價格增量</p>
-                    <p class="text-[13px] font-black text-gray-900">$0.1</p>
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">价格精度</p>
+                    <p id="info-price-precision" class="text-[13px] font-black text-gray-900">0.1</p>
                 </div>
                 <div class="space-y-1">
-                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">限價單單筆最大訂單數量</p>
-                    <p class="text-[13px] font-black text-gray-900">100.000 BTC</p>
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">最小步进</p>
+                    <p id="info-price-unit" class="text-[13px] font-black text-gray-900">0.1</p>
                 </div>
                 <div class="space-y-1">
-                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">最小交易單位</p>
-                    <p class="text-[13px] font-black text-gray-900">0.003 BTC</p>
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">单笔最小成交价值</p>
+                    <p id="info-min-once-cost" class="text-[13px] font-black text-gray-900">10</p>
                 </div>
                 <div class="space-y-1">
-                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">市價單單筆最大訂單數量</p>
-                    <p class="text-[13px] font-black text-gray-900">10.000 BTC</p>
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">单笔最大成交价值</p>
+                    <p id="info-max-once-cost" class="text-[13px] font-black text-gray-900">100000</p>
                 </div>
                 <div class="space-y-1">
-                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">清算費率</p>
-                    <p class="text-[13px] font-black text-gray-900">1%</p>
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">最大持仓数量</p>
+                    <p id="info-max-hold" class="text-[13px] font-black text-gray-900">200</p>
                 </div>
                 <div class="space-y-1">
-                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">最大倉位</p>
-                    <p class="text-[13px] font-black text-gray-900">200.000 BTC</p>
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">最大挂单数</p>
+                    <p id="info-max-book-num" class="text-[13px] font-black text-gray-900">200</p>
                 </div>
             </div>
 
@@ -110,10 +110,34 @@
         text.textContent = intro;
     }
 
+    const TRADING_RULES_BY_PAIR = {
+        _default: {
+            maxLeverage: '100x',
+            pricePrecision: '0.1',
+            priceUnit: '0.1',
+            minOnceCost: '10',
+            maxOnceCost: '100000',
+            maxHold: '200',
+            maxBookNum: '200',
+        },
+    };
+
+    function applyTradingRules(pair) {
+        const rules = TRADING_RULES_BY_PAIR[pair] || TRADING_RULES_BY_PAIR._default;
+        document.getElementById('info-market').textContent = pair;
+        document.getElementById('info-max-leverage').textContent = rules.maxLeverage;
+        document.getElementById('info-price-precision').textContent = rules.pricePrecision;
+        document.getElementById('info-price-unit').textContent = rules.priceUnit;
+        document.getElementById('info-min-once-cost').textContent = rules.minOnceCost;
+        document.getElementById('info-max-once-cost').textContent = rules.maxOnceCost;
+        document.getElementById('info-max-hold').textContent = rules.maxHold;
+        document.getElementById('info-max-book-num').textContent = rules.maxBookNum;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const pair = params.get('pair') || 'BTCUSDT';
     document.getElementById('pair-title').textContent = pair + ' 永續';
-    document.getElementById('info-market').textContent = pair;
+    applyTradingRules(pair);
     document.getElementById('risk-limit-link').href = '风险限额.html?pair=' + encodeURIComponent(pair);
     updateAssetIntro(pair);
 </script>
