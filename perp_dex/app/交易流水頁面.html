@@ -141,6 +141,7 @@
             <button onclick="switchPrimary('history')" id="p-history" class="tab-primary">歷史委託</button>
             <button onclick="switchPrimary('position')" id="p-position" class="tab-primary">持倉歷史</button>
             <button onclick="switchPrimary('tradeBill')" id="p-tradeBill" class="tab-primary">交易賬單</button>
+            <button onclick="switchPrimary('trialFundBill')" id="p-trialFundBill" class="tab-primary">体验金账单</button>
             <button onclick="switchPrimary('fundBill')" id="p-fundBill" class="tab-primary">資金賬單</button>
             <button onclick="switchPrimary('funding')" id="p-funding" class="tab-primary">資金費率</button>
         </div>
@@ -599,7 +600,6 @@
     /** 账单主类型 → 账单子类型（与 Web / 《持仓管理 & 资金流水 模块》§3.4.2 一致） */
     const BILL_MAIN_SUB_TYPES = {
         '划转': ['全部', '转入', '转出'],
-        '体验金': ['全部', '使用体验金', '未使用体验金回收', '体验金回收'],
         '交易': ['全部', '开多', '开空', '平多', '平空'],
         '保证金划转': ['全部', '手动追加保证金', '手动减少保证金', '自动追加保证金'],
         '阶梯减仓': ['全部', '平多', '平空'],
@@ -614,8 +614,18 @@
         { time: '2026-06-13 16:40:08', mainType: '划转', subType: '转入', role: null, coin: 'USDC', symbol: null, positionType: null, qty: '500.00 USDC', fee: null, price: null, pnl: null, pnlClass: '', posBalChange: null, posBalChangeClass: '', posBal: null, acctBalChange: '+500.00 USDC', acctBalChangeClass: 'text-green-500', acctBal: '13,028.05 USDC' },
         { time: '2026-06-13 10:22:30', mainType: '保证金划转', subType: '手动追加保证金', role: null, coin: 'USDC', symbol: 'BNBUSDC', positionType: '逐仓 (20x)', qty: '50.00 USDC', fee: null, price: null, pnl: null, pnlClass: '', posBalChange: '+50.00 USDC', posBalChangeClass: 'text-green-500', posBal: '1,300.00 USDC', acctBalChange: '-50.00 USDC', acctBalChangeClass: 'text-red-500', acctBal: '12,978.05 USDC' },
         { time: '2026-06-12 21:30:19', mainType: '资金费', subType: '资金费收入', role: null, coin: 'USDC', symbol: 'BTCUSDC', positionType: '逐仓 (20x)', qty: null, fee: null, price: null, pnl: '+0.128 USDC', pnlClass: 'text-green-500', posBalChange: '+0.128 USDC', posBalChangeClass: 'text-green-500', posBal: '0.00 USDC', acctBalChange: '+0.128 USDC', acctBalChangeClass: 'text-green-500', acctBal: '13,028.18 USDC' },
-        { time: '2026-06-12 15:00:00', mainType: '体验金', subType: '使用体验金', role: null, coin: 'USDC', symbol: 'BNBUSDC', positionType: '逐仓 (20x)', qty: '200.00 USDC', fee: null, price: null, pnl: null, pnlClass: '', posBalChange: '+200.00 USDC', posBalChangeClass: 'text-green-500', posBal: '1,050.00 USDC', acctBalChange: null, acctBalChangeClass: '', acctBal: '13,028.18 USDC' },
     ];
+
+    const TRIAL_FUND_BILL_TYPES = ['激活', '费用抵扣', '亏损抵扣', '回收'];
+
+    const TRIAL_FUND_BILLS = [
+        { time: '2026-06-15 14:05:00', couponId: 'TF-20260615-001', type: '费用抵扣', symbol: 'BNBUSDC', amountChange: '-0.619 USDC', amountChangeClass: 'text-red-500', trialBal: '199.38 USDC' },
+        { time: '2026-06-14 09:12:33', couponId: 'TF-20260614-008', type: '激活', symbol: null, amountChange: '+200.00 USDC', amountChangeClass: 'text-green-500', trialBal: '200.00 USDC' },
+        { time: '2026-06-13 22:40:11', couponId: 'TF-20260613-002', type: '亏损抵扣', symbol: 'SOLUSDC', amountChange: '-12.50 USDC', amountChangeClass: 'text-red-500', trialBal: '87.50 USDC' },
+        { time: '2026-06-12 15:00:00', couponId: 'TF-20260612-004', type: '回收', symbol: null, amountChange: '-50.00 USDC', amountChangeClass: 'text-red-500', trialBal: '0.00 USDC' },
+    ];
+
+    let trialFundBillFilterType = '';
 
     let billFilterMain = '';
     let billFilterSub = '全部';
@@ -701,6 +711,93 @@
             return '<div class="py-20 text-center text-gray-300 font-bold uppercase tracking-widest text-[10px]">暂无账单记录</div>';
         }
         return rows.map(renderTradeBillCard).join('');
+    }
+
+    function renderTrialFundBillCard(bill) {
+        const symbolVal = isBillFieldEmpty(bill.symbol) ? null : bill.symbol;
+        return `<div class="order-card bill-card">
+            <div class="flex justify-between items-start gap-2 mb-2">
+                <span class="bill-tag-main">${bill.type}</span>
+                <span class="text-gray-300 font-medium text-[10px] shrink-0">${formatBillTime(bill.time)}</span>
+            </div>
+            <div class="grid grid-cols-3 gap-x-2 gap-y-2.5">
+                ${renderBillGridCell('卡券ID', bill.couponId, 'text-gray-900')}
+                ${renderBillGridCell('交易合约', symbolVal, '')}
+                ${renderBillGridCell('金额变动', bill.amountChange, bill.amountChangeClass)}
+                ${renderBillGridCell('交易账户体验金余额', bill.trialBal, '')}
+            </div>
+        </div>`;
+    }
+
+    function filterTrialFundBills() {
+        return TRIAL_FUND_BILLS.filter(function (bill) {
+            if (trialFundBillFilterType && bill.type !== trialFundBillFilterType) return false;
+            return true;
+        });
+    }
+
+    function renderTrialFundBillList() {
+        const rows = filterTrialFundBills();
+        if (!rows.length) {
+            return '<div class="py-20 text-center text-gray-300 font-bold uppercase tracking-widest text-[10px]">暂无账单记录</div>';
+        }
+        return rows.map(renderTrialFundBillCard).join('');
+    }
+
+    function resetTrialFundBillFilters() {
+        trialFundBillFilterType = '';
+        updateTrialFundBillFilterBar();
+        renderList();
+    }
+
+    function pickTrialFundBillType(type) {
+        trialFundBillFilterType = type === '全部' ? '' : type;
+        refreshTrialFundTypePickerModal();
+    }
+
+    function refreshTrialFundTypePickerModal() {
+        const content = document.getElementById('filter-content');
+        if (content && currentFilterModalType === 'trialFundType') {
+            content.innerHTML = renderTrialFundTypePickerHtml();
+        }
+    }
+
+    function confirmTrialFundTypeFilter() {
+        closeFilterModal();
+        updateTrialFundBillFilterBar();
+        renderList();
+    }
+
+    function renderTrialFundTypePickerHtml() {
+        const checkMark = '<svg class="w-3 h-3 inline-block ml-0.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="3"/></svg>';
+        const headerActive = !trialFundBillFilterType;
+        return `
+            <div class="bill-type-picker mb-4">
+                <button type="button" onclick="pickTrialFundBillType('全部')" class="bill-type-col-header w-full ${headerActive ? 'active' : ''}">类型${headerActive ? checkMark : ''}</button>
+                <div class="bill-type-col no-scrollbar max-h-none border-r-0">
+                    ${TRIAL_FUND_BILL_TYPES.map(function (t) {
+                        const active = trialFundBillFilterType === t;
+                        return `<div class="bill-type-item ${active ? 'active' : ''}" onclick="pickTrialFundBillType('${t}')">${t}</div>`;
+                    }).join('')}
+                </div>
+            </div>
+            <div class="flex space-x-3 pb-2">
+                <button type="button" onclick="resetTrialFundBillFilters(); refreshTrialFundTypePickerModal();" class="flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-xs uppercase">重置</button>
+                <button type="button" onclick="confirmTrialFundTypeFilter()" class="flex-1 py-3 bg-black text-white rounded-xl font-black text-xs uppercase shadow-lg">确认</button>
+            </div>`;
+    }
+
+    function updateTrialFundBillFilterBar() {
+        if (currentPrimary !== 'trialFundBill') return;
+        const triangle = `<svg class="w-2 h-2 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M5 7l5 5 5-5z"/></svg>`;
+        const funnelBtn = getFunnelBtnHtml();
+        const typeLabel = trialFundBillFilterType || '类型';
+        const typeActive = trialFundBillFilterType ? 'text-gray-900' : '';
+        document.getElementById('filter-group').innerHTML = `
+            <div class="flex items-center flex-1 overflow-x-auto no-scrollbar space-x-2">
+                <button onclick="openFilterModal('trialFundType')" class="filter-btn ${typeActive}">${typeLabel} ${triangle}</button>
+            </div>
+            ${funnelBtn}`;
     }
 
     function resetBillFilters() {
@@ -1263,7 +1360,7 @@
         currentPrimary = tab;
 
         // 1. 更新主 Tab 樣式
-        const tabs = ['current', 'history', 'position', 'tradeBill', 'fundBill', 'funding'];
+        const tabs = ['current', 'history', 'position', 'tradeBill', 'trialFundBill', 'fundBill', 'funding'];
         tabs.forEach(t => {
             const el = document.getElementById('p-' + t);
             if (el) el.classList.toggle('active', t === tab);
@@ -1307,6 +1404,8 @@
 
             if (tab === 'tradeBill') {
                 updateTradeBillFilterBar();
+            } else if (tab === 'trialFundBill') {
+                updateTrialFundBillFilterBar();
             } else if (tab === 'fundBill') {
                 updateFundBillFilterBar();
             } else {
@@ -1357,6 +1456,8 @@
         const container = document.getElementById('list-container');
         if (currentPrimary === 'tradeBill') {
             container.innerHTML = renderTradeBillList();
+        } else if (currentPrimary === 'trialFundBill') {
+            container.innerHTML = renderTrialFundBillList();
         } else if (currentPrimary === 'fundBill') {
             container.innerHTML = renderFundBillList();
         } else if (currentPrimary === 'current' || currentPrimary === 'history') {
@@ -1473,6 +1574,8 @@
             `;
             case 'fundBillMainType':
                 return renderFundBillMainTypePickerHtml();
+            case 'trialFundType':
+                return renderTrialFundTypePickerHtml();
             case 'billType':
                 return renderBillTypePickerHtml();
             case 'cancel-type-select':

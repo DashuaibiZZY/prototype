@@ -203,7 +203,6 @@
     /** 账单主类型 → 账单子类型（对应关系见需求文档「账单流水对应关系」） */
     const BILL_MAIN_SUB_TYPES = {
         '划转': ['全部', '转入', '转出'],
-        '体验金': ['全部', '使用体验金', '未使用体验金回收', '体验金回收'],
         '交易': ['全部', '开多', '开空', '平多', '平空'],
         '保证金划转': ['全部', '手动追加保证金', '手动减少保证金', '自动追加保证金'],
         '阶梯减仓': ['全部', '平多', '平空'],
@@ -260,12 +259,26 @@
             posBalChange: '+0.128 USDC', posBalChangeClass: 'text-green-500', posBal: '0.00 USDC',
             acctBalChange: '+0.128 USDC', acctBalChangeClass: 'text-green-500', acctBal: '13,028.18 USDC',
         },
+    ];
+
+    const TRIAL_FUND_BILL_TYPES = ['全部', '激活', '费用抵扣', '亏损抵扣', '回收'];
+
+    const TRIAL_FUND_BILLS = [
         {
-            time: '2026-06-12 15:00:00', mainType: '体验金', subType: '使用体验金', role: '--',
-            coin: 'USDC', symbol: 'BNBUSDC', positionType: '逐仓 (20x)',
-            qty: '200.00 USDC', fee: '--', price: '--', pnl: '--', pnlClass: 'text-gray-400',
-            posBalChange: '+200.00 USDC', posBalChangeClass: 'text-green-500', posBal: '1,050.00 USDC',
-            acctBalChange: '--', acctBalChangeClass: 'text-gray-400', acctBal: '13,028.18 USDC',
+            time: '2026-06-15 14:05:00', couponId: 'TF-20260615-001', type: '费用抵扣', symbol: 'BNBUSDC',
+            amountChange: '-0.619 USDC', amountChangeClass: 'text-red-500', trialBal: '199.38 USDC',
+        },
+        {
+            time: '2026-06-14 09:12:33', couponId: 'TF-20260614-008', type: '激活', symbol: '--',
+            amountChange: '+200.00 USDC', amountChangeClass: 'text-green-500', trialBal: '200.00 USDC',
+        },
+        {
+            time: '2026-06-13 22:40:11', couponId: 'TF-20260613-002', type: '亏损抵扣', symbol: 'SOLUSDC',
+            amountChange: '-12.50 USDC', amountChangeClass: 'text-red-500', trialBal: '87.50 USDC',
+        },
+        {
+            time: '2026-06-12 15:00:00', couponId: 'TF-20260612-004', type: '回收', symbol: '--',
+            amountChange: '-50.00 USDC', amountChangeClass: 'text-red-500', trialBal: '0.00 USDC',
         },
     ];
 
@@ -599,6 +612,19 @@
         }).join('');
     }
 
+    function renderTrialFundBillRows() {
+        return TRIAL_FUND_BILLS.map(function (r) {
+            return `<tr class="border-b border-gray-50 hover:bg-gray-50 text-[11px]">
+                <td class="px-4 py-3 text-gray-400 whitespace-nowrap">${r.time}</td>
+                <td class="px-4 py-3 font-mono whitespace-nowrap">${r.couponId}</td>
+                <td class="px-4 py-3 font-bold whitespace-nowrap">${r.type}</td>
+                <td class="px-4 py-3 font-bold whitespace-nowrap">${r.symbol}</td>
+                <td class="px-4 py-3 font-mono whitespace-nowrap ${r.amountChangeClass}">${r.amountChange}</td>
+                <td class="px-4 py-3 font-mono whitespace-nowrap">${r.trialBal}</td>
+            </tr>`;
+        }).join('');
+    }
+
     window.PositionFlow = {
         PNL_BREAKDOWN_EXTRA: PNL_BREAKDOWN_EXTRA,
 
@@ -728,6 +754,32 @@
 
         renderHistTradeBody: function () {
             return renderHistTradeRows();
+        },
+
+        TRIAL_FUND_BILL_TYPES: TRIAL_FUND_BILL_TYPES,
+
+        renderTrialFundBillHeader: function () {
+            return '<th class="px-4 py-2">时间</th><th class="px-4 py-2">卡券ID</th><th class="px-4 py-2">类型</th><th class="px-4 py-2">交易合约</th><th class="px-4 py-2">金额变动</th><th class="px-4 py-2">交易账户体验金余额</th>';
+        },
+
+        renderTrialFundBillBody: function () {
+            return renderTrialFundBillRows();
+        },
+
+        resetTrialFundBillTypeFilter: function () {
+            const el = document.getElementById('hist-trial-fund-type');
+            if (el) el.value = '';
+        },
+
+        initTrialFundBillFilters: function () {
+            const typeEl = document.getElementById('hist-trial-fund-type');
+            if (typeEl) {
+                typeEl.innerHTML = '<option value="">类型</option>' +
+                    TRIAL_FUND_BILL_TYPES.filter(function (t) { return t !== '全部'; }).map(function (t) {
+                        return '<option value="' + t + '">' + t + '</option>';
+                    }).join('');
+            }
+            this.resetTrialFundBillTypeFilter();
         },
 
         renderHistPosHeader: function () {
