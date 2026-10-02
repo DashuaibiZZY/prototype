@@ -1851,6 +1851,10 @@
                 </div>
                 <select id="hist-trial-fund-type" class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]">
                     <option value="">类型</option>
+                    <option value="激活">激活</option>
+                    <option value="费用抵扣">费用抵扣</option>
+                    <option value="亏损抵扣">亏损抵扣</option>
+                    <option value="回收">回收</option>
                 </select>
                 <button class="px-3 py-1 bg-black text-white rounded-sm">查詢</button>
                 <button type="button" class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm" onclick="PositionFlow.resetTrialFundBillTypeFilter()">重置</button>
@@ -3565,7 +3569,7 @@
 
 <script src="shared/pnl-share-poster.js?v=20260920-poster-templates"></script>
 <script src="shared/forx-vip-tier-api.js?v=20260919-vip-config-v2"></script>
-<script src="position-flow-module.js?v=2026-09-29-current-adv-post-only"></script>
+<script src="position-flow-module.js?v=20261002-trial-fund-bill"></script>
 <script src="position-close-module.js?v=2026-09-02-base-order-polish"></script>
 <script>
     // ==================== 通用工具 ====================
@@ -3720,6 +3724,43 @@
                 '<td class="px-3 py-2.5 whitespace-nowrap text-gray-400">' + r.time + '</td>' +
                 '<td class="px-3 py-2.5 whitespace-nowrap font-bold text-gray-900">' + r.symbol + '</td>' +
                 '<td class="px-3 py-2.5 whitespace-nowrap font-mono font-bold ' + r.feeClass + '">' + r.fee + '</td>' +
+                '</tr>';
+        }).join('');
+    }
+
+    const WEB_TRIAL_FUND_BILL_DEMO_ROWS = [
+        { time: '2026-06-15 14:05:00', couponId: 'TF-20260615-001', type: '费用抵扣', symbol: 'BNBUSDC', amountChange: '-0.619 USDC', amountChangeClass: 'text-red-500', trialBal: '199.38 USDC' },
+        { time: '2026-06-14 09:12:33', couponId: 'TF-20260614-008', type: '激活', symbol: '--', amountChange: '+200.00 USDC', amountChangeClass: 'text-green-500', trialBal: '200.00 USDC' },
+        { time: '2026-06-13 22:40:11', couponId: 'TF-20260613-002', type: '亏损抵扣', symbol: 'SOLUSDC', amountChange: '-12.50 USDC', amountChangeClass: 'text-red-500', trialBal: '87.50 USDC' },
+        { time: '2026-06-12 15:00:00', couponId: 'TF-20260612-004', type: '回收', symbol: '--', amountChange: '-50.00 USDC', amountChangeClass: 'text-red-500', trialBal: '0.00 USDC' },
+    ];
+
+    function ensureWebTrialFundBillTypeSelect() {
+        const typeEl = document.querySelector('#hist-trial-fund-filters #hist-trial-fund-type');
+        if (!typeEl || typeEl.options.length > 1) return;
+        const types = ['激活', '费用抵扣', '亏损抵扣', '回收'];
+        typeEl.innerHTML = '<option value="">类型</option>' + types.map(function (t) {
+            return '<option value="' + t + '">' + t + '</option>';
+        }).join('');
+    }
+
+    function renderWebTrialFundBillTable(headerEl, bodyEl) {
+        if (!headerEl || !bodyEl) return;
+        if (window.PositionFlow && typeof PositionFlow.renderTrialFundBillHeader === 'function' &&
+            typeof PositionFlow.renderTrialFundBillBody === 'function') {
+            headerEl.innerHTML = PositionFlow.renderTrialFundBillHeader();
+            bodyEl.innerHTML = PositionFlow.renderTrialFundBillBody();
+            return;
+        }
+        headerEl.innerHTML = '<th class="px-4 py-2">时间</th><th class="px-4 py-2">卡券ID</th><th class="px-4 py-2">类型</th><th class="px-4 py-2">交易合约</th><th class="px-4 py-2">金额变动</th><th class="px-4 py-2">交易账户体验金余额</th>';
+        bodyEl.innerHTML = WEB_TRIAL_FUND_BILL_DEMO_ROWS.map(function (r) {
+            return '<tr class="border-b border-gray-50 hover:bg-gray-50 text-[11px]">' +
+                '<td class="px-4 py-3 text-gray-400 whitespace-nowrap">' + r.time + '</td>' +
+                '<td class="px-4 py-3 font-mono whitespace-nowrap">' + r.couponId + '</td>' +
+                '<td class="px-4 py-3 font-bold whitespace-nowrap">' + r.type + '</td>' +
+                '<td class="px-4 py-3 font-bold whitespace-nowrap">' + r.symbol + '</td>' +
+                '<td class="px-4 py-3 font-mono whitespace-nowrap ' + r.amountChangeClass + '">' + r.amountChange + '</td>' +
+                '<td class="px-4 py-3 font-mono whitespace-nowrap">' + r.trialBal + '</td>' +
                 '</tr>';
         }).join('');
     }
@@ -4879,11 +4920,11 @@
             b.innerHTML = PositionFlow.renderHistTradeBody();
         } else if (tabId === 'hist-trial-fund') {
             document.getElementById('hist-trial-fund-filters')?.classList.remove('hidden');
+            ensureWebTrialFundBillTypeSelect();
             if (window.PositionFlow && typeof PositionFlow.initTrialFundBillFilters === 'function') {
                 PositionFlow.initTrialFundBillFilters();
             }
-            h.innerHTML = PositionFlow.renderTrialFundBillHeader();
-            b.innerHTML = PositionFlow.renderTrialFundBillBody();
+            renderWebTrialFundBillTable(h, b);
         } else if (tabId === 'hist-pos') {
             document.getElementById('hist-pos-filters')?.classList.remove('hidden');
             h.innerHTML = PositionFlow.renderHistPosHeader();
