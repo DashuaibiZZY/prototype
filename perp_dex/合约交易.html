@@ -1413,6 +1413,7 @@
                 <span onclick="switchDataTab('order')" id="tab-data-order" class="cursor-pointer h-8 flex items-center shrink-0">當前委託 (1)</span>
                 <span onclick="switchDataTab('hist-order')" id="tab-data-hist-order" class="cursor-pointer h-8 flex items-center shrink-0">歷史委託</span>
                 <span onclick="switchDataTab('hist-trade')" id="tab-data-hist-trade" class="cursor-pointer h-8 flex items-center shrink-0">交易賬單</span>
+                <span onclick="switchDataTab('hist-trial-fund')" id="tab-data-hist-trial-fund" class="cursor-pointer h-8 flex items-center shrink-0">体验金账单</span>
                 <span onclick="switchDataTab('hist-pos')" id="tab-data-hist-pos" class="cursor-pointer h-8 flex items-center shrink-0">歷史持倉</span>
                 <span onclick="switchDataTab('asset-log')" id="tab-data-asset-log" class="cursor-pointer h-8 flex items-center shrink-0">資金賬單</span>
                 <span onclick="switchDataTab('funding-fee')" id="tab-data-funding-fee" class="cursor-pointer h-8 flex items-center shrink-0">資金費用</span>
@@ -1722,6 +1723,139 @@
                 <button class="px-3 py-1 bg-black text-white rounded-sm">查詢</button>
                 <button type="button" class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm" onclick="PositionFlow.resetBillTypeFilters()">重置</button>
             </div>
+
+            <!-- 体验金账单筛选栏 -->
+            <div id="hist-trial-fund-filters" class="pf-filter-bar px-4 py-2 border-b border-gray-50 flex flex-wrap items-center space-x-2 text-[9px] font-bold hidden shrink-0">
+                <button type="button" class="pf-period-btn px-2 py-1 rounded-sm bg-gray-900 text-white" onclick="PositionFlow.setPeriod(this, 1)">近1日</button>
+                <button type="button" class="pf-period-btn px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100" onclick="PositionFlow.setPeriod(this, 7)">近7日</button>
+                <button type="button" class="pf-period-btn px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100" onclick="PositionFlow.setPeriod(this, 30)">近30日</button>
+                <button type="button" class="pf-period-btn px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100" onclick="PositionFlow.setPeriod(this, 90)">近90日</button>
+                <span class="text-gray-300">|</span>
+                <div class="relative">
+                    <button type="button" data-date-trigger onclick="toggleDatePicker('hist-trial-fund-date-picker')" class="flex items-center space-x-1 border border-gray-200 px-2 py-1 rounded-sm hover:border-black">
+                        <span data-date-part>2026-06-14</span>
+                        <span class="text-gray-300">-</span>
+                        <span data-date-part>2026-06-15</span>
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </button>
+                    <div id="hist-trial-fund-date-picker" class="date-range-picker-popover absolute top-full mt-1 left-0 bg-white border border-gray-200 shadow-xl rounded-sm hidden" style="width:520px;">
+                        <div class="p-4">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-[11px] font-black text-gray-500 uppercase tracking-wider">選擇日期範圍</span>
+                                <button type="button" onclick="PositionFlow.closeDatePanel(this)" class="text-gray-300 hover:text-black font-bold">✕</button>
+                            </div>
+                            <div class="flex space-x-5">
+                                <!-- 左日历：2026年6月 -->
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-center mb-2 px-1">
+                                        <button class="text-gray-400 hover:text-black text-xs font-bold">&lt;</button>
+                                        <span class="text-[12px] font-black text-gray-900">2026年 6月</span>
+                                        <button class="text-gray-400 hover:text-black text-xs font-bold invisible">&gt;</button>
+                                    </div>
+                                    <div class="grid grid-cols-7 text-center text-[9px] font-bold text-gray-400 mb-1">
+                                        <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+                                    </div>
+                                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-medium">
+                                        <span class="py-1.5 text-gray-300">31</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">1</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">2</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer bg-blue-600 text-white">3</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer bg-blue-50">4</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer bg-blue-50">5</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer bg-blue-50">6</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer bg-blue-50">7</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer bg-blue-50">8</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer bg-blue-50">9</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer bg-blue-50">10</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer bg-blue-50">11</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer bg-blue-50">12</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer bg-blue-50">13</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer bg-blue-50">14</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer bg-blue-600 text-white">15</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">16</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">17</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">18</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">19</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">20</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">21</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">22</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">23</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">24</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">25</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">26</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">27</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">28</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">29</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">30</span>
+                                        <span class="py-1.5 text-gray-300">1</span>
+                                        <span class="py-1.5 text-gray-300">2</span>
+                                    </div>
+                                </div>
+
+                                <!-- 右日历：2026年7月 -->
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-center mb-2 px-1">
+                                        <button class="text-gray-400 hover:text-black text-xs font-bold">&lt;</button>
+                                        <span class="text-[12px] font-black text-gray-900">2026年 7月</span>
+                                        <button class="text-gray-400 hover:text-black text-xs font-bold">&gt;</button>
+                                    </div>
+                                    <div class="grid grid-cols-7 text-center text-[9px] font-bold text-gray-400 mb-1">
+                                        <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+                                    </div>
+                                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-medium">
+                                        <span class="py-1.5 text-gray-300">28</span>
+                                        <span class="py-1.5 text-gray-300">29</span>
+                                        <span class="py-1.5 text-gray-300">30</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">1</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">2</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">3</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">4</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">5</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">6</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">7</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">8</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">9</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">10</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">11</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">12</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">13</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">14</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">15</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">16</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">17</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">18</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">19</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">20</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">21</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">22</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">23</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">24</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">25</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">26</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">27</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">28</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">29</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">30</span>
+                                        <span class="py-1.5 rounded-sm cursor-pointer hover:bg-blue-50">31</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
+            <span class="text-[10px] text-gray-400">
+                已選: <span data-selected-range><span class="font-black text-gray-900">2026-06-14</span> <span class="text-gray-300">至</span> <span class="font-black text-gray-900">2026-06-15</span></span>
+            </span>
+                                <button type="button" class="px-4 py-1.5 bg-black text-white rounded-sm text-[10px] font-bold hover:bg-gray-800" onclick="PositionFlow.confirmDatePanel(this)">確定</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <select id="hist-trial-fund-type" class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]">
+                    <option value="">类型</option>
+                </select>
+                <button class="px-3 py-1 bg-black text-white rounded-sm">查詢</button>
+                <button type="button" class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm" onclick="PositionFlow.resetTrialFundBillTypeFilter()">重置</button>
+            </div>
+
 
             <!-- 历史持仓筛选栏 -->
             <div id="hist-pos-filters" class="pf-filter-bar px-4 py-2 border-b border-gray-50 flex flex-wrap items-center space-x-2 text-[9px] font-bold hidden shrink-0">
@@ -3565,7 +3699,7 @@
     }
 
     window.rerenderPositionFlowTab = function () {
-        if (['hist-order', 'hist-trade', 'hist-pos', 'asset-log', 'funding-fee'].includes(currentDataTab)) {
+        if (['hist-order', 'hist-trade', 'hist-trial-fund', 'hist-pos', 'asset-log', 'funding-fee'].includes(currentDataTab)) {
             renderTableForTab(currentDataTab);
         }
     };
@@ -4580,7 +4714,7 @@
     }
 
     function switchDataTab(tabId) {
-        const tabs = ['pos','order','hist-order','hist-trade','hist-pos','asset-log','funding-fee'];
+        const tabs = ['pos','order','hist-order','hist-trade','hist-trial-fund','hist-pos','asset-log','funding-fee'];
         tabs.forEach(t => {
             const el = document.getElementById('tab-data-' + t);
             if (el) el.className = 'cursor-pointer h-8 flex items-center shrink-0';
@@ -4663,7 +4797,7 @@
         const b = document.getElementById('data-body');
         if (!h || !b) return;
 
-        const filterIds = ['hist-order-filters','hist-trade-filters','hist-pos-filters','asset-log-filters','funding-fee-filters'];
+        const filterIds = ['hist-order-filters','hist-trade-filters','hist-trial-fund-filters','hist-pos-filters','asset-log-filters','funding-fee-filters'];
         filterIds.forEach(id => document.getElementById(id)?.classList.add('hidden'));
 
         if (tabId === 'pos') {
@@ -4743,6 +4877,13 @@
             document.getElementById('hist-trade-filters')?.classList.remove('hidden');
             h.innerHTML = PositionFlow.renderHistTradeHeader();
             b.innerHTML = PositionFlow.renderHistTradeBody();
+        } else if (tabId === 'hist-trial-fund') {
+            document.getElementById('hist-trial-fund-filters')?.classList.remove('hidden');
+            if (window.PositionFlow && typeof PositionFlow.initTrialFundBillFilters === 'function') {
+                PositionFlow.initTrialFundBillFilters();
+            }
+            h.innerHTML = PositionFlow.renderTrialFundBillHeader();
+            b.innerHTML = PositionFlow.renderTrialFundBillBody();
         } else if (tabId === 'hist-pos') {
             document.getElementById('hist-pos-filters')?.classList.remove('hidden');
             h.innerHTML = PositionFlow.renderHistPosHeader();
