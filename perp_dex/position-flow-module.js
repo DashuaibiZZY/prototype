@@ -265,41 +265,41 @@
 
     const TRIAL_FUND_BILLS = [
         {
-            time: '2026-06-15 14:05:00', couponId: 'TF-20260615-001', type: '费用抵扣', symbol: 'BNBUSDC',
-            amountChange: '-0.619 USDC', amountChangeClass: 'text-red-500', trialBal: '199.38 USDC',
+            time: '2026-06-15 14:05:00', couponId: 'TF-20260615-001', type: '费用抵扣',
+            amountChange: '-0.619 USDC', amountChangeClass: 'text-red-500', positionId: 'POS_882911020015',
         },
         {
-            time: '2026-06-14 09:12:33', couponId: 'TF-20260614-008', type: '激活', symbol: '--',
-            amountChange: '+200.00 USDC', amountChangeClass: 'text-green-500', trialBal: '200.00 USDC',
+            time: '2026-06-14 09:12:33', couponId: 'TF-20260614-008', type: '激活',
+            amountChange: '+200.00 USDC', amountChangeClass: 'text-green-500', positionId: '--',
         },
         {
-            time: '2026-06-13 22:40:11', couponId: 'TF-20260613-002', type: '亏损抵扣', symbol: 'SOLUSDC',
-            amountChange: '-12.50 USDC', amountChangeClass: 'text-red-500', trialBal: '87.50 USDC',
+            time: '2026-06-13 22:40:11', couponId: 'TF-20260613-002', type: '亏损抵扣',
+            amountChange: '-12.50 USDC', amountChangeClass: 'text-red-500', positionId: 'POS_882911020033',
         },
         {
-            time: '2026-06-12 15:00:00', couponId: 'TF-20260612-004', type: '回收', symbol: '--',
-            amountChange: '-50.00 USDC', amountChangeClass: 'text-red-500', trialBal: '0.00 USDC',
+            time: '2026-06-12 15:00:00', couponId: 'TF-20260612-004', type: '回收',
+            amountChange: '-50.00 USDC', amountChangeClass: 'text-red-500', positionId: '--',
         },
     ];
 
     const HIST_POSITIONS = [
         {
-            id: 'hp1', symbol: 'ETHUSDT', positionType: '全仓 (20x)', subtitle: 'ETHUSDT 全仓 20x',
+            id: 'hp1', positionId: 'POS_882911020001', symbol: 'ETHUSDT', positionType: '全仓 (20x)', subtitle: 'ETHUSDT 全仓 20x',
             openAvg: '2,400.0', closeAvg: '2,450.0', maxQty: '10.0 ETH', closedQty: '10.0 ETH',
             pnlKey: 'hist', status: '全部平仓', openTime: '2026-06-10 10:00:00', closeTime: '2026-06-11 11:47:17',
         },
         {
-            id: 'hp2', symbol: 'BNBUSDT', positionType: '逐仓 (15x)', subtitle: 'BNBUSDT 逐仓 15x',
+            id: 'hp2', positionId: 'POS_882911020015', symbol: 'BNBUSDT', positionType: '逐仓 (15x)', subtitle: 'BNBUSDT 逐仓 15x',
             openAvg: '592.15', closeAvg: '604.22', maxQty: '1.02 BNB', closedQty: '0.68 BNB',
             pnlKey: 'histBn', status: '部分平仓', openTime: '2026-06-11 18:59:05', closeTime: '2026-06-12 09:15:40',
         },
         {
-            id: 'hp3', symbol: 'BTCUSDT', positionType: '逐仓 (10x)', subtitle: 'BTCUSDT 逐仓 10x',
+            id: 'hp3', positionId: 'POS_882911020022', symbol: 'BTCUSDT', positionType: '逐仓 (10x)', subtitle: 'BTCUSDT 逐仓 10x',
             openAvg: '65,100.5', closeAvg: '65,800.0', maxQty: '0.50 BTC', closedQty: '0.50 BTC',
             pnlKey: 'histBtc', status: '全部平仓', openTime: '2026-06-08 08:30:00', closeTime: '2026-06-09 16:20:11',
         },
         {
-            id: 'hp4', symbol: 'SOLUSDT', positionType: '全仓 (25x)', subtitle: 'SOLUSDT 全仓 25x',
+            id: 'hp4', positionId: 'POS_882911020033', symbol: 'SOLUSDT', positionType: '全仓 (25x)', subtitle: 'SOLUSDT 全仓 25x',
             openAvg: '148.20', closeAvg: '145.60', maxQty: '200 SOL', closedQty: '120 SOL',
             pnlKey: 'histSol', status: '部分平仓', openTime: '2026-06-12 14:05:22', closeTime: '2026-06-13 11:40:33',
         },
@@ -586,6 +586,7 @@
                 <td class="px-4 py-3 whitespace-nowrap">${p.openTime}</td>
                 <td class="px-4 py-3 whitespace-nowrap">${p.closeTime}</td>
                 <td class="px-4 py-3 whitespace-nowrap"><button type="button" class="${BTN_BASE} text-blue-600" onclick="openHistPosRelatedOrders('${esc}')">关联订单</button></td>
+                <td class="px-4 py-3 font-mono whitespace-nowrap">${p.positionId}</td>
             </tr>`;
         }).join('');
     }
@@ -618,9 +619,8 @@
                 <td class="px-4 py-3 text-gray-400 whitespace-nowrap">${r.time}</td>
                 <td class="px-4 py-3 font-mono whitespace-nowrap">${r.couponId}</td>
                 <td class="px-4 py-3 font-bold whitespace-nowrap">${r.type}</td>
-                <td class="px-4 py-3 font-bold whitespace-nowrap">${r.symbol}</td>
                 <td class="px-4 py-3 font-mono whitespace-nowrap ${r.amountChangeClass}">${r.amountChange}</td>
-                <td class="px-4 py-3 font-mono whitespace-nowrap">${r.trialBal}</td>
+                <td class="px-4 py-3 font-mono whitespace-nowrap">${r.positionId}</td>
             </tr>`;
         }).join('');
     }
@@ -759,7 +759,7 @@
         TRIAL_FUND_BILL_TYPES: TRIAL_FUND_BILL_TYPES,
 
         renderTrialFundBillHeader: function () {
-            return '<th class="px-4 py-2">时间</th><th class="px-4 py-2">卡券ID</th><th class="px-4 py-2">类型</th><th class="px-4 py-2">交易合约</th><th class="px-4 py-2">金额变动</th><th class="px-4 py-2">交易账户体验金余额</th>';
+            return '<th class="px-4 py-2">时间</th><th class="px-4 py-2">卡券ID</th><th class="px-4 py-2">类型</th><th class="px-4 py-2">金额变动</th><th class="px-4 py-2">关联仓位ID</th>';
         },
 
         renderTrialFundBillBody: function () {
@@ -783,7 +783,7 @@
         },
 
         renderHistPosHeader: function () {
-            return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">仓位类型</th><th class="px-4 py-2">開倉均價</th><th class="px-4 py-2">平倉均價</th><th class="px-4 py-2"><span class="market-hint-wrap dashed-hint">最大持仓量<div class="market-hint-tip th-col-tip">您的持仓曾达到的最大规模 (非累积计算)</div></span></th><th class="px-4 py-2">已平仓量</th><th class="px-4 py-2">已实现盈亏 (ROE%)</th><th class="px-4 py-2">狀態</th><th class="px-4 py-2">開倉時間</th><th class="px-4 py-2">平倉時間</th><th class="px-4 py-2">关联订单</th>';
+            return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">仓位类型</th><th class="px-4 py-2">開倉均價</th><th class="px-4 py-2">平倉均價</th><th class="px-4 py-2"><span class="market-hint-wrap dashed-hint">最大持仓量<div class="market-hint-tip th-col-tip">您的持仓曾达到的最大规模 (非累积计算)</div></span></th><th class="px-4 py-2">已平仓量</th><th class="px-4 py-2">已实现盈亏 (ROE%)</th><th class="px-4 py-2">狀態</th><th class="px-4 py-2">開倉時間</th><th class="px-4 py-2">平倉時間</th><th class="px-4 py-2">关联订单</th><th class="px-4 py-2">仓位ID</th>';
         },
 
         renderHistPosBody: function (helpers) {
