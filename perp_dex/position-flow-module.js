@@ -585,8 +585,8 @@
                 <td class="px-4 py-3 whitespace-nowrap"><span class="font-bold text-gray-700">${p.status}</span></td>
                 <td class="px-4 py-3 whitespace-nowrap">${p.openTime}</td>
                 <td class="px-4 py-3 whitespace-nowrap">${p.closeTime}</td>
-                <td class="px-4 py-3 whitespace-nowrap"><button type="button" class="${BTN_BASE} text-blue-600" onclick="openHistPosRelatedOrders('${esc}')">关联订单</button></td>
                 <td class="px-4 py-3 font-mono whitespace-nowrap">${p.positionId}</td>
+                <td class="px-4 py-3 whitespace-nowrap"><button type="button" class="${BTN_BASE} text-blue-600" onclick="openHistPosRelatedOrders('${esc}')">关联订单</button></td>
             </tr>`;
         }).join('');
     }
@@ -783,7 +783,7 @@
         },
 
         renderHistPosHeader: function () {
-            return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">仓位类型</th><th class="px-4 py-2">開倉均價</th><th class="px-4 py-2">平倉均價</th><th class="px-4 py-2"><span class="market-hint-wrap dashed-hint">最大持仓量<div class="market-hint-tip th-col-tip">您的持仓曾达到的最大规模 (非累积计算)</div></span></th><th class="px-4 py-2">已平仓量</th><th class="px-4 py-2">已实现盈亏 (ROE%)</th><th class="px-4 py-2">狀態</th><th class="px-4 py-2">開倉時間</th><th class="px-4 py-2">平倉時間</th><th class="px-4 py-2">关联订单</th><th class="px-4 py-2">仓位ID</th>';
+            return '<th class="px-4 py-2">合約</th><th class="px-4 py-2">仓位类型</th><th class="px-4 py-2">開倉均價</th><th class="px-4 py-2">平倉均價</th><th class="px-4 py-2"><span class="market-hint-wrap dashed-hint">最大持仓量<div class="market-hint-tip th-col-tip">您的持仓曾达到的最大规模 (非累积计算)</div></span></th><th class="px-4 py-2">已平仓量</th><th class="px-4 py-2">已实现盈亏 (ROE%)</th><th class="px-4 py-2">狀態</th><th class="px-4 py-2">開倉時間</th><th class="px-4 py-2">平倉時間</th><th class="px-4 py-2">仓位ID</th><th class="px-4 py-2">关联订单</th>';
         },
 
         renderHistPosBody: function (helpers) {
