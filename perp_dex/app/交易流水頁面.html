@@ -103,6 +103,14 @@
         .bill-type-item.active { color: #000; font-weight: 900; background: #f9fafb; }
         .bill-type-item:active { background: #f3f4f6; }
         .filter-btn.disabled { opacity: 0.45; pointer-events: none; }
+        .qty-slider-wrap { position: relative; height: 22px; display: flex; align-items: center; padding: 0 2px; }
+        .qty-slider-wrap input[type=range] { position: absolute; left: 0; right: 0; width: 100%; z-index: 2; background: transparent; height: 22px; margin: 0; -webkit-appearance: none; appearance: none; }
+        .qty-slider-wrap .slider-line { width: 100%; pointer-events: none; }
+        .qty-slider-wrap .slider-dot { position: absolute; top: 50%; width: 6px; height: 6px; background: #d1d5db; border-radius: 50%; transform: translate(-50%, -50%); }
+        .tpsl-type-toggle { display: flex; background: #f3f4f6; border-radius: 6px; padding: 2px; }
+        .tpsl-type-toggle button { flex: 1; padding: 4px 0; font-size: 9px; font-weight: 800; border-radius: 4px; color: #9ca3af; }
+        .tpsl-type-toggle button.active { background: #fff; color: #111827; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+        .app-pos-tpsl-order-card { border: 1px solid #f3f4f6; border-radius: 12px; padding: 12px; background: #fafafa; }
     </style>
 </head>
 <body>
@@ -356,6 +364,199 @@
             </div>
         </div>
 
+        <!-- ===== 底部弹层：持仓止盈止损设置 ===== -->
+        <div id="position-tpsl-sheet" class="hidden absolute inset-0 z-[55] flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('position-tpsl-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl app-sheet max-h-[90%] overflow-y-auto">
+                <div class="py-4 px-5 border-b border-gray-50 flex justify-between items-start gap-3 sticky top-0 bg-white z-10">
+                    <div class="min-w-0">
+                        <h3 class="text-[13px] font-black text-gray-900">止盈止損設置</h3>
+                        <div class="flex flex-wrap items-center gap-1 mt-2">
+                            <span id="pos-tpsl-pair-tag" class="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-bold">BNBUSDT</span>
+                            <span id="pos-tpsl-margin-tag" class="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold">逐倉</span>
+                            <span id="pos-tpsl-lev-tag" class="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold">20X</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <button type="button" onclick="AppPositionTpsl.setDemoState('list')" class="text-[9px] text-gray-300 underline">模擬已設置</button>
+                        <button type="button" onclick="AppPositionTpsl.setDemoState('empty')" class="text-[9px] text-gray-300 underline">模擬未設置</button>
+                        <button type="button" onclick="closeSheet('position-tpsl-sheet')" class="text-gray-400 text-lg leading-none">✕</button>
+                    </div>
+                </div>
+                <div class="p-5 space-y-5 pb-8">
+                    <div class="grid grid-cols-3 gap-3 text-center border-b border-gray-50 pb-4">
+                        <div class="space-y-1">
+                            <p class="text-[9px] text-gray-400 font-bold">開倉均價</p>
+                            <p id="pos-tpsl-open-price" class="text-[12px] font-black text-gray-900">579.61</p>
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-[9px] text-gray-400 font-bold">當前標記價</p>
+                            <p id="pos-tpsl-mark-price" class="text-[12px] font-black text-blue-600">579.773</p>
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-[9px] text-gray-400 font-bold">持倉數量</p>
+                            <p id="pos-tpsl-qty" class="text-[12px] font-black text-gray-900">1245.80 USDT</p>
+                        </div>
+                    </div>
+
+                    <div id="app-pos-tpsl-main-view" class="space-y-4">
+                        <div id="app-pos-tpsl-list" class="space-y-3">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <span class="text-[12px] font-black text-gray-900">止盈止损委托 <span id="app-pos-tpsl-order-count" class="text-gray-500">(2)</span></span>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <button type="button" onclick="AppPositionTpsl.cancelAll()" class="px-3 py-1.5 text-[10px] font-black text-red-500 border border-red-100 rounded-lg">全部撤单</button>
+                                    <button type="button" onclick="AppPositionTpsl.openForm('add')" class="px-3 py-1.5 text-[10px] font-black text-white bg-black rounded-lg">继续添加</button>
+                                </div>
+                            </div>
+                            <div id="app-pos-tpsl-orders-container" class="space-y-3"></div>
+                        </div>
+                        <div id="app-pos-tpsl-empty" class="hidden space-y-4 py-4 text-center">
+                            <p class="text-[12px] font-black text-gray-900 text-left">止盈止损委托</p>
+                            <p class="text-[11px] font-bold text-gray-400">无止盈止损单</p>
+                            <button type="button" onclick="AppPositionTpsl.openForm('add')" class="mx-auto px-8 py-2.5 bg-black text-white text-[11px] font-black rounded-xl">立即添加</button>
+                        </div>
+                    </div>
+
+                    <div id="app-pos-tpsl-form-view" class="hidden space-y-5">
+                        <button type="button" onclick="AppPositionTpsl.closeForm()" class="flex items-center gap-1 text-[10px] font-black text-gray-500">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                            返回
+                        </button>
+                        <p id="app-pos-tpsl-form-title" class="text-[12px] font-black text-gray-900 -mt-2">添加止盈止损</p>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <label class="text-[11px] font-black text-gray-500 flex items-center"><span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>止盈</label>
+                                <div class="tpsl-type-toggle">
+                                    <button type="button" id="app-pos-tp-btn-market" class="active" onclick="switchPositionTPSLType('tp', 'market', 'app-pos-')">市價</button>
+                                    <button type="button" id="app-pos-tp-btn-limit" onclick="switchPositionTPSLType('tp', 'limit', 'app-pos-')">限價</button>
+                                </div>
+                            </div>
+                            <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
+                                <input id="app-pos-tpsl-tp-trigger" type="number" placeholder="止盈觸發價格" class="flex-1 px-3 py-2.5 text-[12px] font-bold outline-none font-mono min-w-0">
+                                <button type="button" onclick="openPickerSheet('trigger-type', 'app-pos-tp')" class="picker-chip shrink-0 border-l border-gray-100 px-3 py-2.5">
+                                    <span id="app-pos-tp-trigger-label">最新价格</span>
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                                </button>
+                            </div>
+                            <div id="app-pos-tp-limit-input" class="hidden">
+                                <input id="app-pos-tpsl-tp-limit" type="number" placeholder="限價成交價格" class="w-full border border-green-100 bg-green-50/40 px-3 py-2.5 text-[12px] font-bold rounded-lg outline-none">
+                            </div>
+                            <div class="flex justify-between text-[10px] px-1">
+                                <span class="text-gray-400 font-bold">預估收益</span>
+                                <span class="text-green-500 font-black font-mono">+0.00 USDT</span>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <label class="text-[11px] font-black text-gray-500 flex items-center"><span class="w-1.5 h-1.5 bg-red-500 rounded-full mr-1.5"></span>止損</label>
+                                <div class="tpsl-type-toggle">
+                                    <button type="button" id="app-pos-sl-btn-market" class="active" onclick="switchPositionTPSLType('sl', 'market', 'app-pos-')">市價</button>
+                                    <button type="button" id="app-pos-sl-btn-limit" onclick="switchPositionTPSLType('sl', 'limit', 'app-pos-')">限價</button>
+                                </div>
+                            </div>
+                            <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
+                                <input id="app-pos-tpsl-sl-trigger" type="number" placeholder="止損觸發價格" class="flex-1 px-3 py-2.5 text-[12px] font-bold outline-none font-mono min-w-0">
+                                <button type="button" onclick="openPickerSheet('trigger-type', 'app-pos-sl')" class="picker-chip shrink-0 border-l border-gray-100 px-3 py-2.5">
+                                    <span id="app-pos-sl-trigger-label">最新价格</span>
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                                </button>
+                            </div>
+                            <div id="app-pos-sl-limit-input" class="hidden">
+                                <input id="app-pos-tpsl-sl-limit" type="number" placeholder="限價成交價格" class="w-full border border-red-100 bg-red-50/40 px-3 py-2.5 text-[12px] font-bold rounded-lg outline-none">
+                            </div>
+                            <div class="flex justify-between text-[10px] px-1">
+                                <span class="text-gray-400 font-bold">預估收益</span>
+                                <span class="text-red-500 font-black font-mono">-0.00 USDT</span>
+                            </div>
+                        </div>
+                        <div class="space-y-3 pt-2 border-t border-gray-50">
+                            <div class="flex justify-between items-end">
+                                <label class="text-[11px] font-black text-gray-500">數量</label>
+                                <p class="text-[10px] font-bold text-gray-400">倉位數量 <span id="app-pos-tpsl-qty-hint" class="text-gray-900 font-mono">1245.80 USDT</span></p>
+                            </div>
+                            <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
+                                <input id="app-pos-tpsl-qty-input" type="number" value="1245.80" class="flex-1 px-3 py-2.5 text-[12px] font-bold outline-none font-mono min-w-0">
+                                <span class="px-3 text-[10px] font-black text-gray-400 border-l border-gray-100 bg-gray-50">USDT</span>
+                            </div>
+                            <div class="qty-slider-wrap">
+                                <input type="range" id="app-pos-tpsl-qty-slider" min="0" max="100" step="25" value="100" oninput="syncPositionTPSLQtySlider(this.value)">
+                                <div class="slider-line">
+                                    <div class="slider-dot" style="left: 0%"></div>
+                                    <div class="slider-dot" style="left: 25%"></div>
+                                    <div class="slider-dot" style="left: 50%"></div>
+                                    <div class="slider-dot" style="left: 75%"></div>
+                                    <div class="slider-dot" style="left: 100%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" onclick="openPositionTPSLConfirm()" class="w-full bg-black text-white py-3.5 rounded-xl text-[12px] font-black">確認設置</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 居中弹窗：持仓止盈止损确认 ===== -->
+        <div id="position-tpsl-confirm-modal" class="hidden absolute inset-0 z-[65] flex items-center justify-center rounded-[38px] overflow-hidden px-6">
+            <div class="absolute inset-0 bg-black/40" onclick="closeModal('position-tpsl-confirm-modal')"></div>
+            <div class="relative w-full bg-white rounded-2xl shadow-2xl app-modal overflow-hidden max-h-[85%] overflow-y-auto">
+                <div class="px-5 py-4 border-b border-gray-50 flex justify-between items-center bg-gray-50">
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-[13px] font-black">止盈止損確認</h3>
+                        <span id="pos-tpsl-confirm-side" class="text-[9px] bg-green-500 text-white px-1.5 py-0.5 rounded font-black">多單</span>
+                    </div>
+                    <button type="button" onclick="closeModal('position-tpsl-confirm-modal')" class="text-gray-400 text-lg">✕</button>
+                </div>
+                <div class="p-5 space-y-4">
+                    <div class="grid grid-cols-2 gap-4 pb-3 border-b border-gray-50 text-[11px]">
+                        <div class="space-y-1">
+                            <p class="text-[9px] text-gray-400 font-bold">合約</p>
+                            <p id="pos-tpsl-confirm-pair" class="font-black text-gray-900">BNBUSDT</p>
+                        </div>
+                        <div class="space-y-1 text-right">
+                            <p class="text-[9px] text-gray-400 font-bold">開倉價格</p>
+                            <p id="pos-tpsl-confirm-open" class="font-black text-gray-900 font-mono">579.61 <span class="text-gray-400 font-medium">USDT</span></p>
+                        </div>
+                    </div>
+                    <div class="space-y-2 bg-green-50/40 p-3 rounded-lg border border-green-100">
+                        <p class="text-[10px] font-black text-green-600 flex items-center"><span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>止盈</p>
+                        <div class="space-y-1.5 text-[11px]">
+                            <div class="flex justify-between"><span class="text-gray-400 font-bold">觸發價格</span><span class="font-black font-mono">620.00 <span class="text-gray-400">(標記)</span></span></div>
+                            <div class="flex justify-between"><span class="text-gray-400 font-bold">委託價格</span><span class="font-black">市價</span></div>
+                            <div class="flex justify-between pt-1 border-t border-green-100"><span class="text-gray-400 font-bold">預估收益</span><span class="text-green-600 font-black font-mono">+39.23 USDT</span></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2 bg-red-50/40 p-3 rounded-lg border border-red-100">
+                        <p class="text-[10px] font-black text-red-600 flex items-center"><span class="w-1.5 h-1.5 bg-red-500 rounded-full mr-1.5"></span>止損</p>
+                        <div class="space-y-1.5 text-[11px]">
+                            <div class="flex justify-between"><span class="text-gray-400 font-bold">觸發價格</span><span class="font-black font-mono">560.00 <span class="text-gray-400">(標記)</span></span></div>
+                            <div class="flex justify-between"><span class="text-gray-400 font-bold">委託價格</span><span class="font-black font-mono">555.00</span></div>
+                            <div class="flex justify-between pt-1 border-t border-red-100"><span class="text-gray-400 font-bold">預估收益</span><span class="text-red-600 font-black font-mono">-19.23 USDT</span></div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center py-1 text-[11px]">
+                        <span class="text-gray-400 font-bold">下單數量</span>
+                        <span id="pos-tpsl-confirm-qty" class="font-black font-mono">1245.80 <span class="text-gray-400">USDT</span></span>
+                    </div>
+                    <label class="flex items-start gap-2">
+                        <input type="checkbox" class="w-3.5 h-3.5 mt-0.5 accent-black">
+                        <span class="text-[10px] text-gray-400 leading-relaxed">不再為止盈止損訂單提示二次確認</span>
+                    </label>
+                    <div class="flex gap-3 pt-1">
+                        <button type="button" onclick="closeModal('position-tpsl-confirm-modal')" class="flex-1 border border-gray-200 py-3 rounded-xl text-[12px] font-bold text-gray-400">取消</button>
+                        <button type="button" onclick="executePositionTPSL()" class="flex-[1.4] bg-black text-white py-3 rounded-xl text-[12px] font-black">確認提交</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="picker-sheet" class="hidden absolute inset-0 z-[70] flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('picker-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl max-h-[78%] overflow-y-auto">
+                <div id="picker-sheet-body"></div>
+            </div>
+        </div>
+
         <!-- 已实现盈亏拆解 -->
         <div id="realized-pnl-sheet" class="hidden absolute inset-0 z-[120] flex items-end rounded-[38px] overflow-hidden">
             <div class="absolute inset-0 bg-black/40" onclick="closeRealizedPnlSheet()"></div>
@@ -371,6 +572,7 @@
     </div>
 </div>
 
+<script src="app-position-tpsl.js"></script>
 <script>
     const REALIZED_PNL_BREAKDOWN = {
         hist: { total: -579.30, closePnl: -554.02, funding: 11.35, fee: -36.64 }
@@ -438,6 +640,95 @@
 
     function openSheet(id) { document.getElementById(id)?.classList.remove('hidden'); }
     function closeSheet(id) { document.getElementById(id)?.classList.add('hidden'); }
+    function openModal(id) { document.getElementById(id)?.classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); }
+
+    const triggerTypeMap = { 'app-pos-tp': 'latest', 'app-pos-sl': 'latest' };
+    let pickerContext = { type: '', key: '' };
+    const orderTpslState = {
+        pair: 'BNBUSDT',
+        side: 'long',
+        leverage: 3,
+        marginMode: '全仓',
+        openPrice: '620.00',
+        markPrice: '615.50',
+        qtyUsdt: 10.23,
+    };
+
+    function getTriggerTypeLabel(key) {
+        return key === 'mark' ? '标记价格' : '最新价格';
+    }
+
+    function renderPickerHeader(title) {
+        return '<div class="py-4 px-5 border-b border-gray-50"><h3 class="text-[13px] font-black text-gray-900">' + title + '</h3></div>';
+    }
+
+    function renderRichPickerOption(value, title, desc, selected) {
+        const safeDesc = desc ? '<div class="text-[10px] text-gray-400 mt-0.5">' + desc + '</div>' : '';
+        return '<div class="sheet-option-rich ' + (selected ? 'bg-gray-50' : '') + '" onclick="selectPickerOption(\'' + value + '\')"><div class="text-[13px] font-bold text-gray-900">' + title + '</div>' + safeDesc + '</div>';
+    }
+
+    function openPickerSheet(type, key) {
+        pickerContext = { type, key: key || '' };
+        const body = document.getElementById('picker-sheet-body');
+        if (!body || type !== 'trigger-type') return;
+        const current = triggerTypeMap[key] || 'latest';
+        let html = renderPickerHeader('觸發價格类型');
+        html += renderRichPickerOption('latest', '最新成交价', '', current === 'latest');
+        html += renderRichPickerOption('mark', '标记价格', '', current === 'mark');
+        body.innerHTML = html + '<div class="p-4"><button onclick="closeSheet(\'picker-sheet\')" class="w-full py-3 text-[13px] font-bold text-gray-400 bg-gray-50 rounded-xl">取消</button></div>';
+        openSheet('picker-sheet');
+    }
+
+    function selectPickerOption(value) {
+        const { type, key } = pickerContext;
+        if (type === 'trigger-type') {
+            triggerTypeMap[key] = value;
+            const labelEl = document.getElementById(key + '-trigger-label');
+            if (labelEl) labelEl.textContent = getTriggerTypeLabel(value);
+        }
+        closeSheet('picker-sheet');
+    }
+
+    function switchPositionTPSLType(mode, type, prefix) {
+        const p = prefix || 'app-pos-';
+        const isLimit = type === 'limit';
+        document.getElementById(p + mode + '-limit-input')?.classList.toggle('hidden', !isLimit);
+        const btnMarket = document.getElementById(p + mode + '-btn-market');
+        const btnLimit = document.getElementById(p + mode + '-btn-limit');
+        if (btnMarket && btnLimit) {
+            btnMarket.classList.toggle('active', !isLimit);
+            btnLimit.classList.toggle('active', isLimit);
+        }
+    }
+
+    function syncPositionTPSLQtySlider(val) {
+        const pct = parseInt(val, 10);
+        if (window.AppPositionTpsl) AppPositionTpsl.syncQtyPct(pct);
+    }
+
+    function openPositionTPSLConfirm() {
+        closeSheet('position-tpsl-sheet');
+        const s = orderTpslState;
+        const sideEl = document.getElementById('pos-tpsl-confirm-side');
+        if (sideEl) {
+            sideEl.textContent = s.side === 'long' ? '多單' : '空單';
+            sideEl.className = s.side === 'long'
+                ? 'text-[9px] bg-green-500 text-white px-1.5 py-0.5 rounded font-black'
+                : 'text-[9px] bg-red-500 text-white px-1.5 py-0.5 rounded font-black';
+        }
+        document.getElementById('pos-tpsl-confirm-pair').textContent = s.pair;
+        document.getElementById('pos-tpsl-confirm-open').innerHTML = s.openPrice + ' <span class="text-gray-400 font-medium">USDT</span>';
+        const qtyVal = document.getElementById('app-pos-tpsl-qty-input')?.value || s.qtyUsdt.toFixed(2);
+        document.getElementById('pos-tpsl-confirm-qty').innerHTML = qtyVal + ' <span class="text-gray-400">USDT</span>';
+        openModal('position-tpsl-confirm-modal');
+    }
+
+    function executePositionTPSL() {
+        if (window.AppPositionTpsl) AppPositionTpsl.persistFromForm();
+        closeModal('position-tpsl-confirm-modal');
+        showProtoToast('止盈止損已提交');
+    }
 
     function showProtoToast(msg) {
         let toast = document.getElementById('proto-toast');
@@ -506,7 +797,22 @@
     }
 
     function openOrderTPSLSheet() {
-        showProtoToast('打开止盈止损编辑');
+        const s = orderTpslState;
+        document.getElementById('pos-tpsl-pair-tag').textContent = s.pair;
+        document.getElementById('pos-tpsl-margin-tag').textContent = s.marginMode;
+        document.getElementById('pos-tpsl-lev-tag').textContent = s.leverage + 'X';
+        document.getElementById('pos-tpsl-open-price').textContent = s.openPrice;
+        document.getElementById('pos-tpsl-mark-price').textContent = s.markPrice;
+        const qtyText = s.qtyUsdt.toFixed(2) + ' USDT';
+        document.getElementById('pos-tpsl-qty').textContent = qtyText;
+        if (window.AppPositionTpsl) {
+            AppPositionTpsl.setTotalQtyUsdt(s.qtyUsdt);
+            const hint = document.getElementById('app-pos-tpsl-qty-hint');
+            if (hint) hint.textContent = qtyText;
+            AppPositionTpsl.closeForm();
+            AppPositionTpsl.refreshModalView();
+        }
+        openSheet('position-tpsl-sheet');
     }
 
     /** 资金账单 · 账单主类型（与 Web §3.6.2 一致） */
@@ -1650,6 +1956,10 @@
     }
 
     // 初始加載
+    if (window.AppPositionTpsl) {
+        AppPositionTpsl.setTotalQtyUsdt(orderTpslState.qtyUsdt);
+        AppPositionTpsl.refreshModalView();
+    }
     switchPrimary('current');
 </script>
 
