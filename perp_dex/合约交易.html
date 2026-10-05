@@ -4763,11 +4763,60 @@
         }
     }
 
+    function getPosTpslDelegateFromDom(leg) {
+        const limitWrap = document.getElementById(leg + '-limit-input');
+        return limitWrap && !limitWrap.classList.contains('hidden') ? 'limit' : 'market';
+    }
+
+    function buildPosTpslOrderFromForm(existing) {
+        const tpTrigger = document.getElementById('pos-tpsl-tp-trigger')?.value?.trim() || '';
+        const slTrigger = document.getElementById('pos-tpsl-sl-trigger')?.value?.trim() || '';
+        const tpTypeSel = document.getElementById('pos-tpsl-tp-trigger-type')?.value || '標記價格';
+        const slTypeSel = document.getElementById('pos-tpsl-sl-trigger-type')?.value || '標記價格';
+        const tpLimit = document.getElementById('pos-tpsl-tp-limit-price')?.value?.trim() || '';
+        const slLimit = document.getElementById('pos-tpsl-sl-limit-price')?.value?.trim() || '';
+        const qtyRaw = parseFloat(document.getElementById('pos-tpsl-qty-input')?.value);
+        const qtyBnb = Number.isFinite(qtyRaw) ? qtyRaw : TPSL_POS_QTY;
+        const markRef = 658.28;
+        return {
+            id: existing?.id || ('o' + Date.now()),
+            tpTrigger: tpTrigger,
+            tpTriggerType: tpTypeSel === '標記價格' ? 'mark' : 'latest',
+            tpDelegate: getPosTpslDelegateFromDom('tp'),
+            tpLimitPrice: tpLimit,
+            slTrigger: slTrigger,
+            slTriggerType: slTypeSel === '標記價格' ? 'mark' : 'latest',
+            slDelegate: getPosTpslDelegateFromDom('sl'),
+            slLimitPrice: slLimit,
+            qtyBnb: qtyBnb,
+            qtyLabel: (qtyBnb * markRef).toFixed(2) + ' USDT',
+            estTp: existing?.estTp || (tpTrigger ? '+0.00' : ''),
+            estSl: existing?.estSl || (slTrigger ? '-0.00' : ''),
+        };
+    }
+
+    function persistPosTpslFromForm() {
+        const existing = posTpslEditingId
+            ? posTpslOrders.find(function (o) { return o.id === posTpslEditingId; })
+            : null;
+        const next = buildPosTpslOrderFromForm(existing);
+        if (posTpslEditingId) {
+            posTpslOrders = posTpslOrders.map(function (o) {
+                return o.id === posTpslEditingId ? next : o;
+            });
+        } else {
+            posTpslOrders = posTpslOrders.concat([next]);
+        }
+        posTpslEditingId = null;
+        refreshPosTpslModalView();
+    }
+
     function closePosTpslForm() {
         const mainEl = document.getElementById('pos-tpsl-main-view');
         const formEl = document.getElementById('pos-tpsl-form-view');
         if (mainEl) mainEl.classList.remove('hidden');
         if (formEl) formEl.classList.add('hidden');
+        posTpslEditingId = null;
     }
 
     function openPosTpslModal() {
@@ -4903,9 +4952,8 @@
             confirmModal.style.display = 'none';
             confirmModal.classList.add('hidden');
         }
+        persistPosTpslFromForm();
         closePosTpslForm();
-        if (posTpslOrders.length === 0) refreshPosTpslModalView();
-        else refreshPosTpslPositionCell();
         if (typeof showNotification === 'function') showNotification('止盈止損已提交');
         else alert('止盈止損訂單已下單！');
     }
@@ -6337,6 +6385,7 @@
         if (tfc) tfc.addEventListener('click', function () { applyTerminalFeeDemo('custom'); });
         if (tfcp) tfcp.addEventListener('click', function () { applyTerminalFeeDemo('customPermanent'); });
         if (window.ForxPnlSharePoster) ForxPnlSharePoster.init();
+        refreshPosTpslModalView();
     });
 </script>
 </body>
