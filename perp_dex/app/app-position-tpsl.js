@@ -90,15 +90,17 @@
 
     function refreshInlineSummaries() {
         const summary = getCellSummary();
-        ['pos-tpsl-inline-iso', 'pos-tpsl-inline-cross'].forEach(function (id, idx) {
-            const el = document.getElementById(id);
-            if (!el) return;
-            if (id === 'pos-tpsl-inline-cross') {
-                el.innerHTML = '止盈止损：<span class="text-gray-400 font-mono">-- / --</span>';
-                return;
-            }
-            el.innerHTML = summary.text;
-        });
+        const hasOrders = orders.length > 0;
+        const crossEl = document.getElementById('pos-tpsl-inline-cross');
+        if (crossEl) crossEl.classList.add('hidden');
+        const isoEl = document.getElementById('pos-tpsl-inline-iso');
+        if (!isoEl) return;
+        if (!hasOrders) {
+            isoEl.classList.add('hidden');
+            return;
+        }
+        isoEl.classList.remove('hidden');
+        isoEl.innerHTML = summary.text;
     }
 
     function refreshModalView() {
