@@ -1,10 +1,11 @@
 /**
- * 四级审批流：市场运营提交 → 市场运营交叉审核 → 风控审核 → 老板审批（可同步 Lark）
+ * 三级审批流：业务提交 → 风控审核 → 老板审批（可同步 Lark）
+ * 体验金 / 积分 / 费率 / 合伙人 统一为风控 + 老板两审，无市场运营交叉审核。
  */
 (function () {
     const STORAGE_KEY = 'forx_approval_applications';
     const ROLE_KEY = 'forx_approval_view_role';
-    const SEED_VERSION = '2026-08-11-partner-v6';
+    const SEED_VERSION = '2026-09-10-approval-fee-position-demo-v1';
     const SEED_VERSION_KEY = 'forx_approval_seed_v';
 
     const STEPS = [
@@ -15,10 +16,17 @@
     ];
 
     const TYPE_FLOW_PROFILE = {
-        points_pool_config: 'cross_risk',
+        trial_issue: 'risk_boss',
+        points_manual: 'risk_boss',
+        points_bonus_config: 'risk_boss',
+        points_pool_config: 'risk_boss',
+        points_program_switch: 'risk_boss',
+        vip_tier_config: 'risk_boss',
+        fee_config: 'risk_boss',
         partner_l1_bind: 'risk_boss',
+        partner_l1_bind_cross: 'risk_boss',
         partner_ratio_change: 'risk_boss',
-        partner_rebate_migrate: 'risk_only'
+        partner_rebate_migrate: 'risk_boss'
     };
 
     const FLOW_PROFILES = {
@@ -59,14 +67,36 @@
         }
     };
 
+    const FEE_USER_OPEN_POSITION = {
+        '10031592': true,
+        '10106789': true
+    };
+
+    const FEE_CUSTOM_POSITION_CHECK_MESSAGES = {
+        applicant: '自定义费率将在老板终审环节校验目标用户 {uid} 是否持有永续合约持仓。若 {uid} 当前仍有持仓，老板无法审批通过，新费率也不会生效。请提前告知目标用户需先平仓并确认无任何永续合约持仓后再提交。',
+        bossBlock: '目标用户 {uid} 当前仍有永续合约持仓。自定义费率须在用户无任何合约持仓时方可审批通过并生效。请驳回申请，或由申请人 {applicant} 联系用户平仓后重新提交。'
+    };
+
+    function formatFeeCheckMessage(template, params) {
+        return String(template || '').replace(/\{(\w+)\}/g, function (_, key) {
+            return params && params[key] != null ? String(params[key]) : '{' + key + '}';
+        });
+    }
+
+    function getFeeUserHasOpenPosition(uid) {
+        return !!FEE_USER_OPEN_POSITION[String(uid)];
+    }
+
     const TYPE_LABELS = {
         trial_issue: '体验金发放',
         points_manual: '积分手动发放',
         fee_config: '用户费率配置',
         points_bonus_config: '积分加成配置',
         points_pool_config: '积分总池配置',
+        vip_tier_config: 'VIP 配置',
         points_program_switch: '积分计划总开关',
         partner_l1_bind: '一级合伙人绑定（超上限）',
+        partner_l1_bind_cross: '一级合伙人绑定（跨权限）',
         partner_ratio_change: '返佣比例调整（超出上限）',
         partner_rebate_migrate: '返佣关系迁移'
     };
@@ -78,12 +108,12 @@
     };
 
     function getFlowProfile(appOrKey) {
-        if (typeof appOrKey === 'string') return FLOW_PROFILES[appOrKey] || FLOW_PROFILES.full;
-        if (appOrKey && appOrKey.flowProfile) return FLOW_PROFILES[appOrKey.flowProfile] || FLOW_PROFILES.full;
+        if (typeof appOrKey === 'string') return FLOW_PROFILES[appOrKey] || FLOW_PROFILES.risk_boss;
+        if (appOrKey && appOrKey.flowProfile) return FLOW_PROFILES[appOrKey.flowProfile] || FLOW_PROFILES.risk_boss;
         if (appOrKey && appOrKey.type && TYPE_FLOW_PROFILE[appOrKey.type]) {
-            return FLOW_PROFILES[TYPE_FLOW_PROFILE[appOrKey.type]] || FLOW_PROFILES.full;
+            return FLOW_PROFILES[TYPE_FLOW_PROFILE[appOrKey.type]] || FLOW_PROFILES.risk_boss;
         }
-        return FLOW_PROFILES.full;
+        return FLOW_PROFILES.risk_boss;
     }
 
     function stepIndex(status, profile) {
@@ -134,10 +164,21 @@
     }
 
     function migrateLegacyStatus(app) {
-        if (app.status === 'pending_manager') app.status = 'pending_cross';
+        if (app.status === 'pending_manager') app.status = 'pending_risk';
+        if (TYPE_FLOW_PROFILE[app.type]) app.flowProfile = TYPE_FLOW_PROFILE[app.type];
+        if (app.flowProfile === 'full' || app.flowProfile === 'cross_risk' || app.flowProfile === 'risk_only') {
+            app.flowProfile = 'risk_boss';
+        }
+        if (app.flowProfile === 'risk_boss' && app.status === 'pending_cross') app.status = 'pending_risk';
+        if (app.status === 'pending_boss' && getFlowProfile(app).larkOnRisk && !app.lark) {
+            pushLarkApproval(app);
+        }
         if (app.timeline) {
-            app.timeline.forEach(function (t) {
-                if (t.action === '运营负责人通过') t.action = '市场运营交叉审核通过';
+            app.timeline = app.timeline.filter(function (t) {
+                return t.action !== '市场运营交叉审核通过' && !(t.actor === 'Mkt_Cross');
+            }).map(function (t) {
+                if (t.action === '运营负责人通过') t.action = '风控通过';
+                return t;
             });
         }
         return app;
@@ -149,6 +190,121 @@
 
     function partnerAttachmentPreview(label) {
         return 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="480" height="280"><rect fill="#e8f0fe" width="480" height="280"/><text x="24" y="48" font-size="18" fill="#1e3a5f" font-family="sans-serif">' + label + '</text><text x="24" y="88" font-size="14" fill="#64748b" font-family="sans-serif">渠道协议 / 谈判依据截图（演示）</text></svg>');
+    }
+
+    function computeFeeRevenueImpactSide(currentRate, targetRate, sideIncome30d) {
+        var cur = parseFeeRateDecimal(currentRate);
+        var tgt = parseFeeRateDecimal(targetRate);
+        var inc = Number(sideIncome30d);
+        if (!isFinite(inc) || !cur || cur <= 0 || isNaN(tgt)) return null;
+        return inc * (tgt / cur - 1);
+    }
+
+    function feeApprovalSnapshot(curT, curM, tgtTaker, tgtMaker, volume30d, feeIncome30d) {
+        var takerInc = Math.round(feeIncome30d * 0.62);
+        var makerInc = feeIncome30d - takerInc;
+        var tgtT = parseFeeRateDecimal(tgtTaker);
+        var tgtM = parseFeeRateDecimal(tgtMaker);
+        return {
+            currentTaker: (curT * 100).toFixed(3) + '%',
+            currentMaker: (curM * 100).toFixed(3) + '%',
+            volume30d: volume30d,
+            takerFeeIncome30d: takerInc,
+            makerFeeIncome30d: makerInc,
+            revenueImpactTaker: computeFeeRevenueImpactSide(curT, tgtT, takerInc),
+            revenueImpactMaker: computeFeeRevenueImpactSide(curM, tgtM, makerInc)
+        };
+    }
+
+    var FEE_METRICS_PAYLOAD_KEYS = [
+        'currentTaker', 'currentMaker', 'volume30d',
+        'takerFeeIncome30d', 'makerFeeIncome30d',
+        'revenueImpactTaker', 'revenueImpactMaker'
+    ];
+    const FEE_METRICS_MIGRATION_KEY = 'forx_approval_fee_metrics_v2';
+
+    function parseFeeRateDecimal(v) {
+        if (v == null || v === '') return NaN;
+        if (typeof v === 'number') return v;
+        var s = String(v).trim();
+        if (s.endsWith('%')) return parseFloat(s.slice(0, -1)) / 100;
+        var n = parseFloat(s);
+        return n > 0 && n < 0.01 ? n : n / 100;
+    }
+
+    function feePayloadMissingMetrics(payload) {
+        if (!payload) return true;
+        return payload.volume30d == null && payload.currentTaker == null && payload.feeIncome30d == null;
+    }
+
+    function mergeFeeMetricsFields(target, source) {
+        if (!target || !source) return;
+        FEE_METRICS_PAYLOAD_KEYS.forEach(function (k) {
+            if (target[k] == null && source[k] != null) target[k] = source[k];
+        });
+    }
+
+    function recomputeFeeRevenueImpact(payload) {
+        if (!payload) return;
+        if (payload.takerFeeIncome30d != null) {
+            payload.revenueImpactTaker = computeFeeRevenueImpactSide(
+                payload.currentTaker, payload.taker, payload.takerFeeIncome30d
+            );
+        }
+        if (payload.makerFeeIncome30d != null) {
+            payload.revenueImpactMaker = computeFeeRevenueImpactSide(
+                payload.currentMaker, payload.maker, payload.makerFeeIncome30d
+            );
+        }
+    }
+
+    function synthesizeFeeMetricsForPayload(payload) {
+        if (!payload || !payload.taker || !payload.maker) return false;
+        var curT = parseFeeRateDecimal(payload.currentTaker);
+        var curM = parseFeeRateDecimal(payload.currentMaker);
+        if (isNaN(curT)) curT = 0.00039;
+        if (isNaN(curM)) curM = 0.00013;
+        var vol = payload.volume30d != null ? payload.volume30d : 5000000;
+        var income = payload.feeIncome30d != null ? payload.feeIncome30d : Math.round(vol * curT * 0.55);
+        var snap = feeApprovalSnapshot(curT, curM, payload.taker, payload.maker, vol, income);
+        mergeFeeMetricsFields(payload, snap);
+        return true;
+    }
+
+    function migrateFeeConfigApprovalPayloads(apps) {
+        var seeds = buildSeedData();
+        var seedPayloadById = {};
+        var seedPayloadByUid = {};
+        seeds.forEach(function (s) {
+            if (s.type !== 'fee_config' || !s.payload) return;
+            seedPayloadById[s.id] = s.payload;
+            if (s.payload.uid) seedPayloadByUid[s.payload.uid] = s.payload;
+        });
+        var changed = false;
+        apps.forEach(function (app) {
+            if (app.type !== 'fee_config' || !app.payload) return;
+            var p = app.payload;
+            if (feePayloadMissingMetrics(p)) {
+                if (seedPayloadById[app.id]) {
+                    mergeFeeMetricsFields(p, seedPayloadById[app.id]);
+                } else if (p.uid && seedPayloadByUid[p.uid]) {
+                    mergeFeeMetricsFields(p, seedPayloadByUid[p.uid]);
+                } else {
+                    synthesizeFeeMetricsForPayload(p);
+                }
+            }
+            recomputeFeeRevenueImpact(p);
+            changed = true;
+        });
+        return changed;
+    }
+
+    function ensureFeeConfigMetricsMigration() {
+        if (localStorage.getItem(FEE_METRICS_MIGRATION_KEY) === 'done') return;
+        var apps = getApps().map(migrateLegacyStatus);
+        var changed = migrateFeeConfigApprovalPayloads(apps);
+        if (changed) saveApps(apps);
+        localStorage.setItem(FEE_METRICS_MIGRATION_KEY, 'done');
     }
 
     function buildSeedData() {
@@ -223,7 +379,42 @@
                     { at: '2026-07-25 11:00', actor: 'Trial_Admin', action: '提交申请', note: 'VIP 召回活动' },
                     { at: '2026-07-25 12:30', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '通过' },
                     { at: '2026-07-25 14:00', actor: 'Risk_Control', action: '风控通过', note: '风险可控' },
-                    { at: '2026-07-25 15:30', actor: 'System', action: '已同步 Lark 审批', note: '等待老板在 Lark 完成审批' }
+                    { at: '2026-07-25 15:30', actor: 'System', action: '已同步 Lark 审批', note: '等待老板在 Lark 审批' }
+                ]
+            },
+            {
+                id: 'APR20260718005',
+                type: 'trial_issue',
+                title: '体验金批量发放',
+                applicant: 'Trial_Admin',
+                status: 'rejected',
+                createdAt: '2026-07-18 16:20',
+                remark: 'KOL 渠道补发体验金',
+                summary: '78 人 · 7,880 USDT · 社区 KOL 合作激励',
+                payload: {
+                    activityMode: 'custom',
+                    activityName: '社区 KOL 合作激励',
+                    cardGroup: 'KOL大额专属组',
+                    cardGroupId: 'g2',
+                    cardGroupDetails: {
+                        id: 'g2', name: 'KOL大额专属组', couponValidDays: 14, openValidDays: 60
+                    },
+                    recipientCount: 78,
+                    totalAmount: '7,880 USDT',
+                    inputMode: 'excel',
+                    invalidRecipientCount: 2,
+                    invalidRecipients: [
+                        { uid_or_wallet: '99990001', amount: '120', reason: '用户不存在' },
+                        { uid_or_wallet: '88880002', amount: '80', reason: '用户不存在' }
+                    ],
+                    recipients: [
+                        { uid_or_wallet: '100234', amount: '100' },
+                        { uid_or_wallet: '100891', amount: '250' }
+                    ]
+                },
+                timeline: [
+                    { at: '2026-07-18 16:20', actor: 'Trial_Admin', action: '提交申请', note: 'KOL 渠道补发体验金（含 2 条无效 UID 已剔除）' },
+                    { at: '2026-07-18 17:05', actor: 'Mkt_Cross', action: '驳回', note: '有效名单金额与活动预算不符，请修正后重新提交' }
                 ]
             },
             {
@@ -316,7 +507,7 @@
                     { at: '2026-07-24 10:00', actor: 'Points_Admin', action: '提交申请', note: '签到活动补发' },
                     { at: '2026-07-24 11:30', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '通过' },
                     { at: '2026-07-24 13:00', actor: 'Risk_Control', action: '风控通过', note: '通过' },
-                    { at: '2026-07-24 14:20', actor: 'System', action: '已同步 Lark 审批', note: '等待老板审批' }
+                    { at: '2026-07-24 14:20', actor: 'System', action: '已同步 Lark 审批', note: '等待老板在 Lark 审批' }
                 ]
             },
             {
@@ -407,7 +598,7 @@
                 timeline: [
                     { at: '2026-08-03 14:00', actor: 'Mkt_Bob', action: '提交申请', note: '海外做市商 85% 谈判' },
                     { at: '2026-08-03 15:20', actor: 'Risk_Control', action: '风控通过', note: '已核实协议与历史交易量' },
-                    { at: '2026-08-03 16:10', actor: 'System', action: '已同步 Lark 审批', note: '等待老板审批' }
+                    { at: '2026-08-03 16:10', actor: 'System', action: '已同步 Lark 审批', note: '等待老板在 Lark 审批' }
                 ]
             },
             {
@@ -460,7 +651,7 @@
                 timeline: [
                     { at: '2026-08-05 10:00', actor: 'Mkt_Bob', action: '提交申请', note: 'VIP 渠道 88% 特批' },
                     { at: '2026-08-05 12:30', actor: 'Risk_Control', action: '风控通过', note: '风险敞口可接受' },
-                    { at: '2026-08-05 14:20', actor: 'System', action: '已同步 Lark 审批', note: '等待老板审批' }
+                    { at: '2026-08-05 14:20', actor: 'System', action: '已同步 Lark 审批', note: '等待老板在 Lark 审批' }
                 ]
             },
             {
@@ -518,18 +709,23 @@
                 status: 'pending_risk',
                 flowProfile: 'risk_only',
                 createdAt: '2026-08-11 09:30',
-                remark: '含倒挂分支修正后迁移',
-                summary: '0xMig...Abn → 0xTo...L1 · 58%',
+                remark: '代理整伞迁移',
+                summary: '0xMig...Ok → 0xTo...L1 · 58%',
                 payload: {
-                    subjectWallet: '0xMig...Abn',
-                    subjectUid: '200301',
+                    subjectWallet: '0xMig...Ok',
+                    subjectUid: '200201',
                     subjectType: 'partner',
                     targetWallet: '0xTo...L1',
                     targetUid: '200001',
+                    oldRatio: 58,
+                    beforeIdentity: '2级合伙人',
+                    afterIdentity: '2级合伙人',
                     newRatio: 58,
-                    ratioFixes: [{ wallet: '0xMig...AbnBL4', oldRatio: 42, newRatio: 38 }]
+                    migrateAsPartner: true,
+                    attachments: ['迁移方案说明.png'],
+                    attachmentPreviews: { '迁移方案说明.png': partnerImg1 }
                 },
-                timeline: [{ at: '2026-08-11 09:30', actor: 'Mkt_Allen', action: '提交申请', note: '含倒挂分支修正后迁移' }]
+                timeline: [{ at: '2026-08-11 09:30', actor: 'Mkt_Allen', action: '提交申请', note: '代理整伞迁移' }]
             },
             {
                 id: 'APR20260811002',
@@ -547,8 +743,11 @@
                     subjectType: 'partner',
                     targetWallet: '0xTo...L2',
                     targetUid: '200002',
+                    oldRatio: 58,
+                    beforeIdentity: '2级合伙人',
+                    afterIdentity: '3级合伙人',
                     newRatio: 52,
-                    ratioFixes: []
+                    migrateAsPartner: true
                 },
                 timeline: [{ at: '2026-08-11 10:15', actor: 'Mkt_Bob', action: '提交申请', note: '正常代理整伞迁移' }]
             },
@@ -566,14 +765,132 @@
                     subjectWallet: '0xPlain...U1',
                     subjectUid: '200101',
                     subjectType: 'plain',
+                    plainRole: 'sub_partner',
                     targetWallet: '0xTo...L1',
                     targetUid: '200001',
+                    oldRatio: null,
+                    beforeIdentity: '直客',
+                    afterIdentity: '2级合伙人',
                     newRatio: 45,
-                    ratioFixes: []
+                    migrateAsPartner: true
                 },
                 timeline: [
                     { at: '2026-08-10 16:40', actor: 'Mkt_Allen', action: '提交申请', note: '普通用户引流迁移' },
                     { at: '2026-08-10 17:20', actor: 'Risk_Control', action: '风控通过', note: '直客关系清晰' }
+                ]
+            },
+            {
+                id: 'APR20260829001',
+                type: 'partner_l1_bind_cross',
+                title: '一级合伙人绑定（跨权限）',
+                applicant: 'Mkt_Allen',
+                status: 'pending_risk',
+                flowProfile: 'risk_boss',
+                createdAt: '2026-08-29 10:00',
+                remark: '原 BD 渠道交接至 Allen 团队，已与 bob 确认资源归属；华南线四级代理升级一级',
+                summary: 'N 级代理 · UID 100815 · 62%',
+                payload: {
+                    uid: '100815',
+                    wallet: '0xAbn...L4',
+                    ratio: 62,
+                    opsCap: 80,
+                    exceedsCap: false,
+                    crossBd: true,
+                    originalBd: 'bob@forx.fi',
+                    crossBdReason: '原 BD 渠道交接至 Allen 团队，已与 bob 确认资源归属；华南线四级代理升级一级',
+                    subjectKind: 'partner_n',
+                    subjectLabel: 'N 级代理 · 系统 L4',
+                    upgradeScope: '整伞返佣树',
+                    attachments: ['渠道交接说明.png'],
+                    attachmentPreviews: { '渠道交接说明.png': partnerImg1 }
+                },
+                timeline: [{ at: '2026-08-29 10:00', actor: 'Mkt_Allen', action: '提交申请', note: '跨 BD 升级 bob 伞下四级代理' }]
+            },
+            {
+                id: 'APR20260829002',
+                type: 'partner_rebate_migrate',
+                title: '返佣关系迁移（跨权限配置）',
+                applicant: 'Mkt_Allen',
+                status: 'pending_boss',
+                flowProfile: 'risk_boss',
+                createdAt: '2026-08-29 11:30',
+                remark: '跨 BD 整伞迁移至 Allen 负责一级',
+                summary: 'UID 100815 → 200001 · 50%',
+                payload: {
+                    subjectWallet: '0xAbn...L4',
+                    subjectUid: '100815',
+                    subjectType: 'partner',
+                    targetWallet: '0xTo...L1',
+                    targetUid: '200001',
+                    oldRatio: 50,
+                    beforeIdentity: 'N级合伙人 · 系统 L4',
+                    afterIdentity: '2级合伙人',
+                    newRatio: 50,
+                    migrateAsPartner: true,
+                    crossBd: true,
+                    originalBd: 'bob@forx.fi',
+                    crossBdReason: '华南线渠道整合，主体原归属 bob@forx.fi 伞下',
+                    attachments: ['跨BD迁移依据.png'],
+                    attachmentPreviews: { '跨BD迁移依据.png': partnerImg2 }
+                },
+                lark: { id: 'LARK-20260829-3301', status: 'pending', url: 'https://www.feishu.cn/approval/admin/preview/LARK-20260829-3301', syncedAt: '2026-08-29 14:00' },
+                timeline: [
+                    { at: '2026-08-29 11:30', actor: 'Mkt_Allen', action: '提交申请', note: '跨 BD 整伞迁移' },
+                    { at: '2026-08-29 13:10', actor: 'Risk_Control', action: '风控通过', note: '已核实原归属 BD 与商务原因' },
+                    { at: '2026-08-29 14:00', actor: 'System', action: '已同步 Lark 审批', note: '等待老板在 Lark 审批' }
+                ]
+            },
+            {
+                id: 'APR20260829003',
+                type: 'partner_ratio_change',
+                title: '返佣比例调整（跨权限配置）',
+                applicant: 'Mkt_Allen',
+                status: 'pending_risk',
+                flowProfile: 'risk_boss',
+                createdAt: '2026-08-29 15:00',
+                remark: '跨 BD 调整 bob 伞下代理比例',
+                summary: '0xAbn...L4 · 50% → 48%',
+                payload: {
+                    uid: '100815',
+                    wallet: '0xAbn...L4',
+                    oldRatio: 50,
+                    newRatio: 48,
+                    opsCap: 80,
+                    exceedsCap: false,
+                    crossBd: true,
+                    originalBd: 'bob@forx.fi',
+                    crossBdReason: '跨 BD 渠道协商下调，已与原 BD 确认',
+                    changeRemark: '跨 BD 渠道协商下调'
+                },
+                timeline: [{ at: '2026-08-29 15:00', actor: 'Mkt_Allen', action: '提交申请', note: '跨 BD 调整 bob 伞下代理比例' }]
+            },
+            {
+                id: 'APR20260724024',
+                type: 'fee_config',
+                title: '用户费率配置',
+                applicant: 'Fee_Admin',
+                status: 'pending_boss',
+                createdAt: '2026-07-24 16:20',
+                remark: '做市商专属自定义费率',
+                summary: 'UID 10106789 · 自定义 · 45 天有效',
+                payload: Object.assign({
+                    activityMode: 'custom',
+                    activityName: 'VIP 费率优惠',
+                    uid: '10106789',
+                    wallet: '0xfedc...ba98',
+                    feeMode: 'custom',
+                    vipLevel: null,
+                    taker: '0.018%',
+                    maker: '0.006%',
+                    validDays: 45,
+                    attachments: ['其他所VIP证明.png'],
+                    attachmentPreviews: { '其他所VIP证明.png': feeImg }
+                }, feeApprovalSnapshot(0.00018, 0.00006, '0.018%', '0.006%', 2100000, 7600)),
+                lark: { id: 'LARK-20260724-9012', status: 'pending', url: 'https://www.feishu.cn/approval/admin/preview/LARK-20260724-9012', syncedAt: '2026-07-24 18:05' },
+                timeline: [
+                    { at: '2026-07-24 16:20', actor: 'Fee_Admin', action: '提交申请', note: '做市商专属自定义费率' },
+                    { at: '2026-07-24 17:00', actor: 'Risk_Control', action: '风控通过', note: '材料齐全' },
+                    { at: '2026-07-24 18:05', actor: 'System', action: '已同步 Lark 审批', note: '等待老板在 Lark 审批' }
                 ]
             },
             {
@@ -584,20 +901,20 @@
                 status: 'pending_cross',
                 createdAt: '2026-07-27 10:00',
                 remark: 'VIP3 大客户申请',
-                summary: 'UID 10028471 · VIP 3 · 90 天有效',
-                payload: {
+                summary: 'UID 10028471 · 自定义 · 90 天有效',
+                payload: Object.assign({
                     activityMode: 'custom',
                     activityName: 'VIP3 费率优惠',
                     uid: '10028471',
                     wallet: '0x7a3f...9c2e',
-                    feeMode: 'vip',
-                    vipLevel: 3,
+                    feeMode: 'custom',
+                    vipLevel: null,
                     taker: '0.029%',
                     maker: '0.006%',
                     validDays: 90,
                     attachments: ['币安VIP证明.png'],
                     attachmentPreviews: { '币安VIP证明.png': feeImg }
-                },
+                }, feeApprovalSnapshot(0.00034, 0.00010, '0.029%', '0.006%', 8900000, 32800)),
                 timeline: [{ at: '2026-07-27 10:00', actor: 'Fee_Admin', action: '提交申请', note: 'VIP3 大客户申请' }]
             },
             {
@@ -609,7 +926,7 @@
                 createdAt: '2026-07-26 11:30',
                 remark: '做市商专属费率',
                 summary: 'UID 10019833 · 自定义 · 180 天有效',
-                payload: {
+                payload: Object.assign({
                     activityMode: 'platform',
                     activityId: 'ACT202605004',
                     activityName: '做市商专属费率',
@@ -622,7 +939,7 @@
                     validDays: 180,
                     attachments: ['做市商协议.png'],
                     attachmentPreviews: { '做市商协议.png': feeImg }
-                },
+                }, feeApprovalSnapshot(0.00026, 0.00004, '0.030%', '0.000%', 125000000, 438000)),
                 timeline: [
                     { at: '2026-07-26 11:30', actor: 'Fee_Admin', action: '提交申请', note: '做市商专属费率' },
                     { at: '2026-07-26 14:00', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '协议已核实' }
@@ -637,26 +954,26 @@
                 createdAt: '2026-07-25 09:15',
                 remark: '大客户 VIP2 费率申请',
                 summary: 'UID 10031592 · VIP 2 · 30 天有效',
-                payload: {
+                payload: Object.assign({
                     activityMode: 'platform',
                     activityId: 'ACT202605002',
                     activityName: '新手成长任务',
                     uid: '10031592',
                     wallet: '0x2b91...4f8a',
-                    feeMode: 'vip',
-                    vipLevel: 2,
+                    feeMode: 'custom',
+                    vipLevel: null,
                     taker: '0.034%',
                     maker: '0.010%',
                     validDays: 30,
                     attachments: ['币安VIP证明.png'],
                     attachmentPreviews: { '币安VIP证明.png': feeImg }
-                },
+                }, feeApprovalSnapshot(0.00020, 0.00008, '0.034%', '0.010%', 1200000, 4200)),
                 lark: { id: 'LARK-20260725-8831', status: 'pending', url: 'https://www.feishu.cn/approval/admin/preview/LARK-20260725-8831', syncedAt: '2026-07-25 13:40' },
                 timeline: [
                     { at: '2026-07-25 09:15', actor: 'Fee_Admin', action: '提交申请', note: '大客户 VIP2 费率申请' },
                     { at: '2026-07-25 10:05', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '大客户专属费率' },
                     { at: '2026-07-25 11:20', actor: 'Risk_Control', action: '风控通过', note: '风险可控' },
-                    { at: '2026-07-25 13:40', actor: 'System', action: '已同步 Lark 审批', note: '等待老板在 Lark 完成审批' }
+                    { at: '2026-07-25 13:40', actor: 'System', action: '已同步 Lark 审批', note: '等待老板在 Lark 审批' }
                 ]
             },
             {
@@ -741,18 +1058,192 @@
                     { at: '2026-07-26 10:30', actor: 'Points_Admin', action: '提交申请', note: '暑期活动批量配置' },
                     { at: '2026-07-26 12:00', actor: 'Mkt_Cross', action: '市场运营交叉审核通过', note: '已与活动方确认' }
                 ]
+            },
+            {
+                id: 'APR20260723033',
+                type: 'points_bonus_config',
+                title: '积分加成配置',
+                applicant: 'Points_Admin',
+                status: 'rejected',
+                createdAt: '2026-07-23 14:10',
+                remark: '误配加成系数',
+                summary: '12 人 · 1.8x 加成 · 误操作批量',
+                payload: {
+                    activityMode: 'custom',
+                    activityName: '误操作批量',
+                    bonusMultiplier: 1.8,
+                    recipientCount: 12,
+                    anomalyCount: 0,
+                    items: [
+                        { uid: '200112', naturalBonus: '1.2x', newBonus: '1.8x', anomaly: false },
+                        { uid: '200445', naturalBonus: '1.1x', newBonus: '1.8x', anomaly: false }
+                    ]
+                },
+                timeline: [
+                    { at: '2026-07-23 14:10', actor: 'Points_Admin', action: '提交申请', note: '误配加成系数' },
+                    { at: '2026-07-23 15:00', actor: 'Mkt_Cross', action: '驳回', note: '加成系数与活动方案不符，请确认后重新提交' }
+                ]
+            },
+            {
+                id: 'APR20260721041',
+                type: 'points_pool_config',
+                title: '积分总池配置',
+                applicant: 'Points_Admin',
+                status: 'rejected',
+                flowProfile: 'cross_risk',
+                createdAt: '2026-07-21 11:20',
+                remark: '误调维度占比',
+                summary: '总池 800,000 · 交易 80% / 有效持仓 5%',
+                payload: {
+                    effectivePeriod: '2026-W29 (07/14 - 07/20)',
+                    before: {
+                        weeklyPool: 1000000,
+                        dimPct: { trade: 60, position: 15, loss: 8, profit: 2, balance: 5, invite: 10 },
+                        minHolding: { duration: 1, unit: 'hour' }
+                    },
+                    after: {
+                        weeklyPool: 800000,
+                        dimPct: { trade: 80, position: 5, loss: 5, profit: 2, balance: 3, invite: 5 },
+                        minHolding: { duration: 1, unit: 'hour' }
+                    },
+                    changes: [
+                        { field: '本周总池（积分）', before: '1,000,000', after: '800,000' },
+                        { field: '交易积分占比', before: '60%', after: '80%' },
+                        { field: '有效持仓积分占比', before: '15%', after: '5%' }
+                    ]
+                },
+                timeline: [
+                    { at: '2026-07-21 11:20', actor: 'Points_Admin', action: '提交申请', note: '误调维度占比' },
+                    { at: '2026-07-21 12:05', actor: 'Mkt_Cross', action: '驳回', note: '总池缩减幅度过大，请核对活动预算后重新提交' }
+                ]
+            },
+            {
+                id: 'APR20260720051',
+                type: 'points_program_switch',
+                title: '积分计划总开关',
+                applicant: 'Points_Admin',
+                status: 'rejected',
+                createdAt: '2026-07-20 16:40',
+                remark: '临时关闭积分计划',
+                summary: '关闭积分计划 · 待活动结束恢复',
+                payload: {
+                    beforeEnabled: true,
+                    afterEnabled: false,
+                    reason: '待活动结束恢复'
+                },
+                timeline: [
+                    { at: '2026-07-20 16:40', actor: 'Points_Admin', action: '提交申请', note: '临时关闭积分计划' },
+                    { at: '2026-07-20 17:10', actor: 'Mkt_Cross', action: '驳回', note: '关闭须附活动负责人确认，请补充说明后重新提交' }
+                ]
+            },
+            {
+                id: 'APR20260721024',
+                type: 'fee_config',
+                title: '用户费率配置',
+                applicant: 'Fee_Admin',
+                status: 'rejected',
+                createdAt: '2026-07-21 09:30',
+                remark: 'VIP1 费率申请',
+                summary: 'UID 10045201 · VIP 1 · 60 天有效',
+                payload: Object.assign({
+                    activityMode: 'custom',
+                    activityName: 'VIP1 费率优惠',
+                    uid: '10045201',
+                    wallet: '0x9c4e...2b1a',
+                    feeMode: 'custom',
+                    vipLevel: null,
+                    taker: '0.040%',
+                    maker: '0.015%',
+                    validDays: 60,
+                    attachments: ['VIP证明.png'],
+                    attachmentPreviews: { 'VIP证明.png': feeImg }
+                }, feeApprovalSnapshot(0.00045, 0.00015, '0.040%', '0.015%', 2800000, 9800)),
+                timeline: [
+                    { at: '2026-07-21 09:30', actor: 'Fee_Admin', action: '提交申请', note: 'VIP1 费率申请' },
+                    { at: '2026-07-21 10:15', actor: 'Mkt_Cross', action: '驳回', note: '附件不清晰，请重新上传证明后提交' }
+                ]
+            },
+            {
+                id: 'APR20260808092',
+                type: 'partner_l1_bind',
+                title: '一级合伙人绑定（超上限）',
+                applicant: 'Mkt_Allen',
+                status: 'rejected',
+                flowProfile: 'risk_boss',
+                createdAt: '2026-08-08 11:00',
+                remark: '渠道 KOL 83% 谈判',
+                summary: 'UID 100955 · 0xkol8...33ef · 83%',
+                payload: {
+                    uid: '100955',
+                    wallet: '0xkol8...33ef',
+                    ratio: 83,
+                    opsCap: 80,
+                    exceedsCap: true,
+                    attachments: ['KOL合作协议.png'],
+                    attachmentPreviews: { 'KOL合作协议.png': partnerImg1 }
+                },
+                timeline: [
+                    { at: '2026-08-08 11:00', actor: 'Mkt_Allen', action: '提交申请', note: '渠道 KOL 83% 谈判' },
+                    { at: '2026-08-08 12:20', actor: 'Risk_Control', action: '驳回', note: '协议有效期不足，请更新附件后重新提交' }
+                ]
+            },
+            {
+                id: 'APR20260812003',
+                type: 'partner_rebate_migrate',
+                title: '返佣关系迁移',
+                applicant: 'Mkt_Bob',
+                status: 'rejected',
+                flowProfile: 'risk_only',
+                createdAt: '2026-08-12 14:30',
+                remark: '整伞迁移至新一级',
+                summary: '0xMig...Fail → 0xTo...L1 · 62%',
+                payload: {
+                    subjectWallet: '0xMig...Fail',
+                    subjectUid: '200401',
+                    subjectType: 'partner',
+                    targetWallet: '0xTo...L1',
+                    targetUid: '200001',
+                    oldRatio: 65,
+                    beforeIdentity: 'N级合伙人 · 系统 L3',
+                    afterIdentity: '2级合伙人',
+                    newRatio: 62,
+                    migrateAsPartner: true
+                },
+                timeline: [
+                    { at: '2026-08-12 14:30', actor: 'Mkt_Bob', action: '提交申请', note: '整伞迁移至新一级' },
+                    { at: '2026-08-12 15:10', actor: 'Risk_Control', action: '驳回', note: '目标上级信息不完整，请补充后重新提交' }
+                ]
             }
         ];
+    }
+
+    function ensureCriticalDemos() {
+        const criticalIds = ['APR20260724024'];
+        const seeds = buildSeedData().map(migrateLegacyStatus);
+        const apps = getApps();
+        let changed = false;
+        criticalIds.forEach(function (id) {
+            if (apps.some(function (a) { return a.id === id; })) return;
+            const seed = seeds.find(function (a) { return a.id === id; });
+            if (!seed) return;
+            apps.unshift(JSON.parse(JSON.stringify(seed)));
+            changed = true;
+        });
+        if (changed) saveApps(apps);
     }
 
     function seedIfEmpty() {
         if (localStorage.getItem(SEED_VERSION_KEY) === SEED_VERSION) {
             const apps = getApps().map(migrateLegacyStatus);
             if (apps.length) saveApps(apps);
+            ensureCriticalDemos();
+            ensureFeeConfigMetricsMigration();
             return;
         }
-        saveApps(buildSeedData());
+        saveApps(buildSeedData().map(migrateLegacyStatus));
         localStorage.setItem(SEED_VERSION_KEY, SEED_VERSION);
+        ensureCriticalDemos();
+        ensureFeeConfigMetricsMigration();
     }
 
     function renderApprovalFlow(status, compact, appOrProfile) {
@@ -782,23 +1273,13 @@
             } else {
                 html += '<p class="approval-note wait">等待风控审核…</p>';
             }
-        } else if (status === 'pending_boss') html += '<p class="approval-note wait">风控已通过，等待老板审批（后台或 Lark）…</p>';
+        } else if (status === 'pending_boss') html += '<p class="approval-note wait">等待老板审批…</p>';
         return html;
     }
 
-    function renderLarkCard(app) {
-        if (!app || !app.lark) return '';
-        const lark = app.lark;
-        const statusText = lark.status === 'approved' ? '已通过' : lark.status === 'rejected' ? '已驳回' : '待审批';
-        const statusCls = lark.status === 'approved' ? 'ok' : lark.status === 'rejected' ? 'err' : 'wait';
-        return '<div class="lark-card">' +
-            '<div class="lark-card-head"><span class="lark-badge">Lark</span><span class="font-bold text-slate-800">老板审批已同步至飞书</span></div>' +
-            '<p class="text-[11px] text-slate-500 mt-2">审批单号：<span class="font-mono font-bold">' + lark.id + '</span> · 状态：<span class="approval-note ' + statusCls + '" style="display:inline;margin:0">' + statusText + '</span></p>' +
-            '<p class="text-[10px] text-slate-400 mt-1">同步时间 ' + (lark.syncedAt || '—') + ' · 老板可在 Lark 完成审批，后台亦支持操作</p>' +
-            '<div class="flex gap-2 mt-3">' +
-            '<a href="' + (lark.url || '#') + '" target="_blank" class="flex-1 text-center py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50">在 Lark 中查看</a>' +
-            (app.status === 'pending_boss' && lark.status === 'pending' ? '<button type="button" onclick="simulateLarkApprove(\'' + app.id + '\')" class="flex-1 py-2 bg-[#3370ff] text-white rounded-lg text-xs font-bold hover:opacity-90">模拟 Lark 通过</button>' : '') +
-            '</div></div>';
+    /** 待老板审批阶段：后台详情不渲染 Lark 联动卡片（审批在 Lark 完成）。 */
+    function renderLarkCard(app, rootId) {
+        return '';
     }
 
     function injectStyles() {
@@ -854,7 +1335,6 @@
         if (!app || app.status === 'approved' || app.status === 'rejected') return false;
         if (role === 'cross' && app.status === 'pending_cross') return true;
         if (role === 'risk' && app.status === 'pending_risk') return true;
-        if (role === 'boss' && app.status === 'pending_boss') return true;
         return false;
     }
 
@@ -873,7 +1353,7 @@
             at: app.lark.syncedAt,
             actor: 'System',
             action: '已同步 Lark 审批',
-            note: '等待老板在 Lark 完成审批，后台亦可操作'
+            note: '等待老板在 Lark 审批'
         });
     }
 
@@ -913,9 +1393,15 @@
 
     window.getApprovalFlowProfile = getFlowProfile;
 
-    window.renderLarkApprovalCard = function (app) {
+    window.computeFeeRevenueImpactSide = computeFeeRevenueImpactSide;
+
+    window.getApprovalSubmittedMessage = function () {
+        return '审批申请已提交，等待风控审核 → 老板审批（老板须在 Lark 审批）';
+    };
+
+    window.renderLarkApprovalCard = function (app, rootId) {
         injectStyles();
-        return renderLarkCard(app);
+        return renderLarkCard(app, rootId);
     };
 
     window.getApprovalTypeLabel = function (type) {
@@ -941,8 +1427,58 @@
 
     window.getApprovalAppById = getAppById;
 
+    window.getFeeUserHasOpenPosition = getFeeUserHasOpenPosition;
+
+    window.getFeeCustomPositionApplicantMessage = function (uid) {
+        return formatFeeCheckMessage(FEE_CUSTOM_POSITION_CHECK_MESSAGES.applicant, { uid: uid || '—' });
+    };
+
+    window.getFeeConfigBossBlockReason = function (app) {
+        if (!app || app.type !== 'fee_config' || app.status !== 'pending_boss') return null;
+        if (!app.payload || app.payload.feeMode !== 'custom') return null;
+        if (getFeeUserHasOpenPosition(app.payload.uid)) {
+            return formatFeeCheckMessage(FEE_CUSTOM_POSITION_CHECK_MESSAGES.bossBlock, {
+                uid: app.payload.uid || '—',
+                applicant: app.applicant || '—'
+            });
+        }
+        return null;
+    };
+
+    window.getPendingApprovalByType = function (type) {
+        return getApps().find(function (a) {
+            return a.type === type && a.status !== 'approved' && a.status !== 'rejected';
+        }) || null;
+    };
+
+    window.getPendingApprovalsByType = function (type) {
+        return getApps().filter(function (a) {
+            return a.type === type && a.status !== 'approved' && a.status !== 'rejected';
+        });
+    };
+
+    function applyPointsPoolConfigAfterApproval(app) {
+        if (!app || app.type !== 'points_pool_config' || !app.payload || !app.payload.after) return;
+        try {
+            localStorage.setItem('forx_points_pool_saved_config', JSON.stringify(app.payload.after));
+        } catch (e) { /* ignore */ }
+        if (typeof window.applySavedPoolConfig === 'function') window.applySavedPoolConfig(app.payload.after);
+        if (typeof window.clearPointsPoolConfigPending === 'function') window.clearPointsPoolConfigPending();
+    }
+
+    function applyVipTierConfigAfterApproval(app) {
+        if (!app || app.type !== 'vip_tier_config' || !app.payload || !app.payload.after || !app.payload.after.tiers) return;
+        if (window.ForxAdminVipConfig && window.ForxAdminVipConfig.saveVipTierRows) {
+            window.ForxAdminVipConfig.saveVipTierRows(app.payload.after.tiers);
+        } else if (window.ForxVipTierApi && window.ForxVipTierApi.savePublishedTiers) {
+            window.ForxVipTierApi.savePublishedTiers(app.payload.after.tiers);
+        }
+        if (typeof window.clearVipTierConfigPending === 'function') window.clearVipTierConfigPending();
+        if (typeof window.applySavedVipTierConfig === 'function') window.applySavedVipTierConfig();
+    }
+
     window.getApprovalViewRole = function () {
-        return sessionStorage.getItem(ROLE_KEY) || 'cross';
+        return sessionStorage.getItem(ROLE_KEY) || 'risk';
     };
 
     window.setApprovalViewRole = function (role) {
@@ -958,8 +1494,8 @@
     window.submitApprovalApplication = function (opts) {
         opts = opts || {};
         seedIfEmpty();
-        const profileKey = opts.flowProfile || TYPE_FLOW_PROFILE[opts.type] || 'full';
-        const initialStatus = (profileKey === 'risk_boss' || profileKey === 'risk_only') ? 'pending_risk' : 'pending_cross';
+        const profileKey = opts.flowProfile || TYPE_FLOW_PROFILE[opts.type] || 'risk_boss';
+        const initialStatus = 'pending_risk';
         const app = {
             id: 'APR' + Date.now(),
             type: opts.type || 'other',
@@ -981,35 +1517,79 @@
         const apps = getApps();
         apps.unshift(app);
         saveApps(apps);
+        if (opts.type === 'points_pool_config' && typeof window.setPointsPoolConfigPending === 'function') {
+            window.setPointsPoolConfigPending({ id: app.id, status: app.status });
+        }
+        if (opts.type === 'vip_tier_config' && typeof window.setVipTierConfigPending === 'function') {
+            window.setVipTierConfigPending({ id: app.id, status: app.status });
+        }
         if (opts.onSubmit) opts.onSubmit(app);
         return app;
     };
 
-    window.approveApplication = function (id, role, note) {
-        const actorMap = { cross: 'Mkt_Cross', risk: 'Risk_Control', boss: 'Boss' };
+    window.resubmitApprovalApplication = function (id, opts) {
+        opts = opts || {};
+        seedIfEmpty();
+        const old = getApprovalAppById(id);
+        if (!old || old.status !== 'rejected') return null;
+        const payload = JSON.parse(JSON.stringify(old.payload || {}));
+        const profileKey = opts.flowProfile || old.flowProfile || TYPE_FLOW_PROFILE[old.type] || 'risk_boss';
+        const initialStatus = 'pending_risk';
+        const app = {
+            id: 'APR' + Date.now(),
+            type: old.type,
+            title: old.title,
+            summary: old.summary,
+            applicant: old.applicant,
+            status: initialStatus,
+            flowProfile: profileKey,
+            createdAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
+            remark: opts.remark || old.remark || '',
+            payload: payload,
+            resubmittedFrom: id,
+            timeline: [{
+                at: new Date().toISOString().slice(0, 16).replace('T', ' '),
+                actor: old.applicant,
+                action: '重新提交申请',
+                note: '基于 ' + id + ' 原内容重新发起'
+            }]
+        };
+        const apps = getApps();
+        apps.unshift(app);
+        saveApps(apps);
+        if (app.type === 'vip_tier_config' && typeof window.setVipTierConfigPending === 'function') {
+            window.setVipTierConfigPending({ id: app.id, status: app.status });
+        }
+        if (opts.onSubmit) opts.onSubmit(app);
+        return app;
+    };
+
+    window.approveApplication = function (id, role, note, extra) {
+        extra = extra || {};
+        const appBefore = getAppById(id);
+        if (role === 'boss' && appBefore && appBefore.status === 'pending_boss') {
+            const blockReason = getFeeConfigBossBlockReason(appBefore);
+            if (blockReason) return { blocked: true, message: blockReason, app: appBefore };
+        }
+        const actorMap = { cross: 'Mkt_Cross', risk: 'Risk_Control', boss: extra.larkApprove ? 'Boss (Lark)' : 'Boss' };
         const actionMap = {
             cross: '市场运营交叉审核通过',
             risk: '风控通过',
-            boss: '老板审批通过'
+            boss: extra.larkApprove ? '老板审批通过' : '老板审批通过'
         };
-        return updateApp(id, function (app) {
+        const result = updateApp(id, function (app) {
             const profile = getFlowProfile(app);
             app.timeline.push({
                 at: new Date().toISOString().slice(0, 16).replace('T', ' '),
                 actor: actorMap[role] || role,
                 action: actionMap[role] || '通过',
-                note: note || ''
+                note: note || (extra.larkApprove ? '通过 Lark 审批完成' : '')
             });
             if (role === 'cross' && app.status === 'pending_cross') app.status = 'pending_risk';
             else if (role === 'risk' && app.status === 'pending_risk') {
                 if (profile.afterRisk === 'approved') {
                     app.status = 'approved';
-                    if (app.type === 'points_pool_config' && app.payload && app.payload.after) {
-                        try {
-                            localStorage.setItem('forx_points_pool_saved_config', JSON.stringify(app.payload.after));
-                        } catch (e) { /* ignore */ }
-                        if (typeof window.applySavedPoolConfig === 'function') window.applySavedPoolConfig(app.payload.after);
-                    }
+                    if (app.type === 'points_pool_config') applyPointsPoolConfigAfterApproval(app);
                 } else {
                     app.status = 'pending_boss';
                     if (profile.larkOnRisk) pushLarkApproval(app);
@@ -1023,17 +1603,38 @@
                     }
                     if (typeof window.clearPointsProgramPending === 'function') window.clearPointsProgramPending();
                 }
+                if (app.type === 'points_pool_config') applyPointsPoolConfigAfterApproval(app);
+                if (app.type === 'vip_tier_config') applyVipTierConfigAfterApproval(app);
             }
         });
+        if (result && (result.type === 'points_pool_config' || result.type === 'points_program_switch' || result.type === 'vip_tier_config') &&
+            typeof window.renderPoolConfigAdminUI === 'function') {
+            window.renderPoolConfigAdminUI();
+        }
+        if (result && result.type === 'vip_tier_config' && typeof window.renderVipConfigAdminUI === 'function') {
+            window.renderVipConfigAdminUI();
+        }
+        if (result && result.status === 'approved' &&
+            (result.type === 'partner_l1_bind' || result.type === 'partner_l1_bind_cross' || result.type === 'partner_ratio_change' || result.type === 'partner_rebate_migrate') &&
+            typeof window.applyPartnerApprovalEffect === 'function') {
+            window.applyPartnerApprovalEffect(result);
+        }
+        return result;
     };
 
     window.rejectApplication = function (id, role, note) {
         const actorMap = { cross: 'Mkt_Cross', risk: 'Risk_Control', boss: 'Boss' };
-        return updateApp(id, function (app) {
+        const result = updateApp(id, function (app) {
             if (app.lark) app.lark.status = 'rejected';
             app.status = 'rejected';
             if (app.type === 'points_program_switch' && typeof window.clearPointsProgramPending === 'function') {
                 window.clearPointsProgramPending();
+            }
+            if (app.type === 'points_pool_config' && typeof window.clearPointsPoolConfigPending === 'function') {
+                window.clearPointsPoolConfigPending();
+            }
+            if (app.type === 'vip_tier_config' && typeof window.clearVipTierConfigPending === 'function') {
+                window.clearVipTierConfigPending();
             }
             app.timeline.push({
                 at: new Date().toISOString().slice(0, 16).replace('T', ' '),
@@ -1042,28 +1643,23 @@
                 note: note || ''
             });
         });
+        if (typeof window.renderPoolConfigAdminUI === 'function') window.renderPoolConfigAdminUI();
+        if (typeof window.renderVipConfigAdminUI === 'function') window.renderVipConfigAdminUI();
+        return result;
     };
 
     window.simulateLarkApprove = function (id) {
-        return updateApp(id, function (app) {
-            if (!app.lark || app.status !== 'pending_boss') return;
-            app.lark.status = 'approved';
-            app.status = 'approved';
-            app.timeline.push({
-                at: new Date().toISOString().slice(0, 16).replace('T', ' '),
-                actor: 'Boss (Lark)',
-                action: '老板审批通过',
-                note: '通过 Lark 审批完成'
-            });
-        });
+        const appBefore = getAppById(id);
+        if (!appBefore || appBefore.status !== 'pending_boss') return null;
+        return approveApplication(id, 'boss', '通过 Lark 审批完成', { larkApprove: true });
     };
 
     window.exportApprovalListCsv = function (list) {
-        const rows = [['审批单号', '业务类型', '申请人', '申请时间', '状态', '摘要', '活动信息', '申请备注']];
+        const rows = [['审批单号', '业务类型', '申请人', '申请时间', '状态', '活动信息', '申请备注']];
         (list || getApps()).forEach(function (a) {
             rows.push([
                 a.id, TYPE_LABELS[a.type] || a.type, a.applicant, a.createdAt,
-                statusLabel(a.status), a.summary, formatActivity(a.payload), a.remark
+                statusLabel(a.status), formatActivity(a.payload), a.remark
             ]);
         });
         downloadCsv('approval_list_' + Date.now() + '.csv', rows);
@@ -1078,7 +1674,6 @@
             ['申请人', app.applicant],
             ['申请时间', app.createdAt],
             ['状态', statusLabel(app.status)],
-            ['摘要', app.summary],
             ['活动信息', formatActivity(app.payload)],
             ['申请备注', app.remark]
         ];
@@ -1103,6 +1698,12 @@
             p.changes.forEach(function (c) {
                 rows.push([c.field, c.before, c.after]);
             });
+        } else if (app.type === 'vip_tier_config' && p.changes) {
+            rows.push([]);
+            rows.push(['配置项', '变更前', '变更后']);
+            p.changes.forEach(function (c) {
+                rows.push([c.field, c.before, c.after]);
+            });
         } else if (app.type === 'points_program_switch') {
             rows.push([]);
             rows.push(['配置项', '变更前', '变更后']);
@@ -1111,7 +1712,7 @@
             Object.keys(p).forEach(function (k) {
                 if (k !== 'recipients') rows.push([k, Array.isArray(p[k]) ? p[k].join('; ') : p[k]]);
             });
-        } else if (app.type === 'partner_l1_bind') {
+        } else if (app.type === 'partner_l1_bind' || app.type === 'partner_l1_bind_cross') {
             rows.push(['wallet', p.wallet], ['ratio', p.ratio], ['note', p.note], ['opsCap', p.opsCap]);
         }
         downloadCsv(app.id + '_detail.csv', rows);

@@ -10,9 +10,16 @@
             ]
         },
         {
+            title: '邀请返佣',
+            items: [
+                { key: 'invite-rebate', label: '邀请返佣管理', href: '邀请返佣后台.html' }
+            ]
+        },
+        {
             title: '合伙人中心',
             items: [
                 { key: 'agent-mgmt', label: '合伙人管理', href: '代理中心后台.html#agent' },
+                { key: 'agent-applications', label: '合伙人申请管理', href: '代理中心后台.html#partner-applications' },
                 { key: 'agent-migrate', label: '迁移返佣关系', href: '代理中心后台.html#migrate' },
                 { key: 'agent-approval', label: '合伙人审核', href: '代理中心后台.html#approval' },
                 { key: 'agent-settlement', label: '佣金对账与发放', href: '代理中心后台.html#settlement' },
@@ -31,20 +38,28 @@
         },
         {
             title: '风控冻结',
+            hidden: true, // 模块暂缓开发；需要时去掉 hidden 即可恢复侧栏
             items: [
                 { key: 'freeze-settings', label: '用户冻结设置', href: '用户冻结设置.html' },
                 { key: 'freeze-log', label: '冻结操作记录', href: '冻结操作记录.html' }
             ]
         },
         {
-            title: '排行榜',
+            title: '合约交易',
             items: [
-                { key: 'leaderboard', label: '排行榜影子配置', href: '排行榜后台.html' }
+                { key: 'contract-pairs', label: '交易对配置', href: '合约交易后台.html' }
             ]
         },
         {
-            title: '费率',
+            title: '排行榜',
             items: [
+                { key: 'leaderboard', label: '排行榜用户数据配置', href: '排行榜后台.html' }
+            ]
+        },
+        {
+            title: 'VIP & 费率',
+            items: [
+                { key: 'fee-vip-config', label: 'VIP 配置', href: 'VIP配置.html' },
                 { key: 'fee-settings', label: '用户费率设置', href: '用户费率设置.html' },
                 { key: 'fee-approval', label: '费率审批', href: '用户费率设置.html#approval' },
                 { key: 'fee-log', label: '费率操作记录', href: '费率操作记录.html' }
@@ -78,7 +93,7 @@
         let html = '<div class="p-6 shrink-0"><span class="text-white font-black text-2xl tracking-tighter italic uppercase">ForX Admin</span></div>';
         html += '<nav class="flex-1 overflow-y-auto px-3 pb-4 space-y-4">';
 
-        MODULES.forEach(function (mod) {
+        MODULES.filter(function (mod) { return !mod.hidden; }).forEach(function (mod) {
             html += '<div><div class="px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">' + mod.title + '</div><div class="space-y-0.5">';
             mod.items.forEach(function (item) {
                 const isActive = item.key === key;

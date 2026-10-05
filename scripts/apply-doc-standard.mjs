@@ -102,7 +102,7 @@ function processFile(relPath, opts = {}) {
 processFile('document/web&后台/积分（后台_Web_APP）.md', {
   captureScript: 'capture-points-doc-screenshots.mjs',
 });
-processFile('document/web&后台/费率.md', {
+processFile('document/web&后台/VIP & 费率.md', {
   captureScript: 'capture-fee-doc-screenshots.mjs',
 });
 processFile('document/web&后台/合约交易页.md', {

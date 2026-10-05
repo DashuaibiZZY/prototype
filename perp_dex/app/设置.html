@@ -3,169 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ForX APP - 设置</title>
+    <title>ForX APP · 设置全状态原型</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
-        .phone-shell { width: 375px; height: 812px; background: #000; border-radius: 50px; padding: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative; border: 4px solid #333; }
-        .screen { width: 100%; height: 100%; background: #fff; border-radius: 38px; overflow: hidden; position: relative; }
+        body { font-family: 'Inter', sans-serif; background: #e5e7eb; margin: 0; padding: 32px 24px 48px; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .page { position: absolute; inset: 0; background: white; transition: transform 0.3s ease-in-out; z-index: 10; display: flex; flex-direction: column; }
-        .page-hidden { transform: translateX(100%); }
-        .page-active { transform: translateX(0); }
-        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f9f9f9; cursor: pointer; }
-        .setting-row:active { background-color: #f5f5f5; }
-        body { flex-wrap: wrap; gap: 20px; align-items: flex-start; }
-        .proto-controls { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
-        .proto-btn { background: #111827; color: #fff; padding: 10px 16px; border-radius: 999px; font-size: 11px; font-weight: 800; border: none; cursor: pointer; }
-        .proto-btn.alt { background: #fff; color: #111827; border: 1px solid #e5e7eb; }
-        .proto-btn.active { outline: 2px solid #6366f1; outline-offset: 2px; }
-        .phone-shell { flex-shrink: 0; }
+        .gallery-header { max-width: 1200px; margin: 0 auto 28px; }
+        .gallery-header h1 { font-size: 22px; font-weight: 900; color: #111827; letter-spacing: -0.02em; }
+        .gallery-header p { font-size: 12px; color: #6b7280; margin-top: 6px; line-height: 1.6; }
+        .proto-grid { display: flex; flex-wrap: wrap; gap: 36px 28px; align-items: flex-start; justify-content: center; max-width: 1800px; margin: 0 auto; }
+        .proto-panel { display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+        .proto-label { width: 375px; font-size: 13px; font-weight: 800; color: #111827; line-height: 1.45; }
+        .proto-label .desc { display: block; font-size: 11px; font-weight: 600; color: #6b7280; margin-top: 4px; }
+        .phone-shell {
+            width: 375px; height: 812px; background: #000; border-radius: 50px; padding: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.45); position: relative; border: 4px solid #333; flex-shrink: 0;
+        }
+        .screen {
+            width: 100%; height: 100%; background: #fff; border-radius: 38px; overflow: hidden;
+            position: relative; display: flex; flex-direction: column;
+        }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f9f9f9; }
         .section-label { padding: 12px 20px 4px; font-size: 10px; font-weight: 900; color: #9ca3af; letter-spacing: 0.06em; }
         .status-badge { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px; }
-        .status-ok { background: #ecfdf5; color: #059669; }
-        .status-warn { background: #fffbeb; color: #d97706; }
+        .status-warn { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+        .update-dot { width: 8px; height: 8px; background: #ef4444; border-radius: 50%; flex-shrink: 0; }
+        .modal-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.45);
+            display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 100;
+            border-radius: 38px;
+        }
     </style>
 </head>
 <body>
 
-<div class="proto-controls">
-    <button type="button" id="btn-wallet" class="proto-btn active" onclick="setLoginType('wallet')">钱包登录</button>
-    <button type="button" id="btn-email" class="proto-btn alt" onclick="setLoginType('email')">邮箱登录</button>
+<div class="gallery-header">
+    <h1>设置 · 全状态平铺原型</h1>
+    <p>含钱包/邮箱登录差异、子页面，以及关于 ForX 检查更新的无更新 / 有新版本 / 更新弹窗 / 主页红点等状态。</p>
 </div>
 
-<div class="phone-shell">
-    <div class="screen">
+<div class="proto-grid" id="proto-grid"></div>
 
-        <!-- 设置主页面 -->
-        <div id="page-main" class="page page-active flex flex-col">
-            <header class="pt-12 pb-4 px-6 flex items-center border-b border-gray-50">
-                <button onclick="window.history.back()" class="p-1 -ml-2">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <h2 class="flex-1 text-center font-bold text-lg pr-6">设置</h2>
-            </header>
+<script>
+const SOCIAL_FOOTER = `
+    <footer class="pb-12 pt-6 flex justify-center space-x-8 border-t border-gray-50 shrink-0">
+        <span class="text-gray-400"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.045 4.126H5.078z"/></svg></span>
+        <span class="text-gray-400"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg></span>
+        <span class="text-gray-400"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2s-.21-.05-.3-.03c-.14.03-2.29 1.45-6.46 4.26-.61.42-1.16.63-1.65.61-.54-.01-1.58-.31-2.35-.57-.95-.31-1.7-.48-1.63-.1.04.19.43.39 1.15.69 4.45 1.93 7.42 3.21 8.91 3.82 4.23 1.74 5.11 2.04 5.69 2.05.13 0 .41-.03.6-.19.16-.14.21-.33.23-.47.05-.31.05-1.08.01-1.62z"/></svg></span>
+    </footer>`;
 
+function subHeader(title, backLabel = '设置') {
+    return `
+        <header class="pt-12 pb-4 px-6 flex items-center border-b border-gray-50 shrink-0">
+            <span class="p-1 -ml-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </span>
+            <h2 class="flex-1 text-center font-bold text-lg pr-6">${title}</h2>
+        </header>`;
+}
+
+function mainHeaderHtml() {
+    return `
+        <header class="pt-12 pb-4 px-6 flex items-center border-b border-gray-50 shrink-0">
+            <span class="p-1 -ml-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </span>
+            <h2 class="flex-1 text-center font-bold text-lg pr-6">设置</h2>
+        </header>`;
+}
+
+function aboutRowHtml(hasUpdate) {
+    const right = hasUpdate
+        ? `<div class="flex items-center space-x-2">
+                <span class="text-xs text-gray-400">v1.2.0</span>
+                <span class="text-[9px] bg-red-500 text-white px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider">New</span>
+           </div>`
+        : `<span class="text-xs text-gray-400">已是最新版本</span>`;
+    return `
+        <div class="setting-row">
+            <span class="text-sm font-medium text-gray-700">检查更新</span>
+            ${right}
+        </div>`;
+}
+
+function updateModalHtml() {
+    return `
+        <div class="modal-overlay">
+            <div class="bg-white w-full max-w-[300px] rounded-2xl p-6 shadow-2xl">
+                <div class="w-12 h-12 bg-black rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <span class="text-white text-xl font-black italic">F</span>
+                </div>
+                <h3 class="text-base font-black text-center text-gray-900">发现新版本</h3>
+                <p class="text-xs text-gray-500 text-center mt-2 leading-relaxed">
+                    当前版本 v1.1.0<br>最新版本 <span class="font-black text-gray-800">v1.2.0</span>
+                </p>
+                <ul class="text-[11px] text-gray-500 mt-4 space-y-1.5 px-1">
+                    <li>· 合约交易体验优化</li>
+                    <li>· 修复部分机型网络异常问题</li>
+                    <li>· 安全性能提升</li>
+                </ul>
+                <div class="flex gap-3 mt-6">
+                    <button type="button" class="flex-1 py-3 border border-gray-200 rounded-xl text-xs font-bold text-gray-500">稍后</button>
+                    <button type="button" class="flex-1 py-3 bg-black text-white rounded-xl text-xs font-black">立即更新</button>
+                </div>
+            </div>
+        </div>`;
+}
+
+function mainSettingsHtml(loginType, updateAvailable = false) {
+    const security = loginType === 'email' ? `
+        <div>
+            <p class="section-label">账户安全</p>
+            <a href="身份验证器.html" class="setting-row">
+                <span class="text-sm font-medium text-gray-700">身份验证器 App</span>
+                <span class="text-sm text-gray-400 flex items-center gap-2">
+                    <span class="status-badge status-warn">未绑定</span>
+                    <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+                </span>
+            </a>
+        </div>` : '';
+
+    const aboutTrailing = updateAvailable
+        ? `<span class="update-dot"></span><svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>`
+        : `<svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>`;
+
+    return `
+        <div class="screen flex flex-col">
+            ${mainHeaderHtml()}
             <div class="flex-1 overflow-y-auto no-scrollbar">
-                <div id="section-security" class="hidden">
-                    <p class="section-label">账户安全</p>
-                    <div onclick="location.href='身份验证器.html'" class="setting-row">
-                        <span class="text-sm font-medium text-gray-700">身份验证器 App</span>
-                        <span class="text-sm text-gray-400 flex items-center gap-2">
-                            <span id="auth-status-badge" class="status-badge status-warn">未绑定</span>
-                            <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-                        </span>
-                    </div>
-                </div>
-                <p class="section-label" id="label-general">通用</p>
-                <div onclick="openPage('page-currency')" class="setting-row">
+                ${security}
+                <p class="section-label">通用</p>
+                <div class="setting-row">
                     <span class="text-sm font-medium text-gray-700">币种设置</span>
-                    <span class="text-sm text-gray-400" id="currency-display">美元 (USD) <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></span>
+                    <span class="text-sm text-gray-400">美元 (USD) <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></span>
                 </div>
-                <div onclick="openPage('page-language')" class="setting-row">
+                <div class="setting-row">
                     <span class="text-sm font-medium text-gray-700">语言设置</span>
                     <span class="text-sm text-gray-400">简体中文 <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></span>
                 </div>
-                <div onclick="openPage('page-theme')" class="setting-row">
+                <div class="setting-row">
                     <span class="text-sm font-medium text-gray-700">主题模式</span>
                     <span class="text-sm text-gray-400">日间模式 <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></span>
                 </div>
-                <div onclick="window.open('#')" class="setting-row">
+                <div class="setting-row">
                     <span class="text-sm font-medium text-gray-700">隐私政策</span>
                     <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
                 </div>
-                <div onclick="window.open('#')" class="setting-row">
+                <div class="setting-row">
                     <span class="text-sm font-medium text-gray-700">服务条款</span>
                     <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
                 </div>
-                <div onclick="openPage('page-about')" class="setting-row">
+                <div class="setting-row">
                     <span class="text-sm font-medium text-gray-700">关于 ForX</span>
-                    <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+                    <div class="flex items-center gap-2">${aboutTrailing}</div>
                 </div>
             </div>
+            ${SOCIAL_FOOTER}
+        </div>`;
+}
 
-            <footer class="pb-12 pt-6 flex justify-center space-x-8 border-t border-gray-50">
-                <a href="#" class="text-gray-400 hover:text-black">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.045 4.126H5.078z"/></svg>
-                </a>
-                <a href="#" class="text-gray-400 hover:text-black">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-                </a>
-                <a href="#" class="text-gray-400 hover:text-black">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2s-.21-.05-.3-.03c-.14.03-2.29 1.45-6.46 4.26-.61.42-1.16.63-1.65.61-.54-.01-1.58-.31-2.35-.57-.95-.31-1.7-.48-1.63-.1.04.19.43.39 1.15.69 4.45 1.93 7.42 3.21 8.91 3.82 4.23 1.74 5.11 2.04 5.69 2.05.13 0 .41-.03.6-.19.16-.14.21-.33.23-.47.05-.31.05-1.08.01-1.62z"/></svg>
-                </a>
-            </footer>
-        </div>
-
-        <!-- 币种设置 -->
-        <div id="page-currency" class="page page-hidden flex flex-col">
-            <header class="pt-12 pb-4 px-6 flex items-center border-b border-gray-50">
-                <button onclick="closePage('page-currency')" class="p-1 -ml-2">
+function aboutPageHtml(hasUpdate, showModal = false) {
+    return `
+        <div class="screen flex flex-col relative">
+            <header class="pt-12 pb-4 px-6 flex items-center shrink-0">
+                <span class="p-1 -ml-2">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <h2 class="flex-1 text-center font-bold text-lg pr-6">币种设置</h2>
-            </header>
-            <div class="flex-1">
-                <label class="setting-row" onclick="selectCurrency('美元 (USD)')">
-                    <span class="text-sm font-medium">美元 (USD)</span>
-                    <input type="radio" name="currency" checked class="w-4 h-4 accent-black">
-                </label>
-                <label class="setting-row" onclick="selectCurrency('日元 (JPY)')">
-                    <span class="text-sm font-medium">日元 (JPY)</span>
-                    <input type="radio" name="currency" class="w-4 h-4 accent-black">
-                </label>
-                <label class="setting-row" onclick="selectCurrency('韩元 (KRW)')">
-                    <span class="text-sm font-medium">韩元 (KRW)</span>
-                    <input type="radio" name="currency" class="w-4 h-4 accent-black">
-                </label>
-                <label class="setting-row" onclick="selectCurrency('欧元 (EUR)')">
-                    <span class="text-sm font-medium">欧元 (EUR)</span>
-                    <input type="radio" name="currency" class="w-4 h-4 accent-black">
-                </label>
-                <label class="setting-row" onclick="selectCurrency('人民币 (CNY)')">
-                    <span class="text-sm font-medium">人民币 (CNY)</span>
-                    <input type="radio" name="currency" class="w-4 h-4 accent-black">
-                </label>
-            </div>
-        </div>
-
-        <!-- 语言设置 -->
-        <div id="page-language" class="page page-hidden flex flex-col">
-            <header class="pt-12 pb-4 px-6 flex items-center border-b border-gray-50">
-                <button onclick="closePage('page-language')" class="p-1 -ml-2">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <h2 class="flex-1 text-center font-bold text-lg pr-6">语言设置</h2>
-            </header>
-            <div class="flex-1">
-                <label class="setting-row"><span class="text-sm font-medium">English</span><input type="radio" name="lang" class="w-4 h-4 accent-black"></label>
-                <label class="setting-row"><span class="text-sm font-medium">繁體中文</span><input type="radio" name="lang" class="w-4 h-4 accent-black"></label>
-                <label class="setting-row"><span class="text-sm font-medium">简体中文</span><input type="radio" name="lang" checked class="w-4 h-4 accent-black"></label>
-                <label class="setting-row"><span class="text-sm font-medium">日本語</span><input type="radio" name="lang" class="w-4 h-4 accent-black"></label>
-            </div>
-        </div>
-
-        <!-- 主题模式 -->
-        <div id="page-theme" class="page page-hidden flex flex-col">
-            <header class="pt-12 pb-4 px-6 flex items-center border-b border-gray-50">
-                <button onclick="closePage('page-theme')" class="p-1 -ml-2">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <h2 class="flex-1 text-center font-bold text-lg pr-6">主题模式</h2>
-            </header>
-            <div class="flex-1">
-                <label class="setting-row"><span class="text-sm font-medium">日间模式</span><input type="radio" name="theme" checked class="w-4 h-4 accent-black"></label>
-                <label class="setting-row"><span class="text-sm font-medium">夜间模式</span><input type="radio" name="theme" class="w-4 h-4 accent-black"></label>
-            </div>
-        </div>
-
-        <!-- 关于 ForX（无标题栏） -->
-        <div id="page-about" class="page page-hidden flex flex-col">
-            <header class="pt-12 pb-4 px-6 flex items-center">
-                <button onclick="closePage('page-about')" class="p-1 -ml-2">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
+                </span>
             </header>
             <div class="flex-1 flex flex-col pt-4">
                 <div class="flex flex-col items-center justify-center space-y-3 mb-10">
@@ -176,46 +180,121 @@
                     <p class="text-gray-400 text-xs font-medium">版本：v1.1.0</p>
                 </div>
                 <div class="border-t border-gray-50">
-                    <div class="setting-row">
-                        <span class="text-sm font-medium text-gray-700">检查更新</span>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-xs text-gray-400">v1.1.0</span>
-                            <span class="text-[9px] bg-red-500 text-white px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider">New</span>
-                        </div>
-                    </div>
-                    <div class="setting-row cursor-default bg-white active:bg-white">
+                    ${aboutRowHtml(hasUpdate)}
+                    <div class="setting-row bg-white">
                         <span class="text-sm font-medium text-gray-700">电子邮件</span>
                         <span class="text-sm text-gray-400">support@forx.fi</span>
                     </div>
                 </div>
             </div>
-        </div>
+            ${showModal ? updateModalHtml() : ''}
+        </div>`;
+}
 
-    </div>
-</div>
+function currencyPageHtml() {
+    const items = ['美元 (USD)', '日元 (JPY)', '韩元 (KRW)', '欧元 (EUR)', '人民币 (CNY)'];
+    return `
+        <div class="screen flex flex-col">
+            ${subHeader('币种设置')}
+            <div class="flex-1">
+                ${items.map((label, i) => `
+                    <label class="setting-row">
+                        <span class="text-sm font-medium">${label}</span>
+                        <input type="radio" ${i === 0 ? 'checked' : ''} class="w-4 h-4 accent-black" readonly>
+                    </label>`).join('')}
+            </div>
+        </div>`;
+}
 
-<script>
-function openPage(pageId) {
-    document.getElementById(pageId).classList.remove('page-hidden');
-    document.getElementById(pageId).classList.add('page-active');
+function languagePageHtml() {
+    const langs = [
+        { label: 'English', checked: false },
+        { label: '繁體中文', checked: false },
+        { label: '简体中文', checked: true },
+        { label: '日本語', checked: false }
+    ];
+    return `
+        <div class="screen flex flex-col">
+            ${subHeader('语言设置')}
+            <div class="flex-1">
+                ${langs.map(l => `
+                    <label class="setting-row">
+                        <span class="text-sm font-medium">${l.label}</span>
+                        <input type="radio" ${l.checked ? 'checked' : ''} class="w-4 h-4 accent-black" readonly>
+                    </label>`).join('')}
+            </div>
+        </div>`;
 }
-function closePage(pageId) {
-    document.getElementById(pageId).classList.remove('page-active');
-    document.getElementById(pageId).classList.add('page-hidden');
+
+function themePageHtml() {
+    return `
+        <div class="screen flex flex-col">
+            ${subHeader('主题模式')}
+            <div class="flex-1">
+                <label class="setting-row"><span class="text-sm font-medium">日间模式</span><input type="radio" checked class="w-4 h-4 accent-black" readonly></label>
+                <label class="setting-row"><span class="text-sm font-medium">夜间模式</span><input type="radio" class="w-4 h-4 accent-black" readonly></label>
+            </div>
+        </div>`;
 }
-function selectCurrency(label) {
-    document.getElementById('currency-display').innerHTML = label + ' <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>';
-}
-function setLoginType(type) {
-    const isEmail = type === 'email';
-    document.getElementById('section-security').classList.toggle('hidden', !isEmail);
-    document.getElementById('btn-wallet').classList.toggle('active', !isEmail);
-    document.getElementById('btn-wallet').classList.toggle('alt', isEmail);
-    document.getElementById('btn-email').classList.toggle('active', isEmail);
-    document.getElementById('btn-email').classList.toggle('alt', !isEmail);
-}
-const params = new URLSearchParams(window.location.search);
-if (params.get('login') === 'email') setLoginType('email');
+
+const STATES = [
+    {
+        title: '① 设置主页 · 钱包登录',
+        desc: '无账户安全区；通用设置列表 + 底部社交链接',
+        render: () => mainSettingsHtml('wallet', false)
+    },
+    {
+        title: '② 设置主页 · 邮箱登录',
+        desc: '展示身份验证器 App 入口 + 通用设置',
+        render: () => mainSettingsHtml('email', false)
+    },
+    {
+        title: '③ 设置主页 · 有新版本（红点）',
+        desc: '检测到新版本时，「关于 ForX」行右侧显示红色圆点提示',
+        render: () => mainSettingsHtml('wallet', true)
+    },
+    {
+        title: '④ 币种设置',
+        desc: '单选列表切换展示币种',
+        render: () => currencyPageHtml()
+    },
+    {
+        title: '⑤ 语言设置',
+        desc: '单选列表切换应用语言',
+        render: () => languagePageHtml()
+    },
+    {
+        title: '⑥ 主题模式',
+        desc: '日间 / 夜间模式单选',
+        render: () => themePageHtml()
+    },
+    {
+        title: '⑦ 关于 ForX · 无更新',
+        desc: '检查更新行显示「已是最新版本」，无 New 标签',
+        render: () => aboutPageHtml(false, false)
+    },
+    {
+        title: '⑧ 关于 ForX · 有新版本',
+        desc: '检查更新行显示新版本号 v1.2.0 + 红色 New 标签',
+        render: () => aboutPageHtml(true, false)
+    },
+    {
+        title: '⑨ 检查更新 · 更新弹窗',
+        desc: '有新版本时点击「检查更新」：居中弹窗展示版本信息与「稍后 / 立即更新」',
+        render: () => aboutPageHtml(true, true)
+    }
+];
+
+const grid = document.getElementById('proto-grid');
+STATES.forEach(state => {
+    const panel = document.createElement('div');
+    panel.className = 'proto-panel';
+    panel.innerHTML = `
+        <div class="proto-label">${state.title}<span class="desc">${state.desc}</span></div>
+        <div class="phone-shell">${state.render()}</div>`;
+    grid.appendChild(panel);
+});
 </script>
+
 </body>
 </html>

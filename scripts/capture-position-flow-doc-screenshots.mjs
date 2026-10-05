@@ -113,13 +113,23 @@ const shots = [
   },
   {
     file: 'pos-flow-float-close-qty-pct.png',
-    before: `switchDataTab('pos'); ${scrollDataModule}; (() => {
-      const popup = document.querySelector('#close-qty-input')?.closest('.group')?.querySelector('.absolute.bottom-full');
-      if (popup) { popup.classList.remove('hidden'); popup.classList.add('flex'); }
+    before: `switchDataTab('pos'); ${scrollDataModule}; PositionClose.setPosCloseMode('quick'); (() => {
+      document.getElementById('quick-qty-panel')?.classList.remove('hidden');
+      PositionClose.refreshCloseQtyDisplay();
     })()`,
-    selector: '#close-qty-input',
-    parentSection: 'close-qty-group',
-    clipHeight: 80,
+    selector: '#quick-qty-panel',
+  },
+  {
+    file: 'pos-flow-modal-position-close.png',
+    before: `switchDataTab('pos'); ${scrollDataModule}; PositionClose.openPositionCloseModal(); PositionClose.setModalCloseQtyPct(50)`,
+    selector: '#modal-position-close > div.bg-white',
+  },
+  {
+    file: 'pos-flow-quick-close.png',
+    before: `switchDataTab('pos'); ${scrollDataModule}; PositionClose.setPosCloseMode('quick')`,
+    selector: '#tab-data-pos',
+    parentSection: 'data-left',
+    clipHeight: 200,
   },
   {
     file: 'pos-flow-float-date-picker.png',
@@ -158,18 +168,13 @@ const shots = [
     selector: '#modal-cancel-all > div.bg-white',
   },
   {
-    file: 'pos-flow-modal-unit-switch.png',
-    before: `switchDataTab('pos'); document.getElementById('modal-unit-switch').style.display='flex'`,
-    selector: '#modal-unit-switch > .bn-modal',
-  },
-  {
     file: 'pos-flow-modal-order-tpsl.png',
-    before: `switchDataTab('order'); document.getElementById('modal-order-tpsl').style.display='flex'`,
+    before: `switchDataTab('order'); toggleModal('modal-order-tpsl')`,
     selector: '#modal-order-tpsl > div',
   },
   {
     file: 'pos-flow-modal-position-tpsl.png',
-    before: `switchDataTab('pos'); document.getElementById('modal-tpsl').style.display='flex'`,
+    before: `switchDataTab('pos'); toggleModal('modal-tpsl')`,
     selector: '#modal-tpsl > div',
   },
 ];
@@ -201,7 +206,11 @@ for (const shot of shots) {
   await page.goto(shot.url || CONTRACT_HTML, { waitUntil: 'networkidle0', timeout: 120000 });
   await new Promise((r) => setTimeout(r, 800));
   if (shot.before) {
-    await page.evaluate(shot.before);
+    try {
+      await page.evaluate(shot.before);
+    } catch (err) {
+      console.error('BEFORE_FAIL', shot.file, err.message);
+    }
     await new Promise((r) => setTimeout(r, 700));
   }
   let el = await page.$(shot.selector);

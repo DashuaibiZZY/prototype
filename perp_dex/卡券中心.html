@@ -17,6 +17,13 @@
         .status-tab:hover { color: #000; }
         .dropdown-content { display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #f1f1f1; box-shadow: 0 4px 12px rgba(0,0,0,0.05); min-width: 140px; z-index: 100; }
         .group:hover .dropdown-content { display: block; }
+        .web-pagination { display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap; }
+        .web-page-btn { min-width: 28px; height: 28px; padding: 0 8px; border: 1px solid #e5e7eb; background: #fff; border-radius: 4px; font-size: 10px; font-weight: 800; cursor: pointer; color: #6b7280; transition: all 0.15s; }
+        .web-page-btn:hover:not(:disabled) { border-color: #111827; color: #111827; }
+        .web-page-btn.active { background: #111827; color: #fff; border-color: #111827; }
+        .web-page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .web-page-ellipsis { padding: 0 4px; color: #9ca3af; font-size: 10px; font-weight: 700; user-select: none; }
+        .coupon-grid-pagination { margin-top: 2px; padding: 16px 20px; background: #fff; border: 1px solid #f1f1f1; border-radius: 4px; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col text-[12px]">
@@ -177,10 +184,10 @@
         </div>
 
         <!-- 4. 卡券列表矩陣 (Grid) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div id="coupon-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
             <!-- 卡片 1: 可使用 (待激活) -->
-            <div class="coupon-card p-6 flex flex-col justify-between min-h-[208px] shadow-sm border-l-4 border-l-blue-600 bg-white relative">
+            <div class="coupon-card p-6 flex flex-col justify-between min-h-[160px] shadow-sm border-l-4 border-l-blue-600 bg-white relative" data-coupon-card>
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-[10px] font-black text-gray-400 uppercase mb-1 tracking-wider">永續合約體驗金</p>
@@ -189,39 +196,14 @@
                     <button class="px-4 py-1.5 bg-blue-600 text-white rounded-sm font-black text-[10px] hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">開啟使用</button>
                 </div>
 
-                <!-- 新增：抵扣規則區域 -->
-                <div class="space-y-1.5 py-3 mt-2">
-                    <div class="flex items-center justify-between text-[11px]">
-                        <div class="flex items-center text-gray-500 font-bold group relative">
-                            <span>虧損抵扣上限</span>
-                            <svg class="w-3.5 h-3.5 ml-1 text-gray-300 cursor-help" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
-                            <!-- Tooltip -->
-                            <div class="hidden group-hover:block absolute bottom-6 left-0 w-48 p-2 bg-gray-900 text-white text-[10px] rounded shadow-xl z-50 leading-relaxed font-normal">
-                                當累計交易虧損抵扣達面額的 20% 時，系統將自動回收剩餘體驗金。
-                            </div>
-                        </div>
-                        <span class="text-gray-900 font-black">20% (10.00 USDT)</span>
-                    </div>
-                    <div class="flex items-center justify-between text-[11px]">
-                        <div class="flex items-center text-gray-500 font-bold group relative">
-                            <span>費用抵扣上限</span>
-                            <svg class="w-3.5 h-3.5 ml-1 text-gray-300 cursor-help" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
-                            <!-- Tooltip -->
-                            <div class="hidden group-hover:block absolute bottom-6 left-0 w-48 p-2 bg-gray-900 text-white text-[10px] rounded shadow-xl z-50 leading-relaxed font-normal">
-                                當累計手續費及資金費率抵扣達面額的 10% 時，系統將自動回收剩餘體驗金。
-                            </div>
-                        </div>
-                        <span class="text-gray-900 font-black">10% (5.00 USDT)</span>
-                    </div>
-                </div>
-
-                <div class="pt-3 border-t border-gray-50">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase">激活截止時間：<span class="text-gray-700">2024-11-10 12:00</span></p>
+                <div class="pt-3 border-t border-gray-50 mt-4">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase">卡券ID：<span class="text-gray-700 font-mono">CPN101</span></p>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase mt-1">激活截止時間：<span class="text-gray-700">2024-11-10 12:00</span></p>
                 </div>
             </div>
 
             <!-- 卡片 2: 已使用 (去交易) -->
-            <div class="coupon-card p-6 flex flex-col justify-between min-h-[208px] shadow-sm border-l-4 border-l-green-500 bg-white">
+            <div class="coupon-card p-6 flex flex-col justify-between min-h-[160px] shadow-sm border-l-4 border-l-green-500 bg-white" data-coupon-card>
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-[10px] font-black text-gray-400 uppercase mb-1 tracking-wider">永續合約體驗金</p>
@@ -231,25 +213,14 @@
                     <button class="px-4 py-1.5 bg-black text-white rounded-sm font-black text-[10px] hover:bg-gray-800 transition uppercase tracking-tighter">去交易</button>
                 </div>
 
-                <!-- 抵扣規則區域 -->
-                <div class="space-y-1.5 py-3 mt-2">
-                    <div class="flex justify-between text-[11px] font-bold">
-                        <span class="text-gray-400">虧損抵扣上限</span>
-                        <span class="text-gray-900">20% (20.00 USDT)</span>
-                    </div>
-                    <div class="flex justify-between text-[11px] font-bold">
-                        <span class="text-gray-400">費用抵扣上限</span>
-                        <span class="text-gray-900">15% (15.00 USDT)</span>
-                    </div>
-                </div>
-
-                <div class="pt-3 border-t border-gray-50">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase">回收截止時間：<span class="text-gray-700">2024-11-15 18:00</span></p>
+                <div class="pt-3 border-t border-gray-50 mt-4">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase">卡券ID：<span class="text-gray-700 font-mono">CPN102</span></p>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase mt-1">回收截止時間：<span class="text-gray-700">2024-11-15 18:00</span></p>
                 </div>
             </div>
 
             <!-- 卡片 3: 已過期 (置灰處理) -->
-            <div class="coupon-card p-6 flex flex-col justify-between min-h-[208px] opacity-60 grayscale border-l-4 border-l-gray-300 bg-gray-50/50">
+            <div class="coupon-card p-6 flex flex-col justify-between min-h-[160px] opacity-60 grayscale border-l-4 border-l-gray-300 bg-gray-50/50" data-coupon-card>
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-[10px] font-black text-gray-400 uppercase mb-1">永續合約體驗金</p>
@@ -258,24 +229,14 @@
                     <span class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm font-black text-[9px] uppercase">已過期</span>
                 </div>
 
-                <div class="space-y-1.5 py-3 mt-2 opacity-50">
-                    <div class="flex justify-between text-[11px] font-bold text-gray-400">
-                        <span>虧損抵扣上限</span>
-                        <span>20%</span>
-                    </div>
-                    <div class="flex justify-between text-[11px] font-bold text-gray-400">
-                        <span>費用抵扣上限</span>
-                        <span>10%</span>
-                    </div>
-                </div>
-
-                <div class="pt-3 border-t border-gray-100">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase">激活截止時間：<span class="text-gray-400 line-through">2024-10-20 00:00</span></p>
+                <div class="pt-3 border-t border-gray-100 mt-4">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase">卡券ID：<span class="text-gray-500 font-mono">CPN103</span></p>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase mt-1">激活截止時間：<span class="text-gray-400 line-through">2024-10-20 00:00</span></p>
                 </div>
             </div>
 
             <!-- 卡片 4: 已失效 (紅色警示感) -->
-            <div class="coupon-card p-6 flex flex-col justify-between min-h-[208px] border-l-4 border-l-red-200 bg-gray-50/50">
+            <div class="coupon-card p-6 flex flex-col justify-between min-h-[160px] border-l-4 border-l-red-200 bg-gray-50/50" data-coupon-card>
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-[10px] font-black text-gray-400 uppercase mb-1">永續合約體驗金</p>
@@ -284,22 +245,64 @@
                     <span class="px-3 py-1 border border-red-100 text-red-300 rounded-sm font-black text-[9px] uppercase">已失效</span>
                 </div>
 
-                <div class="space-y-1.5 py-3 mt-2 opacity-40">
-                    <div class="flex justify-between text-[11px] font-bold text-gray-400">
-                        <span>虧損抵扣上限</span>
-                        <span>30%</span>
-                    </div>
-                    <div class="flex justify-between text-[11px] font-bold text-gray-400">
-                        <span>費用抵扣上限</span>
-                        <span>無上限</span>
-                    </div>
-                </div>
-
-                <div class="pt-3 border-t border-gray-100">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase">回收截止時間：<span class="text-gray-400 line-through">2024-10-25 15:00</span></p>
+                <div class="pt-3 border-t border-gray-100 mt-4">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase">卡券ID：<span class="text-gray-500 font-mono">CPN104</span></p>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase mt-1">回收截止時間：<span class="text-gray-400 line-through">2024-10-25 15:00</span></p>
                 </div>
             </div>
 
+            <!-- 卡片 5-8：分頁演示 -->
+            <div class="coupon-card p-6 flex flex-col justify-between min-h-[160px] shadow-sm border-l-4 border-l-blue-600 bg-white" data-coupon-card>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] font-black text-gray-400 uppercase mb-1 tracking-wider">永續合約體驗金</p>
+                        <h2 class="text-3xl font-black text-gray-900">30.00 <span class="text-sm font-medium text-gray-400 uppercase">USDT</span></h2>
+                    </div>
+                    <button class="px-4 py-1.5 bg-blue-600 text-white rounded-sm font-black text-[10px] hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">開啟使用</button>
+                </div>
+                <div class="pt-3 border-t border-gray-50 mt-4"><p class="text-[10px] font-bold text-gray-400 uppercase">卡券ID：<span class="text-gray-700 font-mono">CPN105</span></p><p class="text-[10px] font-bold text-gray-400 uppercase mt-1">激活截止時間：<span class="text-gray-700">2024-11-12 12:00</span></p></div>
+            </div>
+
+            <div class="coupon-card p-6 flex flex-col justify-between min-h-[160px] shadow-sm border-l-4 border-l-blue-600 bg-white" data-coupon-card>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] font-black text-gray-400 uppercase mb-1 tracking-wider">永續合約體驗金</p>
+                        <h2 class="text-3xl font-black text-gray-900">80.00 <span class="text-sm font-medium text-gray-400 uppercase">USDT</span></h2>
+                    </div>
+                    <button class="px-4 py-1.5 bg-blue-600 text-white rounded-sm font-black text-[10px] hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">開啟使用</button>
+                </div>
+                <div class="pt-3 border-t border-gray-50 mt-4"><p class="text-[10px] font-bold text-gray-400 uppercase">卡券ID：<span class="text-gray-700 font-mono">CPN106</span></p><p class="text-[10px] font-bold text-gray-400 uppercase mt-1">激活截止時間：<span class="text-gray-700">2024-11-14 12:00</span></p></div>
+            </div>
+
+            <div class="coupon-card p-6 flex flex-col justify-between min-h-[160px] shadow-sm border-l-4 border-l-green-500 bg-white" data-coupon-card>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] font-black text-gray-400 uppercase mb-1 tracking-wider">永續合約體驗金</p>
+                        <h2 class="text-3xl font-black text-gray-900">60.00 <span class="text-sm font-medium text-gray-400 uppercase">USDT</span></h2>
+                        <span class="inline-block mt-1 px-1.5 py-0.5 bg-green-50 text-green-600 text-[9px] font-black rounded-sm uppercase">正在使用中</span>
+                    </div>
+                    <button class="px-4 py-1.5 bg-black text-white rounded-sm font-black text-[10px] hover:bg-gray-800 transition uppercase tracking-tighter">去交易</button>
+                </div>
+                <div class="pt-3 border-t border-gray-50 mt-4"><p class="text-[10px] font-bold text-gray-400 uppercase">卡券ID：<span class="text-gray-700 font-mono">CPN107</span></p><p class="text-[10px] font-bold text-gray-400 uppercase mt-1">回收截止時間：<span class="text-gray-700">2024-11-18 18:00</span></p></div>
+            </div>
+
+            <div class="coupon-card p-6 flex flex-col justify-between min-h-[160px] opacity-60 grayscale border-l-4 border-l-gray-300 bg-gray-50/50" data-coupon-card>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] font-black text-gray-400 uppercase mb-1">永續合約體驗金</p>
+                        <h2 class="text-3xl font-black text-gray-400">15.00 <span class="text-sm font-medium uppercase">USDT</span></h2>
+                    </div>
+                    <span class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm font-black text-[9px] uppercase">已過期</span>
+                </div>
+                <div class="pt-3 border-t border-gray-100 mt-4"><p class="text-[10px] font-bold text-gray-400 uppercase">卡券ID：<span class="text-gray-500 font-mono">CPN108</span></p><p class="text-[10px] font-bold text-gray-400 uppercase mt-1">激活截止時間：<span class="text-gray-400 line-through">2024-10-18 00:00</span></p></div>
+            </div>
+
+        </div>
+
+        <!-- 4.1 卡券矩阵分页 -->
+        <div class="coupon-grid-pagination flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <span id="coupon-grid-summary" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider"></span>
+            <div id="coupon-grid-pagination" class="web-pagination"></div>
         </div>
 
         <!-- 5. 底部提示 -->
@@ -310,13 +313,63 @@
             </h3>
             <ul class="list-disc list-inside text-[11px] text-gray-500 space-y-1.5 font-medium">
                 <li>合約體驗金僅可用於合約交易保證金，不可提現。</li>
-                <li>體驗金產生的盈利部分支持提現，但提現動作將導致剩餘未消耗體驗金立即失效。</li>
-                <li>請注意每張卡券的「激活截止時間」與「回收截止時間」，逾期將自動清零。</li>
+                <li>體驗金倉位與自有資金倉位分開開倉；手續費/虧損優先扣自有，平倉先釋放自有占用。</li>
+                <li>劃轉將回收可用體驗金；占用部分標記待回收，須平掉體驗金倉位或激活新卡券接替。</li>
+                <li>轉入自有資金不觸發體驗金回收。</li>
             </ul>
         </div>
 
     </div>
 </main>
+
+<script>
+    const COUPON_GRID_PAGE_SIZE = 6;
+    let couponGridPage = 1;
+
+    function buildWebPaginationHtml(total, page, pageSize, handlerName) {
+        const pages = Math.max(1, Math.ceil(total / pageSize) || 1);
+        page = Math.max(1, Math.min(page, pages));
+        let html = '<button type="button" class="web-page-btn"' + (page <= 1 ? ' disabled' : '') + ' onclick="' + handlerName + '(' + (page - 1) + ')">&lt;</button>';
+        const nums = pages <= 7 ? Array.from({ length: pages }, (_, i) => i + 1) : [1, 2, '...', pages];
+        nums.forEach(function (item) {
+            if (item === '...') {
+                html += '<span class="web-page-ellipsis">...</span>';
+            } else {
+                html += '<button type="button" class="web-page-btn' + (item === page ? ' active' : '') + '" onclick="' + handlerName + '(' + item + ')">' + item + '</button>';
+            }
+        });
+        html += '<button type="button" class="web-page-btn"' + (page >= pages ? ' disabled' : '') + ' onclick="' + handlerName + '(' + (page + 1) + ')">&gt;</button>';
+        return html;
+    }
+
+    function renderCouponGridPage(page) {
+        couponGridPage = page;
+        const cards = Array.from(document.querySelectorAll('[data-coupon-card]'));
+        const total = cards.length;
+        const pages = Math.max(1, Math.ceil(total / COUPON_GRID_PAGE_SIZE));
+        couponGridPage = Math.max(1, Math.min(couponGridPage, pages));
+        const start = (couponGridPage - 1) * COUPON_GRID_PAGE_SIZE;
+        cards.forEach(function (card, index) {
+            card.classList.toggle('hidden', index < start || index >= start + COUPON_GRID_PAGE_SIZE);
+        });
+        const summary = document.getElementById('coupon-grid-summary');
+        if (summary) {
+            const from = total ? start + 1 : 0;
+            const to = Math.min(start + COUPON_GRID_PAGE_SIZE, total);
+            summary.textContent = '显示 ' + from + '-' + to + ' 张，共 ' + total + ' 张卡券';
+        }
+        const pager = document.getElementById('coupon-grid-pagination');
+        if (pager) pager.innerHTML = buildWebPaginationHtml(total, couponGridPage, COUPON_GRID_PAGE_SIZE, 'goCouponGridPage');
+    }
+
+    function goCouponGridPage(page) {
+        renderCouponGridPage(page);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        renderCouponGridPage(1);
+    });
+</script>
 
 </body>
 </html>

@@ -17,12 +17,15 @@
         .tab-primary { color: #9ca3af; font-weight: 700; padding-bottom: 8px; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; font-size: 13px; }
         .tab-primary.active { color: #000; border-color: #000; font-weight: 900; }
 
-        .tab-secondary { color: #9ca3af; font-weight: 700; font-size: 12px; transition: all 0.2s; }
+        .tab-secondary { color: #9ca3af; font-weight: 700; font-size: 11px; transition: all 0.2s; }
         .tab-secondary.active { color: #000; font-weight: 900; position: relative; }
 
         /* 通用卡片 */
         .order-card { background: white; border-bottom: 1px solid #f3f4f6; padding: 16px 20px; transition: background 0.2s; }
         .order-card:active { background: #f9fafb; }
+        a.order-card { display: block; color: inherit; text-decoration: none; }
+        .tif-tag { background-color: #dbeafe; color: #2563eb; font-size: 8px; padding: 2px 4px; font-weight: 800; border-radius: 2px; line-height: 1.2; white-space: nowrap; }
+        .picker-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #6b7280; }
 
         /* 篩選按鈕 */
         .filter-btn { display: flex; items-center; background: #f3f4f6; border-radius: 4px; padding: 4px 8px; font-size: 10px; font-weight: 800; color: #6b7280; }
@@ -82,6 +85,24 @@
             font-size: 8px;
         }
         .dashed-underline { border-bottom: 1px dashed #d1d5db; }
+
+        /* 交易账单 */
+        .bill-tag-main { background: #f3f4f6; color: #374151; font-size: 9px; padding: 2px 6px; font-weight: 900; border-radius: 4px; white-space: nowrap; }
+        .bill-tag-sub { font-size: 9px; padding: 2px 6px; font-weight: 900; border-radius: 4px; white-space: nowrap; }
+        .bill-tag-trade-long { background: #dcfce7; color: #16a34a; }
+        .bill-tag-trade-short { background: #fee2e2; color: #dc2626; }
+        .bill-tag-neutral { background: #f3f4f6; color: #6b7280; }
+        .bill-card { padding: 12px 16px; }
+        .bill-type-picker { border: 1px solid #f3f4f6; border-radius: 12px; overflow: hidden; }
+        .bill-type-col-header { width: 100%; padding: 10px 8px; text-align: center; font-size: 10px; font-weight: 900; color: #9ca3af; background: #fafafa; border-bottom: 1px solid #f3f4f6; }
+        .bill-type-col-header.active { color: #000; background: #f0f9ff; }
+        .bill-type-col-header + .bill-type-col-header { border-left: 1px solid #f3f4f6; }
+        .bill-type-col { max-height: 240px; overflow-y: auto; border-right: 1px solid #f3f4f6; }
+        .bill-type-col:last-child { border-right: none; }
+        .bill-type-item { padding: 10px 12px; font-size: 11px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 1px solid #f9fafb; }
+        .bill-type-item.active { color: #000; font-weight: 900; background: #f9fafb; }
+        .bill-type-item:active { background: #f3f4f6; }
+        .filter-btn.disabled { opacity: 0.45; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -116,19 +137,21 @@
 
         <!-- 3. 一級標籤欄 (支持橫向滾動) -->
         <div class="flex space-x-6 px-5 border-b border-gray-50 overflow-x-auto no-scrollbar shrink-0 mt-2">
-            <button onclick="switchPrimary('current')" id="p-current" class="tab-primary active">當前委託 (3)</button>
+            <button onclick="switchPrimary('current')" id="p-current" class="tab-primary active">當前委託 (5)</button>
             <button onclick="switchPrimary('history')" id="p-history" class="tab-primary">歷史委託</button>
             <button onclick="switchPrimary('position')" id="p-position" class="tab-primary">持倉歷史</button>
-            <button onclick="switchPrimary('trades')" id="p-trades" class="tab-primary">歷史成交</button>
-            <button onclick="switchPrimary('logs')" id="p-logs" class="tab-primary">資金流水</button>
+            <button onclick="switchPrimary('tradeBill')" id="p-tradeBill" class="tab-primary">交易賬單</button>
+            <button onclick="switchPrimary('trialFundBill')" id="p-trialFundBill" class="tab-primary">体验金账单</button>
+            <button onclick="switchPrimary('fundBill')" id="p-fundBill" class="tab-primary">資金賬單</button>
             <button onclick="switchPrimary('funding')" id="p-funding" class="tab-primary">資金費率</button>
         </div>
 
         <!-- 4. 二級標籤欄 (僅部分頁面顯示) -->
         <div id="secondary-tabs" class="flex items-center justify-between px-5 py-3 shrink-0">
-            <div class="flex space-x-6">
-                <button onclick="switchSecondary('basic')" id="s-basic" class="tab-secondary active text-[14px]">基礎單 (1)</button>
-                <button onclick="switchSecondary('tpsl')" id="s-tpsl" class="tab-secondary text-[14px]">止盈止損單 (2)</button>
+            <div class="flex space-x-4 overflow-x-auto no-scrollbar">
+                <button onclick="switchSecondary('basic')" id="s-basic" class="tab-secondary active shrink-0 text-[11px]">限價｜市價 (2)</button>
+                <button onclick="switchSecondary('tpsl')" id="s-tpsl" class="tab-secondary shrink-0 text-[11px]">止盈止損單 (2)</button>
+                <button onclick="switchSecondary('adv')" id="s-adv" class="tab-secondary shrink-0 text-[11px]">高级限价 (1)</button>
             </div>
         </div>
 
@@ -160,11 +183,15 @@
         </div>
 
         <!-- 交易盈虧分享彈窗 (Poster) -->
-        <div id="modal-share-pnl" class="hidden absolute inset-0 z-[150] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6">
-            <div class="bg-white w-full rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in duration-300 flex flex-col">
-
+        <div id="modal-share-pnl" class="hidden absolute inset-0 z-[150] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-[340px] rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in duration-300 flex flex-col max-h-[92%]">
+                <div class="px-3 pt-3 pb-2 border-b border-gray-100 shrink-0">
+                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-2">海报模版</p>
+                    <div class="grid grid-cols-4 gap-1.5" data-pnl-template-picker></div>
+                </div>
+                <div class="overflow-y-auto min-h-0">
                 <!-- 海報內容區 (模擬截圖區域) -->
-                <div id="pnl-poster" class="bg-white p-8 space-y-8 relative">
+                <div id="pnl-poster" class="pnl-poster--classic bg-white p-8 space-y-8 relative">
                     <!-- 1. 頂部品牌區 -->
                     <div class="flex items-center space-x-2">
                         <div class="w-6 h-6 bg-black rounded flex items-center justify-center text-white font-black text-xs italic">F</div>
@@ -210,7 +237,7 @@
                     <div class="flex items-center justify-between gap-4 pt-2 border-t border-gray-100">
                         <div class="flex-1 min-w-0">
                             <p class="text-[9px] text-gray-400 font-bold uppercase tracking-wider">我的邀請碼</p>
-                            <p class="text-lg font-black text-gray-900 font-mono tracking-wider mt-0.5">E6DL28G</p>
+                            <p class="text-lg font-black text-gray-900 font-mono tracking-wider mt-0.5">E6DL28GX</p>
                             <p class="text-[8px] text-gray-400 mt-1 truncate">掃碼註冊，一起交易</p>
                         </div>
                         <div class="w-[72px] h-[72px] bg-white border border-gray-200 rounded-lg p-1.5 shrink-0 flex items-center justify-center shadow-sm" title="邀請註冊二維碼">
@@ -231,11 +258,100 @@
                         <p class="text-[9px] text-gray-400 font-bold uppercase tracking-tight">鏈上交易加密貨幣、黃金和股票</p>
                     </div>
                 </div>
+                </div>
 
                 <!-- 6. 操作按鈕區 -->
-                <div class="p-4 bg-gray-50 flex space-x-3 border-t border-gray-100">
+                <div class="p-4 bg-gray-50 flex space-x-3 border-t border-gray-100 shrink-0">
                     <button onclick="closeSharePnl()" class="flex-1 py-3 border border-gray-200 bg-white rounded-xl font-black text-xs text-gray-400 uppercase">取消</button>
                     <button onclick="alert('海報已保存至相冊')" class="flex-1 py-3 bg-black text-white rounded-xl font-black text-xs shadow-lg uppercase active:scale-95 transition-all">分享海報</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 修改基础单参数 -->
+        <div id="modify-base-order-sheet" class="hidden absolute inset-0 z-[56] flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('modify-base-order-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl max-h-[90%] overflow-y-auto">
+                <div class="py-4 px-5 border-b border-gray-50 flex justify-between items-center sticky top-0 bg-white z-10">
+                    <h3 class="text-[13px] font-black text-gray-900">修改参数</h3>
+                    <button type="button" onclick="closeSheet('modify-base-order-sheet')" class="text-gray-400 text-lg leading-none">✕</button>
+                </div>
+                <div class="p-5 space-y-4 pb-8 text-[11px]">
+                    <div>
+                        <p id="modify-base-order-title" class="font-black text-gray-900 text-[12px]">BNBUSDC <span class="text-green-500">开多 全仓 3x</span></p>
+                        <p id="modify-base-order-last-price" class="text-gray-400 mt-1 text-[10px]">最新价 606.31</p>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-gray-500 font-bold text-[10px]">委托价格</label>
+                        <input id="modify-base-order-price" type="text" value="620.00" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 font-mono font-bold outline-none focus:border-black">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-gray-500 font-bold text-[10px]">数量</label>
+                        <div class="flex border border-gray-200 rounded-lg overflow-hidden">
+                            <input id="modify-base-order-qty" type="text" value="620" class="flex-1 px-3 py-2.5 font-mono font-bold outline-none">
+                            <select id="modify-base-order-qty-unit" class="bg-gray-50 border-l border-gray-200 px-3 text-[10px] font-bold text-gray-600 outline-none">
+                                <option>USDT</option>
+                                <option>BNB</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="border-t border-gray-50 pt-3">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="modify-base-order-tpsl-check" class="w-3.5 h-3.5 accent-black" onchange="toggleModifyBaseOrderTpsl()">
+                            <span class="ml-1.5 font-bold text-gray-600">止盈止损</span>
+                        </label>
+                        <div id="modify-base-order-tpsl-inputs" class="mt-2 space-y-2 hidden">
+                            <div class="space-y-0.5">
+                                <div class="text-[8px] text-gray-400 font-bold">止盈</div>
+                                <input id="modify-base-order-tp-price" type="text" value="500" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 font-mono font-bold outline-none" placeholder="价格">
+                            </div>
+                            <div class="space-y-0.5">
+                                <div class="text-[8px] text-gray-400 font-bold">止损</div>
+                                <input id="modify-base-order-sl-price" type="text" value="600" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 font-mono font-bold outline-none" placeholder="价格">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-3 pt-2">
+                        <button type="button" onclick="closeSheet('modify-base-order-sheet')" class="flex-1 border border-gray-200 py-3 rounded-xl font-bold text-xs text-gray-400">取消</button>
+                        <button type="button" onclick="confirmModifyBaseOrder()" class="flex-1 bg-black text-white py-3 rounded-xl font-bold text-xs">确认</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 委托关联止盈止损设置 -->
+        <div id="order-attach-tpsl-sheet" class="hidden absolute inset-0 z-[56] flex items-end rounded-[38px] overflow-hidden">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('order-attach-tpsl-sheet')"></div>
+            <div class="relative w-full bg-white rounded-t-2xl shadow-2xl max-h-[90%] overflow-y-auto">
+                <div class="py-4 px-5 border-b border-gray-50 flex justify-between items-center sticky top-0 bg-white z-10">
+                    <h3 class="text-[13px] font-black text-gray-900">止盈止損設置</h3>
+                    <button type="button" onclick="closeSheet('order-attach-tpsl-sheet')" class="text-gray-400 text-lg leading-none">✕</button>
+                </div>
+                <div class="p-5 space-y-5 pb-8">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[12px] font-black text-gray-900">BNBUSDC</span>
+                        <span class="text-[10px] font-black text-red-500">平多</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-[10px] font-bold text-gray-400 border-b border-gray-50 pb-4">
+                        <div>
+                            <p class="mb-1">數量 (USDC / BNB)</p>
+                            <p class="text-[13px] font-black text-gray-900 font-mono">620 / 1</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="mb-1">委託價格</p>
+                            <p class="text-[13px] font-black text-gray-900 font-mono">620.00</p>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-gray-400 leading-relaxed bg-gray-50 rounded-lg p-3 border border-gray-100">温馨提示：主訂單完全成交後，系統將自動按以下觸發價格掛出相應的止盈止損單。</p>
+                    <div class="space-y-3">
+                        <p class="text-[11px] font-black text-gray-700">市價止盈平多</p>
+                        <input type="number" placeholder="止盈觸發價格" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-[12px] font-bold outline-none font-mono" value="500">
+                    </div>
+                    <div class="space-y-3">
+                        <p class="text-[11px] font-black text-gray-700">市價止損平多</p>
+                        <input type="number" placeholder="止損觸發價格" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-[12px] font-bold outline-none font-mono" value="600">
+                    </div>
+                    <button type="button" onclick="confirmOrderAttachTPSL()" class="w-full bg-black text-white py-3 rounded-xl text-[13px] font-black">设置</button>
                 </div>
             </div>
         </div>
@@ -290,156 +406,908 @@
         document.getElementById('realized-pnl-sheet')?.classList.add('hidden');
     }
 
+    const MODIFY_BASE_ORDER_DATA = {
+        OR_882910: {
+            titleHtml: 'BNBUSDC <span class="text-red-500">平多 全仓 3x</span>',
+            lastPrice: '606.31',
+            price: '620.00',
+            qty: '620',
+            unit: 'USDT',
+            tpslTp: '500',
+            tpslSl: '600',
+        },
+        OR_882912: {
+            titleHtml: 'ETHUSDT <span class="text-green-500">平空 逐仓 5x</span>',
+            lastPrice: '2,382.50',
+            price: '2380.00',
+            qty: '850',
+            unit: 'USDT',
+            tpslTp: '',
+            tpslSl: '',
+        },
+        OR_882915: {
+            titleHtml: 'SOLUSDT <span class="text-green-500">開多 逐仓 10x</span>',
+            lastPrice: '198.20',
+            price: '198.50',
+            qty: '120',
+            unit: 'USDT',
+            tpslTp: '',
+            tpslSl: '',
+        },
+    };
+
+    function openSheet(id) { document.getElementById(id)?.classList.remove('hidden'); }
+    function closeSheet(id) { document.getElementById(id)?.classList.add('hidden'); }
+
+    function showProtoToast(msg) {
+        let toast = document.getElementById('proto-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'proto-toast';
+            toast.className = 'hidden absolute left-1/2 -translate-x-1/2 top-24 z-[120] bg-gray-900/95 text-white text-[11px] font-bold px-4 py-2 rounded-full shadow-lg';
+            document.querySelector('.screen')?.appendChild(toast);
+        }
+        toast.textContent = msg;
+        toast.classList.remove('hidden');
+        clearTimeout(showProtoToast._timer);
+        showProtoToast._timer = setTimeout(() => toast.classList.add('hidden'), 1600);
+    }
+
+    function openModifyBaseOrderSheet(orderId) {
+        const row = MODIFY_BASE_ORDER_DATA[orderId] || MODIFY_BASE_ORDER_DATA.OR_882910;
+        const titleEl = document.getElementById('modify-base-order-title');
+        const priceHintEl = document.getElementById('modify-base-order-last-price');
+        const priceInput = document.getElementById('modify-base-order-price');
+        const qtyInput = document.getElementById('modify-base-order-qty');
+        const unitSelect = document.getElementById('modify-base-order-qty-unit');
+        const tpslCheck = document.getElementById('modify-base-order-tpsl-check');
+        const tpslInputs = document.getElementById('modify-base-order-tpsl-inputs');
+        const tpInput = document.getElementById('modify-base-order-tp-price');
+        const slInput = document.getElementById('modify-base-order-sl-price');
+        if (titleEl) titleEl.innerHTML = row.titleHtml;
+        if (priceHintEl) priceHintEl.textContent = '最新价 ' + row.lastPrice;
+        if (priceInput) priceInput.value = row.price;
+        if (qtyInput) qtyInput.value = row.qty;
+        if (unitSelect) unitSelect.value = row.unit || 'USDT';
+        const hasTpsl = !!(row.tpslTp || row.tpslSl);
+        if (tpslCheck) tpslCheck.checked = hasTpsl;
+        if (tpslInputs) tpslInputs.classList.toggle('hidden', !hasTpsl);
+        if (tpInput) tpInput.value = row.tpslTp || '';
+        if (slInput) slInput.value = row.tpslSl || '';
+        openSheet('modify-base-order-sheet');
+    }
+
+    function toggleModifyBaseOrderTpsl() {
+        const checked = document.getElementById('modify-base-order-tpsl-check')?.checked;
+        const panel = document.getElementById('modify-base-order-tpsl-inputs');
+        if (panel) panel.classList.toggle('hidden', !checked);
+    }
+
+    function confirmModifyBaseOrder() {
+        closeSheet('modify-base-order-sheet');
+        showProtoToast('委托参数已更新');
+    }
+
+    function openOrderAttachTPSLSheet() {
+        openSheet('order-attach-tpsl-sheet');
+    }
+
+    function confirmOrderAttachTPSL() {
+        const tpInput = document.querySelector('#order-attach-tpsl-sheet input[placeholder="止盈觸發價格"]');
+        const slInput = document.querySelector('#order-attach-tpsl-sheet input[placeholder="止損觸發價格"]');
+        const tp = tpInput?.value || '500';
+        const sl = slInput?.value || '600';
+        const display = document.getElementById('order-basic-tpsl-display');
+        if (display) display.textContent = tp + '/' + sl;
+        const advDisplay = document.getElementById('order-adv-tpsl-display');
+        if (advDisplay) advDisplay.textContent = tp + '/' + sl;
+        closeSheet('order-attach-tpsl-sheet');
+        showProtoToast('止盈止損已更新');
+    }
+
+    function openOrderTPSLSheet() {
+        showProtoToast('打开止盈止损编辑');
+    }
+
+    /** 资金账单 · 账单主类型（与 Web §3.6.2 一致） */
+    const FUND_BILL_MAIN_TYPES = ['充值', '提币', '转入', '转出', '空投奖励', '返佣'];
+
+    const FUND_BILLS = [
+        { time: '2026-06-15 10:30:00', coin: 'USDC', mainType: '充值', qty: '+1,000.00 USDC', qtyClass: 'text-green-500', accountBalance: '13,845.32 USDC' },
+        { time: '2026-06-14 16:20:00', coin: 'USDC', mainType: '转入', qty: '+500.00 USDC', qtyClass: 'text-green-500', accountBalance: '12,845.32 USDC' },
+        { time: '2026-06-14 09:15:00', coin: 'USDC', mainType: '转出', qty: '-200.00 USDC', qtyClass: 'text-red-500', accountBalance: '12,345.32 USDC' },
+        { time: '2026-06-13 18:00:00', coin: 'USDC', mainType: '提币', qty: '-800.00 USDC', qtyClass: 'text-red-500', accountBalance: '12,545.32 USDC' },
+        { time: '2026-06-12 21:30:19', coin: 'USDC', mainType: '返佣', qty: '+12.80 USDC', qtyClass: 'text-green-500', accountBalance: '13,332.52 USDC' },
+        { time: '2026-06-12 08:00:00', coin: 'USDC', mainType: '空投奖励', qty: '+50.00 USDC', qtyClass: 'text-green-500', accountBalance: '13,319.72 USDC' },
+        { time: '2026-06-11 14:22:08', coin: 'USDC', mainType: '充值', qty: '+2,000.00 USDC', qtyClass: 'text-green-500', accountBalance: '13,269.72 USDC' },
+    ];
+
+    let fundBillFilterMain = '';
+
+    function renderFundBillGridCell(label, value, valueClass) {
+        return `<div class="min-w-0"><p class="text-gray-400 font-bold text-[8px] uppercase leading-tight mb-0.5">${label}</p><p class="font-black font-mono text-[10px] leading-tight break-all ${valueClass || 'text-gray-900'}">${value}</p></div>`;
+    }
+
+    function renderFundBillCard(bill) {
+        return `<div class="order-card bill-card">
+            <div class="flex justify-between items-start gap-2 mb-2">
+                <span class="bill-tag-main">${bill.mainType}</span>
+                <span class="text-gray-300 font-medium text-[10px] shrink-0">${formatBillTime(bill.time)}</span>
+            </div>
+            <div class="grid grid-cols-3 gap-x-2 gap-y-1">
+                ${renderFundBillGridCell('币种', bill.coin, '')}
+                ${renderFundBillGridCell('数量', bill.qty, bill.qtyClass)}
+                ${renderFundBillGridCell('账户余额', bill.accountBalance, '')}
+            </div>
+        </div>`;
+    }
+
+    function filterFundBills() {
+        return FUND_BILLS.filter(function (bill) {
+            if (fundBillFilterMain && bill.mainType !== fundBillFilterMain) return false;
+            return true;
+        });
+    }
+
+    function renderFundBillList() {
+        const rows = filterFundBills();
+        if (!rows.length) {
+            return '<div class="py-20 text-center text-gray-300 font-bold uppercase tracking-widest text-[10px]">暂无账单记录</div>';
+        }
+        return rows.map(renderFundBillCard).join('');
+    }
+
+    function resetFundBillFilters() {
+        fundBillFilterMain = '';
+        updateFundBillFilterBar();
+        renderList();
+    }
+
+    function pickFundBillMainType(main) {
+        fundBillFilterMain = main === '全部' ? '' : main;
+        closeFilterModal();
+        updateFundBillFilterBar();
+        renderList();
+    }
+
+    function updateFundBillFilterBar() {
+        if (currentPrimary !== 'fundBill') return;
+        const triangle = `<svg class="w-2 h-2 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M5 7l5 5 5-5z"/></svg>`;
+        const funnelBtn = `<button onclick="openFilterModal('date')" class="p-2 text-gray-400 hover:text-black transition-colors relative shrink-0"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"/></svg></button>`;
+        const typeLabel = fundBillFilterMain || '账单主类型';
+        document.getElementById('filter-group').innerHTML = `
+            <div class="flex items-center flex-1 overflow-x-auto no-scrollbar space-x-2">
+                <button onclick="openFilterModal('fundBillMainType')" class="filter-btn ${fundBillFilterMain ? 'text-gray-900' : ''}">${typeLabel} ${triangle}</button>
+            </div>
+            ${funnelBtn}`;
+    }
+
+    function renderFundBillMainTypePickerHtml() {
+        const headerActive = !fundBillFilterMain;
+        const checkMark = '<svg class="w-3 h-3 inline-block ml-0.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="3"/></svg>';
+        return `
+            <div class="bill-type-picker mb-4">
+                <button type="button" onclick="pickFundBillMainType('全部')" class="bill-type-col-header w-full ${headerActive ? 'active' : ''}">账单主类型${headerActive ? checkMark : ''}</button>
+                <div class="bill-type-col no-scrollbar max-h-none border-r-0">
+                    ${FUND_BILL_MAIN_TYPES.map(function (main) {
+                        const active = fundBillFilterMain === main;
+                        return `<div class="bill-type-item ${active ? 'active' : ''}" onclick="pickFundBillMainType('${main}')">${main}</div>`;
+                    }).join('')}
+                </div>
+            </div>`;
+    }
+
+    /** 账单主类型 → 账单子类型（与 Web / 《持仓管理 & 资金流水 模块》§3.4.2 一致） */
+    const BILL_MAIN_SUB_TYPES = {
+        '划转': ['全部', '转入', '转出'],
+        '交易': ['全部', '开多', '开空', '平多', '平空'],
+        '保证金划转': ['全部', '手动追加保证金', '手动减少保证金', '自动追加保证金'],
+        '阶梯减仓': ['全部', '平多', '平空'],
+        '资金费': ['全部', '资金费支出', '资金费收入'],
+    };
+
+    const TRADE_BILLS = [
+        { time: '2026-06-15 14:20:16', mainType: '交易', subType: '开多', role: '吃单方', coin: 'USDC', symbol: 'BNBUSDC', positionType: '逐仓 (20x)', qty: '1.00 BNB', fee: '0.619 USDC', price: '618.50', pnl: null, pnlClass: '', posBalChange: '+618.50 USDC', posBalChangeClass: 'text-green-500', posBal: '1,250.00 USDC', acctBalChange: '-0.619 USDC', acctBalChangeClass: 'text-red-500', acctBal: '12,845.32 USDC' },
+        { time: '2026-06-15 11:05:43', mainType: '交易', subType: '平多', role: '挂单方', coin: 'USDC', symbol: 'BTCUSDC', positionType: '逐仓 (20x)', qty: '0.35 BTC', fee: '1.145 USDC', price: '65,420.0', pnl: '+184.32 USDC', pnlClass: 'text-green-500', posBalChange: '-22,897.00 USDC', posBalChangeClass: 'text-red-500', posBal: '0.00 USDC', acctBalChange: '+183.18 USDC', acctBalChangeClass: 'text-green-500', acctBal: '13,028.50 USDC' },
+        { time: '2026-06-15 08:00:00', mainType: '资金费', subType: '资金费支出', role: null, coin: 'USDC', symbol: 'BNBUSDC', positionType: '逐仓 (20x)', qty: null, fee: null, price: null, pnl: '-0.452 USDC', pnlClass: 'text-red-500', posBalChange: '-0.452 USDC', posBalChangeClass: 'text-red-500', posBal: '1,249.55 USDC', acctBalChange: '-0.452 USDC', acctBalChangeClass: 'text-red-500', acctBal: '13,028.05 USDC' },
+        { time: '2026-06-14 16:40:12', mainType: '阶梯减仓', subType: '平空', role: null, coin: 'USDC', symbol: 'SOLUSDC', positionType: '全仓 (25x)', qty: '120 SOL', fee: '0.856 USDC', price: '142.80', pnl: '-88.40 USDC', pnlClass: 'text-red-500', posBalChange: '-17,136.00 USDC', posBalChangeClass: 'text-red-500', posBal: '0.00 USDC', acctBalChange: '-89.26 USDC', acctBalChangeClass: 'text-red-500', acctBal: '12,938.79 USDC' },
+        { time: '2026-06-13 16:40:08', mainType: '划转', subType: '转入', role: null, coin: 'USDC', symbol: null, positionType: null, qty: '500.00 USDC', fee: null, price: null, pnl: null, pnlClass: '', posBalChange: null, posBalChangeClass: '', posBal: null, acctBalChange: '+500.00 USDC', acctBalChangeClass: 'text-green-500', acctBal: '13,028.05 USDC' },
+        { time: '2026-06-13 10:22:30', mainType: '保证金划转', subType: '手动追加保证金', role: null, coin: 'USDC', symbol: 'BNBUSDC', positionType: '逐仓 (20x)', qty: '50.00 USDC', fee: null, price: null, pnl: null, pnlClass: '', posBalChange: '+50.00 USDC', posBalChangeClass: 'text-green-500', posBal: '1,300.00 USDC', acctBalChange: '-50.00 USDC', acctBalChangeClass: 'text-red-500', acctBal: '12,978.05 USDC' },
+        { time: '2026-06-12 21:30:19', mainType: '资金费', subType: '资金费收入', role: null, coin: 'USDC', symbol: 'BTCUSDC', positionType: '逐仓 (20x)', qty: null, fee: null, price: null, pnl: '+0.128 USDC', pnlClass: 'text-green-500', posBalChange: '+0.128 USDC', posBalChangeClass: 'text-green-500', posBal: '0.00 USDC', acctBalChange: '+0.128 USDC', acctBalChangeClass: 'text-green-500', acctBal: '13,028.18 USDC' },
+    ];
+
+    const TRIAL_FUND_BILL_TYPES = ['激活', '费用抵扣', '亏损抵扣', '回收'];
+
+    const TRIAL_FUND_BILLS = [
+        { time: '2026-06-15 14:05:00', couponId: 'TF-20260615-001', type: '费用抵扣', amountChange: '-0.619 USDC', amountChangeClass: 'text-red-500', positionId: 'POS_882911020015' },
+        { time: '2026-06-14 09:12:33', couponId: 'TF-20260614-008', type: '激活', amountChange: '+200.00 USDC', amountChangeClass: 'text-green-500', positionId: null },
+        { time: '2026-06-13 22:40:11', couponId: 'TF-20260613-002', type: '亏损抵扣', amountChange: '-12.50 USDC', amountChangeClass: 'text-red-500', positionId: 'POS_882911020033' },
+        { time: '2026-06-12 15:00:00', couponId: 'TF-20260612-004', type: '回收', amountChange: '-50.00 USDC', amountChangeClass: 'text-red-500', positionId: null },
+    ];
+
+    let trialFundBillFilterType = '';
+
+    let billFilterMain = '';
+    let billFilterSub = '全部';
+    let billFilterContract = '全部';
+
+    function isBillFieldEmpty(val) {
+        return val == null || val === '' || val === '--';
+    }
+
+    function formatBillTime(time) {
+        const m = String(time).match(/(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/);
+        return m ? `${m[2]}/${m[3]} ${m[4]}` : time;
+    }
+
+    function billSubTypeTagClass(subType) {
+        if (subType === '开多' || subType === '平空') return 'bill-tag-sub bill-tag-trade-long';
+        if (subType === '开空' || subType === '平多') return 'bill-tag-sub bill-tag-trade-short';
+        return 'bill-tag-sub bill-tag-neutral';
+    }
+
+    function renderBillGridCell(label, value, valueClass) {
+        if (isBillFieldEmpty(value)) return '';
+        return `<div class="min-w-0"><p class="text-gray-400 font-bold text-[8px] uppercase leading-tight mb-0.5">${label}</p><p class="font-black font-mono text-[10px] leading-tight break-all ${valueClass || 'text-gray-900'}">${value}</p></div>`;
+    }
+
+    function renderTradeBillCard(bill) {
+        const hasSymbol = !isBillFieldEmpty(bill.symbol);
+        const hasPosition = !isBillFieldEmpty(bill.positionType);
+        const cells = [
+            renderBillGridCell('币种', !hasSymbol ? bill.coin : null, ''),
+            renderBillGridCell('数量', bill.qty, ''),
+            renderBillGridCell('成交价', bill.price, ''),
+            renderBillGridCell('挂单/吃单', bill.role, ''),
+            renderBillGridCell('手续费', bill.fee, 'text-red-500'),
+            renderBillGridCell('收益', bill.pnl, bill.pnlClass || ''),
+            renderBillGridCell('仓位余额变动', bill.posBalChange, bill.posBalChangeClass),
+            renderBillGridCell('仓位余额', bill.posBal, ''),
+            renderBillGridCell('账户余额变动', bill.acctBalChange, bill.acctBalChangeClass),
+            renderBillGridCell('账户余额', bill.acctBal, ''),
+        ].filter(Boolean);
+        const gridHtml = cells.length ? `<div class="grid grid-cols-3 gap-x-2 gap-y-2.5">${cells.join('')}</div>` : '';
+
+        const contextHtml = hasSymbol || hasPosition ? (function () {
+            let modeTag = '';
+            let levTag = '';
+            if (hasPosition) {
+                const m = String(bill.positionType).match(/^(.+?)\s*\(([^)]+)\)$/);
+                modeTag = m ? m[1].trim() : bill.positionType;
+                levTag = m ? m[2].trim() : '';
+            }
+            return `<div class="flex items-center flex-wrap gap-1 mb-2 min-w-0">
+                ${hasSymbol ? `<span class="font-black text-[12px]">${bill.symbol}</span>` : ''}
+                ${modeTag ? `<span class="bg-gray-100 text-gray-600 text-[9px] px-1 font-bold rounded-sm">${modeTag}</span>` : ''}
+                ${levTag ? `<span class="bg-gray-100 text-gray-600 text-[9px] px-1 font-bold rounded-sm">${levTag}</span>` : ''}
+            </div>`;
+        })() : '';
+
+        return `<div class="order-card bill-card">
+            <div class="flex justify-between items-start gap-2 mb-1.5">
+                <div class="flex items-center flex-wrap gap-1 min-w-0">
+                    <span class="bill-tag-main">${bill.mainType}</span>
+                    <span class="${billSubTypeTagClass(bill.subType)}">${bill.subType}</span>
+                </div>
+                <span class="text-gray-300 font-medium text-[10px] shrink-0">${formatBillTime(bill.time)}</span>
+            </div>
+            ${contextHtml}
+            ${gridHtml || '<p class="text-[10px] text-gray-300 font-bold">—</p>'}
+        </div>`;
+    }
+
+    function filterTradeBills() {
+        return TRADE_BILLS.filter(function (bill) {
+            if (billFilterMain && bill.mainType !== billFilterMain) return false;
+            if (billFilterMain && billFilterSub && billFilterSub !== '全部' && bill.subType !== billFilterSub) return false;
+            if (billFilterContract && billFilterContract !== '全部' && bill.symbol && bill.symbol !== billFilterContract) return false;
+            return true;
+        });
+    }
+
+    function renderTradeBillList() {
+        const rows = filterTradeBills();
+        if (!rows.length) {
+            return '<div class="py-20 text-center text-gray-300 font-bold uppercase tracking-widest text-[10px]">暂无账单记录</div>';
+        }
+        return rows.map(renderTradeBillCard).join('');
+    }
+
+    function renderTrialFundBillCard(bill) {
+        const posIdVal = isBillFieldEmpty(bill.positionId) ? null : bill.positionId;
+        return `<div class="order-card bill-card">
+            <div class="flex justify-between items-start gap-2 mb-2">
+                <span class="bill-tag-main">${bill.type}</span>
+                <span class="text-gray-300 font-medium text-[10px] shrink-0">${formatBillTime(bill.time)}</span>
+            </div>
+            <div class="grid grid-cols-3 gap-x-2 gap-y-2.5">
+                ${renderBillGridCell('卡券ID', bill.couponId, 'text-gray-900')}
+                ${renderBillGridCell('金额变动', bill.amountChange, bill.amountChangeClass)}
+                ${renderBillGridCell('关联仓位ID', posIdVal, 'text-gray-900 font-mono text-[9px]')}
+            </div>
+        </div>`;
+    }
+
+    function filterTrialFundBills() {
+        return TRIAL_FUND_BILLS.filter(function (bill) {
+            if (trialFundBillFilterType && bill.type !== trialFundBillFilterType) return false;
+            return true;
+        });
+    }
+
+    function renderTrialFundBillList() {
+        const rows = filterTrialFundBills();
+        if (!rows.length) {
+            return '<div class="py-20 text-center text-gray-300 font-bold uppercase tracking-widest text-[10px]">暂无账单记录</div>';
+        }
+        return rows.map(renderTrialFundBillCard).join('');
+    }
+
+    function resetTrialFundBillFilters() {
+        trialFundBillFilterType = '';
+        updateTrialFundBillFilterBar();
+        renderList();
+    }
+
+    function pickTrialFundBillType(type) {
+        trialFundBillFilterType = type === '全部' ? '' : type;
+        refreshTrialFundTypePickerModal();
+    }
+
+    function refreshTrialFundTypePickerModal() {
+        const content = document.getElementById('filter-content');
+        if (content && currentFilterModalType === 'trialFundType') {
+            content.innerHTML = renderTrialFundTypePickerHtml();
+        }
+    }
+
+    function confirmTrialFundTypeFilter() {
+        closeFilterModal();
+        updateTrialFundBillFilterBar();
+        renderList();
+    }
+
+    function renderTrialFundTypePickerHtml() {
+        const checkMark = '<svg class="w-3 h-3 inline-block ml-0.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="3"/></svg>';
+        const headerActive = !trialFundBillFilterType;
+        return `
+            <div class="bill-type-picker mb-4">
+                <button type="button" onclick="pickTrialFundBillType('全部')" class="bill-type-col-header w-full ${headerActive ? 'active' : ''}">类型${headerActive ? checkMark : ''}</button>
+                <div class="bill-type-col no-scrollbar max-h-none border-r-0">
+                    ${TRIAL_FUND_BILL_TYPES.map(function (t) {
+                        const active = trialFundBillFilterType === t;
+                        return `<div class="bill-type-item ${active ? 'active' : ''}" onclick="pickTrialFundBillType('${t}')">${t}</div>`;
+                    }).join('')}
+                </div>
+            </div>
+            <div class="flex space-x-3 pb-2">
+                <button type="button" onclick="resetTrialFundBillFilters(); refreshTrialFundTypePickerModal();" class="flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-xs uppercase">重置</button>
+                <button type="button" onclick="confirmTrialFundTypeFilter()" class="flex-1 py-3 bg-black text-white rounded-xl font-black text-xs uppercase shadow-lg">确认</button>
+            </div>`;
+    }
+
+    function updateTrialFundBillFilterBar() {
+        if (currentPrimary !== 'trialFundBill') return;
+        const triangle = `<svg class="w-2 h-2 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M5 7l5 5 5-5z"/></svg>`;
+        const funnelBtn = getFunnelBtnHtml();
+        const typeLabel = trialFundBillFilterType || '类型';
+        const typeActive = trialFundBillFilterType ? 'text-gray-900' : '';
+        document.getElementById('filter-group').innerHTML = `
+            <div class="flex items-center flex-1 overflow-x-auto no-scrollbar space-x-2">
+                <button onclick="openFilterModal('trialFundType')" class="filter-btn ${typeActive}">${typeLabel} ${triangle}</button>
+            </div>
+            ${funnelBtn}`;
+    }
+
+    function resetBillFilters() {
+        billFilterMain = '';
+        billFilterSub = '全部';
+        updateTradeBillFilterBar();
+        renderList();
+    }
+
+    function getBillTypeFilterLabel() {
+        if (!billFilterMain) return '账单类型';
+        if (billFilterSub === '全部') return billFilterMain;
+        return billFilterMain + ' · ' + billFilterSub;
+    }
+
+    function refreshBillTypePickerModal() {
+        const content = document.getElementById('filter-content');
+        if (content && currentFilterModalType === 'billType') {
+            content.innerHTML = renderBillTypePickerHtml();
+        }
+    }
+
+    function pickBillMainHeaderAll() {
+        billFilterMain = '';
+        billFilterSub = '全部';
+        refreshBillTypePickerModal();
+    }
+
+    function pickBillSubHeaderAll() {
+        billFilterSub = '全部';
+        refreshBillTypePickerModal();
+    }
+
+    function pickBillMain(main) {
+        billFilterMain = main;
+        billFilterSub = '全部';
+        refreshBillTypePickerModal();
+    }
+
+    function pickBillSub(sub) {
+        billFilterSub = sub;
+        refreshBillTypePickerModal();
+    }
+
+    function pickBillSubWithMain(main, sub) {
+        billFilterMain = main;
+        billFilterSub = sub;
+        refreshBillTypePickerModal();
+    }
+
+    function getBillSubTypePickerItems() {
+        if (billFilterMain) {
+            return (BILL_MAIN_SUB_TYPES[billFilterMain] || []).filter(function (s) { return s !== '全部'; }).map(function (sub) {
+                return { main: billFilterMain, sub: sub, label: sub, showMain: false };
+            });
+        }
+        const items = [];
+        Object.keys(BILL_MAIN_SUB_TYPES).forEach(function (main) {
+            (BILL_MAIN_SUB_TYPES[main] || []).filter(function (s) { return s !== '全部'; }).forEach(function (sub) {
+                items.push({ main: main, sub: sub, label: sub, showMain: true });
+            });
+        });
+        return items;
+    }
+
+    function confirmBillTypeFilter() {
+        closeFilterModal();
+        updateTradeBillFilterBar();
+        renderList();
+    }
+
+    function renderBillTypePickerHtml() {
+        const mainHeaderActive = !billFilterMain;
+        const subHeaderActive = billFilterSub === '全部';
+        const subItems = getBillSubTypePickerItems();
+        const checkMark = '<svg class="w-3 h-3 inline-block ml-0.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="3"/></svg>';
+
+        return `
+            <div class="bill-type-picker mb-4">
+                <div class="grid grid-cols-2">
+                    <button type="button" onclick="pickBillMainHeaderAll()" class="bill-type-col-header ${mainHeaderActive ? 'active' : ''}">主账单类型${mainHeaderActive ? checkMark : ''}</button>
+                    <button type="button" onclick="pickBillSubHeaderAll()" class="bill-type-col-header ${subHeaderActive ? 'active' : ''}">子账单类型${subHeaderActive ? checkMark : ''}</button>
+                </div>
+                <div class="grid grid-cols-2">
+                    <div class="bill-type-col no-scrollbar">
+                        ${Object.keys(BILL_MAIN_SUB_TYPES).map(function (main) {
+                            const active = billFilterMain === main;
+                            return `<div class="bill-type-item ${active ? 'active' : ''}" onclick="pickBillMain('${main}')">${main}</div>`;
+                        }).join('')}
+                    </div>
+                    <div class="bill-type-col no-scrollbar">
+                        ${subItems.map(function (item) {
+                            const active = billFilterMain === item.main && billFilterSub === item.sub;
+                            const label = item.showMain ? `${item.main} · ${item.sub}` : item.label;
+                            return `<div class="bill-type-item ${active ? 'active' : ''}" onclick="pickBillSubWithMain('${item.main}', '${item.sub}')">${label}</div>`;
+                        }).join('')}
+                    </div>
+                </div>
+            </div>
+            <div class="flex space-x-3 pb-2">
+                <button type="button" onclick="resetBillFilters(); refreshBillTypePickerModal();" class="flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-xs uppercase">重置</button>
+                <button type="button" onclick="confirmBillTypeFilter()" class="flex-1 py-3 bg-black text-white rounded-xl font-black text-xs uppercase shadow-lg">确认</button>
+            </div>`;
+    }
+
+    function updateTradeBillFilterBar() {
+        if (currentPrimary !== 'tradeBill') return;
+        const triangle = `<svg class="w-2 h-2 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M5 7l5 5 5-5z"/></svg>`;
+        const funnelBtn = `<button onclick="openFilterModal('date')" class="p-2 text-gray-400 hover:text-black transition-colors relative shrink-0"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"/></svg></button>`;
+        const typeLabel = getBillTypeFilterLabel();
+        const typeActive = billFilterMain ? 'text-gray-900' : '';
+        document.getElementById('filter-group').innerHTML = `
+            <div class="flex items-center flex-1 overflow-x-auto no-scrollbar space-x-2">
+                <button onclick="openFilterModal('contract')" class="filter-btn">合约 ${triangle}</button>
+                <button onclick="openFilterModal('billType')" class="filter-btn ${typeActive}">${typeLabel} ${triangle}</button>
+            </div>
+            ${funnelBtn}`;
+    }
+
+    const CHEVRON_SVG = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"/></svg>';
+
     // 數據模擬
     const mockData = {
         current: {
             basic: `
-                <div class="order-card">
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="flex items-center space-x-2">
-                            <span class="font-black text-[13px]">BNBUSDT</span>
-                            <span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <button class="bg-gray-100 text-gray-900 text-[10px] font-black px-3 py-1 rounded-sm">撤單</button>
-                        </div>
+            <div class="order-card">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                        <span class="font-black text-[13px]">BNBUSDC</span>
                     </div>
-                    <div class="flex items-center space-x-2 mb-4 text-[10px] font-black uppercase">
-                        <span class="text-green-500 italic">限價 / 開多</span>
-                        <span class="text-gray-300 font-medium">2026-06-11 18:58:25</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-y-2 text-[11px]">
-                        <div class="flex flex-col"><span class="text-gray-400 font-bold uppercase text-[9px]">成交數量 / 數量 (USDT)</span><span class="font-black">0.00 / 5.00</span></div>
-                        <div class="flex flex-col text-right"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black font-mono">500.00</span></div>
+                    <div class="flex items-center gap-1">
+                        <button type="button" onclick="openModifyBaseOrderSheet('OR_882910')" class="text-blue-500 p-1 active:opacity-60" aria-label="修改参数">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                        <button onclick="showProtoToast('已撤銷該委託')" class="bg-gray-100 text-gray-900 text-[10px] font-black px-3 py-1 rounded-sm">撤單</button>
                     </div>
                 </div>
-            `,
+                <div class="flex items-center justify-between gap-2 mb-4">
+                    <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                    <span class="bg-red-100 text-red-600 text-[10px] px-1 font-black rounded-sm">平多</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">全仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">3X</span>
+                    </div>
+                    <span class="text-gray-300 font-medium text-[10px] shrink-0">06/11 18:59:34</span>
+                </div>
+                <div class="grid grid-cols-2 gap-y-2 text-[11px]">
+                    <div class="flex flex-col"><span class="text-gray-400 font-bold uppercase text-[9px]">成交數量 / 數量 (USDC)</span><span class="font-black font-mono">0.00 / 620</span></div>
+                    <div class="flex flex-col text-right"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black font-mono">620.00</span></div>
+                </div>
+                <div class="flex justify-between items-center text-[11px] mt-3">
+                    <span class="text-gray-400 font-bold uppercase text-[9px]">止盈/止損</span>
+                    <div class="flex items-center gap-1.5 font-black font-mono">
+                        <span id="order-basic-tpsl-display">500/600</span>
+                        <button type="button" onclick="openOrderAttachTPSLSheet()" class="text-blue-500 p-0.5 active:opacity-60" aria-label="设置止盈止损">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="order-card">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                        <span class="font-black text-[13px]">ETHUSDT</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button type="button" onclick="openModifyBaseOrderSheet('OR_882912')" class="text-blue-500 p-1 active:opacity-60" aria-label="修改参数">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                        <button onclick="showProtoToast('已撤銷該委託')" class="bg-gray-100 text-gray-900 text-[10px] font-black px-3 py-1 rounded-sm">撤單</button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between gap-2 mb-4">
+                    <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                    <span class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">平空</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">逐仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">5X</span>
+                    </div>
+                    <span class="text-gray-300 font-medium text-[10px] shrink-0">06/11 19:05:12</span>
+                </div>
+                <div class="grid grid-cols-2 gap-y-2 text-[11px]">
+                    <div class="flex flex-col"><span class="text-gray-400 font-bold uppercase text-[9px]">成交數量 / 數量 (USDT)</span><span class="font-black font-mono">0.00 / 850</span></div>
+                    <div class="flex flex-col text-right"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black font-mono">2,380.00</span></div>
+                </div>
+            </div>
+        `,
             tpsl: `
-                <div class="order-card">
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="flex items-center space-x-2">
-                            <span class="font-black text-[13px]">BNBUSDT</span>
-                            <span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span>
-                        </div>
-                        <button class="bg-gray-100 text-gray-900 text-[10px] font-black px-3 py-1 rounded-sm">撤單</button>
+            <div class="order-card">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-black text-[13px]">BNBUSDT</span>
                     </div>
-                    <div class="flex items-center space-x-2 mb-4 text-[10px] font-black uppercase">
-                        <span class="text-red-500 italic">止盈止損單 / 平多</span>
-                        <span class="text-gray-300 font-medium">2026-06-11 18:59:34</span>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">數量 (USDT)</span><span class="font-black">5.00</span></div>
-                        <div class="flex justify-between text-[11px] items-center"><span class="text-gray-400 font-bold uppercase text-[9px]">止盈/止損觸發價</span><div class="flex items-center space-x-1 font-black font-mono"><span>700.00 / 500.00</span><svg class="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"/></svg></div></div>
-                        <div class="flex justify-between text-[11px] items-center"><span class="text-gray-400 font-bold uppercase text-[9px]">止盈/止損單價格</span><div class="flex items-center space-x-1 font-black"><span>市價 / 市價</span><svg class="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"/></svg></div></div>
+                    <div class="flex items-center gap-1">
+                        <button type="button" onclick="openOrderTPSLSheet()" class="text-blue-500 p-1 active:opacity-60" aria-label="设置止盈止损">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                        <button onclick="showProtoToast('已撤銷該委託')" class="bg-gray-100 text-gray-900 text-[10px] font-black px-3 py-1 rounded-sm">撤單</button>
                     </div>
                 </div>
-            `
+                <div class="flex items-center justify-between gap-2 mb-3">
+                    <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                    <span class="bg-red-100 text-red-600 text-[10px] px-1 font-black rounded-sm">平多</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">全仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">3X</span>
+                    </div>
+                    <span class="text-gray-300 font-medium text-[10px] shrink-0">06/11 18:59:34</span>
+                </div>
+                <div class="flex justify-between items-center text-[11px] mb-3">
+                    <span class="text-gray-400 font-bold text-[9px]">委托数量(USDT)</span>
+                    <span class="font-black font-mono">10.23</span>
+                </div>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                    <span class="text-gray-400 font-bold text-[9px]">止盈触发价</span>
+                    <span class="text-gray-400 font-bold text-[9px] text-right">止盈委托价</span>
+                    <span class="font-black font-mono">700</span>
+                    <span class="font-black font-mono text-right">市价</span>
+                    <span class="text-gray-400 font-bold text-[9px] pt-2">止损触发价</span>
+                    <span class="text-gray-400 font-bold text-[9px] text-right pt-2">止损委托价</span>
+                    <span class="font-black font-mono">510</span>
+                    <span class="font-black font-mono text-right">500</span>
+                </div>
+            </div>
+            <div class="order-card">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-black text-[13px]">ETHUSDT</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button type="button" onclick="openOrderTPSLSheet()" class="text-blue-500 p-1 active:opacity-60" aria-label="设置止盈止损">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                        <button onclick="showProtoToast('已撤銷該委託')" class="bg-gray-100 text-gray-900 text-[10px] font-black px-3 py-1 rounded-sm">撤單</button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between gap-2 mb-3">
+                    <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                    <span class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">平空</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">逐仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">5X</span>
+                    </div>
+                    <span class="text-gray-300 font-medium text-[10px] shrink-0">06/11 19:12:08</span>
+                </div>
+                <div class="flex justify-between items-center text-[11px] mb-3">
+                    <span class="text-gray-400 font-bold text-[9px]">委托数量(USDT)</span>
+                    <span class="font-black font-mono">8.50</span>
+                </div>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                    <span class="text-gray-400 font-bold text-[9px]">止盈触发价</span>
+                    <span class="text-gray-400 font-bold text-[9px] text-right">止盈委托价</span>
+                    <span class="font-black font-mono">2,450</span>
+                    <span class="font-black font-mono text-right">市价</span>
+                    <span class="text-gray-400 font-bold text-[9px] pt-2">止损触发价</span>
+                    <span class="text-gray-400 font-bold text-[9px] text-right pt-2">止损委托价</span>
+                    <span class="font-black font-mono">2,380</span>
+                    <span class="font-black font-mono text-right">2,375</span>
+                </div>
+            </div>
+        `,
+            adv: `
+            <div class="order-card">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                        <span class="font-black text-[13px]">BNBUSDC</span>
+                        <span class="tif-tag">只挂单(Post Only)</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button type="button" onclick="openModifyBaseOrderSheet('OR_882910')" class="text-blue-500 p-1 active:opacity-60" aria-label="修改参数">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                        <button onclick="showProtoToast('已撤銷該委託')" class="bg-gray-100 text-gray-900 text-[10px] font-black px-3 py-1 rounded-sm">撤單</button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between gap-2 mb-4">
+                    <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                    <span class="bg-red-100 text-red-600 text-[10px] px-1 font-black rounded-sm">平多</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">全仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">3X</span>
+                    </div>
+                    <span class="text-gray-300 font-medium text-[10px] shrink-0">06/11 18:59:34</span>
+                </div>
+                <div class="grid grid-cols-2 gap-y-2 text-[11px]">
+                    <div class="flex flex-col"><span class="text-gray-400 font-bold uppercase text-[9px]">成交數量 / 數量 (USDC)</span><span class="font-black font-mono">0.00 / 620</span></div>
+                    <div class="flex flex-col text-right"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black font-mono">620.00</span></div>
+                </div>
+                <div class="flex justify-between items-center text-[11px] mt-3">
+                    <span class="text-gray-400 font-bold uppercase text-[9px]">止盈/止損</span>
+                    <div class="flex items-center gap-1.5 font-black font-mono">
+                        <span id="order-adv-tpsl-display">500/600</span>
+                        <button type="button" onclick="openOrderAttachTPSLSheet()" class="text-blue-500 p-0.5 active:opacity-60" aria-label="设置止盈止损">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `
         },
         history: {
             basic: `
-        <!-- 1. 全部成交 -->
-        <div class="order-card">
-            <div class="flex justify-between items-start mb-1">
-                <div class="flex items-center space-x-2">
-                    <span class="font-black text-[13px]">BNBUSDT</span>
-                    <span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span>
+        <a href="历史委托详情页.html" class="order-card">
+            <div class="flex justify-between items-center mb-2">
+                <span class="font-black text-[13px]">BNBUSDT</span>
+                <span class="text-[10px] font-black text-green-500">全部成交</span>
+            </div>
+            <div class="flex justify-between items-center mb-3 gap-2">
+                <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                    <span class="text-[10px] font-bold text-gray-600">市价</span>
+                    <span class="bg-red-100 text-red-600 text-[10px] px-1 font-black rounded-sm">平多</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">全仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">20x</span>
                 </div>
-                <a href="历史委托详情页.html"><div class="flex items-center space-x-1 text-gray-300"><span class="text-[10px] font-medium">2026-06-11 18:59:34</span><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"/></svg></div></a>
+                <div class="flex items-center space-x-1 text-gray-300 shrink-0">
+                    <span class="text-gray-300 font-medium text-[10px]">06/11 18:59:34</span>
+                    ${CHEVRON_SVG}
+                </div>
             </div>
-            <div class="text-[10px] font-black uppercase italic text-red-500 mb-4">市價 / 平多</div>
-            <div class="space-y-2">
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">數量 (USDT)</span><span class="font-black text-gray-900">6.01 / 6.01</span></div>
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black text-gray-900 font-mono">市價</span></div>
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">狀態</span><span class="font-black text-green-500">全部成交</span></div>
+            <div class="grid grid-cols-3 gap-2 text-[11px]">
+                <div class="flex flex-col"><span class="text-gray-400 font-bold text-[9px]">委托数量(USDC)</span><span class="font-black font-mono">2031.23</span></div>
+                <div class="flex flex-col text-center"><span class="text-gray-400 font-bold text-[9px]">成交数量(USDC)</span><span class="font-black font-mono">2031.23</span></div>
+                <div class="flex flex-col text-right"><span class="text-gray-400 font-bold text-[9px]">成交均价</span><span class="font-black font-mono">634.34</span></div>
             </div>
-        </div>
+        </a>
 
-        <!-- 2. 部分成交 (正在交易) -->
-        <div class="order-card">
-            <div class="flex justify-between items-start mb-1">
-                <div class="flex items-center space-x-2"><span class="font-black text-[13px]">ETHUSDT</span><span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span></div>
-                <a href="历史委托详情页.html"><div class="flex items-center space-x-1 text-gray-300"><span class="text-[10px] font-medium">2026-06-11 18:50:12</span><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"/></svg></div></a>
-            </div>
-            <div class="text-[10px] font-black uppercase italic text-green-500 mb-4">限價 / 開多</div>
-            <div class="space-y-2">
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">數量 (USDT)</span><span class="font-black text-gray-900">50.00 / 100.00</span></div>
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black text-gray-900 font-mono">3450.00</span></div>
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">狀態</span><span class="font-black text-orange-500">部分成交</span></div>
-            </div>
-        </div>
-
-        <!-- 3. 已取消 -->
-        <div class="order-card opacity-60">
-            <div class="flex justify-between items-start mb-1">
-                <div class="flex items-center space-x-2"><span class="font-black text-[13px]">SOLUSDT</span><span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span></div>
-                <a href="历史委托详情页.html"><div class="flex items-center space-x-1 text-gray-300"><span class="text-[10px] font-medium">2026-06-11 18:45:00</span><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"/></svg></div></a>
-            </div>
-            <div class="text-[10px] font-black uppercase italic text-gray-400 mb-4">限價 / 開多</div>
-            <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">數量 (USDT)</span><span class="font-black text-gray-900">-- / 100.00</span></div>
-            <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black text-gray-900 font-mono">3450.00</span></div>
-            <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">狀態</span><span class="font-black text-gray-500">已取消</span></div>
-        </div>
-
-        <!-- 4. 強平委託 (特殊標記) -->
-        <div class="order-card bg-red-50/30">
-            <div class="flex justify-between items-start mb-1">
+        <a href="历史委托详情页.html" class="order-card bg-red-50/30">
+            <div class="flex justify-between items-center mb-2">
                 <div class="flex items-center space-x-2">
                     <span class="font-black text-[13px]">PEPEUSDT</span>
                     <span class="bg-red-600 text-white text-[8px] px-1 font-black rounded-sm uppercase tracking-tighter shadow-sm">強平委託</span>
                 </div>
-                <a href="历史委托详情页.html"><div class="flex items-center space-x-1 text-gray-300"><span class="text-[10px] font-medium">2026-06-10 12:20:05</span><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"/></svg></div></a>
+                <span class="text-[10px] font-black text-green-500">全部成交</span>
             </div>
-            <div class="text-[10px] font-black uppercase italic text-red-600 mb-4">強平 / 平多</div>
-            <div class="space-y-2">
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">數量 (USDT)</span><span class="font-black text-gray-900">100.00 / 100.00</span></div>
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black text-gray-900 font-mono">3450.00</span></div>
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">狀態</span><span class="font-black text-red-600">全部成交</span></div>
+            <div class="flex justify-between items-center mb-3 gap-2">
+                <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                    <span class="text-[10px] font-bold text-red-600">强平</span>
+                    <span class="bg-red-100 text-red-600 text-[10px] px-1 font-black rounded-sm">平多</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">全仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">50x</span>
+                </div>
+                <div class="flex items-center space-x-1 text-gray-300 shrink-0">
+                    <span class="text-gray-300 font-medium text-[10px]">06/10 12:20:05</span>
+                    ${CHEVRON_SVG}
+                </div>
             </div>
-        </div>
+            <div class="grid grid-cols-3 gap-2 text-[11px]">
+                <div class="flex flex-col"><span class="text-gray-400 font-bold text-[9px]">委托数量(USDC)</span><span class="font-black font-mono">5000.00</span></div>
+                <div class="flex flex-col text-center"><span class="text-gray-400 font-bold text-[9px]">成交数量(USDC)</span><span class="font-black font-mono">5000.00</span></div>
+                <div class="flex flex-col text-right"><span class="text-gray-400 font-bold text-[9px]">成交均价</span><span class="font-black font-mono">0.000012</span></div>
+            </div>
+        </a>
+    `,
+            adv: `
+        <a href="历史委托详情页.html" class="order-card">
+            <div class="flex justify-between items-center mb-2">
+                <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                    <span class="font-black text-[13px]">BNBUSDC</span>
+                    <span class="tif-tag">IOC</span>
+                </div>
+                <span class="text-[10px] font-black text-orange-500">部分成交</span>
+            </div>
+            <div class="flex justify-between items-center mb-3 gap-2">
+                <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                    <span class="text-[10px] font-bold text-gray-600">限价</span>
+                    <span class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">开多</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">全仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">20x</span>
+                </div>
+                <div class="flex items-center space-x-1 text-gray-300 shrink-0">
+                    <span class="text-gray-300 font-medium text-[10px]">06/11 18:59:34</span>
+                    ${CHEVRON_SVG}
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-[11px]">
+                <div class="flex flex-col"><span class="text-gray-400 font-bold text-[9px]">委托数量(USDC)</span><span class="font-black font-mono">2031.23</span></div>
+                <div class="flex flex-col text-center"><span class="text-gray-400 font-bold text-[9px]">成交数量(USDC)</span><span class="font-black font-mono">123.24</span></div>
+                <div class="flex flex-col text-right"><span class="text-gray-400 font-bold text-[9px]">成交均价</span><span class="font-black font-mono">634.34</span></div>
+            </div>
+        </a>
+
+        <a href="历史委托详情页.html" class="order-card opacity-60">
+            <div class="flex justify-between items-center mb-2">
+                <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                    <span class="font-black text-[13px]">ETHUSDC</span>
+                    <span class="tif-tag">只挂单(Post Only)</span>
+                </div>
+                <span class="text-[10px] font-black text-gray-400">已取消</span>
+            </div>
+            <div class="flex justify-between items-center mb-3 gap-2">
+                <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                    <span class="text-[10px] font-bold text-gray-600">限价</span>
+                    <span class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">开多</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">逐仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">10x</span>
+                </div>
+                <div class="flex items-center space-x-1 text-gray-300 shrink-0">
+                    <span class="text-gray-300 font-medium text-[10px]">06/11 18:50:00</span>
+                    ${CHEVRON_SVG}
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-[11px]">
+                <div class="flex flex-col"><span class="text-gray-400 font-bold text-[9px]">委托数量(USDC)</span><span class="font-black font-mono">800.00</span></div>
+                <div class="flex flex-col text-center"><span class="text-gray-400 font-bold text-[9px]">成交数量(USDC)</span><span class="font-black font-mono">0.00</span></div>
+                <div class="flex flex-col text-right"><span class="text-gray-400 font-bold text-[9px]">成交均价</span><span class="font-black font-mono">--</span></div>
+            </div>
+        </a>
+
+        <a href="历史委托详情页.html" class="order-card opacity-60">
+            <div class="flex justify-between items-center mb-2">
+                <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                    <span class="font-black text-[13px]">SOLUSDC</span>
+                    <span class="tif-tag">FOK</span>
+                </div>
+                <span class="text-[10px] font-black text-gray-400">已取消</span>
+            </div>
+            <div class="flex justify-between items-center mb-3 gap-2">
+                <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                    <span class="text-[10px] font-bold text-gray-600">限价</span>
+                    <span class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">开多</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">逐仓</span>
+                    <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">10x</span>
+                </div>
+                <div class="flex items-center space-x-1 text-gray-300 shrink-0">
+                    <span class="text-gray-300 font-medium text-[10px]">06/11 18:45:00</span>
+                    ${CHEVRON_SVG}
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-[11px]">
+                <div class="flex flex-col"><span class="text-gray-400 font-bold text-[9px]">委托数量(USDC)</span><span class="font-black font-mono">1000.00</span></div>
+                <div class="flex flex-col text-center"><span class="text-gray-400 font-bold text-[9px]">成交数量(USDC)</span><span class="font-black font-mono">0.00</span></div>
+                <div class="flex flex-col text-right"><span class="text-gray-400 font-bold text-[9px]">成交均价</span><span class="font-black font-mono">--</span></div>
+            </div>
+        </a>
     `,
             tpsl: `
-    <!-- 1. 已取消 -->
-    <div class="order-card opacity-60">
-        <div class="flex justify-between items-start mb-1">
+    <a href="历史委托详情页.html" class="order-card opacity-60 block">
+        <div class="flex justify-between items-start mb-3">
             <div class="flex items-center space-x-2">
                 <span class="font-black text-[13px]">BNBUSDT</span>
-                <span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span>
             </div>
-            <a href="历史委托详情页.html"><div class="flex items-center space-x-1 text-gray-300"><span class="text-[10px] font-medium">2026-05-19 17:45:00</span><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"/></svg></div></a>
+            <span class="text-[10px] font-black text-gray-400">已取消</span>
         </div>
-        <div class="text-[10px] font-black uppercase italic text-gray-400 mb-4">市價止盈 / 平空</div>
-        <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">數量 (USDT)</span><span class="font-black">10.00</span></div>
-        <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">触发条件</span><span class="font-black">最新價格 ≥ 68,000.00</span></div>
-        <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">委託價格</span><span class="font-black">市價</span></div>
-        <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">狀態</span><span class="font-black text-gray-400 uppercase">已取消</span></div>
-    </div>
+        <div class="flex items-center justify-between gap-2 mb-3">
+            <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+            <span class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">平空</span>
+            <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">全仓</span>
+            <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">20x</span>
+            </div>
+            <div class="flex items-center space-x-1 text-gray-300 shrink-0">
+                <span class="text-gray-300 font-medium text-[10px]">05/19 17:45:00</span>
+                ${CHEVRON_SVG}
+            </div>
+        </div>
+        <div class="flex justify-between items-center text-[11px] mb-3">
+            <span class="text-gray-400 font-bold text-[9px]">委托数量(USDT)</span>
+            <span class="font-black font-mono">10.00</span>
+        </div>
+        <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+            <span class="text-gray-400 font-bold text-[9px]">止盈触发价</span>
+            <span class="text-gray-400 font-bold text-[9px] text-right">止盈委托价</span>
+            <span class="font-black font-mono">680.00</span>
+            <span class="font-black font-mono text-right">市价</span>
+            <span class="text-gray-400 font-bold text-[9px] pt-2">止损触发价</span>
+            <span class="text-gray-400 font-bold text-[9px] text-right pt-2">止损委托价</span>
+            <span class="font-black font-mono">--</span>
+            <span class="font-black font-mono text-right">--</span>
+        </div>
+    </a>
 
-    <!-- 2. 已完成 (已觸發並成交) -->
-    <div class="order-card">
-        <div class="flex justify-between items-start mb-1">
-            <div class="flex items-center space-x-2"><span class="font-black text-[13px]">BTCUSDT</span><span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span></div>
-            <a href="历史委托详情页.html"><div class="flex items-center space-x-1 text-gray-300"><span class="text-[10px] font-medium">2026-05-20 14:22:00</span><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"/></svg></div></a>
+    <a href="历史委托详情页.html" class="order-card block">
+        <div class="flex justify-between items-start mb-3">
+            <div class="flex items-center space-x-2">
+                <span class="font-black text-[13px]">BTCUSDT</span>
+            </div>
+            <span class="text-[10px] font-black text-green-500">已完成</span>
         </div>
-        <div class="text-[10px] font-black uppercase italic text-green-500 mb-4">市價止盈止損 / 平多</div>
-        <div class="space-y-2.5">
-            <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">數量 (USDT)</span><span class="font-black">10.00</span></div>
-            <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">触发条件</span><span class="font-black">最新價格 ≥ 68,000.00</span></div>
-            <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">委託價格</span><span class="font-black">市價</span></div>
-            <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">狀態</span><span class="font-black text-green-500 uppercase">已完成</span></div>
+        <div class="flex items-center justify-between gap-2 mb-3">
+            <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+            <span class="bg-red-100 text-red-600 text-[10px] px-1 font-black rounded-sm">平多</span>
+            <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">全仓</span>
+            <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">10x</span>
+            </div>
+            <div class="flex items-center space-x-1 text-gray-300 shrink-0">
+                <span class="text-gray-300 font-medium text-[10px]">05/20 14:22:00</span>
+                ${CHEVRON_SVG}
+            </div>
         </div>
-    </div>`
+        <div class="flex justify-between items-center text-[11px] mb-3">
+            <span class="text-gray-400 font-bold text-[9px]">委托数量(USDT)</span>
+            <span class="font-black font-mono">10.00</span>
+        </div>
+        <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+            <span class="text-gray-400 font-bold text-[9px]">止盈触发价</span>
+            <span class="text-gray-400 font-bold text-[9px] text-right">止盈委托价</span>
+            <span class="font-black font-mono">68,000.00</span>
+            <span class="font-black font-mono text-right">市价</span>
+            <span class="text-gray-400 font-bold text-[9px] pt-2">止损触发价</span>
+            <span class="text-gray-400 font-bold text-[9px] text-right pt-2">止损委托价</span>
+            <span class="font-black font-mono">62,000.00</span>
+            <span class="font-black font-mono text-right">61,800.00</span>
+        </div>
+    </a>`
         },
         position: `
             <div class="order-card">
-                <div class="flex justify-between items-center mb-4">
-                    <div class="flex items-center space-x-2">
-                        <span class="bg-green-500 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-sm">買</span>
-                        <span class="font-black text-[13px]">BNBUSDT 永續</span>
-                        <span class="text-[9px] font-black text-gray-400 uppercase">全倉 15X</span>
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center flex-wrap gap-1.5 min-w-0">
+                        <span class="font-black text-[13px]">BNBUSDC</span>
+                        <span class="bg-green-100 text-green-600 text-[10px] px-1 font-black rounded-sm">开多</span>
+                        <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">全仓</span>
+                        <span class="bg-gray-100 text-gray-600 text-[10px] px-1 font-bold rounded-sm">15x</span>
                     </div>
-                    <div class="flex items-center space-x-2">
+                    <div class="flex items-center space-x-2 shrink-0">
                         <span class="text-[10px] font-black text-gray-900">完全平倉</span>
-                        <button onclick="openSharePnl()" class="p-1 hover:bg-gray-100 rounded-full transition-colors">
+                        <button type="button" onclick="openSharePnl()" class="p-1 hover:bg-gray-100 rounded-full transition-colors">
                             <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                         </button>
                     </div>
@@ -452,54 +1320,12 @@
                     <div class="flex flex-col"><span class="text-[8px] text-gray-400 font-bold uppercase">平倉均價</span><span class="text-[11px] font-black text-gray-900 font-mono">604.22</span></div>
                     <div class="flex flex-col text-right"><span class="text-[8px] text-gray-400 font-bold uppercase">最高 OI</span><span class="text-[11px] font-black text-gray-900">1.02 BNB</span></div>
                 </div>
-                <div class="pt-3 border-t border-gray-50 space-y-1">
+                <div class="pt-3 border-t border-gray-50 space-y-1 mb-3">
                     <div class="flex justify-between text-[9px] font-medium"><span class="text-gray-400">開倉時間</span><span class="text-gray-900">2026-06-11 18:59:05</span></div>
                     <div class="flex justify-between text-[9px] font-medium"><span class="text-gray-400">全部平倉時間</span><span class="text-gray-900">2026-06-11 18:59:20</span></div>
+                    <div class="flex justify-between text-[9px] font-medium"><span class="text-gray-400">仓位ID</span><span class="text-gray-900 font-mono">POS_882911020015</span></div>
                 </div>
-            </div>
-        `,
-        trades: `
-            <div class="order-card">
-                <div class="flex justify-between items-center mb-4">
-                    <div class="flex items-center space-x-2">
-                        <span class="font-black text-[13px]">BNBUSDT</span>
-                        <span class="bg-gray-100 text-gray-500 text-[8px] px-1 font-black rounded-sm uppercase">永續</span>
-                        <span class="text-green-500 text-[10px] font-black uppercase italic">開多</span>
-                    </div>
-                    <div class="flex items-center space-x-1 text-gray-300"><span class="text-[10px] font-medium">2026-06-11 18:59:34</span></div>
-                </div>
-                <div class="space-y-2.5">
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">訂單號</span><div class="flex items-center space-x-1 font-black"><span>2948274921</span><svg class="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg></div></div>
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">價格</span><span class="font-black text-gray-900 font-mono">600.21</span></div>
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">成交數量 (USDT)</span><span class="font-black text-gray-900">42.50</span></div>
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">手續費 (USDT)</span><span class="font-black text-gray-900">-0.0425</span></div>
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">角色</span><span class="font-black text-gray-900">吃單 (Taker)</span></div>
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">已實現盈虧 (USDT)</span><span class="font-black text-gray-400">--</span></div>
-                </div>
-            </div>
-        `,
-        logs: `
-            <div class="order-card">
-                <div class="flex justify-between items-center mb-3">
-                    <span class="font-black text-[13px] text-gray-900">USDT</span>
-                    <span class="text-[10px] text-gray-300 font-medium">2026-06-10 15:04:27</span>
-                </div>
-                <div class="space-y-2">
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">類型</span><span class="font-black text-gray-900 uppercase">資金費用</span></div>
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">合約</span><span class="font-black text-gray-900 uppercase tracking-tighter">BNBUSDT 永續</span></div>
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">總額</span><span class="font-black text-red-500 font-mono">-0.45202481</span></div>
-                </div>
-            </div>
-            <div class="order-card">
-                <div class="flex justify-between items-center mb-3">
-                    <span class="font-black text-[13px] text-gray-900">USDT</span>
-                    <span class="text-[10px] text-gray-300 font-medium">2026-06-10 12:00:00</span>
-                </div>
-                <div class="space-y-2">
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">類型</span><span class="font-black text-gray-900 uppercase">已實現盈虧</span></div>
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">合約</span><span class="font-black text-gray-900 uppercase tracking-tighter">BTCUSDT 永續</span></div>
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">總額</span><span class="font-black text-green-500 font-mono">+124.52</span></div>
-                </div>
+                <a href="持仓关联订单.html" class="block w-full py-2.5 bg-gray-100 rounded-lg text-center text-[11px] font-black text-gray-900 active:opacity-70">关联订单</a>
             </div>
         `,
         funding: `
@@ -509,7 +1335,7 @@
                     <span class="text-[10px] text-gray-300 font-medium">2026-06-10 15:00:00</span>
                 </div>
                 <div class="space-y-2">
-                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">合約</span><span class="font-black text-gray-900 uppercase tracking-tighter">BNBUSDT 永續</span></div>
+                    <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">合約</span><span class="font-black text-gray-900 uppercase tracking-tighter">BNBUSDT</span></div>
                     <div class="flex justify-between text-[11px]"><span class="text-gray-400 font-bold uppercase text-[9px]">资金费用</span><span class="font-black text-red-500 font-mono">-0.45202481</span></div>
                 </div>
             </div>
@@ -518,13 +1344,23 @@
 
     let currentPrimary = 'current';
     let currentSecondary = 'basic';
+    let currentFilterModalType = '';
+
+    function getFunnelBtnHtml() {
+        return `<button onclick="openFilterModal('date')" class="p-2 text-gray-400 hover:text-black transition-colors relative shrink-0"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"/></svg></button>`;
+    }
+
+    function updateCurrentFilters() {
+        const filterGroup = document.getElementById('filter-group');
+        filterGroup.innerHTML = `<span class="text-[11px] font-bold text-gray-500 shrink-0"><input type="checkbox" class="w-3 h-3 accent-black"> 隱藏其他合約</span>`;
+    }
 
     // 2. 修改切換邏輯
     function switchPrimary(tab) {
         currentPrimary = tab;
 
         // 1. 更新主 Tab 樣式
-        const tabs = ['current', 'history', 'position', 'trades', 'logs', 'funding'];
+        const tabs = ['current', 'history', 'position', 'tradeBill', 'trialFundBill', 'fundBill', 'funding'];
         tabs.forEach(t => {
             const el = document.getElementById('p-' + t);
             if (el) el.classList.toggle('active', t === tab);
@@ -533,18 +1369,13 @@
         const secondaryBar = document.getElementById('secondary-tabs');
         const sBasic = document.getElementById('s-basic');
         const sTpsl = document.getElementById('s-tpsl');
+        const sAdv = document.getElementById('s-adv');
         const filterGroup = document.getElementById('filter-group');
         const btnCancel = document.getElementById('btn-all-cancel');
 
         // 2. 定義元件模板
         const triangle = `<svg class="w-2 h-2 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M5 7l5 5 5-5z"/></svg>`;
-
-        // funnelBtn 必須在 switchPrimary 內部定義，才能讀取 tab 參數
-        const funnelBtn = `
-        <button onclick="openFilterModal('date')" class="p-2 text-gray-400 hover:text-black transition-colors relative shrink-0">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"/>
-            </svg>`;
+        const funnelBtn = getFunnelBtnHtml();
 
         // 3. 根據標籤切換佈局
         if (tab === 'current' || tab === 'history') {
@@ -552,41 +1383,42 @@
             btnCancel.style.display = (tab === 'current') ? 'block' : 'none';
 
             if (tab === 'current') {
-                sBasic.innerText = "基礎單 (1)";
+                sBasic.innerText = "限價｜市價 (2)";
                 sTpsl.innerText = "止盈止損單 (2)";
+                if (sAdv) sAdv.innerText = "高级限价 (1)";
             } else {
-                sBasic.innerText = "基礎單";
+                sBasic.innerText = "限價｜市價";
                 sTpsl.innerText = "止盈止損單";
+                if (sAdv) sAdv.innerText = "高级限价";
             }
 
             // 渲染篩選器
             if (tab === 'history') {
-                updateHistoryFilters(funnelBtn); // 傳入 funnelBtn
+                updateHistoryFilters(funnelBtn);
             } else {
-                filterGroup.innerHTML = `
-                <div class="flex items-center flex-1 overflow-x-auto no-scrollbar space-x-2">
-                    <button onclick="openFilterModal('contract')" class="filter-btn">合約 ${triangle}</button>
-                    <button onclick="openFilterModal('orderType')" class="filter-btn">訂單類型 ${triangle}</button>
-                </div>
-            `;
+                updateCurrentFilters();
             }
         } else {
             secondaryBar.style.display = 'none'; // 隱藏二級標籤
             btnCancel.style.display = 'none';
 
-            let filters = '';
-            if (tab === 'position') {
-                filters = `<button onclick="openFilterModal('contract')" class="filter-btn">合約 ${triangle}</button><button onclick="openFilterModal('posMode')" class="filter-btn">倉位模式 ${triangle}</button><button onclick="openFilterModal('posStatus')" class="filter-btn">狀態 ${triangle}</button>`;
-            } else if (tab === 'trades') {
-                filters = `<button onclick="openFilterModal('contract')" class="filter-btn">合約 ${triangle}</button><button onclick="openFilterModal('direction')" class="filter-btn">方向 ${triangle}</button>`;
-            } else if (tab === 'logs') {
-                filters = `<button onclick="openFilterModal('logType')" class="filter-btn">類型 ${triangle}</button>`;
-            }
+            if (tab === 'tradeBill') {
+                updateTradeBillFilterBar();
+            } else if (tab === 'trialFundBill') {
+                updateTrialFundBillFilterBar();
+            } else if (tab === 'fundBill') {
+                updateFundBillFilterBar();
+            } else {
+                let filters = '';
+                if (tab === 'position') {
+                    filters = `<button onclick="openFilterModal('contract')" class="filter-btn">合約 ${triangle}</button><button onclick="openFilterModal('posMode')" class="filter-btn">倉位模式 ${triangle}</button><button onclick="openFilterModal('posStatus')" class="filter-btn">狀態 ${triangle}</button>`;
+                }
 
-            filterGroup.innerHTML = `
-            <div class="flex items-center flex-1 overflow-x-auto no-scrollbar space-x-2">${filters}</div>
-            ${funnelBtn}
-        `;
+                filterGroup.innerHTML = `
+                <div class="flex items-center flex-1 overflow-x-auto no-scrollbar space-x-2">${filters}</div>
+                ${funnelBtn}
+            `;
+            }
         }
         renderList();
     }
@@ -595,32 +1427,41 @@
     function updateHistoryFilters(funnelBtn) {
         const triangle = `<svg class="w-2 h-2 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M5 7l5 5 5-5z"/></svg>`;
         const filterGroup = document.getElementById('filter-group');
+        const fb = funnelBtn || getFunnelBtnHtml();
 
         let filters = '';
-        if (currentSecondary === 'basic') {
-            filters = `<button onclick="openFilterModal('contract')" class="filter-btn">合約 ${triangle}</button><button onclick="openFilterModal('orderType')" class="filter-btn">類型 ${triangle}</button><button onclick="openFilterModal('direction')" class="filter-btn">方向 ${triangle}</button><button onclick="openFilterModal('status')" class="filter-btn">狀態 ${triangle}</button>`;
+        if (currentSecondary === 'basic' || currentSecondary === 'adv') {
+            filters = `<button onclick="openFilterModal('contract')" class="filter-btn">合約 ${triangle}</button><button onclick="openFilterModal('direction')" class="filter-btn">方向 ${triangle}</button><button onclick="openFilterModal('status')" class="filter-btn">狀態 ${triangle}</button>`;
         } else {
             filters = `<button onclick="openFilterModal('contract')" class="filter-btn">合約 ${triangle}</button><button onclick="openFilterModal('status')" class="filter-btn">狀態 ${triangle}</button>`;
         }
 
         filterGroup.innerHTML = `
         <div class="flex items-center flex-1 overflow-x-auto no-scrollbar space-x-2">${filters}</div>
-        ${funnelBtn}
+        ${fb}
     `;
     }
 
     function switchSecondary(sub) {
         currentSecondary = sub;
-        document.getElementById('s-basic').classList.toggle('active', sub === 'basic');
-        document.getElementById('s-tpsl').classList.toggle('active', sub === 'tpsl');
-        if (currentPrimary === 'history') updateHistoryFilters(); // 同步更新篩選欄
+        document.getElementById('s-basic')?.classList.toggle('active', sub === 'basic');
+        document.getElementById('s-tpsl')?.classList.toggle('active', sub === 'tpsl');
+        document.getElementById('s-adv')?.classList.toggle('active', sub === 'adv');
+        if (currentPrimary === 'history') updateHistoryFilters();
+        else if (currentPrimary === 'current') updateCurrentFilters();
         renderList();
     }
 
     function renderList() {
         const container = document.getElementById('list-container');
-        if (currentPrimary === 'current' || currentPrimary === 'history') {
-            container.innerHTML = mockData[currentPrimary][currentSecondary];
+        if (currentPrimary === 'tradeBill') {
+            container.innerHTML = renderTradeBillList();
+        } else if (currentPrimary === 'trialFundBill') {
+            container.innerHTML = renderTrialFundBillList();
+        } else if (currentPrimary === 'fundBill') {
+            container.innerHTML = renderFundBillList();
+        } else if (currentPrimary === 'current' || currentPrimary === 'history') {
+            container.innerHTML = mockData[currentPrimary][currentSecondary] || '<div class="py-20 text-center text-gray-300 font-bold text-[10px]">暫無數據</div>';
         } else {
             container.innerHTML = mockData[currentPrimary] || '<div class="py-20 text-center text-gray-300 font-bold uppercase tracking-widest text-[10px]">No Data</div>';
         }
@@ -628,6 +1469,7 @@
 
     // 打開彈窗的總控函數
     function openFilterModal(type) {
+        currentFilterModalType = type;
         const overlay = document.getElementById('filter-modal-overlay');
         const sheet = document.getElementById('filter-sheet');
         const content = document.getElementById('filter-content');
@@ -640,6 +1482,7 @@
     }
 
     function closeFilterModal() {
+        currentFilterModalType = '';
         const overlay = document.getElementById('filter-modal-overlay');
         const sheet = document.getElementById('filter-sheet');
         sheet.classList.remove('active');
@@ -702,6 +1545,16 @@
                 </div>
             `;
             case 'orderType': // 3. 訂單類型
+                if (currentPrimary === 'current' && currentSecondary === 'basic') {
+                    return `
+                <h3 class="text-center font-black text-sm mb-8 uppercase tracking-widest">訂單類型</h3>
+                <div class="grid grid-cols-2 gap-3 pb-10">
+                    <div class="filter-option-btn active" onclick="closeFilterModal()">全部</div>
+                    <div class="filter-option-btn" onclick="closeFilterModal()">限价单</div>
+                    <div class="filter-option-btn" onclick="closeFilterModal()">只挂单(Post Only)</div>
+                </div>
+            `;
+                }
                 return `
                 <h3 class="text-center font-black text-sm mb-8 uppercase tracking-widest">訂單類型</h3>
                 <div class="grid grid-cols-2 gap-3 pb-10">
@@ -719,22 +1572,18 @@
                     <div class="filter-option-btn active">已取消<div class="check-badge">✓</div></div>
                 </div>
             `;
-            case 'logType': // 7. 資金流水類型 (垂直列表)
-                return `
-                <div class="space-y-1 pb-10">
-                    ${['全部','轉帳','已實現盈虧','手續費','資金費用','爆倉清算','邀請返佣','體驗金入帳','體驗金回收'].map((t, i) => `
-                        <div class="flex justify-between items-center py-4 border-b border-gray-50">
-                            <span class="${i === 0 ? 'text-black font-black' : 'text-gray-500 font-bold'} text-xs">${t}</span>
-                            ${i === 0 ? '<svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="3"/></svg>' : ''}
-                        </div>
-                    `).join('')}
-                </div>
-            `;
+            case 'fundBillMainType':
+                return renderFundBillMainTypePickerHtml();
+            case 'trialFundType':
+                return renderTrialFundTypePickerHtml();
+            case 'billType':
+                return renderBillTypePickerHtml();
             case 'cancel-type-select':
                 return `
         <div class="space-y-4 pb-8">
             <div class="py-3 border-b border-gray-50 font-black text-sm" onclick="selectCancelType('all')">全部</div>
-            <div class="py-3 border-b border-gray-50 font-bold text-gray-500 text-sm" onclick="selectCancelType('limit')">限价</div>
+            <div class="py-3 border-b border-gray-50 font-bold text-gray-500 text-sm" onclick="selectCancelType('limit')">限價｜市價</div>
+            <div class="py-3 border-b border-gray-50 font-bold text-gray-500 text-sm" onclick="selectCancelType('adv')">高级限价</div>
             <div class="py-3 border-b border-gray-50 font-bold text-gray-500 text-sm" onclick="selectCancelType('tpsl')">止盈止损</div>
         </div>`;
             case 'cancel-confirm':

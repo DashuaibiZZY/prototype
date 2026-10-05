@@ -22,6 +22,51 @@
         .tree-line-panel { border: 1px solid #fde68a; border-radius: 4px; background: rgba(255,251,235,0.5); }
         .tree-line-header { cursor: pointer; }
         .tree-line-body { border-top: 1px solid #fde68a; }
+        .user-scale-hint-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+        .user-scale-hint-label { border-bottom: 1px dashed currentColor; cursor: help; }
+        .user-scale-hint-pop {
+            position: absolute; left: 50%; top: calc(100% + 8px); transform: translateX(-50%);
+            z-index: 200; padding: 6px 10px; background: #111827; color: #fff;
+            font-size: 10px; font-weight: 600; line-height: 1.45; white-space: nowrap;
+            border-radius: 4px; box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
+            opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.15s ease;
+        }
+        .user-scale-hint-pop::before {
+            content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+            border: 5px solid transparent; border-bottom-color: #111827;
+        }
+        .user-scale-hint-wrap:hover .user-scale-hint-pop { opacity: 1; visibility: visible; }
+        .links-chart-wrap { position: relative; width: 100%; height: 11rem; }
+        .links-chart-wrap svg { width: 100%; height: 100%; display: block; }
+        .links-chart-legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 9px; font-weight: 800; color: #9ca3af; text-transform: uppercase; }
+        .links-chart-legend span { display: inline-flex; align-items: center; gap: 4px; }
+        .links-chart-legend i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+        .analytics-kpi-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+        @media (min-width: 1024px) { .analytics-kpi-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+        .analytics-kpi-card { background: #fff; border: 1px solid #f1f5f9; border-radius: 4px; padding: 14px 16px; }
+        .analytics-kpi-card .kpi-delta-up { color: #16a34a; font-weight: 800; font-size: 10px; }
+        .analytics-kpi-card .kpi-delta-down { color: #dc2626; font-weight: 800; font-size: 10px; }
+        .analytics-kpi-card .kpi-delta-flat { color: #94a3b8; font-weight: 800; font-size: 10px; }
+        .analytics-chart-shell { display: flex; align-items: stretch; gap: 8px; height: 11rem; width: 100%; }
+        .analytics-chart-y-axis { width: 46px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 8px 0 20px; text-align: right; font-size: 9px; font-weight: 700; color: #94a3b8; line-height: 1; font-variant-numeric: tabular-nums; }
+        .analytics-chart-shell svg { flex: 1; min-width: 0; height: 100%; display: block; }
+        .analytics-source-matrix th, .analytics-source-matrix td { padding: 10px 12px; font-size: 11px; }
+        .analytics-source-matrix th { font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; }
+        .analytics-pct-chip { display: inline-block; min-width: 42px; text-align: right; font-weight: 800; color: #6b7280; font-size: 10px; }
+        .partner-kpi-grid { gap: 10px; }
+        .partner-kpi-card { padding: 12px 14px !important; }
+        .partner-kpi-card .partner-kpi-label { font-size: 9px; font-weight: 700; color: #9ca3af; margin-bottom: 4px; }
+        .partner-kpi-card .partner-kpi-value { font-size: 1.125rem; line-height: 1.25; font-weight: 900; }
+        .partner-kpi-card .partner-kpi-sub { font-size: 9px; color: #9ca3af; margin-top: 4px; }
+        .partner-kpi-card .partner-kpi-breakdown { margin-top: 8px; padding-top: 8px; border-top: 1px solid #f9fafb; font-size: 8px; font-weight: 800; text-transform: uppercase; color: #9ca3af; gap: 2px 6px; }
+        .partner-kpi-card .partner-kpi-breakdown span { color: #111827; }
+        .partner-identity-card { padding: 12px 16px !important; }
+        .partner-identity-card .partner-identity-ratio { font-size: 1.125rem; line-height: 1.25; }
+        .analytics-section-card { padding: 16px !important; border: 1px solid #f1f5f9; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
+        .analytics-section-title { font-size: 11px; font-weight: 900; color: #111827; letter-spacing: 0.02em; }
+        .partner-nav-group { display: flex; flex-direction: column; gap: 4px; }
+        .partner-nav-sub { padding-left: 12px !important; font-size: 11px !important; }
+        .partner-nav-sub-active { background: #f3f4f6 !important; color: #111827 !important; font-weight: 800 !important; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col text-[12px]">
@@ -164,11 +209,12 @@
     <!-- 侧边栏 -->
     <aside class="w-56 bg-white border-r border-gray-100 flex flex-col shrink-0">
         <nav class="flex-1 px-4 py-6 space-y-2">
-            <!-- 新增邀请链接管理 -->
             <button onclick="showMainPage('page-links')" id="sidebar-links" class="sidebar-btn-active w-full text-left px-4 py-3 rounded font-black transition-all">邀请链接管理</button>
-            <!-- 原有項目 -->
-            <button onclick="showMainPage('page-overview')" id="sidebar-overview" class="w-full text-left px-4 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all">合伙人管理</button>
-            <button onclick="showMainPage('page-settlement')" id="sidebar-settlement" class="w-full text-left px-4 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all">佣金結算記錄</button>
+            <div class="partner-nav-group">
+                <button onclick="showMainPage('page-overview')" id="sidebar-overview" class="w-full text-left px-4 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all">合伙人管理</button>
+                <button onclick="showMainPage('page-analytics')" id="sidebar-analytics" class="partner-nav-sub w-full text-left px-4 py-2.5 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all">团队数据分析</button>
+            </div>
+            <button onclick="showMainPage('page-settlement')" id="sidebar-settlement" class="w-full text-left px-4 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all">佣金管理</button>
         </nav>
         <div class="p-6 border-t border-gray-50">
             <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">我的最高比例</p>
@@ -180,13 +226,12 @@
     <main class="flex-1 overflow-y-auto bg-slate-50 p-8">
         <div class="max-w-[1250px] mx-auto space-y-8">
             <!-- 页面 A: 数据总览 -->
-            <div id="page-overview" class="space-y-8 hidden">
-                <div class="flex justify-between items-end">
+            <div id="page-overview" class="space-y-6 hidden">
+                <div class="flex flex-wrap justify-between items-end gap-4">
                     <div>
                         <h1 class="text-2xl font-black tracking-tight">合伙人管理</h1>
-                        <p class="text-gray-400 font-medium">监控实时交易表现与级差收益构成。</p>
+                        <p class="text-gray-400 font-medium">查看团队业绩，管理直属下级合伙人与自邀直客名单。</p>
                     </div>
-                    <!-- 全局时间过滤 -->
                     <div class="flex bg-white p-1 rounded border border-gray-200 shadow-sm">
                         <button type="button" data-period="1D" onclick="PartnerCenter.setOverviewPeriod('1D')" class="overview-period-btn px-4 py-1 text-[10px] font-bold hover:bg-gray-50">1D</button>
                         <button type="button" data-period="1W" onclick="PartnerCenter.setOverviewPeriod('1W')" class="overview-period-btn px-4 py-1 text-[10px] font-bold bg-black text-white rounded-sm shadow-md">1W</button>
@@ -196,57 +241,63 @@
                 </div>
 
                 <!-- 我的上级 / 我的返佣比例 -->
-                <div class="stats-card py-4 px-5">
-                    <div class="flex flex-wrap items-center justify-between gap-6">
+                <div class="stats-card partner-identity-card py-3 px-4">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
                         <div>
-                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">我的上级</p>
-                            <div id="overview-my-superior" class="text-[13px] font-black text-gray-900"></div>
+                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">我的上级</p>
+                            <div id="overview-my-superior" class="text-[12px] font-black text-gray-900"></div>
                         </div>
                         <div class="text-right">
-                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">我的返佣比例</p>
-                            <div id="overview-my-ratio" class="text-2xl font-black text-blue-600 italic">—</div>
+                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">我的返佣比例</p>
+                            <div id="overview-my-ratio" class="partner-identity-ratio font-black text-blue-600 italic">—</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 核心指标 -->
-                <div class="grid grid-cols-4 gap-4">
-                    <div class="stats-card">
-                        <p class="text-gray-400 font-bold mb-2">团队总交易额</p>
-                        <h3 id="overview-team-vol" class="text-3xl font-black">$52,450,000</h3>
-                        <p class="text-[10px] text-gray-400 mt-2">较上周期 <span class="text-green-500">+12.4%</span></p>
-                    </div>
-                    <div class="stats-card border-l-4 border-l-blue-600">
-                        <p class="text-gray-400 font-bold mb-2 text-blue-600">总返佣收入 (本期预估)</p>
-                        <h3 id="overview-total-rebate" class="text-3xl font-black text-gray-900">$12,840.50</h3>
-                        <!-- 收入拆解 -->
-                        <div class="mt-3 grid grid-cols-3 gap-1 text-[9px] font-black uppercase text-gray-400 border-t pt-3 border-gray-50">
-                            <div>自返佣: <span id="overview-self-rebate" class="text-gray-900">$0.2k</span></div>
-                            <div>直客: <span id="overview-direct-rebate" class="text-gray-900">$1.2k</span></div>
-                            <div class="text-blue-600">级差: <span id="overview-gap-rebate">$11.6k</span></div>
+                <div class="grid grid-cols-2 lg:grid-cols-5 partner-kpi-grid">
+                    <div class="stats-card partner-kpi-card">
+                        <p class="partner-kpi-label">团队总交易额</p>
+                        <h3 id="overview-team-vol" class="partner-kpi-value">—</h3>
+                        <div class="partner-kpi-breakdown grid grid-cols-2">
+                            <div>自己产生: <span id="overview-self-vol">—</span></div>
+                            <div>直客: <span id="overview-direct-vol">—</span></div>
+                            <div class="col-span-2 text-blue-600">合伙人: <span id="overview-partner-vol">—</span></div>
                         </div>
                     </div>
-                    <div class="stats-card">
-                        <p class="text-gray-400 font-bold mb-2">团队净入金</p>
-                        <h3 id="overview-team-net" class="text-3xl font-black text-green-500">+$1,240,000</h3>
-                        <p class="text-[10px] text-gray-400 mt-2">包含下级穿透数据</p>
+                    <div class="stats-card partner-kpi-card border-l-4 border-l-blue-600">
+                        <p class="partner-kpi-label text-blue-600">总返佣收入</p>
+                        <h3 id="overview-total-rebate" class="partner-kpi-value text-gray-900">—</h3>
+                        <div class="partner-kpi-breakdown grid grid-cols-2">
+                            <div>自返佣: <span id="overview-self-rebate">—</span></div>
+                            <div>直客: <span id="overview-direct-rebate">—</span></div>
+                            <div class="col-span-2 text-blue-600">级差: <span id="overview-gap-rebate">—</span></div>
+                        </div>
                     </div>
-                    <div class="stats-card">
-                        <p class="text-gray-400 font-bold mb-2">用户规模</p>
-                        <h3 id="overview-trade-users-active" class="text-3xl font-black text-gray-900">1,850 <span class="text-base font-bold text-gray-600">交易用户</span></h3>
-                        <p id="overview-trade-users-total" class="text-[10px] text-gray-400 mt-2 font-bold">3,680 总用户</p>
+                    <div class="stats-card partner-kpi-card">
+                        <p class="partner-kpi-label">团队人数</p>
+                        <h3 id="overview-team-users" class="partner-kpi-value text-gray-900">—</h3>
+                        <div class="partner-kpi-breakdown grid grid-cols-2">
+                            <div>直客: <span id="overview-direct-users">—</span></div>
+                            <div class="text-blue-600">合伙人: <span id="overview-partner-users">—</span></div>
+                        </div>
                     </div>
-                </div>
-
-                <!-- === 团队返佣异常简要提醒 === -->
-                <div id="partner-abnormal-banner" class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded shadow-sm mb-6">
-                    <div class="flex items-start gap-3">
-                        <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                        </svg>
-                        <p class="text-amber-900 font-bold text-[12px] leading-relaxed">
-                            检测到 <span class="font-black">2</span> 条异常返佣线，暂停结算交易额 <span class="font-black">$1,240,000</span>。请在下表查看异常明细并与下级沟通调整返佣比例，否则相关返佣将无法结算。
-                        </p>
+                    <div class="stats-card partner-kpi-card">
+                        <p class="partner-kpi-label"><span class="user-scale-hint-wrap"><span class="user-scale-hint-label">团队交易人数</span><span class="user-scale-hint-pop" role="tooltip">交易用户数据每天 UTC+8 0 点更新</span></span></p>
+                        <h3 id="overview-active-traders" class="partner-kpi-value text-gray-900">—</h3>
+                        <div class="partner-kpi-breakdown grid grid-cols-2">
+                            <div>直客: <span id="overview-direct-active-traders">—</span></div>
+                            <div class="text-blue-600">合伙人: <span id="overview-partner-active-traders">—</span></div>
+                        </div>
+                    </div>
+                    <div class="stats-card partner-kpi-card">
+                        <p class="partner-kpi-label"><span class="user-scale-hint-wrap"><span class="user-scale-hint-label">团队净入金</span><span class="user-scale-hint-pop" role="tooltip">团队净入金数据每天 UTC+8 0 点更新</span></span></p>
+                        <h3 id="overview-team-net" class="partner-kpi-value text-green-500">—</h3>
+                        <div class="partner-kpi-breakdown grid grid-cols-2">
+                            <div>自己: <span id="overview-self-net">—</span></div>
+                            <div>直客: <span id="overview-direct-net">—</span></div>
+                            <div class="col-span-2 text-blue-600">合伙人: <span id="overview-partner-net">—</span></div>
+                        </div>
                     </div>
                 </div>
 
@@ -261,12 +312,11 @@
                             <select id="sub-partner-status-filter" onchange="PartnerCenter.setSubPartnerFilter(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[10px] font-bold text-gray-700 outline-none focus:ring-1 focus:ring-black cursor-pointer">
                                 <option value="all">全部结算状态</option>
                                 <option value="normal">正常</option>
-                                <option value="direct_inversion">返佣比例倒挂（直属下级）</option>
-                                <option value="team_tree_abnormal">团队返佣树异常</option>
+                                <option value="frozen">冻结待结算</option>
                             </select>
 
                             <div class="relative">
-                                <input type="text" id="sub-partner-search" placeholder="搜索地址或备注..." oninput="PartnerCenter.setSubPartnerSearch(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[11px] w-48 outline-none focus:ring-1 focus:ring-black">
+                                <input type="text" id="sub-partner-search" placeholder="搜索 UID / 钱包 / 邮箱 / 备注..." oninput="PartnerCenter.setSubPartnerSearch(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[11px] w-56 outline-none focus:ring-1 focus:ring-black">
                                 <svg class="w-3.5 h-3.5 absolute right-2 top-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2"/></svg>
                             </div>
                         </div>
@@ -299,34 +349,171 @@
                 </div>
             </div>
 
-            <!-- 页面 B: 佣金结算记录 (New) -->
-            <div id="page-settlement" class="space-y-8 hidden">
+            <!-- 页面 A2: 团队数据分析（独立子页） -->
+            <div id="page-analytics" class="space-y-6 hidden">
+                <div class="flex flex-wrap justify-between items-end gap-4">
+                    <div>
+                        <h1 class="text-2xl font-black tracking-tight">团队数据分析</h1>
+                        <p class="text-gray-400 font-medium">按指标查看来源分布与贡献排行。</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button type="button" onclick="showMainPage('page-overview')" class="text-[11px] font-black text-gray-500 hover:text-black">← 返回合伙人管理</button>
+                        <div class="flex bg-white p-1 rounded border border-gray-200 shadow-sm">
+                            <button type="button" data-period="1D" onclick="PartnerCenter.setAnalyticsPeriod('1D')" class="analytics-period-btn px-4 py-1 text-[10px] font-bold hover:bg-gray-50">1D</button>
+                            <button type="button" data-period="1W" onclick="PartnerCenter.setAnalyticsPeriod('1W')" class="analytics-period-btn px-4 py-1 text-[10px] font-bold bg-black text-white rounded-sm shadow-md">1W</button>
+                            <button type="button" data-period="1M" onclick="PartnerCenter.setAnalyticsPeriod('1M')" class="analytics-period-btn px-4 py-1 text-[10px] font-bold hover:bg-gray-50">1M</button>
+                            <button type="button" data-period="3M" onclick="PartnerCenter.setAnalyticsPeriod('3M')" class="analytics-period-btn px-4 py-1 text-[10px] font-bold hover:bg-gray-50">3M</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analytics-kpi-grid">
+                    <div class="analytics-kpi-card">
+                        <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">团队交易额</p>
+                        <p id="analytics-kpi-vol" class="text-lg font-black text-gray-900">—</p>
+                        <p id="analytics-kpi-vol-delta" class="kpi-delta-up mt-1">—</p>
+                    </div>
+                    <div class="analytics-kpi-card border-l-2 border-l-blue-600">
+                        <p class="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-1">返佣收入</p>
+                        <p id="analytics-kpi-rebate" class="text-lg font-black text-gray-900">—</p>
+                        <p id="analytics-kpi-rebate-delta" class="kpi-delta-up mt-1">—</p>
+                    </div>
+                    <div class="analytics-kpi-card">
+                        <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">团队人数</p>
+                        <p id="analytics-kpi-team-users" class="text-lg font-black text-gray-900">—</p>
+                        <p id="analytics-kpi-team-users-delta" class="kpi-delta-up mt-1">—</p>
+                    </div>
+                    <div class="analytics-kpi-card">
+                        <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1"><span class="user-scale-hint-wrap"><span class="user-scale-hint-label">团队交易人数</span><span class="user-scale-hint-pop" role="tooltip">交易用户数据每天 UTC+8 0 点更新</span></span></p>
+                        <p id="analytics-kpi-active-traders" class="text-lg font-black text-gray-900">—</p>
+                        <p id="analytics-kpi-active-traders-delta" class="kpi-delta-up mt-1">—</p>
+                    </div>
+                    <div class="analytics-kpi-card">
+                        <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1"><span class="user-scale-hint-wrap"><span class="user-scale-hint-label">团队净入金</span><span class="user-scale-hint-pop" role="tooltip">团队净入金数据每天 UTC+8 0 点更新</span></span></p>
+                        <p id="analytics-kpi-net" class="text-lg font-black text-green-600">—</p>
+                        <p id="analytics-kpi-net-delta" class="kpi-delta-up mt-1">—</p>
+                    </div>
+                </div>
+
+                <div class="stats-card !p-0 overflow-hidden shadow-sm">
+                    <div class="p-5 border-b border-gray-50 bg-white flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex flex-wrap items-center gap-6">
+                            <button type="button" data-dim-tab="vol" onclick="PartnerCenter.setAnalyticsDimTab('vol')" class="analytics-dim-tab tab-active pb-1">团队交易额</button>
+                            <button type="button" data-dim-tab="rebate" onclick="PartnerCenter.setAnalyticsDimTab('rebate')" class="analytics-dim-tab text-gray-400 font-bold pb-1 hover:text-black">返佣收入</button>
+                            <button type="button" data-dim-tab="users" onclick="PartnerCenter.setAnalyticsDimTab('users')" class="analytics-dim-tab text-gray-400 font-bold pb-1 hover:text-black">团队人数</button>
+                            <button type="button" data-dim-tab="traders" onclick="PartnerCenter.setAnalyticsDimTab('traders')" class="analytics-dim-tab text-gray-400 font-bold pb-1 hover:text-black">团队交易人数</button>
+                            <button type="button" data-dim-tab="net" onclick="PartnerCenter.setAnalyticsDimTab('net')" class="analytics-dim-tab text-gray-400 font-bold pb-1 hover:text-black">团队净入金</button>
+                        </div>
+                        <span id="analytics-chart-period-tag" class="text-[10px] font-black text-gray-500 uppercase tracking-widest bg-gray-100 px-2 py-1 rounded-sm">1W</span>
+                    </div>
+                    <div id="analytics-dim-hint-row" class="px-5 py-2 bg-white border-b border-gray-50 hidden">
+                        <p id="analytics-dim-hint-text" class="text-[10px] text-gray-400 font-bold m-0"></p>
+                    </div>
+                    <div id="analytics-dim-panel-vol" class="p-6 space-y-4">
+                        <div class="stats-card analytics-section-card shadow-sm">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                <p class="analytics-section-title">数据趋势</p>
+                                <div class="links-chart-legend analytics-legend-vol"></div>
+                            </div>
+                            <div id="analytics-chart-vol" class="links-chart-wrap"></div>
+                        </div>
+                        <div class="stats-card analytics-section-card shadow-sm">
+                            <div id="analytics-dist-vol"></div>
+                        </div>
+                        <div class="stats-card analytics-section-card shadow-sm">
+                            <div id="analytics-rank-vol"></div>
+                        </div>
+                    </div>
+                    <div id="analytics-dim-panel-rebate" class="p-6 space-y-4 hidden">
+                        <div class="stats-card analytics-section-card shadow-sm">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                <p class="analytics-section-title">数据趋势</p>
+                                <div class="links-chart-legend analytics-legend-rebate"></div>
+                            </div>
+                            <div id="analytics-chart-rebate" class="links-chart-wrap"></div>
+                        </div>
+                        <div class="stats-card analytics-section-card shadow-sm">
+                            <div id="analytics-dist-rebate"></div>
+                        </div>
+                        <div class="stats-card analytics-section-card shadow-sm">
+                            <div id="analytics-rank-rebate"></div>
+                        </div>
+                    </div>
+                    <div id="analytics-dim-panel-users" class="p-6 space-y-4 hidden">
+                        <div class="stats-card analytics-section-card shadow-sm">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                <p class="analytics-section-title">数据趋势</p>
+                                <div class="links-chart-legend analytics-legend-users"></div>
+                            </div>
+                            <div id="analytics-chart-users" class="links-chart-wrap"></div>
+                        </div>
+                        <div class="stats-card analytics-section-card shadow-sm">
+                            <div id="analytics-dist-users"></div>
+                        </div>
+                        <div class="stats-card analytics-section-card shadow-sm">
+                            <div id="analytics-rank-users"></div>
+                        </div>
+                    </div>
+                    <div id="analytics-dim-panel-traders" class="p-6 space-y-4 hidden">
+                        <div class="stats-card analytics-section-card shadow-sm">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                <p class="analytics-section-title">数据趋势</p>
+                                <div class="links-chart-legend analytics-legend-traders"></div>
+                            </div>
+                            <div id="analytics-chart-traders" class="links-chart-wrap"></div>
+                        </div>
+                        <div class="stats-card analytics-section-card shadow-sm">
+                            <div id="analytics-dist-traders"></div>
+                        </div>
+                        <div class="stats-card analytics-section-card shadow-sm">
+                            <div id="analytics-rank-traders"></div>
+                        </div>
+                    </div>
+                    <div id="analytics-dim-panel-net" class="p-6 space-y-4 hidden">
+                        <div class="stats-card analytics-section-card shadow-sm">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                <p class="analytics-section-title">数据趋势</p>
+                                <div class="links-chart-legend analytics-legend-net"></div>
+                            </div>
+                            <div id="analytics-chart-net" class="links-chart-wrap"></div>
+                        </div>
+                        <div class="stats-card analytics-section-card shadow-sm">
+                            <div id="analytics-dist-net"></div>
+                        </div>
+                        <div class="stats-card analytics-section-card shadow-sm">
+                            <div id="analytics-rank-net"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 B: 佣金管理 -->
+            <div id="page-settlement" class="space-y-6 hidden">
                 <div class="flex justify-between items-end">
                     <div>
-                        <h1 class="text-2xl font-black tracking-tight">佣金结算与发放</h1>
-                        <p class="text-gray-400 font-medium">系统每日 00:00 自动结算前一日产生的所有佣金收益。</p>
+                        <h1 class="text-2xl font-black tracking-tight">佣金管理</h1>
+                        <p class="text-gray-400 font-medium">每日 0:00 系统将前一日 24 小时内产生的返佣汇总为结算批次，经风控审核通过后发放至您的账户。</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-6">
-                    <div class="stats-card bg-gray-900 text-white border-none">
-                        <p class="text-gray-400 font-bold mb-2 uppercase text-[10px]">待结算佣金 (今日预估)</p>
-                        <h3 class="text-3xl font-black">$450.82</h3>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div class="stats-card bg-gray-900 text-white border-none !py-4">
+                        <p class="text-gray-400 font-bold mb-1 uppercase text-[10px]">待返佣（今日预估）</p>
+                        <h3 id="commission-kpi-pending-today" class="text-2xl font-black">—</h3>
                     </div>
-                    <div class="stats-card">
-                        <p class="text-gray-400 font-bold mb-2 uppercase text-[10px]">已结算总额 (累计)</p>
-                        <h3 class="text-3xl font-black text-gray-900">$124,500.00</h3>
+                    <div class="stats-card !py-4">
+                        <p class="text-gray-400 font-bold mb-1 uppercase text-[10px]">历史已返佣（累计）</p>
+                        <h3 id="commission-kpi-settled-total" class="text-2xl font-black text-gray-900">—</h3>
                     </div>
-                    <div class="stats-card">
-                        <p class="text-gray-400 font-bold mb-2 uppercase text-[10px]">昨日发放佣金</p>
-                        <h3 class="text-3xl font-black text-green-500">$1,120.50</h3>
-                        <p class="text-[10px] text-gray-400 mt-3 font-bold tracking-widest uppercase">Status: Success</p>
+                    <div class="stats-card !py-4">
+                        <p class="text-gray-400 font-bold mb-1 uppercase text-[10px]">最近发放</p>
+                        <h3 id="commission-kpi-yesterday" class="text-2xl font-black text-green-500">—</h3>
+                        <p id="commission-kpi-yesterday-status" class="text-[10px] text-gray-400 mt-2 font-bold">—</p>
                     </div>
                 </div>
 
-                <!-- 结算列表 -->
-                <div class="stats-card !p-0">
-                    <div class="p-6 border-b border-gray-50 bg-white flex flex-wrap justify-between items-center gap-4">
+                <div class="stats-card !p-0 overflow-hidden shadow-sm">
+                    <div class="p-5 border-b border-gray-50 bg-white flex flex-wrap justify-between items-center gap-4">
                         <h4 class="font-black text-sm">每日结算流水</h4>
                         <div class="flex flex-wrap items-center gap-3">
                             <input type="date" id="settlement-filter-date" onchange="PartnerCenter.setSettlementDateFilter(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[11px] outline-none focus:ring-1 focus:ring-black">
@@ -334,7 +521,6 @@
                                 <option value="all">全部状态</option>
                                 <option value="pending">待结算</option>
                                 <option value="settled">已结算</option>
-                                <option value="rebate_stopped">返佣异常停止结算</option>
                             </select>
                         </div>
                     </div>
@@ -346,10 +532,67 @@
                 </div>
             </div>
 
+            <!-- 页面 B2: 佣金明细（按日 · 先汇总后下钻） -->
+            <div id="page-commission-detail" class="space-y-6 hidden">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div class="flex items-start gap-3">
+                        <button type="button" onclick="PartnerCenter.backToCommission()" class="p-2 bg-white border border-gray-200 rounded-sm hover:bg-gray-50 shrink-0 mt-0.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
+                        </button>
+                        <div>
+                            <h1 class="text-2xl font-black tracking-tight">佣金详情</h1>
+                            <p id="commission-detail-subtitle" class="text-gray-400 font-medium text-[12px] mt-1">—</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="commission-detail-kpi-panel" class="grid grid-cols-2 lg:grid-cols-4 gap-4 hidden">
+                    <div class="stats-card partner-kpi-card">
+                        <p class="partner-kpi-label">总交易额</p>
+                        <h3 id="commission-detail-kpi-vol" class="partner-kpi-value text-gray-900">—</h3>
+                    </div>
+                    <div class="stats-card partner-kpi-card border-l-4 border-l-blue-600">
+                        <p class="partner-kpi-label text-blue-600">下级合计返佣</p>
+                        <h3 id="commission-detail-kpi-gross-rebate" class="partner-kpi-value text-gray-900">—</h3>
+                        <p class="partner-kpi-sub text-gray-400">调减前应返合计</p>
+                    </div>
+                    <div id="commission-detail-kpi-violation-wrap" class="stats-card partner-kpi-card border-l-4 border-l-red-500">
+                        <p class="partner-kpi-label text-red-500">违规扣除</p>
+                        <h3 id="commission-detail-kpi-violation" class="partner-kpi-value text-red-500">—</h3>
+                        <p id="commission-detail-kpi-violation-reason" class="partner-kpi-sub text-red-600/90 mt-2 leading-relaxed hidden"></p>
+                    </div>
+                    <div class="stats-card partner-kpi-card bg-gray-900 text-white border-none">
+                        <p class="partner-kpi-label text-gray-400">最终返佣金额</p>
+                        <h3 id="commission-detail-kpi-final-rebate" class="partner-kpi-value text-white">—</h3>
+                    </div>
+                </div>
+
+                <div id="commission-detail-summary-panel" class="stats-card !p-0 overflow-hidden shadow-sm">
+                    <div class="p-5 border-b border-gray-50 bg-white flex flex-wrap justify-between items-center gap-4">
+                        <p class="text-[11px] font-black text-gray-900">当日返佣贡献用户列表</p>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <input type="text" id="commission-detail-search" placeholder="UID / 钱包 / 邮箱" oninput="PartnerCenter.setCommissionDetailSearch(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[11px] w-52 outline-none focus:ring-1 focus:ring-black">
+                            <select id="commission-detail-type-filter" onchange="PartnerCenter.setCommissionDetailTypeFilter(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[10px] font-bold text-gray-700 outline-none focus:ring-1 focus:ring-black cursor-pointer">
+                                <option value="all">全部</option>
+                                <option value="下级">下级</option>
+                                <option value="直客">直客</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left min-w-[960px]">
+                            <thead id="commission-detail-summary-head" class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase"></thead>
+                            <tbody id="commission-detail-summary-body" class="divide-y divide-gray-50 text-[11px] font-medium"></tbody>
+                        </table>
+                    </div>
+                    <div id="commission-detail-summary-pagination"></div>
+                </div>
+            </div>
+
         </div>
 
         <!-- 页面 C: 团队穿透（脱敏版合伙人管理） -->
-        <div id="page-drill-overview" class="space-y-8 hidden">
+        <div id="page-drill-overview" class="space-y-6 hidden">
             <div class="flex justify-between items-end">
                 <div class="flex items-start gap-4">
                     <button type="button" onclick="PartnerCenter.drillBack()" class="p-2 bg-white border border-gray-200 rounded-sm hover:bg-gray-50 shrink-0 mt-1">
@@ -368,52 +611,42 @@
                 </div>
             </div>
 
-            <div class="stats-card py-4 px-5">
-                <div class="flex flex-wrap items-center justify-between gap-6">
+            <div class="stats-card partner-identity-card py-3 px-4">
+                <div class="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">我的上级</p>
-                        <div id="drill-my-superior" class="text-[13px] font-black text-gray-900"></div>
+                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">我的上级</p>
+                        <div id="drill-my-superior" class="text-[12px] font-black text-gray-900"></div>
                     </div>
                     <div class="text-right">
-                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">我的返佣比例</p>
-                        <div id="drill-my-ratio" class="text-2xl font-black text-blue-600 italic">—</div>
+                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">我的返佣比例</p>
+                        <div id="drill-my-ratio" class="partner-identity-ratio font-black text-blue-600 italic">—</div>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-4 gap-4">
-                <div class="stats-card">
-                    <p class="text-gray-400 font-bold mb-2">团队总交易额</p>
-                    <h3 id="drill-team-vol" class="text-3xl font-black">—</h3>
-                    <p class="text-[10px] text-gray-400 mt-2">较上周期 <span class="text-green-500">+12.4%</span></p>
+            <div class="grid grid-cols-2 lg:grid-cols-4 partner-kpi-grid">
+                <div class="stats-card partner-kpi-card">
+                    <p class="partner-kpi-label">团队总交易额</p>
+                    <h3 id="drill-team-vol" class="partner-kpi-value">—</h3>
                 </div>
-                <div class="stats-card border-l-4 border-l-blue-600">
-                    <p class="text-gray-400 font-bold mb-2 text-blue-600">总返佣收入 (本期预估)</p>
-                    <h3 id="drill-total-rebate" class="text-3xl font-black text-gray-900">—</h3>
-                    <div class="mt-3 grid grid-cols-3 gap-1 text-[9px] font-black uppercase text-gray-400 border-t pt-3 border-gray-50">
-                        <div>自返佣: <span id="drill-self-rebate" class="text-gray-900">—</span></div>
-                        <div>直客: <span id="drill-direct-rebate" class="text-gray-900">—</span></div>
-                        <div class="text-blue-600">级差: <span id="drill-gap-rebate">—</span></div>
+                <div class="stats-card partner-kpi-card border-l-4 border-l-blue-600">
+                    <p class="partner-kpi-label text-blue-600">总返佣收入 (本期预估)</p>
+                    <h3 id="drill-total-rebate" class="partner-kpi-value text-gray-900">—</h3>
+                    <div class="partner-kpi-breakdown grid grid-cols-2">
+                        <div>自返佣: <span id="drill-self-rebate">—</span></div>
+                        <div>直客: <span id="drill-direct-rebate">—</span></div>
+                        <div class="col-span-2 text-blue-600">级差: <span id="drill-gap-rebate">—</span></div>
                     </div>
                 </div>
-                <div class="stats-card">
-                    <p class="text-gray-400 font-bold mb-2">团队净入金</p>
-                    <h3 id="drill-team-net" class="text-3xl font-black text-green-500">—</h3>
-                    <p class="text-[10px] text-gray-400 mt-2">包含下级穿透数据</p>
+                <div class="stats-card partner-kpi-card">
+                    <p class="partner-kpi-label"><span class="user-scale-hint-wrap"><span class="user-scale-hint-label">团队净入金</span><span class="user-scale-hint-pop" role="tooltip">团队净入金数据每天 UTC+8 0 点更新</span></span></p>
+                    <h3 id="drill-team-net" class="partner-kpi-value text-green-500">—</h3>
+                    <p class="partner-kpi-sub">包含下级穿透数据</p>
                 </div>
-                <div class="stats-card">
-                    <p class="text-gray-400 font-bold mb-2">用户规模</p>
-                    <h3 id="drill-users-active" class="text-3xl font-black text-gray-900">— <span class="text-base font-bold text-gray-600">交易用户</span></h3>
-                    <p id="drill-users-total" class="text-[10px] text-gray-400 mt-2 font-bold">— 总用户</p>
-                </div>
-            </div>
-
-            <div id="drill-abnormal-banner" class="hidden bg-amber-50 border-l-4 border-amber-500 p-4 rounded shadow-sm">
-                <div class="flex items-start gap-3">
-                    <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                        <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                    </svg>
-                    <p id="drill-abnormal-text" class="text-amber-900 font-bold text-[12px] leading-relaxed"></p>
+                <div class="stats-card partner-kpi-card">
+                    <p class="partner-kpi-label"><span class="user-scale-hint-wrap"><span class="user-scale-hint-label">用户规模</span><span class="user-scale-hint-pop" role="tooltip">交易用户数据每天 UTC+8 0 点更新</span></span></p>
+                    <h3 id="drill-users-active" class="partner-kpi-value text-gray-900">—</h3>
+                    <p id="drill-users-total" class="partner-kpi-sub font-bold">—</p>
                 </div>
             </div>
 
@@ -427,11 +660,10 @@
                         <select id="drill-sub-partner-status-filter" onchange="PartnerCenter.setDrillSubFilter(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[10px] font-bold text-gray-700 outline-none focus:ring-1 focus:ring-black cursor-pointer">
                             <option value="all">全部结算状态</option>
                             <option value="normal">正常</option>
-                            <option value="direct_inversion">返佣比例倒挂（直属下级）</option>
-                            <option value="team_tree_abnormal">团队返佣树异常</option>
+                            <option value="frozen">冻结待结算</option>
                         </select>
                         <div class="relative">
-                            <input type="text" id="drill-sub-partner-search" placeholder="搜索地址..." oninput="PartnerCenter.setDrillSubSearch(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[11px] w-40 outline-none focus:ring-1 focus:ring-black">
+                            <input type="text" id="drill-sub-partner-search" placeholder="搜索 UID / 钱包 / 邮箱..." oninput="PartnerCenter.setDrillSubSearch(this.value)" class="bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[11px] w-48 outline-none focus:ring-1 focus:ring-black">
                         </div>
                     </div>
                 </div>
@@ -457,10 +689,10 @@
             <div class="flex justify-between items-end">
                 <div>
                     <h1 class="text-2xl font-black tracking-tight">邀请链接管理</h1>
-                    <p class="text-gray-400 font-medium">您可以創建多個邀請連結用於不同渠道的推廣效果追蹤。</p>
+                    <p class="text-gray-400 font-medium">创建多个邀请链接用于渠道推广追踪；使用中链接最多 50 个，可停用不再使用的链接。</p>
                 </div>
                 <button onclick="openReferralModal('create')" id="links-create-count" class="bg-blue-600 text-white px-6 py-2.5 rounded-sm font-black text-[11px] hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">
-                    + 創建新連結 (已用 12/50)
+                    + 創建新連結 (使用中 11/50)
                 </button>
             </div>
 
@@ -480,12 +712,12 @@
                     <div class="flex flex-col">
                         <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">默認邀請碼</span>
                         <div class="flex items-center space-x-3 mt-1">
-                            <span class="text-[12px] font-black text-gray-900">E6DL28G</span>
+                            <span class="text-[12px] font-black text-gray-900">E6DL28GX</span>
                             <button class="text-blue-600 font-bold text-[10px] uppercase hover:underline">複製</button>
                         </div>
                     </div>
                 </div>
-                <button onclick="toggleModal('modal-share')" class="flex items-center space-x-2 bg-black text-white px-4 py-2 rounded-sm hover:bg-gray-800 transition">
+                <button type="button" onclick="openSharePoster('E6DL28GX')" class="flex items-center space-x-2 bg-black text-white px-4 py-2 rounded-sm hover:bg-gray-800 transition">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                     <span class="text-[11px] font-black uppercase tracking-wider">分享海報</span>
                 </button>
@@ -514,6 +746,7 @@
                 <div id="links-pagination"></div>
             </div>
         </div>
+
     </main>
 </div>
 
@@ -526,22 +759,27 @@
         </div>
         <div class="p-8 space-y-6">
             <div class="space-y-2">
-                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">下级钱包地址 / UID</label>
-                <input type="text" id="input-add-agent-wallet" placeholder="0x..." class="w-full border border-gray-200 p-3 rounded-sm outline-none focus:border-blue-600 font-bold">
+                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">下级 UID</label>
+                <input type="text" id="input-add-agent-uid" placeholder="输入 UID" class="w-full border border-gray-200 p-3 rounded-sm outline-none focus:border-blue-600 font-bold">
+                <p class="text-[10px] text-gray-400 font-bold">绑定后将按 UID 关联用户；钱包或邮箱登录用户均适用。</p>
+            </div>
+            <div class="space-y-2">
+                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">合伙人备注</label>
+                <input type="text" id="input-add-agent-remark" placeholder="例如：渠道-小王" class="w-full border border-gray-200 p-3 rounded-sm outline-none focus:border-blue-600 font-bold">
             </div>
             <div class="space-y-2">
                 <div class="flex justify-between items-center">
                     <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">配置返佣比例</label>
                     <span id="rebate-display" class="text-sm font-black text-blue-600">50%</span>
                 </div>
-                <input type="range" min="0" max="70" step="5" value="50" oninput="updateRangeValue(this.value)" class="w-full accent-black cursor-pointer">
-                <div class="flex justify-between text-[9px] font-bold text-gray-300"><span>0%</span><span>MAX: 70%</span></div>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="input-add-agent-ratio" min="0" max="70" step="1" value="50" oninput="onAddAgentRatioInput(this.value)" class="w-20 bg-gray-100 border-none rounded-sm px-3 py-1.5 text-[13px] font-black text-center outline-none focus:ring-1 focus:ring-black">
+                    <span class="text-sm font-bold text-gray-400">%</span>
+                    <input type="range" id="input-add-agent-slider" min="0" max="70" step="1" value="50" oninput="onAddAgentRatioInput(this.value)" class="flex-1 accent-black cursor-pointer">
+                </div>
+                <div class="flex justify-between text-[9px] font-bold text-gray-300"><span>0%</span><span id="add-agent-ratio-max">最高 70%</span></div>
             </div>
-            <div class="space-y-2">
-                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">备注名称</label>
-                <input type="text" class="w-full border border-gray-200 p-3 rounded-sm outline-none focus:border-blue-600 font-bold">
-            </div>
-            <button onclick="alert('绑定成功'); toggleModal('modal-add-agent')" class="w-full bg-black text-white py-4 rounded-sm font-black uppercase hover:bg-gray-800 transition shadow-xl">确认绑定下级</button>
+            <button onclick="submitAddAgent()" class="w-full bg-black text-white py-4 rounded-sm font-black uppercase hover:bg-gray-800 transition shadow-xl">确认绑定下级</button>
         </div>
     </div>
 </div>
@@ -584,7 +822,7 @@
             <div class="flex justify-between items-end relative z-10 pt-4">
                 <div class="space-y-2">
                     <p class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">我的邀請碼</p>
-                    <p class="text-2xl font-black tracking-[0.1em] text-white font-mono">E6DL28G</p>
+                    <p id="share-poster-code" class="text-2xl font-black tracking-[0.1em] text-white font-mono">E6DL28GX</p>
                 </div>
                 <div class="w-16 h-16 bg-white p-1 rounded-lg flex items-center justify-center">
                     <svg class="w-full h-full text-black" fill="currentColor" viewBox="0 0 24 24">
@@ -621,21 +859,21 @@
                        class="w-full border border-gray-200 p-3 rounded-sm outline-none focus:border-blue-600 font-bold text-[13px] transition-colors">
             </div>
 
-            <!-- 2. 自定義邀請碼 (必须 6 位) -->
+            <!-- 2. 自定義邀請碼 (必须 7 位) -->
             <div class="space-y-2" id="code-input-container">
                 <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest flex justify-between">
                     自定義邀請碼
-                    <span class="text-red-500 font-black">必须 6 位</span>
+                    <span class="text-red-500 font-black">必须 7 位</span>
                 </label>
                 <div class="relative">
-                    <input type="text" id="input-link-code" placeholder="请输入 6 位字母或数字" maxlength="6"
+                    <input type="text" id="input-link-code" placeholder="请输入 7 位字母或数字" maxlength="7"
                            class="w-full border border-gray-200 p-3 rounded-sm outline-none focus:border-blue-600 font-mono font-black text-[15px] uppercase transition-colors">
                     <div id="code-lock-icon" class="hidden absolute right-3 top-3 text-gray-300">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
                     </div>
                 </div>
                 <p id="code-hint" class="text-[9px] text-gray-400 font-medium leading-relaxed">
-                    * 创建时必须输入 6 位邀请码，支持字母与数字组合。
+                    * 创建时必须输入 7 位邀请码，支持字母与数字组合。
                 </p>
             </div>
 
@@ -679,7 +917,7 @@
                     <span class="text-sm font-bold text-gray-400">%</span>
                     <input type="range" id="adjust-ratio-slider" min="0" max="70" step="1" value="50" oninput="PartnerCenter.onAdjustRatioInput(this.value)" class="flex-1 accent-black cursor-pointer">
                 </div>
-                <div class="flex justify-between text-[9px] font-bold text-gray-300"><span>0%</span><span>MAX: 70%</span></div>
+                <div class="flex justify-between text-[9px] font-bold text-gray-300"><span>0%</span><span>最高 70%</span></div>
             </div>
             <div id="adjust-ratio-warning" class="hidden bg-amber-50 border border-amber-200 rounded-sm p-3 text-[11px] text-amber-800 font-medium leading-relaxed"></div>
             <button type="button" onclick="PartnerCenter.submitAdjustRatio()" class="w-full bg-black text-white py-3.5 rounded-sm font-black uppercase hover:bg-gray-800 transition shadow-xl">确认调整</button>
@@ -705,7 +943,32 @@
     </div>
 </div>
 
-<script src="partner-center-user.js"></script>
+<!-- 弹窗：返佣流水明细 -->
+<div id="modal-commission-trades" class="modal-overlay" onclick="closeModalOnSide(event, 'modal-commission-trades')">
+    <div class="bg-white rounded-sm shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col mx-4" onclick="event.stopPropagation()">
+        <div class="p-5 border-b border-gray-100 flex items-start justify-between gap-4 shrink-0">
+            <p id="commission-trades-modal-title" class="text-sm font-black text-gray-900">—</p>
+            <span class="cursor-pointer text-gray-400 hover:text-black font-bold shrink-0" onclick="toggleModal('modal-commission-trades')">✕</span>
+        </div>
+        <div class="overflow-x-auto flex-1">
+            <table class="w-full text-left">
+                <thead class="bg-gray-50 text-[10px] text-gray-400 font-black uppercase">
+                    <tr>
+                        <th class="px-5 py-3">交易时间</th>
+                        <th class="px-5 py-3 text-right">交易金额</th>
+                        <th class="px-5 py-3 text-right">手续费(USDC)</th>
+                        <th class="px-5 py-3 text-right">返佣比例/级差比例</th>
+                        <th class="px-5 py-3 text-right text-blue-600">返佣金额</th>
+                    </tr>
+                </thead>
+                <tbody id="commission-trades-modal-body" class="divide-y divide-gray-50 text-[11px] font-medium"></tbody>
+            </table>
+        </div>
+        <div id="commission-trades-modal-pagination" class="border-t border-gray-50 shrink-0"></div>
+    </div>
+</div>
+
+<script src="partner-center-user.js?v=partner-user-52"></script>
 <script>
     // 切换数据表格 (下级代理 vs 直客)
     function switchTable(tableId) {
@@ -724,6 +987,12 @@
         if (window.PartnerCenter && PartnerCenter.onTableSwitch) PartnerCenter.onTableSwitch(tableId);
     }
 
+    function openSharePoster(code) {
+        var el = document.getElementById('share-poster-code');
+        if (el) el.textContent = code || 'E6DL28GX';
+        toggleModal('modal-share');
+    }
+
     function toggleModal(id) {
         const modal = document.getElementById(id);
         modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
@@ -733,8 +1002,22 @@
         if (e.target.id === id) toggleModal(id);
     }
 
-    function updateRangeValue(val) {
+    function onAddAgentRatioInput(val) {
+        val = Math.max(0, Math.min(70, parseInt(val, 10) || 0));
         document.getElementById('rebate-display').innerText = val + '%';
+        var input = document.getElementById('input-add-agent-ratio');
+        var slider = document.getElementById('input-add-agent-slider');
+        if (input) input.value = val;
+        if (slider) slider.value = val;
+    }
+
+    function submitAddAgent() {
+        var uid = (document.getElementById('input-add-agent-uid').value || '').trim();
+        var remark = (document.getElementById('input-add-agent-remark').value || '').trim();
+        var ratio = parseInt(document.getElementById('input-add-agent-ratio').value, 10) || 0;
+        if (!uid) { alert('请填写 UID'); return; }
+        alert('已提交绑定申请：UID ' + uid + (remark ? ' · ' + remark : '') + ' · 比例 ' + ratio + '%');
+        toggleModal('modal-add-agent');
     }
 
     // 查看团队 → 无限穿透（脱敏）
@@ -745,31 +1028,41 @@
     }
 
     function showMainPage(pageId) {
-        const pages = ['page-links', 'page-overview', 'page-settlement', 'page-drill-overview'];
+        const pages = ['page-links', 'page-overview', 'page-analytics', 'page-settlement', 'page-commission-detail', 'page-drill-overview'];
         pages.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.classList.add('hidden');
         });
 
-        // 2. 顯示目標頁面
         document.getElementById(pageId).classList.remove('hidden');
 
-        // 3. 更新側邊欄按鈕樣式
         const sidebarBtns = {
             'page-links': 'sidebar-links',
             'page-overview': 'sidebar-overview',
+            'page-analytics': 'sidebar-analytics',
             'page-drill-overview': 'sidebar-overview',
-            'page-settlement': 'sidebar-settlement'
+            'page-settlement': 'sidebar-settlement',
+            'page-commission-detail': 'sidebar-settlement'
         };
 
         const activeBtnId = sidebarBtns[pageId];
+        const partnerSubActive = pageId === 'page-analytics';
 
-        ['sidebar-links', 'sidebar-overview', 'sidebar-settlement'].forEach(id => {
+        ['sidebar-links', 'sidebar-overview', 'sidebar-analytics', 'sidebar-settlement'].forEach(id => {
             const btn = document.getElementById(id);
-            if (id === activeBtnId) {
-                btn.className = "sidebar-btn-active w-full text-left px-4 py-3 rounded font-black transition-all";
+            if (!btn) return;
+            if (id === 'sidebar-overview') {
+                btn.className = (activeBtnId === 'sidebar-overview')
+                    ? 'sidebar-btn-active w-full text-left px-4 py-3 rounded font-black transition-all'
+                    : 'w-full text-left px-4 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all';
+            } else if (id === 'sidebar-analytics') {
+                btn.className = partnerSubActive
+                    ? 'partner-nav-sub partner-nav-sub-active w-full text-left px-4 py-2.5 rounded transition-all'
+                    : 'partner-nav-sub w-full text-left px-4 py-2.5 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all';
+            } else if (id === activeBtnId) {
+                btn.className = 'sidebar-btn-active w-full text-left px-4 py-3 rounded font-black transition-all';
             } else {
-                btn.className = "w-full text-left px-4 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all";
+                btn.className = 'w-full text-left px-4 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded transition-all';
             }
         });
 
@@ -779,10 +1072,14 @@
     }
 
     let currentModalMode = 'create'; // 'create' or 'edit'
-    const existingCodes = ['E6DL28G', 'FORX99', 'YT2024', 'DSC001', 'ASIA01', 'EUR002', 'SZ2405', 'SG2406', 'KOL003', 'MED001', 'MED002', 'VIRAL1'];
+    const existingCodes = ['E6DL28GX', 'FORX99A', 'YT2024A', 'DSC001A', 'ASIA01A', 'EUR002A', 'SZ2405A', 'SG2406A', 'KOL003A', 'MED001A', 'MED002A', 'VIRAL1A'];
 
     // 打開彈窗：支持創建或修改
     function openReferralModal(mode, remark = '', code = '') {
+        if (mode === 'create' && window.PartnerCenter && !PartnerCenter.canCreateInviteLink()) {
+            alert('使用中链接已达上限 50 个，请先停用其他链接后再创建。');
+            return;
+        }
         currentModalMode = mode;
         const titleEl = document.getElementById('referral-modal-title');
         const remarkInput = document.getElementById('input-link-remark');
@@ -813,8 +1110,8 @@
         toggleModal('modal-referral-link');
     }
 
-    // 生成 6 位隨機邀請碼的函數（仅演示备用）
-    function generateRandomCode(length = 6) {
+    // 生成 7 位隨機邀請碼的函數（仅演示备用）
+    function generateRandomCode(length = 7) {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         let result = '';
         for (let i = 0; i < length; i++) {
@@ -836,12 +1133,12 @@
         }
 
         if (currentModalMode === 'create') {
-            if (!code || code.length !== 6) {
-                alert("請輸入 6 位邀請碼");
+            if (!code || code.length !== 7) {
+                alert("請輸入 7 位邀請碼");
                 return;
             }
-            if (!/^[A-Z0-9]{6}$/.test(code)) {
-                alert("邀請碼僅支持 6 位字母或數字");
+            if (!/^[A-Z0-9]{7}$/.test(code)) {
+                alert("邀請碼僅支持 7 位字母或數字");
                 return;
             }
             if (existingCodes.includes(code)) {
@@ -850,7 +1147,10 @@
             }
             existingCodes.push(code);
             if (window.PartnerCenter && PartnerCenter.addInviteLink) {
-                PartnerCenter.addInviteLink(remark, code);
+                if (!PartnerCenter.addInviteLink(remark, code)) {
+                    existingCodes.pop();
+                    return;
+                }
             }
             alert('創建成功！\n備註：' + remark + '\n邀請碼：' + code);
         } else {
