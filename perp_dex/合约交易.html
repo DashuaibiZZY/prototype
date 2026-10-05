@@ -2266,17 +2266,18 @@
             </div>
         </div>
         <div class="p-6 overflow-y-auto flex-1 min-h-0 space-y-4">
-            <div class="flex justify-between items-center text-[11px] pb-3 border-b border-gray-50">
+            <div id="pos-tpsl-summary" class="flex justify-between items-center text-[11px] pb-3 border-b border-gray-50 shrink-0">
                 <div class="space-y-1"><p class="text-gray-400 font-bold uppercase">開倉均價</p><p class="font-black text-gray-900">700.00</p></div>
                 <div class="space-y-1 text-center"><p class="text-gray-400 font-bold uppercase">當前標記價</p><p class="font-black text-blue-600">658.28</p></div>
                 <div class="space-y-1 text-right"><p class="text-gray-400 font-bold uppercase">持倉數量</p><p class="font-black text-gray-900">0.142 BNB</p></div>
             </div>
+            <div id="pos-tpsl-main-view" class="space-y-3">
             <div id="pos-tpsl-modal-list" class="space-y-3">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <span class="text-[12px] font-black text-gray-900">止盈止损委托 <span class="text-gray-500">(2)</span></span>
                     <div class="flex items-center gap-2">
                         <button type="button" onclick="showProtoToast('已撤销全部止盈止损委托')" class="px-3 py-1.5 text-[10px] font-black text-red-500 border border-red-100 rounded-sm hover:bg-red-50">全部撤单</button>
-                        <button type="button" onclick="showProtoToast('继续添加止盈止损')" class="px-3 py-1.5 text-[10px] font-black text-white bg-black rounded-sm hover:bg-gray-800">继续添加</button>
+                        <button type="button" onclick="openPosTpslForm('add')" class="px-3 py-1.5 text-[10px] font-black text-white bg-black rounded-sm hover:bg-gray-800">继续添加</button>
                     </div>
                 </div>
                 <div class="pos-tpsl-order-block">
@@ -2284,7 +2285,7 @@
                         <td class="font-mono">300.00 <span class="text-gray-400 font-bold">(最新)</span></td><td>市价</td>
                         <td class="font-mono">80.00 <span class="text-gray-400 font-bold">(最新)</span></td><td>市价</td>
                         <td class="font-mono whitespace-nowrap">8.87 USDT</td>
-                        <td class="whitespace-nowrap"><button type="button" class="text-blue-600 font-black mr-2" onclick="showProtoToast('修改')">修改</button><button type="button" class="text-red-500 font-black" onclick="showProtoToast('撤单')">撤单</button></td>
+                        <td class="whitespace-nowrap"><button type="button" class="text-blue-600 font-black mr-2" onclick="openPosTpslForm('edit')">修改</button><button type="button" class="text-red-500 font-black" onclick="showProtoToast('撤单')">撤单</button></td>
                     </tr></tbody></table>
                     <p class="pos-tpsl-est-row">预估收益 (USDT) <span class="pos">+12.12</span><span class="text-gray-300">/</span><span class="neg">-3.28</span></p>
                 </div>
@@ -2293,7 +2294,7 @@
                         <td class="font-mono">250.00 <span class="text-gray-400 font-bold">(最新)</span></td><td>市价</td>
                         <td class="text-gray-300">--</td><td class="text-gray-300">--</td>
                         <td class="font-mono whitespace-nowrap">8.87 USDT</td>
-                        <td class="whitespace-nowrap"><button type="button" class="text-blue-600 font-black mr-2" onclick="showProtoToast('修改')">修改</button><button type="button" class="text-red-500 font-black" onclick="showProtoToast('撤单')">撤单</button></td>
+                        <td class="whitespace-nowrap"><button type="button" class="text-blue-600 font-black mr-2" onclick="openPosTpslForm('edit')">修改</button><button type="button" class="text-red-500 font-black" onclick="showProtoToast('撤单')">撤单</button></td>
                     </tr></tbody></table>
                     <p class="pos-tpsl-est-row">预估收益 (USDT) <span class="pos">+8.62</span><span class="text-gray-300">/</span><span class="text-gray-400">--</span></p>
                 </div>
@@ -2301,7 +2302,87 @@
             <div id="pos-tpsl-modal-empty" class="hidden space-y-4 py-6 text-center">
                 <p class="text-[12px] font-black text-gray-900 text-left">止盈止损委托</p>
                 <p class="text-[11px] font-bold text-gray-400">无止盈止损单</p>
-                <button type="button" onclick="showProtoToast('立即添加')" class="mx-auto px-8 py-2.5 bg-black text-white text-[11px] font-black rounded-sm hover:bg-gray-800">立即添加</button>
+                <button type="button" onclick="openPosTpslForm('add')" class="mx-auto px-8 py-2.5 bg-black text-white text-[11px] font-black rounded-sm hover:bg-gray-800">立即添加</button>
+            </div>
+            </div>
+            <div id="pos-tpsl-form-view" class="hidden space-y-6 pt-2">
+                <button type="button" onclick="closePosTpslForm()" class="flex items-center gap-1 text-[10px] font-black text-gray-500 hover:text-black uppercase tracking-wide">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    返回
+                </button>
+                <p id="pos-tpsl-form-title" class="text-[12px] font-black text-gray-900 -mt-2">添加止盈止损</p>
+                <div id="pos-tp-container" class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label class="text-[11px] font-black text-gray-400 uppercase tracking-widest flex items-center">
+                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-2"></span>止盈
+                        </label>
+                        <div class="flex bg-gray-100 p-0.5 rounded-sm">
+                            <button type="button" onclick="switchOrderType('tp', 'market')" id="tp-btn-market" class="px-3 py-0.5 text-[9px] font-bold bg-white shadow-sm rounded-sm">市價</button>
+                            <button type="button" onclick="switchOrderType('tp', 'limit')" id="tp-btn-limit" class="px-3 py-0.5 text-[9px] font-bold text-gray-400">限價</button>
+                        </div>
+                    </div>
+                    <div class="flex items-center border border-gray-200 rounded-sm focus-within:border-black transition-all">
+                        <input type="number" placeholder="止盈觸發價格" class="flex-1 px-3 py-2 text-[12px] font-black outline-none font-mono">
+                        <select class="bg-gray-50 text-[10px] font-bold px-2 py-2.5 border-r border-gray-200 outline-none"><option>標記價格</option><option>最新價格</option></select>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] px-1">
+                        <span class="text-gray-400 font-bold uppercase">預估收益</span>
+                        <span class="text-green-500 font-black font-mono">+0.00 USDC</span>
+                    </div>
+                    <div id="tp-limit-input" class="hidden"><input type="number" placeholder="限價成交價格" class="w-full border border-blue-200 bg-blue-50/30 px-3 py-2 text-[12px] font-black rounded-sm outline-none"></div>
+                </div>
+                <div id="pos-sl-container" class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label class="text-[11px] font-black text-gray-400 uppercase tracking-widest flex items-center">
+                            <span class="w-1.5 h-1.5 bg-red-500 rounded-full mr-2"></span>止損
+                        </label>
+                        <div class="flex bg-gray-100 p-0.5 rounded-sm">
+                            <button type="button" onclick="switchOrderType('sl', 'market')" id="sl-btn-market" class="px-3 py-0.5 text-[9px] font-bold bg-white shadow-sm rounded-sm">市價</button>
+                            <button type="button" onclick="switchOrderType('sl', 'limit')" id="sl-btn-limit" class="px-3 py-0.5 text-[9px] font-bold text-gray-400">限價</button>
+                        </div>
+                    </div>
+                    <div class="flex items-center border border-gray-200 rounded-sm focus-within:border-black transition-all">
+                        <input type="number" placeholder="止損觸發價格" class="flex-1 px-3 py-2 text-[12px] font-black outline-none font-mono">
+                        <select class="bg-gray-50 text-[10px] font-bold px-2 py-2.5 border-r border-gray-200 outline-none"><option>標記價格</option><option>最新價格</option></select>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] px-1">
+                        <span class="text-gray-400 font-bold uppercase">預估收益</span>
+                        <span class="text-red-500 font-black font-mono">-0.00 USDC</span>
+                    </div>
+                    <div id="sl-limit-input" class="hidden"><input type="number" placeholder="限價成交價格" class="w-full border border-red-200 bg-red-50/30 px-3 py-2 text-[12px] font-black rounded-sm outline-none"></div>
+                </div>
+                <div id="quantity-section" class="space-y-4 pt-4 border-t border-gray-50">
+                    <div class="flex justify-between items-end">
+                        <label class="text-[11px] font-black text-gray-400 uppercase tracking-widest">數量</label>
+                        <p class="text-[10px] font-bold text-gray-400">倉位數量 <span class="text-black font-mono">0.142 BNB</span></p>
+                    </div>
+                    <div class="relative flex items-center border border-gray-200 rounded-sm focus-within:border-black transition-all bg-white overflow-hidden">
+                        <input type="number" value="0.142" class="flex-1 px-3 py-2.5 text-[12px] font-black outline-none font-mono">
+                        <span class="px-3 text-[10px] font-black text-gray-400 border-l border-gray-100 bg-slate-50/50 italic">BNB</span>
+                    </div>
+                    <div class="pos-close-slider-wrap pos-close-slider-wrap--tpsl">
+                        <div class="pos-close-slider-rail">
+                            <div class="pos-close-slider-ticks" aria-hidden="true">
+                                <span class="pos-close-slider-tick"></span>
+                                <span class="pos-close-slider-tick"></span>
+                                <span class="pos-close-slider-tick"></span>
+                                <span class="pos-close-slider-tick"></span>
+                                <span class="pos-close-slider-tick"></span>
+                            </div>
+                            <input type="range" id="tpsl-qty-slider" class="pos-close-slider-input" min="0" max="100" step="25" value="100"
+                                oninput="setTpslQtyPct(Number(this.value))">
+                        </div>
+                        <div class="pos-close-slider-labels"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+                    </div>
+                    <div class="flex justify-end">
+                        <p class="text-[10px] font-medium text-gray-400 uppercase tracking-tighter">預估總價值: <span class="text-gray-900 font-black font-mono">≈ 93.47 USDC</span></p>
+                    </div>
+                </div>
+                <div class="pt-2">
+                    <button type="button" onclick="openTPSLConfirm()" class="w-full bg-black text-white py-3.5 rounded-sm font-black uppercase tracking-[0.2em] hover:bg-gray-800 transition shadow-xl shadow-black/10">
+                        確認設置
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -3700,13 +3781,34 @@
 
     function setPosTpslModalState(state) {
         posTpslModalDemoState = state === 'empty' ? 'empty' : 'list';
+        closePosTpslForm();
         const listEl = document.getElementById('pos-tpsl-modal-list');
         const emptyEl = document.getElementById('pos-tpsl-modal-empty');
         if (listEl) listEl.classList.toggle('hidden', posTpslModalDemoState === 'empty');
         if (emptyEl) emptyEl.classList.toggle('hidden', posTpslModalDemoState !== 'empty');
     }
 
+    function openPosTpslForm(mode) {
+        const mainEl = document.getElementById('pos-tpsl-main-view');
+        const formEl = document.getElementById('pos-tpsl-form-view');
+        const titleEl = document.getElementById('pos-tpsl-form-title');
+        if (mainEl) mainEl.classList.add('hidden');
+        if (formEl) formEl.classList.remove('hidden');
+        if (titleEl) titleEl.textContent = mode === 'edit' ? '修改止盈止损' : '添加止盈止损';
+        switchOrderType('tp', 'market');
+        switchOrderType('sl', 'market');
+        setTpslQtyPct(100);
+    }
+
+    function closePosTpslForm() {
+        const mainEl = document.getElementById('pos-tpsl-main-view');
+        const formEl = document.getElementById('pos-tpsl-form-view');
+        if (mainEl) mainEl.classList.remove('hidden');
+        if (formEl) formEl.classList.add('hidden');
+    }
+
     function openPosTpslModal() {
+        closePosTpslForm();
         setPosTpslModalState(posTpslModalDemoState);
         toggleModal('modal-tpsl');
     }
@@ -3812,8 +3914,15 @@
     }
 
     function executeTPSL() {
-        alert("止盈止損訂單已下單！");
-        toggleModal('modal-tpsl-confirm');
+        const confirmModal = document.getElementById('modal-tpsl-confirm');
+        if (confirmModal) {
+            confirmModal.style.display = 'none';
+            confirmModal.classList.add('hidden');
+        }
+        closePosTpslForm();
+        if (posTpslModalDemoState === 'empty') setPosTpslModalState('list');
+        if (typeof showNotification === 'function') showNotification('止盈止損已提交');
+        else alert('止盈止損訂單已下單！');
     }
 
     // ==================== 下半区表格 ====================
