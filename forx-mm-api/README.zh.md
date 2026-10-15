@@ -44,7 +44,7 @@ sign = base64.b64encode(
 
 ### 示例
 
-以下脚本通过环境变量读取凭证：
+运行前设置环境变量：
 
 | 变量 | 说明 |
 | --- | --- |
@@ -53,38 +53,151 @@ sign = base64.b64encode(
 | `FORX_SECRET_KEY` | Secret Key |
 | `FORX_PASSPHRASE` | 口令 |
 
-#### cURL 下单
+#### `curl_place_order.sh`
 
-[`examples/curl_place_order.sh`](./examples/curl_place_order.sh) 生成毫秒时间戳，对 `POST` + `/mm/trade/order` + JSON body 签名，并提交一笔**限价开多**委托。
-
-```bash
-export FORX_MM_BASE=https://your-mm-gateway.example
-export FORX_API_KEY=your-api-key
-export FORX_SECRET_KEY=your-secret-key
-export FORX_PASSPHRASE=your-passphrase
-
-chmod +x examples/curl_place_order.sh
-./examples/curl_place_order.sh
-```
-
-#### Python 签名与请求
-
-[`examples/sign_and_request.py`](./examples/sign_and_request.py) 提供 `sign()`、`request()`（仅标准库）。执行 `main()` 依次调用：
-
-1. `GET /mm/ping`（无需鉴权）
-2. `POST /mm/trade/order`（限价开多，字段与 curl 示例一致）
-3. `GET /mm/trade/orders-pending?product_name=BTC-USDT-SWAP`
-4. `GET /mm/account/trading-assets`
+保存为 `curl_place_order.sh`，`chmod +x` 后执行。对 `POST /mm/trade/order` 签名并提交**限价开多**委托。
 
 ```bash
-export FORX_API_KEY=your-api-key
-export FORX_SECRET_KEY=your-secret-key
-export FORX_PASSPHRASE=your-passphrase
+#!/usr/bin/env bash
+# Place-order curl example
+set -euo pipefail
 
-python3 examples/sign_and_request.py
+BASE_URL="${FORX_MM_BASE:-http://localhost:8080}"
+API_KEY="${FORX_API_KEY:?set FORX_API_KEY}"
+SECRET_KEY="${FORX_SECRET_KEY:?set FORX_SECRET_KEY}"
+PASSPHRASE="${FORX_PASSPHRASE:?set FORX_PASSPHRASE}"
+
+METHOD="POST"
+PATH_ONLY="/mm/trade/order"
+BODY='{"product_name":"BTC-USDT-SWAP","cl_ord_id":"mm-curl-1","side":"buy","pos_side":"long","ord_type":"limit","trade_unit":"size","px":"65000","sz":"1"}'
+TS="$(python3 -c 'import time; print(int(time.time()*1000))')"
+
+SIGN="$(
+  TS="$TS" METHOD="$METHOD" PATH_ONLY="$PATH_ONLY" BODY="$BODY" SECRET_KEY="$SECRET_KEY" python3 - <<'PY'
+import base64, hashlib, hmac, os
+ts = os.environ["TS"]
+method = os.environ["METHOD"]
+path = os.environ["PATH_ONLY"]
+body = os.environ["BODY"]
+secret = os.environ["SECRET_KEY"]
+prehash = f"{ts}{method}{path}{body}"
+print(base64.b64encode(hmac.new(secret.encode(), prehash.encode(), hashlib.sha256).digest()).decode())
+PY
+)"
+
+curl -sS -X POST "${BASE_URL}${PATH_ONLY}" \
+  -H "Content-Type: application/json" \
+  -H "FORX-ACCESS-KEY: ${API_KEY}" \
+  -H "FORX-ACCESS-SIGN: ${SIGN}" \
+  -H "FORX-ACCESS-TIMESTAMP: ${TS}" \
+  -H "FORX-ACCESS-PASSPHRASE: ${PASSPHRASE}" \
+  -d "${BODY}"
+echo
 ```
 
-带 query 的 `GET` 请求，签名原文中的 `requestPath` 须包含完整查询串（脚本中 `orders-pending` 已按此处理）。
+#### `sign_and_request.py`
+
+保存为 `sign_and_request.py`，执行 `python3 sign_and_request.py`。仅标准库。`main()` 依次：`GET /mm/ping`（不鉴权）→ `POST /mm/trade/order` → `GET /mm/trade/orders-pending?product_name=...` → `GET /mm/account/trading-assets`。带 query 的 GET 须在签名原文中包含完整 `requestPath`（含 `?` 后参数）。
+
+```python
+#!/usr/bin/env python3
+"""FORX MM API — HMAC auth and basic request examples (OKX-style)."""
+
+from __future__ import annotations
+
+import base64
+import hashlib
+import hmac
+import json
+import os
+import time
+from typing import Any, Optional
+from urllib.parse import urlencode
+
+import urllib.request
+
+BASE_URL = os.getenv("FORX_MM_BASE", "http://localhost:8080")
+API_KEY = os.getenv("FORX_API_KEY", "your-api-key")
+SECRET_KEY = os.getenv("FORX_SECRET_KEY", "your-secret-key")
+PASSPHRASE = os.getenv("FORX_PASSPHRASE", "your-passphrase")
+
+
+def sign(timestamp: str, method: str, request_path: str, body: str, secret: str) -> str:
+    """prehash = timestamp + METHOD + requestPath + body → Base64(HMAC-SHA256)."""
+    prehash = f"{timestamp}{method.upper()}{request_path}{body}"
+    digest = hmac.new(secret.encode(), prehash.encode(), hashlib.sha256).digest()
+    return base64.b64encode(digest).decode()
+
+
+def request(
+    method: str,
+    path: str,
+    *,
+    query: Optional[dict[str, Any]] = None,
+    body: Any = None,
+    auth: bool = True,
+) -> dict:
+    request_path = path
+    if query:
+        request_path = f"{path}?{urlencode({k: v for k, v in query.items() if v is not None})}"
+
+    body_str = ""
+    if body is not None:
+        body_str = json.dumps(body, separators=(",", ":"), ensure_ascii=False)
+
+    headers = {"Content-Type": "application/json"}
+    if auth:
+        # Prefer 13-digit millisecond timestamp (also supports seconds / RFC3339)
+        ts = str(int(time.time() * 1000))
+        headers.update(
+            {
+                "FORX-ACCESS-KEY": API_KEY,
+                "FORX-ACCESS-SIGN": sign(ts, method, request_path, body_str, SECRET_KEY),
+                "FORX-ACCESS-TIMESTAMP": ts,
+                "FORX-ACCESS-PASSPHRASE": PASSPHRASE,
+            }
+        )
+
+    req = urllib.request.Request(
+        f"{BASE_URL}{request_path}",
+        data=body_str.encode() if body_str else None,
+        headers=headers,
+        method=method.upper(),
+    )
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return json.loads(resp.read().decode())
+
+
+def main() -> None:
+    # 1) Public endpoint
+    print("GET /mm/ping =>", request("GET", "/mm/ping", auth=False))
+
+    # 2) Place order (limit open long)
+    order = {
+        "product_name": "BTC-USDT-SWAP",
+        "cl_ord_id": f"mm-{int(time.time())}",
+        "side": "buy",
+        "pos_side": "long",
+        "ord_type": "limit",
+        "trade_unit": "size",
+        "px": "65000",
+        "sz": "1",
+    }
+    print("POST /mm/trade/order =>", request("POST", "/mm/trade/order", body=order))
+
+    # 3) Query open orders
+    print(
+        "GET /mm/trade/orders-pending =>",
+        request("GET", "/mm/trade/orders-pending", query={"product_name": "BTC-USDT-SWAP"}),
+    )
+
+    # 4) Trading account assets
+    print("GET /mm/account/trading-assets =>", request("GET", "/mm/account/trading-assets"))
+
+
+if __name__ == "__main__":
+    main()
+```
 
 鉴权失败 HTTP `401`，`msg` 为：
 
