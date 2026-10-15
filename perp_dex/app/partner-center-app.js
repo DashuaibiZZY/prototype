@@ -133,18 +133,18 @@
     };
 
     const inviteLinksData = [
-        { remark: '預設連結', code: 'E6DL28GX', directCount: 124, subPartnerCount: 42, totalVol: 5200000, totalFee: 5200, rebateIncome: 3640, netDeposit: 420000, isDefault: true, disabled: false },
-        { remark: '推特推廣-01', code: 'FORX99A', directCount: 12, subPartnerCount: 0, totalVol: 850000, totalFee: 850, rebateIncome: 595, netDeposit: 62000, isDefault: false, disabled: false },
-        { remark: 'YouTube-KOL', code: 'YT2024A', directCount: 56, subPartnerCount: 3, totalVol: 2100000, totalFee: 2100, rebateIncome: 1470, netDeposit: 185000, isDefault: false, disabled: false },
-        { remark: 'Discord社群', code: 'DSC001A', directCount: 89, subPartnerCount: 5, totalVol: 1680000, totalFee: 1680, rebateIncome: 1176, netDeposit: 92000, isDefault: false, disabled: false },
-        { remark: '亞洲渠道-A', code: 'ASIA01A', directCount: 34, subPartnerCount: 2, totalVol: 980000, totalFee: 980, rebateIncome: 686, netDeposit: 45000, isDefault: false, disabled: false },
-        { remark: '歐洲渠道-B', code: 'EUR002A', directCount: 21, subPartnerCount: 1, totalVol: 720000, totalFee: 720, rebateIncome: 504, netDeposit: 38000, isDefault: false, disabled: false },
-        { remark: '線下活動-深圳', code: 'SZ2405A', directCount: 45, subPartnerCount: 0, totalVol: 560000, totalFee: 560, rebateIncome: 392, netDeposit: 28000, isDefault: false, disabled: false },
-        { remark: '線下活動-新加坡', code: 'SG2406A', directCount: 18, subPartnerCount: 0, totalVol: 430000, totalFee: 430, rebateIncome: 301, netDeposit: 22000, isDefault: false, disabled: false },
-        { remark: 'KOL合作-03', code: 'KOL003A', directCount: 67, subPartnerCount: 4, totalVol: 1450000, totalFee: 1450, rebateIncome: 1015, netDeposit: 76000, isDefault: false, disabled: false },
-        { remark: '媒體投放-01', code: 'MED001A', directCount: 9, subPartnerCount: 0, totalVol: 320000, totalFee: 320, rebateIncome: 224, netDeposit: 15000, isDefault: false, disabled: false },
-        { remark: '媒體投放-02', code: 'MED002A', directCount: 14, subPartnerCount: 0, totalVol: 410000, totalFee: 410, rebateIncome: 287, netDeposit: 19000, isDefault: false, disabled: true },
-        { remark: '社群裂變', code: 'VIRAL1A', directCount: 102, subPartnerCount: 6, totalVol: 2890000, totalFee: 2890, rebateIncome: 2023, netDeposit: 156000, isDefault: false, disabled: false }
+        { remark: '預設連結', code: 'E6DL28GX', directCount: 124, subPartnerCount: 42, totalVol: 5200000, totalFee: 5200, rebateIncome: 3640, netDeposit: 420000, isDefault: true },
+        { remark: '推特推廣-01', code: 'FORX99A', directCount: 12, subPartnerCount: 0, totalVol: 850000, totalFee: 850, rebateIncome: 595, netDeposit: 62000, isDefault: false },
+        { remark: 'YouTube-KOL', code: 'YT2024A', directCount: 56, subPartnerCount: 3, totalVol: 2100000, totalFee: 2100, rebateIncome: 1470, netDeposit: 185000, isDefault: false },
+        { remark: 'Discord社群', code: 'DSC001A', directCount: 89, subPartnerCount: 5, totalVol: 1680000, totalFee: 1680, rebateIncome: 1176, netDeposit: 92000, isDefault: false },
+        { remark: '亞洲渠道-A', code: 'ASIA01A', directCount: 34, subPartnerCount: 2, totalVol: 980000, totalFee: 980, rebateIncome: 686, netDeposit: 45000, isDefault: false },
+        { remark: '歐洲渠道-B', code: 'EUR002A', directCount: 21, subPartnerCount: 1, totalVol: 720000, totalFee: 720, rebateIncome: 504, netDeposit: 38000, isDefault: false },
+        { remark: '線下活動-深圳', code: 'SZ2405A', directCount: 45, subPartnerCount: 0, totalVol: 560000, totalFee: 560, rebateIncome: 392, netDeposit: 28000, isDefault: false },
+        { remark: '線下活動-新加坡', code: 'SG2406A', directCount: 18, subPartnerCount: 0, totalVol: 430000, totalFee: 430, rebateIncome: 301, netDeposit: 22000, isDefault: false },
+        { remark: 'KOL合作-03', code: 'KOL003A', directCount: 67, subPartnerCount: 4, totalVol: 1450000, totalFee: 1450, rebateIncome: 1015, netDeposit: 76000, isDefault: false },
+        { remark: '媒體投放-01', code: 'MED001A', directCount: 9, subPartnerCount: 0, totalVol: 320000, totalFee: 320, rebateIncome: 224, netDeposit: 15000, isDefault: false },
+        { remark: '媒體投放-02', code: 'MED002A', directCount: 14, subPartnerCount: 0, totalVol: 410000, totalFee: 410, rebateIncome: 287, netDeposit: 19000, isDefault: false },
+        { remark: '社群裂變', code: 'VIRAL1A', directCount: 102, subPartnerCount: 6, totalVol: 2890000, totalFee: 2890, rebateIncome: 2023, netDeposit: 156000, isDefault: false }
     ];
 
     const existingCodesList = inviteLinksData.map(function (r) { return r.code; });
@@ -916,10 +916,6 @@
         return '<span class="text-gray-400 text-[10px]">—</span>';
     }
 
-    function countActiveInviteLinks() {
-        return inviteLinksData.filter(function (r) { return !r.disabled; }).length;
-    }
-
     function findSubPartner(id) {
         return subPartnersData.find(function (r) { return r.id === id; });
     }
@@ -1068,7 +1064,7 @@ function renderLinks() {
     const scale = PERIOD_SCALE[linksPeriod] || 1;
     const summary = document.getElementById('links-summary');
     if (summary) {
-        summary.innerHTML = '<div class="summary-bar"><span>返佣比例 ' + myPartnerProfile.ratio + '%</span><span>使用中 ' + countActiveInviteLinks() + '/50</span></div>';
+        summary.innerHTML = '<div class="summary-bar"><span>返佣比例 ' + myPartnerProfile.ratio + '%</span></div>';
     }
     let filtered = inviteLinksData.filter(function (row) {
         if (!linksSearch) return true;
@@ -1084,15 +1080,12 @@ function renderLinks() {
             const fee = row.totalFee * scale;
             const rebate = row.rebateIncome * scale;
             const linkUrl = 'https://forx.finance/?ref=' + row.code;
-            const statusBadge = row.disabled
-                ? '<span class="status-badge off">已停用</span>'
-                : '<span class="status-badge on">使用中</span>';
-            const disabledAttr = row.disabled ? ' disabled' : '';
-            const shareBtn = '<button type="button" class="icon-btn"' + disabledAttr + clickHandler('openShare', row.code) + '>' +
+            const defaultBadge = row.isDefault ? '<span class="status-badge on">默认</span>' : '';
+            const shareBtn = '<button type="button" class="icon-btn"' + clickHandler('openShare', row.code) + '>' +
                 '<svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg></button>';
-            return '<div class="list-card' + (row.disabled ? ' opacity-60' : '') + '">' +
+            return '<div class="list-card">' +
                 '<div class="flex justify-between items-start mb-2 gap-2">' +
-                '<div class="min-w-0 flex-1"><div class="flex items-center gap-2 flex-wrap"><p class="font-black text-[13px]">' + esc(row.remark) + '</p>' + statusBadge + '</div>' +
+                '<div class="min-w-0 flex-1"><div class="flex items-center gap-2 flex-wrap"><p class="font-black text-[13px]">' + esc(row.remark) + '</p>' + defaultBadge + '</div>' +
                 '<p class="font-mono text-blue-600 text-[11px] font-bold mt-1">' + esc(row.code) +
                 ' <button type="button" class="text-gray-400 ml-1 inline-flex"' + clickHandler('copyText', row.code, '邀请码') + '><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg></button></p></div>' +
                 shareBtn + '</div>' +
@@ -1100,12 +1093,9 @@ function renderLinks() {
                 metricCell('直邀', fmtNum(row.directCount)) + metricCell('下级合伙人', fmtNum(row.subPartnerCount)) + metricCell('交易额', fmtCompactMoney(vol)) +
                 metricCell('手续费', fmtMoney(fee)) + metricCell('返佣', fmtMoney(rebate)) + metricCell('净入金', fmtCompactMoney(row.netDeposit, { signed: true })) +
                 '</div>' +
-                cardActionsRow(3,
-                    '<button type="button" class="action-btn primary"' + disabledAttr + clickHandler('copyText', linkUrl, '邀请链接') + '>复制链接</button>' +
-                    '<button type="button" class="action-btn"' + clickHandler('editLinkRemark', row.code) + '>修改</button>' +
-                    (row.isDefault && !row.disabled
-                        ? '<span class="action-btn-static">默认</span>'
-                        : '<button type="button" class="action-btn danger"' + clickHandler('toggleLink', row.code) + '>' + (row.disabled ? '启用' : '停用') + '</button>')
+                cardActionsRow(2,
+                    '<button type="button" class="action-btn primary"' + clickHandler('copyText', linkUrl, '邀请链接') + '>复制链接</button>' +
+                    '<button type="button" class="action-btn"' + clickHandler('editLinkRemark', row.code) + '>修改</button>'
                 ) +
                 '</div>';
         }).join('') || '<p class="text-center text-gray-400 text-[11px] py-8 font-bold">暂无链接</p>';
@@ -1648,10 +1638,6 @@ function renderCommissionFilterSheet() {
         setDrillTable: function (table) { drillActiveTable = table; renderDrill(); },
 
         openCreateLink: function () {
-            if (countActiveInviteLinks() >= 50) {
-                showToast('使用中链接已达上限 50 个');
-                return;
-            }
             document.getElementById('create-link-remark').value = '';
             document.getElementById('create-link-code').value = '';
             openSheet('sheet-create-link');
@@ -1662,8 +1648,7 @@ function renderCommissionFilterSheet() {
             if (!remark) { showToast('请填写备注名称'); return; }
             if (!/^[A-Z0-9]{7}$/.test(code)) { showToast('邀请码须为 7 位字母或数字'); return; }
             if (existingCodesList.indexOf(code) >= 0) { showToast('邀请码已存在'); return; }
-            if (countActiveInviteLinks() >= 50) { showToast('使用中链接已达上限 50 个'); return; }
-            inviteLinksData.push({ remark: remark, code: code, directCount: 0, subPartnerCount: 0, totalVol: 0, totalFee: 0, rebateIncome: 0, netDeposit: 0, isDefault: false, disabled: false });
+            inviteLinksData.push({ remark: remark, code: code, directCount: 0, subPartnerCount: 0, totalVol: 0, totalFee: 0, rebateIncome: 0, netDeposit: 0, isDefault: false });
             existingCodesList.push(code);
             linksPage = 1;
             closeAllSheets();
@@ -1700,32 +1685,6 @@ function renderCommissionFilterSheet() {
             closeAllSheets();
             renderLinks();
             showToast('备注已更新');
-        },
-
-        toggleLink: function (code) {
-            const row = inviteLinksData.find(function (r) { return r.code === code; });
-            if (!row) return;
-            if (row.isDefault && !row.disabled) {
-                showToast('默认邀请链接不可停用');
-                return;
-            }
-            if (row.disabled) {
-                if (countActiveInviteLinks() >= 50) {
-                    showToast('使用中链接已达上限 50 个');
-                    return;
-                }
-                openConfirmDialog('启用链接', '确认启用链接「' + row.remark + '」？启用后将占用一个使用中名额。', function () {
-                    row.disabled = false;
-                    renderLinks();
-                    showToast('链接已启用');
-                });
-            } else {
-                openConfirmDialog('停用链接', '确认停用链接「' + row.remark + '」？停用后新用户将无法通过该链接注册。', function () {
-                    row.disabled = true;
-                    renderLinks();
-                    showToast('链接已停用');
-                });
-            }
         },
 
         openAddPartner: function () {
