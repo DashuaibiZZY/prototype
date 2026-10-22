@@ -1,9 +1,8 @@
-# FORX Market Maker API
+# FORX Market Maker REST API
 
-中文：[`README.zh.md`](./README.zh.md)  
-OpenAPI spec: [`openapi.yaml`](./openapi.yaml)  
-
-Preview with Swagger UI / Redoc / Stoplight.
+Back to index: [`README.md`](./README.md)  
+中文：[`../rest-api.md`](../rest-api.md)  
+OpenAPI (if provided): [`../openapi.yaml`](../openapi.yaml)
 
 ---
 

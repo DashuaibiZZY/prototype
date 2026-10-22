@@ -1,9 +1,8 @@
-# FORX 做市接口
+# FORX 做市 REST API
 
-英文文档：[`README.md`](./README.md)  
-OpenAPI：[`openapi.yaml`](./openapi.yaml)
-
-可用 Swagger UI / Redoc / Stoplight 打开 `openapi.yaml`。
+返回目录：[`README.md`](./README.md)  
+英文：[`en/rest-api.md`](./en/rest-api.md)  
+OpenAPI（若有）：[`openapi.yaml`](./openapi.yaml)
 
 ---
 
