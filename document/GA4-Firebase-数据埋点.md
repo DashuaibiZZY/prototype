@@ -112,19 +112,50 @@
 
 ### 3\.3 P1 事件（示例，按需删减）
 
+活动、卡券、积分、邀请返佣、合伙人等运营向埋点以 **§3.4** 为准；本节仅保留未列入 §3.4 的扩展项。
+
 | event_name | 中文说明 | 触发时机 | Web | Android | iOS | 参数（全部必填） | 关键事件 |
 |---|---|---|---|---|---|---|---|
-| `invite_share` | 邀请分享 | 用户触发分享或复制邀请链接 | ✓ | ✓ | ✓ | `channel`（string）【分享渠道】。取值：`link` / `poster` | 否 |
-| `campaign_view` | 活动曝光 | 活动详情页展示 | ✓ | ✓ | ✓ | `campaign_id`（string）【活动 ID】<br>`entry_source`【进入活动页入口】 | 否 |
-| `campaign_join` | 参与活动 | 报名或参与成功 | ✓ | ✓ | ✓ | `campaign_id`（string）【活动 ID】 | 否 |
-| `coupon_redeem` | 卡券使用 | 卡券核销成功 | ✓ | ✓ | ✓ | `coupon_type`（string）【卡券类型】。与卡券中心类型枚举一致 | 否 |
-| `partner_center_view` | 合伙人中心 | 进入合伙人中心 Hub | ✓ | ✓ | ✓ | `entry_source`【进入合伙人中心入口】 | 否 |
-
-### 3\.4 待补充（产品填写）
-
-| event_name | 中文说明 | 触发时机 | Web | Android | iOS | 参数 | 关键事件 |
-|---|---|---|---|---|---|---|---|
 | | | | | | | | |
+
+### 3\.4 运营类事件
+
+**公共参数（本节复用）**
+
+| 参数名 | 含义 | 取值 |
+|---|---|---|
+| `entry_source` | 进入当前页/弹窗的上级入口 | 同 §3.2；无法识别时传 `unknown` |
+| `campaign_id` | 活动 ID | 与活动中心/详情后台 ID 一致 |
+| `coupon_id` | 卡券 ID | 卡券实例或模板 ID（与卡券中心列表一致） |
+| `share_channel` | 分享形式 | `poster` / `link` / `system_share`（系统分享面板）/ `other` |
+
+| event_name | 中文说明 | 触发时机 | Web | Android | iOS | 参数（全部必填） | 关键事件 |
+|---|---|---|---|---|---|---|---|
+| `coupon_page_view` | 卡券页预览 | 卡券中心/我的卡券页首屏展示 | ✓ | ✓ | ✓ | `entry_source`【进入卡券页入口】 | 否 |
+| `coupon_use_click` | 卡券页点击使用 | 用户点击卡券「使用」按钮（点击即报，不等核销结果） | ✓ | ✓ | ✓ | `coupon_id`【卡券 ID】<br>`entry_source`【当前页入口，固定为卡券页路由时可传 `coupon_page`】 | 否 |
+| `points_page_view` | 积分页预览 | 积分中心页首屏展示 | ✓ | ✓ | ✓ | `entry_source`【进入积分页入口】 | 否 |
+| `points_share_click` | 积分页点击分享 | 用户点击积分页分享按钮 | ✓ | ✓ | ✓ | `share_channel`【分享形式】<br>`entry_source`【固定传 `points_page`】 | 否 |
+| `invite_rebate_page_view` | 邀请返佣页预览 | 邀请返佣主页面首屏展示 | ✓ | ✓ | ✓ | `entry_source`【进入邀请返佣页入口】 | 否 |
+| `invite_rebate_share_click` | 邀请返佣页点击分享 | 用户点击邀请返佣页分享按钮 | ✓ | ✓ | ✓ | `share_channel`【分享形式】<br>`entry_source`【固定传 `invite_rebate_page`】 | 否 |
+| `invite_rebate_link_copy_click` | 邀请返佣页点击复制链接 | 用户点击复制邀请链接按钮且复制动作触发 | ✓ | ✓ | ✓ | `entry_source`【固定传 `invite_rebate_page`】 | 否 |
+| `invite_friend_detail_page_view` | 邀请好友明细页预览 | 邀请好友明细/记录页首屏展示 | — | ✓ | ✓ | `entry_source`【进入明细页入口】 | 否 |
+| `activity_center_page_view` | 活动中心页预览 | 活动中心列表页首屏展示 | ✓ | ✓ | ✓ | `entry_source`【进入活动中心入口】 | 否 |
+| `activity_detail_page_view` | 活动详情页预览 | 单个活动详情页首屏展示 | ✓ | ✓ | ✓ | `campaign_id`【活动 ID】<br>`entry_source`【进入详情页入口】 | 否 |
+| `activity_detail_join_click` | 活动详情页点击报名 | 用户点击活动详情页「报名/参与」按钮（点击即报） | ✓ | ✓ | ✓ | `campaign_id`【活动 ID】<br>`entry_source`【固定传 `activity_detail_page`】 | 否 |
+| `my_activity_page_view` | 我的活动页预览 | 「我的活动」列表页首屏展示 | ✓ | ✓ | ✓ | `entry_source`【进入我的活动页入口】 | 否 |
+| `activity_reward_records_modal_view` | 活动奖励记录弹窗预览 | 打开活动奖励记录弹窗并展示内容 | ✓ | ✓ | ✓ | `entry_source`【触发弹窗的入口，如 `my_activity_page` / `activity_detail_page`】 | 否 |
+| `partner_invite_links_page_view` | 合伙人邀请链接管理页预览 | 合伙人邀请链接管理页首屏展示 | ✓ | ✓ | ✓ | `entry_source`【进入该页入口】 | 否 |
+| `partner_share_click` | 合伙人点击分享 | 合伙人模块内点击分享按钮 | ✓ | ✓ | ✓ | `share_channel`【分享形式】<br>`entry_source`【当前合伙人子页面路由或模块名】 | 否 |
+| `partner_link_copy_click` | 合伙人点击复制链接 | 合伙人模块内点击复制邀请/推广链接 | ✓ | ✓ | ✓ | `entry_source`【当前合伙人子页面路由或模块名】 | 否 |
+| `partner_manage_page_view` | 合伙人管理页预览 | 合伙人管理/团队管理主页首屏展示 | ✓ | ✓ | ✓ | `entry_source`【进入合伙人管理页入口】 | 否 |
+| `partner_team_drill_page_view` | 合伙人穿透团队页预览 | 下级团队穿透/钻取页首屏展示 | ✓ | ✓ | ✓ | `entry_source`【从管理页哪个节点进入】 | 否 |
+| `partner_add_sub_partner_submit` | 合伙人新增下级提交 | 新增下级合伙人表单校验通过并提交成功 | ✓ | ✓ | ✓ | `entry_source`【提交表单的页面，如 `partner_manage_page`】 | 否 |
+| `partner_adjust_rebate_ratio_submit` | 合伙人调整返佣比例提交 | 调整下级返佣比例并提交成功 | ✓ | ✓ | ✓ | `entry_source`【提交表单的页面】 | 否 |
+| `partner_team_analytics_page_view` | 合伙人团队数据分析页预览 | 团队数据分析页首屏展示 | ✓ | ✓ | ✓ | `entry_source`【进入数据分析页入口】 | 否 |
+| `partner_commission_manage_page_view` | 合伙人佣金管理页预览 | 佣金管理列表页首屏展示 | ✓ | ✓ | ✓ | `entry_source`【进入佣金管理页入口】 | 否 |
+| `partner_commission_detail_page_view` | 合伙人佣金详情页预览 | 单笔/单期佣金详情页首屏展示 | ✓ | ✓ | ✓ | `entry_source`【进入佣金详情页入口】 | 否 |
+| `partner_trade_rebate_flow_modal_view` | 合伙人交易返佣流水弹窗预览 | Web 打开交易返佣流水弹窗并展示 | ✓ | — | — | `entry_source`【触发弹窗的页面或控件】 | 否 |
+| `partner_trade_rebate_flow_page_view` | 合伙人交易返佣流水页预览 | App 交易返佣流水全屏/独立页首屏展示 | — | ✓ | ✓ | `entry_source`【进入流水页入口】 | 否 |
 
 ---
 
@@ -243,7 +274,7 @@ Analytics.logEvent("analytics_test", parameters: ["platform": "ios"])
 | 步骤 | 负责人 | 通过标准 |
 |---|---|---|
 | 各端上报 `analytics_test` | 开发 | DebugView（App）或 GA4 实时（Web）可见 |
-| §3.1 P0、§3.2 合约事件按字典实现 | 开发 | 产品抽测 1 条真实路径，参数与表一致 |
+| §3.1 P0、§3.2 合约、§3.4 运营事件按字典实现 | 开发 | 产品抽测 1 条真实路径，参数与表一致 |
 | 标关键事件 | 产品 + 数据 | GA4 管理 → 事件 → 将表中「关键事件=是」项标记 |
 | 隐私 | 法务 / 产品 | 隐私政策已披露；参数无 PII |
 
@@ -257,3 +288,4 @@ Analytics.logEvent("analytics_test", parameters: ["platform": "ios"])
 | 2026-10-21 | 0.2 | 新增 §3.2 合约交易事件表（Web/App 分端浏览与下单类） |
 | 2026-10-21 | 0.3 | 参数全部必填；补充中文含义与取值；§3.2 增加公共枚举表 |
 | 2026-10-22 | 0.4 | §3.2 公共参数与 `order_type` / `close_ratio` 取值对齐产品；平仓三事件合并为 `contract_close_order_submit` + `close_order_location`；下单失败去掉 `fail_reason` |
+| 2026-10-22 | 0.5 | 新增 §3.4 运营类事件（卡券/积分/邀请返佣/活动/合伙人）；原 §3.3 示例中与 §3.4 重复项下线 |
