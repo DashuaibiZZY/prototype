@@ -1,26 +1,36 @@
-# FORX Market Maker Integration
+# Notification Integration Guide
 
-Documentation for market maker (MM) **REST** and **WebSocket** (public / private).
+Market data and trading notification integration for external teams, covering REST API, public WebSocket, and private WebSocket.
 
-| Doc | Description |
-| --- | --- |
-| [`rest-api.md`](./rest-api.md) | REST: auth, endpoints, examples, enums |
-| [`public-ws.md`](./public-ws.md) | Public WebSocket: market data subscriptions |
-| [`private-ws.md`](./private-ws.md) | Private WebSocket: orders, positions, account |
-| [`../README.md`](../README.md) | 中文目录 |
+| Document | Description |
+|------|------|
+| [REST API](./rest-api.md) | HTTP market data queries |
+| [Public WebSocket](./public-ws.md) | Market subscribe and pull without login |
+| [Private WebSocket](./private-ws.md) | Login, private channels, place / cancel / amend orders |
 
-## Examples
+中文：[`../README.md`](../README.md)
 
-| File | Description |
-| --- | --- |
-| [`../examples/curl_place_order.sh`](../examples/curl_place_order.sh) | Signed `curl` place order |
-| [`../examples/sign_and_request.py`](../examples/sign_and_request.py) | Python signing and sample REST calls |
+## Basics
 
-## Environment variables
+| Item | Description |
+|------|------|
+| Path prefix | `/notification` |
+| Default HTTP port | `8080` (per deployment) |
+| REST example | `https://{host}/notification/tickers` |
+| Public WS | `wss://{host}/notification/public` |
+| Private WS | `wss://{host}/notification/private` |
 
-| Variable | Description |
-| --- | --- |
-| `FORX_MM_BASE` | REST base URL |
-| `FORX_MM_WS_PUBLIC` | Public WS URL — see `public-ws.md` |
-| `FORX_MM_WS_PRIVATE` | Private WS URL — see `private-ws.md` |
-| `FORX_API_KEY` / `FORX_SECRET_KEY` / `FORX_PASSPHRASE` | API credentials |
+Local development:
+
+```text
+http://localhost:8080/notification/tickers
+ws://localhost:8080/notification/public
+ws://localhost:8080/notification/private
+```
+
+## Conventions
+
+- `symbol` / `product_name` are case-insensitive; use uppercase consistently, e.g. `BTC-USDT`.
+- Amount and price fields may be strings or JSON numbers; the server applies instrument precision.
+- Timestamps: use **Unix seconds** for REST / WS historical candle pulls; WS heartbeat `ping` / `pong` use **milliseconds**.
+- UTF-8 encoding; WebSocket text frames (JSON).
