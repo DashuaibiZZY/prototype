@@ -77,22 +77,20 @@
 | 参数名 | 含义 | 取值 |
 |---|---|---|
 | `entry_source` | 进入当前页/弹窗的上级入口 | 各端路由名或模块名，如 `markets` / `home` / `trade` / `position_tab`；无法识别时统一传 `unknown` |
-| `symbol` | 合约交易对 | 与行情、下单一致，如 `BTC-USDT` |
-| `side` | 买卖方向（开平仓方向口径与交易 PRD 一致） | `buy` / `sell` |
-| `order_type` | 委托类型 | `limit` / `market` / `advanced`（与产品委托类型枚举一致，无则传 `other`） |
+| `symbol` | 合约交易对 | 与行情、下单一致，如 `BTCUSDC` |
+| `side` | 买卖方向 | `buy` / `sell` |
+| `order_type` | 委托类型 | `limit` / `market` / `TPSL` / `Post_Only` / `FOK` / `IOC` |
 | `position_side` | 持仓方向 | `long` / `short` |
-| `close_ratio` | 平仓数量占该仓位可平数量的比例 | number，`0`–`100`；全平传 `100` |
+| `close_ratio` | 平仓数量占该仓位可平数量的比例 | number；全平传 `-` |
 | `error_code` | 失败错误码 | 接口返回码；仅前端拦截无码时传 `client_validation` |
-| `fail_reason` | 失败说明 | 简短英文或 snake_case 原因，如 `insufficient_margin`；接口失败可与 `error_code` 同值 |
+| `close_order_location` | 平仓下单位置 | `trade_terminal`（交易终端内）/ `position_tab_standard`（持仓 Tab 标准平仓弹窗或表单）/ `position_tab_quick`（持仓 Tab 快捷平仓） |
 
 | event_name | 中文说明 | 触发时机 | Web | Android | iOS | 参数（全部必填） | 关键事件 |
 |---|---|---|---|---|---|---|---|
 | `trade_page_view` | 交易页面浏览 | 合约交易主页面首屏就绪，或切换交易对后新 `symbol` 页面就绪 | ✓ | ✓ | ✓ | `symbol`（string）【当前交易对】<br>`entry_source`（string）【进入交易页的入口】 | 否 |
 | `contract_order_submit` | 合约下单 | 开仓/加仓类委托被交易系统接受（非平仓单） | ✓ | ✓ | ✓ | `symbol`【交易对】<br>`side`【买卖方向】<br>`order_type`【委托类型】<br>`position_side`【持仓方向】 | 是 |
-| `contract_order_submit_fail` | 下单失败 | 委托未形成有效订单（前端拦截或接口拒绝） | ✓ | ✓ | ✓ | `symbol`【交易对】<br>`error_code`【错误码】<br>`fail_reason`【失败原因】 | 否 |
-| `terminal_close_order_submit` | 交易终端平仓下单 | 在**交易终端**内提交平仓委托且被接受 | ✓ | ✓ | ✓ | `symbol`【交易对】<br>`close_ratio`【平仓比例】<br>`order_type`【委托类型】 | 否 |
-| `position_close_order_submit` | 持仓管理标准平仓下单 | **持仓 Tab** 标准平仓弹窗/表单提交且被接受 | ✓ | ✓ | ✓ | `symbol`【交易对】<br>`close_ratio`【平仓比例】<br>`order_type`【委托类型】 | 否 |
-| `position_quick_close_submit` | 持仓管理标准快捷下单 | **持仓 Tab** 快捷平仓入口提交且被接受 | ✓ | ✓ | ✓ | `symbol`【交易对】<br>`close_ratio`【平仓比例】 | 否 |
+| `contract_order_submit_fail` | 下单失败 | 委托未形成有效订单（前端拦截或接口拒绝） | ✓ | ✓ | ✓ | `symbol`【交易对】<br>`error_code`【错误码】 | 否 |
+| `contract_close_order_submit` | 平仓下单 | 平仓委托被交易系统接受（交易终端、持仓 Tab 标准平仓、持仓 Tab 快捷平仓统一上报） | ✓ | ✓ | ✓ | `symbol`【交易对】<br>`order_type`【委托类型】<br>`close_order_location`【平仓下单位置】 | 否 |
 | `position_close_all_submit` | 一键平仓 | 一键平仓请求被系统接受 | ✓ | ✓ | ✓ | `symbol_count`（number）【本次平仓涉及的交易对个数】。仅平当前页交易对传 `1`；平多个传实际个数 | 是 |
 | `position_share_click` | 点击持仓分享 | 点击持仓盈亏分享/海报入口 | ✓ | ✓ | ✓ | `symbol`【交易对】<br>`share_channel`（string）【分享形式】。取值：`poster` / `link` / `other` | 否 |
 | `order_modify_submit` | 修改委托 | 修改未成交委托且保存成功 | ✓ | ✓ | ✓ | `symbol`【交易对】<br>`order_id`（string）【订单 ID】。传系统内部订单号，勿传钱包/邮箱 | 否 |
@@ -160,14 +158,20 @@ iOS     → Firebase Analytics → 数据流 16171023830
 
 ```javascript
 gtag('event', 'contract_order_submit', {
-  symbol: 'BTC-USDT',
+  symbol: 'BTCUSDC',
   side: 'buy',
   order_type: 'limit',
   position_side: 'long'
 });
 
+gtag('event', 'contract_close_order_submit', {
+  symbol: 'BTCUSDC',
+  order_type: 'market',
+  close_order_location: 'position_tab_quick'
+});
+
 gtag('event', 'trade_page_view', {
-  symbol: 'BTC-USDT',
+  symbol: 'BTCUSDC',
   entry_source: 'markets'
 });
 
@@ -252,3 +256,4 @@ Analytics.logEvent("analytics_test", parameters: ["platform": "ios"])
 | 2026-10-21 | 0.1 | 初版：环境信息 + P0/P1 事件字典模板 + 三端示例 |
 | 2026-10-21 | 0.2 | 新增 §3.2 合约交易事件表（Web/App 分端浏览与下单类） |
 | 2026-10-21 | 0.3 | 参数全部必填；补充中文含义与取值；§3.2 增加公共枚举表 |
+| 2026-10-22 | 0.4 | §3.2 公共参数与 `order_type` / `close_ratio` 取值对齐产品；平仓三事件合并为 `contract_close_order_submit` + `close_order_location`；下单失败去掉 `fail_reason` |
