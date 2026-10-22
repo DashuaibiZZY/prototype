@@ -1,63 +1,36 @@
-# FORX Market Maker API
+# Notification Integration Guide
 
-中文总览：[`../README.md`](../README.md)  
-OpenAPI: [`../openapi.yaml`](../openapi.yaml)
+Market data and trading notification integration for external teams, covering REST API, public WebSocket, and private WebSocket.
 
-Preview `openapi.yaml` with Swagger UI / Redoc / Stoplight.
+| Document | Description |
+|------|------|
+| [REST API](./rest-api.md) | HTTP market data queries |
+| [Public WebSocket](./public-ws.md) | Market subscribe and pull without login |
+| [Private WebSocket](./private-ws.md) | Login, private channels, place / cancel / amend orders |
 
----
+中文：[`../README.md`](../README.md)
 
-## Documentation
+## Basics
 
-| File | Description |
-| --- | --- |
-| **README.md** | Index (this page) |
-| [**rest-api.md**](./rest-api.md) | REST: auth, endpoints, examples, enums |
-| [**public-ws.md**](./public-ws.md) | Public WebSocket |
-| [**private-ws.md**](./private-ws.md) | Private WebSocket |
+| Item | Description |
+|------|------|
+| Path prefix | `/notification` |
+| Default HTTP port | `8080` (per deployment) |
+| REST example | `https://{host}/notification/tickers` |
+| Public WS | `wss://{host}/notification/public` |
+| Private WS | `wss://{host}/notification/private` |
 
----
+Local development:
 
-## Overview
-
-| Channel | Use |
-| --- | --- |
-| **REST** | Place/cancel orders, queries, transfers |
-| **Public WS** | Market data streams |
-| **Private WS** | Account order/fill/position updates |
-
-Private WS login uses the same API key material as REST (see `rest-api.md` and `private-ws.md`).
-
----
-
-## Authentication (summary)
-
-REST calls (except health) require `FORX-ACCESS-KEY`, `FORX-ACCESS-SIGN`, `FORX-ACCESS-TIMESTAMP`, `FORX-ACCESS-PASSPHRASE`.
-
-```
-prehash = timestamp + METHOD + requestPath + body
+```text
+http://localhost:8080/notification/tickers
+ws://localhost:8080/notification/public
+ws://localhost:8080/notification/private
 ```
 
-Full signing rules, scripts, and error messages: **[rest-api.md](./rest-api.md)** (Authentication section).
+## Conventions
 
----
-
-## Examples
-
-| File | Description |
-| --- | --- |
-| [`../examples/curl_place_order.sh`](../examples/curl_place_order.sh) | Signed `curl` limit open-long |
-| [`../examples/sign_and_request.py`](../examples/sign_and_request.py) | Python: ping → order → open orders → assets |
-
-Environment variables: `FORX_MM_BASE`, `FORX_API_KEY`, `FORX_SECRET_KEY`, `FORX_PASSPHRASE`.  
-WebSocket URLs: see `public-ws.md` / `private-ws.md`.
-
----
-
-## REST response envelope
-
-```json
-{ "code": 0, "msg": "success", "data": {}, "fd": "..." }
-```
-
-Details: [rest-api.md § Response format](./rest-api.md#response-format).
+- `symbol` / `product_name` are case-insensitive; use uppercase consistently, e.g. `BTC-USDT`.
+- Amount and price fields may be strings or JSON numbers; the server applies instrument precision.
+- Timestamps: use **Unix seconds** for REST / WS historical candle pulls; WS heartbeat `ping` / `pong` use **milliseconds**.
+- UTF-8 encoding; WebSocket text frames (JSON).
