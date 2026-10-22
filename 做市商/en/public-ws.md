@@ -1,121 +1,490 @@
-# FORX Market Maker Public WebSocket
+# Public WebSocket
 
-Back to index: [`README.md`](./README.md)  
 中文：[`../public-ws.md`](../public-ws.md)
 
-Public channels do **not** require REST auth headers. Use them for tickers, order book, trades, mark/index price, funding rate, etc.
-
----
+No login required. Use it to subscribe to real-time market data or pull snapshot data on demand.
 
 ## Connection
 
-| Item | Description |
-| --- | --- |
-| URL | Provided by operations; example `wss://{host}/mm/ws/public` (`FORX_MM_WS_PUBLIC`) |
-| Protocol | WebSocket, **text frames**, UTF-8 JSON |
-| Compression | Per gateway config if enabled |
+```text
+wss://{host}/notification/public
+```
 
-On disconnect: reconnect with backoff and **re-subscribe** all channels.
+Local example: `ws://localhost:8080/notification/public`
+
+### On connect (server may push first)
+
+```json
+{"pong": 1710000000000}
+```
 
 ---
 
 ## Heartbeat
 
-Client (interval ≤ 30s unless server specifies otherwise):
+### Server push
 
 ```json
-{ "op": "ping" }
+{"ping": 1710000000123}
 ```
 
-Server:
+### Client reply (within about 30 seconds)
 
 ```json
-{ "op": "pong" }
+{"pong": 1710000000123}
 ```
 
-If no `pong` within the server timeout, close and reconnect.
+The connection is closed if no reply is received in time.
+
+---
+
+## Common format
+
+### Client request
+
+```json
+{
+  "event": "sub",
+  "params": {}
+}
+```
+
+| `event` | Description |
+|---------|------|
+| `sub` | Subscribe to a channel |
+| `unsub` | Unsubscribe |
+| `req` | One-shot fetch (rate limited) |
+
+### Error response
+
+```json
+{
+  "id": "1710000000",
+  "event": "error",
+  "code": "500",
+  "msg": "params error",
+  "args": []
+}
+```
+
+Rate limit example:
+
+```json
+{
+  "id": "1710000000",
+  "event": "error",
+  "code": "500",
+  "msg": "too many requests",
+  "args": []
+}
+```
 
 ---
 
 ## Subscribe / unsubscribe
 
-**Subscribe**
+### Supported channel `type`
+
+| type | Description | Extra parameters |
+|------|------|----------|
+| `ticker` | Single-symbol ticker | `symbol` |
+| `tickers` | All-market overview | None |
+| `overview` | Single-symbol overview | `symbol` |
+| `fills` / `trade` | Trade stream | `symbol` |
+| `orderbook` | Order book depth | `symbol`, `interval` |
+| `percent10` | Depth view | `symbol` |
+| `position` | Market position stats | `symbol` |
+| `market-candles` | Market candles | `symbol`, `interval` |
+| `index-candles` | Index candles | `symbol`, `interval` |
+| `mark-candles` | Mark candles | `symbol`, `interval` |
+
+Candle intervals: `1m`, `5m`, `15m`, `1h`, `4h`, `1d`, etc.; also `1min`, `1hour`, `1day`.  
+Depth step: `"0"`, `"1"` or `"step0"`, `"step1"`.
+
+### 1. Subscribe to ticker
+
+**Request**
 
 ```json
 {
-  "op": "subscribe",
+  "event": "sub",
+  "params": {
+    "type": "ticker",
+    "symbol": "BTC-USDT"
+  }
+}
+```
+
+**Subscribe acknowledgment**
+
+```json
+{
+  "id": "1710000000",
+  "event": "subscribe",
   "args": [
-    { "channel": "books", "product_name": "BTC-USDT-SWAP" }
+    {
+      "type": "ticker",
+      "symbol": "BTC-USDT"
+    }
   ]
 }
 ```
 
-**Unsubscribe**
-
-```json
-{
-  "op": "unsubscribe",
-  "args": [
-    { "channel": "books", "product_name": "BTC-USDT-SWAP" }
-  ]
-}
-```
-
-| Field | Type | Description |
-| --- | --- | --- |
-| `op` | string | `subscribe` / `unsubscribe` / `ping` |
-| `args` | array | Subscription items |
-| `args[].channel` | string | Channel name (table below) |
-| `args[].product_name` | string | Same as REST `product_name`, e.g. `BTC-USDT-SWAP` |
-
----
-
-## Channels
-
-| channel | Description |
-| --- | --- |
-| `tickers` | 24h ticker snapshot |
-| `books` | Order book (depth granularity per server) |
-| `trades` | Public trades |
-| `mark-price` | Mark price |
-| `index-price` | Index price |
-| `funding-rate` | Funding rate / next funding time |
-
-Multiple `product_name` and `channel` values per connection are allowed.
-
----
-
-## Push format
+**Push example**
 
 ```json
 {
   "arg": {
-    "channel": "books",
-    "product_name": "BTC-USDT-SWAP"
+    "channel": "market.BTC-USDT.ticker",
+    "symbol": "BTC-USDT"
   },
-  "data": []
+  "data": {
+    "channel": "market.BTC-USDT.ticker",
+    "pari_code": "BTC-USDT",
+    "data": {
+      "o": "64000",
+      "c": "65123.5",
+      "h": "65500",
+      "l": "63800",
+      "t": "125000000",
+      "v": "1920.5",
+      "b": "65120",
+      "a": "65125"
+    }
+  }
 }
 ```
 
-Snapshot vs incremental updates (e.g. depth `action`: `snapshot` / `update`) follow server/OpenAPI specs.
+> The exact shape of push `data` may vary in production.
 
----
+### 2. Subscribe to orderbook
 
-## Errors
+**Request**
 
 ```json
 {
-  "event": "error",
-  "code": "60012",
-  "msg": "Invalid request"
+  "event": "sub",
+  "params": {
+    "type": "orderbook",
+    "symbol": "BTC-USDT",
+    "interval": "0"
+  }
 }
 ```
 
-Fix `channel` / `product_name` before retrying. Auth errors on a public socket should not occur.
+**Subscribe acknowledgment**
+
+```json
+{
+  "id": "1710000001",
+  "event": "subscribe",
+  "args": [
+    {
+      "type": "orderbook",
+      "symbol": "BTC-USDT",
+      "interval": "0"
+    }
+  ]
+}
+```
+
+**Push example**
+
+```json
+{
+  "arg": {
+    "channel": "depth.BTC-USDT.0",
+    "symbol": "BTC-USDT"
+  },
+  "data": {
+    "channel": "depth.BTC-USDT.0",
+    "pari_code": "BTC-USDT",
+    "data": {
+      "b": [["65120", "1.25"], ["65110", "2.1"]],
+      "a": [["65125", "0.9"], ["65130", "1.5"]],
+      "t": 1710000000123,
+      "v": 987654321,
+      "i": "0"
+    }
+  }
+}
+```
+
+### 3. Subscribe to candles
+
+**Request**
+
+```json
+{
+  "event": "sub",
+  "params": {
+    "type": "market-candles",
+    "symbol": "BTC-USDT",
+    "interval": "1m"
+  }
+}
+```
+
+**Subscribe acknowledgment**
+
+```json
+{
+  "id": "1710000002",
+  "event": "subscribe",
+  "args": [
+    {
+      "type": "market-candles",
+      "symbol": "BTC-USDT",
+      "interval": "1m"
+    }
+  ]
+}
+```
+
+**Push example**
+
+```json
+{
+  "arg": {
+    "channel": "kline.BTC-USDT.market.1m",
+    "symbol": "BTC-USDT",
+    "type": "market"
+  },
+  "data": {
+    "s": 1710000000,
+    "o": "65000",
+    "c": "65050.5",
+    "h": "65100",
+    "l": "64980",
+    "t": "1250000",
+    "v": "19.2"
+  }
+}
+```
+
+### 4. Subscribe to fills
+
+**Request**
+
+```json
+{
+  "event": "sub",
+  "params": {
+    "type": "fills",
+    "symbol": "BTC-USDT"
+  }
+}
+```
+
+**Push example**
+
+```json
+{
+  "arg": {
+    "channel": "market.BTC-USDT.trade",
+    "symbol": "BTC-USDT"
+  },
+  "data": {
+    "pari_code": "BTC-USDT",
+    "channel": "market.BTC-USDT.trade",
+    "data": [
+      { "v": "0.01", "t": 1710000000123, "p": "65123.5", "d": true }
+    ]
+  }
+}
+```
+
+### 5. Unsubscribe
+
+**Request**
+
+```json
+{
+  "event": "unsub",
+  "params": {
+    "type": "ticker",
+    "symbol": "BTC-USDT"
+  }
+}
+```
+
+**Response**
+
+```json
+{
+  "id": "1710000003",
+  "event": "unsubscribe",
+  "args": [
+    {
+      "type": "ticker",
+      "symbol": "BTC-USDT"
+    }
+  ]
+}
+```
 
 ---
 
-## REST
+## One-shot requests (`req`)
 
-- Trading and queries: [`rest-api.md`](./rest-api.md).
-- MM price reports (if enabled): REST `POST /mm/trade/report-*`.
+No persistent subscription; suitable for initialization or backfill.
+
+### 1. Fetch ticker
+
+**Request**
+
+```json
+{
+  "event": "req",
+  "params": {
+    "type": "ticker",
+    "symbol": "BTC-USDT"
+  }
+}
+```
+
+**Response example**
+
+```json
+{
+  "arg": {
+    "channel": "market.Overview",
+    "symbol": "BTC-USDT"
+  },
+  "data": {
+    "pairCode": "BTC-USDT",
+    "market": {
+      "o": "64000",
+      "c": "65123.5",
+      "h": "65500",
+      "l": "63800",
+      "t": "125000000",
+      "v": "1920.5",
+      "b": "65120",
+      "a": "65125"
+    },
+    "index": { "c": "65110" },
+    "tag": { "c": "65115" }
+  }
+}
+```
+
+### 2. Fetch orderbook
+
+**Request**
+
+```json
+{
+  "event": "req",
+  "params": {
+    "type": "orderbook",
+    "symbol": "BTC-USDT",
+    "interval": "0"
+  }
+}
+```
+
+**Response example**
+
+```json
+{
+  "arg": {
+    "channel": "depth.BTC-USDT.0",
+    "symbol": "BTC-USDT"
+  },
+  "data": {
+    "b": [["65120", "1.25"]],
+    "a": [["65125", "0.9"]],
+    "t": 1710000000123,
+    "v": 987654321
+  }
+}
+```
+
+### 3. Fetch recent trades
+
+**Request**
+
+```json
+{
+  "event": "req",
+  "params": {
+    "type": "trade",
+    "symbol": "BTC-USDT",
+    "size": 50
+  }
+}
+```
+
+**Response example**
+
+```json
+{
+  "arg": {
+    "channel": "market.BTC-USDT.trade",
+    "symbol": "BTC-USDT"
+  },
+  "data": [
+    { "v": "0.01", "t": 1710000000123, "p": "65123.5", "d": true },
+    { "v": "0.02", "t": 1710000000456, "p": "65120", "d": false }
+  ]
+}
+```
+
+### 4. Fetch historical candles
+
+**Request**
+
+```json
+{
+  "event": "req",
+  "params": {
+    "type": "market-candles",
+    "symbol": "BTC-USDT",
+    "interval": "1m",
+    "from": 1710000000,
+    "to": 1710003600,
+    "size": 100
+  }
+}
+```
+
+| Field | Description |
+|------|------|
+| `from` / `to` | Unix **seconds** |
+| `size` | Number of bars |
+| `interval` | Candle interval |
+
+**Response example**
+
+```json
+{
+  "arg": {
+    "channel": "request-kline",
+    "symbol": "BTC-USDT",
+    "type": "market-candles"
+  },
+  "data": [
+    {
+      "s": 1710000000,
+      "o": "65000",
+      "c": "65050.5",
+      "h": "65100",
+      "l": "64980",
+      "t": "1250000",
+      "v": "19.2",
+      "p": "BTC-USDT",
+      "i": "1m"
+    }
+  ]
+}
+```
+
+---
+
+## Integration tips
+
+1. Handle `ping` / `pong` immediately after connecting.
+2. Validate `symbol` and `interval` before subscribing.
+3. Prefer `sub` for high-frequency use; use `req` for gaps or cold start.
+4. For account and orders, use [Private WebSocket](./private-ws.md).
