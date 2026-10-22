@@ -1,374 +1,349 @@
-# FORX Market Maker REST API
+# REST API
 
-Back to index: [`README.md`](./README.md)  
-中文：[`../rest-api.md`](../rest-api.md)  
-OpenAPI (if provided): [`../openapi.yaml`](../openapi.yaml)
+中文：[`../rest-api.md`](../rest-api.md)
 
----
+All API paths are prefixed with `/notification`.
 
-## Authentication
-
-All endpoints except health checks require:
-
-| Header | Description |
-| --- | --- |
-| `FORX-ACCESS-KEY` | API Key |
-| `FORX-ACCESS-SIGN` | `Base64(HMAC-SHA256(prehash, SecretKey))` |
-| `FORX-ACCESS-TIMESTAMP` | Milliseconds / seconds / RFC3339 (must match the signed value) |
-| `FORX-ACCESS-PASSPHRASE` | Passphrase set when creating the key |
-
-```
-prehash = timestamp + METHOD + requestPath + body
-```
-
-- `METHOD`: uppercase (`GET` / `POST` / `PUT`)
-- `requestPath`: path including query, e.g. `/mm/trade/orders-pending?product_name=BTC-USDT-SWAP`
-- `body`: raw JSON string; empty string when there is no body
-- Clock skew > 30s → `timestamp timeout`
-
-### Python signing snippet
-
-```python
-import base64, hashlib, hmac, time
-
-ts = str(int(time.time() * 1000))
-method = "POST"
-path = "/mm/trade/order"
-body = '{"product_name":"BTC-USDT-SWAP","side":"buy","pos_side":"long","ord_type":"limit","trade_unit":"size","px":"65000","sz":"1"}'
-prehash = ts + method + path + body
-sign = base64.b64encode(
-    hmac.new(secret.encode(), prehash.encode(), hashlib.sha256).digest()
-).decode()
-```
-
-### Examples
-
-Set credentials before running either script:
-
-| Variable | Description |
-| --- | --- |
-| `FORX_MM_BASE` | API base URL (default `http://localhost:8080`) |
-| `FORX_API_KEY` | API Key |
-| `FORX_SECRET_KEY` | Secret Key |
-| `FORX_PASSPHRASE` | Passphrase |
-
-#### `curl_place_order.sh`
-
-Save as `curl_place_order.sh`, `chmod +x`, then run with the env vars above. It signs `POST /mm/trade/order` and places a **limit open-long** order.
-
-```bash
-#!/usr/bin/env bash
-# Place-order curl example
-set -euo pipefail
-
-BASE_URL="${FORX_MM_BASE:-http://localhost:8080}"
-API_KEY="${FORX_API_KEY:?set FORX_API_KEY}"
-SECRET_KEY="${FORX_SECRET_KEY:?set FORX_SECRET_KEY}"
-PASSPHRASE="${FORX_PASSPHRASE:?set FORX_PASSPHRASE}"
-
-METHOD="POST"
-PATH_ONLY="/mm/trade/order"
-BODY='{"product_name":"BTC-USDT-SWAP","cl_ord_id":"mm-curl-1","side":"buy","pos_side":"long","ord_type":"limit","trade_unit":"size","px":"65000","sz":"1"}'
-TS="$(python3 -c 'import time; print(int(time.time()*1000))')"
-
-SIGN="$(
-  TS="$TS" METHOD="$METHOD" PATH_ONLY="$PATH_ONLY" BODY="$BODY" SECRET_KEY="$SECRET_KEY" python3 - <<'PY'
-import base64, hashlib, hmac, os
-ts = os.environ["TS"]
-method = os.environ["METHOD"]
-path = os.environ["PATH_ONLY"]
-body = os.environ["BODY"]
-secret = os.environ["SECRET_KEY"]
-prehash = f"{ts}{method}{path}{body}"
-print(base64.b64encode(hmac.new(secret.encode(), prehash.encode(), hashlib.sha256).digest()).decode())
-PY
-)"
-
-curl -sS -X POST "${BASE_URL}${PATH_ONLY}" \
-  -H "Content-Type: application/json" \
-  -H "FORX-ACCESS-KEY: ${API_KEY}" \
-  -H "FORX-ACCESS-SIGN: ${SIGN}" \
-  -H "FORX-ACCESS-TIMESTAMP: ${TS}" \
-  -H "FORX-ACCESS-PASSPHRASE: ${PASSPHRASE}" \
-  -d "${BODY}"
-echo
-```
-
-#### `sign_and_request.py`
-
-Save as `sign_and_request.py` and run with `python3 sign_and_request.py`. Stdlib only. `main()` calls: `GET /mm/ping` (no auth) → `POST /mm/trade/order` → `GET /mm/trade/orders-pending?product_name=...` → `GET /mm/account/trading-assets`. For GET with query, sign the full `requestPath` including `?key=value`.
-
-```python
-#!/usr/bin/env python3
-"""FORX MM API — HMAC auth and basic request examples (OKX-style)."""
-
-from __future__ import annotations
-
-import base64
-import hashlib
-import hmac
-import json
-import os
-import time
-from typing import Any, Optional
-from urllib.parse import urlencode
-
-import urllib.request
-
-BASE_URL = os.getenv("FORX_MM_BASE", "http://localhost:8080")
-API_KEY = os.getenv("FORX_API_KEY", "your-api-key")
-SECRET_KEY = os.getenv("FORX_SECRET_KEY", "your-secret-key")
-PASSPHRASE = os.getenv("FORX_PASSPHRASE", "your-passphrase")
-
-
-def sign(timestamp: str, method: str, request_path: str, body: str, secret: str) -> str:
-    """prehash = timestamp + METHOD + requestPath + body → Base64(HMAC-SHA256)."""
-    prehash = f"{timestamp}{method.upper()}{request_path}{body}"
-    digest = hmac.new(secret.encode(), prehash.encode(), hashlib.sha256).digest()
-    return base64.b64encode(digest).decode()
-
-
-def request(
-    method: str,
-    path: str,
-    *,
-    query: Optional[dict[str, Any]] = None,
-    body: Any = None,
-    auth: bool = True,
-) -> dict:
-    request_path = path
-    if query:
-        request_path = f"{path}?{urlencode({k: v for k, v in query.items() if v is not None})}"
-
-    body_str = ""
-    if body is not None:
-        body_str = json.dumps(body, separators=(",", ":"), ensure_ascii=False)
-
-    headers = {"Content-Type": "application/json"}
-    if auth:
-        # Prefer 13-digit millisecond timestamp (also supports seconds / RFC3339)
-        ts = str(int(time.time() * 1000))
-        headers.update(
-            {
-                "FORX-ACCESS-KEY": API_KEY,
-                "FORX-ACCESS-SIGN": sign(ts, method, request_path, body_str, SECRET_KEY),
-                "FORX-ACCESS-TIMESTAMP": ts,
-                "FORX-ACCESS-PASSPHRASE": PASSPHRASE,
-            }
-        )
-
-    req = urllib.request.Request(
-        f"{BASE_URL}{request_path}",
-        data=body_str.encode() if body_str else None,
-        headers=headers,
-        method=method.upper(),
-    )
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return json.loads(resp.read().decode())
-
-
-def main() -> None:
-    # 1) Public endpoint
-    print("GET /mm/ping =>", request("GET", "/mm/ping", auth=False))
-
-    # 2) Place order (limit open long)
-    order = {
-        "product_name": "BTC-USDT-SWAP",
-        "cl_ord_id": f"mm-{int(time.time())}",
-        "side": "buy",
-        "pos_side": "long",
-        "ord_type": "limit",
-        "trade_unit": "size",
-        "px": "65000",
-        "sz": "1",
-    }
-    print("POST /mm/trade/order =>", request("POST", "/mm/trade/order", body=order))
-
-    # 3) Query open orders
-    print(
-        "GET /mm/trade/orders-pending =>",
-        request("GET", "/mm/trade/orders-pending", query={"product_name": "BTC-USDT-SWAP"}),
-    )
-
-    # 4) Trading account assets
-    print("GET /mm/account/trading-assets =>", request("GET", "/mm/account/trading-assets"))
-
-
-if __name__ == "__main__":
-    main()
-```
-
----
-
-## Response format
+## Unified response
 
 ```json
-{ "code": 0, "msg": "success", "data": {}, "fd": "..." }
+{
+  "code": 200,
+  "message": "success",
+  "success": true,
+  "data": {}
+}
+```
+
+| Field | Type | Description |
+|------|------|------|
+| `code` | number | Business status code; success is typically `200` |
+| `message` | string | Message text |
+| `success` | boolean | Whether the request succeeded |
+| `data` | any | Business payload; often `[]` on failure |
+
+HTTP status is usually `200`; use `success` / `code` to determine the business outcome.
+
+Failure example:
+
+```json
+{
+  "code": 500,
+  "message": "invalid symbol",
+  "success": false,
+  "data": []
+}
+```
+
+---
+
+## 1. All-market overview
+
+`GET /notification/tickers`
+
+### Request example
+
+```http
+GET /notification/tickers HTTP/1.1
+Host: api.example.com
+```
+
+```bash
+curl -s "https://api.example.com/notification/tickers"
+```
+
+### Response example
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "success": true,
+  "data": [
+    {
+      "pairCode": "BTC-USDT",
+      "market": {
+        "o": "64000",
+        "c": "65123.5",
+        "h": "65500",
+        "l": "63800",
+        "t": "125000000",
+        "v": "1920.5",
+        "b": "65120",
+        "a": "65125",
+        "bv": "1.2",
+        "av": "0.8",
+        "position_num": "3200.5"
+      },
+      "index": { "c": "65110" },
+      "tag": { "c": "65115" },
+      "r": "0.0001",
+      "nt": 1710003600000,
+      "pr": "0.00008",
+      "position_num": "3200.5"
+    }
+  ]
+}
+```
+
+---
+
+## 2. Single-symbol overview
+
+`GET /notification/{symbol}/ticker`
+
+| Path parameter | Description |
+|----------|------|
+| `symbol` | Trading pair, e.g. `BTC-USDT` |
+
+### Request example
+
+```http
+GET /notification/BTC-USDT/ticker HTTP/1.1
+Host: api.example.com
+```
+
+```bash
+curl -s "https://api.example.com/notification/BTC-USDT/ticker"
+```
+
+### Response example
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "success": true,
+  "data": {
+    "pairCode": "BTC-USDT",
+    "market": {
+      "o": "64000",
+      "c": "65123.5",
+      "h": "65500",
+      "l": "63800",
+      "t": "125000000",
+      "v": "1920.5",
+      "b": "65120",
+      "a": "65125",
+      "bv": "1.2",
+      "av": "0.8"
+    },
+    "index": { "c": "65110" },
+    "tag": { "c": "65115" },
+    "r": "0.0001",
+    "nt": 1710003600000,
+    "pr": "0.00008"
+  }
+}
+```
+
+---
+
+## 3. Candles (K-line)
+
+`GET /notification/{symbol}/candles`
+
+| Parameter | Location | Required | Description |
+|------|------|------|------|
+| `symbol` | path | Yes | Trading pair |
+| `type` | query | Yes | `market` / `index` / `mark` |
+| `interval` | query | Yes | Interval, e.g. `1m`, `5m`, `1h`, `1d`; also accepts `1min`, `1hour`, `1day`, etc. |
+| `start` | query | Yes | Start time (Unix **seconds**) |
+| `end` | query | Yes | End time (Unix **seconds**) |
+| `size` | query | Yes | Number of bars, range `1`–`2000` |
+
+### Request example
+
+```http
+GET /notification/BTC-USDT/candles?type=market&interval=1m&start=1710000000&end=1710003600&size=100 HTTP/1.1
+Host: api.example.com
+```
+
+```bash
+curl -s "https://api.example.com/notification/BTC-USDT/candles?type=market&interval=1m&start=1710000000&end=1710003600&size=100"
+```
+
+### Response example (`type=market`)
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "success": true,
+  "data": [
+    {
+      "s": 1710000000,
+      "o": "65000",
+      "c": "65050.5",
+      "h": "65100",
+      "l": "64980",
+      "t": "1250000",
+      "v": "19.2",
+      "p": "BTC-USDT",
+      "i": "1m"
+    }
+  ]
+}
+```
+
+### Response example (`type=index` / `mark`)
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "success": true,
+  "data": [
+    {
+      "s": 1710000000,
+      "o": "65010",
+      "c": "65055",
+      "h": "65090",
+      "l": "64995",
+      "p": "BTC-USDT",
+      "i": "1m"
+    }
+  ]
+}
+```
+
+---
+
+## 4. Order book (depth snapshot)
+
+`GET /notification/{symbol}/orderbook`
+
+| Parameter | Location | Required | Description |
+|------|------|------|------|
+| `symbol` | path | Yes | Trading pair |
+| `interval` | query | No | Aggregation step, default `0`; may be `0`, `1`, … or `step0`, `step1`, … |
+
+### Request example
+
+```http
+GET /notification/BTC-USDT/orderbook?interval=0 HTTP/1.1
+Host: api.example.com
+```
+
+```bash
+curl -s "https://api.example.com/notification/BTC-USDT/orderbook?interval=0"
+```
+
+### Response example
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "success": true,
+  "data": {
+    "channel": "depth.BTC-USDT.0",
+    "pari_code": "BTC-USDT",
+    "data": {
+      "b": [["65120", "1.25"], ["65110", "2.1"]],
+      "a": [["65125", "0.9"], ["65130", "1.5"]],
+      "t": 1710000000123,
+      "v": 987654321,
+      "i": "0"
+    }
+  }
+}
+```
+
+When no cached data is available:
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "success": true,
+  "data": []
+}
+```
+
+---
+
+## 5. Recent trades
+
+### 5.1 Latest trade
+
+`GET /notification/{symbol}/fill`
+
+#### Request example
+
+```bash
+curl -s "https://api.example.com/notification/BTC-USDT/fill"
+```
+
+#### Response example
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "success": true,
+  "data": [
+    {
+      "v": "0.01",
+      "t": 1710000000123,
+      "p": "65123.5",
+      "d": true
+    }
+  ]
+}
 ```
 
 | Field | Description |
-| --- | --- |
-| `code` | `0` success; non-zero business error |
-| `msg` | Message or error detail |
-| `data` | Payload |
-| `fd` | Request trace ID |
+|------|------|
+| `v` | Trade size |
+| `t` | Trade time (milliseconds) |
+| `p` | Trade price |
+| `d` | Side (`true` / `false`; per production convention) |
 
-Business endpoints usually return HTTP `200`; check `code`. Auth failures return `401`.
+### 5.2 Recent trades (multiple)
 
----
+`GET /notification/{symbol}/fills`
 
-## Endpoints
+Returns up to about 100 trades by default.
 
-### Public (no auth)
+#### Request example
 
-| Method | Path | Description |
-| --- | --- | --- |
-| GET | `/mm/ping` | Health ping |
-| GET | `/mm/ts` | Server timestamp (ms) |
-
-### Trade
-
-| Method | Path | Description |
-| --- | --- | --- |
-| POST | `/mm/trade/order` | Place order |
-| POST | `/mm/trade/batch-orders` | Batch place (≤20) |
-| PUT | `/mm/trade/cancel-order` | Cancel order |
-| PUT | `/mm/trade/cancel-batch-orders` | Batch cancel (≤20) |
-| PUT | `/mm/trade/close-position` | Market close position |
-| PUT | `/mm/trade/close-batch-positions` | Batch market close |
-| POST | `/mm/trade/wash-trading` | Wash trading order |
-| POST | `/mm/trade/self-trading` | Self-trading order |
-| POST | `/mm/trade/report-index` | Report index price |
-| POST | `/mm/trade/report-mark` | Report mark price |
-| POST | `/mm/trade/report-funding-rate` | Report funding rate |
-| GET | `/mm/trade/orders-pending` | Open orders |
-| GET | `/mm/trade/orders-history` | Order history |
-| GET | `/mm/trade/positions` | Open positions |
-| GET | `/mm/trade/positions-history` | Position history |
-| GET | `/mm/trade/fills` | Fill details |
-
-### Account
-
-| Method | Path | Description |
-| --- | --- | --- |
-| PUT | `/mm/account/margin-balance` | Adjust margin (isolated only) |
-| PUT | `/mm/account/set-mgn-mode` | Set margin mode |
-| PUT | `/mm/account/set-leverage` | Set position leverage |
-| PUT | `/mm/account/set-dual-leverage` | Set product leverage |
-| GET | `/mm/account/funding-assets` | Funding account assets |
-| GET | `/mm/account/trading-assets` | Trading account assets |
-| GET | `/mm/account/funding-bills` | Funding bills |
-| GET | `/mm/account/trading-bills` | Trading bills |
-
-### Asset
-
-| Method | Path | Description |
-| --- | --- | --- |
-| POST | `/mm/asset/transfer` | Funding ↔ trading transfer. `trans_type` 1 funding→trading, 2 trading→funding |
-
----
-
-## Basic examples
-
-### Place order
-
-`POST /mm/trade/order`
-
-```json
-{
-  "product_name": "BTC-USDT-SWAP",
-  "cl_ord_id": "mm-001",
-  "side": "buy",
-  "pos_side": "long",
-  "ord_type": "limit",
-  "trade_unit": "size",
-  "px": "65000",
-  "sz": "1"
-}
+```bash
+curl -s "https://api.example.com/notification/BTC-USDT/fills"
 ```
 
-Success response:
+#### Response example
 
 ```json
 {
-  "code": 0,
-  "msg": "success",
-  "data": {
-    "order_id": "1987654321098765432",
-    "cl_ord_id": "mm-001",
-    "state": "order init"
-  },
-  "fd": "..."
-}
-```
-
-### Cancel order
-
-`PUT /mm/trade/cancel-order`
-
-```json
-{
-  "product_name": "BTC-USDT-SWAP",
-  "order_id": "1987654321098765432"
-}
-```
-
-### Open orders (cursor pagination)
-
-`GET /mm/trade/orders-pending?product_name=BTC-USDT-SWAP`
-
-Next page — pass the last item from the previous page:
-
-`?after_created_at=1730000000123&after_order_id=1987654321098765432`
-
-### Trading assets
-
-`GET /mm/account/trading-assets`
-
-```json
-{
-  "code": 0,
-  "msg": "success",
+  "code": 200,
+  "message": "success",
+  "success": true,
   "data": [
-    {
-      "coin_id": 1,
-      "coin_name": "USDT",
-      "balance": { "total": "10000", "self": "10000", "bonus": "0" },
-      "swap_entrust_margin": { "total": "0", "self": "0", "bonus": "0" },
-      "isolated_position_margin": { "total": "0", "self": "0", "bonus": "0" },
-      "cross_position_margin": { "total": "0", "self": "0", "bonus": "0" }
-    }
-  ],
-  "fd": "..."
+    { "v": "0.01", "t": 1710000000123, "p": "65123.5", "d": true },
+    { "v": "0.02", "t": 1710000000456, "p": "65120", "d": false }
+  ]
 }
 ```
-
-### Transfer
-
-`POST /mm/asset/transfer`
-
-```json
-{
-  "trans_type": 1,
-  "coin_id": 1,
-  "amount": "100"
-}
-```
-
-`trans_type`: `1` funding → trading, `2` trading → funding.
 
 ---
 
-## Enums
+## Overview field reference
 
-| Field | Values |
-| --- | --- |
-| `side` | `buy` / `sell` |
-| `pos_side` | `long` / `short` (`net` also allowed for set-leverage) |
-| `ord_type` | `limit` / `market` / `fok` / `ioc` / `post_only` |
-| `trade_unit` | `base` / `quote` / `size` |
-| `mgn_mode` | `isolated` / `cross` |
-| `product_type` (query) | `swap` / `spot` |
-| `trans_type` | `1` funding→trading / `2` trading→funding |
+| Field | Description |
+|------|------|
+| `pairCode` | Trading pair |
+| `market.o` / `c` / `h` / `l` | Open / close / high / low |
+| `market.t` / `v` | Turnover / volume |
+| `market.b` / `a` | Best bid / best ask price |
+| `market.bv` / `av` | Best bid / best ask size |
+| `market.position_num` | Open interest (if present) |
+| `index.c` | Index price |
+| `tag.c` | Mark price |
+| `r` | Funding rate |
+| `nt` | Next funding time |
+| `pr` | Previous funding rate |
+| `rf` | Risk fund (if present) |
+| `position_num` | Open interest (top-level duplicate) |
 
-History queries default to a **7-day** window. Orders/bills pages are fixed at **20** items; use `after_*` cursors for pagination.
+Some fields may be omitted when there is no data.
