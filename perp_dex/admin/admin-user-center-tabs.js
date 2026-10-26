@@ -17,7 +17,7 @@
         );
     }
 
-    function sel(label, options, extraClass) {
+    function sel(label, options, extraClass, disabled) {
         const opts = options
             .map(function (o) {
                 return '<option>' + o + '</option>';
@@ -26,12 +26,15 @@
         const cls =
             'border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white min-w-[120px]' +
             (extraClass ? ' ' + extraClass : '');
+        const dis = disabled ? ' disabled' : '';
         return (
             '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">' +
             label +
             '</label><select class="' +
             cls +
-            '">' +
+            '"' +
+            dis +
+            '>' +
             opts +
             '</select></div>'
         );
@@ -45,6 +48,7 @@
             '<button type="button" class="px-2 py-1 rounded text-xs font-bold text-slate-500 hover:bg-slate-100">近7日</button>' +
             '<button type="button" class="px-2 py-1 rounded text-xs font-bold text-slate-500 hover:bg-slate-100">近30日</button>' +
             '<button type="button" class="px-2 py-1 rounded text-xs font-bold text-slate-500 hover:bg-slate-100">近90日</button>' +
+            '<span class="text-slate-300 mx-1">|</span>' +
             '<input type="date" class="border border-slate-200 rounded px-2 py-1 text-xs" />' +
             '<span class="text-slate-300">—</span>' +
             '<input type="date" class="border border-slate-200 rounded px-2 py-1 text-xs" />' +
@@ -64,7 +68,18 @@
     }
 
     function contractSel() {
-        return sel('合约', ['全部', 'BTCUSDC', 'ETHUSDC', 'BNBUSDC', 'SOLUSDC', 'PEPEUSDC']);
+        return sel('合约', [
+            '全部',
+            'BTCUSDC',
+            'BNBUSDC',
+            'ETHUSDC',
+            'SOLUSDC',
+            'PEPEUSDC',
+            'BTCUSDT',
+            'BNBUSDT',
+            'ETHUSDT',
+            'SOLUSDT'
+        ]);
     }
 
     function tableHead(cells) {
@@ -200,17 +215,6 @@
 
     const TRADE_BILL_MAIN_TYPES = ['划转', '交易', '保证金划转', '阶梯减仓', '资金费'];
 
-    function histOrderFilters(sub) {
-        let html = periodBtns() + contractSel();
-        if (sub === 'tpsl') {
-            html += sel('状态', ['状态', '已完成', '已取消']);
-        } else {
-            html += sel('方向', ['方向', '全部', '买入', '卖出']);
-            html += sel('状态', ['状态', '全部成交', '部分成交', '已取消']);
-        }
-        return html;
-    }
-
     function histOrderHeaders(sub) {
         if (sub === 'adv') return HIST_ORDER_ADV;
         if (sub === 'tpsl') return HIST_ORDER_TPSL;
@@ -231,8 +235,7 @@
             return tableHead(curOrderHeaders(sub));
         },
         'hist-order': function (sub) {
-            const st = sub || 'base';
-            return filterBar(histOrderFilters(st)) + tableHead(histOrderHeaders(st));
+            return filterBar(periodBtns()) + tableHead(histOrderHeaders(sub || 'base'));
         },
         'hist-trade': function () {
             return (
@@ -240,7 +243,7 @@
                     periodBtns() +
                         contractSel() +
                         sel('账单主类型', ['账单主类型'].concat(TRADE_BILL_MAIN_TYPES)) +
-                        sel('账单子类型', ['账单子类型'], 'opacity-50 cursor-not-allowed')
+                        sel('账单子类型', ['账单子类型'], 'opacity-50 cursor-not-allowed', true)
                 ) + tableHead(HIST_TRADE_HEADERS)
             );
         },
@@ -248,7 +251,7 @@
             return (
                 filterBar(
                     periodBtns() +
-                        sel('类型', ['类型', '激活', '费用抵扣', '亏损抵扣', '回收'])
+                        sel('类型', ['类型', '激活', '费用抵扣', '亏损抵扣', '回收'], 'min-w-[100px]')
                 ) + tableHead(TRIAL_FUND_HEADERS)
             );
         },
