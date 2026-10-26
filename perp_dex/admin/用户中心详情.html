@@ -80,7 +80,7 @@
                 <tbody id="deviceTableBody" class="divide-y divide-slate-50"></tbody>
             </table>
         </div>
-        <div class="px-6 py-3 border-t border-slate-100 text-[10px] text-slate-400">展示近 90 天登录记录，接口接入后由服务端分页返回</div>
+        <div id="device-modal-pagination" class="border-t border-slate-100 shrink-0"></div>
     </div>
 </div>
 
@@ -103,11 +103,12 @@
                 <tbody id="freezeLogTableBody" class="divide-y divide-slate-50"></tbody>
             </table>
         </div>
-        <div class="px-6 py-3 border-t border-slate-100 text-[10px] text-slate-400">按时间倒序展示，接口接入后支持分页</div>
+        <div id="freeze-log-pagination" class="border-t border-slate-100 shrink-0"></div>
     </div>
 </div>
 
 <script src="admin-user-center-tabs.js"></script>
+<script src="admin-pagination.js"></script>
 <script>
     const FREEZE_BEHAVIORS = [
         { key: 'withdrawFreeze', label: '提现' },
@@ -172,6 +173,20 @@
     let orderSub = 'base';
     let dwSub = 'deposit';
     let profile = null;
+    let devicePage = 1;
+    let freezeLogPage = 1;
+
+    function sortByTimeDesc(rows) {
+        return rows.slice().sort(function (a, b) {
+            return String(b.time).localeCompare(String(a.time));
+        });
+    }
+
+    function mountModalPagination(containerId, total, page, handlerId) {
+        if (window.AdminPagination) {
+            AdminPagination.mount(containerId, total, page, handlerId);
+        }
+    }
 
     function qsUid() {
         return new URLSearchParams(location.search).get('uid') || '10028471';
@@ -286,13 +301,23 @@
         document.getElementById('tabPanel').innerHTML = html;
     }
 
-    function openDeviceModal() {
-        const rows = (profile && profile.devices) || [];
-        document.getElementById('deviceTableBody').innerHTML = rows.length
-            ? rows.map(function (d) {
+    function renderDeviceTable() {
+        const all = sortByTimeDesc((profile && profile.devices) || []);
+        const sliced = window.AdminPagination
+            ? AdminPagination.slice(all, devicePage)
+            : { items: all, page: 1, total: all.length };
+        devicePage = sliced.page;
+        document.getElementById('deviceTableBody').innerHTML = sliced.items.length
+            ? sliced.items.map(function (d) {
                 return '<tr><td class="px-4 py-3">' + d.time + '</td><td class="px-4 py-3 font-mono">' + d.ip + '</td><td class="px-4 py-3">' + d.device + '</td><td class="px-4 py-3">' + d.client + '</td></tr>';
             }).join('')
             : '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400">暂无登录设备记录</td></tr>';
+        mountModalPagination('device-modal-pagination', sliced.total, devicePage, 'uc-detail-devices');
+    }
+
+    function openDeviceModal() {
+        devicePage = 1;
+        renderDeviceTable();
         document.getElementById('deviceModal').classList.remove('hidden');
         document.getElementById('deviceModal').classList.add('flex');
     }
@@ -302,11 +327,15 @@
         document.getElementById('deviceModal').classList.remove('flex');
     }
 
-    function openFreezeLogModal() {
+    function renderFreezeLogTable() {
         const uid = qsUid();
-        const rows = FREEZE_LOGS[uid] || [];
-        document.getElementById('freezeLogTableBody').innerHTML = rows.length
-            ? rows.map(function (r) {
+        const all = sortByTimeDesc(FREEZE_LOGS[uid] || []);
+        const sliced = window.AdminPagination
+            ? AdminPagination.slice(all, freezeLogPage)
+            : { items: all, page: 1, total: all.length };
+        freezeLogPage = sliced.page;
+        document.getElementById('freezeLogTableBody').innerHTML = sliced.items.length
+            ? sliced.items.map(function (r) {
                 const typeCls = r.actionType === '冻结' ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold';
                 return '<tr><td class="px-4 py-3 whitespace-nowrap">' + r.time + '</td>' +
                     '<td class="px-4 py-3"><span class="' + typeCls + '">' + r.actionType + '</span></td>' +
@@ -314,6 +343,12 @@
                     '<td class="px-4 py-3 font-mono text-slate-600">' + r.operator + '</td></tr>';
             }).join('')
             : '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400">暂无冻结配置记录</td></tr>';
+        mountModalPagination('freeze-log-pagination', sliced.total, freezeLogPage, 'uc-detail-freeze-log');
+    }
+
+    function openFreezeLogModal() {
+        freezeLogPage = 1;
+        renderFreezeLogTable();
         document.getElementById('freezeLogModal').classList.remove('hidden');
         document.getElementById('freezeLogModal').classList.add('flex');
     }
@@ -321,6 +356,17 @@
     function closeFreezeLogModal() {
         document.getElementById('freezeLogModal').classList.add('hidden');
         document.getElementById('freezeLogModal').classList.remove('flex');
+    }
+
+    if (window.AdminPagination) {
+        AdminPagination.register('uc-detail-devices', function (page) {
+            devicePage = page;
+            renderDeviceTable();
+        });
+        AdminPagination.register('uc-detail-freeze-log', function (page) {
+            freezeLogPage = page;
+            renderFreezeLogTable();
+        });
     }
 
     renderProfile();
