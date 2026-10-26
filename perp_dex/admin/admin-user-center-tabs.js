@@ -208,9 +208,6 @@
             if (sub === 'auth') {
                 return filterBar(dwFilter) + tableHead(['创建时间', '资产', '数量', '类型', '网络', '授权状态', '授权时间']);
             }
-            if (sub === 'pending') {
-                return filterBar(dwFilter) + tableHead(['类型与说明', '资产与网络', '金额', '状态', '操作']);
-            }
             return filterBar(dwFilter) + tableHead(['类型与说明', '资产与网络', '金额', '状态', '时间']);
         }
     };
@@ -241,8 +238,7 @@
             { id: 'deposit', label: '充值' },
             { id: 'withdraw', label: '提现' },
             { id: 'transfer', label: '划转' },
-            { id: 'auth', label: '授权记录' },
-            { id: 'pending', label: '待处理' }
+            { id: 'auth', label: '授权记录' }
         ],
         orderSubTabs: [
             { id: 'base', label: '限价｜市价' },
