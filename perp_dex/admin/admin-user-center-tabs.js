@@ -44,6 +44,17 @@
         );
     }
 
+    function dwPeriodBtns() {
+        return (
+            '<div class="flex items-center gap-1">' +
+            '<span class="text-[10px] font-bold text-slate-500 uppercase mr-1">时间</span>' +
+            '<button type="button" class="px-2 py-1 rounded text-xs font-bold bg-slate-900 text-white">近7日</button>' +
+            '<button type="button" class="px-2 py-1 rounded text-xs font-bold text-slate-500 hover:bg-slate-100">近30日</button>' +
+            '<button type="button" class="px-2 py-1 rounded text-xs font-bold text-slate-500 hover:bg-slate-100">全部</button>' +
+            '</div>'
+        );
+    }
+
     function tableHead(cells) {
         const ths = cells
             .map(function (c) {
@@ -121,15 +132,7 @@
 
     const panels = {
         pos: function () {
-            return (
-                '<div class="hidden-check">' +
-                filterBar(
-                    '<label class="flex items-center gap-2 text-xs text-slate-600"><input type="checkbox" class="rounded border-slate-300" /> 仅当前合约</label>' +
-                        sel('合约', 'f-pos-symbol', ['全部', 'BTCUSDC', 'ETHUSDC'])
-                ) +
-                tableHead(POS_HEADERS) +
-                '</div>'
-            );
+            return tableHead(POS_HEADERS);
         },
         order: function (sub) {
             const isBase = sub === 'base';
@@ -145,13 +148,7 @@
                     sel('生效机制', 'f-ord-adv-tif', ['全部', 'Post Only', 'FOK', 'IOC']) +
                     sel('方向', 'f-ord-adv-dir', ['全部', '买入', '卖出']);
             }
-            return (
-                filterBar(
-                    sel('合约', 'f-ord-symbol', ['全部', 'BTCUSDC']) +
-                        extra +
-                        '<label class="flex items-center gap-2 text-xs text-slate-600"><input type="checkbox" class="rounded border-slate-300" /> 隐藏其他合约</label>'
-                ) + tableHead(headers)
-            );
+            return filterBar(sel('合约', 'f-ord-symbol', ['全部', 'BTCUSDC']) + extra) + tableHead(headers);
         },
         'hist-order': function (sub) {
             const isBase = sub === 'base';
@@ -203,13 +200,10 @@
                 sel('资产', 'f-dw-asset', ['全部']) +
                 sel('网络', 'f-dw-net', ['全部']) +
                 sel('状态', 'f-dw-status', ['全部']) +
-                sel('时间', 'f-dw-time', ['全部']);
+                dwPeriodBtns();
 
             if (sub === 'auth') {
                 return filterBar(dwFilter) + tableHead(['创建时间', '资产', '数量', '类型', '网络', '授权状态', '授权时间']);
-            }
-            if (sub === 'pending') {
-                return filterBar(dwFilter) + tableHead(['类型与说明', '资产与网络', '金额', '状态', '操作']);
             }
             return filterBar(dwFilter) + tableHead(['类型与说明', '资产与网络', '金额', '状态', '时间']);
         }
@@ -233,7 +227,7 @@
             { id: 'hist-order', label: '历史委托' },
             { id: 'hist-trade', label: '交易账单' },
             { id: 'hist-pos', label: '历史持仓' },
-            { id: 'asset-log', label: '资金流水' },
+            { id: 'asset-log', label: '资金账单' },
             { id: 'funding-fee', label: '资金费用' },
             { id: 'dw', label: '充提记录' }
         ],
@@ -241,8 +235,7 @@
             { id: 'deposit', label: '充值' },
             { id: 'withdraw', label: '提现' },
             { id: 'transfer', label: '划转' },
-            { id: 'auth', label: '授权记录' },
-            { id: 'pending', label: '待处理' }
+            { id: 'auth', label: '授权记录' }
         ],
         orderSubTabs: [
             { id: 'base', label: '限价｜市价' },
