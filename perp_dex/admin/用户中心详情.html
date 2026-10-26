@@ -95,28 +95,6 @@
         { key: 'loginFreeze', label: '登录' }
     ];
 
-    const DEMO_USERS = {
-        '10028471': {
-            uid: '10028471', email: 'trader@example.com', wallet: '0x7a3f8c2e91d04b5a6e7f8091a2b3c4d5e6f7a8b9',
-            userType: 'retail', lastLogin: '2026-10-26 18:22:10', loginIp: '103.21.44.88',
-            totalAsset: '125,430.50 USDT', fundingBal: '42,100.00', tradingBal: '83,330.50',
-            marginRatio: '18.6%', upnl: '+1,240.30', maintMargin: '4,520.00', vol14d: '12,450,800 USDT',
-            vip: 'VIP 2', taker: '0.034%', maker: '0.010%', feeDays: '12', status: 'normal', flags: {},
-            devices: [
-                { time: '2026-10-26 18:22:10', ip: '103.21.44.88', device: 'Chrome 141 / macOS 15', client: 'Web' },
-                { time: '2026-10-25 09:11:02', ip: '103.21.44.90', device: 'ForX App / iOS 18.1', client: 'iOS' }
-            ]
-        },
-        '10031592': {
-            uid: '10031592', email: '', wallet: '0x2b91c4d8e0f1234567890abcdef1234567890abcd',
-            userType: 'mm', lastLogin: '2026-10-26 09:05:33', loginIp: '47.88.12.4',
-            totalAsset: '2,410,000.00 USDT', fundingBal: '410,000.00', tradingBal: '2,000,000.00',
-            marginRatio: '42.1%', upnl: '-12,400.00', maintMargin: '180,200.00', vol14d: '89,102,400 USDT',
-            vip: 'VIP 4', taker: '0.026%', maker: '0.004%', feeDays: '—', status: 'partial', flags: { orderFreeze: true, apiFreeze: true },
-            devices: [{ time: '2026-10-26 09:05:33', ip: '47.88.12.4', device: 'API Client', client: 'API' }]
-        }
-    };
-
     let currentTab = 'pos';
     let orderSub = 'base';
     let dwSub = 'deposit';
@@ -137,11 +115,27 @@
     function renderProfile() {
         const uid = qsUid();
         document.getElementById('headerUid').textContent = uid;
-        profile = DEMO_USERS[uid] || {
-            uid, email: '—', wallet: '—', userType: 'retail', lastLogin: '—', loginIp: '—',
-            totalAsset: '—', fundingBal: '—', tradingBal: '—', marginRatio: '—', upnl: '—',
-            maintMargin: '—', vol14d: '—', vip: '—', taker: '—', maker: '—', feeDays: '—',
-            status: 'normal', flags: {}, devices: []
+        profile = {
+            uid,
+            email: '—',
+            wallet: '—',
+            userType: 'retail',
+            lastLogin: '—',
+            loginIp: '—',
+            totalAsset: '—',
+            fundingBal: '—',
+            tradingBal: '—',
+            marginRatio: '—',
+            upnl: '—',
+            maintMargin: '—',
+            vol14d: '—',
+            vip: '—',
+            taker: '—',
+            maker: '—',
+            feeDays: '—',
+            status: 'normal',
+            flags: {},
+            devices: []
         };
 
         const fields = [
@@ -177,7 +171,7 @@
         const el = document.getElementById('mainTabs');
         el.innerHTML = AdminUserCenterTabs.mainTabs.map(function (t) {
             const active = t.id === currentTab ? 'active' : '';
-            const label = t.label + (t.id === 'pos' || t.id === 'order' ? ' (0)' : '');
+            const label = t.label + (t.id === 'pos' || t.id === 'order' ? ' (—)' : '');
             return '<button type="button" class="tab-btn ' + active + '" data-tab="' + t.id + '">' + label + '</button>';
         }).join('');
         el.querySelectorAll('[data-tab]').forEach(function (btn) {

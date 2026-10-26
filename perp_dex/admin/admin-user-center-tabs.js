@@ -133,11 +133,18 @@
         },
         order: function (sub) {
             const isBase = sub === 'base';
-            const headers = isBase ? ORDER_BASE_HEADERS : ORDER_TPSL_HEADERS;
-            const extra = isBase
-                ? sel('订单类型', 'f-ord-type', ['全部', '限价', '市价', '限价止损', '市价止损']) +
-                  sel('方向', 'f-ord-dir', ['全部', '买入', '卖出'])
-                : '';
+            const isAdv = sub === 'adv';
+            const headers = isBase || isAdv ? ORDER_BASE_HEADERS : ORDER_TPSL_HEADERS;
+            let extra = '';
+            if (isBase) {
+                extra =
+                    sel('订单类型', 'f-ord-type', ['全部', '限价', '市价', '限价止损', '市价止损']) +
+                    sel('方向', 'f-ord-dir', ['全部', '买入', '卖出']);
+            } else if (isAdv) {
+                extra =
+                    sel('生效机制', 'f-ord-adv-tif', ['全部', 'Post Only', 'FOK', 'IOC']) +
+                    sel('方向', 'f-ord-adv-dir', ['全部', '买入', '卖出']);
+            }
             return (
                 filterBar(
                     sel('合约', 'f-ord-symbol', ['全部', 'BTCUSDC']) +
@@ -148,12 +155,22 @@
         },
         'hist-order': function (sub) {
             const isBase = sub === 'base';
-            const headers = isBase ? HIST_ORDER_BASE_HEADERS : HIST_ORDER_TPSL_HEADERS;
-            const extra = isBase
-                ? sel('订单类型', 'f-ho-type', ['全部', '限价委托', '市价委托', '强平委托']) +
-                  sel('方向', 'f-ho-dir', ['全部', '买入', '卖出']) +
-                  sel('状态', 'f-ho-status', ['全部', '完全成交', '部分成交', '已取消'])
-                : sel('状态', 'f-ho-tpsl-status', ['全部', '完全成交', '已取消']);
+            const isAdv = sub === 'adv';
+            const headers = isBase || isAdv ? HIST_ORDER_BASE_HEADERS : HIST_ORDER_TPSL_HEADERS;
+            let extra = '';
+            if (isBase) {
+                extra =
+                    sel('订单类型', 'f-ho-type', ['全部', '限价委托', '市价委托', '强平委托']) +
+                    sel('方向', 'f-ho-dir', ['全部', '买入', '卖出']) +
+                    sel('状态', 'f-ho-status', ['全部', '完全成交', '部分成交', '已取消']);
+            } else if (isAdv) {
+                extra =
+                    sel('生效机制', 'f-ho-adv-tif', ['全部', 'Post Only', 'FOK', 'IOC']) +
+                    sel('方向', 'f-ho-adv-dir', ['全部', '买入', '卖出']) +
+                    sel('状态', 'f-ho-adv-status', ['全部', '完全成交', '部分成交', '已取消']);
+            } else {
+                extra = sel('状态', 'f-ho-tpsl-status', ['全部', '完全成交', '已取消']);
+            }
             return filterBar(periodBtns() + sel('合约', 'f-ho-symbol', ['全部', 'BTCUSDC']) + extra) + tableHead(headers);
         },
         'hist-trade': function () {
@@ -228,8 +245,9 @@
             { id: 'pending', label: '待处理' }
         ],
         orderSubTabs: [
-            { id: 'base', label: '基础单' },
-            { id: 'tpsl', label: '止盈止损单' }
+            { id: 'base', label: '限价｜市价' },
+            { id: 'tpsl', label: '止盈止损单' },
+            { id: 'adv', label: '高级限价' }
         ]
     };
 })();
