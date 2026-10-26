@@ -1,5 +1,5 @@
 /**
- * 用户中心详情 · 交易数据区（仅筛选 + 表头，无 mock 行）
+ * 用户中心详情 · 交易数据区（筛选 + 表头与 Web 合约交易页对齐，无 mock 行、无代客操作列）
  */
 (function () {
     function emptyBody(colspan) {
@@ -7,6 +7,7 @@
     }
 
     function filterBar(fieldsHtml) {
+        if (!fieldsHtml) return '';
         return (
             '<div class="px-4 py-3 border-b border-slate-100 flex flex-wrap items-end gap-3 bg-slate-50/80">' +
             fieldsHtml +
@@ -16,14 +17,21 @@
         );
     }
 
-    function sel(label, id, options) {
-        const opts = options.map(function (o) {
-            return '<option>' + o + '</option>';
-        }).join('');
+    function sel(label, options, extraClass) {
+        const opts = options
+            .map(function (o) {
+                return '<option>' + o + '</option>';
+            })
+            .join('');
+        const cls =
+            'border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white min-w-[120px]' +
+            (extraClass ? ' ' + extraClass : '');
         return (
             '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">' +
             label +
-            '</label><select class="border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white min-w-[120px]">' +
+            '</label><select class="' +
+            cls +
+            '">' +
             opts +
             '</select></div>'
         );
@@ -55,6 +63,10 @@
         );
     }
 
+    function contractSel() {
+        return sel('合约', ['全部', 'BTCUSDC', 'ETHUSDC', 'BNBUSDC', 'SOLUSDC', 'PEPEUSDC']);
+    }
+
     function tableHead(cells) {
         const ths = cells
             .map(function (c) {
@@ -71,6 +83,7 @@
         );
     }
 
+    /** 当前持仓（无平仓/分享/一键平仓列） */
     const POS_HEADERS = [
         '合约',
         '数量',
@@ -78,128 +91,193 @@
         '标记价格',
         '盈亏平衡价',
         '预估强平价',
-        '风险率',
+        '联合保证金率',
         '保证金',
         '盈亏 (ROE%)',
         '止盈/止损'
     ];
 
-    const ORDER_BASE_HEADERS = [
-        '时间',
+    const CUR_ORDER_BASE = [
         '合约',
-        '类型',
-        '方向',
+        '委托时间',
+        '交易方向',
+        '委托价',
+        '委托数量',
         '成交均价',
-        '价格',
         '成交数量',
-        '数量',
-        '触发条件',
-        '止盈/止损',
-        '生效时间',
-        '状态'
+        '止盈止损',
+        '订单状态',
+        '订单编号'
     ];
 
-    const ORDER_TPSL_HEADERS = [
-        '时间',
+    const CUR_ORDER_ADV = [
         '合约',
-        '类型',
-        '方向',
+        '委托时间',
+        '交易方向',
+        '委托价',
+        '委托数量',
         '成交均价',
-        '价格',
         '成交数量',
-        '数量',
-        '触发条件',
-        '止盈/止损',
-        '生效时间',
-        '状态'
+        '生效类型',
+        '止盈止损',
+        '订单状态',
+        '订单编号'
     ];
 
-    const HIST_ORDER_BASE_HEADERS = [
-        '时间',
+    const CUR_ORDER_TPSL = ['合约', '委托时间', '交易方向', '数量', '触发价格', '委托价格', '订单状态', '订单编号'];
+
+    const HIST_ORDER_BASE = [
         '合约',
-        '类型',
-        '方向',
-        '平均价格',
-        '价格',
+        '委托时间',
+        '交易方向',
+        '委托价',
+        '委托数量',
+        '成交均价',
         '成交数量',
-        '数量',
-        '触发条件',
-        '生效时间',
-        '状态'
+        '手续费',
+        '盈亏 (ROE%)',
+        '订单状态',
+        '订单编号',
+        '流水详情'
     ];
 
-    const HIST_ORDER_TPSL_HEADERS = ['时间', '合约', '类型', '方向', '价格', '数量', '触发条件', '生效时间', '状态'];
+    const HIST_ORDER_ADV = [
+        '合约',
+        '委托时间',
+        '交易方向',
+        '委托价',
+        '委托数量',
+        '成交均价',
+        '成交数量',
+        '生效类型',
+        '手续费',
+        '盈亏 (ROE%)',
+        '订单状态',
+        '订单编号',
+        '流水详情'
+    ];
+
+    const HIST_ORDER_TPSL = ['合约', '委托时间', '交易方向', '数量', '触发价格', '委托价格', '订单状态', '订单编号'];
+
+    const HIST_TRADE_HEADERS = [
+        '发生时间',
+        '账单主类型',
+        '账单子类型',
+        '挂单/吃单',
+        '币种',
+        '交易合约',
+        '仓位类型',
+        '数量',
+        '手续费',
+        '成交价',
+        '收益',
+        '仓位余额变动',
+        '仓位余额',
+        '账户余额变动',
+        '账户余额'
+    ];
+
+    const TRIAL_FUND_HEADERS = ['时间', '卡券ID', '类型', '金额变动', '关联仓位ID'];
+
+    const HIST_POS_HEADERS = [
+        '合约',
+        '仓位类型',
+        '开仓均价',
+        '平仓均价',
+        '最大持仓量',
+        '已平仓量',
+        '已实现盈亏 (ROE%)',
+        '状态',
+        '开仓时间',
+        '平仓时间',
+        '仓位ID',
+        '关联订单'
+    ];
+
+    const ASSET_LOG_HEADERS = ['时间', '币种', '账单主类型', '数量', '账户余额'];
+
+    const FUNDING_FEE_HEADERS = ['时间', '合约', '资金费用'];
+
+    const TRADE_BILL_MAIN_TYPES = ['划转', '交易', '保证金划转', '阶梯减仓', '资金费'];
+
+    function histOrderFilters(sub) {
+        let html = periodBtns() + contractSel();
+        if (sub === 'tpsl') {
+            html += sel('状态', ['状态', '已完成', '已取消']);
+        } else {
+            html += sel('方向', ['方向', '全部', '买入', '卖出']);
+            html += sel('状态', ['状态', '全部成交', '部分成交', '已取消']);
+        }
+        return html;
+    }
+
+    function histOrderHeaders(sub) {
+        if (sub === 'adv') return HIST_ORDER_ADV;
+        if (sub === 'tpsl') return HIST_ORDER_TPSL;
+        return HIST_ORDER_BASE;
+    }
+
+    function curOrderHeaders(sub) {
+        if (sub === 'adv') return CUR_ORDER_ADV;
+        if (sub === 'tpsl') return CUR_ORDER_TPSL;
+        return CUR_ORDER_BASE;
+    }
 
     const panels = {
         pos: function () {
             return tableHead(POS_HEADERS);
         },
         order: function (sub) {
-            const isBase = sub === 'base';
-            const isAdv = sub === 'adv';
-            const headers = isBase || isAdv ? ORDER_BASE_HEADERS : ORDER_TPSL_HEADERS;
-            let extra = '';
-            if (isBase) {
-                extra =
-                    sel('订单类型', 'f-ord-type', ['全部', '限价', '市价', '限价止损', '市价止损']) +
-                    sel('方向', 'f-ord-dir', ['全部', '买入', '卖出']);
-            } else if (isAdv) {
-                extra =
-                    sel('生效机制', 'f-ord-adv-tif', ['全部', 'Post Only', 'FOK', 'IOC']) +
-                    sel('方向', 'f-ord-adv-dir', ['全部', '买入', '卖出']);
-            }
-            return filterBar(sel('合约', 'f-ord-symbol', ['全部', 'BTCUSDC']) + extra) + tableHead(headers);
+            return tableHead(curOrderHeaders(sub));
         },
         'hist-order': function (sub) {
-            const isBase = sub === 'base';
-            const isAdv = sub === 'adv';
-            const headers = isBase || isAdv ? HIST_ORDER_BASE_HEADERS : HIST_ORDER_TPSL_HEADERS;
-            let extra = '';
-            if (isBase) {
-                extra =
-                    sel('订单类型', 'f-ho-type', ['全部', '限价委托', '市价委托', '强平委托']) +
-                    sel('方向', 'f-ho-dir', ['全部', '买入', '卖出']) +
-                    sel('状态', 'f-ho-status', ['全部', '完全成交', '部分成交', '已取消']);
-            } else if (isAdv) {
-                extra =
-                    sel('生效机制', 'f-ho-adv-tif', ['全部', 'Post Only', 'FOK', 'IOC']) +
-                    sel('方向', 'f-ho-adv-dir', ['全部', '买入', '卖出']) +
-                    sel('状态', 'f-ho-adv-status', ['全部', '完全成交', '部分成交', '已取消']);
-            } else {
-                extra = sel('状态', 'f-ho-tpsl-status', ['全部', '完全成交', '已取消']);
-            }
-            return filterBar(periodBtns() + sel('合约', 'f-ho-symbol', ['全部', 'BTCUSDC']) + extra) + tableHead(headers);
+            const st = sub || 'base';
+            return filterBar(histOrderFilters(st)) + tableHead(histOrderHeaders(st));
         },
         'hist-trade': function () {
-            return filterBar(periodBtns() + sel('合约', 'f-ht-symbol', ['全部', 'BTCUSDC']) + sel('方向', 'f-ht-dir', ['全部', '买入', '卖出'])) + tableHead(['时间', '订单号', '合约', '方向', '成交均价', '数量', '角色', '手续费', '已实现盈亏']);
+            return (
+                filterBar(
+                    periodBtns() +
+                        contractSel() +
+                        sel('账单主类型', ['账单主类型'].concat(TRADE_BILL_MAIN_TYPES)) +
+                        sel('账单子类型', ['账单子类型'], 'opacity-50 cursor-not-allowed')
+                ) + tableHead(HIST_TRADE_HEADERS)
+            );
+        },
+        'hist-trial-fund': function () {
+            return (
+                filterBar(
+                    periodBtns() +
+                        sel('类型', ['类型', '激活', '费用抵扣', '亏损抵扣', '回收'])
+                ) + tableHead(TRIAL_FUND_HEADERS)
+            );
         },
         'hist-pos': function () {
             return (
                 filterBar(
                     periodBtns() +
-                        sel('合约', 'f-hp-symbol', ['全部', 'BTCUSDC']) +
-                        sel('仓位模式', 'f-hp-mode', ['全部', '逐仓', '全仓']) +
-                        sel('状态', 'f-hp-status', ['全部', '已全部平仓', '部分平仓'])
-                ) +
-                tableHead(['合约', '仓位模式', '杠杆', '开仓均价', '平仓均价', '持仓数量', '已平仓数量', '已平仓盈亏', '状态', '开仓时间', '最新平仓时间', '仓位 ID'])
+                        contractSel() +
+                        sel('仓位模式', ['仓位模式', '全部', '逐仓', '全仓']) +
+                        sel('状态', ['状态', '全部平仓', '部分平仓'], 'min-w-[100px]')
+                ) + tableHead(HIST_POS_HEADERS)
             );
         },
         'asset-log': function () {
             return (
                 filterBar(
                     periodBtns() +
-                        sel('类型', 'f-al-type', ['全部', '转账', '已实现盈亏', '手续费', '资金费用', '体验金入账', '体验金回收'])
-                ) + tableHead(['时间', '类型', '金额', '币种', '合约'])
+                        sel('账单主类型', ['账单主类型', '充值', '提币', '转入', '转出', '空投奖励', '返佣'])
+                ) + tableHead(ASSET_LOG_HEADERS)
             );
         },
         'funding-fee': function () {
-            return filterBar(periodBtns() + sel('合约', 'f-ff-symbol', ['全部', 'BTCUSDC'])) + tableHead(['时间', '合约', '方向', '资金费用']);
+            return filterBar(periodBtns()) + tableHead(FUNDING_FEE_HEADERS);
         },
         dw: function (sub) {
             const dwFilter =
-                sel('资产', 'f-dw-asset', ['全部']) +
-                sel('网络', 'f-dw-net', ['全部']) +
-                sel('状态', 'f-dw-status', ['全部']) +
+                sel('资产', ['全部']) +
+                sel('网络', ['全部']) +
+                sel('状态', ['全部']) +
                 dwPeriodBtns();
 
             if (sub === 'auth') {
@@ -215,6 +293,7 @@
             if (tabId === 'order') return panels.order(subTab || 'base');
             if (tabId === 'hist-order') return panels['hist-order'](subTab || 'base');
             if (tabId === 'hist-trade') return panels['hist-trade']();
+            if (tabId === 'hist-trial-fund') return panels['hist-trial-fund']();
             if (tabId === 'hist-pos') return panels['hist-pos']();
             if (tabId === 'asset-log') return panels['asset-log']();
             if (tabId === 'funding-fee') return panels['funding-fee']();
@@ -226,6 +305,7 @@
             { id: 'order', label: '当前委托' },
             { id: 'hist-order', label: '历史委托' },
             { id: 'hist-trade', label: '交易账单' },
+            { id: 'hist-trial-fund', label: '体验金账单' },
             { id: 'hist-pos', label: '历史持仓' },
             { id: 'asset-log', label: '资金账单' },
             { id: 'funding-fee', label: '资金费用' },
