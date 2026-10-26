@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX Admin - 用户中心</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+        .sidebar-item-active { background: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+        .status-tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+        .status-normal { background: #ecfdf5; color: #059669; }
+        .status-partial { background: #fff7ed; color: #ea580c; }
+        .status-frozen { background: #fef2f2; color: #dc2626; }
+        .type-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: #f1f5f9; color: #475569; }
+        .type-tag.mm { background: #eff6ff; color: #2563eb; }
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; inset: 0; background: #cbd5e1; transition: .25s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background: #fff; transition: .25s; border-radius: 50%; }
+        input:checked + .slider { background: #3b82f6; }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .config-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid #f1f5f9; }
+        .config-row:last-child { border-bottom: none; }
+        .config-row-title { font-size: 13px; font-weight: 700; color: #0f172a; }
+        .config-row-desc { font-size: 11px; color: #94a3b8; margin-top: 3px; line-height: 1.45; max-width: 320px; }
+        .drawer-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 40; }
+        .drawer-panel { position: fixed; top: 0; right: 0; width: 520px; max-width: 100%; height: 100%; background: #fff; z-index: 50; box-shadow: -8px 0 24px rgba(0,0,0,.12); display: flex; flex-direction: column; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-[12px]">
+
+<aside id="admin-sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0"></aside>
+
+<main class="flex-1 flex flex-col overflow-hidden">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+        <div>
+            <h1 class="text-xl font-bold text-slate-800">用户中心</h1>
+            <p class="text-xs text-slate-400 mt-0.5">查询用户资料、类型与冻结状态；交易数据请在用户详情中只读查看</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-sm text-slate-500">Ops_Admin</span>
+            <div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">OA</div>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8 space-y-6">
+        <section class="card p-5">
+            <div class="grid grid-cols-5 gap-4 items-end">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID</label>
+                    <input id="filterUid" type="text" placeholder="输入 UID" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">邮箱 / 钱包地址</label>
+                    <input id="filterContact" type="text" placeholder="邮箱或 0x..." class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">用户类型</label>
+                    <select id="filterUserType" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none">
+                        <option value="all">全部</option>
+                        <option value="retail">普通用户</option>
+                        <option value="mm">做市商</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">用户状态</label>
+                    <select id="filterStatus" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none">
+                        <option value="all">全部</option>
+                        <option value="normal">正常</option>
+                        <option value="partial">部分冻结</option>
+                        <option value="frozen">冻结</option>
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" onclick="applyFilters()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-slate-800">查询</button>
+                    <button type="button" onclick="resetFilters()" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50">重置</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="card overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100">
+                <span class="text-sm font-bold text-slate-700">用户列表 <span id="userCount" class="text-slate-400 font-medium"></span></span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left min-w-[960px]">
+                    <thead class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase">
+                    <tr>
+                        <th class="px-6 py-3">UID</th>
+                        <th class="px-6 py-3">邮箱 / 钱包地址</th>
+                        <th class="px-6 py-3">用户类型</th>
+                        <th class="px-6 py-3">最新登录时间</th>
+                        <th class="px-6 py-3 text-right">过去 14 天交易量</th>
+                        <th class="px-6 py-3 text-center">VIP 等级</th>
+                        <th class="px-6 py-3 text-center">用户状态</th>
+                        <th class="px-6 py-3 text-right">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="userTableBody" class="divide-y divide-slate-50 text-[12px]"></tbody>
+                </table>
+            </div>
+            <div id="uc-list-pagination"></div>
+        </section>
+    </div>
+</main>
+
+<!-- 用户类型 -->
+<div id="typeModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/50">
+    <div class="bg-white w-[420px] rounded-xl p-6 shadow-2xl">
+        <h3 class="text-base font-bold text-slate-800 mb-1">配置用户类型</h3>
+        <p id="typeModalMeta" class="text-xs text-slate-400 font-mono mb-5"></p>
+        <div class="space-y-3 mb-6">
+            <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                <input type="radio" name="userTypePick" value="retail" class="accent-blue-600">
+                <div><div class="font-bold text-slate-800">普通用户</div><div class="text-[11px] text-slate-400">默认零售交易账户</div></div>
+            </label>
+            <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                <input type="radio" name="userTypePick" value="mm" class="accent-blue-600">
+                <div><div class="font-bold text-slate-800">做市商</div><div class="text-[11px] text-slate-400">开通做市商权限与费率策略</div></div>
+            </label>
+        </div>
+        <div class="flex gap-3">
+            <button type="button" onclick="closeTypeModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button type="button" onclick="saveUserType()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 冻结配置 -->
+<div id="freezeOverlay" class="drawer-overlay hidden" onclick="closeFreezeDrawer()"></div>
+<div id="freezeDrawer" class="drawer-panel hidden">
+    <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between shrink-0">
+        <div>
+            <h2 class="text-base font-bold text-slate-800">冻结配置</h2>
+            <p id="freezeDrawerMeta" class="text-xs text-slate-400 mt-1 font-mono"></p>
+        </div>
+        <button type="button" onclick="closeFreezeDrawer()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-500 text-lg">&times;</button>
+    </div>
+    <div class="flex-1 overflow-y-auto px-6 py-5">
+        <section class="card p-5">
+            <h3 class="text-sm font-bold text-slate-800 mb-3">冻结与交易限制</h3>
+            <div id="freezeConfigList"></div>
+        </section>
+        <section class="card p-5 mt-4">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">操作备注（必填）</label>
+            <textarea id="freezeRemark" rows="3" placeholder="请填写变更原因..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none resize-none"></textarea>
+        </section>
+    </div>
+    <div class="px-6 py-4 border-t border-slate-100 flex gap-3 shrink-0">
+        <button type="button" onclick="closeFreezeDrawer()" class="flex-1 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">取消</button>
+        <button type="button" onclick="saveFreezeConfig()" class="flex-1 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold">保存配置</button>
+    </div>
+</div>
+
+<div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-lg text-sm font-bold shadow-xl z-[70] hidden"></div>
+
+<script src="admin-pagination.js"></script>
+<script>
+    const UC_FREEZE_CONFIGS = [
+        { key: 'withdrawFreeze', title: '提现冻结', desc: '禁止发起链上提现申请' },
+        { key: 'transferFreeze', title: '资金划转冻结', desc: '禁止交易账户、资金账户之间的资金划转' },
+        { key: 'orderFreeze', title: '下单冻结', desc: '禁止下单，开平仓都不允许' },
+        { key: 'closeOnly', title: '仅平仓模式', desc: '仅允许平掉已有仓位，禁止任何开仓行为' },
+        { key: 'apiFreeze', title: 'API 交易冻结', desc: '禁止使用 API Key 进行下单，Web/App 不受影响' },
+        { key: 'loginFreeze', title: '登录冻结', desc: '禁止用户登录账号' }
+    ];
+
+    let users = [
+        { uid: '10028471', email: 'trader@example.com', wallet: '0x7a3f8c2e91d04b5a6e7f8091a2b3c4d5e6f7a8b9', userType: 'retail', lastLogin: '2026-10-26 18:22:10', vol14d: '12,450,800', vip: 'VIP 2', status: 'normal', flags: {} },
+        { uid: '10031592', email: '', wallet: '0x2b91c4d8e0f1234567890abcdef1234567890abcd', userType: 'mm', lastLogin: '2026-10-26 09:05:33', vol14d: '89,102,400', vip: 'VIP 4', status: 'partial', flags: { orderFreeze: true, apiFreeze: true } },
+        { uid: '10019833', email: 'ops@forx.test', wallet: '0xd5e2a1b7c9034567890abcdef1234567890abcdef12', userType: 'retail', lastLogin: '2026-10-25 22:18:00', vol14d: '320,500', vip: 'VIP 0', status: 'frozen', flags: { loginFreeze: true, withdrawFreeze: true, transferFreeze: true, orderFreeze: true } }
+    ];
+
+    let filteredUsers = [...users];
+    let listPage = 1;
+    let typeEditUid = null;
+    let freezeEditUid = null;
+    let draftFlags = null;
+
+    function userTypeLabel(t) {
+        return t === 'mm' ? '<span class="type-tag mm">做市商</span>' : '<span class="type-tag">普通用户</span>';
+    }
+
+    function contactCell(u) {
+        if (u.email) return '<div>' + u.email + '</div><div class="text-[10px] text-slate-400 font-mono mt-0.5">' + (window.AdminCopyChip ? AdminCopyChip.wallet(u.wallet) : u.wallet) + '</div>';
+        return window.AdminCopyChip ? AdminCopyChip.wallet(u.wallet) : u.wallet;
+    }
+
+    function statusFromFlags(flags) {
+        if (flags.loginFreeze && Object.keys(flags).filter(k => flags[k]).length >= 3) return 'frozen';
+        const any = UC_FREEZE_CONFIGS.some(c => flags[c.key]);
+        return any ? 'partial' : 'normal';
+    }
+
+    function statusTag(status) {
+        if (status === 'frozen') return '<span class="status-tag status-frozen">冻结</span>';
+        if (status === 'partial') return '<span class="status-tag status-partial">部分冻结</span>';
+        return '<span class="status-tag status-normal">正常</span>';
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('userTableBody');
+        const sliced = window.AdminPagination ? AdminPagination.slice(filteredUsers, listPage) : { items: filteredUsers, page: 1, total: filteredUsers.length };
+        listPage = sliced.page;
+        document.getElementById('userCount').textContent = '(' + filteredUsers.length + ')';
+        if (!filteredUsers.length) {
+            tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-12 text-center text-slate-400">未找到匹配用户</td></tr>';
+            if (window.AdminPagination) AdminPagination.mount('uc-list-pagination', 0, 1, 'uc-list');
+            return;
+        }
+        tbody.innerHTML = sliced.items.map(function (u) {
+            const uidCell = window.AdminCopyChip ? AdminCopyChip.uid(u.uid) : u.uid;
+            return '<tr class="hover:bg-slate-50">' +
+                '<td class="px-6 py-4 font-mono">' + uidCell + '</td>' +
+                '<td class="px-6 py-4">' + contactCell(u) + '</td>' +
+                '<td class="px-6 py-4">' + userTypeLabel(u.userType) + '</td>' +
+                '<td class="px-6 py-4 text-slate-600 whitespace-nowrap">' + u.lastLogin + '</td>' +
+                '<td class="px-6 py-4 text-right font-mono">' + u.vol14d + ' USDT</td>' +
+                '<td class="px-6 py-4 text-center font-bold">' + u.vip + '</td>' +
+                '<td class="px-6 py-4 text-center">' + statusTag(u.status) + '</td>' +
+                '<td class="px-6 py-4 text-right space-x-3 whitespace-nowrap">' +
+                '<a href="用户中心详情.html?uid=' + encodeURIComponent(u.uid) + '" class="text-blue-600 font-bold hover:underline">详情</a>' +
+                '<button type="button" onclick="openTypeModal(\'' + u.uid + '\')" class="text-slate-700 font-bold hover:underline">类型</button>' +
+                '<button type="button" onclick="openFreezeDrawer(\'' + u.uid + '\')" class="text-orange-600 font-bold hover:underline">冻结</button>' +
+                '</td></tr>';
+        }).join('');
+        if (window.AdminPagination) AdminPagination.mount('uc-list-pagination', sliced.total, listPage, 'uc-list');
+    }
+
+    function applyFilters() {
+        const uid = document.getElementById('filterUid').value.trim();
+        const contact = document.getElementById('filterContact').value.trim().toLowerCase();
+        const ut = document.getElementById('filterUserType').value;
+        const st = document.getElementById('filterStatus').value;
+        filteredUsers = users.filter(function (u) {
+            if (uid && !u.uid.includes(uid)) return false;
+            if (contact) {
+                const hay = (u.email + ' ' + u.wallet).toLowerCase();
+                if (!hay.includes(contact)) return false;
+            }
+            if (ut !== 'all' && u.userType !== ut) return false;
+            if (st !== 'all' && u.status !== st) return false;
+            return true;
+        });
+        listPage = 1;
+        renderTable();
+    }
+
+    function resetFilters() {
+        document.getElementById('filterUid').value = '';
+        document.getElementById('filterContact').value = '';
+        document.getElementById('filterUserType').value = 'all';
+        document.getElementById('filterStatus').value = 'all';
+        filteredUsers = [...users];
+        listPage = 1;
+        renderTable();
+    }
+
+    function openTypeModal(uid) {
+        typeEditUid = uid;
+        const u = users.find(x => x.uid === uid);
+        document.getElementById('typeModalMeta').textContent = 'UID ' + uid;
+        document.querySelectorAll('input[name="userTypePick"]').forEach(function (r) {
+            r.checked = r.value === (u && u.userType);
+        });
+        document.getElementById('typeModal').classList.remove('hidden');
+        document.getElementById('typeModal').classList.add('flex');
+    }
+
+    function closeTypeModal() {
+        document.getElementById('typeModal').classList.add('hidden');
+        document.getElementById('typeModal').classList.remove('flex');
+        typeEditUid = null;
+    }
+
+    function saveUserType() {
+        const pick = document.querySelector('input[name="userTypePick"]:checked');
+        if (!pick) { showToast('请选择用户类型'); return; }
+        const u = users.find(x => x.uid === typeEditUid);
+        if (u) u.userType = pick.value;
+        closeTypeModal();
+        applyFilters();
+        showToast('用户类型已更新');
+    }
+
+    function renderFreezeList(flags) {
+        document.getElementById('freezeConfigList').innerHTML = UC_FREEZE_CONFIGS.map(function (c) {
+            return '<div class="config-row"><div><div class="config-row-title">' + c.title + '</div><div class="config-row-desc">' + c.desc + '</div></div>' +
+                '<label class="switch"><input type="checkbox" ' + (flags[c.key] ? 'checked' : '') + ' onchange="onFreezeToggle(\'' + c.key + '\', this.checked)"><span class="slider"></span></label></div>';
+        }).join('');
+    }
+
+    function openFreezeDrawer(uid) {
+        const u = users.find(x => x.uid === uid);
+        if (!u) return;
+        freezeEditUid = uid;
+        draftFlags = Object.assign({}, u.flags);
+        document.getElementById('freezeDrawerMeta').textContent = 'UID ' + uid;
+        document.getElementById('freezeRemark').value = '';
+        renderFreezeList(draftFlags);
+        document.getElementById('freezeOverlay').classList.remove('hidden');
+        document.getElementById('freezeDrawer').classList.remove('hidden');
+    }
+
+    function closeFreezeDrawer() {
+        document.getElementById('freezeOverlay').classList.add('hidden');
+        document.getElementById('freezeDrawer').classList.add('hidden');
+        freezeEditUid = null;
+        draftFlags = null;
+    }
+
+    function onFreezeToggle(key, checked) {
+        if (!draftFlags) return;
+        draftFlags[key] = checked;
+    }
+
+    function saveFreezeConfig() {
+        const remark = document.getElementById('freezeRemark').value.trim();
+        if (!remark) { showToast('请填写操作备注'); return; }
+        const u = users.find(x => x.uid === freezeEditUid);
+        if (u && draftFlags) {
+            u.flags = Object.assign({}, draftFlags);
+            u.status = statusFromFlags(u.flags);
+        }
+        closeFreezeDrawer();
+        applyFilters();
+        showToast('冻结配置已保存');
+    }
+
+    function showToast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.remove('hidden');
+        setTimeout(function () { el.classList.add('hidden'); }, 2500);
+    }
+
+    renderTable();
+    if (window.AdminPagination) {
+        AdminPagination.register('uc-list', function (p) { listPage = p; renderTable(); });
+    }
+</script>
+<script src="admin-permission-registry.js"></script>
+<script src="admin-permission-store.js"></script>
+<script src="admin-permissions.js"></script>
+<script src="admin-copy-chip.js"></script>
+<script src="admin-sidebar.js"></script>
+<script>initAdminSidebar('user-center', '登录身份: 运营管理员');</script>
+</body>
+</html>
