@@ -231,7 +231,7 @@
             { id: 'pos', label: '当前持仓' },
             { id: 'order', label: '当前委托' },
             { id: 'hist-order', label: '历史委托' },
-            { id: 'hist-trade', label: '历史成交' },
+            { id: 'hist-trade', label: '交易账单' },
             { id: 'hist-pos', label: '历史持仓' },
             { id: 'asset-log', label: '资金流水' },
             { id: 'funding-fee', label: '资金费用' },
