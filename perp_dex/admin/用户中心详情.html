@@ -32,10 +32,7 @@
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
         <div class="flex items-center gap-4">
             <a href="用户中心.html" class="text-xs font-bold text-blue-600 hover:underline">← 返回用户列表</a>
-            <div>
-                <h1 class="text-xl font-bold text-slate-800">用户详情</h1>
-                <p class="text-xs text-slate-400 mt-0.5">UID <span id="headerUid" class="font-mono font-bold text-slate-600">—</span> · 交易数据只读，不支持代客平仓/撤单</p>
-            </div>
+            <h1 class="text-xl font-bold text-slate-800">用户详情</h1>
         </div>
     </header>
 
@@ -47,7 +44,10 @@
             </div>
             <div id="detailGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
             <div class="mt-6 pt-6 border-t border-slate-100">
-                <p class="detail-label mb-2">用户冻结行为</p>
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <p class="detail-label">用户冻结行为</p>
+                    <button type="button" onclick="openFreezeLogModal()" class="text-xs font-bold text-blue-600 hover:underline">冻结配置记录</button>
+                </div>
                 <div id="freezeBehaviorRow" class="flex flex-wrap"></div>
             </div>
         </section>
@@ -84,6 +84,29 @@
     </div>
 </div>
 
+<div id="freezeLogModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/50 p-4">
+    <div class="bg-white w-full max-w-3xl rounded-xl shadow-2xl max-h-[80vh] flex flex-col">
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="text-base font-bold text-slate-800">冻结配置记录</h3>
+            <button type="button" onclick="closeFreezeLogModal()" class="text-slate-400 hover:text-slate-800 text-xl">&times;</button>
+        </div>
+        <div class="overflow-auto p-4">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase">
+                <tr>
+                    <th class="px-4 py-2">时间</th>
+                    <th class="px-4 py-2">冻结类型</th>
+                    <th class="px-4 py-2">冻结行为</th>
+                    <th class="px-4 py-2">操作人</th>
+                </tr>
+                </thead>
+                <tbody id="freezeLogTableBody" class="divide-y divide-slate-50"></tbody>
+            </table>
+        </div>
+        <div class="px-6 py-3 border-t border-slate-100 text-[10px] text-slate-400">按时间倒序展示，接口接入后支持分页</div>
+    </div>
+</div>
+
 <script src="admin-user-center-tabs.js"></script>
 <script>
     const FREEZE_BEHAVIORS = [
@@ -94,6 +117,56 @@
         { key: 'apiFreeze', label: 'API 下单' },
         { key: 'loginFreeze', label: '登录' }
     ];
+
+    const DEMO_USERS = {
+        '10028471': {
+            uid: '10028471', email: 'trader@example.com', wallet: '',
+            userType: 'retail', lastLogin: '2026-10-26 18:22:10', loginIp: '103.21.44.88',
+            totalAsset: '125,430.50 USDT', fundingBal: '42,100.00 USDT', tradingBal: '83,330.50 USDT',
+            marginRatio: '18.6%', upnl: '+1,240.30 USDT', maintMargin: '4,520.00 USDT', vol14d: '12,450,800 USDT',
+            vip: 'VIP 2', taker: '0.034%', maker: '0.010%', feeDays: '12', status: 'normal', flags: {},
+            devices: [
+                { time: '2026-10-26 18:22:10', ip: '103.21.44.88', device: 'Chrome 141 / macOS 15', client: 'Web' },
+                { time: '2026-10-25 09:11:02', ip: '103.21.44.90', device: 'ForX App / iOS 18.1', client: 'iOS' }
+            ]
+        },
+        '10031592': {
+            uid: '10031592', email: '', wallet: '0x2b91c4d8e0f1234567890abcdef1234567890abcd',
+            userType: 'mm', lastLogin: '2026-10-26 09:05:33', loginIp: '47.88.12.4',
+            totalAsset: '2,410,000.00 USDT', fundingBal: '410,000.00 USDT', tradingBal: '2,000,000.00 USDT',
+            marginRatio: '42.1%', upnl: '-12,400.00 USDT', maintMargin: '180,200.00 USDT', vol14d: '89,102,400 USDT',
+            vip: 'VIP 4', taker: '0.026%', maker: '0.004%', feeDays: '—', status: 'partial',
+            flags: { orderFreeze: true, apiFreeze: true, closeOnly: true },
+            devices: [{ time: '2026-10-26 09:05:33', ip: '47.88.12.4', device: 'API Client', client: 'API' }]
+        },
+        '10019833': {
+            uid: '10019833', email: 'ops@forx.test', wallet: '',
+            userType: 'retail', lastLogin: '2026-10-25 22:18:00', loginIp: '198.18.0.12',
+            totalAsset: '8,240.00 USDT', fundingBal: '1,200.00 USDT', tradingBal: '7,040.00 USDT',
+            marginRatio: '—', upnl: '0.00 USDT', maintMargin: '—', vol14d: '320,500 USDT',
+            vip: 'VIP 0', taker: '0.050%', maker: '0.020%', feeDays: '—', status: 'frozen',
+            flags: { loginFreeze: true, withdrawFreeze: true, transferFreeze: true, orderFreeze: true },
+            devices: [{ time: '2026-10-20 14:02:00', ip: '198.18.0.12', device: 'Safari / iOS 17', client: 'iOS' }]
+        }
+    };
+
+    const FREEZE_LOGS = {
+        '10028471': [
+            { time: '2026-09-12 11:20:00', actionType: '取消冻结', behavior: '提现冻结', operator: 'Risk_Admin' }
+        ],
+        '10031592': [
+            { time: '2026-10-26 09:10:00', actionType: '冻结', behavior: '下单冻结', operator: 'Risk_Admin' },
+            { time: '2026-10-26 09:10:00', actionType: '冻结', behavior: 'API 交易冻结', operator: 'Risk_Admin' },
+            { time: '2026-10-26 09:12:00', actionType: '冻结', behavior: '仅平仓模式', operator: 'Risk_Admin' },
+            { time: '2026-10-18 16:40:00', actionType: '取消冻结', behavior: '资金划转冻结', operator: 'Ops_Lead' }
+        ],
+        '10019833': [
+            { time: '2026-10-25 22:30:00', actionType: '冻结', behavior: '登录冻结', operator: 'Risk_Admin' },
+            { time: '2026-10-25 22:30:00', actionType: '冻结', behavior: '提现冻结', operator: 'Risk_Admin' },
+            { time: '2026-10-25 22:30:00', actionType: '冻结', behavior: '资金划转冻结', operator: 'Risk_Admin' },
+            { time: '2026-10-25 22:30:00', actionType: '冻结', behavior: '下单冻结', operator: 'Risk_Admin' }
+        ]
+    };
 
     let currentTab = 'pos';
     let orderSub = 'base';
@@ -106,6 +179,17 @@
 
     function userTypeText(t) { return t === 'mm' ? '做市商' : '普通用户'; }
 
+    function contactField(profile) {
+        if (profile.email) {
+            return { label: '邮箱', value: profile.email };
+        }
+        if (profile.wallet) {
+            const w = window.AdminCopyChip ? AdminCopyChip.wallet(profile.wallet) : profile.wallet;
+            return { label: '钱包地址', value: w };
+        }
+        return { label: '邮箱 / 钱包地址', value: '—' };
+    }
+
     function statusTag(s) {
         if (s === 'frozen') return '<span class="status-tag status-frozen">冻结</span>';
         if (s === 'partial') return '<span class="status-tag status-partial">部分冻结</span>';
@@ -114,33 +198,12 @@
 
     function renderProfile() {
         const uid = qsUid();
-        document.getElementById('headerUid').textContent = uid;
-        profile = {
-            uid,
-            email: '—',
-            wallet: '—',
-            userType: 'retail',
-            lastLogin: '—',
-            loginIp: '—',
-            totalAsset: '—',
-            fundingBal: '—',
-            tradingBal: '—',
-            marginRatio: '—',
-            upnl: '—',
-            maintMargin: '—',
-            vol14d: '—',
-            vip: '—',
-            taker: '—',
-            maker: '—',
-            feeDays: '—',
-            status: 'normal',
-            flags: {},
-            devices: []
-        };
+        profile = DEMO_USERS[uid] || Object.assign({}, DEMO_USERS['10028471'], { uid, email: '', wallet: '', flags: {}, devices: [] });
 
+        const contact = contactField(profile);
         const fields = [
             { label: 'UID', value: profile.uid },
-            { label: '邮箱 / 钱包地址', value: profile.email ? profile.email + '<br><span class="text-[11px] font-mono text-slate-500">' + profile.wallet + '</span>' : '<span class="font-mono text-[11px]">' + profile.wallet + '</span>' },
+            { label: contact.label, value: contact.value },
             { label: '用户类型', value: userTypeText(profile.userType) },
             { label: '最新登录时间', value: profile.lastLogin },
             { label: '登录 IP', value: profile.loginIp },
@@ -237,6 +300,27 @@
     function closeDeviceModal() {
         document.getElementById('deviceModal').classList.add('hidden');
         document.getElementById('deviceModal').classList.remove('flex');
+    }
+
+    function openFreezeLogModal() {
+        const uid = qsUid();
+        const rows = FREEZE_LOGS[uid] || [];
+        document.getElementById('freezeLogTableBody').innerHTML = rows.length
+            ? rows.map(function (r) {
+                const typeCls = r.actionType === '冻结' ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold';
+                return '<tr><td class="px-4 py-3 whitespace-nowrap">' + r.time + '</td>' +
+                    '<td class="px-4 py-3"><span class="' + typeCls + '">' + r.actionType + '</span></td>' +
+                    '<td class="px-4 py-3">' + r.behavior + '</td>' +
+                    '<td class="px-4 py-3 font-mono text-slate-600">' + r.operator + '</td></tr>';
+            }).join('')
+            : '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400">暂无冻结配置记录</td></tr>';
+        document.getElementById('freezeLogModal').classList.remove('hidden');
+        document.getElementById('freezeLogModal').classList.add('flex');
+    }
+
+    function closeFreezeLogModal() {
+        document.getElementById('freezeLogModal').classList.add('hidden');
+        document.getElementById('freezeLogModal').classList.remove('flex');
     }
 
     renderProfile();
