@@ -200,10 +200,10 @@
         },
         dw: function (sub) {
             const dwFilter =
-                sel('资产', 'f-dw-asset', ['全部', 'USDT', 'USDC']) +
-                sel('网络', 'f-dw-net', ['全部', 'BSC', 'Ethereum']) +
-                sel('状态', 'f-dw-status', ['全部', '处理中', '已完成', '失败']) +
-                '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">时间</label><select class="border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white"><option>最近 7 天</option><option>最近 30 天</option><option>全部</option></select></div>';
+                sel('资产', 'f-dw-asset', ['全部']) +
+                sel('网络', 'f-dw-net', ['全部']) +
+                sel('状态', 'f-dw-status', ['全部']) +
+                sel('时间', 'f-dw-time', ['全部']);
 
             if (sub === 'auth') {
                 return filterBar(dwFilter) + tableHead(['创建时间', '资产', '数量', '类型', '网络', '授权状态', '授权时间']);
