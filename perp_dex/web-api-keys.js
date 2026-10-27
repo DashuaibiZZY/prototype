@@ -61,17 +61,20 @@
 
     function formatCreatedRowHtml(isoLike) {
         if (!isoLike) {
-            return '<div class="flex items-center justify-between text-[10px] text-gray-400"><span>创建日期</span><span>—</span></div>';
+            return '<div class="api-created-row text-[10px] text-gray-400"><span>创建日期</span><span>—</span></div>';
         }
         const m = isoLike.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}:\d{2}:\d{2})/);
         if (!m) {
-            return '<div class="text-[10px] text-gray-400">创建日期 <span class="text-gray-700 font-bold">' + isoLike + '</span></div>';
+            return (
+                '<div class="api-created-row text-[10px]"><span class="text-gray-400">创建日期</span>' +
+                '<span class="api-created-datetime">' + isoLike + '</span></div>'
+            );
         }
-        const datePart = m[1] + '年' + parseInt(m[2], 10) + '月' + parseInt(m[3], 10) + '日';
+        const dateTime = m[1] + '年' + parseInt(m[2], 10) + '月' + parseInt(m[3], 10) + '日 ' + m[4];
         return (
-            '<div class="flex items-center justify-between gap-3 text-[10px]">' +
-            '<span class="text-gray-400">创建日期 <span class="text-gray-700 font-bold">' + datePart + '</span></span>' +
-            '<span class="text-gray-700 font-bold font-mono tabular-nums shrink-0">' + m[4] + '</span>' +
+            '<div class="api-created-row text-[10px]">' +
+            '<span class="text-gray-400 shrink-0">创建日期</span>' +
+            '<span class="api-created-datetime">' + dateTime + '</span>' +
             '</div>'
         );
     }
@@ -210,8 +213,9 @@
         };
     }
 
-    function modalBtn(classes, label, dataName) {
-        return '<button type="button" class="' + classes + '" ' + dataName + '="">' + label + '</button>';
+    function modalBtn(classes, label, dataName, disabled) {
+        const dis = disabled ? ' disabled' : '';
+        return '<button type="button" class="' + classes + '" ' + dataName + '=""' + dis + '>' + label + '</button>';
     }
 
     function buildCredentialModalHtml(key, opts) {
@@ -222,22 +226,18 @@
         if (opts.mode === 'success') {
             footer =
                 '<div class="pt-1">' +
-                modalBtn('w-full py-2.5 bg-gray-900 text-white rounded-sm font-black text-[11px] hover:bg-black transition', '一键复制', 'data-copy-all') +
+                modalBtn('api-modal-btn api-modal-btn-primary', '一键复制', 'data-copy-all') +
                 '</div>';
         } else if (opts.showDelete) {
-            if (revealed) {
-                footer =
-                    '<div class="flex flex-row items-stretch gap-3 pt-1">' +
-                    modalBtn('flex-1 min-w-0 py-2.5 border border-red-200 text-red-600 rounded-sm font-black text-[11px] hover:bg-red-50 transition', '删除', 'data-detail-delete') +
-                    modalBtn('flex-1 min-w-0 py-2.5 border border-gray-200 rounded-sm font-black text-[11px] text-gray-800 hover:bg-gray-50 transition', '一键复制', 'data-copy-all') +
-                    '</div>';
-            } else {
-                footer =
-                    '<div class="space-y-3 pt-1">' +
-                    modalBtn('w-full py-2.5 border border-gray-200 rounded-sm font-black text-[11px] text-gray-800 hover:bg-gray-50 transition', '查看凭证', 'data-reveal-cred') +
-                    modalBtn('w-full py-2.5 border border-red-200 text-red-600 rounded-sm font-black text-[11px] hover:bg-red-50 transition', '删除', 'data-detail-delete') +
-                    '</div>';
-            }
+            const revealLink = revealed
+                ? ''
+                : '<div class="text-right"><button type="button" class="text-[11px] font-bold text-blue-600 hover:underline" data-reveal-cred>查看凭证</button></div>';
+            footer =
+                revealLink +
+                '<div class="api-modal-actions">' +
+                modalBtn('api-modal-btn api-modal-btn-danger', '删除', 'data-detail-delete') +
+                modalBtn('api-modal-btn api-modal-btn-copy', '一键复制', 'data-copy-all', !revealed) +
+                '</div>';
         }
         return (
             '<div class="space-y-4">' +
