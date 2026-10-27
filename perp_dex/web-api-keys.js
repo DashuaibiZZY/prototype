@@ -59,6 +59,23 @@
         return isoLike;
     }
 
+    function formatCreatedRowHtml(isoLike) {
+        if (!isoLike) {
+            return '<div class="flex items-center justify-between text-[10px] text-gray-400"><span>创建日期</span><span>—</span></div>';
+        }
+        const m = isoLike.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}:\d{2}:\d{2})/);
+        if (!m) {
+            return '<div class="text-[10px] text-gray-400">创建日期 <span class="text-gray-700 font-bold">' + isoLike + '</span></div>';
+        }
+        const datePart = m[1] + '年' + parseInt(m[2], 10) + '月' + parseInt(m[3], 10) + '日';
+        return (
+            '<div class="flex items-center justify-between gap-3 text-[10px]">' +
+            '<span class="text-gray-400">创建日期 <span class="text-gray-700 font-bold">' + datePart + '</span></span>' +
+            '<span class="text-gray-700 font-bold font-mono tabular-nums shrink-0">' + m[4] + '</span>' +
+            '</div>'
+        );
+    }
+
     function nowCreatedAt() {
         const d = new Date();
         const p = function (n) { return String(n).padStart(2, '0'); };
@@ -210,9 +227,9 @@
         } else if (opts.showDelete) {
             if (revealed) {
                 footer =
-                    '<div class="flex gap-3 pt-1">' +
-                    modalBtn('flex-1 py-2.5 border border-red-200 text-red-600 rounded-sm font-black text-[11px] hover:bg-red-50 transition', '删除', 'data-detail-delete') +
-                    modalBtn('flex-1 py-2.5 border border-gray-200 rounded-sm font-black text-[11px] text-gray-800 hover:bg-gray-50 transition', '一键复制', 'data-copy-all') +
+                    '<div class="flex flex-row items-stretch gap-3 pt-1">' +
+                    modalBtn('flex-1 min-w-0 py-2.5 border border-red-200 text-red-600 rounded-sm font-black text-[11px] hover:bg-red-50 transition', '删除', 'data-detail-delete') +
+                    modalBtn('flex-1 min-w-0 py-2.5 border border-gray-200 rounded-sm font-black text-[11px] text-gray-800 hover:bg-gray-50 transition', '一键复制', 'data-copy-all') +
                     '</div>';
             } else {
                 footer =
@@ -238,7 +255,7 @@
             cred.secret +
             (revealed ? copyIconBtn(key.secret) : '') +
             '</div></div></div>' +
-            '<p class="text-[10px] text-gray-400">创建日期 <span class="text-gray-700 font-bold">' + formatCreatedDisplay(key.createdAt) + '</span></p>' +
+            formatCreatedRowHtml(key.createdAt) +
             footer +
             '</div>'
         );
