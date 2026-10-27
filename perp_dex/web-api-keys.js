@@ -67,15 +67,17 @@
         if (!m) {
             return (
                 '<div class="api-created-row text-[10px]"><span class="text-gray-400">创建日期</span>' +
-                '<span class="api-created-datetime">' + isoLike + '</span></div>'
+                '<div class="api-created-datetime-col"><div>' + isoLike + '</div></div></div>'
             );
         }
-        const dateTime = m[1] + '年' + parseInt(m[2], 10) + '月' + parseInt(m[3], 10) + '日 ' + m[4];
+        const datePart = m[1] + '年' + parseInt(m[2], 10) + '月' + parseInt(m[3], 10) + '日';
         return (
             '<div class="api-created-row text-[10px]">' +
             '<span class="text-gray-400 shrink-0">创建日期</span>' +
-            '<span class="api-created-datetime">' + dateTime + '</span>' +
-            '</div>'
+            '<div class="api-created-datetime-col">' +
+            '<div>' + datePart + '</div>' +
+            '<div class="api-created-time">' + m[4] + '</div>' +
+            '</div></div>'
         );
     }
 
@@ -229,16 +231,15 @@
                 modalBtn('api-modal-btn api-modal-btn-primary', '一键复制', 'data-copy-all') +
                 '</div>';
         } else if (opts.showDelete) {
-            const revealLink = revealed
-                ? ''
-                : '<div class="text-right"><button type="button" class="text-[11px] font-bold text-blue-600 hover:underline" data-reveal-cred>查看凭证</button></div>';
             footer =
-                revealLink +
                 '<div class="api-modal-actions">' +
                 modalBtn('api-modal-btn api-modal-btn-danger', '删除', 'data-detail-delete') +
                 modalBtn('api-modal-btn api-modal-btn-copy', '一键复制', 'data-copy-all', !revealed) +
                 '</div>';
         }
+        const revealLink = opts.showDelete && !revealed
+            ? '<div class="text-right pt-1"><button type="button" class="text-[11px] font-bold text-blue-600 hover:underline" data-reveal-cred>查看凭证</button></div>'
+            : '';
         return (
             '<div class="space-y-4">' +
             '<p class="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded-sm px-3 py-2 font-bold">切勿向任何人透露您的 API 凭证。</p>' +
@@ -254,7 +255,9 @@
             '<div class="flex items-center gap-1 min-w-0 font-mono font-bold text-gray-900 truncate">' +
             cred.secret +
             (revealed ? copyIconBtn(key.secret) : '') +
-            '</div></div></div>' +
+            '</div></div>' +
+            revealLink +
+            '</div>' +
             formatCreatedRowHtml(key.createdAt) +
             footer +
             '</div>'
