@@ -82,14 +82,14 @@
                 colOpen + '<div>' + isoLike + '</div></div></div>'
             );
         }
-        const datePart = m[1] + '年' + parseInt(m[2], 10) + '月' + parseInt(m[3], 10) + '日';
+        const display = formatCreatedDisplay(isoLike);
         return (
             '<div' + rowStyle + '>' +
             '<span class="text-gray-400 shrink-0">创建日期</span>' +
             colOpen +
-            '<div style="white-space:nowrap">' + datePart + '</div>' +
-            '<div class="api-created-time" style="white-space:nowrap">' + m[4] + '</div>' +
-            '</div></div>'
+            '<div class="api-created-datetime" style="white-space:nowrap;font-variant-numeric:tabular-nums">' +
+            display +
+            '</div></div></div>'
         );
     }
 
