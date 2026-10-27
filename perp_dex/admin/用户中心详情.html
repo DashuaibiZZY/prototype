@@ -133,7 +133,7 @@
         },
         '10031592': {
             uid: '10031592', email: '', wallet: '0x2b91c4d8e0f1234567890abcdef1234567890abcd',
-            userType: 'mm', lastLogin: '2026-10-26 09:05:33', loginIp: '47.88.12.4',
+            userType: 'mm_external', lastLogin: '2026-10-26 09:05:33', loginIp: '47.88.12.4',
             totalAsset: '2,410,000.00 USDC', fundingBal: '410,000.00 USDC', tradingBal: '2,000,000.00 USDC',
             marginRatio: '42.1%', upnl: '-12,400.00 USDC', maintMargin: '180,200.00 USDC', vol14d: '89,102,400 USDC',
             vip: 'VIP 4', taker: '0.026%', maker: '0.004%', feeDays: '—', status: 'partial',
@@ -142,7 +142,7 @@
         },
         '10019833': {
             uid: '10019833', email: 'ops@forx.test', wallet: '',
-            userType: 'retail', lastLogin: '2026-10-25 22:18:00', loginIp: '198.18.0.12',
+            userType: 'mm_internal', lastLogin: '2026-10-25 22:18:00', loginIp: '198.18.0.12',
             totalAsset: '8,240.00 USDC', fundingBal: '1,200.00 USDC', tradingBal: '7,040.00 USDC',
             marginRatio: '—', upnl: '0.00 USDC', maintMargin: '—', vol14d: '320,500 USDC',
             vip: 'VIP 0', taker: '0.050%', maker: '0.020%', feeDays: '—', status: 'frozen',
@@ -192,7 +192,16 @@
         return new URLSearchParams(location.search).get('uid') || '10028471';
     }
 
-    function userTypeText(t) { return t === 'mm' ? '做市商' : '普通用户'; }
+    const USER_TYPE_LABELS = {
+        retail: '普通用户',
+        mm_internal: '内部做市商',
+        mm_external: '外部做市商',
+        mm: '外部做市商'
+    };
+
+    function userTypeText(t) {
+        return USER_TYPE_LABELS[t] || USER_TYPE_LABELS.retail;
+    }
 
     function contactField(profile) {
         if (profile.email) {

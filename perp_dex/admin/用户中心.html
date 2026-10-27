@@ -15,7 +15,8 @@
         .status-partial { background: #fff7ed; color: #ea580c; }
         .status-frozen { background: #fef2f2; color: #dc2626; }
         .type-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: #f1f5f9; color: #475569; }
-        .type-tag.mm { background: #eff6ff; color: #2563eb; }
+        .type-tag.mm-internal { background: #f0fdf4; color: #15803d; }
+        .type-tag.mm-external { background: #eff6ff; color: #2563eb; }
         .switch { position: relative; display: inline-block; width: 40px; height: 20px; flex-shrink: 0; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; inset: 0; background: #cbd5e1; transition: .25s; border-radius: 20px; }
@@ -62,7 +63,8 @@
                     <select id="filterUserType" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none">
                         <option value="all">全部</option>
                         <option value="retail">普通用户</option>
-                        <option value="mm">做市商</option>
+                        <option value="mm_internal">内部做市商</option>
+                        <option value="mm_external">外部做市商</option>
                     </select>
                 </div>
                 <div>
@@ -119,8 +121,12 @@
                 <div><div class="font-bold text-slate-800">普通用户</div><div class="text-[11px] text-slate-400">默认零售交易账户</div></div>
             </label>
             <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
-                <input type="radio" name="userTypePick" value="mm" class="accent-blue-600">
-                <div><div class="font-bold text-slate-800">做市商</div><div class="text-[11px] text-slate-400">开通做市商权限与费率策略</div></div>
+                <input type="radio" name="userTypePick" value="mm_internal" class="accent-blue-600">
+                <div><div class="font-bold text-slate-800">内部做市商</div><div class="text-[11px] text-slate-400">平台内部做市账户，适用内部费率与风控策略</div></div>
+            </label>
+            <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                <input type="radio" name="userTypePick" value="mm_external" class="accent-blue-600">
+                <div><div class="font-bold text-slate-800">外部做市商</div><div class="text-[11px] text-slate-400">外部合作做市商，开通做市权限与专属费率策略</div></div>
             </label>
         </div>
         <div class="flex gap-3">
@@ -171,8 +177,8 @@
 
     let users = [
         { uid: '10028471', email: 'trader@example.com', wallet: '', userType: 'retail', lastLogin: '2026-10-26 18:22:10', totalAsset: '125,430.50', vol14d: '12,450,800', vip: 'VIP 2', status: 'normal', flags: {} },
-        { uid: '10031592', email: '', wallet: '0x2b91c4d8e0f1234567890abcdef1234567890abcd', userType: 'mm', lastLogin: '2026-10-26 09:05:33', totalAsset: '2,410,000.00', vol14d: '89,102,400', vip: 'VIP 4', status: 'partial', flags: { orderFreeze: true, apiFreeze: true, closeOnly: true } },
-        { uid: '10019833', email: 'ops@forx.test', wallet: '', userType: 'retail', lastLogin: '2026-10-25 22:18:00', totalAsset: '8,240.00', vol14d: '320,500', vip: 'VIP 0', status: 'frozen', flags: { loginFreeze: true, withdrawFreeze: true, transferFreeze: true, orderFreeze: true } }
+        { uid: '10031592', email: '', wallet: '0x2b91c4d8e0f1234567890abcdef1234567890abcd', userType: 'mm_external', lastLogin: '2026-10-26 09:05:33', totalAsset: '2,410,000.00', vol14d: '89,102,400', vip: 'VIP 4', status: 'partial', flags: { orderFreeze: true, apiFreeze: true, closeOnly: true } },
+        { uid: '10019833', email: 'ops@forx.test', wallet: '', userType: 'mm_internal', lastLogin: '2026-10-25 22:18:00', totalAsset: '8,240.00', vol14d: '320,500', vip: 'VIP 0', status: 'frozen', flags: { loginFreeze: true, withdrawFreeze: true, transferFreeze: true, orderFreeze: true } }
     ];
 
     let filteredUsers = [...users];
@@ -181,8 +187,17 @@
     let freezeEditUid = null;
     let draftFlags = null;
 
+    const USER_TYPE_META = {
+        retail: { label: '普通用户', tagClass: '' },
+        mm_internal: { label: '内部做市商', tagClass: 'mm-internal' },
+        mm_external: { label: '外部做市商', tagClass: 'mm-external' },
+        mm: { label: '外部做市商', tagClass: 'mm-external' }
+    };
+
     function userTypeLabel(t) {
-        return t === 'mm' ? '<span class="type-tag mm">做市商</span>' : '<span class="type-tag">普通用户</span>';
+        const meta = USER_TYPE_META[t] || USER_TYPE_META.retail;
+        const cls = meta.tagClass ? 'type-tag ' + meta.tagClass : 'type-tag';
+        return '<span class="' + cls + '">' + meta.label + '</span>';
     }
 
     function contactCell(u) {
