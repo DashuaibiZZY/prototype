@@ -88,10 +88,15 @@
     }
 
     function setView(view) {
-        const list = document.getElementById('api-view-list');
-        const create = document.getElementById('api-view-create');
-        if (list) list.classList.toggle('hidden', view !== 'list');
-        if (create) create.classList.toggle('hidden', view !== 'create');
+        const listShell = document.getElementById('api-shell-list');
+        const createShell = document.getElementById('api-shell-create');
+        if (listShell) listShell.classList.toggle('hidden', view !== 'list');
+        if (createShell) createShell.classList.toggle('hidden', view !== 'create');
+        if (view === 'create') {
+            try { history.replaceState(null, '', '#create'); } catch (e) { /* ignore */ }
+        } else if (location.hash === '#create') {
+            try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* ignore */ }
+        }
     }
 
     function renderList() {
@@ -188,20 +193,38 @@
         };
     }
 
+    function modalBtn(classes, label, dataName) {
+        return '<button type="button" class="' + classes + '" ' + dataName + '="">' + label + '</button>';
+    }
+
     function buildCredentialModalHtml(key, opts) {
         opts = opts || {};
         const revealed = !!opts.revealed;
         const cred = credentialBlock(key, revealed);
-        const copyAllBtn = revealed
-            ? '<button type="button" class="text-[10px] font-black text-blue-600 hover:underline" data-copy-all>一键复制</button>'
-            : '<button type="button" class="text-[10px] font-black text-blue-600 hover:underline" data-reveal-cred>查看凭证</button>';
+        let footer = '';
+        if (opts.mode === 'success') {
+            footer =
+                '<div class="pt-1">' +
+                modalBtn('w-full py-2.5 bg-gray-900 text-white rounded-sm font-black text-[11px] hover:bg-black transition', '一键复制', 'data-copy-all') +
+                '</div>';
+        } else if (opts.showDelete) {
+            if (revealed) {
+                footer =
+                    '<div class="flex gap-3 pt-1">' +
+                    modalBtn('flex-1 py-2.5 border border-red-200 text-red-600 rounded-sm font-black text-[11px] hover:bg-red-50 transition', '删除', 'data-detail-delete') +
+                    modalBtn('flex-1 py-2.5 border border-gray-200 rounded-sm font-black text-[11px] text-gray-800 hover:bg-gray-50 transition', '一键复制', 'data-copy-all') +
+                    '</div>';
+            } else {
+                footer =
+                    '<div class="space-y-3 pt-1">' +
+                    modalBtn('w-full py-2.5 border border-gray-200 rounded-sm font-black text-[11px] text-gray-800 hover:bg-gray-50 transition', '查看凭证', 'data-reveal-cred') +
+                    modalBtn('w-full py-2.5 border border-red-200 text-red-600 rounded-sm font-black text-[11px] hover:bg-red-50 transition', '删除', 'data-detail-delete') +
+                    '</div>';
+            }
+        }
         return (
             '<div class="space-y-4">' +
             '<p class="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded-sm px-3 py-2 font-bold">切勿向任何人透露您的 API 凭证。</p>' +
-            '<div class="flex justify-between items-center">' +
-            '<span class="text-[10px] font-black text-gray-400 uppercase">API 凭证</span>' +
-            copyAllBtn +
-            '</div>' +
             '<div class="space-y-2 text-[11px]">' +
             '<div class="flex items-center justify-between gap-2">' +
             '<span class="text-gray-400 shrink-0">API Key</span>' +
@@ -216,9 +239,7 @@
             (revealed ? copyIconBtn(key.secret) : '') +
             '</div></div></div>' +
             '<p class="text-[10px] text-gray-400">创建日期 <span class="text-gray-700 font-bold">' + formatCreatedDisplay(key.createdAt) + '</span></p>' +
-            (opts.showDelete
-                ? '<button type="button" class="w-full py-2.5 border border-red-200 text-red-600 rounded-sm font-black text-[11px] hover:bg-red-50" data-detail-delete>删除</button>'
-                : '') +
+            footer +
             '</div>'
         );
     }
@@ -226,8 +247,10 @@
     function openModal(id, title, bodyHtml) {
         const modal = document.getElementById(id);
         if (!modal) return;
-        modal.querySelector('[data-modal-title]').textContent = title;
-        modal.querySelector('[data-modal-body]').innerHTML = bodyHtml;
+        const titleEl = modal.querySelector('[data-modal-title]');
+        if (titleEl) titleEl.textContent = title;
+        const bodyEl = modal.querySelector('[data-modal-body]');
+        if (bodyEl) bodyEl.innerHTML = bodyHtml;
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     }
@@ -240,7 +263,7 @@
     }
 
     function openSuccessModal(key) {
-        openModal('api-modal-success', key.label, buildCredentialModalHtml(key, { revealed: true, showDelete: false }));
+        openModal('api-modal-success', key.label, buildCredentialModalHtml(key, { revealed: true, mode: 'success' }));
         const body = document.querySelector('#api-modal-success [data-modal-body]');
         body.querySelector('[data-copy-all]')?.addEventListener('click', function () {
             copyText('API Key: ' + key.apiKey + '\n密钥: ' + key.secret);
@@ -278,11 +301,16 @@
         const key = keys.find(function (k) { return k.id === id; });
         if (!key) return;
         pendingDeleteId = id;
-        document.getElementById('api-delete-name').textContent = key.label;
-        openModal('api-modal-delete', '删除 API Key', '');
-        document.querySelector('#api-modal-delete [data-modal-body]').innerHTML =
-            '<p class="text-[13px] font-black text-gray-900 text-center">要删除 <span class="text-blue-600">' + key.label + '</span> API Key 吗？</p>' +
-            '<p class="text-[11px] text-gray-500 text-center mt-2">API Key 删除后将不可恢复</p>';
+        const modal = document.getElementById('api-modal-delete');
+        if (!modal) return;
+        const bodyEl = modal.querySelector('[data-modal-body]');
+        if (bodyEl) {
+            bodyEl.innerHTML =
+                '<p class="text-[13px] font-black text-gray-900 text-center leading-relaxed">要删除 <span class="text-blue-600">' + key.label + '</span> API Key 吗？</p>' +
+                '<p class="text-[11px] text-gray-500 text-center mt-2">API Key 删除后将不可恢复</p>';
+        }
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
     }
 
     function confirmDelete() {
@@ -332,7 +360,9 @@
         document.getElementById('api-btn-submit-create')?.addEventListener('click', submitCreate);
         document.querySelectorAll('[data-modal-close]').forEach(function (btn) {
             btn.addEventListener('click', function () {
-                closeModal(btn.getAttribute('data-modal-close'));
+                const target = btn.getAttribute('data-modal-close');
+                if (target === 'api-modal-delete') pendingDeleteId = null;
+                closeModal(target);
             });
         });
         document.getElementById('api-delete-confirm')?.addEventListener('click', confirmDelete);
@@ -361,7 +391,11 @@
             initFromQuery();
             bindUi();
             initDemoToolbar();
-            setView('list');
+            if (location.hash === '#create') {
+                setView('create');
+            } else {
+                setView('list');
+            }
             renderList();
         },
         API_DOC_HREF: API_DOC_HREF
@@ -369,5 +403,11 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         if (document.getElementById('api-page-root')) window.WebApiKeys.init();
+    });
+
+    window.addEventListener('hashchange', function () {
+        if (!document.getElementById('api-page-root')) return;
+        if (location.hash === '#create') setView('create');
+        else setView('list');
     });
 })();
