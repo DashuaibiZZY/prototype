@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX Web · API 管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f9fafb; color: #111827; }
+        .copy-icon-btn { color: #9ca3af; padding: 2px; flex-shrink: 0; border: none; background: transparent; cursor: pointer; line-height: 0; }
+        .copy-icon-btn:hover { color: #2563eb; }
+        .api-field { width: 100%; border: 1px solid #e5e7eb; border-radius: 4px; padding: 10px 12px; font-size: 12px; outline: none; }
+        .api-field:focus { border-color: #111827; }
+        #api-demo-bar { position: fixed; bottom: 16px; left: 16px; z-index: 250; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 12px; box-shadow: 0 8px 24px rgba(0,0,0,.08); font-size: 10px; max-width: 320px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col text-[12px]" id="api-page-root">
+
+<nav class="h-10 border-b border-gray-100 flex items-center px-4 justify-between shrink-0 sticky top-0 z-50 bg-white">
+    <div class="flex items-center space-x-6">
+        <a href="合约交易.html" class="font-black text-lg tracking-tighter">ForX</a>
+        <div class="flex space-x-5 text-[12px] font-medium">
+            <a href="合约交易.html" class="text-gray-400 hover:text-black">交易</a>
+            <a href="投资组合.html" class="text-gray-400 hover:text-black">投资组合</a>
+            <a href="活动中心.html" class="text-gray-400 hover:text-black relative">热门活动</a>
+            <a href="积分.html" class="text-gray-400 hover:text-black">积分</a>
+            <a href="邀请返佣.html" class="text-gray-400 hover:text-black relative">邀请返佣</a>
+        </div>
+    </div>
+    <div class="flex items-center space-x-3">
+        <div id="user-account-wrapper" class="relative group h-12 flex items-center">
+            <button type="button" class="bg-gray-50 px-3 py-1.5 rounded-sm flex items-center space-x-2 border border-gray-100 hover:bg-gray-100 transition">
+                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                <span class="text-[11px] font-black text-gray-900">usdt32145@gmail.com</span>
+                <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="3"/></svg>
+            </button>
+            <div class="absolute top-full right-0 hidden group-hover:block pt-2 z-[110]">
+                <div class="bg-white border border-gray-100 rounded-sm shadow-2xl p-4 min-w-[280px] space-y-3">
+                    <div class="text-[10px] text-gray-400">UID: <strong class="text-gray-900">123456</strong></div>
+                    <a href="API管理.html" class="block w-full text-center py-2 bg-gray-900 text-white text-[10px] font-black rounded-sm">API 管理</a>
+                    <button type="button" class="w-full text-left text-[11px] font-bold text-red-400">退出登录</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<main class="flex-1">
+    <div class="max-w-[960px] mx-auto px-6 py-10 space-y-8">
+
+        <div id="api-view-list" class="space-y-8">
+            <div class="space-y-3">
+                <h1 class="text-2xl font-black tracking-tight text-gray-900">API 管理</h1>
+                <p class="text-[12px] text-gray-500 leading-relaxed max-w-2xl">
+                    创建并使用 API Key 可自动进行交易或连接至第三方工具。为确保安全，请勿将您的 API Key 分享给任何第三方。
+                    <a href="做市商/rest-api.md" target="_blank" rel="noopener" class="text-blue-600 font-bold hover:underline ml-1">查看 API 接入文档</a>
+                </p>
+            </div>
+
+            <div id="api-empty-state" class="hidden bg-white border border-gray-100 rounded-sm p-16 text-center space-y-4 shadow-sm">
+                <h2 class="text-lg font-black text-gray-900">暂无 API Key</h2>
+                <p class="text-[12px] text-gray-500 max-w-md mx-auto leading-relaxed">
+                    请创建您的首个 API Key，用以自动交易、获取市场数据，最多可持有 50 个有效 API Key。
+                </p>
+                <button type="button" id="api-btn-create-empty" class="inline-flex px-8 py-2.5 bg-gray-900 text-white rounded-sm font-black text-[11px] hover:bg-black transition">
+                    创建 API Key
+                </button>
+            </div>
+
+            <div id="api-table-wrap" class="hidden bg-white border border-gray-100 rounded-sm shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-50 flex flex-wrap items-center justify-between gap-3">
+                    <span id="api-key-count" class="text-[12px] font-black text-gray-800">0/50 个 API Key</span>
+                    <button type="button" id="api-btn-create-top" class="px-5 py-2 bg-gray-900 text-white rounded-sm font-black text-[11px] hover:bg-black transition">
+                        创建 API Key
+                    </button>
+                </div>
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 text-[10px] font-black text-gray-400 uppercase">
+                    <tr>
+                        <th class="px-4 py-3">备注名</th>
+                        <th class="px-4 py-3">创建日期</th>
+                        <th class="px-4 py-3 text-right">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="api-key-tbody" class="text-[12px]"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="api-view-create" class="hidden max-w-lg space-y-6">
+            <button type="button" id="api-btn-back" class="text-[11px] font-bold text-gray-500 hover:text-black flex items-center gap-1">
+                ← 返回 API 管理
+            </button>
+            <div>
+                <h2 class="text-xl font-black text-gray-900">创建 API Key</h2>
+                <p class="text-[11px] text-gray-500 mt-2">提交前需通过身份验证器（MFA）验证。</p>
+            </div>
+            <div class="bg-white border border-gray-100 rounded-sm p-6 space-y-5 shadow-sm">
+                <div>
+                    <label class="block text-[10px] font-black text-gray-500 uppercase mb-2">备注名</label>
+                    <input id="api-field-label" type="text" class="api-field" placeholder="例如：量化策略 A" maxlength="64" />
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-gray-500 uppercase mb-2">密码 (Passphrase)</label>
+                    <input id="api-field-passphrase" type="password" class="api-field" placeholder="设置 API 调用密码" autocomplete="new-password" />
+                    <p id="api-passphrase-error" class="hidden text-[11px] text-red-600 font-bold mt-2">密码不符合下方规则，请检查后重试。</p>
+                    <ul class="mt-3 text-[10px] text-gray-500 space-y-1 leading-relaxed list-disc list-inside">
+                        <li>您的密码 (Passphrase) 必须包含：</li>
+                        <li>8 ~ 32 个字符</li>
+                        <li>至少 1 个小写字母 (a-z)</li>
+                        <li>至少 1 个大写字母 (A-Z)</li>
+                        <li>至少 1 个数字</li>
+                        <li>至少 1 个符号 (如 ! @ # $ % 等)</li>
+                    </ul>
+                </div>
+                <button type="button" id="api-btn-submit-create" class="w-full py-3 bg-gray-900 text-white rounded-sm font-black text-[12px] hover:bg-black transition">
+                    立即添加
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- 创建成功 / 详情 -->
+<div id="api-modal-success" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-md rounded-lg shadow-2xl border border-gray-100">
+        <div class="px-5 py-4 border-b border-gray-50 flex justify-between items-center gap-3">
+            <h3 data-modal-title class="text-sm font-black text-gray-900 truncate"></h3>
+            <button type="button" data-modal-close="api-modal-success" class="text-gray-400 hover:text-black text-lg leading-none shrink-0">✕</button>
+        </div>
+        <div class="p-5" data-modal-body></div>
+    </div>
+</div>
+
+<div id="api-modal-detail" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-md rounded-lg shadow-2xl border border-gray-100">
+        <div class="px-5 py-4 border-b border-gray-50 flex justify-between items-center gap-3">
+            <h3 data-modal-title class="text-sm font-black text-gray-900 truncate"></h3>
+            <button type="button" data-modal-close="api-modal-detail" class="text-gray-400 hover:text-black text-lg leading-none shrink-0">✕</button>
+        </div>
+        <div class="p-5" data-modal-body></div>
+    </div>
+</div>
+
+<!-- 删除确认 -->
+<div id="api-modal-delete" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-sm rounded-lg shadow-2xl border border-gray-100">
+        <div class="px-5 py-4 border-b border-gray-50 flex justify-between items-center">
+            <h3 class="text-sm font-black text-gray-900">删除 API Key</h3>
+            <button type="button" data-modal-close="api-modal-delete" class="text-gray-400 hover:text-black text-lg leading-none">✕</button>
+        </div>
+        <div class="p-5 space-y-5" data-modal-body></div>
+        <div class="px-5 pb-5 flex gap-3">
+            <button type="button" id="api-delete-cancel" class="flex-1 py-2.5 border border-gray-200 rounded-sm font-bold text-gray-600">取消</button>
+            <button type="button" id="api-delete-confirm" class="flex-1 py-2.5 bg-red-600 text-white rounded-sm font-black">确认</button>
+        </div>
+    </div>
+</div>
+
+<!-- 原型演示条（可切换空态 / 列表态、MFA 绑定） -->
+<div id="api-demo-bar">
+    <p class="font-black text-gray-700 mb-2">原型演示</p>
+    <div class="flex flex-wrap gap-1 mb-2">
+        <span class="text-gray-400 mr-1">数据：</span>
+        <button type="button" data-demo-keys="empty" class="px-2 py-0.5 border border-gray-200 rounded font-bold hover:bg-gray-50">无 Key</button>
+        <button type="button" data-demo-keys="list" class="px-2 py-0.5 border border-gray-200 rounded font-bold hover:bg-gray-50">2 个 Key</button>
+    </div>
+    <div class="flex flex-wrap gap-1">
+        <span class="text-gray-400 mr-1">MFA：</span>
+        <button type="button" data-demo-mfa="bound" class="px-2 py-0.5 border border-gray-200 rounded font-bold hover:bg-gray-50">已绑定</button>
+        <button type="button" data-demo-mfa="unbound" class="px-2 py-0.5 border border-gray-200 rounded font-bold hover:bg-gray-50">未绑定</button>
+    </div>
+</div>
+
+<script src="web-totp-gate.js"></script>
+<script src="web-api-keys.js"></script>
+</body>
+</html>
