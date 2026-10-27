@@ -5,6 +5,15 @@
     const STORAGE_KEYS = 'forx_web_api_keys_v1';
     const MAX_KEYS = 50;
     const API_DOC_HREF = '做市商/rest-api.md';
+    const LAYOUT = {
+        createdRow:
+            'display:flex;flex-direction:row;flex-wrap:nowrap;align-items:flex-start;justify-content:space-between;width:100%;gap:12px',
+        datetimeCol:
+            'margin-left:auto;text-align:right;font-weight:700;color:#111827;line-height:1.4;flex-shrink:0',
+        modalActions:
+            'display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;width:100%',
+        modalBtn: 'width:100%;min-width:0;box-sizing:border-box'
+    };
 
     const DEFAULT_KEYS = [
         {
@@ -60,23 +69,26 @@
     }
 
     function formatCreatedRowHtml(isoLike) {
+        const rowStyle = ' class="api-created-row text-[10px]" style="' + LAYOUT.createdRow + '"';
+        const colOpen =
+            '<div class="api-created-datetime-col" style="' + LAYOUT.datetimeCol + '">';
         if (!isoLike) {
-            return '<div class="api-created-row text-[10px] text-gray-400"><span>创建日期</span><span>—</span></div>';
+            return '<div' + rowStyle + '><span class="text-gray-400">创建日期</span><span>—</span></div>';
         }
         const m = isoLike.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}:\d{2}:\d{2})/);
         if (!m) {
             return (
-                '<div class="api-created-row text-[10px]"><span class="text-gray-400">创建日期</span>' +
-                '<div class="api-created-datetime-col"><div>' + isoLike + '</div></div></div>'
+                '<div' + rowStyle + '><span class="text-gray-400 shrink-0">创建日期</span>' +
+                colOpen + '<div>' + isoLike + '</div></div></div>'
             );
         }
         const datePart = m[1] + '年' + parseInt(m[2], 10) + '月' + parseInt(m[3], 10) + '日';
         return (
-            '<div class="api-created-row text-[10px]">' +
+            '<div' + rowStyle + '>' +
             '<span class="text-gray-400 shrink-0">创建日期</span>' +
-            '<div class="api-created-datetime-col">' +
-            '<div>' + datePart + '</div>' +
-            '<div class="api-created-time">' + m[4] + '</div>' +
+            colOpen +
+            '<div style="white-space:nowrap">' + datePart + '</div>' +
+            '<div class="api-created-time" style="white-space:nowrap">' + m[4] + '</div>' +
             '</div></div>'
         );
     }
@@ -217,7 +229,11 @@
 
     function modalBtn(classes, label, dataName, disabled) {
         const dis = disabled ? ' disabled' : '';
-        return '<button type="button" class="' + classes + '" ' + dataName + '=""' + dis + '>' + label + '</button>';
+        return (
+            '<button type="button" class="' + classes + '" style="' + LAYOUT.modalBtn + '" ' + dataName + '=""' + dis + '>' +
+            label +
+            '</button>'
+        );
     }
 
     function buildCredentialModalHtml(key, opts) {
@@ -232,7 +248,7 @@
                 '</div>';
         } else if (opts.showDelete) {
             footer =
-                '<div class="api-modal-actions">' +
+                '<div class="api-modal-actions" style="' + LAYOUT.modalActions + '">' +
                 modalBtn('api-modal-btn api-modal-btn-danger', '删除', 'data-detail-delete') +
                 modalBtn('api-modal-btn api-modal-btn-copy', '一键复制', 'data-copy-all', !revealed) +
                 '</div>';
