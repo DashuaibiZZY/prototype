@@ -6,8 +6,13 @@
         {
             title: '系统',
             items: [
-                { key: 'sys-admin', label: '权限与用户', href: '权限配置后台.html#staff' },
-                { key: 'user-center', label: '用户中心', href: '用户中心.html' }
+                { key: 'sys-admin', label: '权限与用户', href: '权限配置后台.html#staff' }
+            ]
+        },
+        {
+            title: '用户中心',
+            items: [
+                { key: 'user-data', label: '用户数据', href: '用户中心.html' }
             ]
         },
         {
