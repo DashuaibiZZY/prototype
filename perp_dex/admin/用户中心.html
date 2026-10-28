@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ForX Admin - 用户中心</title>
+    <title>ForX Admin - 用户数据</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -38,7 +38,7 @@
 <main class="flex-1 flex flex-col overflow-hidden">
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
         <div>
-            <h1 class="text-xl font-bold text-slate-800">用户中心</h1>
+            <h1 class="text-xl font-bold text-slate-800">用户数据</h1>
             <p class="text-xs text-slate-400 mt-0.5">查询用户资料、类型与冻结状态；交易数据请在用户详情中只读查看</p>
         </div>
         <div class="flex items-center gap-3">
@@ -129,6 +129,11 @@
                 <div><div class="font-bold text-slate-800">外部做市商</div><div class="text-[11px] text-slate-400">外部合作做市商，开通做市权限与专属费率策略</div></div>
             </label>
         </div>
+        <div id="typeTeamTagWrap" class="hidden mb-6">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">团队标签</label>
+            <input id="typeTeamTagInput" type="text" maxlength="32" placeholder="输入做市团队名称或标识" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+            <p class="text-[11px] text-slate-400 mt-2">内部 / 外部做市商需填写，用于区分做市团队归属</p>
+        </div>
         <div class="flex gap-3">
             <button type="button" onclick="closeTypeModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
             <button type="button" onclick="saveUserType()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">保存</button>
@@ -177,8 +182,8 @@
 
     let users = [
         { uid: '10028471', email: 'trader@example.com', wallet: '', userType: 'retail', lastLogin: '2026-10-26 18:22:10', totalAsset: '125,430.50', vol14d: '12,450,800', vip: 'VIP 2', status: 'normal', flags: {} },
-        { uid: '10031592', email: '', wallet: '0x2b91c4d8e0f1234567890abcdef1234567890abcd', userType: 'mm_external', lastLogin: '2026-10-26 09:05:33', totalAsset: '2,410,000.00', vol14d: '89,102,400', vip: 'VIP 4', status: 'partial', flags: { orderFreeze: true, apiFreeze: true, closeOnly: true } },
-        { uid: '10019833', email: 'ops@forx.test', wallet: '', userType: 'mm_internal', lastLogin: '2026-10-25 22:18:00', totalAsset: '8,240.00', vol14d: '320,500', vip: 'VIP 0', status: 'frozen', flags: { loginFreeze: true, withdrawFreeze: true, transferFreeze: true, orderFreeze: true } }
+        { uid: '10031592', email: '', wallet: '0x2b91c4d8e0f1234567890abcdef1234567890abcd', userType: 'mm_external', teamTag: 'Alpha MM', lastLogin: '2026-10-26 09:05:33', totalAsset: '2,410,000.00', vol14d: '89,102,400', vip: 'VIP 4', status: 'partial', flags: { orderFreeze: true, apiFreeze: true, closeOnly: true } },
+        { uid: '10019833', email: 'ops@forx.test', wallet: '', userType: 'mm_internal', teamTag: 'Desk-Quant', lastLogin: '2026-10-25 22:18:00', totalAsset: '8,240.00', vol14d: '320,500', vip: 'VIP 0', status: 'frozen', flags: { loginFreeze: true, withdrawFreeze: true, transferFreeze: true, orderFreeze: true } }
     ];
 
     let filteredUsers = [...users];
@@ -194,10 +199,33 @@
         mm: { label: '外部做市商', tagClass: 'mm-external' }
     };
 
-    function userTypeLabel(t) {
+    function userTypeLabel(t, teamTag) {
         const meta = USER_TYPE_META[t] || USER_TYPE_META.retail;
         const cls = meta.tagClass ? 'type-tag ' + meta.tagClass : 'type-tag';
-        return '<span class="' + cls + '">' + meta.label + '</span>';
+        let html = '<span class="' + cls + '">' + meta.label + '</span>';
+        if (teamTag && (t === 'mm_internal' || t === 'mm_external')) {
+            html += ' <span class="text-[11px] font-bold text-slate-500">' + escapeHtml(teamTag) + '</span>';
+        }
+        return html;
+    }
+
+    function escapeHtml(s) {
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function isMmUserType(t) {
+        return t === 'mm_internal' || t === 'mm_external';
+    }
+
+    function syncTypeModalTeamField() {
+        const pick = document.querySelector('input[name="userTypePick"]:checked');
+        const wrap = document.getElementById('typeTeamTagWrap');
+        const show = pick && isMmUserType(pick.value);
+        wrap.classList.toggle('hidden', !show);
     }
 
     function contactCell(u) {
@@ -233,7 +261,7 @@
             return '<tr class="hover:bg-slate-50">' +
                 '<td class="px-6 py-4 font-mono">' + uidCell + '</td>' +
                 '<td class="px-6 py-4">' + contactCell(u) + '</td>' +
-                '<td class="px-6 py-4">' + userTypeLabel(u.userType) + '</td>' +
+                '<td class="px-6 py-4">' + userTypeLabel(u.userType, u.teamTag) + '</td>' +
                 '<td class="px-6 py-4 text-slate-600 whitespace-nowrap">' + u.lastLogin + '</td>' +
                 '<td class="px-6 py-4 text-right font-mono">' + u.totalAsset + ' USDC</td>' +
                 '<td class="px-6 py-4 text-right font-mono">' + u.vol14d + ' USDC</td>' +
@@ -283,7 +311,10 @@
         document.getElementById('typeModalMeta').textContent = 'UID ' + uid;
         document.querySelectorAll('input[name="userTypePick"]').forEach(function (r) {
             r.checked = r.value === (u && u.userType);
+            r.onchange = syncTypeModalTeamField;
         });
+        document.getElementById('typeTeamTagInput').value = (u && u.teamTag) || '';
+        syncTypeModalTeamField();
         document.getElementById('typeModal').classList.remove('hidden');
         document.getElementById('typeModal').classList.add('flex');
     }
@@ -298,7 +329,19 @@
         const pick = document.querySelector('input[name="userTypePick"]:checked');
         if (!pick) { showToast('请选择用户类型'); return; }
         const u = users.find(x => x.uid === typeEditUid);
-        if (u) u.userType = pick.value;
+        if (u) {
+            u.userType = pick.value;
+            if (isMmUserType(pick.value)) {
+                const tag = document.getElementById('typeTeamTagInput').value.trim();
+                if (!tag) {
+                    showToast('请填写团队标签');
+                    return;
+                }
+                u.teamTag = tag;
+            } else {
+                delete u.teamTag;
+            }
+        }
         closeTypeModal();
         applyFilters();
         showToast('用户类型已更新');
@@ -362,7 +405,7 @@
 <script src="admin-copy-chip.js"></script>
 <script src="admin-sidebar.js"></script>
 <script>
-    initAdminSidebar('user-center', '登录身份: 运营管理员');
+    initAdminSidebar('user-data', '登录身份: 运营管理员');
     renderTable();
     if (window.AdminPagination) {
         AdminPagination.register('uc-list', function (p) { listPage = p; renderTable(); });

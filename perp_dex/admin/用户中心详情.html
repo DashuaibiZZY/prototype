@@ -31,7 +31,7 @@
 <main class="flex-1 flex flex-col overflow-hidden">
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
         <div class="flex items-center gap-4">
-            <a href="用户中心.html" class="text-xs font-bold text-blue-600 hover:underline">← 返回用户列表</a>
+            <a href="用户中心.html" class="text-xs font-bold text-blue-600 hover:underline">← 返回用户数据</a>
             <h1 class="text-xl font-bold text-slate-800">用户详情</h1>
         </div>
     </header>
@@ -133,7 +133,7 @@
         },
         '10031592': {
             uid: '10031592', email: '', wallet: '0x2b91c4d8e0f1234567890abcdef1234567890abcd',
-            userType: 'mm_external', lastLogin: '2026-10-26 09:05:33', loginIp: '47.88.12.4',
+            userType: 'mm_external', teamTag: 'Alpha MM', lastLogin: '2026-10-26 09:05:33', loginIp: '47.88.12.4',
             totalAsset: '2,410,000.00 USDC', fundingBal: '410,000.00 USDC', tradingBal: '2,000,000.00 USDC',
             marginRatio: '42.1%', upnl: '-12,400.00 USDC', maintMargin: '180,200.00 USDC', vol14d: '89,102,400 USDC',
             vip: 'VIP 4', taker: '0.026%', maker: '0.004%', feeDays: '—', status: 'partial',
@@ -142,7 +142,7 @@
         },
         '10019833': {
             uid: '10019833', email: 'ops@forx.test', wallet: '',
-            userType: 'mm_internal', lastLogin: '2026-10-25 22:18:00', loginIp: '198.18.0.12',
+            userType: 'mm_internal', teamTag: 'Desk-Quant', lastLogin: '2026-10-25 22:18:00', loginIp: '198.18.0.12',
             totalAsset: '8,240.00 USDC', fundingBal: '1,200.00 USDC', tradingBal: '7,040.00 USDC',
             marginRatio: '—', upnl: '0.00 USDC', maintMargin: '—', vol14d: '320,500 USDC',
             vip: 'VIP 0', taker: '0.050%', maker: '0.020%', feeDays: '—', status: 'frozen',
@@ -229,6 +229,11 @@
             { label: 'UID', value: profile.uid },
             { label: contact.label, value: contact.value },
             { label: '用户类型', value: userTypeText(profile.userType) },
+        ];
+        if (profile.userType === 'mm_internal' || profile.userType === 'mm_external') {
+            fields.push({ label: '团队标签', value: profile.teamTag || '—' });
+        }
+        fields.push(
             { label: '最新登录时间', value: profile.lastLogin },
             { label: '登录 IP', value: profile.loginIp },
             { label: '总资产价值', value: profile.totalAsset },
@@ -242,7 +247,7 @@
             { label: '费率 (Taker / Maker)', value: profile.taker + ' / ' + profile.maker },
             { label: '费率有效期天数', value: profile.feeDays },
             { label: '用户状态', value: statusTag(profile.status) }
-        ];
+        );
 
         document.getElementById('detailGrid').innerHTML = fields.map(function (f) {
             return '<div><p class="detail-label">' + f.label + '</p><div class="detail-value">' + f.value + '</div></div>';
@@ -385,6 +390,6 @@
 </script>
 <script src="admin-copy-chip.js"></script>
 <script src="admin-sidebar.js"></script>
-<script>initAdminSidebar('user-center', '登录身份: 运营管理员');</script>
+<script>initAdminSidebar('user-data', '登录身份: 运营管理员');</script>
 </body>
 </html>

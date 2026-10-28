@@ -4,7 +4,7 @@
 (function () {
     const ADMIN_PAGES = [
         { id: 'sys.admin', module: '系统', label: '权限与用户', writeHint: '维护人员、页面权限与敏感组' },
-        { id: 'user.center', module: '系统', label: '用户中心', writeHint: '查询用户、配置类型与冻结' },
+        { id: 'user.center', module: '用户中心', label: '用户数据', writeHint: '查询用户、配置类型与冻结' },
         { id: 'agent.mgmt', module: '合伙人中心', label: '合伙人管理', writeHint: '绑定/调整合伙人', needsAgentCap: true, needsAgentDataScope: true },
         { id: 'agent.applications', module: '合伙人中心', label: '合伙人申请管理', writeHint: '审核合伙人入驻申请' },
         { id: 'agent.migrate', module: '合伙人中心', label: '迁移返佣关系', writeHint: '提交返佣关系迁移审批' },
