@@ -29,10 +29,6 @@
         .config-row-desc { font-size: 11px; color: #94a3b8; margin-top: 3px; line-height: 1.45; max-width: 320px; }
         .drawer-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 40; }
         .drawer-panel { position: fixed; top: 0; right: 0; width: 520px; max-width: 100%; height: 100%; background: #fff; z-index: 50; box-shadow: -8px 0 24px rgba(0,0,0,.12); display: flex; flex-direction: column; }
-        .team-tag-combobox-panel { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 80; background: #fff; border: 1px solid #e2e8f0; border-radius: 0.5rem; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12); overflow: hidden; }
-        .team-tag-combobox-option { display: block; width: 100%; text-align: left; padding: 8px 12px; font-size: 12px; font-weight: 600; color: #334155; }
-        .team-tag-combobox-option:hover, .team-tag-combobox-option.selected { background: #eff6ff; color: #1d4ed8; }
-        .team-tag-combobox-create { color: #059669; font-weight: 700; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -134,21 +130,33 @@
             </label>
         </div>
         <div id="typeTeamTagWrap" class="hidden mb-6">
-            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">团队标签</label>
-            <div id="typeTeamTagCombobox" class="relative">
-                <div class="flex rounded-lg border border-slate-200 focus-within:ring-2 focus-within:ring-blue-500 overflow-hidden bg-white">
-                    <input id="typeTeamTagInput" type="text" maxlength="32" autocomplete="off" placeholder="选择或输入团队标签" class="flex-1 min-w-0 px-3 py-2.5 text-sm outline-none border-0">
-                    <button type="button" id="typeTeamTagToggle" class="px-3 text-slate-400 hover:text-slate-700 border-l border-slate-200 shrink-0" aria-label="展开团队标签列表">▾</button>
-                </div>
-                <div id="typeTeamTagPanel" class="team-tag-combobox-panel hidden">
-                    <div id="typeTeamTagOptions" class="max-h-44 overflow-y-auto py-1"></div>
-                </div>
+            <div class="flex items-center justify-between gap-2 mb-2">
+                <label class="text-[10px] font-bold text-slate-500 uppercase">团队标签</label>
+                <button type="button" onclick="openTeamTagCreateModal()" class="text-[11px] font-bold text-blue-600 hover:underline">+ 新增标签</button>
             </div>
-            <p class="text-[11px] text-slate-400 mt-2">内部 / 外部做市商必选；可从列表选择，也可输入新标签（保存后加入选项）</p>
+            <select id="typeTeamTagSelect" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">请选择团队标签</option>
+            </select>
+            <p class="text-[11px] text-slate-400 mt-2">内部 / 外部做市商必选；仅可从列表选择，新标签请通过「新增标签」创建</p>
         </div>
         <div class="flex gap-3">
             <button type="button" onclick="closeTypeModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
             <button type="button" onclick="saveUserType()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 新增团队标签 -->
+<div id="teamTagCreateModal" class="fixed inset-0 z-[70] hidden items-center justify-center bg-slate-900/50 p-4">
+    <div class="bg-white w-full max-w-[380px] rounded-xl p-6 shadow-2xl">
+        <h3 class="text-base font-bold text-slate-800 mb-1">新增团队标签</h3>
+        <p class="text-xs text-slate-400 mb-4">创建后将加入团队标签列表，可在配置用户类型时选择</p>
+        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">标签名称</label>
+        <input id="teamTagCreateInput" type="text" maxlength="32" placeholder="输入做市团队名称或标识" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+        <p id="teamTagCreateError" class="hidden text-[11px] text-red-600 font-bold mt-2"></p>
+        <div class="flex gap-3 mt-6">
+            <button type="button" onclick="closeTeamTagCreateModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button type="button" onclick="saveNewTeamTag()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">保存</button>
         </div>
     </div>
 </div>
@@ -185,7 +193,6 @@
 <script>
     const UC_TEAM_TAG_STORAGE = 'forx_admin_uc_team_tags_v1';
     const UC_TEAM_TAG_DEFAULTS = ['Alpha MM', 'Desk-Quant', 'Beta Liquidity', 'External Desk A'];
-    let teamTagPanelOpen = false;
 
     const UC_FREEZE_CONFIGS = [
         { key: 'withdrawFreeze', title: '提现冻结', desc: '禁止发起链上提现申请' },
@@ -266,60 +273,59 @@
         return Array.from(set).sort(function (a, b) { return a.localeCompare(b, 'zh-CN'); });
     }
 
-    function closeTeamTagPanel() {
-        const panel = document.getElementById('typeTeamTagPanel');
-        if (panel) panel.classList.add('hidden');
-        teamTagPanelOpen = false;
-    }
-
-    function openTeamTagPanel() {
-        const panel = document.getElementById('typeTeamTagPanel');
-        if (!panel) return;
-        renderTeamTagOptions();
-        panel.classList.remove('hidden');
-        teamTagPanelOpen = true;
-    }
-
-    function toggleTeamTagPanel() {
-        if (teamTagPanelOpen) closeTeamTagPanel();
-        else openTeamTagPanel();
-    }
-
-    function renderTeamTagOptions() {
-        const container = document.getElementById('typeTeamTagOptions');
-        const input = document.getElementById('typeTeamTagInput');
-        if (!container || !input) return;
-        const q = input.value.trim();
-        const qLower = q.toLowerCase();
+    function renderTeamTagSelect(selected) {
+        const sel = document.getElementById('typeTeamTagSelect');
+        if (!sel) return;
         const catalog = getTeamTagCatalog();
-        const matches = catalog.filter(function (t) {
-            return !qLower || t.toLowerCase().indexOf(qLower) >= 0;
+        const options = catalog.slice();
+        if (selected && options.indexOf(selected) < 0) options.push(selected);
+        sel.innerHTML = '';
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = '请选择团队标签';
+        sel.appendChild(placeholder);
+        options.sort(function (a, b) { return a.localeCompare(b, 'zh-CN'); }).forEach(function (t) {
+            const o = document.createElement('option');
+            o.value = t;
+            o.textContent = t;
+            sel.appendChild(o);
         });
-        const current = q;
-        let html = '';
-        if (matches.length) {
-            html += matches.map(function (t) {
-                const sel = t === current ? ' selected' : '';
-                return '<button type="button" class="team-tag-combobox-option' + sel + '">' + escapeHtml(t) + '</button>';
-            }).join('');
-        } else if (!q) {
-            html = '<p class="px-3 py-3 text-center text-slate-400 text-[11px]">暂无团队标签，请在上方输入</p>';
+        sel.value = selected && options.indexOf(selected) >= 0 ? selected : '';
+    }
+
+    function openTeamTagCreateModal() {
+        document.getElementById('teamTagCreateInput').value = '';
+        const err = document.getElementById('teamTagCreateError');
+        err.classList.add('hidden');
+        err.textContent = '';
+        document.getElementById('teamTagCreateModal').classList.remove('hidden');
+        document.getElementById('teamTagCreateModal').classList.add('flex');
+        document.getElementById('teamTagCreateInput').focus();
+    }
+
+    function closeTeamTagCreateModal() {
+        document.getElementById('teamTagCreateModal').classList.add('hidden');
+        document.getElementById('teamTagCreateModal').classList.remove('flex');
+    }
+
+    function saveNewTeamTag() {
+        const input = document.getElementById('teamTagCreateInput');
+        const err = document.getElementById('teamTagCreateError');
+        const tag = (input.value || '').trim();
+        if (!tag) {
+            err.textContent = '请输入标签名称';
+            err.classList.remove('hidden');
+            return;
         }
-        if (q && !catalog.some(function (t) { return t === q; })) {
-            html += '<button type="button" class="team-tag-combobox-option team-tag-combobox-create" data-team-tag-new="1">使用新标签「' + escapeHtml(q) + '」</button>';
+        if (getTeamTagCatalog().some(function (t) { return t === tag; })) {
+            err.textContent = '该团队标签已存在';
+            err.classList.remove('hidden');
+            return;
         }
-        container.innerHTML = html;
-        container.querySelectorAll('.team-tag-combobox-option:not(.team-tag-combobox-create)').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                input.value = btn.textContent.trim();
-                closeTeamTagPanel();
-            });
-        });
-        container.querySelectorAll('[data-team-tag-new]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                closeTeamTagPanel();
-            });
-        });
+        rememberTeamTag(tag);
+        renderTeamTagSelect(tag);
+        closeTeamTagCreateModal();
+        showToast('团队标签已新增');
     }
 
     function syncTypeModalTeamField() {
@@ -327,7 +333,6 @@
         const wrap = document.getElementById('typeTeamTagWrap');
         const show = pick && isMmUserType(pick.value);
         wrap.classList.toggle('hidden', !show);
-        if (!show) closeTeamTagPanel();
     }
 
     function contactCell(u) {
@@ -416,8 +421,7 @@
             r.checked = r.value === pickedType;
             r.onchange = syncTypeModalTeamField;
         });
-        document.getElementById('typeTeamTagInput').value = (u && u.teamTag) || '';
-        closeTeamTagPanel();
+        renderTeamTagSelect(u && u.teamTag);
         syncTypeModalTeamField();
         document.getElementById('typeModal').classList.remove('hidden');
         document.getElementById('typeModal').classList.add('flex');
@@ -427,7 +431,6 @@
         document.getElementById('typeModal').classList.add('hidden');
         document.getElementById('typeModal').classList.remove('flex');
         typeEditUid = null;
-        closeTeamTagPanel();
     }
 
     function saveUserType() {
@@ -437,13 +440,12 @@
         if (u) {
             u.userType = pick.value;
             if (isMmUserType(pick.value)) {
-                const tag = document.getElementById('typeTeamTagInput').value.trim();
+                const tag = (document.getElementById('typeTeamTagSelect').value || '').trim();
                 if (!tag) {
-                    showToast('请填写团队标签');
+                    showToast('请选择团队标签');
                     return;
                 }
                 u.teamTag = tag;
-                rememberTeamTag(tag);
             } else {
                 delete u.teamTag;
             }
@@ -511,28 +513,6 @@
 <script src="admin-copy-chip.js"></script>
 <script src="admin-sidebar.js"></script>
 <script>
-    (function initTeamTagCombobox() {
-        const input = document.getElementById('typeTeamTagInput');
-        const toggle = document.getElementById('typeTeamTagToggle');
-        const wrap = document.getElementById('typeTeamTagCombobox');
-        if (input) {
-            input.addEventListener('focus', function () { openTeamTagPanel(); });
-            input.addEventListener('input', function () { renderTeamTagOptions(); if (!teamTagPanelOpen) openTeamTagPanel(); });
-        }
-        if (toggle) {
-            toggle.addEventListener('click', function (e) {
-                e.preventDefault();
-                toggleTeamTagPanel();
-                if (teamTagPanelOpen && input) input.focus();
-            });
-        }
-        document.addEventListener('click', function (e) {
-            const modal = document.getElementById('typeModal');
-            if (!wrap || !modal || modal.classList.contains('hidden')) return;
-            if (!wrap.contains(e.target)) closeTeamTagPanel();
-        });
-    })();
-
     initAdminSidebar('user-data', '登录身份: 运营管理员');
     renderTable();
     if (window.AdminPagination) {
