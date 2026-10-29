@@ -22,6 +22,7 @@
         .subtab-btn.active { background: #0f172a; color: #fff; }
         .detail-label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
         .detail-value { font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 4px; }
+        .detail-section-title { font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 1rem; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -38,18 +39,27 @@
 
     <div class="flex-1 overflow-y-auto p-8 space-y-6">
         <section class="card p-6">
-            <div class="flex flex-wrap justify-between gap-4 mb-6">
-                <h2 class="text-sm font-bold text-slate-800">基础信息</h2>
-                <button type="button" onclick="openDeviceModal()" class="text-xs font-bold text-blue-600 hover:underline">查看登录设备列表</button>
+            <h2 class="detail-section-title">基础信息</h2>
+            <div id="basicInfoGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+        </section>
+
+        <section class="card p-6">
+            <h2 class="detail-section-title">资产信息</h2>
+            <div id="assetInfoGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+        </section>
+
+        <section class="card p-6">
+            <h2 class="detail-section-title">交易信息</h2>
+            <div id="tradeInfoGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+        </section>
+
+        <section class="card p-6">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                <h2 class="detail-section-title mb-0">用户状态</h2>
+                <button type="button" onclick="openFreezeLogModal()" class="text-xs font-bold text-blue-600 hover:underline">冻结配置记录</button>
             </div>
-            <div id="detailGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
-            <div class="mt-6 pt-6 border-t border-slate-100">
-                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-                    <p class="detail-label">用户冻结行为</p>
-                    <button type="button" onclick="openFreezeLogModal()" class="text-xs font-bold text-blue-600 hover:underline">冻结配置记录</button>
-                </div>
-                <div id="freezeBehaviorRow" class="flex flex-wrap"></div>
-            </div>
+            <p class="detail-label mb-2">用户冻结行为</p>
+            <div id="freezeBehaviorRow" class="flex flex-wrap"></div>
         </section>
 
         <section class="card overflow-hidden flex flex-col min-h-[480px]">
@@ -124,7 +134,9 @@
             uid: '10028471', email: 'trader@example.com', wallet: '',
             userType: 'retail', lastLogin: '2026-10-26 18:22:10', loginIp: '103.21.44.88',
             totalAsset: '125,430.50 USDC', fundingBal: '42,100.00 USDC', tradingBal: '83,330.50 USDC',
-            marginRatio: '18.6%', upnl: '+1,240.30 USDC', maintMargin: '4,520.00 USDC', vol14d: '12,450,800 USDC',
+            marginRatio: '18.6%', upnl: '+1,240.30 USDC', maintMargin: '4,520.00 USDC',
+            cumDeposit: '980,000.00 USDC', cumWithdraw: '120,500.00 USDC', cumRealizedPnl: '+45,320.80 USDC',
+            cumVolume: '156,800,000 USDC', vol14d: '12,450,800 USDC',
             vip: 'VIP 2', taker: '0.034%', maker: '0.010%', feeDays: '12', status: 'normal', flags: {},
             devices: [
                 { time: '2026-10-26 18:22:10', ip: '103.21.44.88', device: 'Chrome 141 / macOS 15', client: 'Web' },
@@ -135,7 +147,9 @@
             uid: '10031592', email: '', wallet: '0x2b91c4d8e0f1234567890abcdef1234567890abcd',
             userType: 'mm_external', teamTag: 'Alpha MM', lastLogin: '2026-10-26 09:05:33', loginIp: '47.88.12.4',
             totalAsset: '2,410,000.00 USDC', fundingBal: '410,000.00 USDC', tradingBal: '2,000,000.00 USDC',
-            marginRatio: '42.1%', upnl: '-12,400.00 USDC', maintMargin: '180,200.00 USDC', vol14d: '89,102,400 USDC',
+            marginRatio: '42.1%', upnl: '-12,400.00 USDC', maintMargin: '180,200.00 USDC',
+            cumDeposit: '5,200,000.00 USDC', cumWithdraw: '800,000.00 USDC', cumRealizedPnl: '+892,100.00 USDC',
+            cumVolume: '2,890,000,000 USDC', vol14d: '89,102,400 USDC',
             vip: 'VIP 4', taker: '0.026%', maker: '0.004%', feeDays: '—', status: 'partial',
             flags: { orderFreeze: true, apiFreeze: true, closeOnly: true },
             devices: [{ time: '2026-10-26 09:05:33', ip: '47.88.12.4', device: 'API Client', client: 'API' }]
@@ -144,7 +158,9 @@
             uid: '10019833', email: 'ops@forx.test', wallet: '',
             userType: 'mm_internal', teamTag: 'Desk-Quant', lastLogin: '2026-10-25 22:18:00', loginIp: '198.18.0.12',
             totalAsset: '8,240.00 USDC', fundingBal: '1,200.00 USDC', tradingBal: '7,040.00 USDC',
-            marginRatio: '—', upnl: '0.00 USDC', maintMargin: '—', vol14d: '320,500 USDC',
+            marginRatio: '—', upnl: '0.00 USDC', maintMargin: '—',
+            cumDeposit: '50,000.00 USDC', cumWithdraw: '12,000.00 USDC', cumRealizedPnl: '-2,400.00 USDC',
+            cumVolume: '890,000 USDC', vol14d: '320,500 USDC',
             vip: 'VIP 0', taker: '0.050%', maker: '0.020%', feeDays: '—', status: 'frozen',
             flags: { loginFreeze: true, withdrawFreeze: true, transferFreeze: true, orderFreeze: true },
             devices: [{ time: '2026-10-20 14:02:00', ip: '198.18.0.12', device: 'Safari / iOS 17', client: 'iOS' }]
@@ -203,15 +219,45 @@
         return USER_TYPE_LABELS[t] || USER_TYPE_LABELS.retail;
     }
 
-    function contactField(profile) {
-        if (profile.email) {
-            return { label: '邮箱', value: profile.email };
+    function userTypeDisplay(p) {
+        let text = userTypeText(p.userType);
+        if ((p.userType === 'mm_internal' || p.userType === 'mm_external') && p.teamTag) {
+            text += ' · ' + p.teamTag;
         }
+        return text;
+    }
+
+    function contactDisplayValue(profile) {
+        if (profile.email) return profile.email;
         if (profile.wallet) {
-            const w = window.AdminCopyChip ? AdminCopyChip.wallet(profile.wallet) : profile.wallet;
-            return { label: '钱包地址', value: w };
+            return window.AdminCopyChip ? AdminCopyChip.wallet(profile.wallet) : profile.wallet;
         }
-        return { label: '邮箱或钱包地址', value: '—' };
+        return '—';
+    }
+
+    function uidDisplayValue(uid) {
+        return window.AdminCopyChip ? AdminCopyChip.uid(uid) : uid;
+    }
+
+    function deviceListField(profile) {
+        const n = (profile.devices || []).length;
+        if (!n) {
+            return '<span class="text-slate-400">暂无记录</span>';
+        }
+        return '<span class="text-slate-600">共 ' + n + ' 台</span>' +
+            ' <button type="button" class="text-blue-600 font-bold hover:underline" onclick="openDeviceModal()">查看列表</button>';
+    }
+
+    function renderDetailGrid(containerId, fields) {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        el.innerHTML = fields.map(function (f) {
+            return '<div><p class="detail-label">' + f.label + '</p><div class="detail-value">' + f.value + '</div></div>';
+        }).join('');
+    }
+
+    function metricOrDash(profile, key) {
+        return profile[key] != null && profile[key] !== '' ? profile[key] : '—';
     }
 
     function statusTag(s) {
@@ -224,34 +270,35 @@
         const uid = qsUid();
         profile = DEMO_USERS[uid] || Object.assign({}, DEMO_USERS['10028471'], { uid, email: '', wallet: '', flags: {}, devices: [] });
 
-        const contact = contactField(profile);
-        const fields = [
-            { label: 'UID', value: profile.uid },
-            { label: contact.label, value: contact.value },
-            { label: '用户类型', value: userTypeText(profile.userType) },
-        ];
-        if (profile.userType === 'mm_internal' || profile.userType === 'mm_external') {
-            fields.push({ label: '团队标签', value: profile.teamTag || '—' });
-        }
-        fields.push(
-            { label: '最新登录时间', value: profile.lastLogin },
-            { label: '登录 IP', value: profile.loginIp },
-            { label: '总资产价值', value: profile.totalAsset },
-            { label: '资金账户余额', value: profile.fundingBal },
-            { label: '交易账户余额', value: profile.tradingBal },
-            { label: '账户保证金比例', value: profile.marginRatio },
-            { label: '未实现盈亏', value: profile.upnl },
-            { label: '维持保证金', value: profile.maintMargin },
-            { label: '过去 14 天交易量', value: profile.vol14d },
-            { label: 'VIP 等级', value: profile.vip },
-            { label: '费率 (Taker / Maker)', value: profile.taker + ' / ' + profile.maker },
-            { label: '费率有效期天数', value: profile.feeDays },
-            { label: '用户状态', value: statusTag(profile.status) }
-        );
+        renderDetailGrid('basicInfoGrid', [
+            { label: 'UID', value: uidDisplayValue(profile.uid) },
+            { label: '钱包地址 / 邮箱', value: contactDisplayValue(profile) },
+            { label: '用户类型', value: userTypeDisplay(profile) },
+            { label: '用户状态', value: statusTag(profile.status) },
+            { label: '最新登录时间', value: profile.lastLogin || '—' },
+            { label: '登录 IP', value: profile.loginIp || '—' },
+            { label: '登录设备列表', value: deviceListField(profile) }
+        ]);
 
-        document.getElementById('detailGrid').innerHTML = fields.map(function (f) {
-            return '<div><p class="detail-label">' + f.label + '</p><div class="detail-value">' + f.value + '</div></div>';
-        }).join('');
+        renderDetailGrid('assetInfoGrid', [
+            { label: '总资产价值', value: metricOrDash(profile, 'totalAsset') },
+            { label: '资金账户余额', value: metricOrDash(profile, 'fundingBal') },
+            { label: '交易账户余额', value: metricOrDash(profile, 'tradingBal') },
+            { label: '账户保证金比例', value: metricOrDash(profile, 'marginRatio') },
+            { label: '未实现盈亏', value: metricOrDash(profile, 'upnl') },
+            { label: '维持保证金', value: metricOrDash(profile, 'maintMargin') },
+            { label: '累计充值金额', value: metricOrDash(profile, 'cumDeposit') },
+            { label: '累计提现金额', value: metricOrDash(profile, 'cumWithdraw') },
+            { label: '累计平仓已实现盈亏', value: metricOrDash(profile, 'cumRealizedPnl') }
+        ]);
+
+        renderDetailGrid('tradeInfoGrid', [
+            { label: '累计交易量', value: metricOrDash(profile, 'cumVolume') },
+            { label: '过去 14 天交易量', value: metricOrDash(profile, 'vol14d') },
+            { label: 'VIP 等级', value: metricOrDash(profile, 'vip') },
+            { label: '费率 (Taker / Maker)', value: (profile.taker || '—') + ' / ' + (profile.maker || '—') },
+            { label: '自定义费率有效期天数', value: metricOrDash(profile, 'feeDays') }
+        ]);
 
         document.getElementById('freezeBehaviorRow').innerHTML = FREEZE_BEHAVIORS.map(function (b) {
             const on = profile.flags[b.key];
@@ -383,13 +430,15 @@
         });
     }
 
+</script>
+<script src="admin-copy-chip.js"></script>
+<script src="admin-sidebar.js"></script>
+<script>
+    initAdminSidebar('user-data', '登录身份: 运营管理员');
     renderProfile();
     renderMainTabs();
     renderSubTabs();
     renderPanel();
 </script>
-<script src="admin-copy-chip.js"></script>
-<script src="admin-sidebar.js"></script>
-<script>initAdminSidebar('user-data', '登录身份: 运营管理员');</script>
 </body>
 </html>
