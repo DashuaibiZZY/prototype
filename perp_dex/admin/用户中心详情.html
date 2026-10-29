@@ -33,6 +33,20 @@
         @media (min-width: 1280px) { .detail-grid--trade { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
         .profile-status-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.35rem 0.75rem; margin-bottom: 0.35rem; }
         .profile-status-head .detail-section-title { margin-bottom: 0; }
+        .profile-block-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.35rem 0.75rem; margin-bottom: 0.5rem; }
+        .profile-block-head .detail-section-title { margin-bottom: 0; }
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; inset: 0; background: #cbd5e1; transition: .25s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background: #fff; transition: .25s; border-radius: 50%; }
+        input:checked + .slider { background: #3b82f6; }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .config-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid #f1f5f9; }
+        .config-row:last-child { border-bottom: none; }
+        .config-row-title { font-size: 13px; font-weight: 700; color: #0f172a; }
+        .config-row-desc { font-size: 11px; color: #94a3b8; margin-top: 3px; line-height: 1.45; max-width: 320px; }
+        .drawer-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 40; }
+        .drawer-panel { position: fixed; top: 0; right: 0; width: 520px; max-width: 100%; height: 100%; background: #fff; z-index: 50; box-shadow: -8px 0 24px rgba(0,0,0,.12); display: flex; flex-direction: column; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -50,7 +64,10 @@
     <div class="flex-1 overflow-y-auto p-5 space-y-4">
         <section class="card profile-summary-card">
             <div class="profile-block">
-                <h2 class="detail-section-title">基础信息</h2>
+                <div class="profile-block-head">
+                    <h2 class="detail-section-title">基础信息</h2>
+                    <button type="button" onclick="openTypeModal(qsUid())" class="text-[11px] font-bold text-slate-700 hover:text-blue-600 shrink-0">设置类型</button>
+                </div>
                 <div id="basicInfoGrid" class="detail-grid"></div>
             </div>
             <div class="profile-block-divider" aria-hidden="true"></div>
@@ -67,7 +84,10 @@
             <div class="profile-block">
                 <div class="profile-status-head">
                     <h2 class="detail-section-title">用户状态</h2>
-                    <button type="button" onclick="openFreezeLogModal()" class="text-[11px] font-bold text-blue-600 hover:underline shrink-0">冻结配置记录</button>
+                    <div class="flex flex-wrap items-center gap-3 shrink-0">
+                        <button type="button" onclick="openFreezeDrawer(qsUid())" class="text-[11px] font-bold text-orange-600 hover:underline">冻结设置</button>
+                        <button type="button" onclick="openFreezeLogModal()" class="text-[11px] font-bold text-blue-600 hover:underline">冻结配置记录</button>
+                    </div>
                 </div>
                 <p class="detail-label mb-1">用户冻结行为</p>
                 <div id="freezeBehaviorRow" class="flex flex-wrap gap-0.5"></div>
@@ -129,6 +149,84 @@
     </div>
 </div>
 
+<!-- 用户类型 / 冻结（与列表页共用） -->
+<div id="typeModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/50">
+    <div class="bg-white w-[420px] rounded-xl p-6 shadow-2xl">
+        <h3 class="text-base font-bold text-slate-800 mb-1">配置用户类型</h3>
+        <p id="typeModalMeta" class="text-xs text-slate-400 font-mono mb-5"></p>
+        <div class="space-y-3 mb-6">
+            <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                <input type="radio" name="userTypePick" value="retail" class="accent-blue-600">
+                <div><div class="font-bold text-slate-800">普通用户</div><div class="text-[11px] text-slate-400">默认零售交易账户</div></div>
+            </label>
+            <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                <input type="radio" name="userTypePick" value="mm_internal" class="accent-blue-600">
+                <div><div class="font-bold text-slate-800">内部做市商</div><div class="text-[11px] text-slate-400">平台内部做市账户，适用内部费率与风控策略</div></div>
+            </label>
+            <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                <input type="radio" name="userTypePick" value="mm_external" class="accent-blue-600">
+                <div><div class="font-bold text-slate-800">外部做市商</div><div class="text-[11px] text-slate-400">外部合作做市商，开通做市权限与专属费率策略</div></div>
+            </label>
+        </div>
+        <div id="typeTeamTagWrap" class="hidden mb-6">
+            <div class="flex items-center justify-between gap-2 mb-2">
+                <label class="text-[10px] font-bold text-slate-500 uppercase">团队标签</label>
+                <button type="button" onclick="openTeamTagCreateModal()" class="text-[11px] font-bold text-blue-600 hover:underline">+ 新增标签</button>
+            </div>
+            <select id="typeTeamTagSelect" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">请选择团队标签</option>
+            </select>
+            <p class="text-[11px] text-slate-400 mt-2">内部 / 外部做市商必选；仅可从列表选择，新标签请通过「新增标签」创建</p>
+        </div>
+        <div class="flex gap-3">
+            <button type="button" onclick="closeTypeModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button type="button" onclick="saveUserType()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">保存</button>
+        </div>
+    </div>
+</div>
+
+<div id="teamTagCreateModal" class="fixed inset-0 z-[70] hidden items-center justify-center bg-slate-900/50 p-4">
+    <div class="bg-white w-full max-w-[380px] rounded-xl p-6 shadow-2xl">
+        <h3 class="text-base font-bold text-slate-800 mb-1">新增团队标签</h3>
+        <p class="text-xs text-slate-400 mb-4">创建后将加入团队标签列表，可在配置用户类型时选择</p>
+        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">标签名称</label>
+        <input id="teamTagCreateInput" type="text" maxlength="32" placeholder="输入做市团队名称或标识" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+        <p id="teamTagCreateError" class="hidden text-[11px] text-red-600 font-bold mt-2"></p>
+        <div class="flex gap-3 mt-6">
+            <button type="button" onclick="closeTeamTagCreateModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button type="button" onclick="saveNewTeamTag()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">保存</button>
+        </div>
+    </div>
+</div>
+
+<div id="freezeOverlay" class="drawer-overlay hidden" onclick="closeFreezeDrawer()"></div>
+<div id="freezeDrawer" class="drawer-panel hidden">
+    <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between shrink-0">
+        <div>
+            <h2 class="text-base font-bold text-slate-800">冻结配置</h2>
+            <p id="freezeDrawerMeta" class="text-xs text-slate-400 mt-1 font-mono"></p>
+        </div>
+        <button type="button" onclick="closeFreezeDrawer()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-500 text-lg">&times;</button>
+    </div>
+    <div class="flex-1 overflow-y-auto px-6 py-5">
+        <section class="card p-5">
+            <h3 class="text-sm font-bold text-slate-800 mb-3">冻结与交易限制</h3>
+            <div id="freezeConfigList"></div>
+        </section>
+        <section class="card p-5 mt-4">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">操作备注（必填）</label>
+            <textarea id="freezeRemark" rows="3" placeholder="请填写变更原因..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none resize-none"></textarea>
+        </section>
+    </div>
+    <div class="px-6 py-4 border-t border-slate-100 flex gap-3 shrink-0">
+        <button type="button" onclick="closeFreezeDrawer()" class="flex-1 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">取消</button>
+        <button type="button" onclick="saveFreezeConfig()" class="flex-1 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold">保存配置</button>
+    </div>
+</div>
+
+<div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-lg text-sm font-bold shadow-xl z-[70] hidden"></div>
+
+<script src="admin-user-center-actions.js"></script>
 <script src="admin-user-center-tabs.js"></script>
 <script src="admin-pagination.js"></script>
 <script>
@@ -446,6 +544,20 @@
 <script src="admin-copy-chip.js"></script>
 <script src="admin-sidebar.js"></script>
 <script>
+    function ensureDemoUser(uid) {
+        if (!DEMO_USERS[uid]) {
+            DEMO_USERS[uid] = Object.assign({}, DEMO_USERS['10028471'], { uid: uid, email: '', wallet: '', flags: {}, devices: [] });
+        }
+        if (!DEMO_USERS[uid].flags) DEMO_USERS[uid].flags = {};
+        return DEMO_USERS[uid];
+    }
+
+    AdminUserCenterActions.init({
+        getUserByUid: ensureDemoUser,
+        listAllUsers: function () { return Object.values(DEMO_USERS); },
+        onUserUpdated: function () { renderProfile(); }
+    });
+
     initAdminSidebar('user-data', '登录身份: 运营管理员');
     renderProfile();
     renderMainTabs();
