@@ -1,5 +1,5 @@
 /**
- * ForX Web · 风险基金页（原型 mock + 图表/表格/分页）
+ * ForX Web · 风险保障基金页（原型 mock + 图表/表格/分页）
  */
 (function (global) {
     var PAGE_SIZE = 20;
