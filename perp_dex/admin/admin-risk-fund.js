@@ -5,13 +5,6 @@
     var LIST_PAGE_SIZE = 20;
     var DETAIL_PAGE_SIZE = 20;
 
-    var SUMMARY = {
-        total: 8934233,
-        transferIn: 34233,
-        liquidationSurplus: 34233,
-        shortfall: 34233
-    };
-
     var TX_TYPES = {
         transfer_in: '转入',
         transfer_out: '转出',
@@ -28,6 +21,7 @@
         detailTxType: 'all',
         detailRangeDays: 7,
         detailTablePage: 1,
+        detailMargin: 0,
         transferRowId: null,
         transferAmount: ''
     };
@@ -127,20 +121,6 @@
         }).join('');
         var saved = localStorage.getItem(STORAGE_MARKET_KEY) || 'USDC';
         if (sel.querySelector('option[value="' + saved + '"]')) sel.value = saved;
-    }
-
-    function renderSummary(prefix) {
-        prefix = prefix || 'rf';
-        var map = [
-            ['total', SUMMARY.total],
-            ['transfer', SUMMARY.transferIn],
-            ['surplus', SUMMARY.liquidationSurplus],
-            ['shortfall', SUMMARY.shortfall]
-        ];
-        map.forEach(function (item) {
-            var el = document.getElementById(prefix + '-stat-' + item[0]);
-            if (el) el.textContent = fmtUsdcPlain(item[1]) + ' USDC';
-        });
     }
 
     function getFilteredAccounts() {
@@ -265,11 +245,12 @@
     function renderDetail() {
         var title = document.getElementById('rf-detail-title');
         if (title) title.textContent = state.detailPair + ' · UID ' + state.detailUid;
-        var reserveEl = document.getElementById('rf-detail-reserve');
-        if (reserveEl) {
-            reserveEl.textContent = fmtUsdc(PAIR_RESERVE[state.detailPair] || 0);
+        var pairLabel = document.getElementById('rf-detail-pair-label');
+        var marginEl = document.getElementById('rf-detail-margin');
+        if (pairLabel) pairLabel.textContent = state.detailPair || '—';
+        if (marginEl) {
+            marginEl.textContent = fmtUsdc(state.detailMargin || PAIR_RESERVE[state.detailPair] || 0);
         }
-        renderSummary('rf-detail');
         renderChart('rf-detail-chart', state.detailPair, state.detailRangeDays);
         var rows = getDetailRows();
         var sliced = AdminPagination.slice(rows, state.detailTablePage, DETAIL_PAGE_SIZE);
@@ -339,6 +320,7 @@
     function openDetail(row) {
         state.detailPair = row.pair;
         state.detailUid = row.uid;
+        state.detailMargin = row.contractBalance;
         state.detailTxType = 'all';
         state.detailRangeDays = 7;
         state.detailTablePage = 1;
