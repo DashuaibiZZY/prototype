@@ -191,12 +191,17 @@
     }
 
     function openMmCreateModal() {
+        const modal = document.getElementById('mmAccountCreateModal');
+        if (!modal) {
+            showToast('无法打开弹窗，请刷新页面后重试');
+            return;
+        }
         document.querySelectorAll('input[name="mmCreateTypePick"]').forEach(function (r, idx) {
             r.checked = idx === 0;
         });
         renderTeamTagSelect('', 'mmCreateTeamTagSelect');
-        document.getElementById('mmAccountCreateModal').classList.remove('hidden');
-        document.getElementById('mmAccountCreateModal').classList.add('flex');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
     }
 
     function closeMmCreateModal() {
@@ -300,16 +305,31 @@
         showToast('冻结配置已保存');
     }
 
+    function bindMmCreateUi() {
+        const btn = document.getElementById('btnOpenMmCreateModal');
+        if (!btn || btn.dataset.mmCreateBound === '1') return;
+        btn.dataset.mmCreateBound = '1';
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            openMmCreateModal();
+        });
+    }
+
     function init(opts) {
         getUserByUid = opts.getUserByUid;
         listAllUsers = opts.listAllUsers;
         onUserUpdated = opts.onUserUpdated || function () {};
+        bindMmCreateUi();
     }
 
     global.AdminUserCenterActions = {
         init: init,
         statusFromFlags: statusFromFlags,
-        UC_FREEZE_CONFIGS: UC_FREEZE_CONFIGS
+        UC_FREEZE_CONFIGS: UC_FREEZE_CONFIGS,
+        openMmCreateModal: openMmCreateModal,
+        closeMmCreateModal: closeMmCreateModal,
+        confirmMmCreate: confirmMmCreate,
+        closeMmCreatedModal: closeMmCreatedModal
     };
 
     global.openTypeModal = openTypeModal;

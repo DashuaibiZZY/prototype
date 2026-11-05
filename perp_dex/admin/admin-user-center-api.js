@@ -365,17 +365,6 @@
         });
     }
 
-    function initDemoToolbar() {
-        const bar = document.getElementById('api-demo-bar');
-        if (!bar) return;
-        bar.querySelectorAll('[data-demo-mfa]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                const bound = btn.getAttribute('data-demo-mfa') === 'bound';
-                window.AdminTotpGate.setBound(bound);
-            });
-        });
-    }
-
     function bindUi() {
         document.getElementById('api-btn-create-empty')?.addEventListener('click', openCreate);
         document.getElementById('api-btn-create-top')?.addEventListener('click', openCreate);
@@ -416,7 +405,6 @@
         init: function () {
             initFromQuery();
             bindUi();
-            initDemoToolbar();
             if (location.hash === '#create') {
                 setView('create');
             } else {
