@@ -15,7 +15,6 @@
         ETHUSDC: { reserve: 68420.12, totalShare: 68420.12 },
         SOLUSDC: { reserve: 54650.34, totalShare: 54650.34 }
     };
-    var FUND_TOTAL = 213601;
 
     var TX_TYPES = {
         liquidation_surplus: '强平盈余注入',
@@ -201,17 +200,9 @@
         }
         var pag = document.getElementById('risk-fund-pagination');
         if (pag) pag.innerHTML = buildPaginationHtml(total, state.tablePage, 'RiskFundPage.goTablePage');
-        var summary = document.getElementById('risk-fund-table-summary');
-        if (summary) {
-            var from = total ? start + 1 : 0;
-            var to = Math.min(start + PAGE_SIZE, total);
-            summary.textContent = '共 ' + total + ' 条 · 第 ' + from + '–' + to + ' 条';
-        }
     }
 
     function renderHeader() {
-        var totalEl = document.getElementById('risk-fund-total');
-        if (totalEl) totalEl.textContent = FUND_TOTAL.toLocaleString() + ' USDC';
         var pair = state.pair === 'ALL' ? 'BTCUSDC' : state.pair;
         var meta = PAIR_META[pair] || PAIR_META.BTCUSDC;
         var labelEl = document.getElementById('risk-fund-pair-label');
