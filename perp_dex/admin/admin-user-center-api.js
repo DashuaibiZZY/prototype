@@ -1,5 +1,5 @@
 /**
- * 后台 · 做市商用户 API Key 管理（代管，GA 为管理人员）
+ * 后台 · 做市商用户 API Key 管理（代管；敏感操作仅弹 GA 验证码）
  */
 (function () {
     let targetUid = '';
