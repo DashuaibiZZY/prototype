@@ -51,9 +51,10 @@
             ]
         },
         {
-            title: '合约交易',
+            title: '合约配置',
             items: [
-                { key: 'contract-pairs', label: '交易对配置', href: '合约交易后台.html' }
+                { key: 'contract-pairs', label: '交易对配置', href: '合约交易后台.html' },
+                { key: 'risk-fund', label: '风险保障基金管理', href: '风险保障基金管理.html' }
             ]
         },
         {
