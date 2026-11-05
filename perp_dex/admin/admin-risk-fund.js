@@ -13,7 +13,8 @@
     };
 
     var TX_TYPES = {
-        transfer_inject: '划转注入',
+        transfer_in: '转入',
+        transfer_out: '转出',
         liquidation_surplus: '强平盈余注入',
         shortfall: '穿仓亏损'
     };
@@ -72,10 +73,7 @@
                     pair: pair,
                     uid: 'RF' + (880000 + pi * 100 + i),
                     fundingBalance: 1000000 - i * 12000 + pi * 5000,
-                    contractBalance: (PAIR_RESERVE[pair] || 50000) - i * 800 + pi * 200,
-                    cumTransfer: 12000 + i * 1500 + pi * 800,
-                    cumSurplus: 8900 + i * 1100,
-                    cumShortfall: 2100 + i * 400
+                    contractBalance: (PAIR_RESERVE[pair] || 50000) - i * 800 + pi * 200
                 });
             }
         });
@@ -87,13 +85,16 @@
     function buildDetailLedger(pair) {
         var rows = [];
         var balance = PAIR_RESERVE[pair] || 80000;
-        var keys = ['transfer_inject', 'liquidation_surplus', 'shortfall'];
+        var keys = ['transfer_in', 'transfer_out', 'liquidation_surplus', 'shortfall'];
         var now = Date.now();
         for (var i = 0; i < 42; i++) {
-            var typeKey = keys[i % 3];
-            var amount = typeKey === 'shortfall'
-                ? -(20 + (i % 6) * 15.5)
-                : (50 + (i % 8) * 22.3);
+            var typeKey = keys[i % keys.length];
+            var amount;
+            if (typeKey === 'shortfall' || typeKey === 'transfer_out') {
+                amount = -(20 + (i % 6) * 15.5);
+            } else {
+                amount = 50 + (i % 8) * 22.3;
+            }
             balance = Math.round((balance + amount) * 100) / 100;
             var t = new Date(now - i * 7200000);
             rows.push({
@@ -156,7 +157,7 @@
         var tbody = document.getElementById('rf-list-tbody');
         if (!tbody) return;
         if (!sliced.items.length) {
-            tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-12 text-center text-slate-400 font-bold">暂无数据</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-12 text-center text-slate-400 font-bold">暂无数据</td></tr>';
         } else {
             tbody.innerHTML = sliced.items.map(function (row) {
                 return '<tr class="border-b border-slate-50 hover:bg-slate-50/80">' +
@@ -164,9 +165,6 @@
                     '<td class="px-4 py-3 font-mono text-[11px]">' + row.uid + '</td>' +
                     '<td class="px-4 py-3 font-bold">' + fmtUsdc(row.fundingBalance) + '</td>' +
                     '<td class="px-4 py-3 font-bold text-blue-700">' + fmtUsdc(row.contractBalance) + '</td>' +
-                    '<td class="px-4 py-3">' + fmtUsdc(row.cumTransfer) + '</td>' +
-                    '<td class="px-4 py-3">' + fmtUsdc(row.cumSurplus) + '</td>' +
-                    '<td class="px-4 py-3 text-red-600 font-bold">' + fmtUsdc(row.cumShortfall) + '</td>' +
                     '<td class="px-4 py-3 text-right space-x-3 whitespace-nowrap">' +
                     '<button type="button" class="text-blue-600 font-black hover:underline" data-action="open-transfer" data-id="' + row.id + '">划转资金</button>' +
                     '<button type="button" class="text-slate-600 font-black hover:underline" data-action="open-detail" data-id="' + row.id + '">详情</button>' +
@@ -320,7 +318,6 @@
         }
         row.fundingBalance = Math.round((row.fundingBalance - amt) * 1000000) / 1000000;
         row.contractBalance = Math.round((row.contractBalance + amt) * 1000000) / 1000000;
-        row.cumTransfer = Math.round((row.cumTransfer + amt) * 100) / 100;
         closeTransferModal();
         renderList();
         alert('划转成功（原型）');
@@ -335,7 +332,6 @@
         var label = document.getElementById('rf-current-market');
         if (label) label.textContent = market;
         fillPairFilter();
-        renderSummary('rf');
         renderList();
         showView('view-list');
     }
@@ -414,7 +410,6 @@
 
     function initRiskFundAdmin() {
         populateMarketSelect();
-        renderSummary('rf');
         bindEvents();
         AdminPagination.register('risk-fund-list', function (p) {
             state.listPage = p;
