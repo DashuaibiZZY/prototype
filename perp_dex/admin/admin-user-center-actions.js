@@ -56,8 +56,9 @@
         return Array.from(set).sort(function (a, b) { return a.localeCompare(b, 'zh-CN'); });
     }
 
-    function renderTeamTagSelect(selected) {
-        const sel = document.getElementById('typeTeamTagSelect');
+    function renderTeamTagSelect(selected, selectId) {
+        selectId = selectId || 'typeTeamTagSelect';
+        const sel = document.getElementById(selectId);
         if (!sel) return;
         const catalog = getTeamTagCatalog();
         const options = catalog.slice();
@@ -178,8 +179,71 @@
         }
         rememberTeamTag(tag);
         renderTeamTagSelect(tag);
+        renderTeamTagSelect(tag, 'mmCreateTeamTagSelect');
         closeTeamTagCreateModal();
         showToast('团队标签已新增');
+    }
+
+    function generateMmUid() {
+        let s = '';
+        for (let i = 0; i < 16; i++) s += Math.floor(Math.random() * 10);
+        return s;
+    }
+
+    function openMmCreateModal() {
+        document.querySelectorAll('input[name="mmCreateTypePick"]').forEach(function (r, idx) {
+            r.checked = idx === 0;
+        });
+        renderTeamTagSelect('', 'mmCreateTeamTagSelect');
+        document.getElementById('mmAccountCreateModal').classList.remove('hidden');
+        document.getElementById('mmAccountCreateModal').classList.add('flex');
+    }
+
+    function closeMmCreateModal() {
+        document.getElementById('mmAccountCreateModal').classList.add('hidden');
+        document.getElementById('mmAccountCreateModal').classList.remove('flex');
+    }
+
+    function confirmMmCreate() {
+        const pick = document.querySelector('input[name="mmCreateTypePick"]:checked');
+        if (!pick) {
+            showToast('请选择用户类型');
+            return;
+        }
+        const tag = (document.getElementById('mmCreateTeamTagSelect').value || '').trim();
+        if (!tag) {
+            showToast('请选择团队标签');
+            return;
+        }
+        const uid = generateMmUid();
+        const newUser = {
+            uid: uid,
+            email: '',
+            wallet: '',
+            userType: pick.value,
+            teamTag: tag,
+            lastLogin: '—',
+            totalAsset: '0.00',
+            vol14d: '0',
+            vip: 'VIP 0',
+            status: 'normal',
+            flags: {}
+        };
+        if (listAllUsers) {
+            const list = listAllUsers();
+            if (list && list.unshift) list.unshift(newUser);
+        }
+        rememberTeamTag(tag);
+        closeMmCreateModal();
+        document.getElementById('mmCreatedUidText').textContent = uid;
+        document.getElementById('mmAccountCreatedModal').classList.remove('hidden');
+        document.getElementById('mmAccountCreatedModal').classList.add('flex');
+        if (onUserUpdated) onUserUpdated(uid);
+    }
+
+    function closeMmCreatedModal() {
+        document.getElementById('mmAccountCreatedModal').classList.add('hidden');
+        document.getElementById('mmAccountCreatedModal').classList.remove('flex');
     }
 
     function renderFreezeList(flags) {
@@ -259,4 +323,8 @@
     global.onFreezeToggle = onFreezeToggle;
     global.saveFreezeConfig = saveFreezeConfig;
     global.showToast = showToast;
+    global.openMmCreateModal = openMmCreateModal;
+    global.closeMmCreateModal = closeMmCreateModal;
+    global.confirmMmCreate = confirmMmCreate;
+    global.closeMmCreatedModal = closeMmCreatedModal;
 })(window);
