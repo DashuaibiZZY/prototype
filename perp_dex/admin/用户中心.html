@@ -84,8 +84,9 @@
         </section>
 
         <section class="card overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
                 <span class="text-sm font-bold text-slate-700">用户列表 <span id="userCount" class="text-slate-400 font-medium"></span></span>
+                <button type="button" onclick="openMmCreateModal()" class="shrink-0 px-4 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black hover:bg-blue-700">新增做市商账号</button>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left min-w-[1080px]">
@@ -109,6 +110,45 @@
         </section>
     </div>
 </main>
+
+<!-- 新增做市商账号 -->
+<div id="mmAccountCreateModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/50">
+    <div class="bg-white w-[420px] rounded-xl p-6 shadow-2xl">
+        <h3 class="text-base font-bold text-slate-800 mb-5">选择用户类型</h3>
+        <div class="space-y-3 mb-6">
+            <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                <input type="radio" name="mmCreateTypePick" value="mm_internal" class="accent-blue-600" checked>
+                <div><div class="font-bold text-slate-800">内部做市商</div><div class="text-[11px] text-slate-400">平台内部做市账户，适用内部费率与风控策略</div></div>
+            </label>
+            <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                <input type="radio" name="mmCreateTypePick" value="mm_external" class="accent-blue-600">
+                <div><div class="font-bold text-slate-800">外部做市商</div><div class="text-[11px] text-slate-400">外部合作做市商，开通做市权限与专属费率策略</div></div>
+            </label>
+        </div>
+        <div class="mb-6">
+            <div class="flex items-center justify-between gap-2 mb-2">
+                <label class="text-[10px] font-bold text-slate-500 uppercase">团队标签</label>
+                <button type="button" onclick="openTeamTagCreateModal()" class="text-[11px] font-bold text-blue-600 hover:underline">+ 新增标签</button>
+            </div>
+            <select id="mmCreateTeamTagSelect" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">请选择团队标签</option>
+            </select>
+        </div>
+        <div class="flex gap-3">
+            <button type="button" onclick="closeMmCreateModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button type="button" onclick="confirmMmCreate()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">确认新增</button>
+        </div>
+    </div>
+</div>
+
+<div id="mmAccountCreatedModal" class="fixed inset-0 z-[65] hidden items-center justify-center bg-slate-900/50">
+    <div class="bg-white w-[380px] rounded-xl p-6 shadow-2xl text-center space-y-4">
+        <h3 class="text-base font-bold text-slate-800">系统已创建账户</h3>
+        <p class="text-[12px] text-slate-500">账户 UID</p>
+        <p id="mmCreatedUidText" class="text-lg font-black font-mono text-slate-900 break-all">—</p>
+        <button type="button" onclick="closeMmCreatedModal()" class="w-full py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">确认</button>
+    </div>
+</div>
 
 <!-- 用户类型 -->
 <div id="typeModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/50">
@@ -271,6 +311,9 @@
                 '<a href="用户中心详情.html?uid=' + encodeURIComponent(u.uid) + '" class="text-blue-600 font-bold hover:underline">详情</a>' +
                 '<button type="button" onclick="openTypeModal(\'' + u.uid + '\')" class="text-slate-700 font-bold hover:underline">类型</button>' +
                 '<button type="button" onclick="openFreezeDrawer(\'' + u.uid + '\')" class="text-orange-600 font-bold hover:underline">冻结</button>' +
+                (isMmUserType(u.userType)
+                    ? '<a href="用户中心API管理.html?uid=' + encodeURIComponent(u.uid) + '" class="text-violet-600 font-bold hover:underline">API管理</a>'
+                    : '') +
                 '</td></tr>';
         }).join('');
         if (window.AdminPagination) AdminPagination.mount('uc-list-pagination', sliced.total, listPage, 'uc-list');
