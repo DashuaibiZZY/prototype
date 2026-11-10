@@ -10,9 +10,17 @@
         body { font-family: 'Inter', sans-serif; background: #f8fafc; }
         .sidebar-item-active { background: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
         .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
-        .stat { padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 6px; background: #f8fafc; }
-        .stat .label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; }
-        .stat .val { margin-top: 6px; font-size: 13px; font-weight: 900; color: #0f172a; font-variant-numeric: tabular-nums; }
+        .detail-label { font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; line-height: 1.2; }
+        .detail-value { font-size: 12px; font-weight: 600; color: #0f172a; margin-top: 2px; line-height: 1.35; font-variant-numeric: tabular-nums; }
+        .detail-section-title { font-size: 11px; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem; letter-spacing: 0.02em; }
+        .profile-summary-card { padding: 0.75rem 1rem; }
+        .profile-block { padding: 0.45rem 0; }
+        .profile-block-divider { height: 1px; background: #f1f5f9; margin: 0.25rem 0; }
+        .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1rem; row-gap: 0.45rem; }
+        @media (min-width: 768px) { .detail-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 0.5rem; } }
+        @media (min-width: 1280px) { .detail-grid--wide { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+        .mm-op-btn { display: inline-block; padding: 4px 8px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 10px; font-weight: 800; color: #2563eb; background: #fff; white-space: nowrap; }
+        .mm-op-btn:hover { background: #eff6ff; border-color: #93c5fd; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -20,22 +28,26 @@
 <aside id="admin-sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0"></aside>
 
 <main class="flex-1 flex flex-col overflow-hidden">
-    <header class="h-16 bg-white border-b border-slate-200 flex items-center px-8 shrink-0 gap-4">
-        <a href="做市商数据看板.html" class="text-slate-500 font-black hover:text-black text-sm">← 返回列表</a>
+    <header class="h-14 bg-white border-b border-slate-200 flex items-center px-6 shrink-0 gap-3">
+        <a href="做市商数据看板.html" class="text-xs font-bold text-blue-600 hover:underline">← 返回列表</a>
         <h1 class="text-lg font-bold text-slate-800">团队详情</h1>
     </header>
-    <div class="flex-1 overflow-y-auto p-8 space-y-6">
-        <section class="grid grid-cols-2 lg:grid-cols-5 gap-3">
-            <div class="stat lg:col-span-2"><div class="label">做市商团队</div><div class="val" id="mm-detail-team">—</div></div>
-            <div class="stat"><div class="label">当前总资产</div><div class="val" id="mm-detail-asset">—</div></div>
-            <div class="stat"><div class="label">当前总未实现盈亏</div><div class="val" id="mm-detail-unrealized">—</div></div>
-            <div class="stat"><div class="label">累计已实现盈亏（截止昨日）</div><div class="val" id="mm-detail-realized">—</div></div>
-            <div class="stat"><div class="label">累计充值金额</div><div class="val" id="mm-detail-deposit">—</div></div>
-            <div class="stat"><div class="label">累计提现金额</div><div class="val" id="mm-detail-withdraw">—</div></div>
-            <div class="stat"><div class="label">累计空投金额</div><div class="val" id="mm-detail-airdrop">—</div></div>
-            <div class="stat"><div class="label">前一日总交易额</div><div class="val" id="mm-detail-prev-vol">—</div></div>
-            <div class="stat"><div class="label">前一日交易额占比全站</div><div class="val" id="mm-detail-prev-share">—</div></div>
-            <div class="stat"><div class="label">团队账号数</div><div class="val" id="mm-detail-uid-count">—</div></div>
+    <div class="flex-1 overflow-y-auto p-5 space-y-4">
+        <section class="card profile-summary-card">
+            <div class="profile-block">
+                <h2 class="detail-section-title">团队概览</h2>
+                <div id="mm-detail-team-grid" class="detail-grid"></div>
+            </div>
+            <div class="profile-block-divider" aria-hidden="true"></div>
+            <div class="profile-block">
+                <h2 class="detail-section-title">资产与盈亏</h2>
+                <div id="mm-detail-asset-grid" class="detail-grid detail-grid--wide"></div>
+            </div>
+            <div class="profile-block-divider" aria-hidden="true"></div>
+            <div class="profile-block">
+                <h2 class="detail-section-title">交易占比</h2>
+                <div id="mm-detail-trade-grid" class="detail-grid"></div>
+            </div>
         </section>
 
         <section class="card overflow-hidden">
@@ -49,9 +61,24 @@
         </section>
 
         <section class="card overflow-hidden">
-            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/80"><h2 class="font-black text-slate-800">1. 团队日交易额</h2></div>
+            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/80 flex flex-wrap items-end justify-between gap-3">
+                <h2 class="font-black text-slate-800 shrink-0">1. 团队日交易额</h2>
+                <div class="flex flex-wrap items-end gap-2">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1">开始日期</label>
+                        <input id="mm-trade-date-from" type="date" class="border border-slate-200 rounded px-3 py-2 text-[11px] font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1">结束日期</label>
+                        <input id="mm-trade-date-to" type="date" class="border border-slate-200 rounded px-3 py-2 text-[11px] font-bold">
+                    </div>
+                    <button type="button" id="mm-trade-query" class="px-4 py-2 bg-slate-900 text-white rounded font-black text-[11px]">查询</button>
+                    <button type="button" id="mm-trade-download" class="px-4 py-2 border border-slate-200 rounded font-black text-[11px] text-slate-700 hover:bg-slate-50">下载 CSV</button>
+                </div>
+            </div>
+            <p id="mm-trade-range-hint" class="px-4 py-2 text-[10px] text-slate-500 border-b border-slate-50">单次查询区间最多 90 天</p>
             <div class="overflow-x-auto">
-                <table class="w-full text-left min-w-[1100px] text-[11px]">
+                <table class="w-full text-left min-w-[1280px] text-[11px]">
                     <thead class="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase border-b border-slate-100">
                     <tr>
                         <th class="px-4 py-3">统计日期</th>
@@ -60,18 +87,37 @@
                         <th class="px-4 py-3 text-right">总成交笔数</th>
                         <th class="px-4 py-3 text-right">总吃单成交额</th>
                         <th class="px-4 py-3 text-right">总挂单成交额</th>
+                        <th class="px-4 py-3 text-right">总已实现盈亏</th>
+                        <th class="px-4 py-3 text-right">总未实现盈亏</th>
                         <th class="px-4 py-3 text-right">总手续费</th>
                         <th class="px-4 py-3 text-right">总资金费用</th>
                         <th class="px-4 py-3">当日有成交账号</th>
+                        <th class="px-4 py-3 text-right">操作</th>
                     </tr>
                     </thead>
                     <tbody id="mm-detail-trade-body"></tbody>
                 </table>
             </div>
+            <div id="mm-trade-pagination"></div>
         </section>
 
         <section class="card overflow-hidden">
-            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/80"><h2 class="font-black text-slate-800">2. UID 日资产与盈亏（团队汇总）</h2></div>
+            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/80 flex flex-wrap items-end justify-between gap-3">
+                <h2 class="font-black text-slate-800 shrink-0">2. UID 日资产与盈亏（团队汇总）</h2>
+                <div class="flex flex-wrap items-end gap-2">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1">开始日期</label>
+                        <input id="mm-asset-date-from" type="date" class="border border-slate-200 rounded px-3 py-2 text-[11px] font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1">结束日期</label>
+                        <input id="mm-asset-date-to" type="date" class="border border-slate-200 rounded px-3 py-2 text-[11px] font-bold">
+                    </div>
+                    <button type="button" id="mm-asset-query" class="px-4 py-2 bg-slate-900 text-white rounded font-black text-[11px]">查询</button>
+                    <button type="button" id="mm-asset-download" class="px-4 py-2 border border-slate-200 rounded font-black text-[11px] text-slate-700 hover:bg-slate-50">下载 CSV</button>
+                </div>
+            </div>
+            <p class="px-4 py-2 text-[10px] text-slate-500 border-b border-slate-50">单次查询区间最多 90 天</p>
             <div class="overflow-x-auto">
                 <table class="w-full text-left min-w-[1100px] text-[11px]">
                     <thead class="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase border-b border-slate-100">
@@ -85,17 +131,19 @@
                         <th class="px-4 py-3 text-right">总提现</th>
                         <th class="px-4 py-3 text-right">净充值</th>
                         <th class="px-4 py-3 text-right">总空投</th>
+                        <th class="px-4 py-3 text-right">操作</th>
                     </tr>
                     </thead>
                     <tbody id="mm-detail-asset-body"></tbody>
                 </table>
             </div>
+            <div id="mm-asset-pagination"></div>
         </section>
 
         <section class="card overflow-hidden">
             <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/80 flex flex-wrap items-end justify-between gap-3">
-                <h2 class="font-black text-slate-800">3. UID 盘口挂单分布快照（团队汇总）</h2>
-                <div class="flex flex-wrap items-end gap-3">
+                <h2 class="font-black text-slate-800 shrink-0">3. UID 盘口挂单分布快照（团队汇总）</h2>
+                <div class="flex flex-wrap items-end gap-2">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 mb-1">快照日期</label>
                         <input id="mm-ob-date" type="date" class="border border-slate-200 rounded px-3 py-2 text-[11px] font-bold">
@@ -104,7 +152,8 @@
                         <label class="block text-[10px] font-bold text-slate-500 mb-1">交易对</label>
                         <select id="mm-ob-pair" class="border border-slate-200 rounded px-3 py-2 text-[11px] font-bold bg-white min-w-[140px]"></select>
                     </div>
-                    <button type="button" id="mm-ob-query" class="px-5 py-2 bg-slate-900 text-white rounded font-black text-[11px]">查询</button>
+                    <button type="button" id="mm-ob-query" class="px-4 py-2 bg-slate-900 text-white rounded font-black text-[11px]">查询</button>
+                    <button type="button" id="mm-ob-download" class="px-4 py-2 border border-slate-200 rounded font-black text-[11px] text-slate-700 hover:bg-slate-50">下载 CSV</button>
                 </div>
             </div>
             <p class="px-4 py-2 text-[10px] text-slate-500 border-b border-slate-50">各 bps 档位为挂单名义价值（USDC）；spread 为买卖价差（bps）</p>
@@ -128,13 +177,15 @@
                     <tbody id="mm-detail-ob-body"></tbody>
                 </table>
             </div>
+            <div id="mm-ob-pagination"></div>
         </section>
     </div>
 </main>
 
-<script src="admin-mm-team-store.js?v=20261110-mm-dashboard"></script>
-<script src="admin-mm-dashboard.js?v=20261110-mm-dashboard"></script>
-<script src="admin-sidebar.js?v=20261110-mm-dashboard"></script>
+<script src="admin-pagination.js"></script>
+<script src="admin-mm-team-store.js?v=20261110-mm-drill"></script>
+<script src="admin-mm-dashboard.js?v=20261110-mm-drill"></script>
+<script src="admin-sidebar.js?v=20261110-mm-drill"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         AdminMmDashboard.initDetailPage();
