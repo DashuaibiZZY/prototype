@@ -1,10 +1,7 @@
 /**
- * 用户数据 · 类型配置 / 冻结配置弹窗（列表页与详情页共用）
+ * 用户数据 · 类型配置 / 冻结配置 / 做市商账号（团队标签决定内/外部）
  */
 (function (global) {
-    const UC_TEAM_TAG_STORAGE = 'forx_admin_uc_team_tags_v1';
-    const UC_TEAM_TAG_DEFAULTS = ['Alpha MM', 'Desk-Quant', 'Beta Liquidity', 'External Desk A'];
-
     const UC_FREEZE_CONFIGS = [
         { key: 'withdrawFreeze', title: '提现冻结', desc: '禁止发起链上提现申请' },
         { key: 'transferFreeze', title: '资金划转冻结', desc: '禁止交易账户、资金账户之间的资金划转' },
@@ -21,6 +18,10 @@
     let freezeEditUid = null;
     let draftFlags = null;
 
+    function store() {
+        return global.AdminMmTeamStore;
+    }
+
     function isMmUserType(t) {
         return t === 'mm_internal' || t === 'mm_external';
     }
@@ -30,59 +31,40 @@
         return t || 'retail';
     }
 
-    function loadStoredTeamTags() {
-        try {
-            const raw = localStorage.getItem(UC_TEAM_TAG_STORAGE);
-            if (raw) return JSON.parse(raw);
-        } catch (e) { /* ignore */ }
-        return [];
-    }
-
-    function rememberTeamTag(tag) {
-        const t = String(tag || '').trim();
-        if (!t) return;
-        const set = new Set(loadStoredTeamTags());
-        UC_TEAM_TAG_DEFAULTS.forEach(function (x) { set.add(x); });
-        set.add(t);
-        localStorage.setItem(UC_TEAM_TAG_STORAGE, JSON.stringify(Array.from(set)));
-    }
-
-    function getTeamTagCatalog() {
-        const set = new Set(UC_TEAM_TAG_DEFAULTS);
-        loadStoredTeamTags().forEach(function (t) { if (t) set.add(t); });
-        (listAllUsers ? listAllUsers() : []).forEach(function (u) {
-            if (u && u.teamTag) set.add(u.teamTag);
+    function syncUsersIntoTags() {
+        if (!store() || !listAllUsers) return;
+        const names = [];
+        listAllUsers().forEach(function (u) {
+            if (u && u.teamTag) names.push(u.teamTag);
         });
-        return Array.from(set).sort(function (a, b) { return a.localeCompare(b, 'zh-CN'); });
+        store().migrateLegacyTagNames(names);
     }
 
     function renderTeamTagSelect(selected, selectId) {
         selectId = selectId || 'typeTeamTagSelect';
         const sel = document.getElementById(selectId);
-        if (!sel) return;
-        const catalog = getTeamTagCatalog();
-        const options = catalog.slice();
-        if (selected && options.indexOf(selected) < 0) options.push(selected);
+        if (!sel || !store()) return;
+        syncUsersIntoTags();
+        const tags = store().getAll();
         sel.innerHTML = '';
         const placeholder = document.createElement('option');
         placeholder.value = '';
         placeholder.textContent = '请选择团队标签';
         sel.appendChild(placeholder);
-        options.sort(function (a, b) { return a.localeCompare(b, 'zh-CN'); }).forEach(function (t) {
+        tags.forEach(function (tag) {
             const o = document.createElement('option');
-            o.value = t;
-            o.textContent = t;
+            o.value = tag.name;
+            o.textContent = store().formatSelectLabel(tag);
             sel.appendChild(o);
         });
-        sel.value = selected && options.indexOf(selected) >= 0 ? selected : '';
+        sel.value = selected && tags.some(function (t) { return t.name === selected; }) ? selected : '';
     }
 
     function syncTypeModalTeamField() {
         const pick = document.querySelector('input[name="userTypePick"]:checked');
         const wrap = document.getElementById('typeTeamTagWrap');
         if (!wrap) return;
-        const show = pick && isMmUserType(pick.value);
-        wrap.classList.toggle('hidden', !show);
+        wrap.classList.toggle('hidden', !pick || pick.value !== 'mm');
     }
 
     function statusFromFlags(flags) {
@@ -105,12 +87,12 @@
         typeEditUid = uid;
         const u = getUserByUid(uid);
         document.getElementById('typeModalMeta').textContent = 'UID ' + uid;
-        const pickedType = normalizeUserType(u && u.userType);
+        const isMm = u && isMmUserType(normalizeUserType(u.userType));
         document.querySelectorAll('input[name="userTypePick"]').forEach(function (r) {
-            r.checked = r.value === pickedType;
+            r.checked = isMm ? r.value === 'mm' : r.value === 'retail';
             r.onchange = syncTypeModalTeamField;
         });
-        renderTeamTagSelect(u && u.teamTag);
+        renderTeamTagSelect(isMm ? u.teamTag : '');
         syncTypeModalTeamField();
         document.getElementById('typeModal').classList.remove('hidden');
         document.getElementById('typeModal').classList.add('flex');
@@ -130,16 +112,17 @@
         }
         const u = getUserByUid && typeEditUid ? getUserByUid(typeEditUid) : null;
         if (u) {
-            u.userType = pick.value;
-            if (isMmUserType(pick.value)) {
+            if (pick.value === 'retail') {
+                u.userType = 'retail';
+                delete u.teamTag;
+            } else {
                 const tag = (document.getElementById('typeTeamTagSelect').value || '').trim();
                 if (!tag) {
                     showToast('请选择团队标签');
                     return;
                 }
                 u.teamTag = tag;
-            } else {
-                delete u.teamTag;
+                u.userType = store() ? store().userTypeFromTag(tag) : 'mm_external';
             }
         }
         const savedUid = typeEditUid;
@@ -150,6 +133,9 @@
 
     function openTeamTagCreateModal() {
         document.getElementById('teamTagCreateInput').value = '';
+        document.querySelectorAll('input[name="teamTagKindPick"]').forEach(function (r, i) {
+            r.checked = i === 0;
+        });
         const err = document.getElementById('teamTagCreateError');
         err.classList.add('hidden');
         err.textContent = '';
@@ -167,17 +153,19 @@
         const input = document.getElementById('teamTagCreateInput');
         const err = document.getElementById('teamTagCreateError');
         const tag = (input.value || '').trim();
+        const kindPick = document.querySelector('input[name="teamTagKindPick"]:checked');
+        const kind = kindPick ? kindPick.value : 'mm_external';
         if (!tag) {
             err.textContent = '请输入标签名称';
             err.classList.remove('hidden');
             return;
         }
-        if (getTeamTagCatalog().some(function (t) { return t === tag; })) {
+        if (store() && store().getByName(tag)) {
             err.textContent = '该团队标签已存在';
             err.classList.remove('hidden');
             return;
         }
-        rememberTeamTag(tag);
+        if (store()) store().upsert(tag, kind);
         renderTeamTagSelect(tag);
         renderTeamTagSelect(tag, 'mmCreateTeamTagSelect');
         closeTeamTagCreateModal();
@@ -196,9 +184,6 @@
             showToast('无法打开弹窗，请刷新页面后重试');
             return;
         }
-        document.querySelectorAll('input[name="mmCreateTypePick"]').forEach(function (r, idx) {
-            r.checked = idx === 0;
-        });
         renderTeamTagSelect('', 'mmCreateTeamTagSelect');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -210,23 +195,20 @@
     }
 
     function confirmMmCreate() {
-        const pick = document.querySelector('input[name="mmCreateTypePick"]:checked');
-        if (!pick) {
-            showToast('请选择用户类型');
-            return;
-        }
         const tag = (document.getElementById('mmCreateTeamTagSelect').value || '').trim();
         if (!tag) {
             showToast('请选择团队标签');
             return;
         }
         const uid = generateMmUid();
+        const userType = store() ? store().userTypeFromTag(tag) : 'mm_external';
         const newUser = {
             uid: uid,
             email: '',
             wallet: '',
-            userType: pick.value,
+            userType: userType,
             teamTag: tag,
+            teamBindAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
             lastLogin: '—',
             totalAsset: '0.00',
             vol14d: '0',
@@ -238,7 +220,6 @@
             const list = listAllUsers();
             if (list && list.unshift) list.unshift(newUser);
         }
-        rememberTeamTag(tag);
         closeMmCreateModal();
         document.getElementById('mmCreatedUidText').textContent = uid;
         document.getElementById('mmAccountCreatedModal').classList.remove('hidden');
@@ -319,6 +300,7 @@
         getUserByUid = opts.getUserByUid;
         listAllUsers = opts.listAllUsers;
         onUserUpdated = opts.onUserUpdated || function () {};
+        syncUsersIntoTags();
         bindMmCreateUi();
     }
 

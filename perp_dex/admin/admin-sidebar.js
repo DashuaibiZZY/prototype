@@ -10,12 +10,6 @@
             ]
         },
         {
-            title: '用户中心',
-            items: [
-                { key: 'user-data', label: '用户数据', href: '用户中心.html' }
-            ]
-        },
-        {
             title: '邀请返佣',
             items: [
                 { key: 'invite-rebate', label: '邀请返佣管理', href: '邀请返佣后台.html' }
@@ -40,6 +34,13 @@
                 { key: 'trial-approval', label: '发放审批', href: '体验金后台.html#approval' },
                 { key: 'trial-users', label: '数据查询&回收', href: '体验金后台.html#users' },
                 { key: 'trial-logs', label: '操作记录', href: '体验金后台.html#logs' }
+            ]
+        },
+        {
+            title: '用户中心',
+            items: [
+                { key: 'user-data', label: '用户数据', href: '用户中心.html' },
+                { key: 'mm-dashboard', label: '做市商数据看板', href: '做市商数据看板.html' }
             ]
         },
         {

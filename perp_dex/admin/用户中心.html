@@ -83,6 +83,14 @@
             </div>
         </section>
 
+        <section class="card p-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h2 class="text-sm font-black text-slate-800">做市商数据</h2>
+                <p class="text-[11px] text-slate-400 mt-0.5">按团队标签汇总交易额、资产、盈亏与盘口分布</p>
+            </div>
+            <a href="做市商数据看板.html" class="px-4 py-2 bg-violet-600 text-white rounded-lg text-[11px] font-black hover:bg-violet-700">进入做市商数据看板</a>
+        </section>
+
         <section class="card overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
                 <span class="text-sm font-bold text-slate-700">用户列表 <span id="userCount" class="text-slate-400 font-medium"></span></span>
@@ -114,17 +122,8 @@
 <!-- 新增做市商账号 -->
 <div id="mmAccountCreateModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/50">
     <div class="bg-white w-[420px] rounded-xl p-6 shadow-2xl">
-        <h3 class="text-base font-bold text-slate-800 mb-5">选择用户类型</h3>
-        <div class="space-y-3 mb-6">
-            <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
-                <input type="radio" name="mmCreateTypePick" value="mm_internal" class="accent-blue-600" checked>
-                <div><div class="font-bold text-slate-800">内部做市商</div><div class="text-[11px] text-slate-400">平台内部做市账户，适用内部费率与风控策略</div></div>
-            </label>
-            <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
-                <input type="radio" name="mmCreateTypePick" value="mm_external" class="accent-blue-600">
-                <div><div class="font-bold text-slate-800">外部做市商</div><div class="text-[11px] text-slate-400">外部合作做市商，开通做市权限与专属费率策略</div></div>
-            </label>
-        </div>
+        <h3 class="text-base font-bold text-slate-800 mb-1">新增做市商账号</h3>
+        <p class="text-[11px] text-slate-400 mb-5">选择团队标签即可，内部/外部做市商类型由标签决定</p>
         <div class="mb-6">
             <div class="flex items-center justify-between gap-2 mb-2">
                 <label class="text-[10px] font-bold text-slate-500 uppercase">团队标签</label>
@@ -161,12 +160,8 @@
                 <div><div class="font-bold text-slate-800">普通用户</div><div class="text-[11px] text-slate-400">默认零售交易账户</div></div>
             </label>
             <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
-                <input type="radio" name="userTypePick" value="mm_internal" class="accent-blue-600">
-                <div><div class="font-bold text-slate-800">内部做市商</div><div class="text-[11px] text-slate-400">平台内部做市账户，适用内部费率与风控策略</div></div>
-            </label>
-            <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
-                <input type="radio" name="userTypePick" value="mm_external" class="accent-blue-600">
-                <div><div class="font-bold text-slate-800">外部做市商</div><div class="text-[11px] text-slate-400">外部合作做市商，开通做市权限与专属费率策略</div></div>
+                <input type="radio" name="userTypePick" value="mm" class="accent-blue-600">
+                <div><div class="font-bold text-slate-800">做市商</div><div class="text-[11px] text-slate-400">选择团队标签；内部/外部类型由标签自带，无需再选</div></div>
             </label>
         </div>
         <div id="typeTeamTagWrap" class="hidden mb-6">
@@ -177,7 +172,7 @@
             <select id="typeTeamTagSelect" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">请选择团队标签</option>
             </select>
-            <p class="text-[11px] text-slate-400 mt-2">内部 / 外部做市商必选；仅可从列表选择，新标签请通过「新增标签」创建</p>
+            <p class="text-[11px] text-slate-400 mt-2">下拉项展示「标签名（内部/外部做市商）」</p>
         </div>
         <div class="flex gap-3">
             <button type="button" onclick="closeTypeModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
@@ -190,9 +185,20 @@
 <div id="teamTagCreateModal" class="fixed inset-0 z-[70] hidden items-center justify-center bg-slate-900/50 p-4">
     <div class="bg-white w-full max-w-[380px] rounded-xl p-6 shadow-2xl">
         <h3 class="text-base font-bold text-slate-800 mb-1">新增团队标签</h3>
-        <p class="text-xs text-slate-400 mb-4">创建后将加入团队标签列表，可在配置用户类型时选择</p>
+        <p class="text-xs text-slate-400 mb-4">标签自带内部/外部做市商属性，创建后可用于用户配置与数据看板汇总</p>
         <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">标签名称</label>
-        <input id="teamTagCreateInput" type="text" maxlength="32" placeholder="输入做市团队名称或标识" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+        <input id="teamTagCreateInput" type="text" maxlength="32" placeholder="输入做市团队名称或标识" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">做市商类型</label>
+        <div class="space-y-2 mb-2">
+            <label class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-lg cursor-pointer has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                <input type="radio" name="teamTagKindPick" value="mm_internal" class="accent-blue-600" checked>
+                <span class="text-sm font-bold text-slate-800">内部做市商</span>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-lg cursor-pointer has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                <input type="radio" name="teamTagKindPick" value="mm_external" class="accent-blue-600">
+                <span class="text-sm font-bold text-slate-800">外部做市商</span>
+            </label>
+        </div>
         <p id="teamTagCreateError" class="hidden text-[11px] text-red-600 font-bold mt-2"></p>
         <div class="flex gap-3 mt-6">
             <button type="button" onclick="closeTeamTagCreateModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
@@ -230,12 +236,14 @@
 <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-lg text-sm font-bold shadow-xl z-[70] hidden"></div>
 
 <script src="admin-pagination.js"></script>
-<script src="admin-user-center-actions.js?v=20261105-mm-polish"></script>
+<script src="admin-mm-team-store.js?v=20261110-mm-dashboard"></script>
+<script src="admin-user-center-actions.js?v=20261110-mm-dashboard"></script>
 <script>
     let users = [
         { uid: '10028471', email: 'trader@example.com', wallet: '', userType: 'retail', lastLogin: '2026-10-26 18:22:10', totalAsset: '125,430.50', vol14d: '12,450,800', vip: 'VIP 2', status: 'normal', flags: {} },
-        { uid: '10031592', email: '', wallet: '0x2b91c4d8e0f1234567890abcdef1234567890abcd', userType: 'mm_external', teamTag: 'Alpha MM', lastLogin: '2026-10-26 09:05:33', totalAsset: '2,410,000.00', vol14d: '89,102,400', vip: 'VIP 4', status: 'partial', flags: { orderFreeze: true, apiFreeze: true, closeOnly: true } },
-        { uid: '10019833', email: 'ops@forx.test', wallet: '', userType: 'mm_internal', teamTag: 'Desk-Quant', lastLogin: '2026-10-25 22:18:00', totalAsset: '8,240.00', vol14d: '320,500', vip: 'VIP 0', status: 'frozen', flags: { loginFreeze: true, withdrawFreeze: true, transferFreeze: true, orderFreeze: true } }
+        { uid: '10031592', email: '', wallet: '0x2b91c4d8e0f1234567890abcdef1234567890abcd', userType: 'mm_external', teamTag: 'Alpha MM', teamBindAt: '2025-06-12 10:00:00', lastLogin: '2026-10-26 09:05:33', totalAsset: '2,410,000.00', vol14d: '89,102,400', vip: 'VIP 4', status: 'partial', flags: { orderFreeze: true, apiFreeze: true, closeOnly: true } },
+        { uid: '10019833', email: 'ops@forx.test', wallet: '', userType: 'mm_internal', teamTag: 'Desk-Quant', teamBindAt: '2024-11-01 09:30:00', lastLogin: '2026-10-25 22:18:00', totalAsset: '8,240.00', vol14d: '320,500', vip: 'VIP 0', status: 'frozen', flags: { loginFreeze: true, withdrawFreeze: true, transferFreeze: true, orderFreeze: true } },
+        { uid: '10040102', email: 'mm2@alpha.test', wallet: '', userType: 'mm_external', teamTag: 'Alpha MM', teamBindAt: '2025-08-20 14:22:00', lastLogin: '2026-10-26 08:11:00', totalAsset: '980,200.00', vol14d: '42,800,000', vip: 'VIP 3', status: 'normal', flags: {} }
     ];
 
     let filteredUsers = [...users];
@@ -249,12 +257,15 @@
     };
 
     function userTypeLabel(t, teamTag) {
-        const meta = USER_TYPE_META[t] || USER_TYPE_META.retail;
-        const cls = meta.tagClass ? 'type-tag ' + meta.tagClass : 'type-tag';
-        let html = '<span class="' + cls + '">' + meta.label + '</span>';
-        if (teamTag && (t === 'mm_internal' || t === 'mm_external')) {
-            html += ' <span class="text-[11px] font-bold text-slate-500">' + escapeHtml(teamTag) + '</span>';
+        if (!isMmUserType(t)) {
+            return '<span class="type-tag">普通用户</span>';
         }
+        const meta = USER_TYPE_META[t] || USER_TYPE_META.mm_external;
+        const tagRec = teamTag && window.AdminMmTeamStore ? AdminMmTeamStore.getByName(teamTag) : null;
+        const kindLabel = tagRec ? AdminMmTeamStore.kindLabel(tagRec.kind) : meta.label;
+        const cls = meta.tagClass ? 'type-tag ' + meta.tagClass : 'type-tag';
+        let html = '<span class="' + cls + '">' + escapeHtml(teamTag || '—') + '</span>';
+        html += ' <span class="text-[10px] font-bold text-slate-500">(' + escapeHtml(kindLabel) + ')</span>';
         return html;
     }
 
