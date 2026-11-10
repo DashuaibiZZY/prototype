@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX Admin - 用户详情</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+        .sidebar-item-active { background: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+        .status-tag { display: inline-flex; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+        .status-normal { background: #ecfdf5; color: #059669; }
+        .status-partial { background: #fff7ed; color: #ea580c; }
+        .status-frozen { background: #fef2f2; color: #dc2626; }
+        .freeze-pill { display: inline-flex; padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 700; background: #fef2f2; color: #b91c1c; margin: 0; }
+        .freeze-pill.off { background: #f1f5f9; color: #94a3b8; font-weight: 500; }
+        .tab-btn { padding: 6px 12px; font-size: 11px; font-weight: 700; color: #64748b; border-bottom: 2px solid transparent; cursor: pointer; }
+        .tab-btn.active { color: #0f172a; border-bottom-color: #0f172a; }
+        .subtab-btn { padding: 6px 12px; font-size: 11px; font-weight: 700; border-radius: 6px; color: #64748b; }
+        .subtab-btn.active { background: #0f172a; color: #fff; }
+        .detail-label { font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; line-height: 1.2; }
+        .detail-value { font-size: 12px; font-weight: 600; color: #0f172a; margin-top: 2px; line-height: 1.35; }
+        .detail-section-title { font-size: 11px; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem; letter-spacing: 0.02em; }
+        .profile-summary-card { padding: 0.75rem 1rem; }
+        .profile-block { padding: 0.45rem 0; }
+        .profile-block:first-child { padding-top: 0; }
+        .profile-block:last-child { padding-bottom: 0; }
+        .profile-block-divider { height: 1px; background: #f1f5f9; margin: 0.25rem 0; }
+        .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1rem; row-gap: 0.45rem; }
+        @media (min-width: 768px) { .detail-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 0.5rem; } }
+        @media (min-width: 1280px) { .detail-grid--trade { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+        .profile-status-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.35rem 0.75rem; margin-bottom: 0.35rem; }
+        .profile-status-head .detail-section-title { margin-bottom: 0; }
+        .profile-block-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.35rem 0.75rem; margin-bottom: 0.5rem; }
+        .profile-block-head .detail-section-title { margin-bottom: 0; }
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; inset: 0; background: #cbd5e1; transition: .25s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background: #fff; transition: .25s; border-radius: 50%; }
+        input:checked + .slider { background: #3b82f6; }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .config-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid #f1f5f9; }
+        .config-row:last-child { border-bottom: none; }
+        .config-row-title { font-size: 13px; font-weight: 700; color: #0f172a; }
+        .config-row-desc { font-size: 11px; color: #94a3b8; margin-top: 3px; line-height: 1.45; max-width: 320px; }
+        .drawer-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 40; }
+        .drawer-panel { position: fixed; top: 0; right: 0; width: 520px; max-width: 100%; height: 100%; background: #fff; z-index: 50; box-shadow: -8px 0 24px rgba(0,0,0,.12); display: flex; flex-direction: column; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-[12px]">
+
+<aside id="admin-sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0"></aside>
+
+<main class="flex-1 flex flex-col overflow-hidden">
+    <header class="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0">
+        <div class="flex items-center gap-3">
+            <a href="用户中心.html" class="text-xs font-bold text-blue-600 hover:underline">← 返回用户数据</a>
+            <h1 class="text-lg font-bold text-slate-800">用户详情</h1>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-5 space-y-4">
+        <section class="card profile-summary-card">
+            <div class="profile-block">
+                <div class="profile-block-head">
+                    <h2 class="detail-section-title">基础信息</h2>
+                    <button type="button" onclick="openTypeModal(qsUid())" class="text-[11px] font-bold text-slate-700 hover:text-blue-600 shrink-0">设置类型</button>
+                </div>
+                <div id="basicInfoGrid" class="detail-grid"></div>
+            </div>
+            <div class="profile-block-divider" aria-hidden="true"></div>
+            <div class="profile-block">
+                <h2 class="detail-section-title">资产信息</h2>
+                <div id="assetInfoGrid" class="detail-grid"></div>
+            </div>
+            <div class="profile-block-divider" aria-hidden="true"></div>
+            <div class="profile-block">
+                <h2 class="detail-section-title">交易信息</h2>
+                <div id="tradeInfoGrid" class="detail-grid detail-grid--trade"></div>
+            </div>
+            <div class="profile-block-divider" aria-hidden="true"></div>
+            <div class="profile-block">
+                <div class="profile-status-head">
+                    <h2 class="detail-section-title">用户状态</h2>
+                    <div class="flex flex-wrap items-center gap-3 shrink-0">
+                        <button type="button" onclick="openFreezeDrawer(qsUid())" class="text-[11px] font-bold text-orange-600 hover:underline">冻结设置</button>
+                        <button type="button" onclick="openFreezeLogModal()" class="text-[11px] font-bold text-blue-600 hover:underline">冻结配置记录</button>
+                    </div>
+                </div>
+                <p class="detail-label mb-1">用户冻结行为</p>
+                <div id="freezeBehaviorRow" class="flex flex-wrap gap-0.5"></div>
+            </div>
+        </section>
+
+        <section class="card overflow-hidden flex flex-col min-h-[360px]">
+            <div class="px-4 border-b border-slate-100 flex flex-wrap items-center gap-1 shrink-0" id="mainTabs"></div>
+            <div id="orderSubTabs" class="hidden px-4 py-2 border-b border-slate-50 flex gap-2 bg-white"></div>
+            <div id="dwSubTabs" class="hidden px-4 py-2 border-b border-slate-50 flex gap-2 bg-white"></div>
+            <div id="tabPanel" class="flex-1 flex flex-col min-h-0"></div>
+        </section>
+    </div>
+</main>
+
+<div id="deviceModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/50 p-4">
+    <div class="bg-white w-full max-w-2xl rounded-xl shadow-2xl max-h-[80vh] flex flex-col">
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="text-base font-bold text-slate-800">登录设备</h3>
+            <button type="button" onclick="closeDeviceModal()" class="text-slate-400 hover:text-slate-800 text-xl">&times;</button>
+        </div>
+        <div class="overflow-auto p-4">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase">
+                <tr>
+                    <th class="px-4 py-2">最近登录时间</th>
+                    <th class="px-4 py-2">登录 IP</th>
+                    <th class="px-4 py-2">设备 / 浏览器</th>
+                    <th class="px-4 py-2">端</th>
+                </tr>
+                </thead>
+                <tbody id="deviceTableBody" class="divide-y divide-slate-50"></tbody>
+            </table>
+        </div>
+        <div id="device-modal-pagination" class="border-t border-slate-100 shrink-0"></div>
+    </div>
+</div>
+
+<div id="freezeLogModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/50 p-4">
+    <div class="bg-white w-full max-w-3xl rounded-xl shadow-2xl max-h-[80vh] flex flex-col">
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="text-base font-bold text-slate-800">冻结配置记录</h3>
+            <button type="button" onclick="closeFreezeLogModal()" class="text-slate-400 hover:text-slate-800 text-xl">&times;</button>
+        </div>
+        <div class="overflow-auto p-4">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase">
+                <tr>
+                    <th class="px-4 py-2">时间</th>
+                    <th class="px-4 py-2">冻结类型</th>
+                    <th class="px-4 py-2">冻结行为</th>
+                    <th class="px-4 py-2">操作人</th>
+                </tr>
+                </thead>
+                <tbody id="freezeLogTableBody" class="divide-y divide-slate-50"></tbody>
+            </table>
+        </div>
+        <div id="freeze-log-pagination" class="border-t border-slate-100 shrink-0"></div>
+    </div>
+</div>
+
+<!-- 用户类型 / 冻结（与列表页共用） -->
+<div id="typeModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/50">
+    <div class="bg-white w-[420px] rounded-xl p-6 shadow-2xl">
+        <h3 class="text-base font-bold text-slate-800 mb-1">配置用户类型</h3>
+        <p id="typeModalMeta" class="text-xs text-slate-400 font-mono mb-5"></p>
+        <div class="space-y-3 mb-6">
+            <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                <input type="radio" name="userTypePick" value="retail" class="accent-blue-600">
+                <div><div class="font-bold text-slate-800">普通用户</div><div class="text-[11px] text-slate-400">默认零售交易账户</div></div>
+            </label>
+            <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                <input type="radio" name="userTypePick" value="mm_internal" class="accent-blue-600">
+                <div><div class="font-bold text-slate-800">内部做市商</div><div class="text-[11px] text-slate-400">平台内部做市账户，适用内部费率与风控策略</div></div>
+            </label>
+            <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                <input type="radio" name="userTypePick" value="mm_external" class="accent-blue-600">
+                <div><div class="font-bold text-slate-800">外部做市商</div><div class="text-[11px] text-slate-400">外部合作做市商，开通做市权限与专属费率策略</div></div>
+            </label>
+        </div>
+        <div id="typeTeamTagWrap" class="hidden mb-6">
+            <div class="flex items-center justify-between gap-2 mb-2">
+                <label class="text-[10px] font-bold text-slate-500 uppercase">团队标签</label>
+                <button type="button" onclick="openTeamTagCreateModal()" class="text-[11px] font-bold text-blue-600 hover:underline">+ 新增标签</button>
+            </div>
+            <select id="typeTeamTagSelect" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">请选择团队标签</option>
+            </select>
+            <p class="text-[11px] text-slate-400 mt-2">内部 / 外部做市商必选；仅可从列表选择，新标签请通过「新增标签」创建</p>
+        </div>
+        <div class="flex gap-3">
+            <button type="button" onclick="closeTypeModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button type="button" onclick="saveUserType()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">保存</button>
+        </div>
+    </div>
+</div>
+
+<div id="teamTagCreateModal" class="fixed inset-0 z-[70] hidden items-center justify-center bg-slate-900/50 p-4">
+    <div class="bg-white w-full max-w-[380px] rounded-xl p-6 shadow-2xl">
+        <h3 class="text-base font-bold text-slate-800 mb-1">新增团队标签</h3>
+        <p class="text-xs text-slate-400 mb-4">创建后将加入团队标签列表，可在配置用户类型时选择</p>
+        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">标签名称</label>
+        <input id="teamTagCreateInput" type="text" maxlength="32" placeholder="输入做市团队名称或标识" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+        <p id="teamTagCreateError" class="hidden text-[11px] text-red-600 font-bold mt-2"></p>
+        <div class="flex gap-3 mt-6">
+            <button type="button" onclick="closeTeamTagCreateModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
+            <button type="button" onclick="saveNewTeamTag()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">保存</button>
+        </div>
+    </div>
+</div>
+
+<div id="freezeOverlay" class="drawer-overlay hidden" onclick="closeFreezeDrawer()"></div>
+<div id="freezeDrawer" class="drawer-panel hidden">
+    <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between shrink-0">
+        <div>
+            <h2 class="text-base font-bold text-slate-800">冻结配置</h2>
+            <p id="freezeDrawerMeta" class="text-xs text-slate-400 mt-1 font-mono"></p>
+        </div>
+        <button type="button" onclick="closeFreezeDrawer()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-500 text-lg">&times;</button>
+    </div>
+    <div class="flex-1 overflow-y-auto px-6 py-5">
+        <section class="card p-5">
+            <h3 class="text-sm font-bold text-slate-800 mb-3">冻结与交易限制</h3>
+            <div id="freezeConfigList"></div>
+        </section>
+        <section class="card p-5 mt-4">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">操作备注（必填）</label>
+            <textarea id="freezeRemark" rows="3" placeholder="请填写变更原因..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none resize-none"></textarea>
+        </section>
+    </div>
+    <div class="px-6 py-4 border-t border-slate-100 flex gap-3 shrink-0">
+        <button type="button" onclick="closeFreezeDrawer()" class="flex-1 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">取消</button>
+        <button type="button" onclick="saveFreezeConfig()" class="flex-1 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold">保存配置</button>
+    </div>
+</div>
+
+<div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-lg text-sm font-bold shadow-xl z-[70] hidden"></div>
+
+<script src="admin-user-center-actions.js"></script>
+<script src="admin-user-center-tabs.js"></script>
+<script src="admin-pagination.js"></script>
+<script>
+    const FREEZE_BEHAVIORS = [
+        { key: 'withdrawFreeze', label: '提现' },
+        { key: 'transferFreeze', label: '划转' },
+        { key: 'orderFreeze', label: '下单' },
+        { key: 'closeOnly', label: '仅平仓' },
+        { key: 'apiFreeze', label: 'API 下单' },
+        { key: 'loginFreeze', label: '登录' }
+    ];
+
+    const DEMO_USERS = {
+        '10028471': {
+            uid: '10028471', email: 'trader@example.com', wallet: '',
+            userType: 'retail', lastLogin: '2026-10-26 18:22:10', loginIp: '103.21.44.88',
+            totalAsset: '125,430.50 USDC', fundingBal: '42,100.00 USDC', tradingBal: '83,330.50 USDC',
+            marginRatio: '18.6%', upnl: '+1,240.30 USDC', maintMargin: '4,520.00 USDC',
+            cumDeposit: '980,000.00 USDC', cumWithdraw: '120,500.00 USDC', cumRealizedPnl: '+45,320.80 USDC',
+            cumVolume: '156,800,000 USDC', vol14d: '12,450,800 USDC',
+            vip: 'VIP 2', taker: '0.034%', maker: '0.010%', feeDays: '12', status: 'normal', flags: {},
+            devices: [
+                { time: '2026-10-26 18:22:10', ip: '103.21.44.88', device: 'Chrome 141 / macOS 15', client: 'Web' },
+                { time: '2026-10-25 09:11:02', ip: '103.21.44.90', device: 'ForX App / iOS 18.1', client: 'iOS' }
+            ]
+        },
+        '10031592': {
+            uid: '10031592', email: '', wallet: '0x2b91c4d8e0f1234567890abcdef1234567890abcd',
+            userType: 'mm_external', teamTag: 'Alpha MM', lastLogin: '2026-10-26 09:05:33', loginIp: '47.88.12.4',
+            totalAsset: '2,410,000.00 USDC', fundingBal: '410,000.00 USDC', tradingBal: '2,000,000.00 USDC',
+            marginRatio: '42.1%', upnl: '-12,400.00 USDC', maintMargin: '180,200.00 USDC',
+            cumDeposit: '5,200,000.00 USDC', cumWithdraw: '800,000.00 USDC', cumRealizedPnl: '+892,100.00 USDC',
+            cumVolume: '2,890,000,000 USDC', vol14d: '89,102,400 USDC',
+            vip: 'VIP 4', taker: '0.026%', maker: '0.004%', feeDays: '—', status: 'partial',
+            flags: { orderFreeze: true, apiFreeze: true, closeOnly: true },
+            devices: [{ time: '2026-10-26 09:05:33', ip: '47.88.12.4', device: 'API Client', client: 'API' }]
+        },
+        '10019833': {
+            uid: '10019833', email: 'ops@forx.test', wallet: '',
+            userType: 'mm_internal', teamTag: 'Desk-Quant', lastLogin: '2026-10-25 22:18:00', loginIp: '198.18.0.12',
+            totalAsset: '8,240.00 USDC', fundingBal: '1,200.00 USDC', tradingBal: '7,040.00 USDC',
+            marginRatio: '—', upnl: '0.00 USDC', maintMargin: '—',
+            cumDeposit: '50,000.00 USDC', cumWithdraw: '12,000.00 USDC', cumRealizedPnl: '-2,400.00 USDC',
+            cumVolume: '890,000 USDC', vol14d: '320,500 USDC',
+            vip: 'VIP 0', taker: '0.050%', maker: '0.020%', feeDays: '—', status: 'frozen',
+            flags: { loginFreeze: true, withdrawFreeze: true, transferFreeze: true, orderFreeze: true },
+            devices: [{ time: '2026-10-20 14:02:00', ip: '198.18.0.12', device: 'Safari / iOS 17', client: 'iOS' }]
+        }
+    };
+
+    const FREEZE_LOGS = {
+        '10028471': [
+            { time: '2026-09-12 11:20:00', actionType: '取消冻结', behavior: '提现冻结', operator: 'Risk_Admin' }
+        ],
+        '10031592': [
+            { time: '2026-10-26 09:10:00', actionType: '冻结', behavior: '下单冻结', operator: 'Risk_Admin' },
+            { time: '2026-10-26 09:10:00', actionType: '冻结', behavior: 'API 交易冻结', operator: 'Risk_Admin' },
+            { time: '2026-10-26 09:12:00', actionType: '冻结', behavior: '仅平仓模式', operator: 'Risk_Admin' },
+            { time: '2026-10-18 16:40:00', actionType: '取消冻结', behavior: '资金划转冻结', operator: 'Ops_Lead' }
+        ],
+        '10019833': [
+            { time: '2026-10-25 22:30:00', actionType: '冻结', behavior: '登录冻结', operator: 'Risk_Admin' },
+            { time: '2026-10-25 22:30:00', actionType: '冻结', behavior: '提现冻结', operator: 'Risk_Admin' },
+            { time: '2026-10-25 22:30:00', actionType: '冻结', behavior: '资金划转冻结', operator: 'Risk_Admin' },
+            { time: '2026-10-25 22:30:00', actionType: '冻结', behavior: '下单冻结', operator: 'Risk_Admin' }
+        ]
+    };
+
+    let currentTab = 'pos';
+    let orderSub = 'base';
+    let dwSub = 'deposit';
+    let profile = null;
+    let devicePage = 1;
+    let freezeLogPage = 1;
+
+    function sortByTimeDesc(rows) {
+        return rows.slice().sort(function (a, b) {
+            return String(b.time).localeCompare(String(a.time));
+        });
+    }
+
+    function mountModalPagination(containerId, total, page, handlerId) {
+        if (window.AdminPagination) {
+            AdminPagination.mount(containerId, total, page, handlerId);
+        }
+    }
+
+    function qsUid() {
+        return new URLSearchParams(location.search).get('uid') || '10028471';
+    }
+
+    const USER_TYPE_LABELS = {
+        retail: '普通用户',
+        mm_internal: '内部做市商',
+        mm_external: '外部做市商',
+        mm: '外部做市商'
+    };
+
+    function userTypeText(t) {
+        return USER_TYPE_LABELS[t] || USER_TYPE_LABELS.retail;
+    }
+
+    function userTypeDisplay(p) {
+        let text = userTypeText(p.userType);
+        if ((p.userType === 'mm_internal' || p.userType === 'mm_external') && p.teamTag) {
+            text += ' · ' + p.teamTag;
+        }
+        return text;
+    }
+
+    function contactDisplayValue(profile) {
+        if (profile.email) return profile.email;
+        if (profile.wallet) {
+            return window.AdminCopyChip ? AdminCopyChip.wallet(profile.wallet) : profile.wallet;
+        }
+        return '—';
+    }
+
+    function uidDisplayValue(uid) {
+        return window.AdminCopyChip ? AdminCopyChip.uid(uid) : uid;
+    }
+
+    function deviceListField(profile) {
+        const n = (profile.devices || []).length;
+        if (!n) {
+            return '<span class="text-slate-400">暂无记录</span>';
+        }
+        return '<span class="text-slate-600">共 ' + n + ' 台</span>' +
+            ' <button type="button" class="text-blue-600 font-bold hover:underline" onclick="openDeviceModal()">查看列表</button>';
+    }
+
+    function renderDetailGrid(containerId, fields) {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        el.innerHTML = fields.map(function (f) {
+            return '<div><p class="detail-label">' + f.label + '</p><div class="detail-value">' + f.value + '</div></div>';
+        }).join('');
+    }
+
+    function metricOrDash(profile, key) {
+        return profile[key] != null && profile[key] !== '' ? profile[key] : '—';
+    }
+
+    function statusTag(s) {
+        if (s === 'frozen') return '<span class="status-tag status-frozen">冻结</span>';
+        if (s === 'partial') return '<span class="status-tag status-partial">部分冻结</span>';
+        return '<span class="status-tag status-normal">正常</span>';
+    }
+
+    function renderProfile() {
+        const uid = qsUid();
+        profile = DEMO_USERS[uid] || Object.assign({}, DEMO_USERS['10028471'], { uid, email: '', wallet: '', flags: {}, devices: [] });
+
+        renderDetailGrid('basicInfoGrid', [
+            { label: 'UID', value: uidDisplayValue(profile.uid) },
+            { label: '钱包地址 / 邮箱', value: contactDisplayValue(profile) },
+            { label: '用户类型', value: userTypeDisplay(profile) },
+            { label: '用户状态', value: statusTag(profile.status) },
+            { label: '最新登录时间', value: profile.lastLogin || '—' },
+            { label: '登录 IP', value: profile.loginIp || '—' },
+            { label: '登录设备列表', value: deviceListField(profile) }
+        ]);
+
+        renderDetailGrid('assetInfoGrid', [
+            { label: '总资产价值', value: metricOrDash(profile, 'totalAsset') },
+            { label: '资金账户余额', value: metricOrDash(profile, 'fundingBal') },
+            { label: '交易账户余额', value: metricOrDash(profile, 'tradingBal') },
+            { label: '账户保证金比例', value: metricOrDash(profile, 'marginRatio') },
+            { label: '未实现盈亏', value: metricOrDash(profile, 'upnl') },
+            { label: '维持保证金', value: metricOrDash(profile, 'maintMargin') },
+            { label: '累计充值金额', value: metricOrDash(profile, 'cumDeposit') },
+            { label: '累计提现金额', value: metricOrDash(profile, 'cumWithdraw') },
+            { label: '累计平仓已实现盈亏', value: metricOrDash(profile, 'cumRealizedPnl') }
+        ]);
+
+        renderDetailGrid('tradeInfoGrid', [
+            { label: '累计交易量', value: metricOrDash(profile, 'cumVolume') },
+            { label: '过去 14 天交易量', value: metricOrDash(profile, 'vol14d') },
+            { label: 'VIP 等级', value: metricOrDash(profile, 'vip') },
+            { label: '费率 (Taker / Maker)', value: (profile.taker || '—') + ' / ' + (profile.maker || '—') },
+            { label: '自定义费率有效期天数', value: metricOrDash(profile, 'feeDays') }
+        ]);
+
+        document.getElementById('freezeBehaviorRow').innerHTML = FREEZE_BEHAVIORS.map(function (b) {
+            const on = profile.flags[b.key];
+            return '<span class="freeze-pill ' + (on ? '' : 'off') + '">' + b.label + (on ? ' · 已冻结' : ' · 正常') + '</span>';
+        }).join('');
+    }
+
+    function renderMainTabs() {
+        const el = document.getElementById('mainTabs');
+        el.innerHTML = AdminUserCenterTabs.mainTabs.map(function (t) {
+            const active = t.id === currentTab ? 'active' : '';
+            const label = t.label + (t.id === 'pos' || t.id === 'order' ? ' (1)' : '');
+            return '<button type="button" class="tab-btn ' + active + '" data-tab="' + t.id + '">' + label + '</button>';
+        }).join('');
+        el.querySelectorAll('[data-tab]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                currentTab = btn.getAttribute('data-tab');
+                renderMainTabs();
+                renderSubTabs();
+                renderPanel();
+            });
+        });
+    }
+
+    function renderSubTabs() {
+        const orderEl = document.getElementById('orderSubTabs');
+        const dwEl = document.getElementById('dwSubTabs');
+        const showOrder = currentTab === 'order' || currentTab === 'hist-order';
+        orderEl.classList.toggle('hidden', !showOrder);
+        if (showOrder) {
+            orderEl.innerHTML = AdminUserCenterTabs.orderSubTabs.map(function (s) {
+                return '<button type="button" class="subtab-btn ' + (s.id === orderSub ? 'active' : '') + '" data-osub="' + s.id + '">' + s.label + '</button>';
+            }).join('');
+            orderEl.querySelectorAll('[data-osub]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    orderSub = btn.getAttribute('data-osub');
+                    renderSubTabs();
+                    renderPanel();
+                });
+            });
+        }
+        const showDw = currentTab === 'dw';
+        dwEl.classList.toggle('hidden', !showDw);
+        if (showDw) {
+            dwEl.innerHTML = AdminUserCenterTabs.dwSubTabs.map(function (s) {
+                return '<button type="button" class="subtab-btn ' + (s.id === dwSub ? 'active' : '') + '" data-dwsub="' + s.id + '">' + s.label + '</button>';
+            }).join('');
+            dwEl.querySelectorAll('[data-dwsub]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    dwSub = btn.getAttribute('data-dwsub');
+                    renderSubTabs();
+                    renderPanel();
+                });
+            });
+        }
+    }
+
+    function renderPanel() {
+        const sub = (currentTab === 'order' || currentTab === 'hist-order') ? orderSub : 'base';
+        const html = AdminUserCenterTabs.renderPanel(currentTab, sub, dwSub);
+        document.getElementById('tabPanel').innerHTML = html;
+    }
+
+    function renderDeviceTable() {
+        const all = sortByTimeDesc((profile && profile.devices) || []);
+        const sliced = window.AdminPagination
+            ? AdminPagination.slice(all, devicePage)
+            : { items: all, page: 1, total: all.length };
+        devicePage = sliced.page;
+        document.getElementById('deviceTableBody').innerHTML = sliced.items.length
+            ? sliced.items.map(function (d) {
+                return '<tr><td class="px-4 py-3">' + d.time + '</td><td class="px-4 py-3 font-mono">' + d.ip + '</td><td class="px-4 py-3">' + d.device + '</td><td class="px-4 py-3">' + d.client + '</td></tr>';
+            }).join('')
+            : '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400">暂无登录设备记录</td></tr>';
+        mountModalPagination('device-modal-pagination', sliced.total, devicePage, 'uc-detail-devices');
+    }
+
+    function openDeviceModal() {
+        devicePage = 1;
+        renderDeviceTable();
+        document.getElementById('deviceModal').classList.remove('hidden');
+        document.getElementById('deviceModal').classList.add('flex');
+    }
+
+    function closeDeviceModal() {
+        document.getElementById('deviceModal').classList.add('hidden');
+        document.getElementById('deviceModal').classList.remove('flex');
+    }
+
+    function renderFreezeLogTable() {
+        const uid = qsUid();
+        const all = sortByTimeDesc(FREEZE_LOGS[uid] || []);
+        const sliced = window.AdminPagination
+            ? AdminPagination.slice(all, freezeLogPage)
+            : { items: all, page: 1, total: all.length };
+        freezeLogPage = sliced.page;
+        document.getElementById('freezeLogTableBody').innerHTML = sliced.items.length
+            ? sliced.items.map(function (r) {
+                const typeCls = r.actionType === '冻结' ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold';
+                return '<tr><td class="px-4 py-3 whitespace-nowrap">' + r.time + '</td>' +
+                    '<td class="px-4 py-3"><span class="' + typeCls + '">' + r.actionType + '</span></td>' +
+                    '<td class="px-4 py-3">' + r.behavior + '</td>' +
+                    '<td class="px-4 py-3 font-mono text-slate-600">' + r.operator + '</td></tr>';
+            }).join('')
+            : '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400">暂无冻结配置记录</td></tr>';
+        mountModalPagination('freeze-log-pagination', sliced.total, freezeLogPage, 'uc-detail-freeze-log');
+    }
+
+    function openFreezeLogModal() {
+        freezeLogPage = 1;
+        renderFreezeLogTable();
+        document.getElementById('freezeLogModal').classList.remove('hidden');
+        document.getElementById('freezeLogModal').classList.add('flex');
+    }
+
+    function closeFreezeLogModal() {
+        document.getElementById('freezeLogModal').classList.add('hidden');
+        document.getElementById('freezeLogModal').classList.remove('flex');
+    }
+
+    if (window.AdminPagination) {
+        AdminPagination.register('uc-detail-devices', function (page) {
+            devicePage = page;
+            renderDeviceTable();
+        });
+        AdminPagination.register('uc-detail-freeze-log', function (page) {
+            freezeLogPage = page;
+            renderFreezeLogTable();
+        });
+    }
+
+</script>
+<script src="admin-copy-chip.js"></script>
+<script src="admin-sidebar.js"></script>
+<script>
+    function ensureDemoUser(uid) {
+        if (!DEMO_USERS[uid]) {
+            DEMO_USERS[uid] = Object.assign({}, DEMO_USERS['10028471'], { uid: uid, email: '', wallet: '', flags: {}, devices: [] });
+        }
+        if (!DEMO_USERS[uid].flags) DEMO_USERS[uid].flags = {};
+        return DEMO_USERS[uid];
+    }
+
+    AdminUserCenterActions.init({
+        getUserByUid: ensureDemoUser,
+        listAllUsers: function () { return Object.values(DEMO_USERS); },
+        onUserUpdated: function () { renderProfile(); }
+    });
+
+    initAdminSidebar('user-data', '登录身份: 运营管理员');
+    renderProfile();
+    renderMainTabs();
+    renderSubTabs();
+    renderPanel();
+</script>
+</body>
+</html>

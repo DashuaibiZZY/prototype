@@ -30,6 +30,13 @@
             ]
         },
         {
+            title: '用户中心',
+            items: [
+                { key: 'user-data', label: '用户数据', href: '用户中心.html' },
+                { key: 'mm-dashboard', label: '做市商数据看板', href: '做市商数据看板.html' }
+            ]
+        },
+        {
             title: '风控冻结',
             items: [
                 { key: 'freeze-settings', label: '用户冻结设置', href: '用户冻结设置.html' },
