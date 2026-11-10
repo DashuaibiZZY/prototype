@@ -64,4 +64,4 @@ function formatFile(relPath, folder) {
 }
 
 formatFile('document/web&后台/积分（后台_Web_APP）.md', '积分');
-formatFile('document/web&后台/费率.md', '费率');
+formatFile('document/web&后台/VIP & 费率.md', '费率');

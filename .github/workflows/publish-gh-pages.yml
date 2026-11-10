@@ -13,6 +13,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  deployments: write
 
 concurrency:
   group: pages
@@ -67,6 +68,14 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Release stuck Pages deployment lock
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/release-pages-deployment-lock.sh
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5

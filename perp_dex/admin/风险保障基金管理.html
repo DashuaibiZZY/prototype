@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>ForX Admin · 风险保障基金管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #111827; }
+        .input-label { display: block; font-size: 10px; font-weight: 900; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.05em; }
+        .field-input { border: 1px solid #e2e8f0; border-radius: 4px; padding: 6px 10px; font-size: 11px; outline: none; width: 100%; transition: border-color 0.2s; }
+        .field-input:focus { border-color: #3b82f6; }
+        .section-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
+        .hint-box { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 4px; padding: 10px 12px; font-size: 10px; color: #64748b; line-height: 1.6; }
+        .admin-subview { display: flex; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; }
+        .admin-subview.hidden { display: none !important; }
+        .stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+        @media (max-width: 900px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+        .stat-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; }
+        .stat-card .label { font-size: 10px; font-weight: 800; color: #64748b; }
+        .stat-card .value { font-size: 15px; font-weight: 900; color: #0f172a; margin-top: 6px; font-variant-numeric: tabular-nums; }
+        .rf-range-btn { padding: 6px 14px; font-size: 10px; font-weight: 800; border: 1px solid #e2e8f0; background: #fff; color: #64748b; border-radius: 4px; cursor: pointer; }
+        .rf-range-btn.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+        #rf-transfer-modal.hidden { display: none !important; }
+        #rf-detail-chart { width: 100%; height: auto; display: block; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-[12px]">
+
+<aside id="admin-sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0"></aside>
+
+<main class="flex-1 flex flex-col overflow-hidden">
+
+    <div id="view-market" class="admin-subview hidden">
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center px-8 shrink-0">
+            <div>
+                <h1 class="text-lg font-bold text-slate-800 italic uppercase">风险保障基金 · 选择交易市场</h1>
+                <p class="text-[10px] text-slate-400 mt-0.5">请先选择市场基础计价货币，再进入基金管理</p>
+            </div>
+        </header>
+        <div class="flex-1 overflow-y-auto p-8 flex items-start justify-center">
+            <section class="section-card w-full max-w-lg space-y-6">
+                <div class="hint-box">计价货币来自<strong>币种配置</strong>中已<strong>开启交易市场</strong>的代币。</div>
+                <div>
+                    <label class="input-label">市场基础计价货币</label>
+                    <select id="rf-market-select" class="field-input bg-white font-bold"></select>
+                </div>
+                <button type="button" data-action="confirm-market" class="w-full py-3 bg-blue-600 text-white font-black rounded-sm hover:bg-blue-700 uppercase tracking-wide">确认并进入</button>
+            </section>
+        </div>
+    </div>
+
+    <div id="view-list" class="admin-subview hidden">
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center px-8 shrink-0">
+            <div>
+                <h1 class="text-lg font-bold text-slate-800 italic uppercase">风险保障基金管理</h1>
+                <p class="text-[10px] text-slate-400 mt-0.5">计价市场 <span id="rf-current-market" class="text-blue-600 font-black">USDC</span> · <button type="button" data-action="switch-market" class="text-slate-500 underline hover:text-black">切换市场</button></p>
+            </div>
+        </header>
+        <div class="flex-1 overflow-y-auto p-8 space-y-4">
+            <section class="section-card p-4">
+                <div class="flex flex-wrap items-end gap-4">
+                    <div class="min-w-[180px]">
+                        <label class="input-label" for="rf-pair-filter">交易对</label>
+                        <select id="rf-pair-filter" class="field-input bg-white font-bold"><option value="all">全部</option></select>
+                    </div>
+                    <button type="button" data-action="query-list" class="px-8 py-2.5 bg-slate-900 text-white font-black rounded-sm uppercase">查询</button>
+                </div>
+            </section>
+            <section class="section-card overflow-hidden !p-0">
+                <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <h2 class="font-black text-slate-700 uppercase tracking-tighter">账户列表</h2>
+                    <span id="rf-list-hint" class="text-[10px] text-slate-400 font-bold">共 0 条</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left min-w-[960px]">
+                        <thead class="bg-slate-50 text-slate-400 font-black text-[10px] uppercase border-b border-slate-100">
+                        <tr>
+                            <th class="px-4 py-3">交易对</th>
+                            <th class="px-4 py-3">账户 UID</th>
+                            <th class="px-4 py-3">资金账户余额</th>
+                            <th class="px-4 py-3">风险保障余额（合约账户）</th>
+                            <th class="px-4 py-3 text-right">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody id="rf-list-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="rf-list-pagination"></div>
+            </section>
+        </div>
+    </div>
+
+    <div id="view-detail" class="admin-subview hidden">
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+            <div class="flex items-center gap-4">
+                <button type="button" data-action="back-list" class="text-slate-500 font-black hover:text-black">← 返回列表</button>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-800 italic uppercase" id="rf-detail-title">详情</h1>
+                </div>
+            </div>
+        </header>
+        <div class="flex-1 overflow-y-auto p-8 space-y-4">
+            <section class="section-card space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex flex-wrap gap-3">
+                        <select id="rf-detail-type-select" class="field-input bg-white font-bold w-auto min-w-[160px]">
+                            <option value="all">全部</option>
+                            <option value="transfer_in">转入</option>
+                            <option value="transfer_out">转出</option>
+                            <option value="liquidation_surplus">强平盈余注入</option>
+                            <option value="shortfall">穿仓亏损</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button" id="rf-detail-range-7" class="rf-range-btn active" data-action="detail-range" data-days="7">近 7 日</button>
+                        <button type="button" id="rf-detail-range-30" class="rf-range-btn" data-action="detail-range" data-days="30">近 30 日</button>
+                    </div>
+                </div>
+                <p class="text-[13px] font-black text-slate-900">
+                    <span id="rf-detail-pair-label">—</span>
+                    <span class="text-slate-500 font-bold"> 风险保证金：</span>
+                    <span id="rf-detail-margin" class="text-blue-600">—</span>
+                </p>
+                <div class="border border-slate-100 rounded-md p-3 bg-slate-50/40">
+                    <svg id="rf-detail-chart" role="img" aria-label="风险保障余额走势"></svg>
+                </div>
+            </section>
+            <section class="section-card overflow-hidden !p-0">
+                <div class="p-4 border-b border-slate-100 bg-slate-50/50">
+                    <h2 class="font-black text-slate-700 uppercase tracking-tighter">资金流水</h2>
+                </div>
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 text-slate-400 font-black text-[10px] uppercase border-b border-slate-100">
+                    <tr>
+                        <th class="px-4 py-3">时间</th>
+                        <th class="px-4 py-3">交易类型</th>
+                        <th class="px-4 py-3">金额</th>
+                        <th class="px-4 py-3">余额</th>
+                    </tr>
+                    </thead>
+                    <tbody id="rf-detail-tbody"></tbody>
+                </table>
+                <div id="rf-detail-pagination"></div>
+            </section>
+        </div>
+    </div>
+</main>
+
+<div id="rf-transfer-modal" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-lg shadow-2xl w-full max-w-md p-6 space-y-5">
+        <div class="flex justify-between items-center">
+            <h3 class="font-black text-slate-800 uppercase text-[13px]">资金划转</h3>
+            <button type="button" data-action="close-transfer" class="text-slate-400 hover:text-black text-xl leading-none">&times;</button>
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-[11px]">
+            <div>
+                <p class="text-[10px] font-black text-slate-400 uppercase">转出账户</p>
+                <p class="font-black text-slate-800 mt-1">资金账户</p>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] font-black text-slate-400 uppercase">可用余额</p>
+                <p class="font-black text-slate-900 mt-1" id="rf-transfer-from-balance">—</p>
+            </div>
+        </div>
+        <div class="flex justify-center py-1">
+            <button type="button" class="w-10 h-10 rounded-full border border-slate-200 text-slate-500 font-black" title="调换方向（原型展示）" disabled>⇅</button>
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-[11px]">
+            <div>
+                <p class="text-[10px] font-black text-slate-400 uppercase">转入账户</p>
+                <p class="font-black text-slate-800 mt-1">合约账户</p>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] font-black text-slate-400 uppercase">当前余额</p>
+                <p class="font-black text-blue-700 mt-1" id="rf-transfer-to-balance">—</p>
+            </div>
+        </div>
+        <div>
+            <label class="input-label">划转金额 · 最低 0.000001 USDC</label>
+            <input id="rf-transfer-amount" type="text" inputmode="decimal" class="field-input font-mono" placeholder="请输入数量 USDC">
+            <p class="text-[10px] text-slate-500 mt-2">可划转 <span id="rf-transfer-available" class="font-black text-slate-800">—</span> USDC
+                <button type="button" data-action="transfer-all" class="ml-2 text-blue-600 font-black hover:underline">全部</button>
+            </p>
+            <div class="flex gap-2 mt-2">
+                <button type="button" data-action="transfer-pct" data-pct="0.25" class="flex-1 py-1.5 border border-slate-200 rounded font-black text-[10px]">25%</button>
+                <button type="button" data-action="transfer-pct" data-pct="0.5" class="flex-1 py-1.5 border border-slate-200 rounded font-black text-[10px]">50%</button>
+                <button type="button" data-action="transfer-pct" data-pct="0.75" class="flex-1 py-1.5 border border-slate-200 rounded font-black text-[10px]">75%</button>
+                <button type="button" data-action="transfer-pct" data-pct="1" class="flex-1 py-1.5 border border-slate-200 rounded font-black text-[10px]">100%</button>
+            </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t">
+            <button type="button" data-action="close-transfer" class="px-4 py-2 border border-slate-200 font-bold rounded-sm">取消</button>
+            <button type="button" data-action="confirm-transfer" class="px-5 py-2 bg-blue-600 text-white font-black rounded-sm">确认划转</button>
+        </div>
+    </div>
+</div>
+
+<script src="admin-coin-config-store.js?v=20260919-quote-coin"></script>
+<script src="admin-pagination.js"></script>
+<script src="admin-risk-fund.js?v=20261105-risk-detail"></script>
+<script src="admin-sidebar.js?v=20261105-risk-fund"></script>
+<script>
+    initAdminSidebar('risk-fund', '登录身份: 合约运营');
+    initRiskFundAdmin();
+</script>
+</body>
+</html>

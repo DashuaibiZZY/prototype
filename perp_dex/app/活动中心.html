@@ -188,8 +188,6 @@
         .reward-flow-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; font-size: 10px; }
         .reward-flow-grid .lbl { color: #9ca3af; font-weight: 700; }
         .reward-flow-grid .val { font-weight: 800; color: #111827; }
-        .reward-flow-grid .val.pending { color: #d97706; }
-        .reward-flow-grid .val.ok { color: #059669; }
 
         .reward-search-row { padding: 8px 16px 12px; }
         .reward-search-input { width: 100%; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 12px; font-weight: 600; color: #111827; background: #fff; outline: none; }
@@ -1070,19 +1068,15 @@
                 container.innerHTML = `<div class="reward-empty-hint">${query ? '未找到匹配的奖励记录' : '暂无奖励记录'}</div>`;
                 return;
             }
-            container.innerHTML = filtered.map(r => {
-                const statusCls = r.status === '待发放' ? 'pending' : (r.status === '已发放' ? 'ok' : '');
-                return `
+            container.innerHTML = filtered.map(r => `
                     <div class="reward-flow-item">
                         <div class="reward-flow-name">${r.name}</div>
                         <div class="reward-flow-grid">
                             <div><span class="lbl">奖励类型</span><div class="val">${r.rewardType}</div></div>
                             <div><span class="lbl">发放金额</span><div class="val">${r.amount}</div></div>
-                            <div><span class="lbl">发放状态</span><div class="val ${statusCls}">${r.status}</div></div>
                             <div><span class="lbl">发放时间</span><div class="val">${r.time}</div></div>
                         </div>
-                    </div>`;
-            }).join('');
+                    </div>`).join('');
         }
 
         function goToMyRewards() {

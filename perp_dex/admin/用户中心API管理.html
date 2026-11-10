@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX Admin · 做市商 API 管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #111827; }
+        .sidebar-item-active { background: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
+        .copy-icon-btn { color: #9ca3af; padding: 2px; border: none; background: transparent; cursor: pointer; }
+        .copy-icon-btn:hover { color: #2563eb; }
+        .api-field { width: 100%; border: 1px solid #e2e8f0; border-radius: 4px; padding: 10px 12px; font-size: 12px; outline: none; }
+        .api-field:focus { border-color: #0f172a; }
+        #admin-api-page-root .api-created-row { display: flex !important; flex-direction: row; flex-wrap: nowrap; align-items: flex-start; justify-content: space-between; width: 100%; gap: 12px; }
+        #admin-api-page-root .api-created-datetime-col { margin-left: auto; text-align: right; font-weight: 700; line-height: 1.4; flex-shrink: 0; }
+        #admin-api-page-root .api-modal-actions { display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; width: 100%; }
+        #admin-api-page-root .api-modal-btn { width: 100%; min-width: 0; box-sizing: border-box; padding: 10px 12px; border-radius: 4px; font-size: 11px; font-weight: 800; cursor: pointer; }
+        .api-modal-btn-danger { border: 1px solid #fecaca; color: #dc2626; background: #fff; }
+        .api-modal-btn-copy { border: 1px solid #e2e8f0; color: #1f2937; background: #fff; }
+        .api-modal-btn-primary { border: none; color: #fff; background: #0f172a; width: 100%; }
+        .api-modal-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-[12px]" id="admin-api-page-root">
+
+<aside id="admin-sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0"></aside>
+
+<main class="flex-1 flex flex-col overflow-hidden">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+        <div>
+            <a href="用户中心.html" class="text-[11px] font-bold text-slate-500 hover:text-slate-900">← 返回用户数据</a>
+            <h1 class="text-lg font-bold text-slate-800 mt-1">API 管理</h1>
+            <p id="admin-api-target-meta" class="text-[10px] text-slate-400 mt-0.5">—</p>
+        </div>
+        <p class="text-[10px] text-slate-400 max-w-xs text-right">代做市商账户维护 API Key；敏感操作需输入<strong class="text-slate-600">GA 验证码</strong></p>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8">
+        <div id="api-shell-list" class="max-w-[960px] mx-auto space-y-6">
+            <div id="api-empty-state" class="hidden bg-white border border-slate-200 rounded-lg p-14 text-center space-y-4">
+                <h2 class="text-base font-black text-slate-800">暂无 API Key</h2>
+                <p class="text-[12px] text-slate-500">最多 50 个有效 Key</p>
+                <button type="button" id="api-btn-create-empty" class="inline-flex px-6 py-2.5 bg-slate-900 text-white rounded-sm font-black text-[11px]">创建 API Key</button>
+            </div>
+            <div id="api-table-wrap" class="hidden bg-white border border-slate-200 rounded-lg overflow-hidden">
+                <div class="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                    <span id="api-key-count" class="text-[12px] font-black text-slate-800">0/50 个 API Key</span>
+                    <button type="button" id="api-btn-create-top" class="px-5 py-2 bg-slate-900 text-white rounded-sm font-black text-[11px]">创建 API Key</button>
+                </div>
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
+                    <tr>
+                        <th class="px-4 py-3">备注名</th>
+                        <th class="px-4 py-3">创建日期</th>
+                        <th class="px-4 py-3 text-right">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="api-key-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="api-shell-create" class="hidden max-w-[640px] mx-auto space-y-4">
+            <button type="button" id="api-btn-back" class="text-[11px] font-bold text-slate-500 hover:text-black">← 返回列表</button>
+            <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100">
+                    <h2 class="text-base font-black text-slate-900">创建 API Key</h2>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-500 uppercase mb-2">备注名</label>
+                        <input id="api-field-label" type="text" class="api-field" placeholder="备注信息" maxlength="64" />
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-500 uppercase mb-2">密码 (Passphrase)</label>
+                        <input id="api-field-passphrase" type="password" class="api-field" placeholder="设置 API 调用密码" autocomplete="new-password" />
+                        <p id="api-passphrase-error" class="hidden text-[11px] text-red-600 font-bold mt-2">密码不符合规则</p>
+                        <p class="mt-2 text-[10px] text-slate-500">8–32 位，含大小写字母、数字与符号</p>
+                    </div>
+                    <button type="button" id="api-btn-submit-create" class="w-full py-3 bg-slate-900 text-white rounded-sm font-black text-[12px]">立即添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div id="api-modal-success" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-md rounded-lg shadow-2xl border border-slate-200">
+        <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center gap-3">
+            <h3 data-modal-title class="text-sm font-black text-slate-900 truncate"></h3>
+            <button type="button" data-modal-close="api-modal-success" class="text-slate-400 hover:text-black text-lg leading-none">✕</button>
+        </div>
+        <div class="p-5" data-modal-body></div>
+    </div>
+</div>
+
+<div id="api-modal-detail" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-md rounded-lg shadow-2xl border border-slate-200">
+        <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center gap-3">
+            <h3 data-modal-title class="text-sm font-black text-slate-900 truncate"></h3>
+            <button type="button" data-modal-close="api-modal-detail" class="text-slate-400 hover:text-black text-lg leading-none">✕</button>
+        </div>
+        <div class="p-5" data-modal-body></div>
+    </div>
+</div>
+
+<div id="api-modal-delete" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-sm rounded-lg shadow-2xl border border-slate-200">
+        <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="text-sm font-black text-slate-900">删除 API Key</h3>
+            <button type="button" data-modal-close="api-modal-delete" class="text-slate-400 hover:text-black text-lg leading-none">✕</button>
+        </div>
+        <div class="p-5 space-y-5" data-modal-body></div>
+        <div class="px-5 pb-5 flex gap-3">
+            <button type="button" id="api-delete-cancel" class="flex-1 py-2.5 border border-slate-200 rounded-sm font-bold text-slate-600">取消</button>
+            <button type="button" id="api-delete-confirm" class="flex-1 py-2.5 bg-red-600 text-white rounded-sm font-black">确认</button>
+        </div>
+    </div>
+</div>
+
+<script src="admin-sidebar.js"></script>
+<script src="admin-totp-gate.js?v=20261105-admin-ga-verify"></script>
+<script src="admin-user-center-api.js?v=20261105-admin-ga-verify"></script>
+<script>
+    initAdminSidebar('user-data', '登录身份: 运营管理员');
+</script>
+</body>
+</html>

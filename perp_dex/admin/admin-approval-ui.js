@@ -27,13 +27,85 @@
         return state.recipientFilters[appId];
     }
 
+    function parseFeeRateDecimal(v) {
+        if (v == null || v === '') return 0;
+        if (typeof v === 'number') return v;
+        var s = String(v).trim();
+        var hasPct = s.indexOf('%') !== -1;
+        var n = parseFloat(s.replace('%', ''));
+        if (isNaN(n)) return 0;
+        return hasPct ? n / 100 : n;
+    }
+
+    function formatFeeUsdPlain(n, signed) {
+        n = Number(n) || 0;
+        var body = '$' + Math.abs(n).toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
+        if (signed) {
+            if (n < 0) return '-' + body;
+            if (n > 0) return '+' + body;
+            return body;
+        }
+        if (n < 0) return '-' + body;
+        return body;
+    }
+
+    function formatFeeUsd(n) {
+        n = Number(n) || 0;
+        var abs = Math.abs(n);
+        var body;
+        if (abs >= 1000000000) body = '$' + (abs / 1000000000).toFixed(2) + 'B';
+        else if (abs >= 1000000) body = '$' + (abs / 1000000).toFixed(2) + 'M';
+        else if (abs >= 1000) body = '$' + (abs / 1000).toFixed(1) + 'K';
+        else body = '$' + abs.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+        if (n < 0) return '-' + body;
+        if (n > 0) return '+' + body;
+        return body;
+    }
+
+    function formatFeeVolumeUsd(n) {
+        n = Number(n) || 0;
+        if (n >= 1000000000) return '$' + (n / 1000000000).toFixed(2) + 'B';
+        if (n >= 1000000) return '$' + (n / 1000000).toFixed(2) + 'M';
+        if (n >= 1000) return '$' + (n / 1000).toFixed(1) + 'K';
+        return '$' + n.toLocaleString('en-US');
+    }
+
+    function enrichFeeConfigPayload(p) {
+        if (!p) return p;
+        if (p.volume30d == null && p.currentTaker == null && window.ForxFeeApprovalMetrics && typeof window.ForxFeeApprovalMetrics.resolve === 'function') {
+            var fromUser = window.ForxFeeApprovalMetrics.resolve(p.uid, p.taker, p.maker);
+            if (fromUser) Object.assign(p, fromUser);
+        }
+        var curT = parseFeeRateDecimal(p.currentTaker);
+        var curM = parseFeeRateDecimal(p.currentMaker);
+        var tgtT = parseFeeRateDecimal(p.taker);
+        var tgtM = parseFeeRateDecimal(p.maker);
+        if (p.takerFeeIncome30d == null && p.feeIncome30d != null) {
+            p.takerFeeIncome30d = Math.round(p.feeIncome30d * 0.62);
+            p.makerFeeIncome30d = p.feeIncome30d - p.takerFeeIncome30d;
+        }
+        var impactFn = typeof window.computeFeeRevenueImpactSide === 'function'
+            ? window.computeFeeRevenueImpactSide
+            : function (cur, tgt, inc) {
+                if (!inc || !cur) return null;
+                return inc * (tgt / cur - 1);
+            };
+        if (p.takerFeeIncome30d != null && curT > 0) {
+            p.revenueImpactTaker = impactFn(curT, tgtT, p.takerFeeIncome30d);
+        }
+        if (p.makerFeeIncome30d != null && curM > 0) {
+            p.revenueImpactMaker = impactFn(curM, tgtM, p.makerFeeIncome30d);
+        }
+        return p;
+    }
+
     function recipientSectionId(rootId, appId) {
         return rootId + '-recipients-' + String(appId).replace(/[^a-zA-Z0-9]/g, '_');
     }
 
     function getAppSubjectUser(app) {
         const p = app.payload || {};
-        if (app.type === 'fee_config' || app.type === 'partner_l1_bind' || app.type === 'partner_ratio_change' || app.type === 'partner_rebate_migrate') {
+        if (app.type === 'fee_config' || app.type === 'partner_l1_bind' || app.type === 'partner_l1_bind_cross' || app.type === 'partner_ratio_change' || app.type === 'partner_rebate_migrate') {
             return { wallet: p.subjectWallet || p.wallet || '—', uid: p.subjectUid || p.uid || '—' };
         }
         return { wallet: '—', uid: '—' };
@@ -62,7 +134,7 @@
                 kind: isTrial ? 'trial' : 'points',
                 title: isTrial ? '体验金发放名单' : '积分发放名单',
                 searchKey: 'uid_or_wallet',
-                headers: ['uid_or_wallet', isTrial ? 'amount' : 'points'],
+                headers: ['UID', isTrial ? '金额 (USDT)' : '积分'],
                 rows: p.recipients.map(function (r) {
                     return {
                         key: r.uid_or_wallet,
@@ -86,7 +158,16 @@
         } else if (app.type === 'points_bonus_config') {
             rows.push(['加成系数', p.bonusMultiplier ? p.bonusMultiplier + 'x' : '—'], ['配置人数', p.recipientCount], ['异常人数', p.anomalyCount || 0]);
         } else if (app.type === 'fee_config') {
-            rows.push(['UID', p.uid], ['钱包', p.wallet], ['费率模式', p.feeMode === 'vip' ? 'VIP 等级' : '自定义'], ['VIP 等级', p.vipLevel != null ? 'VIP ' + p.vipLevel : '—'], ['Taker', p.taker], ['Maker', p.maker], ['有效期', p.validDays ? p.validDays + ' 天（到期日 24:00:00（UTC+8）失效）' : '永久有效']);
+            var fp = enrichFeeConfigPayload(Object.assign({}, p));
+            rows.push(['UID', p.uid]);
+            rows.push(['当前费率', 'Taker ' + (fp.currentTaker || '—') + ' · Maker ' + (fp.currentMaker || '—')]);
+            rows.push(['近 30 日总交易额', fp.volume30d != null ? formatFeeVolumeUsd(fp.volume30d) : '—']);
+            rows.push(['近 30 日 Taker 手续费收入', fp.takerFeeIncome30d != null ? formatFeeUsdPlain(fp.takerFeeIncome30d) : '—']);
+            rows.push(['近 30 日 Maker 手续费收入', fp.makerFeeIncome30d != null ? formatFeeUsdPlain(fp.makerFeeIncome30d) : '—']);
+            rows.push(['申请 Taker / Maker', (p.taker || '—') + ' / ' + (p.maker || '—')]);
+            rows.push(['月收入影响 · Taker', fp.revenueImpactTaker != null ? formatFeeUsdPlain(fp.revenueImpactTaker, true) : '—']);
+            rows.push(['月收入影响 · Maker', fp.revenueImpactMaker != null ? formatFeeUsdPlain(fp.revenueImpactMaker, true) : '—']);
+            rows.push(['费率模式', '自定义'], ['有效期', p.validDays ? p.validDays + ' 天（到期日 24:00:00（UTC+8）失效）' : '永久有效']);
             if (opts && opts.detailImagePreview && p.attachments && p.attachments.length) {
                 const previews = p.attachmentPreviews || {};
                 rows.push(['附件', p.attachments.map(function (name) {
@@ -96,8 +177,16 @@
             } else {
                 rows.push(['附件', (p.attachments || []).join('、') || '—']);
             }
-        } else if (app.type === 'partner_l1_bind') {
-            rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['申请返佣比例', p.ratio + '%'], ['运营配置上限', p.opsCap + '%'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
+        } else if (app.type === 'partner_l1_bind' || app.type === 'partner_l1_bind_cross') {
+            rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['当前身份', p.subjectLabel || '—'], ['升级范围', p.upgradeScope || '—'],
+                ['申请返佣比例', p.ratio + '%'], ['运营配置上限', p.opsCap + '%'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
+            if (p.crossBd) {
+                rows.push(['跨权限配置', '是，须风控+老板审批'], ['原归属 BD', p.originalBd || '—'], ['跨权限商务原因', p.crossBdReason || '—']);
+            }
+            if (p.treeNodeCount) rows.push(['代理节点', String(p.treeNodeCount)]);
+            if (p.directSubPartnerCount != null) rows.push(['直属下级合伙人', String(p.directSubPartnerCount)]);
+            if (p.maxDirectSubRatio != null) rows.push(['直属下级最大返佣', p.maxDirectSubRatio + '%']);
+            if (p.directClientCount != null) rows.push(['自邀直客 / 伞下直客', String(p.directClientCount)]);
             if (opts && opts.detailImagePreview && p.attachments && p.attachments.length) {
                 const previews = p.attachmentPreviews || {};
                 rows.push(['图片附件', p.attachments.map(function (name) {
@@ -109,6 +198,9 @@
             }
         } else if (app.type === 'partner_ratio_change') {
             rows.push(['UID', p.uid || '—'], ['钱包', p.wallet], ['原返佣比例', p.oldRatio + '%'], ['新返佣比例', p.newRatio + '%'], ['运营配置上限', p.opsCap + '%'], ['超上限', p.exceedsCap ? '是，须风控+老板审批' : '否']);
+            if (p.crossBd) {
+                rows.push(['跨权限配置', '是，须风控+老板审批'], ['原归属 BD', p.originalBd || '—'], ['跨权限商务原因', p.crossBdReason || '—']);
+            }
             if (opts && opts.detailImagePreview && p.attachments && p.attachments.length) {
                 const previews = p.attachmentPreviews || {};
                 rows.push(['图片附件', p.attachments.map(function (name) {
@@ -119,14 +211,18 @@
                 rows.push(['图片附件', p.attachments.join('、')]);
             }
         } else if (app.type === 'partner_rebate_migrate') {
-            rows.push(['待迁移用户', p.subjectWallet || '—'], ['UID', p.subjectUid || '—'], ['类型', p.subjectType === 'plain' ? '普通用户' : '代理用户'],
-                ['迁移到上级', p.targetWallet || '—'], ['迁移后比例', p.newRatio + '%']);
-            if (p.ratioFixes && p.ratioFixes.length) {
-                rows.push(['倒挂修正', p.ratioFixes.map(function (f) { return f.wallet + ' ' + f.oldRatio + '%→' + f.newRatio + '%'; }).join('；')]);
+            const fp = enrichPartnerMigratePayload(Object.assign({}, p));
+            rows.push(['迁移用户', fp.subjectUid || '—'], ['迁移目标上级用户', fp.targetUid || '—'],
+                ['迁移前返佣比例', formatMigrateRatio(fp.oldRatio)],
+                ['迁移前身份', fp.beforeIdentity || '—'],
+                ['迁移后返佣比例', formatMigrateRatio(fp.newRatio, fp.plainRole === 'direct_client')],
+                ['迁移后身份', fp.afterIdentity || '—']);
+            if (p.crossBd) {
+                rows.push(['跨权限配置', '是，须风控+老板审批'], ['原归属 BD', p.originalBd || '—'], ['跨权限商务原因', p.crossBdReason || '—']);
             }
             if (p.attachments && p.attachments.length) {
                 const previews = p.attachmentPreviews || {};
-                rows.push(['图片附件', p.attachments.map(function (name) {
+                rows.push(['申请附件', p.attachments.map(function (name) {
                     const url = previews[name] || '';
                     return '<button type="button" class="text-blue-600 font-bold hover:underline mr-2" onclick="openApprovalAttachment(\'' + name.replace(/'/g, "\\'") + '\', \'' + url.replace(/'/g, "\\'") + '\')">' + name + '（查看）</button>';
                 }).join('')]);
@@ -135,11 +231,69 @@
         return rows.map(function (r) {
             let valHtml = (r[1] || '—');
             if (window.AdminCopyChip && r[1] && r[1] !== '—') {
-                if (r[0] === 'UID') valHtml = AdminCopyChip.uid(r[1]);
+                if (r[0] === 'UID' || r[0] === '迁移用户' || r[0] === '迁移目标上级用户') valHtml = AdminCopyChip.uid(r[1]);
                 else if (r[0] === '钱包' || r[0] === '待迁移用户' || r[0] === '迁移到上级') valHtml = AdminCopyChip.wallet(r[1]);
             }
             return '<div class="p-3 bg-slate-50 rounded-lg"><p class="text-[10px] text-slate-400 font-bold">' + r[0] + '</p><p class="font-bold text-slate-800 mt-1 break-all">' + valHtml + '</p></div>';
         }).join('');
+    }
+
+    function formatMigrateRatio(ratio, noRatioNeeded) {
+        if (noRatioNeeded) return '—';
+        if (ratio == null || ratio === '') return '—';
+        return ratio + '%';
+    }
+
+    function formatMigratePartnerLevelIdentity(level) {
+        if (level == null || level === '') return '合伙人';
+        return level + '级合伙人';
+    }
+
+    function normalizeMigrateIdentityLabel(label, levelFallback) {
+        if (!label || label === 'N级合伙人') {
+            return levelFallback != null ? formatMigratePartnerLevelIdentity(levelFallback) : '合伙人';
+        }
+        if (label === '直客') return '直客';
+        var m = String(label).match(/系统\s*L(\d+)/i);
+        if (m) return formatMigratePartnerLevelIdentity(parseInt(m[1], 10));
+        return label;
+    }
+
+    function resolveMigrateAfterPartnerLevel(target) {
+        if (!target || target.level == null) return 2;
+        return target.level + 1;
+    }
+
+    function enrichPartnerMigratePayload(p) {
+        if (!p) return p;
+        if (p.beforeIdentity === 'N级合伙人' || !p.beforeIdentity || String(p.beforeIdentity).indexOf('系统 L') >= 0) {
+            if (p.subjectType === 'plain' || p.subjectType === 'direct_client') p.beforeIdentity = '直客';
+            else if (p.subjectUid === '200201') p.beforeIdentity = formatMigratePartnerLevelIdentity(2);
+            else if (p.subjectUid === '100815') p.beforeIdentity = formatMigratePartnerLevelIdentity(4);
+            else if (p.subjectUid === '200401') p.beforeIdentity = formatMigratePartnerLevelIdentity(3);
+            else if (p.subjectType === 'partner') p.beforeIdentity = '合伙人';
+            else if (!p.beforeIdentity) p.beforeIdentity = '直客';
+            else p.beforeIdentity = normalizeMigrateIdentityLabel(p.beforeIdentity, null);
+        }
+        if (p.afterIdentity === 'N级合伙人' || !p.afterIdentity || String(p.afterIdentity).indexOf('系统 L') >= 0) {
+            if (p.plainRole === 'direct_client') p.afterIdentity = '直客';
+            else if (p.subjectUid === '200101') p.afterIdentity = formatMigratePartnerLevelIdentity(2);
+            else if (p.subjectUid === '200201' && p.targetUid === '200002') p.afterIdentity = formatMigratePartnerLevelIdentity(3);
+            else if (p.subjectUid === '200201' && p.targetUid === '200001') p.afterIdentity = formatMigratePartnerLevelIdentity(2);
+            else if (p.subjectUid === '100815') p.afterIdentity = formatMigratePartnerLevelIdentity(2);
+            else if (p.plainRole === 'sub_partner' || p.migrateAsPartner || p.subjectType === 'partner') p.afterIdentity = '合伙人';
+            else p.afterIdentity = '直客';
+        } else {
+            p.afterIdentity = normalizeMigrateIdentityLabel(p.afterIdentity, null);
+        }
+        p.beforeIdentity = normalizeMigrateIdentityLabel(p.beforeIdentity, null);
+        p.afterIdentity = normalizeMigrateIdentityLabel(p.afterIdentity, null);
+        if (p.oldRatio == null && p.subjectType === 'partner') {
+            if (p.subjectUid === '200201') p.oldRatio = 58;
+            else if (p.subjectUid === '100815') p.oldRatio = 50;
+            else if (p.subjectUid === '200401') p.oldRatio = 65;
+        }
+        return p;
     }
 
     function renderPartnerAttachmentThumbnails(p) {
@@ -157,14 +311,22 @@
     }
 
     function renderPartnerL1BindDetailSection(app) {
-        if (app.type !== 'partner_l1_bind') return '';
+        if (app.type !== 'partner_l1_bind' && app.type !== 'partner_l1_bind_cross') return '';
         const p = app.payload || {};
         const exceedLabel = p.exceedsCap ? '是，须风控+老板审批' : '否';
+        const crossBdHtml = p.crossBd
+            ? '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">跨权限配置</p><p class="font-bold mt-1 text-amber-800">原归属 BD：' + (p.originalBd || '—') + '</p><p class="text-[11px] mt-1 text-slate-700">' + (p.crossBdReason || '—') + '</p></div>'
+            : '';
+        const scopeHtml = p.upgradeScope
+            ? '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">升级范围</p><p class="font-bold mt-1 text-slate-800">' + (p.subjectLabel || '—') + ' · ' + p.upgradeScope + '</p></div>'
+            : '';
         return '<div class="col-span-2 border border-slate-200 rounded-lg p-4 bg-slate-50/50">' +
             '<p class="text-[10px] font-bold text-slate-500 uppercase mb-3">一级合伙人绑定申请</p>' +
             '<div class="grid grid-cols-2 gap-4 text-sm">' +
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">UID</p><p class="font-black mt-1">' + (window.AdminCopyChip ? AdminCopyChip.uid(p.uid || '—') : p.uid || '—') + '</p></div>' +
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">钱包</p><p class="font-black mt-1">' + (window.AdminCopyChip ? AdminCopyChip.wallet(p.wallet) : p.wallet || '—') + '</p></div>' +
+            scopeHtml +
+            crossBdHtml +
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">申请返佣比例</p><p class="font-black mt-1 text-blue-600 text-lg">' + (p.ratio != null ? p.ratio + '%' : '—') + '</p></div>' +
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">运营配置上限 / 超上限</p><p class="font-black mt-1">' + (p.opsCap != null ? p.opsCap + '%' : '—') + ' · <span class="text-amber-700">' + exceedLabel + '</span></p></div>' +
             '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">图片附件</p>' + renderPartnerAttachmentThumbnails(p) + '</div>' +
@@ -175,6 +337,9 @@
         if (app.type !== 'partner_ratio_change') return '';
         const p = app.payload || {};
         const exceedLabel = p.exceedsCap ? '是，须风控+老板审批' : '否';
+        const crossBdHtml = p.crossBd
+            ? '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">跨权限配置</p><p class="font-bold mt-1 text-amber-800">原归属 BD：' + (p.originalBd || '—') + '</p><p class="text-[11px] mt-1 text-slate-700">' + (p.crossBdReason || '—') + '</p></div>'
+            : '';
         const remarkHtml = p.changeRemark
             ? '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">修改原因备注</p><p class="font-bold mt-1 text-slate-700 text-[11px]">' + p.changeRemark + '</p></div>'
             : '';
@@ -187,6 +352,7 @@
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">新返佣比例</p><p class="font-black mt-1 text-blue-600 text-lg">' + (p.newRatio != null ? p.newRatio + '%' : '—') + '</p></div>' +
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">运营配置上限</p><p class="font-black mt-1">' + (p.opsCap != null ? p.opsCap + '%' : '—') + '</p></div>' +
             '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">超上限</p><p class="font-black mt-1 text-amber-700">' + exceedLabel + '</p></div>' +
+            crossBdHtml +
             remarkHtml +
             '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">图片附件</p>' + renderPartnerAttachmentThumbnails(p) + '</div>' +
             '</div></div>';
@@ -194,22 +360,25 @@
 
     function renderMigrateDetailSection(app) {
         if (app.type !== 'partner_rebate_migrate') return '';
-        const p = app.payload || {};
-        const typeLabel = p.subjectType === 'plain' ? '普通用户' : '代理用户';
-        const fixesHtml = (p.ratioFixes && p.ratioFixes.length)
-            ? '<ul class="mt-2 space-y-1 text-[11px]">' + p.ratioFixes.map(function (f) {
-                return '<li class="font-bold text-amber-900">' + f.wallet + '：<span class="text-slate-500">' + f.oldRatio + '%</span> → <span class="text-blue-600">' + f.newRatio + '%</span></li>';
-            }).join('') + '</ul>'
-            : '<p class="mt-1 text-slate-500 text-[11px]">无（未修改下级比例）</p>';
-        const attachHtml = renderPartnerAttachmentThumbnails(p);
+        const p = enrichPartnerMigratePayload(Object.assign({}, app.payload || {}));
+        const uidCell = function (uid) {
+            return window.AdminCopyChip ? AdminCopyChip.uid(uid || '—') : (uid || '—');
+        };
+        const crossBdHtml = p.crossBd
+            ? '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">跨权限配置</p><p class="font-bold mt-1 text-amber-800">原归属 BD：' + (p.originalBd || '—') + '</p><p class="text-[11px] mt-1 text-slate-700">' + (p.crossBdReason || '—') + '</p></div>'
+            : '';
+        const afterRatio = formatMigrateRatio(p.newRatio, p.plainRole === 'direct_client');
         return '<div class="col-span-2 border border-slate-200 rounded-lg p-4 bg-slate-50/50">' +
             '<p class="text-[10px] font-bold text-slate-500 uppercase mb-3">迁移申请内容</p>' +
             '<div class="grid grid-cols-2 gap-4 text-sm">' +
-            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">待迁移用户</p><p class="font-black mt-1">' + (window.AdminCopyChip ? AdminCopyChip.wallet(p.subjectWallet) : p.subjectWallet || '—') + '</p><p class="text-[10px] text-slate-400 mt-1">' + (p.subjectUid || '—') + ' · ' + typeLabel + '</p></div>' +
-            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">迁移到上级合伙人</p><p class="font-black mt-1">' + (window.AdminCopyChip ? AdminCopyChip.wallet(p.targetWallet) : p.targetWallet || '—') + '</p><p class="text-[10px] text-slate-400 mt-1">UID ' + (p.targetUid || '—') + '</p></div>' +
-            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">迁移后返佣比例</p><p class="font-black mt-1 text-blue-600 text-lg">' + (p.newRatio != null ? p.newRatio + '%' : '—') + '</p></div>' +
-            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">下级返佣修改</p>' + fixesHtml + '</div>' +
-            '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">图片附件</p>' + attachHtml + '</div>' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">迁移用户</p><p class="font-black mt-1">' + uidCell(p.subjectUid) + '</p></div>' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">迁移目标上级用户</p><p class="font-black mt-1">' + uidCell(p.targetUid) + '</p></div>' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">迁移前返佣比例</p><p class="font-black mt-1 text-slate-700">' + formatMigrateRatio(p.oldRatio) + '</p></div>' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">迁移前身份</p><p class="font-black mt-1 text-slate-800">' + (p.beforeIdentity || '—') + '</p></div>' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">迁移后返佣比例</p><p class="font-black mt-1 text-blue-600 text-lg">' + afterRatio + '</p></div>' +
+            '<div class="p-3 bg-white rounded-lg border"><p class="text-[10px] text-slate-400 font-bold">迁移后身份</p><p class="font-black mt-1 text-slate-800">' + (p.afterIdentity || '—') + '</p></div>' +
+            crossBdHtml +
+            '<div class="p-3 bg-white rounded-lg border col-span-2"><p class="text-[10px] text-slate-400 font-bold">申请附件</p>' + renderPartnerAttachmentThumbnails(p) + '</div>' +
             '</div></div>';
     }
 
@@ -260,6 +429,64 @@
         return '<div class="col-span-2"><div class="border border-slate-200 rounded-lg px-4 py-2 text-sm">' + listHtml + '</div></div>';
     }
 
+    function renderVipTierConfigDetailSection(app) {
+        if (app.type !== 'vip_tier_config') return '';
+        var p = app.payload || {};
+        var changeMap = {};
+        (p.changes || []).forEach(function (c) { changeMap[c.field] = c; });
+        var rowsHtml = (p.changes || []).map(function (c) {
+            return '<div class="flex justify-between items-start gap-4 py-2.5 border-b border-slate-100 last:border-0">' +
+                '<span class="text-slate-600 shrink-0">' + c.field + '</span>' +
+                '<span class="text-right"><span class="text-slate-400">' + c.before + '</span>' +
+                ' <span class="text-slate-300 mx-1">→</span> <span class="text-blue-600 font-bold">' + c.after + '</span></span></div>';
+        }).join('');
+        if (!rowsHtml) rowsHtml = '<p class="text-slate-400 py-2">无变更明细</p>';
+        return '<div class="col-span-2"><p class="text-[10px] font-bold text-slate-500 uppercase mb-2">变更对比</p>' +
+            '<div class="border border-slate-200 rounded-lg px-4 py-2 text-sm">' + rowsHtml + '</div></div>';
+    }
+
+    function renderTrialCardGroupDetailSection(app) {
+        const p = app.payload || {};
+        const g = p.cardGroupDetails || (window.TRIAL_CARD_GROUPS || []).find(function (x) { return x.id === p.cardGroupId; });
+        if (!g) return '';
+        const rows = [
+            ['卡组名称', g.name],
+            ['卡券激活有效期', g.couponValidDays + ' 天'],
+            ['开仓有效期', g.openValidDays + ' 天']
+        ];
+        const body = rows.map(function (r) {
+            return '<div class="flex justify-between items-center py-2 border-b border-blue-100 last:border-0"><span class="text-slate-600">' + r[0] + '</span><span class="font-bold text-slate-800">' + r[1] + '</span></div>';
+        }).join('');
+        return '<div class="col-span-2 mt-2"><p class="text-[10px] font-bold text-slate-500 uppercase mb-2">本批次关联卡组</p><div class="border border-blue-100 bg-blue-50/50 rounded-lg px-4 py-2 text-sm">' + body + '</div></div>';
+    }
+
+    function canResubmitApplication(app, opts) {
+        if (!app || app.status !== 'rejected') return false;
+        opts = opts || {};
+        if (opts.allowResubmit === false) return false;
+        const viewer = opts.currentApplicant || app.applicant;
+        return app.applicant === viewer;
+    }
+
+    function getResubmitHint(app) {
+        if (app.type === 'trial_issue') {
+            return '已驳回的申请可由申请人基于<strong>原名单与卡组配置</strong>重新发起，审批流将从头开始；<strong>仅可修改申请备注</strong>。';
+        }
+        if (app.type === 'fee_config' || app.type === 'partner_l1_bind' || app.type === 'partner_l1_bind_cross' || app.type === 'partner_ratio_change') {
+            return '已驳回的申请可由申请人基于<strong>原配置内容</strong>重新发起，审批流将从头开始；<strong>仅可修改申请备注</strong>。';
+        }
+        if (app.type === 'partner_rebate_migrate') {
+            return '已驳回的申请可由申请人基于<strong>原迁移方案</strong>重新发起，审批流将从头开始；<strong>仅可修改申请备注</strong>。';
+        }
+        if (app.type === 'points_pool_config' || app.type === 'points_program_switch') {
+            return '已驳回的申请可由申请人基于<strong>原配置变更</strong>重新发起，审批流将从头开始；<strong>仅可修改申请备注</strong>。';
+        }
+        if (app.type === 'vip_tier_config') {
+            return '已驳回的申请可由申请人基于<strong>原 VIP 阶梯变更</strong>重新发起，审批流将从头开始；<strong>仅可修改申请备注</strong>。';
+        }
+        return '已驳回的申请可由申请人基于<strong>原名单与配置</strong>重新发起，审批流将从头开始；<strong>仅可修改申请备注</strong>。';
+    }
+
     function renderRecipientSection(rootId, app) {
         const dataset = getRecipientDataset(app);
         if (!dataset) return '';
@@ -279,7 +506,7 @@
         const start = (filter.page - 1) * RECIPIENT_PAGE_SIZE;
         const pageRows = rows.slice(start, start + RECIPIENT_PAGE_SIZE);
         const sectionId = recipientSectionId(rootId, app.id);
-        const searchPlaceholder = dataset.searchKey === 'uid' ? '按 UID 查询' : '按 uid_or_wallet 查询';
+        const searchPlaceholder = dataset.searchKey === 'uid' ? '按 UID 查询' : '按 UID 查询';
 
         let html = '<div id="' + sectionId + '" class="mt-4 col-span-2">';
         html += '<div class="flex flex-wrap justify-between items-center gap-3 mb-2">';
@@ -363,6 +590,7 @@
 
     window.initModuleApproval = function (options) {
         options = options || {};
+        if (options.allowResubmit !== false) options.allowResubmit = true;
         const types = resolveTypes(options);
         const rootId = options.rootId || 'module-approval-root';
         const title = options.title || '审批管理';
@@ -370,7 +598,7 @@
         const showExportDetail = options.showExportDetail === true;
         const detailImagePreview = options.detailImagePreview === true;
         const singleUserConfig = options.singleUserConfig === true;
-        const approvalRoles = options.approvalRoles || ['cross', 'risk', 'boss'];
+        const approvalRoles = options.approvalRoles || ['risk', 'boss'];
         const defaultRole = approvalRoles[0] || 'risk';
         const showTypeColumn = types.length > 1;
         const root = document.getElementById(rootId);
@@ -395,11 +623,11 @@
         const gridCols = showTypeColumn ? 'grid-cols-6' : (singleUserConfig ? 'grid-cols-5' : 'grid-cols-5');
         const typeHeader = showTypeColumn ? '<th class="px-3 py-3 text-xs font-bold text-slate-500">类型</th>' : '';
         const walletUidHeaders = singleUserConfig
-            ? '<th class="px-3 py-3 text-xs font-bold text-slate-500">钱包地址</th><th class="px-3 py-3 text-xs font-bold text-slate-500">UID</th>'
+            ? '<th class="px-3 py-3 text-xs font-bold text-slate-500">UID</th><th class="px-3 py-3 text-xs font-bold text-slate-500">钱包 / 邮箱</th>'
             : '';
         const activityHeader = singleUserConfig ? '' : '<th class="px-3 py-3 text-xs font-bold text-slate-500">活动</th>';
         const activityFilter = singleUserConfig
-            ? '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID / 钱包地址</label><input id="' + rootId + '-filter-wallet-uid" type="text" placeholder="输入 UID 或钱包" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm" oninput="moduleApprovalRenderList(\'' + rootId + '\')"></div>'
+            ? '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID / 钱包 / 邮箱</label><input id="' + rootId + '-filter-wallet-uid" type="text" placeholder="输入 UID、钱包或邮箱" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm" oninput="moduleApprovalRenderList(\'' + rootId + '\')"></div>'
             : '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">活动名称</label><input id="' + rootId + '-filter-activity" type="text" placeholder="模糊匹配" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm" oninput="moduleApprovalRenderList(\'' + rootId + '\')"></div>';
 
         const roleTabsHtml = approvalRoles.map(function (r) {
@@ -410,12 +638,12 @@
         root.innerHTML =
             '<div id="' + rootId + '-list" class="space-y-6">' +
             '<div class="flex flex-wrap justify-between items-start gap-4">' +
-            '<div><h2 class="text-lg font-bold text-slate-700">' + title + '</h2><p class="text-sm text-slate-400 mt-1">本模块审批在此处理，支持查看原数据及 Lark 老板审批联动</p></div>' +
+            '<div><h2 class="text-lg font-bold text-slate-700">' + title + '</h2><p class="text-sm text-slate-400 mt-1">风控在本页通过 / 驳回；<b>待老板审批</b>阶段本页不展示 Lark 卡片与审批操作</p></div>' +
             '<div class="flex flex-wrap gap-2 items-center">' + roleTabsHtml +
             '</div></div>' +
             '<section class="card p-5"><div class="grid ' + gridCols + ' gap-4 items-end">' +
             '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">视图</label><select id="' + rootId + '-view-mode" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white" onchange="moduleApprovalRenderList(\'' + rootId + '\')"><option value="pending">待我审批</option><option value="all">全部审批</option></select></div>' +
-            '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">状态</label><select id="' + rootId + '-filter-status" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white" onchange="moduleApprovalRenderList(\'' + rootId + '\')"><option value="all">全部</option><option value="pending_cross">待交叉审核</option><option value="pending_risk">待风控</option><option value="pending_boss">待老板</option><option value="approved">已通过</option><option value="rejected">已驳回</option></select></div>' +
+            '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">状态</label><select id="' + rootId + '-filter-status" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white" onchange="moduleApprovalRenderList(\'' + rootId + '\')"><option value="all">全部</option><option value="pending_risk">待风控</option><option value="pending_boss">待老板</option><option value="approved">已通过</option><option value="rejected">已驳回</option></select></div>' +
             typeFilter +
             activityFilter +
             '<div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">审批单号</label><input id="' + rootId + '-filter-id" type="text" placeholder="APR..." class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm" oninput="moduleApprovalRenderList(\'' + rootId + '\')"></div>' +
@@ -426,7 +654,7 @@
             '<th class="px-4 py-3 text-xs font-bold text-slate-500">审批单号</th>' + typeHeader +
             '<th class="px-3 py-3 text-xs font-bold text-slate-500">申请人</th><th class="px-3 py-3 text-xs font-bold text-slate-500">申请时间</th>' +
             walletUidHeaders + activityHeader +
-            '<th class="px-3 py-3 text-xs font-bold text-slate-500">摘要</th><th class="px-3 py-3 text-xs font-bold text-slate-500">状态</th><th class="px-4 py-3 text-xs font-bold text-slate-500 text-right">操作</th>' +
+            '<th class="px-3 py-3 text-xs font-bold text-slate-500">状态</th><th class="px-4 py-3 text-xs font-bold text-slate-500 text-right">操作</th>' +
             '</tr></thead><tbody id="' + rootId + '-tbody" class="divide-y divide-slate-50"></tbody></table>' +
             '<div id="' + rootId + '-empty" class="hidden py-16 text-center text-slate-400 text-sm">暂无审批记录</div>' +
             '<div id="' + rootId + '-pagination"></div></div></div>' +
@@ -434,6 +662,14 @@
 
         setApprovalViewRole(defaultRole);
         moduleApprovalSwitchRole(rootId, defaultRole);
+        if (options.defaultStatusFilter) {
+            const statusEl = document.getElementById(rootId + '-filter-status');
+            if (statusEl) statusEl.value = options.defaultStatusFilter;
+        }
+        if (options.defaultViewMode) {
+            const viewEl = document.getElementById(rootId + '-view-mode');
+            if (viewEl) viewEl.value = options.defaultViewMode;
+        }
         moduleApprovalRenderList(rootId);
 
         if (options.onReady) options.onReady(state);
@@ -513,13 +749,12 @@
             const walletCell = window.AdminCopyChip ? AdminCopyChip.wallet(su.wallet) : su.wallet;
             const uidCell = window.AdminCopyChip ? AdminCopyChip.uid(su.uid) : su.uid;
             const walletUidCells = state.options.singleUserConfig
-                ? '<td class="px-3 py-3">' + walletCell + '</td><td class="px-3 py-3">' + uidCell + '</td>'
+                ? '<td class="px-3 py-3">' + uidCell + '</td><td class="px-3 py-3">' + walletCell + '</td>'
                 : '';
             const activityCell = state.options.singleUserConfig ? '' : '<td class="px-3 py-3 max-w-[140px] truncate" title="' + formatApprovalActivity(app.payload) + '">' + formatApprovalActivity(app.payload) + '</td>';
             return '<tr class="hover:bg-slate-50"><td class="px-4 py-3 font-mono text-[11px] font-bold">' + app.id + '</td>' + typeCell +
                 '<td class="px-3 py-3">' + app.applicant + '</td><td class="px-3 py-3 text-slate-500">' + app.createdAt + '</td>' +
                 walletUidCells + activityCell +
-                '<td class="px-3 py-3 max-w-[160px] truncate" title="' + (app.summary || '') + '">' + (app.summary || '—') + '</td>' +
                 '<td class="px-3 py-3"><span class="' + statusPillClass(app.status) + '">' + getApprovalStatusLabel(app.status) + '</span></td>' +
                 '<td class="px-4 py-3 text-right space-x-2"><button type="button" onclick="moduleApprovalOpenDetail(\'' + rootId + '\',\'' + app.id + '\')" class="text-blue-600 font-bold hover:underline">查看</button>' +
                 (actionable ? '<button type="button" onclick="moduleApprovalOpenDetail(\'' + rootId + '\',\'' + app.id + '\')" class="text-green-600 font-bold hover:underline">审批</button>' : '') +
@@ -533,6 +768,10 @@
     window.moduleApprovalOpenDetail = function (rootId, id, pushHash) {
         const state = instances[rootId];
         if (!state) return;
+        const app = getApprovalAppById(id);
+        if (app && app.status === 'pending_boss') {
+            moduleApprovalSwitchRole(rootId, 'boss');
+        }
         state.detailId = id;
         state.view = 'detail';
         document.getElementById(rootId + '-list').classList.add('hidden');
@@ -553,42 +792,61 @@
         const canAct = canApproveApplication(app, role);
         const opts = state ? state.options : {};
         let readonlyHint = '当前审批已结束或无需您处理';
-        if (app.status === 'pending_cross' && role !== 'cross') readonlyHint = '等待市场运营交叉审核';
-        else if (app.status === 'pending_risk' && role !== 'risk') readonlyHint = '等待风控审核';
-        else if (app.status === 'pending_boss' && role !== 'boss') readonlyHint = '等待老板审批（可在 Lark 完成）';
+        if (app.status === 'pending_risk' && role !== 'risk') readonlyHint = '等待风控审核';
+        else if (app.status === 'pending_boss') readonlyHint = '等待老板审批';
 
-        const isSimpleConfig = app.type === 'points_pool_config' || app.type === 'points_program_switch';
+        const isSimpleConfig = app.type === 'points_pool_config' || app.type === 'points_program_switch' || app.type === 'vip_tier_config';
         const exportDetailBtn = opts.showExportDetail && !isSimpleConfig
             ? '<button type="button" onclick="exportApprovalDetailCsv(getApprovalAppById(\'' + app.id + '\'))" class="text-xs font-bold text-blue-600 hover:underline">导出原数据</button>'
             : '';
         const dataSectionTitle = isSimpleConfig ? '配置内容' : '申请原数据';
         const dataSectionBody = app.type === 'points_pool_config'
             ? '<div class="text-sm">' + renderPoolConfigDetailSection(app) + '</div>'
+            : app.type === 'vip_tier_config'
+                ? '<div class="text-sm grid grid-cols-2 gap-3">' + renderVipTierConfigDetailSection(app) + '</div>'
             : app.type === 'points_program_switch'
                 ? '<div class="text-sm">' + renderProgramSwitchDetailSection(app) + '</div>'
                 : app.type === 'partner_rebate_migrate'
                     ? '<div class="text-sm">' + renderMigrateDetailSection(app) + '</div>'
-                    : app.type === 'partner_l1_bind'
+                    : (app.type === 'partner_l1_bind' || app.type === 'partner_l1_bind_cross')
                         ? '<div class="text-sm">' + renderPartnerL1BindDetailSection(app) + '</div>'
                         : app.type === 'partner_ratio_change'
                             ? '<div class="text-sm">' + renderPartnerRatioChangeDetailSection(app) + '</div>'
-                            : '<div class="grid grid-cols-2 gap-3 text-sm">' + renderPayloadMeta(app, opts) + renderRecipientSection(rootId, app) + '</div>';
+                            : app.type === 'trial_issue'
+                                ? '<div class="grid grid-cols-2 gap-3 text-sm">' + renderPayloadMeta(app, opts) + renderTrialCardGroupDetailSection(app) + renderRecipientSection(rootId, app) + '</div>'
+                                : '<div class="grid grid-cols-2 gap-3 text-sm">' + renderPayloadMeta(app, opts) + renderRecipientSection(rootId, app) + '</div>';
+        const canResubmit = canResubmitApplication(app, opts);
+        const resubmitSection = canResubmit
+            ? '<section class="card p-6 border border-amber-200 bg-amber-50/60"><h3 class="font-bold text-amber-900 mb-2">重新提交审批</h3>' +
+            '<p class="text-sm text-amber-900/80 mb-3">' + getResubmitHint(app) + '</p>' +
+            '<label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">申请备注</label>' +
+            '<textarea id="' + rootId + '-resubmit-remark" rows="2" class="w-full border border-slate-200 rounded-lg p-3 text-sm mb-3">' + (app.remark || '').replace(/</g, '&lt;') + '</textarea>' +
+            '<button type="button" onclick="moduleApprovalResubmit(\'' + rootId + '\',\'' + app.id + '\')" class="w-full py-2.5 bg-amber-600 text-white rounded-lg text-sm font-bold hover:bg-amber-700">基于原内容重新提交</button></section>'
+            : '';
         const typeBadge = state.types.length > 1
             ? '<span class="inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">' + getApprovalTypeLabel(app.type) + '</span>'
+            : '';
+        var actHint = '';
+        if (canAct && role === 'risk') {
+            actHint = '<p class="text-[11px] text-slate-500 mb-3">风控节点：在本页通过 / 驳回。</p>';
+        }
+        var bossChannelCard = app.status !== 'pending_boss' && app.lark && typeof renderLarkApprovalCard === 'function'
+            ? renderLarkApprovalCard(app, rootId)
             : '';
 
         detailEl.innerHTML =
             '<div class="flex items-center gap-3 mb-2"><button type="button" onclick="moduleApprovalBackList(\'' + rootId + '\')" class="text-slate-500 hover:text-slate-800 font-bold text-sm">← 返回审批列表</button></div>' +
             '<div class="grid grid-cols-3 gap-6"><div class="col-span-2 space-y-6">' +
             '<section class="card p-6"><div class="flex justify-between items-start mb-4"><div><p class="text-[10px] text-slate-400 font-bold uppercase">审批单号</p><p class="text-lg font-black">' + app.id + '</p>' + typeBadge + '</div><span class="' + statusPillClass(app.status) + '">' + getApprovalStatusLabel(app.status) + '</span></div>' +
-            '<div class="grid grid-cols-2 gap-4 text-sm"><div><span class="text-slate-400">申请人</span><p class="font-bold mt-1">' + app.applicant + '</p></div><div><span class="text-slate-400">申请时间</span><p class="font-bold mt-1">' + app.createdAt + '</p></div><div class="col-span-2"><span class="text-slate-400">摘要</span><p class="font-bold mt-1">' + (app.summary || '—') + '</p></div></div>' +
+            '<div class="grid grid-cols-2 gap-4 text-sm"><div><span class="text-slate-400">申请人</span><p class="font-bold mt-1">' + app.applicant + '</p></div><div><span class="text-slate-400">申请时间</span><p class="font-bold mt-1">' + app.createdAt + '</p></div></div>' +
             '<div class="mt-4 p-4 bg-slate-50 rounded-lg"><p class="text-[10px] text-slate-400 font-bold uppercase mb-1">申请备注</p><p class="text-sm">' + (app.remark || '—') + '</p></div></section>' +
             '<section class="card p-6"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-slate-800">' + dataSectionTitle + '</h3>' + exportDetailBtn + '</div>' +
             dataSectionBody + '</section>' +
             '<section class="card p-6"><h3 class="font-bold mb-4">审批时间线</h3>' + renderTimeline(app) + '</section></div>' +
-            '<div class="space-y-6"><section class="card p-6"><h3 class="font-bold mb-4">审批进度</h3><div>' + renderApprovalFlow(app.status, false, app) + '</div>' + (app.lark ? renderLarkApprovalCard(app) : '') + '</section>' +
-            (canAct ? '<section class="card p-6"><h3 class="font-bold mb-4">审批操作</h3><textarea id="' + rootId + '-note" rows="3" class="w-full border border-slate-200 rounded-lg p-3 text-sm mb-4" placeholder="审批意见（驳回时必填）"></textarea><div class="flex gap-2"><button type="button" onclick="moduleApprovalReject(\'' + rootId + '\',\'' + app.id + '\')" class="flex-1 py-2.5 border border-red-200 text-red-600 rounded-lg text-sm font-bold">驳回</button><button type="button" onclick="moduleApprovalApprove(\'' + rootId + '\',\'' + app.id + '\')" class="flex-1 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold">通过</button></div></section>' :
-                '<section class="card p-6"><p class="text-sm text-slate-500 text-center">' + readonlyHint + '</p></section>') +
+            '<div class="space-y-6"><section class="card p-6"><h3 class="font-bold mb-4">审批进度</h3><div>' + renderApprovalFlow(app.status, false, app) + '</div>' + bossChannelCard + '</section>' +
+            (canAct ? '<section class="card p-6"><h3 class="font-bold mb-4">审批操作</h3>' + actHint + '<textarea id="' + rootId + '-note" rows="3" class="w-full border border-slate-200 rounded-lg p-3 text-sm mb-4" placeholder="审批意见（驳回时必填）"></textarea><div class="flex gap-2"><button type="button" onclick="moduleApprovalReject(\'' + rootId + '\',\'' + app.id + '\')" class="flex-1 py-2.5 border border-red-200 text-red-600 rounded-lg text-sm font-bold">驳回</button><button type="button" onclick="moduleApprovalApprove(\'' + rootId + '\',\'' + app.id + '\')" class="flex-1 py-2.5 rounded-lg text-sm font-bold bg-green-600 text-white">通过</button></div></section>' :
+                (app.status === 'pending_boss' ? '' : '<section class="card p-6"><p class="text-sm text-slate-500 text-center">' + readonlyHint + '</p></section>')) +
+            resubmitSection +
             '</div></div>';
     };
 
@@ -622,9 +880,36 @@
         if (state.onBackList) state.onBackList();
     };
 
+    window.moduleApprovalSimulateLarkApprove = function (rootId, id) {
+        const result = simulateLarkApprove(id);
+        if (result && result.blocked) {
+            alert(result.message);
+            moduleApprovalShowDetail(rootId, id);
+            return;
+        }
+        if (result && result.status === 'approved') {
+            alert('审批已通过');
+        }
+        moduleApprovalShowDetail(rootId, id);
+        moduleApprovalRenderList(rootId);
+    };
+
     window.moduleApprovalApprove = function (rootId, id) {
         const note = document.getElementById(rootId + '-note').value.trim();
-        approveApplication(id, getApprovalViewRole(), note);
+        const app = getApprovalAppById(id);
+        if (app && getApprovalViewRole() === 'boss' && typeof getFeeConfigBossBlockReason === 'function') {
+            const blockReason = getFeeConfigBossBlockReason(app);
+            if (blockReason) {
+                alert(blockReason);
+                return;
+            }
+        }
+        const result = approveApplication(id, getApprovalViewRole(), note);
+        if (result && result.blocked) {
+            alert(result.message);
+            moduleApprovalShowDetail(rootId, id);
+            return;
+        }
         alert('审批已通过');
         moduleApprovalShowDetail(rootId, id);
         moduleApprovalRenderList(rootId);
@@ -639,6 +924,19 @@
         moduleApprovalRenderList(rootId);
     };
 
+    window.moduleApprovalResubmit = function (rootId, id) {
+        const state = instances[rootId];
+        const remarkEl = document.getElementById(rootId + '-resubmit-remark');
+        const remark = remarkEl ? remarkEl.value.trim() : '';
+        if (!remark) { alert('请填写申请备注'); return; }
+        const newApp = resubmitApprovalApplication(id, { remark: remark });
+        if (!newApp) { alert('重新提交失败'); return; }
+        alert('已基于原内容重新提交，审批单号 ' + newApp.id);
+        moduleApprovalOpenDetail(rootId, newApp.id);
+        moduleApprovalRenderList(rootId);
+        if (state && state.onResubmit) state.onResubmit(newApp, id);
+    };
+
     window.moduleApprovalExportList = function (rootId) {
         const state = instances[rootId];
         exportApprovalListCsv(state && state.filtered ? state.filtered : getAppsForState(state));
@@ -650,7 +948,8 @@
         state.hashList = listHash || 'approval';
         state.hashDetailPrefix = detailPrefix || 'approval-detail';
         if (hash.indexOf(state.hashDetailPrefix + '=') === 0) {
-            moduleApprovalOpenDetail(rootId, hash.replace(state.hashDetailPrefix + '=', ''), false);
+            const appId = hash.replace(state.hashDetailPrefix + '=', '');
+            moduleApprovalOpenDetail(rootId, appId, false);
             return true;
         }
         if (hash === state.hashList || hash === 'approval') {
