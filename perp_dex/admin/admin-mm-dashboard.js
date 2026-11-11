@@ -32,16 +32,19 @@
         return fmtCompact(n) + ' USDC';
     }
 
-    function fmtAmt(n) {
+    /** 交易额（成交额 / 吃单 / 挂单等） */
+    function fmtTradeVol(n) {
         return fmtCompactUsdc(n);
     }
 
-    function fmtCount(n) {
+    /** 成交笔数 */
+    function fmtTradeCount(n) {
         return fmtCompact(n);
     }
 
-    function fmtUsdc(n) {
-        return fmtCompactUsdc(n);
+    /** 资产、盈亏、充提、手续费、资金费、盘口名义价值等（不缩写） */
+    function fmtMoney(n) {
+        return fmtNum(n) + ' USDC';
     }
 
     function fmtPct(n) {
@@ -432,8 +435,8 @@
                 '<tr class="border-b border-slate-50 hover:bg-slate-50/80">' +
                 '<td class="px-4 py-3 font-black text-slate-800">' + escapeHtml(name) +
                 ' <span class="text-[10px] font-bold text-slate-400">(' + teamKindLabel(t.kind) + ')</span></td>' +
-                '<td class="px-4 py-3 font-mono text-right">' + fmtAmt(t.totalAsset) + '</td>' +
-                '<td class="px-4 py-3 font-mono text-right">' + fmtAmt(t.prevDayVolume) + '</td>' +
+                '<td class="px-4 py-3 font-mono text-right">' + fmtMoney(t.totalAsset) + '</td>' +
+                '<td class="px-4 py-3 font-mono text-right">' + fmtTradeVol(t.prevDayVolume) + '</td>' +
                 '<td class="px-4 py-3 text-center font-bold">' + t.uidCount + '</td>' +
                 '<td class="px-4 py-3 text-right"><a href="做市商数据详情.html?team=' + encodeURIComponent(name) + '" class="text-blue-600 font-black hover:underline">详情</a></td></tr>'
             );
@@ -459,24 +462,24 @@
         renderDetailGrid('mm-detail-team-grid', [
             { label: '团队标签', value: escapeHtml(teamName) },
             { label: '做市商类型', value: escapeHtml(teamKindLabel(data.kind)) },
-            { label: '团队账号数', value: String(s.uidCount) },
-            { label: '当前总资产', value: fmtUsdc(data.totalAsset) }
+            { label: '团队账号数', value: String(s.uidCount) }
         ]);
         renderDetailGrid('mm-detail-asset-grid', [
-            { label: '当前总未实现盈亏', value: fmtUsdc(s.unrealizedPnl) },
-            { label: '累计已实现盈亏（截止昨日）', value: fmtUsdc(s.realizedPnlYtd) },
-            { label: '累计充值金额', value: fmtUsdc(s.depositTotal) },
-            { label: '累计提现金额', value: fmtUsdc(s.withdrawTotal) },
-            { label: '累计空投金额', value: fmtUsdc(s.airdropTotal) }
+            { label: '当前总资产', value: fmtMoney(data.totalAsset) },
+            { label: '当前总未实现盈亏', value: fmtMoney(s.unrealizedPnl) },
+            { label: '累计已实现盈亏（截止昨日）', value: fmtMoney(s.realizedPnlYtd) },
+            { label: '累计充值金额', value: fmtMoney(s.depositTotal) },
+            { label: '累计提现金额', value: fmtMoney(s.withdrawTotal) },
+            { label: '累计空投金额', value: fmtMoney(s.airdropTotal) }
         ]);
         var d7 = rollingTradeStats(data.tradeDays, 7);
         var d30 = rollingTradeStats(data.tradeDays, 30);
         renderDetailGrid('mm-detail-trade-grid', [
-            { label: '前一日总交易额', value: fmtAmt(s.prevDayVolume) },
+            { label: '前一日总交易额', value: fmtTradeVol(s.prevDayVolume) },
             { label: '前一日交易额占比全站', value: fmtPct(s.prevDayShare) },
-            { label: '近7日总交易额', value: fmtAmt(d7.volume) },
+            { label: '近7日总交易额', value: fmtTradeVol(d7.volume) },
             { label: '近7日交易额占比全站', value: fmtPct(d7.share) },
-            { label: '近30日总交易额', value: fmtAmt(d30.volume) },
+            { label: '近30日总交易额', value: fmtTradeVol(d30.volume) },
             { label: '近30日交易额占比全站', value: fmtPct(d30.share) }
         ]);
     }
@@ -514,14 +517,14 @@
         tbody.innerHTML = rows.map(function (row) {
             return '<tr class="border-b border-slate-50 hover:bg-slate-50/50">' +
                 '<td class="px-4 py-3 font-mono">' + row.date + '</td>' +
-                '<td class="px-4 py-3 font-mono text-right">' + fmtAmt(row.volume) + '</td>' +
+                '<td class="px-4 py-3 font-mono text-right">' + fmtTradeVol(row.volume) + '</td>' +
                 '<td class="px-4 py-3 text-right">' + fmtPct(row.share) + '</td>' +
-                '<td class="px-4 py-3 text-right font-mono">' + fmtCount(row.tradeCount) + '</td>' +
-                '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(row.takerVol) + '</td>' +
-                '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(row.makerVol) + '</td>' +
-                '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(row.realizedPnl) + '</td>' +
-                '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(row.fee) + '</td>' +
-                '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(row.funding) + '</td>' +
+                '<td class="px-4 py-3 text-right font-mono">' + fmtTradeCount(row.tradeCount) + '</td>' +
+                '<td class="px-4 py-3 text-right font-mono">' + fmtTradeVol(row.takerVol) + '</td>' +
+                '<td class="px-4 py-3 text-right font-mono">' + fmtTradeVol(row.makerVol) + '</td>' +
+                '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(row.realizedPnl) + '</td>' +
+                '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(row.fee) + '</td>' +
+                '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(row.funding) + '</td>' +
                 '<td class="px-4 py-3 text-[11px] text-slate-600">' + escapeHtml(row.activeUids) + '</td>' +
                 tradeOpCell(team, row.date) +
                 '</tr>';
@@ -538,14 +541,14 @@
         tbody.innerHTML = rows.map(function (row) {
             return '<tr class="border-b border-slate-50 hover:bg-slate-50/50">' +
                 '<td class="px-4 py-3 font-mono">' + row.date + '</td>' +
-                '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(row.totalAsset) + '</td>' +
-                '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(row.marginUsed) + '</td>' +
-                '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(row.realized) + '</td>' +
-                '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(row.unrealized) + '</td>' +
-                '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(row.deposit) + '</td>' +
-                '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(row.withdraw) + '</td>' +
-                '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(row.netDeposit) + '</td>' +
-                '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(row.airdrop) + '</td>' +
+                '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(row.totalAsset) + '</td>' +
+                '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(row.marginUsed) + '</td>' +
+                '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(row.realized) + '</td>' +
+                '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(row.unrealized) + '</td>' +
+                '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(row.deposit) + '</td>' +
+                '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(row.withdraw) + '</td>' +
+                '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(row.netDeposit) + '</td>' +
+                '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(row.airdrop) + '</td>' +
                 '<td class="px-4 py-3 text-right"><a class="mm-op-btn" href="' + assetDrillUrl(team, row.date) + '">按 UID 展开</a></td></tr>';
         }).join('');
     }
@@ -563,13 +566,13 @@
                 '<td class="px-3 py-3 font-bold">' + r.pair + '</td>' +
                 '<td class="px-3 py-3 text-right">' + fmtPct(r.share) + '</td>' +
                 '<td class="px-3 py-3 text-right font-mono">' + fmtNum(r.spreadBps) + '</td>' +
-                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtAmt(r.b10) + '</td>' +
-                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtAmt(r.b30) + '</td>' +
-                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtAmt(r.b50) + '</td>' +
-                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtAmt(r.b100) + '</td>' +
-                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtAmt(r.b200) + '</td>' +
-                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtAmt(r.b500) + '</td>' +
-                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtAmt(r.b1000) + '</td></tr>';
+                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtMoney(r.b10) + '</td>' +
+                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtMoney(r.b30) + '</td>' +
+                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtMoney(r.b50) + '</td>' +
+                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtMoney(r.b100) + '</td>' +
+                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtMoney(r.b200) + '</td>' +
+                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtMoney(r.b500) + '</td>' +
+                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtMoney(r.b1000) + '</td></tr>';
         }).join('');
     }
 
@@ -761,14 +764,14 @@
                     var tbody = document.getElementById('mm-drill-tbody');
                     tbody.innerHTML = items.map(function (p) {
                         return '<tr class="border-b border-slate-50"><td class="px-4 py-3 font-bold">' + p.pair + '</td>' +
-                            '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(p.volume) + '</td>' +
+                            '<td class="px-4 py-3 text-right font-mono">' + fmtTradeVol(p.volume) + '</td>' +
                             '<td class="px-4 py-3 text-right">' + fmtPct(p.share) + '</td>' +
-                            '<td class="px-4 py-3 text-right">' + fmtCount(p.tradeCount) + '</td>' +
-                            '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(p.takerVol) + '</td>' +
-                            '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(p.makerVol) + '</td>' +
-                            '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(p.realizedPnl) + '</td>' +
-                            '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(p.fee) + '</td>' +
-                            '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(p.funding) + '</td>' +
+                            '<td class="px-4 py-3 text-right">' + fmtTradeCount(p.tradeCount) + '</td>' +
+                            '<td class="px-4 py-3 text-right font-mono">' + fmtTradeVol(p.takerVol) + '</td>' +
+                            '<td class="px-4 py-3 text-right font-mono">' + fmtTradeVol(p.makerVol) + '</td>' +
+                            '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(p.realizedPnl) + '</td>' +
+                            '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(p.fee) + '</td>' +
+                            '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(p.funding) + '</td>' +
                             '<td class="px-4 py-3 text-[11px]">' + escapeHtml(p.activeUids) + '</td></tr>';
                     }).join('');
                 }
@@ -793,14 +796,14 @@
                 renderBody: function (items) {
                     document.getElementById('mm-drill-tbody').innerHTML = items.map(function (u) {
                         return '<tr class="border-b border-slate-50"><td class="px-4 py-3 font-mono font-bold">' + u.uid + '</td>' +
-                            '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(u.volume) + '</td>' +
+                            '<td class="px-4 py-3 text-right font-mono">' + fmtTradeVol(u.volume) + '</td>' +
                             '<td class="px-4 py-3 text-right">' + fmtPct(u.share) + '</td>' +
-                            '<td class="px-4 py-3 text-right">' + fmtCount(u.tradeCount) + '</td>' +
-                            '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(u.takerVol) + '</td>' +
-                            '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(u.makerVol) + '</td>' +
-                            '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(u.realizedPnl) + '</td>' +
-                            '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(u.fee) + '</td>' +
-                            '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(u.funding) + '</td></tr>';
+                            '<td class="px-4 py-3 text-right">' + fmtTradeCount(u.tradeCount) + '</td>' +
+                            '<td class="px-4 py-3 text-right font-mono">' + fmtTradeVol(u.takerVol) + '</td>' +
+                            '<td class="px-4 py-3 text-right font-mono">' + fmtTradeVol(u.makerVol) + '</td>' +
+                            '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(u.realizedPnl) + '</td>' +
+                            '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(u.fee) + '</td>' +
+                            '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(u.funding) + '</td></tr>';
                     }).join('');
                 }
             });
@@ -824,12 +827,12 @@
                     document.getElementById('mm-drill-tbody').innerHTML = items.map(function (r) {
                         return '<tr class="border-b border-slate-50"><td class="px-4 py-3 font-mono">' + r.uid + '</td>' +
                             '<td class="px-4 py-3 font-bold">' + r.pair + '</td>' +
-                            '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(r.volume) + '</td>' +
-                            '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(r.takerVol) + '</td>' +
-                            '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(r.makerVol) + '</td>' +
-                            '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(r.realizedPnl) + '</td>' +
-                            '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(r.fee) + '</td>' +
-                            '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(r.funding) + '</td></tr>';
+                            '<td class="px-4 py-3 text-right font-mono">' + fmtTradeVol(r.volume) + '</td>' +
+                            '<td class="px-4 py-3 text-right font-mono">' + fmtTradeVol(r.takerVol) + '</td>' +
+                            '<td class="px-4 py-3 text-right font-mono">' + fmtTradeVol(r.makerVol) + '</td>' +
+                            '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(r.realizedPnl) + '</td>' +
+                            '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(r.fee) + '</td>' +
+                            '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(r.funding) + '</td></tr>';
                     }).join('');
                 }
             });
@@ -869,12 +872,12 @@
             renderBody: function (items) {
                 document.getElementById('mm-drill-tbody').innerHTML = items.map(function (u) {
                     return '<tr class="border-b border-slate-50"><td class="px-4 py-3 font-mono font-bold">' + u.uid + '</td>' +
-                        '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(u.totalAsset) + '</td>' +
-                        '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(u.marginUsed) + '</td>' +
-                        '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(u.realized) + '</td>' +
-                        '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(u.deposit) + '</td>' +
-                        '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(u.withdraw) + '</td>' +
-                        '<td class="px-4 py-3 text-right font-mono">' + fmtAmt(u.netDeposit) + '</td></tr>';
+                        '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(u.totalAsset) + '</td>' +
+                        '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(u.marginUsed) + '</td>' +
+                        '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(u.realized) + '</td>' +
+                        '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(u.deposit) + '</td>' +
+                        '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(u.withdraw) + '</td>' +
+                        '<td class="px-4 py-3 text-right font-mono">' + fmtMoney(u.netDeposit) + '</td></tr>';
                 }).join('');
             }
         });
