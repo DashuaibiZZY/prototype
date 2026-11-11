@@ -42,9 +42,14 @@
         return fmtCompact(n);
     }
 
-    /** 资产、盈亏、充提、手续费、资金费、盘口名义价值等（不缩写） */
+    /** 资产、盈亏、充提、手续费、资金费等（不缩写） */
     function fmtMoney(n) {
         return fmtNum(n) + ' USDC';
+    }
+
+    /** 盘口挂单分布名义价值（K/M/B） */
+    function fmtObNominal(n) {
+        return fmtTradeVol(n);
     }
 
     function fmtPct(n) {
@@ -252,27 +257,39 @@
             assetDays.push(synthesizeAssetDay(dateStr, cfg.assetBase, uids, scale));
         }
         var obSnapshots = [];
+        var uidList = uids.map(function (u) { return u.uid; });
         PAIRS.forEach(function (pair, pi) {
             for (var h = 0; h < 8; h++) {
                 var mult = 1 + h * 0.03;
+                var b10 = Math.round(cfg.obBase.b10 * mult);
+                var b30 = Math.round(cfg.obBase.b30 * mult);
+                var b50 = Math.round(cfg.obBase.b50 * mult);
+                var b100 = Math.round(cfg.obBase.b100 * mult);
+                var b200 = Math.round(cfg.obBase.b200 * mult);
+                var b500 = Math.round(cfg.obBase.b500 * mult);
+                var b1000 = Math.round(cfg.obBase.b1000 * mult);
+                var activeCount = Math.min(uidList.length, 1 + ((h + pi) % uidList.length));
                 obSnapshots.push({
                     time: '2026-11-06 ' + String(8 + h).padStart(2, '0') + ':00:00',
                     pair: pair,
                     share: cfg.obBase.share + pi,
                     spreadBps: cfg.obBase.spread + pi * 0.3,
-                    b10: Math.round(cfg.obBase.b10 * mult),
-                    b30: Math.round(cfg.obBase.b30 * mult),
-                    b50: Math.round(cfg.obBase.b50 * mult),
-                    b100: Math.round(cfg.obBase.b100 * mult),
-                    b200: Math.round(cfg.obBase.b200 * mult),
-                    b500: Math.round(cfg.obBase.b500 * mult),
-                    b1000: Math.round(cfg.obBase.b1000 * mult)
+                    totalNominal: Math.round(b1000 * 1.06),
+                    b10: b10,
+                    b30: b30,
+                    b50: b50,
+                    b100: b100,
+                    b200: b200,
+                    b500: b500,
+                    b1000: b1000,
+                    activeOrderUids: uidList.slice(0, activeCount).join(', ')
                 });
             }
         });
         return {
             kind: cfg.kind,
             totalAsset: cfg.totalAsset,
+            marginUsedTotal: assetDays.length ? assetDays[0].marginUsed : 0,
             prevDayVolume: tradeDays[0].volume,
             uidCount: uids.length,
             uids: uids,
@@ -466,6 +483,7 @@
         ]);
         renderDetailGrid('mm-detail-asset-grid', [
             { label: '当前总资产', value: fmtMoney(data.totalAsset) },
+            { label: '当前占用保证金总额', value: fmtMoney(data.marginUsedTotal) },
             { label: '当前总未实现盈亏', value: fmtMoney(s.unrealizedPnl) },
             { label: '累计已实现盈亏（截止昨日）', value: fmtMoney(s.realizedPnlYtd) },
             { label: '累计充值金额', value: fmtMoney(s.depositTotal) },
@@ -557,7 +575,7 @@
         var tbody = document.getElementById('mm-detail-ob-body');
         if (!tbody) return;
         if (!rows.length) {
-            tbody.innerHTML = '<tr><td colspan="11" class="px-4 py-8 text-center text-slate-400">无快照数据</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="13" class="px-4 py-8 text-center text-slate-400">无快照数据</td></tr>';
             return;
         }
         tbody.innerHTML = rows.map(function (r) {
@@ -566,13 +584,15 @@
                 '<td class="px-3 py-3 font-bold">' + r.pair + '</td>' +
                 '<td class="px-3 py-3 text-right">' + fmtPct(r.share) + '</td>' +
                 '<td class="px-3 py-3 text-right font-mono">' + fmtNum(r.spreadBps) + '</td>' +
-                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtMoney(r.b10) + '</td>' +
-                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtMoney(r.b30) + '</td>' +
-                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtMoney(r.b50) + '</td>' +
-                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtMoney(r.b100) + '</td>' +
-                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtMoney(r.b200) + '</td>' +
-                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtMoney(r.b500) + '</td>' +
-                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtMoney(r.b1000) + '</td></tr>';
+                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtObNominal(r.totalNominal) + '</td>' +
+                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtObNominal(r.b10) + '</td>' +
+                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtObNominal(r.b30) + '</td>' +
+                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtObNominal(r.b50) + '</td>' +
+                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtObNominal(r.b100) + '</td>' +
+                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtObNominal(r.b200) + '</td>' +
+                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtObNominal(r.b500) + '</td>' +
+                '<td class="px-3 py-3 text-right font-mono text-[11px]">' + fmtObNominal(r.b1000) + '</td>' +
+                '<td class="px-3 py-3 text-[11px] text-slate-600">' + escapeHtml(r.activeOrderUids || '') + '</td></tr>';
         }).join('');
     }
 
@@ -586,7 +606,7 @@
 
     function downloadAssetCsv(rows) {
         downloadCsv('mm_team_asset.csv',
-            ['统计日期', '总资产', '占用保证金', '已实现', '未实现', '充值', '提现', '净充值', '空投'],
+            ['统计/快照日期', '总资产价值', '占用保证金快照', '当日已实现盈亏', '当日未实现盈亏快照', '当日充值金额', '当日提现金额', '当日净充值', '当日空投金额'],
             rows.map(function (r) {
                 return [r.date, r.totalAsset, r.marginUsed, r.realized, r.unrealized, r.deposit, r.withdraw, r.netDeposit, r.airdrop];
             }));
@@ -594,9 +614,9 @@
 
     function downloadObCsv(rows) {
         downloadCsv('mm_team_ob.csv',
-            ['快照时间', '交易对', '挂单占比%', 'spread_bps', '10bps', '30bps', '50bps', '100bps', '200bps', '500bps', '1000bps'],
+            ['快照时间', '交易对', '挂单占比%', 'spread_bps', '合计挂单名义价值', '10bps', '30bps', '50bps', '100bps', '200bps', '500bps', '1000bps', '当日挂单账号'],
             rows.map(function (r) {
-                return [r.time, r.pair, r.share, r.spreadBps, r.b10, r.b30, r.b50, r.b100, r.b200, r.b500, r.b1000];
+                return [r.time, r.pair, r.share, r.spreadBps, r.totalNominal, r.b10, r.b30, r.b50, r.b100, r.b200, r.b500, r.b1000, r.activeOrderUids];
             }));
     }
 
@@ -863,7 +883,7 @@
         }
 
         var rows = day.uidRows;
-        var headers = ['UID', '总资产', '占用保证金', '已实现', '充值', '提现', '净充值'];
+        var headers = ['UID', '总资产价值', '占用保证金快照', '当日已实现盈亏', '当日充值金额', '当日提现金额', '当日净充值'];
         renderPaginatedTable({
             rows: rows,
             page: 1,
