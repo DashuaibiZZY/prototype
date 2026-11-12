@@ -10,25 +10,9 @@
         body { font-family: 'Inter', sans-serif; background: #f8fafc; }
         .sidebar-item-active { background: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
         .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
-        .status-tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
-        .status-normal { background: #ecfdf5; color: #059669; }
-        .status-partial { background: #fff7ed; color: #ea580c; }
-        .status-frozen { background: #fef2f2; color: #dc2626; }
         .type-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: #f1f5f9; color: #475569; }
         .type-tag.mm-internal { background: #f0fdf4; color: #15803d; }
         .type-tag.mm-external { background: #eff6ff; color: #2563eb; }
-        .switch { position: relative; display: inline-block; width: 40px; height: 20px; flex-shrink: 0; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; inset: 0; background: #cbd5e1; transition: .25s; border-radius: 20px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background: #fff; transition: .25s; border-radius: 50%; }
-        input:checked + .slider { background: #3b82f6; }
-        input:checked + .slider:before { transform: translateX(20px); }
-        .config-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid #f1f5f9; }
-        .config-row:last-child { border-bottom: none; }
-        .config-row-title { font-size: 13px; font-weight: 700; color: #0f172a; }
-        .config-row-desc { font-size: 11px; color: #94a3b8; margin-top: 3px; line-height: 1.45; max-width: 320px; }
-        .drawer-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 40; }
-        .drawer-panel { position: fixed; top: 0; right: 0; width: 520px; max-width: 100%; height: 100%; background: #fff; z-index: 50; box-shadow: -8px 0 24px rgba(0,0,0,.12); display: flex; flex-direction: column; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -39,7 +23,7 @@
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
         <div>
             <h1 class="text-xl font-bold text-slate-800">用户数据</h1>
-            <p class="text-xs text-slate-400 mt-0.5">查询用户资料、类型与冻结状态；交易数据请在用户详情中只读查看</p>
+            <p class="text-xs text-slate-400 mt-0.5">查询用户资料与类型；交易数据请在用户详情中只读查看</p>
         </div>
         <div class="flex items-center gap-3">
             <span class="text-sm text-slate-500">Ops_Admin</span>
@@ -49,7 +33,7 @@
 
     <div class="flex-1 overflow-y-auto p-8 space-y-6">
         <section class="card p-5">
-            <div class="grid grid-cols-5 gap-4 items-end">
+            <div class="grid grid-cols-4 gap-4 items-end lg:grid-cols-[1fr_1fr_1fr_auto]">
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID</label>
                     <input id="filterUid" type="text" placeholder="输入 UID" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
@@ -65,15 +49,6 @@
                         <option value="retail">普通用户</option>
                         <option value="mm_internal">内部做市商</option>
                         <option value="mm_external">外部做市商</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">用户状态</label>
-                    <select id="filterStatus" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none">
-                        <option value="all">全部</option>
-                        <option value="normal">正常</option>
-                        <option value="partial">部分冻结</option>
-                        <option value="frozen">冻结</option>
                     </select>
                 </div>
                 <div class="flex gap-2">
@@ -99,7 +74,6 @@
                         <th class="px-6 py-3 text-right">总资产价值</th>
                         <th class="px-6 py-3 text-right">过去 14 天交易量</th>
                         <th class="px-6 py-3 text-center">VIP 等级</th>
-                        <th class="px-6 py-3 text-center">用户状态</th>
                         <th class="px-6 py-3 text-right">操作</th>
                     </tr>
                     </thead>
@@ -199,43 +173,17 @@
     </div>
 </div>
 
-<!-- 冻结配置 -->
-<div id="freezeOverlay" class="drawer-overlay hidden" onclick="closeFreezeDrawer()"></div>
-<div id="freezeDrawer" class="drawer-panel hidden">
-    <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between shrink-0">
-        <div>
-            <h2 class="text-base font-bold text-slate-800">冻结配置</h2>
-            <p id="freezeDrawerMeta" class="text-xs text-slate-400 mt-1 font-mono"></p>
-        </div>
-        <button type="button" onclick="closeFreezeDrawer()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-500 text-lg">&times;</button>
-    </div>
-    <div class="flex-1 overflow-y-auto px-6 py-5">
-        <section class="card p-5">
-            <h3 class="text-sm font-bold text-slate-800 mb-3">冻结与交易限制</h3>
-            <div id="freezeConfigList"></div>
-        </section>
-        <section class="card p-5 mt-4">
-            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">操作备注（必填）</label>
-            <textarea id="freezeRemark" rows="3" placeholder="请填写变更原因..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none resize-none"></textarea>
-        </section>
-    </div>
-    <div class="px-6 py-4 border-t border-slate-100 flex gap-3 shrink-0">
-        <button type="button" onclick="closeFreezeDrawer()" class="flex-1 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">取消</button>
-        <button type="button" onclick="saveFreezeConfig()" class="flex-1 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold">保存配置</button>
-    </div>
-</div>
-
 <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-lg text-sm font-bold shadow-xl z-[70] hidden"></div>
 
 <script src="admin-pagination.js"></script>
 <script src="admin-mm-team-store.js?v=20261110-mm-dashboard"></script>
-<script src="admin-user-center-actions.js?v=20261110-mm-dashboard"></script>
+<script src="admin-user-center-actions.js?v=20261112-no-freeze"></script>
 <script>
     let users = [
-        { uid: '10028471', email: 'trader@example.com', wallet: '', userType: 'retail', lastLogin: '2026-10-26 18:22:10', totalAsset: '125,430.50', vol14d: '12,450,800', vip: 'VIP 2', status: 'normal', flags: {} },
-        { uid: '10031592', email: '', wallet: '0x2b91c4d8e0f1234567890abcdef1234567890abcd', userType: 'mm_external', teamTag: 'Alpha MM', teamBindAt: '2025-06-12 10:00:00', lastLogin: '2026-10-26 09:05:33', totalAsset: '2,410,000.00', vol14d: '89,102,400', vip: 'VIP 4', status: 'partial', flags: { orderFreeze: true, apiFreeze: true, closeOnly: true } },
-        { uid: '10019833', email: 'ops@forx.test', wallet: '', userType: 'mm_internal', teamTag: 'Desk-Quant', teamBindAt: '2024-11-01 09:30:00', lastLogin: '2026-10-25 22:18:00', totalAsset: '8,240.00', vol14d: '320,500', vip: 'VIP 0', status: 'frozen', flags: { loginFreeze: true, withdrawFreeze: true, transferFreeze: true, orderFreeze: true } },
-        { uid: '10040102', email: 'mm2@alpha.test', wallet: '', userType: 'mm_external', teamTag: 'Alpha MM', teamBindAt: '2025-08-20 14:22:00', lastLogin: '2026-10-26 08:11:00', totalAsset: '980,200.00', vol14d: '42,800,000', vip: 'VIP 3', status: 'normal', flags: {} }
+        { uid: '10028471', email: 'trader@example.com', wallet: '', userType: 'retail', lastLogin: '2026-10-26 18:22:10', totalAsset: '125,430.50', vol14d: '12,450,800', vip: 'VIP 2' },
+        { uid: '10031592', email: '', wallet: '0x2b91c4d8e0f1234567890abcdef1234567890abcd', userType: 'mm_external', teamTag: 'Alpha MM', teamBindAt: '2025-06-12 10:00:00', lastLogin: '2026-10-26 09:05:33', totalAsset: '2,410,000.00', vol14d: '89,102,400', vip: 'VIP 4' },
+        { uid: '10019833', email: 'ops@forx.test', wallet: '', userType: 'mm_internal', teamTag: 'Desk-Quant', teamBindAt: '2024-11-01 09:30:00', lastLogin: '2026-10-25 22:18:00', totalAsset: '8,240.00', vol14d: '320,500', vip: 'VIP 0' },
+        { uid: '10040102', email: 'mm2@alpha.test', wallet: '', userType: 'mm_external', teamTag: 'Alpha MM', teamBindAt: '2025-08-20 14:22:00', lastLogin: '2026-10-26 08:11:00', totalAsset: '980,200.00', vol14d: '42,800,000', vip: 'VIP 3' }
     ];
 
     let filteredUsers = [...users];
@@ -279,23 +227,13 @@
         return '—';
     }
 
-    function statusFromFlags(flags) {
-        return AdminUserCenterActions.statusFromFlags(flags);
-    }
-
-    function statusTag(status) {
-        if (status === 'frozen') return '<span class="status-tag status-frozen">冻结</span>';
-        if (status === 'partial') return '<span class="status-tag status-partial">部分冻结</span>';
-        return '<span class="status-tag status-normal">正常</span>';
-    }
-
     function renderTable() {
         const tbody = document.getElementById('userTableBody');
         const sliced = window.AdminPagination ? AdminPagination.slice(filteredUsers, listPage) : { items: filteredUsers, page: 1, total: filteredUsers.length };
         listPage = sliced.page;
         document.getElementById('userCount').textContent = '(' + filteredUsers.length + ')';
         if (!filteredUsers.length) {
-            tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-12 text-center text-slate-400">未找到匹配用户</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-12 text-center text-slate-400">未找到匹配用户</td></tr>';
             if (window.AdminPagination) AdminPagination.mount('uc-list-pagination', 0, 1, 'uc-list');
             return;
         }
@@ -309,11 +247,9 @@
                 '<td class="px-6 py-4 text-right font-mono">' + u.totalAsset + ' USDC</td>' +
                 '<td class="px-6 py-4 text-right font-mono">' + u.vol14d + ' USDC</td>' +
                 '<td class="px-6 py-4 text-center font-bold">' + u.vip + '</td>' +
-                '<td class="px-6 py-4 text-center">' + statusTag(u.status) + '</td>' +
                 '<td class="px-6 py-4 text-right space-x-3 whitespace-nowrap">' +
                 '<a href="用户中心详情.html?uid=' + encodeURIComponent(u.uid) + '" class="text-blue-600 font-bold hover:underline">详情</a>' +
                 '<button type="button" onclick="openTypeModal(\'' + u.uid + '\')" class="text-slate-700 font-bold hover:underline">类型</button>' +
-                '<button type="button" onclick="openFreezeDrawer(\'' + u.uid + '\')" class="text-orange-600 font-bold hover:underline">冻结</button>' +
                 (isMmUserType(u.userType)
                     ? '<a href="用户中心API管理.html?uid=' + encodeURIComponent(u.uid) + '" class="text-violet-600 font-bold hover:underline">API管理</a>'
                     : '') +
@@ -326,7 +262,6 @@
         const uid = document.getElementById('filterUid').value.trim();
         const contact = document.getElementById('filterContact').value.trim().toLowerCase();
         const ut = document.getElementById('filterUserType').value;
-        const st = document.getElementById('filterStatus').value;
         filteredUsers = users.filter(function (u) {
             if (uid && !u.uid.includes(uid)) return false;
             if (contact) {
@@ -334,7 +269,6 @@
                 if (!hay.includes(contact)) return false;
             }
             if (ut !== 'all' && u.userType !== ut) return false;
-            if (st !== 'all' && u.status !== st) return false;
             return true;
         });
         listPage = 1;
@@ -345,7 +279,6 @@
         document.getElementById('filterUid').value = '';
         document.getElementById('filterContact').value = '';
         document.getElementById('filterUserType').value = 'all';
-        document.getElementById('filterStatus').value = 'all';
         filteredUsers = [...users];
         listPage = 1;
         renderTable();
@@ -360,9 +293,7 @@
 <script>
     AdminUserCenterActions.init({
         getUserByUid: function (uid) {
-            let u = users.find(function (x) { return x.uid === uid; });
-            if (u && !u.flags) u.flags = {};
-            return u;
+            return users.find(function (x) { return x.uid === uid; });
         },
         listAllUsers: function () { return users; },
         onUserUpdated: function () { applyFilters(); }

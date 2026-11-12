@@ -1,22 +1,12 @@
 /**
- * 用户数据 · 类型配置 / 冻结配置 / 做市商账号（团队标签决定内/外部）
+ * 用户数据 · 类型配置 / 做市商账号（团队标签决定内/外部）
+ * 冻结配置 UI 已移除，归档见 document/备份/用户中心冻结UI归档/
  */
 (function (global) {
-    const UC_FREEZE_CONFIGS = [
-        { key: 'withdrawFreeze', title: '提现冻结', desc: '禁止发起链上提现申请' },
-        { key: 'transferFreeze', title: '资金划转冻结', desc: '禁止交易账户、资金账户之间的资金划转' },
-        { key: 'orderFreeze', title: '下单冻结', desc: '禁止下单，开平仓都不允许' },
-        { key: 'closeOnly', title: '仅平仓模式', desc: '仅允许平掉已有仓位，禁止任何开仓行为' },
-        { key: 'apiFreeze', title: 'API 交易冻结', desc: '禁止使用 API Key 进行下单，Web/App 不受影响' },
-        { key: 'loginFreeze', title: '登录冻结', desc: '禁止用户登录账号' }
-    ];
-
     let getUserByUid = null;
     let listAllUsers = null;
     let onUserUpdated = null;
     let typeEditUid = null;
-    let freezeEditUid = null;
-    let draftFlags = null;
 
     function store() {
         return global.AdminMmTeamStore;
@@ -65,13 +55,6 @@
         const wrap = document.getElementById('typeTeamTagWrap');
         if (!wrap) return;
         wrap.classList.toggle('hidden', !pick || pick.value !== 'mm');
-    }
-
-    function statusFromFlags(flags) {
-        if (!flags) return 'normal';
-        if (flags.loginFreeze && Object.keys(flags).filter(function (k) { return flags[k]; }).length >= 3) return 'frozen';
-        const any = UC_FREEZE_CONFIGS.some(function (c) { return flags[c.key]; });
-        return any ? 'partial' : 'normal';
     }
 
     function showToast(msg) {
@@ -212,9 +195,7 @@
             lastLogin: '—',
             totalAsset: '0.00',
             vol14d: '0',
-            vip: 'VIP 0',
-            status: 'normal',
-            flags: {}
+            vip: 'VIP 0'
         };
         if (listAllUsers) {
             const list = listAllUsers();
@@ -230,60 +211,6 @@
     function closeMmCreatedModal() {
         document.getElementById('mmAccountCreatedModal').classList.add('hidden');
         document.getElementById('mmAccountCreatedModal').classList.remove('flex');
-    }
-
-    function renderFreezeList(flags) {
-        document.getElementById('freezeConfigList').innerHTML = UC_FREEZE_CONFIGS.map(function (c) {
-            return (
-                '<div class="config-row"><div><div class="config-row-title">' + c.title + '</div>' +
-                '<div class="config-row-desc">' + c.desc + '</div></div>' +
-                '<label class="switch"><input type="checkbox" ' + (flags[c.key] ? 'checked' : '') +
-                ' onchange="onFreezeToggle(\'' + c.key + '\', this.checked)"><span class="slider"></span></label></div>'
-            );
-        }).join('');
-    }
-
-    function openFreezeDrawer(uid) {
-        if (!getUserByUid) return;
-        const u = getUserByUid(uid);
-        if (!u) return;
-        freezeEditUid = uid;
-        if (!u.flags) u.flags = {};
-        draftFlags = Object.assign({}, u.flags);
-        document.getElementById('freezeDrawerMeta').textContent = 'UID ' + uid;
-        document.getElementById('freezeRemark').value = '';
-        renderFreezeList(draftFlags);
-        document.getElementById('freezeOverlay').classList.remove('hidden');
-        document.getElementById('freezeDrawer').classList.remove('hidden');
-    }
-
-    function closeFreezeDrawer() {
-        document.getElementById('freezeOverlay').classList.add('hidden');
-        document.getElementById('freezeDrawer').classList.add('hidden');
-        freezeEditUid = null;
-        draftFlags = null;
-    }
-
-    function onFreezeToggle(key, checked) {
-        if (!draftFlags) return;
-        draftFlags[key] = checked;
-    }
-
-    function saveFreezeConfig() {
-        const remark = document.getElementById('freezeRemark').value.trim();
-        if (!remark) {
-            showToast('请填写操作备注');
-            return;
-        }
-        const u = getUserByUid && freezeEditUid ? getUserByUid(freezeEditUid) : null;
-        if (u && draftFlags) {
-            u.flags = Object.assign({}, draftFlags);
-            u.status = statusFromFlags(u.flags);
-        }
-        const savedUid = freezeEditUid;
-        closeFreezeDrawer();
-        if (onUserUpdated && savedUid) onUserUpdated(savedUid);
-        showToast('冻结配置已保存');
     }
 
     function bindMmCreateUi() {
@@ -306,8 +233,6 @@
 
     global.AdminUserCenterActions = {
         init: init,
-        statusFromFlags: statusFromFlags,
-        UC_FREEZE_CONFIGS: UC_FREEZE_CONFIGS,
         openMmCreateModal: openMmCreateModal,
         closeMmCreateModal: closeMmCreateModal,
         confirmMmCreate: confirmMmCreate,
@@ -320,10 +245,6 @@
     global.openTeamTagCreateModal = openTeamTagCreateModal;
     global.closeTeamTagCreateModal = closeTeamTagCreateModal;
     global.saveNewTeamTag = saveNewTeamTag;
-    global.openFreezeDrawer = openFreezeDrawer;
-    global.closeFreezeDrawer = closeFreezeDrawer;
-    global.onFreezeToggle = onFreezeToggle;
-    global.saveFreezeConfig = saveFreezeConfig;
     global.showToast = showToast;
     global.openMmCreateModal = openMmCreateModal;
     global.closeMmCreateModal = closeMmCreateModal;

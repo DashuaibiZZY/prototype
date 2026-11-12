@@ -10,12 +10,6 @@
         body { font-family: 'Inter', sans-serif; background: #f8fafc; }
         .sidebar-item-active { background: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
         .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
-        .status-tag { display: inline-flex; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
-        .status-normal { background: #ecfdf5; color: #059669; }
-        .status-partial { background: #fff7ed; color: #ea580c; }
-        .status-frozen { background: #fef2f2; color: #dc2626; }
-        .freeze-pill { display: inline-flex; padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 700; background: #fef2f2; color: #b91c1c; margin: 0; }
-        .freeze-pill.off { background: #f1f5f9; color: #94a3b8; font-weight: 500; }
         .tab-btn { padding: 6px 12px; font-size: 11px; font-weight: 700; color: #64748b; border-bottom: 2px solid transparent; cursor: pointer; }
         .tab-btn.active { color: #0f172a; border-bottom-color: #0f172a; }
         .subtab-btn { padding: 6px 12px; font-size: 11px; font-weight: 700; border-radius: 6px; color: #64748b; }
@@ -31,22 +25,8 @@
         .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1rem; row-gap: 0.45rem; }
         @media (min-width: 768px) { .detail-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 0.5rem; } }
         @media (min-width: 1280px) { .detail-grid--trade { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
-        .profile-status-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.35rem 0.75rem; margin-bottom: 0.35rem; }
-        .profile-status-head .detail-section-title { margin-bottom: 0; }
         .profile-block-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.35rem 0.75rem; margin-bottom: 0.5rem; }
         .profile-block-head .detail-section-title { margin-bottom: 0; }
-        .switch { position: relative; display: inline-block; width: 40px; height: 20px; flex-shrink: 0; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; inset: 0; background: #cbd5e1; transition: .25s; border-radius: 20px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background: #fff; transition: .25s; border-radius: 50%; }
-        input:checked + .slider { background: #3b82f6; }
-        input:checked + .slider:before { transform: translateX(20px); }
-        .config-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid #f1f5f9; }
-        .config-row:last-child { border-bottom: none; }
-        .config-row-title { font-size: 13px; font-weight: 700; color: #0f172a; }
-        .config-row-desc { font-size: 11px; color: #94a3b8; margin-top: 3px; line-height: 1.45; max-width: 320px; }
-        .drawer-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 40; }
-        .drawer-panel { position: fixed; top: 0; right: 0; width: 520px; max-width: 100%; height: 100%; background: #fff; z-index: 50; box-shadow: -8px 0 24px rgba(0,0,0,.12); display: flex; flex-direction: column; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-[12px]">
@@ -79,18 +59,6 @@
             <div class="profile-block">
                 <h2 class="detail-section-title">交易信息</h2>
                 <div id="tradeInfoGrid" class="detail-grid detail-grid--trade"></div>
-            </div>
-            <div class="profile-block-divider" aria-hidden="true"></div>
-            <div class="profile-block">
-                <div class="profile-status-head">
-                    <h2 class="detail-section-title">用户状态</h2>
-                    <div class="flex flex-wrap items-center gap-3 shrink-0">
-                        <button type="button" onclick="openFreezeDrawer(qsUid())" class="text-[11px] font-bold text-orange-600 hover:underline">冻结设置</button>
-                        <button type="button" onclick="openFreezeLogModal()" class="text-[11px] font-bold text-blue-600 hover:underline">冻结配置记录</button>
-                    </div>
-                </div>
-                <p class="detail-label mb-1">用户冻结行为</p>
-                <div id="freezeBehaviorRow" class="flex flex-wrap gap-0.5"></div>
             </div>
         </section>
 
@@ -126,30 +94,7 @@
     </div>
 </div>
 
-<div id="freezeLogModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/50 p-4">
-    <div class="bg-white w-full max-w-3xl rounded-xl shadow-2xl max-h-[80vh] flex flex-col">
-        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-            <h3 class="text-base font-bold text-slate-800">冻结配置记录</h3>
-            <button type="button" onclick="closeFreezeLogModal()" class="text-slate-400 hover:text-slate-800 text-xl">&times;</button>
-        </div>
-        <div class="overflow-auto p-4">
-            <table class="w-full text-left text-xs">
-                <thead class="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase">
-                <tr>
-                    <th class="px-4 py-2">时间</th>
-                    <th class="px-4 py-2">冻结类型</th>
-                    <th class="px-4 py-2">冻结行为</th>
-                    <th class="px-4 py-2">操作人</th>
-                </tr>
-                </thead>
-                <tbody id="freezeLogTableBody" class="divide-y divide-slate-50"></tbody>
-            </table>
-        </div>
-        <div id="freeze-log-pagination" class="border-t border-slate-100 shrink-0"></div>
-    </div>
-</div>
-
-<!-- 用户类型 / 冻结（与列表页共用） -->
+<!-- 用户类型（与列表页共用） -->
 <div id="typeModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/50">
     <div class="bg-white w-[420px] rounded-xl p-6 shadow-2xl">
         <h3 class="text-base font-bold text-slate-800 mb-1">配置用户类型</h3>
@@ -199,46 +144,12 @@
     </div>
 </div>
 
-<div id="freezeOverlay" class="drawer-overlay hidden" onclick="closeFreezeDrawer()"></div>
-<div id="freezeDrawer" class="drawer-panel hidden">
-    <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between shrink-0">
-        <div>
-            <h2 class="text-base font-bold text-slate-800">冻结配置</h2>
-            <p id="freezeDrawerMeta" class="text-xs text-slate-400 mt-1 font-mono"></p>
-        </div>
-        <button type="button" onclick="closeFreezeDrawer()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-500 text-lg">&times;</button>
-    </div>
-    <div class="flex-1 overflow-y-auto px-6 py-5">
-        <section class="card p-5">
-            <h3 class="text-sm font-bold text-slate-800 mb-3">冻结与交易限制</h3>
-            <div id="freezeConfigList"></div>
-        </section>
-        <section class="card p-5 mt-4">
-            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">操作备注（必填）</label>
-            <textarea id="freezeRemark" rows="3" placeholder="请填写变更原因..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none resize-none"></textarea>
-        </section>
-    </div>
-    <div class="px-6 py-4 border-t border-slate-100 flex gap-3 shrink-0">
-        <button type="button" onclick="closeFreezeDrawer()" class="flex-1 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">取消</button>
-        <button type="button" onclick="saveFreezeConfig()" class="flex-1 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold">保存配置</button>
-    </div>
-</div>
-
 <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-lg text-sm font-bold shadow-xl z-[70] hidden"></div>
 
-<script src="admin-user-center-actions.js"></script>
+<script src="admin-user-center-actions.js?v=20261112-no-freeze"></script>
 <script src="admin-user-center-tabs.js"></script>
 <script src="admin-pagination.js"></script>
 <script>
-    const FREEZE_BEHAVIORS = [
-        { key: 'withdrawFreeze', label: '提现' },
-        { key: 'transferFreeze', label: '划转' },
-        { key: 'orderFreeze', label: '下单' },
-        { key: 'closeOnly', label: '仅平仓' },
-        { key: 'apiFreeze', label: 'API 下单' },
-        { key: 'loginFreeze', label: '登录' }
-    ];
-
     const DEMO_USERS = {
         '10028471': {
             uid: '10028471', email: 'trader@example.com', wallet: '',
@@ -247,7 +158,7 @@
             marginRatio: '18.6%', upnl: '+1,240.30 USDC', maintMargin: '4,520.00 USDC',
             cumDeposit: '980,000.00 USDC', cumWithdraw: '120,500.00 USDC', cumRealizedPnl: '+45,320.80 USDC',
             cumVolume: '156,800,000 USDC', vol14d: '12,450,800 USDC',
-            vip: 'VIP 2', taker: '0.034%', maker: '0.010%', feeDays: '12', status: 'normal', flags: {},
+            vip: 'VIP 2', taker: '0.034%', maker: '0.010%', feeDays: '12',
             devices: [
                 { time: '2026-10-26 18:22:10', ip: '103.21.44.88', device: 'Chrome 141 / macOS 15', client: 'Web' },
                 { time: '2026-10-25 09:11:02', ip: '103.21.44.90', device: 'ForX App / iOS 18.1', client: 'iOS' }
@@ -260,8 +171,7 @@
             marginRatio: '42.1%', upnl: '-12,400.00 USDC', maintMargin: '180,200.00 USDC',
             cumDeposit: '5,200,000.00 USDC', cumWithdraw: '800,000.00 USDC', cumRealizedPnl: '+892,100.00 USDC',
             cumVolume: '2,890,000,000 USDC', vol14d: '89,102,400 USDC',
-            vip: 'VIP 4', taker: '0.026%', maker: '0.004%', feeDays: '—', status: 'partial',
-            flags: { orderFreeze: true, apiFreeze: true, closeOnly: true },
+            vip: 'VIP 4', taker: '0.026%', maker: '0.004%', feeDays: '—',
             devices: [{ time: '2026-10-26 09:05:33', ip: '47.88.12.4', device: 'API Client', client: 'API' }]
         },
         '10019833': {
@@ -271,28 +181,9 @@
             marginRatio: '—', upnl: '0.00 USDC', maintMargin: '—',
             cumDeposit: '50,000.00 USDC', cumWithdraw: '12,000.00 USDC', cumRealizedPnl: '-2,400.00 USDC',
             cumVolume: '890,000 USDC', vol14d: '320,500 USDC',
-            vip: 'VIP 0', taker: '0.050%', maker: '0.020%', feeDays: '—', status: 'frozen',
-            flags: { loginFreeze: true, withdrawFreeze: true, transferFreeze: true, orderFreeze: true },
+            vip: 'VIP 0', taker: '0.050%', maker: '0.020%', feeDays: '—',
             devices: [{ time: '2026-10-20 14:02:00', ip: '198.18.0.12', device: 'Safari / iOS 17', client: 'iOS' }]
         }
-    };
-
-    const FREEZE_LOGS = {
-        '10028471': [
-            { time: '2026-09-12 11:20:00', actionType: '取消冻结', behavior: '提现冻结', operator: 'Risk_Admin' }
-        ],
-        '10031592': [
-            { time: '2026-10-26 09:10:00', actionType: '冻结', behavior: '下单冻结', operator: 'Risk_Admin' },
-            { time: '2026-10-26 09:10:00', actionType: '冻结', behavior: 'API 交易冻结', operator: 'Risk_Admin' },
-            { time: '2026-10-26 09:12:00', actionType: '冻结', behavior: '仅平仓模式', operator: 'Risk_Admin' },
-            { time: '2026-10-18 16:40:00', actionType: '取消冻结', behavior: '资金划转冻结', operator: 'Ops_Lead' }
-        ],
-        '10019833': [
-            { time: '2026-10-25 22:30:00', actionType: '冻结', behavior: '登录冻结', operator: 'Risk_Admin' },
-            { time: '2026-10-25 22:30:00', actionType: '冻结', behavior: '提现冻结', operator: 'Risk_Admin' },
-            { time: '2026-10-25 22:30:00', actionType: '冻结', behavior: '资金划转冻结', operator: 'Risk_Admin' },
-            { time: '2026-10-25 22:30:00', actionType: '冻结', behavior: '下单冻结', operator: 'Risk_Admin' }
-        ]
     };
 
     let currentTab = 'pos';
@@ -300,8 +191,6 @@
     let dwSub = 'deposit';
     let profile = null;
     let devicePage = 1;
-    let freezeLogPage = 1;
-
     function sortByTimeDesc(rows) {
         return rows.slice().sort(function (a, b) {
             return String(b.time).localeCompare(String(a.time));
@@ -370,21 +259,14 @@
         return profile[key] != null && profile[key] !== '' ? profile[key] : '—';
     }
 
-    function statusTag(s) {
-        if (s === 'frozen') return '<span class="status-tag status-frozen">冻结</span>';
-        if (s === 'partial') return '<span class="status-tag status-partial">部分冻结</span>';
-        return '<span class="status-tag status-normal">正常</span>';
-    }
-
     function renderProfile() {
         const uid = qsUid();
-        profile = DEMO_USERS[uid] || Object.assign({}, DEMO_USERS['10028471'], { uid, email: '', wallet: '', flags: {}, devices: [] });
+        profile = DEMO_USERS[uid] || Object.assign({}, DEMO_USERS['10028471'], { uid, email: '', wallet: '', devices: [] });
 
         renderDetailGrid('basicInfoGrid', [
             { label: 'UID', value: uidDisplayValue(profile.uid) },
             { label: '钱包地址 / 邮箱', value: contactDisplayValue(profile) },
             { label: '用户类型', value: userTypeDisplay(profile) },
-            { label: '用户状态', value: statusTag(profile.status) },
             { label: '最新登录时间', value: profile.lastLogin || '—' },
             { label: '登录 IP', value: profile.loginIp || '—' },
             { label: '登录设备列表', value: deviceListField(profile) }
@@ -410,10 +292,6 @@
             { label: '自定义费率有效期天数', value: metricOrDash(profile, 'feeDays') }
         ]);
 
-        document.getElementById('freezeBehaviorRow').innerHTML = FREEZE_BEHAVIORS.map(function (b) {
-            const on = profile.flags[b.key];
-            return '<span class="freeze-pill ' + (on ? '' : 'off') + '">' + b.label + (on ? ' · 已冻结' : ' · 正常') + '</span>';
-        }).join('');
     }
 
     function renderMainTabs() {
@@ -498,45 +376,10 @@
         document.getElementById('deviceModal').classList.remove('flex');
     }
 
-    function renderFreezeLogTable() {
-        const uid = qsUid();
-        const all = sortByTimeDesc(FREEZE_LOGS[uid] || []);
-        const sliced = window.AdminPagination
-            ? AdminPagination.slice(all, freezeLogPage)
-            : { items: all, page: 1, total: all.length };
-        freezeLogPage = sliced.page;
-        document.getElementById('freezeLogTableBody').innerHTML = sliced.items.length
-            ? sliced.items.map(function (r) {
-                const typeCls = r.actionType === '冻结' ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold';
-                return '<tr><td class="px-4 py-3 whitespace-nowrap">' + r.time + '</td>' +
-                    '<td class="px-4 py-3"><span class="' + typeCls + '">' + r.actionType + '</span></td>' +
-                    '<td class="px-4 py-3">' + r.behavior + '</td>' +
-                    '<td class="px-4 py-3 font-mono text-slate-600">' + r.operator + '</td></tr>';
-            }).join('')
-            : '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400">暂无冻结配置记录</td></tr>';
-        mountModalPagination('freeze-log-pagination', sliced.total, freezeLogPage, 'uc-detail-freeze-log');
-    }
-
-    function openFreezeLogModal() {
-        freezeLogPage = 1;
-        renderFreezeLogTable();
-        document.getElementById('freezeLogModal').classList.remove('hidden');
-        document.getElementById('freezeLogModal').classList.add('flex');
-    }
-
-    function closeFreezeLogModal() {
-        document.getElementById('freezeLogModal').classList.add('hidden');
-        document.getElementById('freezeLogModal').classList.remove('flex');
-    }
-
     if (window.AdminPagination) {
         AdminPagination.register('uc-detail-devices', function (page) {
             devicePage = page;
             renderDeviceTable();
-        });
-        AdminPagination.register('uc-detail-freeze-log', function (page) {
-            freezeLogPage = page;
-            renderFreezeLogTable();
         });
     }
 
@@ -546,9 +389,8 @@
 <script>
     function ensureDemoUser(uid) {
         if (!DEMO_USERS[uid]) {
-            DEMO_USERS[uid] = Object.assign({}, DEMO_USERS['10028471'], { uid: uid, email: '', wallet: '', flags: {}, devices: [] });
+            DEMO_USERS[uid] = Object.assign({}, DEMO_USERS['10028471'], { uid: uid, email: '', wallet: '', devices: [] });
         }
-        if (!DEMO_USERS[uid].flags) DEMO_USERS[uid].flags = {};
         return DEMO_USERS[uid];
     }
 
