@@ -105,12 +105,8 @@
                 <div><div class="font-bold text-slate-800">普通用户</div><div class="text-[11px] text-slate-400">默认零售交易账户</div></div>
             </label>
             <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
-                <input type="radio" name="userTypePick" value="mm_internal" class="accent-blue-600">
-                <div><div class="font-bold text-slate-800">内部做市商</div><div class="text-[11px] text-slate-400">平台内部做市账户，适用内部费率与风控策略</div></div>
-            </label>
-            <label class="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
-                <input type="radio" name="userTypePick" value="mm_external" class="accent-blue-600">
-                <div><div class="font-bold text-slate-800">外部做市商</div><div class="text-[11px] text-slate-400">外部合作做市商，开通做市权限与专属费率策略</div></div>
+                <input type="radio" name="userTypePick" value="mm" class="accent-blue-600">
+                <div><div class="font-bold text-slate-800">做市商</div><div class="text-[11px] text-slate-400">选择团队标签；内部/外部类型由标签自带，无需再选</div></div>
             </label>
         </div>
         <div id="typeTeamTagWrap" class="hidden mb-6">
@@ -121,7 +117,7 @@
             <select id="typeTeamTagSelect" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">请选择团队标签</option>
             </select>
-            <p class="text-[11px] text-slate-400 mt-2">内部 / 外部做市商必选；仅可从列表选择，新标签请通过「新增标签」创建</p>
+            <p class="text-[11px] text-slate-400 mt-2">下拉项展示「标签名（内部/外部做市商）」</p>
         </div>
         <div class="flex gap-3">
             <button type="button" onclick="closeTypeModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
@@ -133,9 +129,20 @@
 <div id="teamTagCreateModal" class="fixed inset-0 z-[70] hidden items-center justify-center bg-slate-900/50 p-4">
     <div class="bg-white w-full max-w-[380px] rounded-xl p-6 shadow-2xl">
         <h3 class="text-base font-bold text-slate-800 mb-1">新增团队标签</h3>
-        <p class="text-xs text-slate-400 mb-4">创建后将加入团队标签列表，可在配置用户类型时选择</p>
+        <p class="text-xs text-slate-400 mb-4">标签自带内部/外部做市商属性，创建后可用于用户配置与数据看板汇总</p>
         <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">标签名称</label>
-        <input id="teamTagCreateInput" type="text" maxlength="32" placeholder="输入做市团队名称或标识" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+        <input id="teamTagCreateInput" type="text" maxlength="32" placeholder="输入做市团队名称或标识" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">做市商类型</label>
+        <div class="space-y-2 mb-2">
+            <label class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-lg cursor-pointer has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                <input type="radio" name="teamTagKindPick" value="mm_internal" class="accent-blue-600" checked>
+                <span class="text-sm font-bold text-slate-800">内部做市商</span>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-lg cursor-pointer has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                <input type="radio" name="teamTagKindPick" value="mm_external" class="accent-blue-600">
+                <span class="text-sm font-bold text-slate-800">外部做市商</span>
+            </label>
+        </div>
         <p id="teamTagCreateError" class="hidden text-[11px] text-red-600 font-bold mt-2"></p>
         <div class="flex gap-3 mt-6">
             <button type="button" onclick="closeTeamTagCreateModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
@@ -146,7 +153,8 @@
 
 <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-lg text-sm font-bold shadow-xl z-[70] hidden"></div>
 
-<script src="admin-user-center-actions.js?v=20261112-no-freeze"></script>
+<script src="admin-mm-team-store.js?v=20261110-mm-dashboard"></script>
+<script src="admin-user-center-actions.js?v=20261112-uc-polish"></script>
 <script src="admin-user-center-tabs.js"></script>
 <script src="admin-pagination.js"></script>
 <script>
@@ -156,9 +164,11 @@
             userType: 'retail', lastLogin: '2026-10-26 18:22:10', loginIp: '103.21.44.88',
             totalAsset: '125,430.50 USDC', fundingBal: '42,100.00 USDC', tradingBal: '83,330.50 USDC',
             marginRatio: '18.6%', upnl: '+1,240.30 USDC', maintMargin: '4,520.00 USDC',
-            cumDeposit: '980,000.00 USDC', cumWithdraw: '120,500.00 USDC', cumRealizedPnl: '+45,320.80 USDC',
+            cumDeposit: '980,000.00 USDC', cumRealizedPnl: '+45,320.80 USDC',
+            cumWithdraw: '120,500.00 USDC', cumAirdrop: '2,500.00 USDC',
             cumVolume: '156,800,000 USDC', vol14d: '12,450,800 USDC',
-            vip: 'VIP 2', taker: '0.034%', maker: '0.010%', feeDays: '12',
+            vip: 'VIP 2', vipTaker: '0.034%', vipMaker: '0.010%',
+            customTaker: '0.028%', customMaker: '0.008%', feeDays: '12',
             devices: [
                 { time: '2026-10-26 18:22:10', ip: '103.21.44.88', device: 'Chrome 141 / macOS 15', client: 'Web' },
                 { time: '2026-10-25 09:11:02', ip: '103.21.44.90', device: 'ForX App / iOS 18.1', client: 'iOS' }
@@ -169,9 +179,11 @@
             userType: 'mm_external', teamTag: 'Alpha MM', lastLogin: '2026-10-26 09:05:33', loginIp: '47.88.12.4',
             totalAsset: '2,410,000.00 USDC', fundingBal: '410,000.00 USDC', tradingBal: '2,000,000.00 USDC',
             marginRatio: '42.1%', upnl: '-12,400.00 USDC', maintMargin: '180,200.00 USDC',
-            cumDeposit: '5,200,000.00 USDC', cumWithdraw: '800,000.00 USDC', cumRealizedPnl: '+892,100.00 USDC',
+            cumDeposit: '5,200,000.00 USDC', cumRealizedPnl: '+892,100.00 USDC',
+            cumWithdraw: '800,000.00 USDC', cumAirdrop: '0.00 USDC',
             cumVolume: '2,890,000,000 USDC', vol14d: '89,102,400 USDC',
-            vip: 'VIP 4', taker: '0.026%', maker: '0.004%', feeDays: '—',
+            vip: 'VIP 4', vipTaker: '0.026%', vipMaker: '0.012%',
+            customTaker: '0.020%', customMaker: '0.004%', feeDays: '—',
             devices: [{ time: '2026-10-26 09:05:33', ip: '47.88.12.4', device: 'API Client', client: 'API' }]
         },
         '10019833': {
@@ -179,9 +191,10 @@
             userType: 'mm_internal', teamTag: 'Desk-Quant', lastLogin: '2026-10-25 22:18:00', loginIp: '198.18.0.12',
             totalAsset: '8,240.00 USDC', fundingBal: '1,200.00 USDC', tradingBal: '7,040.00 USDC',
             marginRatio: '—', upnl: '0.00 USDC', maintMargin: '—',
-            cumDeposit: '50,000.00 USDC', cumWithdraw: '12,000.00 USDC', cumRealizedPnl: '-2,400.00 USDC',
+            cumDeposit: '50,000.00 USDC', cumRealizedPnl: '-2,400.00 USDC',
+            cumWithdraw: '12,000.00 USDC', cumAirdrop: '500.00 USDC',
             cumVolume: '890,000 USDC', vol14d: '320,500 USDC',
-            vip: 'VIP 0', taker: '0.050%', maker: '0.020%', feeDays: '—',
+            vip: 'VIP 0', vipTaker: '0.050%', vipMaker: '0.020%', feeDays: '—',
             devices: [{ time: '2026-10-20 14:02:00', ip: '198.18.0.12', device: 'Safari / iOS 17', client: 'iOS' }]
         }
     };
@@ -259,6 +272,19 @@
         return profile[key] != null && profile[key] !== '' ? profile[key] : '—';
     }
 
+    function feePairDisplay(taker, maker) {
+        if (!taker && !maker) return '—';
+        return 'Taker ' + (taker || '—') + ' / Maker ' + (maker || '—');
+    }
+
+    function vipFeeDisplay(p) {
+        return feePairDisplay(p.vipTaker, p.vipMaker);
+    }
+
+    function customFeeDisplay(p) {
+        return feePairDisplay(p.customTaker, p.customMaker);
+    }
+
     function renderProfile() {
         const uid = qsUid();
         profile = DEMO_USERS[uid] || Object.assign({}, DEMO_USERS['10028471'], { uid, email: '', wallet: '', devices: [] });
@@ -275,20 +301,22 @@
         renderDetailGrid('assetInfoGrid', [
             { label: '总资产价值', value: metricOrDash(profile, 'totalAsset') },
             { label: '资金账户余额', value: metricOrDash(profile, 'fundingBal') },
-            { label: '交易账户余额', value: metricOrDash(profile, 'tradingBal') },
+            { label: '交易账户权益', value: metricOrDash(profile, 'tradingBal') },
             { label: '账户保证金比例', value: metricOrDash(profile, 'marginRatio') },
             { label: '未实现盈亏', value: metricOrDash(profile, 'upnl') },
             { label: '维持保证金', value: metricOrDash(profile, 'maintMargin') },
             { label: '累计充值金额', value: metricOrDash(profile, 'cumDeposit') },
+            { label: '累计平仓已实现盈亏', value: metricOrDash(profile, 'cumRealizedPnl') },
             { label: '累计提现金额', value: metricOrDash(profile, 'cumWithdraw') },
-            { label: '累计平仓已实现盈亏', value: metricOrDash(profile, 'cumRealizedPnl') }
+            { label: '累计空投金额', value: metricOrDash(profile, 'cumAirdrop') }
         ]);
 
         renderDetailGrid('tradeInfoGrid', [
             { label: '累计交易量', value: metricOrDash(profile, 'cumVolume') },
             { label: '过去 14 天交易量', value: metricOrDash(profile, 'vol14d') },
             { label: 'VIP 等级', value: metricOrDash(profile, 'vip') },
-            { label: '费率 (Taker / Maker)', value: (profile.taker || '—') + ' / ' + (profile.maker || '—') },
+            { label: 'VIP 费率', value: vipFeeDisplay(profile) },
+            { label: '自定义费率', value: customFeeDisplay(profile) },
             { label: '自定义费率有效期天数', value: metricOrDash(profile, 'feeDays') }
         ]);
 

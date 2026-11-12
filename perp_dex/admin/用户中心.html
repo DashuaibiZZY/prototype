@@ -33,7 +33,7 @@
 
     <div class="flex-1 overflow-y-auto p-8 space-y-6">
         <section class="card p-5">
-            <div class="grid grid-cols-4 gap-4 items-end lg:grid-cols-[1fr_1fr_1fr_auto]">
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-4 items-end">
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">UID</label>
                     <input id="filterUid" type="text" placeholder="输入 UID" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
@@ -51,7 +51,13 @@
                         <option value="mm_external">外部做市商</option>
                     </select>
                 </div>
-                <div class="flex gap-2">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">做市商团队标签</label>
+                    <select id="filterTeamTag" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white outline-none">
+                        <option value="all">全部</option>
+                    </select>
+                </div>
+                <div class="flex gap-2 sm:col-span-2 xl:col-span-1">
                     <button type="button" onclick="applyFilters()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-slate-800">查询</button>
                     <button type="button" onclick="resetFilters()" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50">重置</button>
                 </div>
@@ -177,7 +183,7 @@
 
 <script src="admin-pagination.js"></script>
 <script src="admin-mm-team-store.js?v=20261110-mm-dashboard"></script>
-<script src="admin-user-center-actions.js?v=20261112-no-freeze"></script>
+<script src="admin-user-center-actions.js?v=20261112-uc-polish"></script>
 <script>
     let users = [
         { uid: '10028471', email: 'trader@example.com', wallet: '', userType: 'retail', lastLogin: '2026-10-26 18:22:10', totalAsset: '125,430.50', vol14d: '12,450,800', vip: 'VIP 2' },
@@ -258,10 +264,29 @@
         if (window.AdminPagination) AdminPagination.mount('uc-list-pagination', sliced.total, listPage, 'uc-list');
     }
 
+    function populateTeamTagFilter() {
+        const sel = document.getElementById('filterTeamTag');
+        if (!sel) return;
+        const prev = sel.value || 'all';
+        const names = new Set();
+        if (window.AdminMmTeamStore) {
+            AdminMmTeamStore.getAll().forEach(function (t) { names.add(t.name); });
+        }
+        users.forEach(function (u) {
+            if (u.teamTag) names.add(u.teamTag);
+        });
+        const sorted = Array.from(names).sort(function (a, b) { return a.localeCompare(b, 'zh-CN'); });
+        sel.innerHTML = '<option value="all">全部</option>' + sorted.map(function (n) {
+            return '<option value="' + escapeHtml(n) + '">' + escapeHtml(n) + '</option>';
+        }).join('');
+        sel.value = sorted.indexOf(prev) >= 0 || prev === 'all' ? prev : 'all';
+    }
+
     function applyFilters() {
         const uid = document.getElementById('filterUid').value.trim();
         const contact = document.getElementById('filterContact').value.trim().toLowerCase();
         const ut = document.getElementById('filterUserType').value;
+        const team = document.getElementById('filterTeamTag').value;
         filteredUsers = users.filter(function (u) {
             if (uid && !u.uid.includes(uid)) return false;
             if (contact) {
@@ -269,6 +294,7 @@
                 if (!hay.includes(contact)) return false;
             }
             if (ut !== 'all' && u.userType !== ut) return false;
+            if (team !== 'all' && (u.teamTag || '') !== team) return false;
             return true;
         });
         listPage = 1;
@@ -279,6 +305,7 @@
         document.getElementById('filterUid').value = '';
         document.getElementById('filterContact').value = '';
         document.getElementById('filterUserType').value = 'all';
+        document.getElementById('filterTeamTag').value = 'all';
         filteredUsers = [...users];
         listPage = 1;
         renderTable();
@@ -300,6 +327,7 @@
     });
 
     initAdminSidebar('user-data', '登录身份: 运营管理员');
+    populateTeamTagFilter();
     renderTable();
     if (window.AdminPagination) {
         AdminPagination.register('uc-list', function (p) { listPage = p; renderTable(); });
