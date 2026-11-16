@@ -32,7 +32,7 @@
         .pair-action-muted { color: #64748b; }
         .admin-subview { display: flex; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; }
         .admin-subview.hidden { display: none !important; }
-        #tag-modal.hidden, #save-confirm-modal.hidden, #status-action-modal.hidden { display: none !important; }
+        #tag-modal.hidden, #save-confirm-modal.hidden, #status-action-modal.hidden, #create-market-modal.hidden { display: none !important; }
         .toggle-switch { position: relative; display: inline-flex; align-items: center; cursor: pointer; flex-shrink: 0; }
         .toggle-switch input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
         .toggle-track { width: 44px; height: 24px; background: #e2e8f0; border-radius: 999px; position: relative; transition: background 0.2s; }
@@ -58,22 +58,46 @@
 
 <main class="flex-1 flex flex-col overflow-hidden">
 
-    <!-- Step 1: 选择交易市场 -->
+    <!-- Step 1: 清算币种 / 交易市场总览 -->
     <div id="view-market" class="admin-subview hidden">
         <header class="h-16 bg-white border-b border-slate-200 flex items-center px-8 shrink-0">
             <div>
-                <h1 class="text-lg font-bold text-slate-800 italic uppercase">合约交易 · 选择交易市场</h1>
-                <p class="text-[10px] text-slate-400 mt-0.5">请先选择市场基础计价货币，再进入交易对配置</p>
+                <h1 class="text-lg font-bold text-slate-800 italic uppercase">合约交易 · 交易市场</h1>
+                <p class="text-[10px] text-slate-400 mt-0.5">按清算币种查看交易对汇总，进入详情管理交易对列表</p>
             </div>
         </header>
-        <div class="flex-1 overflow-y-auto p-8 flex items-start justify-center">
-            <section class="section-card w-full max-w-lg space-y-6">
-                <div class="hint-box">计价货币来自<strong>币种配置</strong>中已<strong>开启交易市场</strong>的代币；未开启的选项置灰不可选。</div>
-                <div>
-                    <label class="input-label">市场基础计价货币</label>
-                    <select id="market-coin-select" class="field-input bg-white font-bold"></select>
+        <div class="flex-1 overflow-y-auto p-8 space-y-4">
+            <section class="section-card p-4">
+                <div class="flex flex-wrap items-end gap-4">
+                    <div class="min-w-[180px] flex-1">
+                        <label class="input-label" for="market-filter-quote">清算币种</label>
+                        <select id="market-filter-quote" class="field-input bg-white font-bold">
+                            <option value="all">全部</option>
+                            <option value="USDC">USDC</option>
+                            <option value="USD1">USD1</option>
+                        </select>
+                    </div>
+                    <button type="button" data-action="market-query" class="px-8 py-2.5 bg-slate-900 text-white font-black rounded-sm uppercase tracking-wide">查询</button>
+                    <button type="button" data-action="open-create-market" class="px-6 py-2.5 bg-blue-600 text-white font-black rounded-sm hover:bg-blue-700 uppercase">创建新交易市场</button>
                 </div>
-                <button type="button" data-action="confirm-market" id="btn-market-confirm" class="w-full py-3 bg-blue-600 text-white font-black rounded-sm hover:bg-blue-700 uppercase tracking-wide">确认并进入交易对配置</button>
+            </section>
+            <section class="section-card overflow-hidden !p-0">
+                <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <h2 class="font-black text-slate-700 uppercase tracking-tighter">交易市场列表</h2>
+                    <span id="market-overview-hint" class="text-[10px] text-slate-400 font-bold">共 0 条</span>
+                </div>
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 text-slate-400 font-black text-[10px] uppercase border-b border-slate-100">
+                    <tr>
+                        <th class="px-6 py-4">清算币种</th>
+                        <th class="px-6 py-4 text-center">交易对数量</th>
+                        <th class="px-6 py-4 text-center">已上线交易对</th>
+                        <th class="px-6 py-4 text-right">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="market-overview-body" class="divide-y divide-slate-50 text-[11px] font-medium"></tbody>
+                </table>
+                <div id="market-overview-pagination" class="border-t border-slate-100"></div>
             </section>
         </div>
     </div>
@@ -83,7 +107,7 @@
         <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
             <div>
                 <h1 class="text-lg font-bold text-slate-800 italic uppercase">交易对配置</h1>
-                <p class="text-[10px] text-slate-400 mt-0.5">计价市场 <span id="current-market-label" class="text-blue-600 font-black">USDC</span> · <button type="button" data-action="switch-market" class="text-slate-500 underline hover:text-black">切换市场</button></p>
+                <p class="text-[10px] text-slate-400 mt-0.5">计价市场 <span id="current-market-label" class="text-blue-600 font-black">USDC</span> · <button type="button" data-action="switch-market" class="text-slate-500 underline hover:text-black">返回交易市场</button></p>
             </div>
             <button type="button" data-action="add-pair" class="bg-blue-600 text-white px-4 py-2 rounded-sm font-black hover:bg-blue-700 uppercase">+ 新增交易对</button>
         </header>
@@ -156,8 +180,13 @@
             <section class="section-card space-y-4" data-form-section id="section-basic-info">
                 <h3 class="section-title">基础信息</h3>
                 <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="input-label">产品名称 PRODUCT_NAME</label>
+                        <input id="form-product-name" class="field-input font-black bg-slate-50" disabled placeholder="BTCUSDC">
+                        <p class="text-[9px] text-slate-400 mt-1 italic">由基础币种与计价币种自动拼接，不可编辑</p>
+                    </div>
                     <div class="col-span-2 icon-mode-root">
-                        <label class="input-label">图标 icon_url</label>
+                        <label class="input-label">图标 ICON_URL</label>
                         <input type="radio" name="icon-mode" id="icon-radio-url" class="icon-radio" value="url" checked>
                         <input type="radio" name="icon-mode" id="icon-radio-upload" class="icon-radio" value="upload">
                         <div class="icon-mode-tabs">
@@ -165,7 +194,7 @@
                             <label for="icon-radio-upload" class="icon-mode-btn">本地上传</label>
                         </div>
                         <div id="icon-panel-url">
-                            <input id="form-icon-url" class="field-input" placeholder="https://static.example.com/icons/btc.png">
+                            <input id="form-icon-url" class="field-input" placeholder="https://static.example.com/icons/new.png">
                             <p class="text-[9px] text-slate-400 mt-1 italic">方式 1：直接输入图片 URL</p>
                         </div>
                         <div id="icon-panel-upload" class="icon-panel-upload">
@@ -175,38 +204,41 @@
                             <p class="text-[9px] text-slate-400 mt-1 italic">方式 2：上传 PNG、JPG 格式图片（原型演示将转为本地预览地址）</p>
                         </div>
                     </div>
-                    <div><label class="input-label">面值 swap_value</label><input id="form-swap-value" class="field-input" placeholder="0.001"></div>
+                    <div>
+                        <label class="input-label">面值 SWAP_VALUE</label>
+                        <input id="form-swap-value" class="field-input" placeholder="0.001">
+                    </div>
                     <div class="col-span-2">
-                        <label class="input-label">基础币种 base_coin_name</label>
+                        <label class="input-label">基础币 · 基础币种 BASE_COIN_NAME</label>
                         <input id="form-base-coin" class="field-input font-black max-w-md" placeholder="如 BTC">
-                        <p class="text-[9px] text-slate-400 mt-1 italic">交易对名称 product_name 由<strong>基础币种 + 计价市场</strong>自动生成（如 BTC + USDC → BTCUSDC）。<strong>不支持</strong>与当前计价资产相同的币种。</p>
+                        <p class="text-[9px] text-slate-400 mt-1 italic">不支持与当前计价资产相同的币种。</p>
                         <div class="mt-3 max-w-xl">
                             <div class="flex justify-between items-end gap-2 mb-1">
-                                <label class="input-label mb-0">币种描述 Description</label>
+                                <label class="input-label mb-0">币种描述 DESCRIPTION</label>
                                 <span id="form-coin-desc-count" class="text-[9px] font-bold text-slate-400">0/50</span>
                             </div>
                             <textarea id="form-coin-description" class="field-input min-h-[72px] resize-y" maxlength="50" placeholder="关联 CoinOverview 表的币种描述"></textarea>
                             <p class="text-[9px] text-slate-400 mt-1 italic">原型：关联 <strong>CoinOverview</strong> 表 · 最多 50 字符</p>
                         </div>
                     </div>
-                    <div><label class="input-label">基础币种精度 coin_precision</label><input id="form-coin-precision" type="number" class="field-input" value="4"></div>
-                    <div><label class="input-label">计价币种精度 quote_precision</label><input id="form-quote-precision" type="number" class="field-input" value="2"></div>
-                    <div><label class="input-label">价格精度 price_precision</label><input id="form-price-precision" type="number" class="field-input" value="1"></div>
+                    <div><label class="input-label">基础币种精度 COIN_PRECISION</label><input id="form-coin-precision" type="number" class="field-input" value="4"><span class="text-[9px] text-slate-400 ml-1">位</span></div>
+                    <div><label class="input-label">计价币种精度 QUOTE_PRECISION</label><input id="form-quote-precision" type="number" class="field-input" value="2"><span class="text-[9px] text-slate-400 ml-1">位</span></div>
+                    <div><label class="input-label">价格精度 PRICE_PRECISION</label><input id="form-price-precision" type="number" class="field-input" value="1"><span class="text-[9px] text-slate-400 ml-1">位</span></div>
                 </div>
             </section>
 
             <!-- 维护保证金率阶梯 -->
             <section class="section-card space-y-4" data-form-section id="section-margin">
                 <div class="flex justify-between items-center">
-                    <h3 class="section-title mb-0 border-0 pb-0">维护保证金率阶梯 maintenance_margin_rate</h3>
+                    <h3 class="section-title mb-0 border-0 pb-0">维护保证金率阶梯 MAINTENANCE_MARGIN_RATE</h3>
                     <button type="button" data-action="add-margin" class="px-3 py-1 bg-slate-900 text-white font-black rounded-sm text-[10px]">+ 添加档位</button>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-[11px]">
                         <thead class="text-[10px] text-slate-400 font-black uppercase"><tr>
-                            <th class="pb-2 pr-2">持仓下限 min_quantity</th>
-                            <th class="pb-2 pr-2">持仓上限 max_quantity</th>
-                            <th class="pb-2 pr-2">最大杠杆 max_level</th>
+                            <th class="pb-2 pr-2">持仓下限 MIN_QUANTITY</th>
+                            <th class="pb-2 pr-2">持仓上限 MAX_QUANTITY</th>
+                            <th class="pb-2 pr-2">最大杠杆 MAX_LEVEL</th>
                             <th class="pb-2 pr-2">维持保证金率</th>
                             <th class="pb-2 text-right">操作</th>
                         </tr></thead>
@@ -220,25 +252,25 @@
                 <h3 class="section-title">展示与状态</h3>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="toggle-row">
-                        <span class="text-[11px] font-bold text-slate-700">前端隐藏 front_hidden</span>
+                        <span class="text-[11px] font-bold text-slate-700">前端隐藏 FRONT_HIDDEN</span>
                         <label class="toggle-switch"><input id="form-front-hidden" type="checkbox"><span class="toggle-track"></span></label>
                     </div>
                     <div class="toggle-row">
-                        <span class="text-[11px] font-bold text-slate-700">APP首屏行情开关 quote_enable</span>
+                        <span class="text-[11px] font-bold text-slate-700">APP首屏行情开关 QUOTE_ENABLE</span>
                         <label class="toggle-switch"><input id="form-quote-enable" type="checkbox"><span class="toggle-track"></span></label>
                     </div>
-                    <div><label class="input-label">APP首屏行情排序 quote_sort</label><input id="form-quote-sort" type="number" class="field-input" value="1"></div>
-                    <div><label class="input-label">排序权重 sort</label><input id="form-sort" type="number" class="field-input" value="1"></div>
-                    <div><label class="input-label">订单簿深度 depth_level</label><input id="form-depth-level" type="number" class="field-input" value="10"></div>
+                    <div><label class="input-label">APP首屏行情排序 QUOTE_SORT</label><input id="form-quote-sort" type="number" class="field-input" value="7"></div>
+                    <div><label class="input-label">排序权重 SORT</label><input id="form-sort" type="number" class="field-input" value="7"></div>
+                    <div><label class="input-label">订单簿深度 DEPTH_LEVEL</label><input id="form-depth-level" type="number" class="field-input" value="10"><span class="text-[9px] text-slate-400 ml-1">档</span></div>
                     <div class="col-span-2">
-                        <label class="input-label">允许交易开始时间 allow_trade_start_time</label>
+                        <label class="input-label">允许交易开始时间 ALLOW_TRADE_START_TIME</label>
                         <p id="form-allow-trade-start-display" class="field-input bg-slate-50 text-slate-600">—</p>
                         <p class="text-[9px] text-slate-400 mt-1 italic">不在此编辑。仅在列表操作<strong>「上线启用」</strong>或<strong>「重新上线」</strong>的确认弹窗内配置，须为当前时间之后。</p>
                     </div>
                 </div>
                 <div>
                     <div class="flex justify-between items-center mb-2">
-                        <label class="input-label mb-0">标签 tags</label>
+                        <label class="input-label mb-0">标签 TAGS</label>
                         <button type="button" data-action="edit-tags" class="text-blue-600 font-black text-[10px] hover:underline">编辑标签选项</button>
                     </div>
                     <div id="tag-checkbox-wrap" class="flex flex-wrap"></div>
@@ -247,49 +279,50 @@
 
             <!-- 限制配置 -->
             <section id="section-limit-config" class="section-card space-y-4" data-form-section>
-                <h3 class="section-title">限制配置 limit_config</h3>
+                <h3 class="section-title">限制配置 LIMIT_CONFIG</h3>
                 <p id="limit-config-edit-hint" class="hint-box hidden">当前状态仅可修改限制配置 limit_config；<strong>最小步进 price_unit</strong> 不可修改。暂停、下线状态支持编辑全部字段。</p>
                 <div class="grid grid-cols-3 gap-4">
-                    <div><label class="input-label">市价最大吃深度 market_max_deeps</label><input id="form-lc-market-max-deeps" type="number" class="field-input"></div>
-                    <div><label class="input-label">最小步进 price_unit</label><input id="form-lc-price-unit" type="number" class="field-input"></div>
-                    <div><label class="input-label">价格比例限制 price_range</label><input id="form-lc-price-range" class="field-input"></div>
-                    <div><label class="input-label">熔断系数 circuit_rate</label><input id="form-lc-circuit-rate" class="field-input"></div>
-                    <div><label class="input-label">单笔最大成交价值 max_once_limit_cost</label><input id="form-lc-max-once" class="field-input"></div>
-                    <div><label class="input-label">单笔最小成交价值 min_once_limit_cost</label><input id="form-lc-min-once" class="field-input"></div>
-                    <div><label class="input-label">市价拆单基础币种数量 split_market_cost</label><input id="form-lc-split-market" class="field-input"></div>
-                    <div><label class="input-label">最大持仓数量 max_hold_amount</label><input id="form-lc-max-hold" class="field-input"></div>
-                    <div><label class="input-label">最大挂单数 max_book_num</label><input id="form-lc-max-book" type="number" class="field-input"></div>
+                    <div><label class="input-label">市价最大吃深度 MARKET_MAX_DEEPS</label><input id="form-lc-market-max-deeps" type="number" class="field-input" placeholder="5"><span class="text-[9px] text-slate-400 ml-1">档</span></div>
+                    <div><label class="input-label">最小步进 PRICE_UNIT</label><input id="form-lc-price-unit" type="number" class="field-input" placeholder="1"></div>
+                    <div><label class="input-label">价格比例限制 PRICE_RANGE</label><input id="form-lc-price-range" class="field-input" placeholder="0.05"><p class="text-[9px] text-slate-400 mt-1">小数比例，0.1 = 10%</p></div>
+                    <div><label class="input-label">熔断系数 CIRCUIT_RATE</label><input id="form-lc-circuit-rate" class="field-input" placeholder="0.02"><p class="text-[9px] text-slate-400 mt-1">小数比例，0.1 = 10%</p></div>
+                    <div><label class="input-label">单笔最大成交价值 MAX_ONCE_LIMIT_COST</label><input id="form-lc-max-once" class="field-input"><span class="text-[9px] text-slate-400 ml-1" id="form-limit-unit-max">USDC</span></div>
+                    <div><label class="input-label">单笔最小成交价值 MIN_ONCE_LIMIT_COST</label><input id="form-lc-min-once" class="field-input"><span class="text-[9px] text-slate-400 ml-1" id="form-limit-unit-min">USDC</span></div>
+                    <div><label class="input-label">市价拆单基础币种数量 SPLIT_MARKET_COST</label><input id="form-lc-split-market" class="field-input" placeholder="20000"></div>
+                    <div><label class="input-label">最大持仓数量 MAX_HOLD_AMOUNT</label><input id="form-lc-max-hold" class="field-input"><span class="text-[9px] text-slate-400 ml-1">基础币</span></div>
+                    <div><label class="input-label">最大挂单数 MAX_BOOK_NUM</label><input id="form-lc-max-book" type="number" class="field-input" placeholder="200"><span class="text-[9px] text-slate-400 ml-1">笔</span></div>
                 </div>
             </section>
 
             <!-- 资金费率 -->
             <section class="section-card space-y-4" data-form-section id="section-funding">
-                <h3 class="section-title">资金费率 funding_rate_config</h3>
+                <h3 class="section-title">资金费率 FUNDING_RATE_CONFIG</h3>
+                <p class="hint-box mb-2">上限、下限、利息基准均为小数比例，0.0001 = 0.01%。</p>
                 <div class="grid grid-cols-3 gap-4">
                     <div class="toggle-row col-span-3 max-w-md">
-                        <span class="text-[11px] font-bold text-slate-700">做市商管理 is_mm_admin</span>
+                        <span class="text-[11px] font-bold text-slate-700">做市商管理 IS_MM_ADMIN</span>
                         <label class="toggle-switch"><input id="form-fr-mm-admin" type="checkbox"><span class="toggle-track"></span></label>
                     </div>
-                    <div><label class="input-label">精度 funds_rate_precision</label><input id="form-fr-precision" type="number" class="field-input"></div>
-                    <div><label class="input-label">上限 funds_rate_max</label><input id="form-fr-max" class="field-input"></div>
-                    <div><label class="input-label">下限 funds_rate_min</label><input id="form-fr-min" class="field-input"></div>
-                    <div><label class="input-label">利息基准 funds_rate_interests</label><input id="form-fr-interests" class="field-input"></div>
-                    <div><label class="input-label">结算周期(小时) funds_interval_hour</label><input id="form-fr-interval" type="number" class="field-input"></div>
+                    <div><label class="input-label">精度 FUNDS_RATE_PRECISION</label><input id="form-fr-precision" type="number" class="field-input" placeholder="6"><span class="text-[9px] text-slate-400 ml-1">位</span></div>
+                    <div><label class="input-label">上限 FUNDS_RATE_MAX</label><input id="form-fr-max" class="field-input" placeholder="0.0075"></div>
+                    <div><label class="input-label">下限 FUNDS_RATE_MIN</label><input id="form-fr-min" class="field-input" placeholder="-0.0075"></div>
+                    <div><label class="input-label">利息基准 FUNDS_RATE_INTERESTS</label><input id="form-fr-interests" class="field-input" placeholder="0.0001"></div>
+                    <div><label class="input-label">结算周期 FUNDS_INTERVAL_HOUR</label><input id="form-fr-interval" type="number" class="field-input" placeholder="8"><span class="text-[9px] text-slate-400 ml-1">小时</span></div>
                     <div class="col-span-2">
-                        <label class="input-label">首次结算时间 funds_init_ts</label>
+                        <label class="input-label">首次结算时间 FUNDS_INIT_TS</label>
                         <p id="form-funds-init-display" class="field-input bg-slate-50 text-slate-600 max-w-md">—</p>
-                        <p class="text-[9px] text-slate-400 mt-1 italic">不在此编辑。仅在列表操作<strong>「上线启用」</strong>的确认弹窗内配置，须为当前时间之后。</p>
+                        <p class="text-[9px] text-slate-400 mt-1 italic">不在此编辑。新增时预填为 24 小时后，正式值在列表操作「上线启用」的确认弹窗内配置。</p>
                     </div>
                 </div>
             </section>
 
             <!-- 账户配置 -->
             <section class="section-card space-y-4" data-form-section id="section-account">
-                <h3 class="section-title">账户配置 account_config</h3>
+                <h3 class="section-title">账户配置 ACCOUNT_CONFIG</h3>
                 <div class="grid grid-cols-3 gap-4">
-                    <div><label class="input-label">风险账户最小余额 risk_account_min</label><input id="form-ac-risk-min" class="field-input"></div>
-                    <div><label class="input-label">风险阈值 risk_threshold</label><input id="form-ac-risk-threshold" class="field-input"></div>
-                    <div><label class="input-label">穿仓补偿上限 risk_reserve_coverage_limit</label><input id="form-ac-coverage" class="field-input"></div>
+                    <div><label class="input-label">风险账户最小余额 RISK_ACCOUNT_MIN</label><input id="form-ac-risk-min" class="field-input" placeholder="10000"><span class="text-[9px] text-slate-400 ml-1" id="form-ac-unit-min">USDC</span></div>
+                    <div><label class="input-label">风险阈值 RISK_THRESHOLD</label><input id="form-ac-risk-threshold" class="field-input" placeholder="0.8"><p class="text-[9px] text-slate-400 mt-1">比例，须大于 0 且小于 1</p></div>
+                    <div><label class="input-label">穿仓补偿上限 RISK_RESERVE_COVERAGE_LIMIT</label><input id="form-ac-coverage" class="field-input" placeholder="0.01"><p class="text-[9px] text-slate-400 mt-1">比例，须大于 0 且小于 0.02</p></div>
                 </div>
             </section>
 
@@ -297,23 +330,23 @@
             <section class="section-card space-y-4" data-form-section id="section-index">
                 <div class="flex justify-between items-center">
                     <div>
-                        <h3 class="section-title mb-1 border-0 pb-0">指数配置 index_config</h3>
+                        <h3 class="section-title mb-1 border-0 pb-0">指数配置 INDEX_CONFIG</h3>
                         <span id="index-weight-hint" class="text-[10px] font-bold text-slate-400">权重合计 100%</span>
                     </div>
                     <button type="button" data-action="add-index" id="btn-add-index" class="px-3 py-1 bg-slate-900 text-white font-black rounded-sm text-[10px]">+ 添加指数源</button>
                 </div>
                 <div class="toggle-row max-w-md mb-2">
-                    <span class="text-[11px] font-bold text-slate-700">启用指数 enable</span>
+                    <span class="text-[11px] font-bold text-slate-700">启用指数 ENABLE</span>
                     <label class="toggle-switch"><input id="form-ic-enable" type="checkbox" checked><span class="toggle-track"></span></label>
                 </div>
                 <p class="hint-box mb-3">源名称仅支持：binance、okx、bybit、hyperliquid；<strong>最多 4 个</strong>指数源且 <strong>source_name 不可重复</strong>；提交时 weight 合计须为 <strong>100%</strong>。</p>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-[11px]">
                         <thead class="text-[10px] text-slate-400 font-black uppercase"><tr>
-                            <th class="pb-2 pr-2">权重 weight</th>
-                            <th class="pb-2 pr-2">源 source_name</th>
-                            <th class="pb-2 pr-2">订阅基础币 sub_base_coin_name</th>
-                            <th class="pb-2 pr-2">订阅结算币 sub_value_coin_name</th>
+                            <th class="pb-2 pr-2">权重 WEIGHT</th>
+                            <th class="pb-2 pr-2">源 SOURCE_NAME</th>
+                            <th class="pb-2 pr-2">订阅基础币 SUB_BASE_COIN_NAME</th>
+                            <th class="pb-2 pr-2">订阅结算币 SUB_VALUE_COIN_NAME</th>
                             <th class="pb-2 text-right">操作</th>
                         </tr></thead>
                         <tbody id="index-source-body" class="divide-y"></tbody>
@@ -323,29 +356,54 @@
 
             <!-- 标记价格 -->
             <section class="section-card space-y-4" data-form-section id="section-tag-price">
-                <h3 class="section-title">标记价格 tag_price_config</h3>
+                <h3 class="section-title">标记价格 TAG_PRICE_CONFIG</h3>
+                <div class="toggle-row max-w-md mb-2">
+                    <span class="text-[11px] font-bold text-slate-700">做市商管理 IS_MM_ADMIN</span>
+                    <label class="toggle-switch"><input id="form-tp-mm-admin" type="checkbox"><span class="toggle-track"></span></label>
+                </div>
+                <p class="hint-box mb-3">关闭做市商管理时，系统需使用基差移动周期和计算类型计算标记价格；开启时这两项可选。</p>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="input-label">基差移动周期 basis_move_cycle</label><input id="form-tp-basis-cycle" type="number" class="field-input"></div>
-                    <div><label class="input-label">计算类型 tag_price_calculate_type</label><select id="form-tp-calc-type" class="field-input bg-white font-bold"></select></div>
+                    <div><label class="input-label">基差移动周期 BASIS_MOVE_CYCLE</label><input id="form-tp-basis-cycle" type="number" class="field-input" placeholder="20"></div>
+                    <div><label class="input-label">计算类型 TAG_PRICE_CALCULATE_TYPE</label><select id="form-tp-calc-type" class="field-input bg-white font-bold"></select></div>
                 </div>
             </section>
 
             <!-- 手续费率 -->
             <section class="section-card space-y-4" data-form-section id="section-fee">
-                <h3 class="section-title">手续费率 fee_rate_config</h3>
+                <h3 class="section-title">白名单手续费率 FEE_RATE_CONFIG</h3>
                 <div class="toggle-row max-w-md mb-2">
-                    <span class="text-[11px] font-bold text-slate-700">启用交易对费率 enable</span>
+                    <span class="text-[11px] font-bold text-slate-700">启动交易对白名单费率 ENABLE</span>
                     <label class="toggle-switch"><input id="form-fee-enable" type="checkbox" checked><span class="toggle-track"></span></label>
                 </div>
+                <p class="hint-box mb-3">费率为小数比例，0.0005 = 0.05%。</p>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="input-label">Taker 费率 taker_fee</label><input id="form-fee-taker" class="field-input"></div>
-                    <div><label class="input-label">Maker 费率 maker_fee</label><input id="form-fee-maker" class="field-input"></div>
+                    <div><label class="input-label">TAKER 费率 TAKER_FEE</label><input id="form-fee-taker" class="field-input" placeholder="0.0005"></div>
+                    <div><label class="input-label">MAKER 费率 MAKER_FEE</label><input id="form-fee-maker" class="field-input" placeholder="0.0002"></div>
                 </div>
             </section>
 
         </div>
     </div>
 </main>
+
+<!-- 创建交易市场 -->
+<div id="create-market-modal" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/50 p-4">
+    <div class="bg-white rounded-lg shadow-2xl w-full max-w-md p-6 space-y-4">
+        <h3 class="font-black text-slate-800">创建新交易市场</h3>
+        <div>
+            <label class="input-label" for="market-create-quote">选择清算币种</label>
+            <select id="market-create-quote" class="field-input bg-white font-bold">
+                <option value="">请选择</option>
+                <option value="USDC">USDC</option>
+                <option value="USD1">USD1</option>
+            </select>
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t">
+            <button type="button" data-action="close-create-market" class="px-4 py-2 border border-slate-200 font-bold rounded-sm">取消</button>
+            <button type="button" data-action="confirm-create-market" class="px-5 py-2 bg-blue-600 text-white font-black rounded-sm">确认创建</button>
+        </div>
+    </div>
+</div>
 
 <!-- 编辑标签弹窗 -->
 <div id="tag-modal" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4">
@@ -413,8 +471,9 @@
     </div>
 </div>
 
+<script src="admin-pagination.js"></script>
 <script src="admin-coin-config-store.js?v=20260919-quote-coin"></script>
-<script src="admin-contract-pairs.js?v=20260919-quote-coin"></script>
+<script src="admin-contract-pairs.js?v=20261116-market-list"></script>
 <script src="admin-sidebar.js?v=20260915-times"></script>
 <script>
     initAdminSidebar('contract-pairs', '登录身份: 合约运营');
