@@ -7,16 +7,18 @@
     var MAX_INDEX_SOURCES = 4;
 
     var TAG_PRICE_CALCULATE_TYPES = [
-        { value: 1, label: '采取中位数' },
+        { value: 1, label: '中位数价格' },
         { value: 2, label: '采用最新价' },
         { value: 3, label: '采用中间价合理价' },
         { value: 4, label: '采用资金费率溢价' }
     ];
 
-    var TAG_OPTIONS = ['perpetual', 'hot', 'new', 'meme'];
+    var TAG_OPTIONS = ['TradFi', 'jack', 'tory', 'AI', 'shawn'];
 
     /** 原型版本号：列表角标可核对是否加载到最新脚本 */
-    var MODULE_BUILD = '20260919-quote-coin';
+    var MODULE_BUILD = '20261116-market-list';
+
+    var CLEARING_MARKETS = ['USDC', 'USD1'];
 
     var STATUS_LABELS = {
         pending: '待启用',
@@ -107,10 +109,20 @@
                 return p;
             })()
         ],
-        USDT: []
+        USD1: [
+            (function () {
+                var p = defaultPair('ETHUSD1', 'ETH', 'USD1');
+                p.status = 'enabled';
+                p.quote_sort = 3;
+                p.sort = 3;
+                return p;
+            })()
+        ]
     };
 
     var selectedMarket = '';
+    var marketListFilter = 'all';
+    var marketListPage = 1;
     var editingProduct = null;
     var tagModalOpen = false;
     var iconInputMode = 'url';
@@ -119,7 +131,8 @@
     var pendingStatusTransition = null;
     var pairListFilters = { name: '', status: 'all' };
 
-    function defaultPair(productName, baseCoin) {
+    function defaultPair(productName, baseCoin, quoteMarket) {
+        quoteMarket = quoteMarket || selectedMarket || 'USDC';
         return {
             product_name: productName,
             icon_url: 'https://static.example.com/icons/' + baseCoin.toLowerCase() + '.png',
@@ -136,14 +149,14 @@
             ],
             front_hidden: false,
             status: 'pending',
-            quote_enable: false,
-            quote_sort: 1,
+            quote_enable: true,
+            quote_sort: 7,
             create_time: '2026-09-01 10:00:00',
             update_time: '2026-09-10 14:30:00',
-            allow_trade_start_time: '2026-09-01T00:00',
-            sort: 1,
+            allow_trade_start_time: '2026-11-17T16:40',
+            sort: 7,
             depth_level: 10,
-            tags: ['perpetual', 'hot'],
+            tags: ['TradFi', 'jack'],
             limit_config: {
                 market_max_deeps: 5,
                 price_unit: 1,
@@ -166,8 +179,8 @@
             },
             account_config: {
                 risk_account_min: '10000',
-                risk_threshold: '5000',
-                risk_reserve_coverage_limit: '0.02'
+                risk_threshold: '0.8',
+                risk_reserve_coverage_limit: '0.01'
             },
             index_config: {
                 enable: true,
@@ -177,6 +190,7 @@
                 ]
             },
             tag_price_config: {
+                is_mm_admin: false,
                 basis_move_cycle: 20,
                 tag_price_calculate_type: 1
             },
@@ -395,32 +409,132 @@
         return String(baseCoin || '').trim().toUpperCase() + String(quoteMarket || '').trim().toUpperCase();
     }
 
-    function syncMarketConfirmButton() {
-        var select = document.getElementById('market-coin-select');
-        var btn = document.getElementById('btn-market-confirm');
-        if (!select || !btn) return;
-        btn.disabled = !isContractMarketQuoteCoin(select.value);
+    function ensureMarketBucket(symbol) {
+        if (!pairsByMarket[symbol]) pairsByMarket[symbol] = [];
     }
 
-    function renderMarketView() {
-        var select = document.getElementById('market-coin-select');
-        if (!select) return;
-        var coins = getCoinConfigList().filter(function (c) { return c.status === 'enabled'; });
-        var quoteCoins = coins.filter(function (c) { return c.contract_market_enabled; });
-        select.innerHTML = coins.map(function (c) {
-            var selectable = !!c.contract_market_enabled;
-            var disabled = selectable ? '' : ' disabled';
-            var hint = selectable ? '' : '（未开启交易市场）';
-            return '<option value="' + c.symbol + '"' + disabled + '>' + c.symbol + ' · ' + c.name + hint + '</option>';
-        }).join('');
-        var preferred = quoteCoins.some(function (c) { return c.symbol === 'USDC'; }) ? 'USDC' : (quoteCoins[0] && quoteCoins[0].symbol);
-        if (preferred && select.querySelector('option[value="' + preferred + '"]:not([disabled])')) {
-            select.value = preferred;
-        } else if (quoteCoins[0]) {
-            select.value = quoteCoins[0].symbol;
+    function countEnabledPairs(symbol) {
+        return (pairsByMarket[symbol] || []).filter(function (p) { return p.status === 'enabled'; }).length;
+    }
+
+    function getMarketOverviewRows() {
+        var markets = CLEARING_MARKETS.slice();
+        Object.keys(pairsByMarket).forEach(function (k) {
+            if (markets.indexOf(k) < 0) markets.push(k);
+        });
+        markets.sort();
+        var filter = marketListFilter || 'all';
+        return markets.filter(function (m) {
+            return filter === 'all' || filter === m;
+        }).map(function (m) {
+            ensureMarketBucket(m);
+            var pairs = pairsByMarket[m] || [];
+            return {
+                quote: m,
+                total: pairs.length,
+                enabled: countEnabledPairs(m)
+            };
+        });
+    }
+
+    function readMarketFilterFromDom() {
+        var sel = document.getElementById('market-filter-quote');
+        marketListFilter = sel ? sel.value : 'all';
+    }
+
+    function syncMarketFilterDom() {
+        var sel = document.getElementById('market-filter-quote');
+        if (sel) sel.value = marketListFilter || 'all';
+    }
+
+    function renderMarketOverview() {
+        syncMarketFilterDom();
+        var rows = getMarketOverviewRows();
+        var hint = document.getElementById('market-overview-hint');
+        var sliced = global.AdminPagination
+            ? global.AdminPagination.slice(rows, marketListPage, 10)
+            : { items: rows, page: 1, total: rows.length };
+        marketListPage = sliced.page;
+        if (hint) hint.textContent = '共 ' + rows.length + ' 条 · ' + MODULE_BUILD;
+        var tbody = document.getElementById('market-overview-body');
+        if (!tbody) return;
+        if (!rows.length) {
+            tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400 font-bold">暂无交易市场</td></tr>';
+        } else {
+            tbody.innerHTML = sliced.items.map(function (row) {
+                return '<tr class="hover:bg-slate-50/80">' +
+                    '<td class="px-6 py-4 font-black text-slate-800">' + row.quote + '</td>' +
+                    '<td class="px-6 py-4 text-center font-mono">' + row.total + '</td>' +
+                    '<td class="px-6 py-4 text-center font-mono text-green-700 font-bold">' + row.enabled + '</td>' +
+                    '<td class="px-6 py-4 text-right">' +
+                    '<button type="button" class="pair-action-btn pair-action-primary" data-action="market-detail" data-quote="' + row.quote + '">详情</button>' +
+                    '</td></tr>';
+            }).join('');
         }
-        select.onchange = syncMarketConfirmButton;
-        syncMarketConfirmButton();
+        if (global.AdminPagination) {
+            global.AdminPagination.mount('market-overview-pagination', sliced.total, marketListPage, 'contract-market-overview');
+        }
+    }
+
+    function queryMarketOverview() {
+        readMarketFilterFromDom();
+        marketListPage = 1;
+        renderMarketOverview();
+    }
+
+    function openCreateMarketModal() {
+        var modal = document.getElementById('create-market-modal');
+        var sel = document.getElementById('market-create-quote');
+        if (sel) sel.value = '';
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeCreateMarketModal() {
+        var modal = document.getElementById('create-market-modal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    function confirmCreateMarket() {
+        var sel = document.getElementById('market-create-quote');
+        var quote = sel ? sel.value : '';
+        if (!quote) {
+            alert('请选择清算币种');
+            return;
+        }
+        ensureMarketBucket(quote);
+        if (CLEARING_MARKETS.indexOf(quote) < 0) CLEARING_MARKETS.push(quote);
+        closeCreateMarketModal();
+        marketListFilter = quote;
+        marketListPage = 1;
+        renderMarketOverview();
+        alert('已创建清算市场「' + quote + '」（原型演示）');
+    }
+
+    function openMarketDetail(quote) {
+        if (!quote) return;
+        ensureMarketBucket(quote);
+        selectedMarket = quote;
+        setStoredMarket(selectedMarket);
+        goList();
+    }
+
+    function syncQuoteUnitLabels() {
+        var unit = selectedMarket || 'USDC';
+        ['form-limit-unit-max', 'form-limit-unit-min', 'form-ac-unit-min'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = unit;
+        });
+    }
+
+    function syncProductNameDisplay() {
+        var el = document.getElementById('form-product-name');
+        if (!el) return;
+        var base = getField('form-base-coin').trim().toUpperCase();
+        if (!base) {
+            el.value = editingProduct || '';
+            return;
+        }
+        el.value = editingProduct || deriveProductName(base, selectedMarket);
     }
 
     function getFilteredPairs() {
@@ -730,12 +844,15 @@
     }
 
     function emptyPair() {
-        var base = defaultPair('NEWUSDC', 'NEW');
+        var base = defaultPair('NEW' + (selectedMarket || 'USDC'), 'NEW', selectedMarket);
         base.create_time = '';
         base.update_time = '';
         base.allow_trade_start_time = '';
         base.sort = getPairs().length + 1;
         base.quote_sort = getPairs().length + 1;
+        var fundsInitTs = Math.floor(Date.now() / 1000) + 86400;
+        if (!base.funding_rate_config) base.funding_rate_config = {};
+        base.funding_rate_config.funds_init_ts = fundsInitTs;
         return base;
     }
 
@@ -898,9 +1015,11 @@
     }
 
     function loadForm(pair) {
+        syncQuoteUnitLabels();
         loadIconFields(pair.icon_url);
         setField('form-swap-value', pair.swap_value);
         setField('form-base-coin', pair.base_coin_name);
+        syncProductNameDisplay();
         var descEl = document.getElementById('form-coin-description');
         if (descEl) {
             descEl.value = (pair.coin_description || '').slice(0, MAX_COIN_DESCRIPTION_LEN);
@@ -948,6 +1067,7 @@
         renderIndexRows(ic.source || []);
 
         var tp = pair.tag_price_config || {};
+        setField('form-tp-mm-admin', tp.is_mm_admin);
         setField('form-tp-basis-cycle', tp.basis_move_cycle);
         renderTagPriceCalcTypeSelect(tp.tag_price_calculate_type);
 
@@ -1094,6 +1214,7 @@
                 source: sources
             },
             tag_price_config: {
+                is_mm_admin: getField('form-tp-mm-admin'),
                 basis_move_cycle: Number(getField('form-tp-basis-cycle')),
                 tag_price_calculate_type: Number(getField('form-tp-calc-type'))
             },
@@ -1149,23 +1270,10 @@
         applyRoute();
     }
 
-    function confirmMarket() {
-        var select = document.getElementById('market-coin-select');
-        if (!select || !isContractMarketQuoteCoin(select.value)) {
-            alert('请选择已在币种配置中开启交易市场的计价货币');
-            return;
-        }
-        selectedMarket = select.value;
-        setStoredMarket(selectedMarket);
-        goList();
-    }
-
     function switchMarket() {
-        if (confirm('切换市场将返回市场选择页，是否继续？')) {
-            selectedMarket = '';
-            try { sessionStorage.removeItem(STORAGE_MARKET_KEY); } catch (e) { /* noop */ }
-            goMarket();
-        }
+        selectedMarket = '';
+        try { sessionStorage.removeItem(STORAGE_MARKET_KEY); } catch (e) { /* noop */ }
+        goMarket();
     }
 
     function openTagModal() {
@@ -1206,39 +1314,37 @@
 
     function applyRoute() {
         var hash = (location.hash || '').replace('#', '');
-        selectedMarket = resolveStoredMarket();
 
-        if (hash === 'market' || !selectedMarket) {
-            if (!selectedMarket || hash === 'market') {
-                renderMarketView();
-                showView('view-market');
-                return;
-            }
+        if (hash === 'market' || hash === '') {
+            renderMarketOverview();
+            showView('view-market');
+            return;
         }
 
+        selectedMarket = resolveStoredMarket();
+
         if (hash.indexOf('edit=') === 0) {
-            selectedMarket = resolveStoredMarket();
             if (!selectedMarket) { goMarket(); return; }
             openForm(false, decodeURIComponent(hash.slice(5)));
             return;
         }
 
         if (hash === 'new') {
-            selectedMarket = resolveStoredMarket();
             if (!selectedMarket) { goMarket(); return; }
             openForm(true);
             return;
         }
 
-        selectedMarket = resolveStoredMarket();
-        if (!selectedMarket) {
-            renderMarketView();
-            showView('view-market');
+        if (hash === 'list') {
+            if (!selectedMarket) { goMarket(); return; }
+            renderList();
+            syncPairListFilterInputsFromState();
+            showView('view-list');
             return;
         }
-        renderList();
-        syncPairListFilterInputsFromState();
-        showView('view-list');
+
+        renderMarketOverview();
+        showView('view-market');
     }
 
     function bindEvents() {
@@ -1246,7 +1352,11 @@
             var t = e.target.closest('[data-action]');
             if (!t) return;
             var action = t.getAttribute('data-action');
-            if (action === 'confirm-market') confirmMarket();
+            if (action === 'market-query') queryMarketOverview();
+            if (action === 'open-create-market') openCreateMarketModal();
+            if (action === 'close-create-market') closeCreateMarketModal();
+            if (action === 'confirm-create-market') confirmCreateMarket();
+            if (action === 'market-detail') openMarketDetail(t.getAttribute('data-quote'));
             if (action === 'switch-market') switchMarket();
             if (action === 'add-pair') { location.hash = '#new'; applyRoute(); }
             if (action === 'filter-pair-list') applyPairListFilters();
@@ -1319,6 +1429,7 @@
             }
             if (e.target.id === 'form-base-coin') {
                 syncCoinDescriptionFromOverview(e.target.value.trim().toUpperCase(), false);
+                syncProductNameDisplay();
             }
             if (e.target.id === 'form-coin-description') {
                 e.target.dataset.userEdited = '1';
@@ -1335,6 +1446,7 @@
             }
             if (e.target.id === 'form-base-coin') {
                 syncCoinDescriptionFromOverview(e.target.value.trim().toUpperCase(), true);
+                syncProductNameDisplay();
             }
         });
     }
@@ -1342,7 +1454,14 @@
     function init() {
         bindEvents();
         bindIconControls();
+        if (global.AdminPagination) {
+            global.AdminPagination.register('contract-market-overview', function (p) {
+                marketListPage = p;
+                renderMarketOverview();
+            });
+        }
         window.addEventListener('hashchange', applyRoute);
+        if (!location.hash) location.hash = '#market';
         applyRoute();
     }
 
