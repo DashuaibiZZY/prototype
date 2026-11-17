@@ -16,7 +16,7 @@
     var TAG_OPTIONS = ['TradFi', 'jack', 'tory', 'AI', 'shawn'];
 
     /** 原型版本号：列表角标可核对是否加载到最新脚本 */
-    var MODULE_BUILD = '20261116-market-list';
+    var MODULE_BUILD = '20261116-market-detail-fix';
 
     var CLEARING_MARKETS = ['USDC', 'USD1'];
 
@@ -314,10 +314,26 @@
         try { sessionStorage.setItem(STORAGE_MARKET_KEY, symbol); } catch (e) { /* noop */ }
     }
 
+    function isActiveClearingMarket(symbol) {
+        var sym = String(symbol || '').trim().toUpperCase();
+        if (!sym) return false;
+        if (CLEARING_MARKETS.indexOf(sym) >= 0) return true;
+        if (pairsByMarket[sym]) return true;
+        return isContractMarketQuoteCoin(sym);
+    }
+
     function resolveStoredMarket() {
         var stored = getStoredMarket();
-        if (stored && isContractMarketQuoteCoin(stored)) return stored;
+        if (stored && isActiveClearingMarket(stored)) return stored;
         return '';
+    }
+
+    /** 保留内存中的 selectedMarket（详情跳转刚写入），仅在缺失时用 session 补齐 */
+    function hydrateSelectedMarket() {
+        if (selectedMarket && isActiveClearingMarket(selectedMarket)) return selectedMarket;
+        var stored = resolveStoredMarket();
+        if (stored) selectedMarket = stored;
+        return selectedMarket;
     }
 
     function getPairs() {
@@ -1321,7 +1337,7 @@
             return;
         }
 
-        selectedMarket = resolveStoredMarket();
+        hydrateSelectedMarket();
 
         if (hash.indexOf('edit=') === 0) {
             if (!selectedMarket) { goMarket(); return; }
