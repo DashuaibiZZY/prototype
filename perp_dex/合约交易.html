@@ -78,6 +78,11 @@
             z-index: 9999;
         }
         #tpsl-order-container { overflow: visible; }
+        .margin-account-menu { box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+        .pos-side-pill { display: inline-block; font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 3px; margin-left: 4px; vertical-align: middle; }
+        .pos-side-pill.short { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+        .pos-side-pill.long { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .trial-fund-sub { padding-left: 10px; border-left: 2px solid #f3f4f6; margin-left: 2px; }
         #tpsl-order-container .tpsl-mode-label-row {
             position: relative;
             overflow: visible;
@@ -2308,61 +2313,73 @@
 
         <!-- 右侧账户信息面板 (优化版) -->
         <aside class="w-[300px] bg-white flex flex-col p-4 border-l border-gray-100 overflow-y-auto">
-            <!-- ===== 1. 保证金区块 ===== -->
+            <!-- ===== 1. 合约保证金 ===== -->
             <div class="mb-5">
-                <p class="font-black text-[11px] mb-2 uppercase tracking-wider text-black border-b border-gray-50 pb-1">全仓保證金</p>
+                <p class="font-black text-[11px] mb-2 uppercase tracking-wider text-black border-b border-gray-50 pb-1">合约保证金</p>
                 <div class="space-y-3 pt-1">
-                    <!-- 账户保证金比例 + 仪表盘图标 -->
-                    <div class="flex items-center justify-between">
-                        <span class="text-gray-400 text-[10px]">賬戶保證金比例</span>
-                        <div class="flex items-center space-x-2">
-                            <!-- 仪表盘图标 (半圆弧，颜色从绿到红，指针指向当前比例) -->
-                            <svg class="w-8 h-5" viewBox="0 0 40 20">
-                                <!-- 背景弧（灰） -->
-                                <path d="M5 18 A15 15 0 0 1 35 18" fill="none" stroke="#e5e7eb" stroke-width="4" stroke-linecap="round"/>
-                                <!-- 风险弧 (绿色到红色渐变，根据保证金比例计算弧长) -->
-                                <!-- 高风险示例：红色弧较长 -->
-                                <path d="M5 18 A15 15 0 0 1 32 10" fill="none" stroke="url(#riskGradient)" stroke-width="4" stroke-linecap="round"/>
-                                <!-- 指针 -->
-                                <circle cx="32" cy="10" r="2" fill="#ef4444"/>
-                                <defs>
-                                    <linearGradient id="riskGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                        <stop offset="0%" stop-color="#22c55e"/>
-                                        <stop offset="50%" stop-color="#eab308"/>
-                                        <stop offset="100%" stop-color="#ef4444"/>
-                                    </linearGradient>
-                                </defs>
+                    <div class="relative" id="margin-account-select-wrap">
+                        <button type="button" id="margin-account-select-btn" onclick="toggleMarginAccountMenu(event)" class="w-full flex items-center justify-between gap-2 py-1 text-left hover:bg-gray-50 rounded-sm -mx-1 px-1">
+                            <span id="margin-account-select-label" class="font-black text-[11px] text-gray-900">USDC 全仓</span>
+                            <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
                             </svg>
-                            <!-- 数值及颜色 -->
-                            <span class="font-bold text-green-500 text-[10px]">731.39%</span>
+                        </button>
+                        <div id="margin-account-menu" class="margin-account-menu hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-sm z-50 py-1 text-[10px] font-bold">
+                            <button type="button" class="w-full text-left px-3 py-2 hover:bg-gray-50 text-gray-900" onclick="selectMarginAccount(event, 'USDC 全仓')">USDC 全仓</button>
+                            <button type="button" class="w-full text-left px-3 py-2 hover:bg-gray-50 text-gray-900" onclick="selectMarginAccount(event, 'USD1 全仓')">USD1 全仓</button>
+                            <button type="button" class="w-full text-left px-3 py-2 hover:bg-gray-50 text-gray-900 flex items-center" onclick="selectMarginAccount(event, 'SOLUSDC 逐仓', '空')">
+                                <span>SOLUSDC 逐仓</span>
+                                <span class="pos-side-pill short">空</span>
+                            </button>
                         </div>
                     </div>
-                    <!-- 账户维持保证金 -->
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-400 text-[10px]">维持保证金率</span>
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-8 h-5 shrink-0" viewBox="0 0 40 20" aria-hidden="true">
+                                <path d="M5 18 A15 15 0 0 1 35 18" fill="none" stroke="#e5e7eb" stroke-width="4" stroke-linecap="round"/>
+                                <path d="M5 18 A15 15 0 0 1 8 16" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round"/>
+                                <circle cx="8" cy="16" r="2" fill="#22c55e"/>
+                            </svg>
+                            <span id="margin-maint-ratio-value" class="font-bold text-green-500 text-[10px]">0.00%</span>
+                        </div>
+                    </div>
                     <div class="flex justify-between items-center text-[10px]">
-                        <span class="text-gray-400">賬戶維持保證金</span>
-                        <span class="font-bold text-gray-900">1,043.23 USDC</span>
+                        <span class="text-gray-400">维持保证金</span>
+                        <span id="margin-maint-amount-value" class="font-bold text-gray-900">0.00 USDC</span>
                     </div>
                 </div>
             </div>
 
-            <!-- ===== 2. 永续账户区块 ===== -->
+            <!-- ===== 2. 永续账户 ===== -->
             <div class="mb-2">
-                <p class="font-black text-[11px] mb-2 uppercase tracking-wider text-black border-b border-gray-50 pb-1">永續賬戶</p>
+                <p class="font-black text-[11px] mb-2 uppercase tracking-wider text-black border-b border-gray-50 pb-1">永续账户</p>
                 <div class="space-y-2.5 pt-1">
-                    <!-- 总权益 -->
                     <div class="flex justify-between items-center text-[10px]">
-                        <span class="text-gray-400">總權益</span>
-                        <span class="font-bold text-gray-900">12,450.50 USDC</span>
+                        <span class="text-gray-400">总权益</span>
+                        <span class="font-bold text-gray-900">101,000.00 USDC</span>
                     </div>
-                    <!-- 未实现盈亏（根据正负值动态显示颜色） -->
                     <div class="flex justify-between items-center text-[10px]">
-                        <span class="text-gray-400">未實現盈虧</span>
-                        <span class="font-bold text-green-500">+166.05 USDC</span> <!-- 正数绿色，负数红色 -->
+                        <span class="text-gray-400">未实现盈亏</span>
+                        <span class="font-bold text-gray-900">0.00 USDC</span>
                     </div>
-                    <!-- 操作按钮（充值 + 划转） -->
+                    <div class="flex justify-between items-center text-[10px]">
+                        <span class="text-gray-400">体验金余额</span>
+                        <span class="font-bold text-gray-900">1,000.00 USDC</span>
+                    </div>
+                    <div class="trial-fund-sub space-y-1.5">
+                        <div class="flex justify-between items-center text-[10px]">
+                            <span class="text-gray-400">待使用</span>
+                            <span class="font-bold text-gray-900">1,000.00 USDC</span>
+                        </div>
+                        <div class="flex justify-between items-center text-[10px]">
+                            <span class="text-gray-400">使用中</span>
+                            <span class="font-bold text-gray-900">0.00 USDC</span>
+                        </div>
+                    </div>
                     <div class="flex gap-2 mt-3">
-                        <button class="flex-1 py-2 bg-black text-white rounded-[2px] text-[10px] font-bold hover:bg-gray-800 transition">充值</button>
-                        <button class="flex-1 py-2 border border-gray-200 rounded-[2px] text-[10px] font-bold hover:bg-gray-50 transition">劃轉</button>
+                        <button type="button" class="flex-1 py-2 bg-black text-white rounded-[2px] text-[10px] font-bold hover:bg-gray-800 transition">充值</button>
+                        <button type="button" class="flex-1 py-2 border border-gray-200 rounded-[2px] text-[10px] font-bold hover:bg-gray-50 transition">劃轉</button>
                     </div>
                 </div>
             </div>
@@ -5362,6 +5379,34 @@
         }
     }
     function toggleMultiSelect(dropdownId) { document.getElementById(dropdownId)?.classList.toggle('hidden'); }
+
+    function toggleMarginAccountMenu(e) {
+        if (e) e.stopPropagation();
+        const menu = document.getElementById('margin-account-menu');
+        if (menu) menu.classList.toggle('hidden');
+    }
+
+    function selectMarginAccount(e, label, side) {
+        if (e) e.stopPropagation();
+        const labelEl = document.getElementById('margin-account-select-label');
+        if (labelEl) {
+            if (side === '空') {
+                labelEl.innerHTML = label + ' <span class="pos-side-pill short">空</span>';
+            } else if (side === '多') {
+                labelEl.innerHTML = label + ' <span class="pos-side-pill long">多</span>';
+            } else {
+                labelEl.textContent = label;
+            }
+        }
+        const menu = document.getElementById('margin-account-menu');
+        if (menu) menu.classList.add('hidden');
+        const unitEl = document.getElementById('margin-maint-amount-value');
+        if (unitEl) {
+            var unit = (label.indexOf('USD1') >= 0) ? 'USD1' : (label.indexOf('SOL') >= 0 ? 'USDC' : 'USDC');
+            unitEl.textContent = '0.00 ' + unit;
+        }
+    }
+
     document.addEventListener('click', function(e) {
         if (!e.target.closest('[onclick^="toggleDatePicker"]') && !e.target.closest('.date-range-picker-popover')) {
             document.querySelectorAll('[id$="-date-picker"]').forEach(function (el) {
@@ -5380,6 +5425,11 @@
         const precisionDD = document.getElementById('precision-dropdown');
         if (precisionDD && !precisionDD.contains(e.target) && !e.target.closest('#precision-trigger')) {
             precisionDD.classList.add('hidden');
+        }
+        const marginMenu = document.getElementById('margin-account-menu');
+        const marginWrap = document.getElementById('margin-account-select-wrap');
+        if (marginMenu && marginWrap && !marginWrap.contains(e.target)) {
+            marginMenu.classList.add('hidden');
         }
     });
 
