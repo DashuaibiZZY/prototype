@@ -78,8 +78,11 @@
             z-index: 9999;
         }
         #tpsl-order-container { overflow: visible; }
-        .margin-account-menu { box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
-        .pos-side-pill { display: inline-block; font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 3px; margin-left: 4px; vertical-align: middle; }
+        .margin-account-menu { box-shadow: 0 8px 24px rgba(0,0,0,0.08); min-width: 100%; width: max-content; max-width: 100%; }
+        .margin-account-trigger { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; }
+        .margin-account-trigger-label { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+        .margin-account-trigger-chevron { width: 14px; height: 14px; color: #6b7280; flex-shrink: 0; margin-top: 1px; }
+        .pos-side-pill { display: inline-block; font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 3px; margin-left: 0; vertical-align: middle; }
         .pos-side-pill.short { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
         .pos-side-pill.long { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
         .trial-fund-sub { padding-left: 10px; border-left: 2px solid #f3f4f6; margin-left: 2px; }
@@ -2317,10 +2320,10 @@
             <div class="mb-5">
                 <p class="font-black text-[11px] mb-2 uppercase tracking-wider text-black border-b border-gray-50 pb-1">合约保证金</p>
                 <div class="space-y-3 pt-1">
-                    <div class="relative" id="margin-account-select-wrap">
-                        <button type="button" id="margin-account-select-btn" onclick="toggleMarginAccountMenu(event)" class="w-full flex items-center justify-between gap-2 py-1 text-left hover:bg-gray-50 rounded-sm -mx-1 px-1">
-                            <span id="margin-account-select-label" class="font-black text-[11px] text-gray-900">USDC 全仓</span>
-                            <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <div class="relative inline-block max-w-full" id="margin-account-select-wrap">
+                        <button type="button" id="margin-account-select-btn" onclick="toggleMarginAccountMenu(event)" class="margin-account-trigger py-1 text-left hover:bg-gray-50 rounded-sm -mx-1 px-1">
+                            <span id="margin-account-select-label" class="margin-account-trigger-label font-black text-[11px] text-gray-900">USDC 全仓</span>
+                            <svg class="margin-account-trigger-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </button>
@@ -5391,9 +5394,9 @@
         const labelEl = document.getElementById('margin-account-select-label');
         if (labelEl) {
             if (side === '空') {
-                labelEl.innerHTML = label + ' <span class="pos-side-pill short">空</span>';
+                labelEl.innerHTML = '<span class="margin-account-trigger-label font-black text-[11px] text-gray-900">' + label + '<span class="pos-side-pill short">空</span></span>';
             } else if (side === '多') {
-                labelEl.innerHTML = label + ' <span class="pos-side-pill long">多</span>';
+                labelEl.innerHTML = '<span class="margin-account-trigger-label font-black text-[11px] text-gray-900">' + label + '<span class="pos-side-pill long">多</span></span>';
             } else {
                 labelEl.textContent = label;
             }
