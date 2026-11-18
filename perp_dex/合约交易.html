@@ -78,10 +78,12 @@
             z-index: 9999;
         }
         #tpsl-order-container { overflow: visible; }
-        .margin-account-menu { box-shadow: 0 8px 24px rgba(0,0,0,0.08); min-width: 100%; width: max-content; max-width: 100%; }
-        .margin-account-trigger { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; }
-        .margin-account-trigger-label { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+        .margin-account-menu { box-shadow: 0 8px 24px rgba(0,0,0,0.08); width: max-content; min-width: 100%; white-space: nowrap; }
+        .margin-account-trigger { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; max-width: 100%; }
+        .margin-account-trigger-label { display: inline-flex; align-items: center; flex-wrap: nowrap; gap: 4px; white-space: nowrap; }
         .margin-account-trigger-chevron { width: 14px; height: 14px; color: #6b7280; flex-shrink: 0; margin-top: 1px; }
+        .margin-account-menu-item { display: flex; align-items: center; gap: 4px; width: 100%; text-align: left; white-space: nowrap; padding: 8px 12px; }
+        .margin-account-menu-item:hover { background: #f9fafb; }
         .pos-side-pill { display: inline-block; font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 3px; margin-left: 0; vertical-align: middle; }
         .pos-side-pill.short { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
         .pos-side-pill.long { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
@@ -2327,10 +2329,10 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </button>
-                        <div id="margin-account-menu" class="margin-account-menu hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-sm z-50 py-1 text-[10px] font-bold">
-                            <button type="button" class="w-full text-left px-3 py-2 hover:bg-gray-50 text-gray-900" onclick="selectMarginAccount(event, 'USDC 全仓')">USDC 全仓</button>
-                            <button type="button" class="w-full text-left px-3 py-2 hover:bg-gray-50 text-gray-900" onclick="selectMarginAccount(event, 'USD1 全仓')">USD1 全仓</button>
-                            <button type="button" class="w-full text-left px-3 py-2 hover:bg-gray-50 text-gray-900 flex items-center" onclick="selectMarginAccount(event, 'SOLUSDC 逐仓', '空')">
+                        <div id="margin-account-menu" class="margin-account-menu hidden absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-sm z-50 text-[10px] font-bold text-gray-900">
+                            <button type="button" class="margin-account-menu-item" onclick="selectMarginAccount(event, 'USDC 全仓')">USDC 全仓</button>
+                            <button type="button" class="margin-account-menu-item" onclick="selectMarginAccount(event, 'USD1 全仓')">USD1 全仓</button>
+                            <button type="button" class="margin-account-menu-item" onclick="selectMarginAccount(event, 'SOLUSDC 逐仓', '空')">
                                 <span>SOLUSDC 逐仓</span>
                                 <span class="pos-side-pill short">空</span>
                             </button>
@@ -2354,30 +2356,32 @@
                 </div>
             </div>
 
-            <!-- ===== 2. 永续账户 ===== -->
+            <!-- ===== 2. 资产区块（随清算账户切换） ===== -->
             <div class="mb-2">
-                <p class="font-black text-[11px] mb-2 uppercase tracking-wider text-black border-b border-gray-50 pb-1">永续账户</p>
+                <p id="perp-asset-section-title" class="font-black text-[11px] mb-2 uppercase tracking-wider text-black border-b border-gray-50 pb-1">USDC 资产</p>
                 <div class="space-y-2.5 pt-1">
                     <div class="flex justify-between items-center text-[10px]">
-                        <span class="text-gray-400">总权益</span>
-                        <span class="font-bold text-gray-900">101,000.00 USDC</span>
+                        <span class="text-gray-400">币种权益</span>
+                        <span id="perp-asset-equity-value" class="font-bold text-gray-900">101,000.00 USDC</span>
                     </div>
                     <div class="flex justify-between items-center text-[10px]">
                         <span class="text-gray-400">未实现盈亏</span>
-                        <span class="font-bold text-gray-900">0.00 USDC</span>
+                        <span id="perp-asset-upnl-value" class="font-bold text-gray-900">0.00 USDC</span>
                     </div>
-                    <div class="flex justify-between items-center text-[10px]">
-                        <span class="text-gray-400">体验金余额</span>
-                        <span class="font-bold text-gray-900">1,000.00 USDC</span>
-                    </div>
-                    <div class="trial-fund-sub space-y-1.5">
+                    <div id="trial-fund-block">
                         <div class="flex justify-between items-center text-[10px]">
-                            <span class="text-gray-400">待使用</span>
+                            <span class="text-gray-400">体验金余额</span>
                             <span class="font-bold text-gray-900">1,000.00 USDC</span>
                         </div>
-                        <div class="flex justify-between items-center text-[10px]">
-                            <span class="text-gray-400">使用中</span>
-                            <span class="font-bold text-gray-900">0.00 USDC</span>
+                        <div class="trial-fund-sub space-y-1.5 mt-2">
+                            <div class="flex justify-between items-center text-[10px]">
+                                <span class="text-gray-400">待使用</span>
+                                <span class="font-bold text-gray-900">1,000.00 USDC</span>
+                            </div>
+                            <div class="flex justify-between items-center text-[10px]">
+                                <span class="text-gray-400">使用中</span>
+                                <span class="font-bold text-gray-900">0.00 USDC</span>
+                            </div>
                         </div>
                     </div>
                     <div class="flex gap-2 mt-3">
@@ -5383,6 +5387,29 @@
     }
     function toggleMultiSelect(dropdownId) { document.getElementById(dropdownId)?.classList.toggle('hidden'); }
 
+    function resolveMarginAssetQuote(label) {
+        var text = String(label || '').trim();
+        if (text.indexOf('USD1') === 0) return 'USD1';
+        return 'USDC';
+    }
+
+    function syncMarginAccountDerivedUi(selectionLabel) {
+        var quote = resolveMarginAssetQuote(selectionLabel);
+        var titleEl = document.getElementById('perp-asset-section-title');
+        if (titleEl) titleEl.textContent = quote + ' 资产';
+        var trialBlock = document.getElementById('trial-fund-block');
+        if (trialBlock) trialBlock.classList.toggle('hidden', quote !== 'USDC');
+        var equityEl = document.getElementById('perp-asset-equity-value');
+        var upnlEl = document.getElementById('perp-asset-upnl-value');
+        if (equityEl) {
+            var eq = quote === 'USD1' ? '88,200.00' : '101,000.00';
+            equityEl.textContent = eq + ' ' + quote;
+        }
+        if (upnlEl) upnlEl.textContent = '0.00 ' + quote;
+        var unitEl = document.getElementById('margin-maint-amount-value');
+        if (unitEl) unitEl.textContent = '0.00 ' + quote;
+    }
+
     function toggleMarginAccountMenu(e) {
         if (e) e.stopPropagation();
         const menu = document.getElementById('margin-account-menu');
@@ -5394,21 +5421,19 @@
         const labelEl = document.getElementById('margin-account-select-label');
         if (labelEl) {
             if (side === '空') {
-                labelEl.innerHTML = '<span class="margin-account-trigger-label font-black text-[11px] text-gray-900">' + label + '<span class="pos-side-pill short">空</span></span>';
+                labelEl.innerHTML = label + '<span class="pos-side-pill short">空</span>';
             } else if (side === '多') {
-                labelEl.innerHTML = '<span class="margin-account-trigger-label font-black text-[11px] text-gray-900">' + label + '<span class="pos-side-pill long">多</span></span>';
+                labelEl.innerHTML = label + '<span class="pos-side-pill long">多</span>';
             } else {
                 labelEl.textContent = label;
             }
         }
         const menu = document.getElementById('margin-account-menu');
         if (menu) menu.classList.add('hidden');
-        const unitEl = document.getElementById('margin-maint-amount-value');
-        if (unitEl) {
-            var unit = (label.indexOf('USD1') >= 0) ? 'USD1' : (label.indexOf('SOL') >= 0 ? 'USDC' : 'USDC');
-            unitEl.textContent = '0.00 ' + unit;
-        }
+        syncMarginAccountDerivedUi(label);
     }
+
+    syncMarginAccountDerivedUi('USDC 全仓');
 
     document.addEventListener('click', function(e) {
         if (!e.target.closest('[onclick^="toggleDatePicker"]') && !e.target.closest('.date-range-picker-popover')) {
