@@ -14,10 +14,10 @@
   "flowchart": {
     "htmlLabels": true,
     "curve": "basis",
-    "nodeSpacing": 38,
-    "rankSpacing": 56,
+    "nodeSpacing": 28,
+    "rankSpacing": 54,
     "wrappingWidth": 420,
-    "padding": 16
+    "padding": 14
   }
 }}%%
 %% 在线访问：https://dashuaibizzy.github.io/prototype/perp_dex/流程图/ForX资金架构图.svg
@@ -46,38 +46,67 @@ flowchart TB
 
     WD["<b>用户提现地址</b>"]
 
-    WARM_N["<div style='text-align:left;line-height:1.6'><b>平台资产底仓储备 N1、N2 …… N</b><br/><span style='color:#63478A'><b>（专用温钱包）</b>· 多钱包，根据资金量分配调整</span><br/><span style='color:#465D72;font-size:13px'>说明：专用存储平台自有资产直接入温钱包，不先充 Cobo 热钱包；<br/>Cobo 热钱包充提不足时再划拨补足</span></div>"]
+    subgraph GRP_N["<b>平台资产底仓储备</b>（专用温钱包）"]
+        direction TB
+        subgraph GRP_N_W["<span style='color:#63478A;font-size:12px'>多个同类钱包，根据资金量分配调整</span>"]
+            direction LR
+            N1["底仓钱包 N1"]
+            N2["底仓钱包 N2"]
+            N3["…"]
+            NN["底仓钱包 N"]
+            N1 ~~~ N2 ~~~ N3 ~~~ NN
+        end
+        N_NOTE["<div style='text-align:left;line-height:1.55'><span style='color:#465D72'><b>说明：</b>专用存储平台自有资产，直接入温钱包，<br/>不先充 Cobo 热钱包；Cobo 热钱包充提不足时再划拨补足</span></div>"]
+        GRP_N_W ~~~ N_NOTE
+    end
 
-    WARM_F["<div style='text-align:left;line-height:1.6'><b>平台手续费收入 F1、F2 …… F</b><br/><span style='color:#63478A'><b>（专用温钱包）</b>· 多钱包，根据资金量分配调整</span><br/><span style='color:#465D72;font-size:13px'>说明：专用存储平台手续费收入定期从 Cobo 热钱包转入温钱包，<br/>但须保留充提底仓资金</span></div>"]
+    subgraph GRP_F["<b>平台手续费收入</b>（专用温钱包）"]
+        direction TB
+        subgraph GRP_F_W["<span style='color:#63478A;font-size:12px'>多个同类钱包，根据资金量分配调整</span>"]
+            direction LR
+            F1["手续费钱包 F1"]
+            F2["手续费钱包 F2"]
+            F3["…"]
+            FF["手续费钱包 F"]
+            F1 ~~~ F2 ~~~ F3 ~~~ FF
+        end
+        F_NOTE["<div style='text-align:left;line-height:1.55'><span style='color:#465D72'><b>说明：</b>专用存储平台手续费收入，定期从 Cobo 热钱包<br/>转入温钱包，但须保留充提底仓资金</span></div>"]
+        GRP_F_W ~~~ F_NOTE
+    end
 
-    WARM_U["<div style='text-align:left;line-height:1.6'><b>用户资产存储 U1、U2 …… U</b><br/><span style='color:#63478A'><b>（专用温钱包）</b>· 多钱包，根据资金量分配调整</span><br/><span style='color:#465D72;font-size:13px'>说明：专用存储平台用户充值资金中，超出充提底仓需求的部分<br/>定期从 Cobo 热钱包转入温钱包</span></div>"]
+    subgraph GRP_U["<b>用户资产存储</b>（专用温钱包）"]
+        direction TB
+        subgraph GRP_U_W["<span style='color:#63478A;font-size:12px'>多个同类钱包，根据资金量分配调整</span>"]
+            direction LR
+            U1["用户钱包 U1"]
+            U2["用户钱包 U2"]
+            U3["…"]
+            UU["用户钱包 U"]
+            U1 ~~~ U2 ~~~ U3 ~~~ UU
+        end
+        U_NOTE["<div style='text-align:left;line-height:1.55'><span style='color:#465D72'><b>说明：</b>专用存储平台用户充值资金中，超出充提底仓需求<br/>的部分，定期从 Cobo 热钱包转入温钱包</span></div>"]
+        GRP_U_W ~~~ U_NOTE
+    end
 
-    %% 0, 1: 锚定顶部概念定义（link 0,1 在 DEF 内部，link 2 在 DEF -> EXT）
+    %% 顶部概念定义锚定
     DEF ~~~ EXT
 
-    %% 3: 外部钱包 -> Privy
+    %% 主资金流与配置
     EXT -->|"充值"| PRIVY
-    %% 4: Privy -> Swap
     PRIVY --> SWAP
-    %% 5: 充提后台 -> Swap（虚线）
     ADMIN -. "按链配置收益收款地址" .-> SWAP
 
-    %% 6: Privy -> Cobo 充值地址
     PRIVY -->|"直接转入支持币种"| DEP
-    %% 7: Swap -> Cobo 充值地址
     SWAP -->|"用户兑换净额"| DEP
-    %% 8: Swap -> 平台 Swap 费用（专用温钱包）
     SWAP -->|"平台 Swap 费用"| SWAP_FEE
 
-    %% 9: 充值地址 -> 热钱包
     DEP -->|"Cobo 自动归集"| HOT
-    %% 10: 热钱包 -> 用户提现地址
     HOT -->|"风控通过后出款"| WD
 
-    %% 11, 12, 13: 三个专用温钱包模块与 Cobo 热钱包双向划转
-    HOT <-->|"热温双向划转"| WARM_N
-    HOT <-->|"热温双向划转"| WARM_F
-    HOT <-->|"热温双向划转"| WARM_U
+    %% 热钱包与 3 个专用温钱包组双向划转
+    HOT <-->|"热温双向划转"| GRP_N
+    HOT <-->|"热温双向划转"| GRP_F
+    HOT <-->|"热温双向划转"| GRP_U
 
     classDef defGroup fill:#F8FAFC,stroke:#CBD5E1,stroke-width:1.5px,color:#182B41
     classDef defHot fill:#FFFFFF,stroke:#235DB3,stroke-width:1.5px,color:#182B41
@@ -87,8 +116,11 @@ flowchart TB
     classDef admin fill:#F7F9FC,stroke:#9DB4CD,stroke-width:1.5px,color:#182B41
     classDef vaultUser fill:#F2F7FF,stroke:#A3BBDB,stroke-width:2px,color:#182B41
     classDef hotWallet fill:#FFFFFF,stroke:#235DB3,stroke-width:2px,color:#182B41
-    classDef warmWallet fill:#F6F1FA,stroke:#BBA9CE,stroke-width:1.5px,color:#182B41
     classDef swapFee fill:#F6F1FA,stroke:#BBA9CE,stroke-width:1.5px,color:#182B41
+    classDef warmGroup fill:#FFFFFF,stroke:#BBA9CE,stroke-width:2px,color:#182B41
+    classDef warmInner fill:#FAF7FD,stroke:#DDD0EC,stroke-width:1px,color:#63478A
+    classDef warmTile fill:#F6F1FA,stroke:#BBA9CE,stroke-width:1.5px,color:#63478A
+    classDef warmNote fill:#FFFFFF,stroke:#E2D9EE,stroke-width:1px,stroke-dasharray: 3 3,color:#465D72
 
     class DEF defGroup
     class DEF_HOT defHot
@@ -99,9 +131,22 @@ flowchart TB
     class UV vaultUser
     class HOT hotWallet
     class SWAP_FEE swapFee
-    class WARM_N,WARM_F,WARM_U warmWallet
+    class GRP_N,GRP_F,GRP_U warmGroup
+    class GRP_N_W,GRP_F_W,GRP_U_W warmInner
+    class N1,N2,N3,NN,F1,F2,F3,FF,U1,U2,U3,UU warmTile
+    class N_NOTE,F_NOTE,U_NOTE warmNote
 
-    linkStyle 3,4,6,7,9,10 stroke:#235DB3,stroke-width:2px
-    linkStyle 5 stroke:#51687F,stroke-width:1.8px,stroke-dasharray:5 4
-    linkStyle 8 stroke:#1B7471,stroke-width:2px
-    linkStyle 11,12,13 stroke:#63478A,stroke-width:2px
+    %% Link indices:
+    %% 0,1: DEF_HOT~~~DEF_WARM~~~DEF_NOTE
+    %% 2,3,4: N1~~~N2~~~N3~~~NN | 5: GRP_N_W~~~N_NOTE
+    %% 6,7,8: F1~~~F2~~~F3~~~FF | 9: GRP_F_W~~~F_NOTE
+    %% 10,11,12: U1~~~U2~~~U3~~~UU | 13: GRP_U_W~~~U_NOTE
+    %% 14: DEF~~~EXT
+    %% 15: EXT-->PRIVY, 16: PRIVY-->SWAP, 17: ADMIN-.->SWAP
+    %% 18: PRIVY-->DEP, 19: SWAP-->DEP, 20: SWAP-->SWAP_FEE
+    %% 21: DEP-->HOT, 22: HOT-->WD
+    %% 23,24,25: HOT<-->GRP_N, GRP_F, GRP_U
+    linkStyle 15,16,18,19,21,22 stroke:#235DB3,stroke-width:2px
+    linkStyle 17 stroke:#51687F,stroke-width:1.8px,stroke-dasharray:5 4
+    linkStyle 20 stroke:#1B7471,stroke-width:2px
+    linkStyle 23,24,25 stroke:#63478A,stroke-width:2px
