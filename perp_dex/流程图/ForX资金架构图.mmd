@@ -1,0 +1,68 @@
+%%{init: {"flowchart": {"htmlLabels": true, "curve": "linear"}, "themeVariables": {"fontFamily": "trebuchet ms, verdana, arial, sans-serif"}}}%%
+%% 在线访问：https://dashuaibizzy.github.io/prototype/perp_dex/流程图/ForX资金架构图.svg
+%% 节点与箭头与 render_forx_fund_flow.py（中文版 PNG）一致；改版后：npx @mermaid-js/mermaid-cli -i ForX资金架构图.mmd -o ForX资金架构图.svg
+flowchart TB
+    EXT["<b>用户外部钱包</b>"]
+    PRIVY["<b>Privy 用户钱包</b><br/><span style='color:#465D72'>用户充值入口</span>"]
+    SWAP["<b>Swap 结算</b><br/><span style='color:#465D72'>用户确认兑换</span>"]
+    ADMIN["<b>充提后台</b><br/><span style='color:#465D72'>按链配置收益收款地址</span>"]
+
+    subgraph UV["<b>Cobo 用户资产 Vault</b>"]
+        direction TB
+        UV_NOTE["<span style='color:#465D72;font-size:smaller'>每人独立充值地址，统一归集到热钱包</span>"]
+        DEP["<b>Cobo 充值地址</b><br/><span style='color:#465D72'>每位用户独立分配</span>"]
+        HOT["<b>Cobo 热钱包</b><br/><span style='color:#465D72'>归集到账 · 日常出款</span>"]
+        WARM["<b>Cobo 温钱包</b><br/><span style='color:#465D72'>仅 Portal 操作 · 无 API Key</span>"]
+        WD["<b>用户提现地址</b>"]
+    end
+
+    subgraph PV["<b>Cobo 平台资产 Vault</b>"]
+        direction TB
+        PV_NOTE["<span style='color:#1B7471;font-size:smaller'>Vault 内所有钱包均禁用 API Key</span>"]
+        FEE_W["<b>Swap 收益钱包</b><br/><span style='color:#465D72'>专收平台应得的 Swap 费用</span>"]
+        REV["<b>平台收益钱包</b><br/><span style='color:#465D72'>与温钱包双向划转 · 人工发起＋审批组审批</span>"]
+        subgraph TW["平台自有资产钱包组"]
+            direction LR
+            TA["自有钱包 A"]
+            TB["自有钱包 B"]
+            TC["自有钱包 C"]
+            TD["…"]
+        end
+    end
+
+    MANUAL["<b style='color:#63478A'>热转温、温转热均需人工发起</b><br/><span style='color:#63478A'>财务与风控审批后签名出款</span>"]
+
+    EXT -->|"充值"| PRIVY
+    PRIVY --> SWAP
+    ADMIN -. "按链配置收益收款地址" .-> SWAP
+
+    PRIVY -->|"直接转入支持币种"| DEP
+    SWAP -->|"用户兑换净额"| DEP
+    SWAP -->|"平台 Swap 费用"| FEE_W
+
+    DEP -->|"Cobo 自动归集"| HOT
+    HOT -->|"风控通过后出款"| WD
+
+    HOT <-->|"人工双向划转"| WARM
+    WARM <-->|"人工双向划转"| REV
+
+    WARM ~~~ MANUAL
+    HOT ~~~ MANUAL
+
+    classDef vaultUser fill:#F2F7FF,stroke:#A3BBDB,stroke-width:2px
+    classDef vaultPlat fill:#F0F8F7,stroke:#9FC9C4,stroke-width:2px
+    classDef warm fill:#F6F1FA,stroke:#BBA9CE,stroke-width:1px
+    classDef admin fill:#F7F9FC,stroke:#9DB4CD,stroke-width:1px
+    classDef treasury fill:#F0F8F7,stroke:#A7CAC4,stroke-width:1px,color:#1B7471
+    classDef manual fill:#F6F1FA,stroke:#BBA9CE,stroke-width:1px
+
+    class UV vaultUser
+    class PV vaultPlat
+    class WARM warm
+    class ADMIN admin
+    class TA,TB,TC,TD treasury
+    class MANUAL manual
+
+    linkStyle 0,1,2,3,4,5,6,7 stroke:#235DB3,stroke-width:2px
+    linkStyle 8 stroke:#1B7471,stroke-width:2px
+    linkStyle 9,10 stroke:#63478A,stroke-width:2px
