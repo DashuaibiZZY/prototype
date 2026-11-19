@@ -617,7 +617,7 @@
             </span>
             <span id="market-funding" class="text-blue-500 font-medium">0.0001% <span class="text-gray-400">00:25:13</span></span>
         </div>
-        <div class="flex flex-col"><span class="text-gray-400">24h成交量 (USDC)</span><span id="market-volume" class="text-gray-900 font-medium">60.23 M</span></div>
+        <div class="flex flex-col"><span class="text-gray-400">24h成交量 (<span id="market-volume-quote-label">USDC</span>)</span><span id="market-volume" class="text-gray-900 font-medium">60.23 M</span></div>
         <div class="flex flex-col">
             <span class="market-hint-wrap text-gray-400 dashed-hint">未平倉合約 (USDC)
                 <div class="market-hint-tip">未平仓合约价值 = 持仓数量 × 最新成交价，每 200 毫秒动态更新一次。</div>
@@ -1326,9 +1326,9 @@
                     <div class="flex items-center text-[9px] font-bold text-gray-500 cursor-pointer shrink-0" onclick="toggleQtyUnitDropdown(event)">
                         <span id="qty-unit">USDC</span>
                         <svg width="8" height="8" class="ml-1" viewBox="0 0 16 16"><path d="M8 11.2L3.2 6.4h9.6L8 11.2z" fill="currentColor"></path></svg>
-                        <div id="qty-unit-dropdown" class="absolute right-0 top-full mt-1 bg-white border border-gray-200 shadow rounded-sm text-[10px] hidden z-50 w-16">
-                            <div class="px-3 py-1 hover:bg-gray-100 cursor-pointer" onclick="setQtyUnit('USDC'); event.stopPropagation();">USDC</div>
-                            <div class="px-3 py-1 hover:bg-gray-100 cursor-pointer" onclick="setQtyUnit('BTC'); event.stopPropagation();">BTC</div>
+                        <div id="qty-unit-dropdown" class="absolute right-0 top-full mt-1 bg-white border border-gray-200 shadow rounded-sm text-[10px] hidden z-50 min-w-[52px]">
+                            <div id="qty-unit-opt-quote" class="px-3 py-1 hover:bg-gray-100 cursor-pointer whitespace-nowrap" onclick="setQtyUnit(document.getElementById('qty-unit-opt-quote').textContent); event.stopPropagation();">USDC</div>
+                            <div class="px-3 py-1 hover:bg-gray-100 cursor-pointer whitespace-nowrap" onclick="setQtyUnit('BTC'); event.stopPropagation();">BTC</div>
                         </div>
                     </div>
                 </div>
@@ -1352,9 +1352,10 @@
                 <!-- 可用余额 + 充币 -->
                 <div class="flex justify-between text-[9px] mb-3">
                     <span class="text-gray-400">可用</span>
-                    <span class="font-bold">12,450.00 USDC
-                <span onclick="openDepositModal()" class="text-blue-500 font-bold text-base cursor-pointer ml-0.5 align-middle leading-none">+</span>
-            </span>
+                    <span class="font-bold">
+                        <span id="terminal-available-balance">12,450.00 USDC</span>
+                        <span onclick="openDepositModal()" class="text-blue-500 font-bold text-base cursor-pointer ml-0.5 align-middle leading-none">+</span>
+                    </span>
                 </div>
 
                 <!-- 止盈止損 (開倉時顯示) -->
@@ -4072,7 +4073,7 @@
         if (raw.endsWith('%')) {
             const pct = parseFloat(raw.replace('%', '').trim()) / 100;
             if (!Number.isFinite(pct)) return NaN;
-            return ORDER_QTY_MAX_USDC * pct;
+            return getOrderQtyMaxForQuote() * pct;
         }
         const qty = parseInputNum(raw);
         if (!Number.isFinite(qty)) return NaN;
@@ -6002,6 +6003,7 @@
 
     const MARKET_PAIR_META = {
         BTCUSDC: { letter: 'B', logoClass: 'bg-orange-100 text-orange-600' },
+        BTCUSD1: { letter: 'B', logoClass: 'bg-amber-100 text-amber-700' },
         ETHUSDC: { letter: 'E', logoClass: 'bg-blue-100 text-blue-600' },
         SOLHUSDC: { letter: 'S', logoClass: 'bg-purple-100 text-purple-600' },
         PEPEUSDC: { letter: 'P', logoClass: 'bg-orange-100 text-orange-500' },
@@ -6052,7 +6054,42 @@
 
     function getBaseAssetFromPair(pair) {
         if (!pair) return '';
-        return pair.replace(/USDC|USDT|HUSDC|BUSD/gi, '').toUpperCase();
+        return pair.replace(/USD1|USDC|USDT|HUSDC|BUSD/gi, '').toUpperCase();
+    }
+
+    function getQuoteCurrencyForPair(pair) {
+        var p = String(pair || '').toUpperCase();
+        if (p.endsWith('USD1')) return 'USD1';
+        return 'USDC';
+    }
+
+    function applyTradeTerminalQuoteCurrency(quote) {
+        quote = quote === 'USD1' ? 'USD1' : 'USDC';
+        var priceUnit = document.getElementById('price-unit');
+        if (priceUnit) priceUnit.textContent = quote;
+        var tradesUnit = document.getElementById('trades-unit-label');
+        if (tradesUnit) tradesUnit.textContent = quote;
+        var volQuote = document.getElementById('market-volume-quote-label');
+        if (volQuote) volQuote.textContent = quote;
+        var qtyUnit = document.getElementById('qty-unit');
+        if (qtyUnit && (qtyUnit.textContent === 'USDC' || qtyUnit.textContent === 'USD1')) {
+            qtyUnit.textContent = quote;
+        }
+        var qtyOpt = document.getElementById('qty-unit-opt-quote');
+        if (qtyOpt) qtyOpt.textContent = quote;
+        var avail = document.getElementById('terminal-available-balance');
+        if (avail) avail.textContent = (quote === 'USD1' ? '8,800.00' : '12,450.00') + ' ' + quote;
+        var openAmt = quote === 'USD1' ? '1,250.00' : '1,397.50';
+        var longEl = document.getElementById('stat-max-open-long');
+        var shortEl = document.getElementById('stat-max-open-short');
+        if (longEl) longEl.textContent = openAmt + ' ' + quote;
+        if (shortEl) shortEl.textContent = openAmt + ' ' + quote;
+        var marginLabel = quote === 'USD1' ? 'USD1 全仓' : 'USDC 全仓';
+        var marginLabelEl = document.getElementById('margin-account-select-label');
+        if (marginLabelEl) marginLabelEl.textContent = marginLabel;
+        if (typeof syncMarginAccountDerivedUi === 'function') {
+            syncMarginAccountDerivedUi(marginLabel);
+        }
     }
 
     const CONTRACT_TRADING_RULES_DEFAULT = {
@@ -6108,6 +6145,7 @@
         const nameEl = document.getElementById('market-pair-name');
         if (nameEl) nameEl.textContent = pair;
         updateContractAssetIntro(pair);
+        applyTradeTerminalQuoteCurrency(getQuoteCurrencyForPair(pair));
         if (pair === 'PEPEUSDC') setKlineCountdownMode(true);
         else setKlineCountdownMode(false);
     }
@@ -6260,6 +6298,12 @@
     }
 
     const ORDER_QTY_MAX_USDC = 12450;
+    const ORDER_QTY_MAX_USD1 = 8800;
+    function getOrderQtyMaxForQuote() {
+        const unit = document.getElementById('qty-unit')?.innerText || 'USDC';
+        if (unit === 'USD1') return ORDER_QTY_MAX_USD1;
+        return ORDER_QTY_MAX_USDC;
+    }
     function setOrderQtyPct(pct) {
         const slider = document.getElementById('order-qty-slider');
         const input = document.getElementById('qty-input');
@@ -6366,7 +6410,15 @@
                 <div class="text-right">3.23M</div>
                 <div class="text-right text-blue-500">0.0001%</div>
             </div>
-            <div data-market-pair="ETHUSDC" data-market-industry="crypto" data-market-tags="hot main" data-market-hot-rank="2" data-market-volume-num="42230000" data-market-listed-days="800" data-market-fav="1" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('ETHUSDC')">
+            <div data-market-pair="BTCUSD1" data-market-industry="crypto" data-market-tags="hot main" data-market-hot-rank="2" data-market-volume-num="18500000" data-market-listed-days="120" data-market-fav="0" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('BTCUSD1')">
+                ${renderMarketPairCell('BTCUSD1', '100x')}
+                <div class="text-right">65,428.00</div>
+                <div class="text-right text-green-500">+0.12%</div>
+                <div class="text-right">18.50M</div>
+                <div class="text-right">1.02M</div>
+                <div class="text-right text-blue-500">0.0001%</div>
+            </div>
+            <div data-market-pair="ETHUSDC" data-market-industry="crypto" data-market-tags="hot main" data-market-hot-rank="3" data-market-volume-num="42230000" data-market-listed-days="800" data-market-fav="1" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('ETHUSDC')">
                 ${renderMarketPairCell('ETHUSDC', '100x')}
                 <div class="text-right">2,432.10</div>
                 <div class="text-right text-red-500">-3.76%</div>
@@ -6374,7 +6426,7 @@
                 <div class="text-right">10.23M</div>
                 <div class="text-right text-blue-500">0.0001%</div>
             </div>
-            <div data-market-pair="SOLHUSDC" data-market-industry="crypto" data-market-tags="hot ai" data-market-hot-rank="3" data-market-volume-num="30000000" data-market-listed-days="400" data-market-fav="0" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('SOLHUSDC')">
+            <div data-market-pair="SOLHUSDC" data-market-industry="crypto" data-market-tags="hot ai" data-market-hot-rank="4" data-market-volume-num="30000000" data-market-listed-days="400" data-market-fav="0" class="grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('SOLHUSDC')">
                 ${renderMarketPairCell('SOLHUSDC', '100x')}
                 <div class="text-right">62.10</div>
                 <div class="text-right text-red-500">-4.76%</div>
@@ -6389,7 +6441,7 @@
                     <span id="market-list-pepe-countdown" class="font-mono text-orange-500 font-bold">${formatMarketListCountdown()}</span>
                 </div>
             </div>
-            <div data-market-pair="SNDKUSDC" data-market-industry="stock" data-market-tags="hot" data-market-hot-rank="4" data-market-volume-num="8000000" data-market-listed-days="60" data-market-fav="1" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('SNDKUSDC')">
+            <div data-market-pair="SNDKUSDC" data-market-industry="stock" data-market-tags="hot" data-market-hot-rank="5" data-market-volume-num="8000000" data-market-listed-days="60" data-market-fav="1" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('SNDKUSDC')">
                 ${renderMarketPairCell('SNDKUSDC', '20x')}
                 <div class="text-right">1,786.00</div>
                 <div class="text-right text-green-500">+0.59%</div>
@@ -6397,7 +6449,7 @@
                 <div class="text-right">8.2M</div>
                 <div class="text-right text-blue-500">0.0001%</div>
             </div>
-            <div data-market-pair="GOLDUSDC" data-market-industry="commodity" data-market-tags="hot" data-market-hot-rank="5" data-market-volume-num="12000000" data-market-listed-days="300" data-market-fav="0" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('GOLDUSDC')">
+            <div data-market-pair="GOLDUSDC" data-market-industry="commodity" data-market-tags="hot" data-market-hot-rank="6" data-market-volume-num="12000000" data-market-listed-days="300" data-market-fav="0" class="hidden grid grid-cols-6 gap-2 py-2.5 border-b border-gray-50 items-center hover:bg-gray-50 cursor-pointer text-[10px]" onclick="selectMarketPair('GOLDUSDC')">
                 ${renderMarketPairCell('GOLDUSDC', '50x')}
                 <div class="text-right">4,411.89</div>
                 <div class="text-right text-red-500">-0.33%</div>
