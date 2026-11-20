@@ -42,6 +42,11 @@ TEAL_BG = "#F0F8F7"
 TEAL_TILE_BG = "#EAF5F3"
 TEAL_PILL_BG = "#CCFBF1"
 TEAL_PILL_FG = "#115E59"
+AMBER = "#B4690E"
+AMBER_BORDER = "#D9A86C"
+AMBER_BG = "#FDF9F0"
+AMBER_PILL_BG = "#FEF3C7"
+AMBER_PILL_FG = "#92400E"
 SLATE = "#51687F"
 BORDER_STD = "#9DB4CD"
 
@@ -52,7 +57,7 @@ def build_svg(language: str = "zh") -> str:
     def loc(cn: str, en: str) -> str:
         return cn if zh else en
 
-    W, H = 1440, 1054
+    W, H = 1440, 1150
     els: list[str] = []
 
     def add(s: str) -> None:
@@ -391,21 +396,22 @@ def build_svg(language: str = "zh") -> str:
     edge_label(433, 694, loc("热温双向划转", "Hot ↔ Warm Transfer"), color=PURPLE, size=12)
 
     # ------------------------------------------------------------------
-    # 5. Right Column — Vault 3 (Cobo Platform Asset Vault · Standalone)
+    # 5. Right Column — Vault 3 (Platform Revenue Vault) & Vault 4 (Reserve Vault)
     # ------------------------------------------------------------------
-    rect(784, 356, 616, 668, fill=TEAL_BG, stroke=TEAL, sw=2.0, rx=10)
-    text(804, 384, loc("Cobo 平台资产 Vault", "Cobo Platform Asset Vault"), size=17, fill=INK, weight="bold")
+    # Vault 3: 平台收入 Vault（平台 Swap 费用 + 平台手续费收入）
+    rect(784, 356, 616, 466, fill=TEAL_BG, stroke=TEAL, sw=2.0, rx=10)
+    text(804, 384, loc("平台收入 Vault", "Platform Revenue Vault"), size=17, fill=INK, weight="bold")
     pill(
-        980 if zh else 1036, 372, 78 if zh else 116, 24,
+        938 if zh else 1012, 372, 78 if zh else 116, 24,
         loc("独立 Vault", "Standalone Vault"), TEAL_PILL_BG, TEAL_PILL_FG, TEAL_BORDER, size=11.5,
     )
     text(
         804, 408,
         loc(
-            "同一 Vault 统一管理 3 类平台专用温钱包 · 禁用 API Key",
-            "Single Vault managing 3 platform warm groups · No API Key",
+            "同一 Vault 统一管理 2 类平台收入专用温钱包 · 禁用 API Key",
+            "Single Vault managing 2 platform revenue warm groups · No API Key",
         ),
-        size=12.2 if not zh else 12.5, fill=TEAL,
+        size=12.0 if not zh else 12.5, fill=TEAL,
     )
 
     # 3a: Platform Swap Fees
@@ -434,32 +440,9 @@ def build_svg(language: str = "zh") -> str:
         pill_bg=TEAL_TILE_BG,
     )
 
-    # 3b: Platform Liquidity Reserve
+    # 3b: Platform Fee Revenue
     wallet_group_card(
         804, 616, 576, 188,
-        title=loc("平台资产底仓储备", "Platform Liquidity Reserve"),
-        tiles=(
-            loc("底仓钱包 N1", "Reserve N1"),
-            loc("底仓钱包 N2", "Reserve N2"),
-            "…",
-            loc("底仓钱包 N", "Reserve N"),
-        ),
-        desc_lines=(
-            (
-                "说明：专用存储平台自有资产直接入温钱包，不先充 Cobo 热钱包；",
-                "Cobo 热钱包充提不足时再划拨补足",
-            )
-            if zh
-            else (
-                "Note: Stores platform treasury assets deposited directly into warm",
-                "wallets (bypassing Hot Wallet); tops up Hot Wallet when needed",
-            )
-        ),
-    )
-
-    # 3c: Platform Fee Revenue
-    wallet_group_card(
-        804, 820, 576, 188,
         title=loc("平台手续费收入", "Platform Fee Revenue"),
         tiles=(
             loc("手续费钱包 F1", "Fee Wallet F1"),
@@ -476,6 +459,45 @@ def build_svg(language: str = "zh") -> str:
             else (
                 "Note: Stores platform fee revenue transferred regularly from Cobo",
                 "Hot Wallet while retaining deposit/withdrawal reserve liquidity",
+            )
+        ),
+    )
+
+    # Vault 4: 平台资产底仓 Vault（平台资产底仓储备）
+    rect(784, 844, 616, 274, fill=AMBER_BG, stroke=AMBER, sw=2.0, rx=10)
+    text(804, 872, loc("平台资产底仓 Vault", "Platform Liquidity Reserve Vault"), size=17, fill=INK, weight="bold")
+    pill(
+        972 if zh else 1088, 860, 78 if zh else 116, 24,
+        loc("独立 Vault", "Standalone Vault"), AMBER_PILL_BG, AMBER_PILL_FG, AMBER_BORDER, size=11.5,
+    )
+    text(
+        804, 895,
+        loc(
+            "独立 Vault 权限边界 · 仅 Portal 操作 · 无 API Key",
+            "Isolated Vault scope · Portal only · No API Key",
+        ),
+        size=12.2 if not zh else 12.5, fill=AMBER,
+    )
+
+    # 4a: Platform Liquidity Reserve
+    wallet_group_card(
+        804, 912, 576, 188,
+        title=loc("平台资产底仓储备", "Platform Liquidity Reserve"),
+        tiles=(
+            loc("底仓钱包 N1", "Reserve N1"),
+            loc("底仓钱包 N2", "Reserve N2"),
+            "…",
+            loc("底仓钱包 N", "Reserve N"),
+        ),
+        desc_lines=(
+            (
+                "说明：专用存储平台自有资产直接入温钱包，不先充 Cobo 热钱包；",
+                "Cobo 热钱包充提不足时再划拨补足",
+            )
+            if zh
+            else (
+                "Note: Stores platform treasury assets deposited directly into warm",
+                "wallets (bypassing Hot Wallet); tops up Hot Wallet when needed",
             )
         ),
     )
@@ -497,22 +519,24 @@ def build_svg(language: str = "zh") -> str:
     edge_label(1049, 306, loc("平台 Swap 费用", "Platform swap fees"), color=TEAL, size=12.2 if not zh else 12.5)
 
     # ------------------------------------------------------------------
-    # 7. Hot Wallet <--> Platform Warm Wallets (Corridor x=656..784)
+    # 7. Hot Wallet <--> Right Platform Warm Vaults (Corridor x=656..784)
     # ------------------------------------------------------------------
+    # Hot Wallet <-> 平台手续费收入 (inside 平台收入 Vault)
     polyline_arrow(
         [(636, 580), (748, 580), (748, 710), (802, 710)],
         color=PURPLE, sw=2.2,
         start_marker="arr-purple-start",
         end_marker="arr-purple",
     )
+    # Hot Wallet <-> 平台资产底仓储备 (inside 平台资产底仓 Vault)
     polyline_arrow(
-        [(636, 610), (692, 610), (692, 914), (802, 914)],
+        [(636, 610), (692, 610), (692, 1006), (802, 1006)],
         color=PURPLE, sw=2.2,
         start_marker="arr-purple-start",
         end_marker="arr-purple",
     )
     edge_label(748, 664, loc("热温双向划转", "Hot ↔ Warm"), color=PURPLE, size=11.5)
-    edge_label(740, 868, loc("热温双向划转", "Hot ↔ Warm"), color=PURPLE, size=11.5)
+    edge_label(740, 958, loc("热温双向划转", "Hot ↔ Warm"), color=PURPLE, size=11.5)
 
     aria = loc("ForX 资金架构图", "ForX Fund Flow Architecture")
     body = "\n  ".join(els)
