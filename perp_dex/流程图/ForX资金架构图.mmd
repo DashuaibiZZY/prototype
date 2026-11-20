@@ -75,58 +75,69 @@ flowchart TB
             HOT <-->|"热温双向划转"| VAULT_U
         end
 
-        %% 独立 Vault 3：平台资产 Vault（大框框起 3 个平台温钱包组，置于热钱包右侧）
-        subgraph VAULT_P["<b>平台资产 Vault（独立 Vault · 统一管理以下 3 类平台专用温钱包）</b>"]
+        subgraph RIGHT_COL[" "]
             direction TB
 
-            subgraph GRP_S["<b>平台 Swap 费用</b>（专用温钱包）"]
+            %% 独立 Vault 3：平台收入 Vault（平台 Swap 费用 + 平台手续费收入）
+            subgraph VAULT_REV["<b>平台收入 Vault（独立 Vault · 统一管理 2 类平台收入专用温钱包）</b>"]
                 direction TB
-                subgraph GRP_S_W["<span style='color:#1B7471;font-size:12px'>多个同类钱包，根据资金量分配调整</span>"]
-                    direction LR
-                    S1["Swap钱包 S1"]
-                    S2["Swap钱包 S2"]
-                    S3["…"]
-                    SS["Swap钱包 S"]
-                    S1 ~~~ S2 ~~~ S3 ~~~ SS
+
+                subgraph GRP_S["<b>平台 Swap 费用</b>（专用温钱包）"]
+                    direction TB
+                    subgraph GRP_S_W["<span style='color:#1B7471;font-size:12px'>多个同类钱包，根据资金量分配调整</span>"]
+                        direction LR
+                        S1["Swap钱包 S1"]
+                        S2["Swap钱包 S2"]
+                        S3["…"]
+                        SS["Swap钱包 S"]
+                        S1 ~~~ S2 ~~~ S3 ~~~ SS
+                    end
+                    S_NOTE["<div style='text-align:left;line-height:1.55'><span style='color:#465D72'><b>说明：</b>专收平台应得的 Swap 手续费，<br/>由 Swap 结算直接转入对应链收款钱包</span></div>"]
+                    GRP_S_W ~~~ S_NOTE
                 end
-                S_NOTE["<div style='text-align:left;line-height:1.55'><span style='color:#465D72'><b>说明：</b>专收平台应得的 Swap 手续费，<br/>由 Swap 结算直接转入对应链收款钱包</span></div>"]
-                GRP_S_W ~~~ S_NOTE
+
+                subgraph GRP_F["<b>平台手续费收入</b>（专用温钱包）"]
+                    direction TB
+                    subgraph GRP_F_W["<span style='color:#63478A;font-size:12px'>多个同类钱包，根据资金量分配调整</span>"]
+                        direction LR
+                        F1["手续费钱包 F1"]
+                        F2["手续费钱包 F2"]
+                        F3["…"]
+                        FF["手续费钱包 F"]
+                        F1 ~~~ F2 ~~~ F3 ~~~ FF
+                    end
+                    F_NOTE["<div style='text-align:left;line-height:1.55'><span style='color:#465D72'><b>说明：</b>专用存储平台手续费收入，定期从 Cobo 热钱包<br/>转入温钱包，但须保留充提底仓资金</span></div>"]
+                    GRP_F_W ~~~ F_NOTE
+                end
+
+                GRP_S ~~~ GRP_F
             end
 
-            subgraph GRP_N["<b>平台资产底仓储备</b>（专用温钱包）"]
+            %% 独立 Vault 4：平台资产底仓 Vault（平台资产底仓储备）
+            subgraph VAULT_RES["<b>平台资产底仓 Vault（独立 Vault · 专用温钱包）</b>"]
                 direction TB
-                subgraph GRP_N_W["<span style='color:#63478A;font-size:12px'>多个同类钱包，根据资金量分配调整</span>"]
-                    direction LR
-                    N1["底仓钱包 N1"]
-                    N2["底仓钱包 N2"]
-                    N3["…"]
-                    NN["底仓钱包 N"]
-                    N1 ~~~ N2 ~~~ N3 ~~~ NN
+
+                subgraph GRP_N["<b>平台资产底仓储备</b>（专用温钱包）"]
+                    direction TB
+                    subgraph GRP_N_W["<span style='color:#63478A;font-size:12px'>多个同类钱包，根据资金量分配调整</span>"]
+                        direction LR
+                        N1["底仓钱包 N1"]
+                        N2["底仓钱包 N2"]
+                        N3["…"]
+                        NN["底仓钱包 N"]
+                        N1 ~~~ N2 ~~~ N3 ~~~ NN
+                    end
+                    N_NOTE["<div style='text-align:left;line-height:1.55'><span style='color:#465D72'><b>说明：</b>专用存储平台自有资产，直接入温钱包，<br/>不先充 Cobo 热钱包；Cobo 热钱包充提不足时再划拨补足</span></div>"]
+                    GRP_N_W ~~~ N_NOTE
                 end
-                N_NOTE["<div style='text-align:left;line-height:1.55'><span style='color:#465D72'><b>说明：</b>专用存储平台自有资产，直接入温钱包，<br/>不先充 Cobo 热钱包；Cobo 热钱包充提不足时再划拨补足</span></div>"]
-                GRP_N_W ~~~ N_NOTE
             end
 
-            subgraph GRP_F["<b>平台手续费收入</b>（专用温钱包）"]
-                direction TB
-                subgraph GRP_F_W["<span style='color:#63478A;font-size:12px'>多个同类钱包，根据资金量分配调整</span>"]
-                    direction LR
-                    F1["手续费钱包 F1"]
-                    F2["手续费钱包 F2"]
-                    F3["…"]
-                    FF["手续费钱包 F"]
-                    F1 ~~~ F2 ~~~ F3 ~~~ FF
-                end
-                F_NOTE["<div style='text-align:left;line-height:1.55'><span style='color:#465D72'><b>说明：</b>专用存储平台手续费收入，定期从 Cobo 热钱包<br/>转入温钱包，但须保留充提底仓资金</span></div>"]
-                GRP_F_W ~~~ F_NOTE
-            end
-
-            GRP_S ~~~ GRP_N ~~~ GRP_F
+            VAULT_REV ~~~ VAULT_RES
         end
 
-        %% 热钱包与右侧「平台资产 Vault」内两类温钱包双向划转
-        HOT <-->|"热温双向划转"| GRP_N
+        %% 热钱包与右侧「平台收入 Vault」「平台资产底仓 Vault」双向划转
         HOT <-->|"热温双向划转"| GRP_F
+        HOT <-->|"热温双向划转"| GRP_N
     end
 
     %% 顶部概念定义锚定
@@ -152,6 +163,7 @@ flowchart TB
     classDef vaultHot fill:#F2F7FF,stroke:#235DB3,stroke-width:2px,color:#182B41
     classDef vaultUserWarm fill:#F8F4FC,stroke:#7C5DA3,stroke-width:2px,color:#182B41
     classDef vaultPlat fill:#F0F8F7,stroke:#1B7471,stroke-width:2px,color:#182B41
+    classDef vaultReserve fill:#FDF9F0,stroke:#B4690E,stroke-width:2px,color:#182B41
     classDef hotWallet fill:#FFFFFF,stroke:#235DB3,stroke-width:2px,color:#182B41
     classDef warmGroup fill:#FFFFFF,stroke:#BBA9CE,stroke-width:1.5px,color:#182B41
     classDef swapGroup fill:#FFFFFF,stroke:#88B8B1,stroke-width:1.5px,color:#182B41
@@ -161,7 +173,7 @@ flowchart TB
     classDef swapTile fill:#EAF5F3,stroke:#88B8B1,stroke-width:1.5px,color:#1B7471
     classDef warmNote fill:#FFFFFF,stroke:#E2D9EE,stroke-width:1px,stroke-dasharray: 3 3,color:#465D72
 
-    class VAULT_AREA,LEFT_COL,USER_BOTTOM invisible
+    class VAULT_AREA,LEFT_COL,RIGHT_COL,USER_BOTTOM invisible
     class DEF defGroup
     class DEF_HOT defHot
     class DEF_WARM defWarm
@@ -171,7 +183,8 @@ flowchart TB
     class ADMIN admin
     class UV vaultHot
     class VAULT_U vaultUserWarm
-    class VAULT_P vaultPlat
+    class VAULT_REV vaultPlat
+    class VAULT_RES vaultReserve
     class HOT hotWallet
     class GRP_N,GRP_F warmGroup
     class GRP_S swapGroup
