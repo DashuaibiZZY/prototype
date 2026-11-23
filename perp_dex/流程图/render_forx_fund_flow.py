@@ -57,7 +57,7 @@ def build_svg(language: str = "zh") -> str:
     def loc(cn: str, en: str) -> str:
         return cn if zh else en
 
-    W, H = 1440, 1150
+    W, H = 1440, 1364
     els: list[str] = []
 
     def add(s: str) -> None:
@@ -69,6 +69,10 @@ def build_svg(language: str = "zh") -> str:
             f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{rx}" ry="{rx}" '
             f'fill="{fill}" stroke="{stroke}" stroke-width="{sw}"{dash_attr}/>'
         )
+
+    def line(x1, y1, x2, y2, stroke="#CBD5E1", sw=1.0, dash=None):
+        dash_attr = f' stroke-dasharray="{dash}"' if dash else ""
+        add(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{stroke}" stroke-width="{sw}"{dash_attr}/>')
 
     def text(x, y, content, size=14, fill=INK, weight="normal", anchor="start"):
         add(
@@ -135,22 +139,22 @@ def build_svg(language: str = "zh") -> str:
     ):
         rect(x, y, w, h, fill="#FFFFFF", stroke=border_color, sw=1.6, rx=8)
         badge_w = 80 if zh else 112
-        text(x + 18, y + 24, title, size=15, fill=INK, weight="bold", anchor="start")
+        text(x + 18, y + 23, title, size=15, fill=INK, weight="bold", anchor="start")
         pill(
-            x + w - badge_w - 18, y + 12, badge_w, 23,
+            x + w - badge_w - 18, y + 11, badge_w, 23,
             loc("专用温钱包", "Dedicated Warm"),
             pill_bg, accent_color, border_color, size=11,
         )
         text(
-            x + 18, y + 46,
+            x + 18, y + 44,
             loc("多个同类钱包，根据资金量分配调整", "Multiple wallets, scaled dynamically by fund volume"),
             size=11.5, fill=accent_color, anchor="start",
         )
 
         inner_x = x + 18
         inner_w = w - 36
-        tile_y = y + 59
-        tile_h = 34
+        tile_y = y + 56
+        tile_h = 33
         gap = 8
         ellipsis_w = 40
         normal_w = (inner_w - ellipsis_w - gap * 3) / 3
@@ -164,21 +168,65 @@ def build_svg(language: str = "zh") -> str:
             )
             cur_x += tw + gap
 
-        note_y = tile_y + tile_h + 12
-        note_h = h - (note_y - y) - 14
+        note_y = tile_y + tile_h + 11
+        note_h = h - (note_y - y) - 12
         rect(inner_x, note_y, inner_w, note_h, fill=note_bg, stroke=note_border, sw=1.0, rx=5, dash="3 3")
-        line_y = note_y + 18
-        note_size = 11.5 if not zh else 12
-        for idx, line in enumerate(desc_lines):
-            if idx == 0 and line.startswith("说明："):
+        line_y = note_y + 17
+        note_size = 11.4 if not zh else 12
+        for idx, l_text in enumerate(desc_lines):
+            if idx == 0 and l_text.startswith("说明："):
                 text(inner_x + 12, line_y, "说明：", size=note_size, fill=INK, weight="bold", anchor="start")
-                text(inner_x + 48, line_y, line[3:], size=note_size, fill=MUTED, anchor="start")
-            elif idx == 0 and line.startswith("Note: "):
+                text(inner_x + 48, line_y, l_text[3:], size=note_size, fill=MUTED, anchor="start")
+            elif idx == 0 and l_text.startswith("Note: "):
                 text(inner_x + 12, line_y, "Note:", size=note_size, fill=INK, weight="bold", anchor="start")
-                text(inner_x + 48, line_y, line[6:], size=note_size, fill=MUTED, anchor="start")
+                text(inner_x + 47, line_y, l_text[6:], size=note_size, fill=MUTED, anchor="start")
             else:
-                text(inner_x + 12, line_y, line, size=note_size, fill=MUTED, anchor="start")
-            line_y += 18 if not zh else 19
+                text(inner_x + 12, line_y, l_text, size=note_size, fill=MUTED, anchor="start")
+            line_y += 17 if not zh else 18
+
+    def mpc_single_panel(x, y, w, h, badge_text, content_line, accent, border, bg, pill_bg, pill_fg):
+        rect(x, y, w, h, fill=bg, stroke=border, sw=1.3, rx=7)
+        text(
+            x + 16, y + 20,
+            loc("提币密钥多签方案", "Withdrawal MPC Signing Scheme"),
+            size=12.5, fill=INK, weight="bold", anchor="start",
+        )
+        pill_w = 88 if zh else 92
+        pill(x + w - pill_w - 14, y + 9, pill_w, 22, badge_text, pill_bg, pill_fg, border, size=10.5)
+        text(x + 16, y + 46, content_line, size=11.6 if not zh else 12, fill=accent, weight="500", anchor="start")
+
+    def mpc_dual_option_panel(
+        x, y, w, h,
+        opt_a_badge, opt_a_lines,
+        opt_b_badge, opt_b_lines,
+        accent, border, bg, sub_bg, sub_border, pill_bg, pill_fg,
+    ):
+        rect(x, y, w, h, fill=bg, stroke=border, sw=1.3, rx=7)
+        text(
+            x + 14, y + 18,
+            loc("提币密钥多签方案", "Withdrawal MPC Signing Scheme"),
+            size=12.5, fill=INK, weight="bold", anchor="start",
+        )
+        badge_w = 96 if zh else 88
+        pill(
+            x + w - badge_w - 14, y + 7, badge_w, 22,
+            loc("可选方案 A / B", "Option A / B"),
+            pill_bg, pill_fg, border, size=10.5,
+        )
+
+        inner_x = x + 12
+        inner_w = w - 24
+        sub_h = (h - 46) / 2
+        opt_font = 11.0 if not zh else 11.5
+
+        for idx, (opt_badge, lines) in enumerate(((opt_a_badge, opt_a_lines), (opt_b_badge, opt_b_lines))):
+            sy = y + 34 + idx * (sub_h + 6)
+            rect(inner_x, sy, inner_w, sub_h, fill=sub_bg, stroke=sub_border, sw=1.0, rx=5)
+            text(inner_x + 10, sy + 14, opt_badge, size=11.5, fill=accent, weight="bold", anchor="start")
+            ly = sy + 32
+            for ln in lines:
+                text(inner_x + 10, ly, ln, size=opt_font, fill=MUTED, anchor="start")
+                ly += 16.5
 
     # ------------------------------------------------------------------
     # Background & Title
@@ -188,8 +236,8 @@ def build_svg(language: str = "zh") -> str:
     text(
         W - 40, 42,
         loc(
-            "Cobo 多 Vault 权限隔离 · 温热钱包分层架构",
-            "Cobo Multi-Vault Permission Isolation · Hot & Warm Wallet Tiering",
+            "Cobo 多 Vault 权限隔离 · 温热钱包分层 · MPC 提币多签架构",
+            "Cobo Multi-Vault Isolation · Hot & Warm Tiering · MPC Withdrawal Governance",
         ),
         size=13, fill=SLATE, anchor="end",
     )
@@ -299,7 +347,7 @@ def build_svg(language: str = "zh") -> str:
     # ------------------------------------------------------------------
     # 3. Left Column — Vault 1 (Cobo Hot Wallet Vault · Standalone)
     # ------------------------------------------------------------------
-    rect(40, 356, 616, 304, fill=BLUE_BG, stroke=BLUE, sw=2.0, rx=10)
+    rect(40, 356, 616, 350, fill=BLUE_BG, stroke=BLUE, sw=2.0, rx=10)
     text(60, 384, loc("Cobo 热钱包 Vault", "Cobo Hot Wallet Vault"), size=17, fill=INK, weight="bold")
     pill(
         220 if zh else 258, 372, 78 if zh else 116, 24,
@@ -319,41 +367,64 @@ def build_svg(language: str = "zh") -> str:
         loc("Cobo 充值地址", "Cobo Deposit Address"),
         loc("每位用户独立分配", "One per user"),
     )
-    box(
-        62, 552, 572, 84,
-        loc("Cobo 热钱包", "Cobo Hot Wallet"),
+
+    # Cobo Hot Wallet card (with integrated MPC 2-of-2 signing scheme section)
+    rect(62, 546, 572, 142, fill="#FFFFFF", stroke=BLUE, sw=2.0, rx=8)
+    text(82, 573, loc("Cobo 热钱包", "Cobo Hot Wallet"), size=16, fill=INK, weight="bold")
+    badge_w = 136 if zh else 154
+    pill(
+        62 + 572 - badge_w - 18, 561, badge_w, 24,
+        loc("API Key 程序化调用", "Programmatic API Key"),
+        BLUE_PILL_BG, BLUE_PILL_FG, "#93C5FD", size=11.5,
+    )
+    text(
+        82, 600,
         loc(
             "归集到账 · 日常出款（隶属独立热钱包 Vault）",
             "Receives sweeps · Pays withdrawals (Standalone Hot Vault)",
         ),
-        stroke=BLUE, sw=2.0,
-        badge=(
-            loc("API Key 程序化调用", "Programmatic API Key"),
-            136 if zh else 154,
-            BLUE_PILL_BG, BLUE_PILL_FG, "#93C5FD",
+        size=12.2 if not zh else 12.5, fill=MUTED,
+    )
+    line(80, 619, 616, 619, stroke="#BFDBFE", sw=1.1, dash="4 3")
+    rect(78, 628, 540, 50, fill="#F5F9FF", stroke="#BFDBFE", sw=1.0, rx=5)
+    text(
+        90, 644,
+        loc("提币密钥多签方案", "Withdrawal MPC Signing Scheme"),
+        size=12, fill=INK, weight="bold",
+    )
+    pill(
+        618 - 88 - 10, 634, 88, 20,
+        "MPC 2-of-2", BLUE_PILL_BG, BLUE_PILL_FG, "#93C5FD", size=10.5,
+    )
+    text(
+        90, 665,
+        loc(
+            "双分片协同签名：自托管服务器 TSS Node（1 分片） + Cobo 官方托管（1 分片）",
+            "2-of-2 TSS Shares: Self-hosted TSS Node (1 share) + Cobo Managed (1 share)",
         ),
+        size=11.5 if not zh else 11.8, fill=BLUE, weight="500",
     )
 
-    polyline_arrow([(348, 490), (348, 550)], color=BLUE, end_marker="arr-blue")
-    text(362, 520, loc("Cobo 自动归集", "Cobo auto-sweep"), size=12.5, fill=BLUE, weight="600")
+    polyline_arrow([(348, 490), (348, 544)], color=BLUE, end_marker="arr-blue")
+    text(362, 517, loc("Cobo 自动归集", "Cobo auto-sweep"), size=12.5, fill=BLUE, weight="600")
 
     # ------------------------------------------------------------------
     # 4. Lower-Left — User Withdrawal Address + Vault 2 (User Asset Storage)
     # ------------------------------------------------------------------
     box(
-        40, 730, 152, 66,
+        40, 774, 152, 66,
         loc("用户提现地址", "User Withdrawal\nAddress"),
         title_size=13.5 if not zh else 15.5,
     )
 
-    rect(210, 730, 446, 294, fill=PURPLE_BG, stroke=PURPLE_STRONG, sw=2.0, rx=10)
-    text(228, 758, loc("用户资产存储 Vault", "User Asset Storage Vault"), size=16.5 if zh else 16, fill=INK, weight="bold")
+    rect(210, 774, 446, 472, fill=PURPLE_BG, stroke=PURPLE_STRONG, sw=2.0, rx=10)
+    text(228, 801, loc("用户资产存储 Vault", "User Asset Storage Vault"), size=16.5 if zh else 16, fill=INK, weight="bold")
     pill(
-        386 if zh else 434, 746, 78 if zh else 116, 24,
+        386 if zh else 434, 789, 78 if zh else 116, 24,
         loc("独立 Vault", "Standalone Vault"), "#EDE9FE", PURPLE, PURPLE_BORDER, size=11.5,
     )
     text(
-        228, 781,
+        228, 824,
         loc(
             "独立 Vault 权限边界 · 仅 Portal 操作 · 无 API Key",
             "Isolated Vault scope · Portal only · No API Key",
@@ -362,7 +433,7 @@ def build_svg(language: str = "zh") -> str:
     )
 
     wallet_group_card(
-        226, 796, 414, 210,
+        226, 839, 414, 194,
         title=loc("用户资产存储", "User Asset Storage"),
         tiles=(
             loc("用户钱包 U1", "User U1"),
@@ -384,22 +455,58 @@ def build_svg(language: str = "zh") -> str:
         ),
     )
 
-    polyline_arrow([(116, 636), (116, 728)], color=BLUE, end_marker="arr-blue")
-    edge_label(116, 694, loc("风控通过后出款", "Sent after risk checks"), color=BLUE, size=11.5 if not zh else 12)
+    # Vault 2 MPC Dual-Option Panel
+    mpc_dual_option_panel(
+        226, 1045, 414, 186,
+        opt_a_badge=loc("方案 A · MPC 2-of-2 + Cobo 审批流", "Option A · MPC 2-of-2 + Cobo Approval Flow"),
+        opt_a_lines=(
+            (
+                "分片：投资人（Cobo App，1 分片） + Cobo 官方（1 分片）",
+                "审批：Cobo 审批流（KEdward + 集团财务）通过后签名",
+            )
+            if zh
+            else (
+                "Shares: Investor (Cobo App, 1) + Cobo Managed (1)",
+                "Approval: KEdward + Group Finance in Cobo before signing",
+            )
+        ),
+        opt_b_badge=loc("方案 B · MPC 2-of-3 门限多签", "Option B · MPC 2-of-3 Threshold Signing"),
+        opt_b_lines=(
+            (
+                "分片：投资人、集团财务、KEdward 各持 1 分片（Cobo App）",
+                "规则：3 分片 2 门限，任意 2 方协同签名生效",
+            )
+            if zh
+            else (
+                "Shares: Investor, Group Finance & KEdward (1 each, App)",
+                "Rule: 2-of-3 threshold (any 2 of 3 shares to sign)",
+            )
+        ),
+        accent=PURPLE,
+        border=PURPLE_BORDER,
+        bg="#FFFFFF",
+        sub_bg=PURPLE_SOFT_BG,
+        sub_border="#DDD0EC",
+        pill_bg="#EDE9FE",
+        pill_fg=PURPLE,
+    )
+
+    polyline_arrow([(116, 688), (116, 772)], color=BLUE, end_marker="arr-blue")
+    edge_label(116, 738, loc("风控通过后出款", "Sent after risk checks"), color=BLUE, size=11.5 if not zh else 12)
 
     polyline_arrow(
-        [(433, 638), (433, 728)],
+        [(433, 690), (433, 772)],
         color=PURPLE, sw=2.2,
         start_marker="arr-purple-start",
         end_marker="arr-purple",
     )
-    edge_label(433, 694, loc("热温双向划转", "Hot ↔ Warm Transfer"), color=PURPLE, size=12)
+    edge_label(433, 738, loc("热温双向划转", "Hot ↔ Warm Transfer"), color=PURPLE, size=12)
 
     # ------------------------------------------------------------------
     # 5. Right Column — Vault 3 (Platform Revenue Vault) & Vault 4 (Reserve Vault)
     # ------------------------------------------------------------------
-    # Vault 3: 平台收入 Vault（平台 Swap 费用 + 平台手续费收入）
-    rect(784, 356, 616, 466, fill=TEAL_BG, stroke=TEAL, sw=2.0, rx=10)
+    # Vault 3: 平台收入 Vault（平台 Swap 费用 + 平台手续费收入 + MPC 2-of-2）
+    rect(784, 356, 616, 526, fill=TEAL_BG, stroke=TEAL, sw=2.0, rx=10)
     text(804, 384, loc("平台收入 Vault", "Platform Revenue Vault"), size=17, fill=INK, weight="bold")
     pill(
         938 if zh else 1012, 372, 78 if zh else 116, 24,
@@ -416,7 +523,7 @@ def build_svg(language: str = "zh") -> str:
 
     # 3a: Platform Swap Fees
     wallet_group_card(
-        804, 426, 576, 174,
+        804, 426, 576, 166,
         title=loc("平台 Swap 费用", "Platform Swap Fees"),
         tiles=(
             loc("Swap钱包 S1", "Swap Fee S1"),
@@ -442,7 +549,7 @@ def build_svg(language: str = "zh") -> str:
 
     # 3b: Platform Fee Revenue
     wallet_group_card(
-        804, 616, 576, 188,
+        804, 606, 576, 180,
         title=loc("平台手续费收入", "Platform Fee Revenue"),
         tiles=(
             loc("手续费钱包 F1", "Fee Wallet F1"),
@@ -463,15 +570,30 @@ def build_svg(language: str = "zh") -> str:
         ),
     )
 
-    # Vault 4: 平台资产底仓 Vault（平台资产底仓储备）
-    rect(784, 844, 616, 274, fill=AMBER_BG, stroke=AMBER, sw=2.0, rx=10)
-    text(804, 872, loc("平台资产底仓 Vault", "Platform Liquidity Reserve Vault"), size=17, fill=INK, weight="bold")
+    # 3c: Vault 3 MPC Single Panel (KEdward Cobo App + Cobo Official)
+    mpc_single_panel(
+        804, 800, 576, 66,
+        badge_text="MPC 2-of-2",
+        content_line=loc(
+            "双分片协同签名：KEdward 通过 Cobo App 持有（1 分片） + Cobo 官方托管（1 分片）",
+            "2-of-2 TSS Shares: KEdward via Cobo App (1 share) + Cobo Managed (1 share)",
+        ),
+        accent=TEAL,
+        border=TEAL_BORDER,
+        bg="#FFFFFF",
+        pill_bg=TEAL_PILL_BG,
+        pill_fg=TEAL_PILL_FG,
+    )
+
+    # Vault 4: 平台资产底仓 Vault（平台资产底仓储备 + 可选 MPC 方案 A / B）
+    rect(784, 902, 616, 434, fill=AMBER_BG, stroke=AMBER, sw=2.0, rx=10)
+    text(804, 930, loc("平台资产底仓 Vault", "Platform Liquidity Reserve Vault"), size=17, fill=INK, weight="bold")
     pill(
-        972 if zh else 1088, 860, 78 if zh else 116, 24,
+        972 if zh else 1088, 918, 78 if zh else 116, 24,
         loc("独立 Vault", "Standalone Vault"), AMBER_PILL_BG, AMBER_PILL_FG, AMBER_BORDER, size=11.5,
     )
     text(
-        804, 895,
+        804, 953,
         loc(
             "独立 Vault 权限边界 · 仅 Portal 操作 · 无 API Key",
             "Isolated Vault scope · Portal only · No API Key",
@@ -481,7 +603,7 @@ def build_svg(language: str = "zh") -> str:
 
     # 4a: Platform Liquidity Reserve
     wallet_group_card(
-        804, 912, 576, 188,
+        804, 968, 576, 178,
         title=loc("平台资产底仓储备", "Platform Liquidity Reserve"),
         tiles=(
             loc("底仓钱包 N1", "Reserve N1"),
@@ -500,6 +622,42 @@ def build_svg(language: str = "zh") -> str:
                 "wallets (bypassing Hot Wallet); tops up Hot Wallet when needed",
             )
         ),
+    )
+
+    # 4b: Vault 4 MPC Dual-Option Panel
+    mpc_dual_option_panel(
+        804, 1158, 576, 162,
+        opt_a_badge=loc("方案 A · MPC 2-of-2 + Cobo 审批流", "Option A · MPC 2-of-2 + Cobo Approval Flow"),
+        opt_a_lines=(
+            (
+                "密钥分片：投资人（Cobo App，1 分片） + Cobo 官方托管（1 分片）",
+                "审批流程：Cobo 提币审批流 → 经 KEdward + 集团财务审批通过后触发签名",
+            )
+            if zh
+            else (
+                "Key Shares: Investor via Cobo App (1 share) + Cobo Managed (1 share)",
+                "Approval Flow: Cobo withdrawal approval (KEdward + Group Finance) before signing",
+            )
+        ),
+        opt_b_badge=loc("方案 B · MPC 2-of-3 门限多签", "Option B · MPC 2-of-3 Threshold Signing"),
+        opt_b_lines=(
+            (
+                "密钥分片：投资人、集团财务、KEdward 各自通过 Cobo App 持有 1 分片",
+                "签名规则：3 分片 2 门限，任意 2 方协同签名即可完成提币授权",
+            )
+            if zh
+            else (
+                "Key Shares: Investor, Group Finance & KEdward hold 1 share each via Cobo App",
+                "Threshold Rule: 2-of-3 threshold (any 2 of 3 key shares required to sign)",
+            )
+        ),
+        accent=AMBER,
+        border=AMBER_BORDER,
+        bg="#FFFFFF",
+        sub_bg="#FFFDF7",
+        sub_border="#E9CFA8",
+        pill_bg=AMBER_PILL_BG,
+        pill_fg=AMBER_PILL_FG,
     )
 
     # ------------------------------------------------------------------
@@ -523,20 +681,20 @@ def build_svg(language: str = "zh") -> str:
     # ------------------------------------------------------------------
     # Hot Wallet <-> 平台手续费收入 (inside 平台收入 Vault)
     polyline_arrow(
-        [(636, 580), (748, 580), (748, 710), (802, 710)],
+        [(636, 582), (748, 582), (748, 696), (802, 696)],
         color=PURPLE, sw=2.2,
         start_marker="arr-purple-start",
         end_marker="arr-purple",
     )
     # Hot Wallet <-> 平台资产底仓储备 (inside 平台资产底仓 Vault)
     polyline_arrow(
-        [(636, 610), (692, 610), (692, 1006), (802, 1006)],
+        [(636, 612), (692, 612), (692, 1056), (802, 1056)],
         color=PURPLE, sw=2.2,
         start_marker="arr-purple-start",
         end_marker="arr-purple",
     )
-    edge_label(748, 664, loc("热温双向划转", "Hot ↔ Warm"), color=PURPLE, size=11.5)
-    edge_label(740, 958, loc("热温双向划转", "Hot ↔ Warm"), color=PURPLE, size=11.5)
+    edge_label(748, 648, loc("热温双向划转", "Hot ↔ Warm"), color=PURPLE, size=11.5)
+    edge_label(738, 1006, loc("热温双向划转", "Hot ↔ Warm"), color=PURPLE, size=11.5)
 
     aria = loc("ForX 资金架构图", "ForX Fund Flow Architecture")
     body = "\n  ".join(els)
