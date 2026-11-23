@@ -100,6 +100,7 @@
 
     /** 当前持仓（无平仓/分享/一键平仓列） */
     const POS_HEADERS = [
+        '持仓ID',
         '合约',
         '数量',
         '开仓均价',
@@ -113,6 +114,7 @@
     ];
 
     const CUR_ORDER_BASE = [
+        '委托ID',
         '合约',
         '委托时间',
         '交易方向',
@@ -126,6 +128,7 @@
     ];
 
     const CUR_ORDER_ADV = [
+        '委托ID',
         '合约',
         '委托时间',
         '交易方向',
@@ -139,9 +142,10 @@
         '订单编号'
     ];
 
-    const CUR_ORDER_TPSL = ['合约', '委托时间', '交易方向', '数量', '触发价格', '委托价格', '订单状态', '订单编号'];
+    const CUR_ORDER_TPSL = ['委托ID', '合约', '委托时间', '交易方向', '数量', '触发价格', '委托价格', '订单状态', '订单编号'];
 
     const HIST_ORDER_BASE = [
+        '委托ID',
         '合约',
         '委托时间',
         '交易方向',
@@ -157,6 +161,7 @@
     ];
 
     const HIST_ORDER_ADV = [
+        '委托ID',
         '合约',
         '委托时间',
         '交易方向',
@@ -172,9 +177,10 @@
         '流水详情'
     ];
 
-    const HIST_ORDER_TPSL = ['合约', '委托时间', '交易方向', '数量', '触发价格', '委托价格', '订单状态', '订单编号'];
+    const HIST_ORDER_TPSL = ['委托ID', '合约', '委托时间', '交易方向', '数量', '触发价格', '委托价格', '订单状态', '订单编号'];
 
     const HIST_TRADE_HEADERS = [
+        '账单ID',
         '发生时间',
         '账单主类型',
         '账单子类型',
@@ -192,9 +198,10 @@
         '账户余额'
     ];
 
-    const TRIAL_FUND_HEADERS = ['时间', '卡券ID', '类型', '金额变动', '关联仓位ID'];
+    const TRIAL_FUND_HEADERS = ['账单ID', '时间', '卡券ID', '类型', '金额变动', '关联仓位ID'];
 
     const HIST_POS_HEADERS = [
+        '持仓ID',
         '合约',
         '仓位类型',
         '开仓均价',
@@ -209,9 +216,9 @@
         '关联订单'
     ];
 
-    const ASSET_LOG_HEADERS = ['时间', '币种', '账单主类型', '数量', '账户余额'];
+    const ASSET_LOG_HEADERS = ['账单ID', '时间', '币种', '账单主类型', '数量', '账户余额'];
 
-    const FUNDING_FEE_HEADERS = ['时间', '合约', '资金费用'];
+    const FUNDING_FEE_HEADERS = ['账单ID', '时间', '合约', '资金费用'];
 
     const TRADE_BILL_MAIN_TYPES = ['划转', '交易', '保证金划转', '阶梯减仓', '资金费'];
 
@@ -284,9 +291,9 @@
                 dwPeriodBtns();
 
             if (sub === 'auth') {
-                return filterBar(dwFilter) + tableHead(['创建时间', '资产', '数量', '类型', '网络', '授权状态', '授权时间']);
+                return filterBar(dwFilter) + tableHead(['账单ID', '创建时间', '资产', '数量', '类型', '网络', '授权状态', '授权时间']);
             }
-            return filterBar(dwFilter) + tableHead(['类型与说明', '资产与网络', '金额', '状态', '时间']);
+            return filterBar(dwFilter) + tableHead(['账单ID', '类型与说明', '资产与网络', '金额', '状态', '时间']);
         }
     };
 
