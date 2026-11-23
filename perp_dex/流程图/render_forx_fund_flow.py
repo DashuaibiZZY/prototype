@@ -470,16 +470,16 @@ def build_svg(language: str = "zh") -> str:
                 "Approval: KEdward + Group Finance in Cobo before signing",
             )
         ),
-        opt_b_badge=loc("方案 B · MPC 2-of-3 门限多签", "Option B · MPC 2-of-3 Threshold Signing"),
+        opt_b_badge=loc("方案 B · MPC 3-of-4 门限多签", "Option B · MPC 3-of-4 Threshold Signing"),
         opt_b_lines=(
             (
-                "分片：投资人、集团财务、KEdward 各持 1 分片（Cobo App）",
-                "规则：3 分片 2 门限，任意 2 方协同签名生效",
+                "分片：投资人、集团财务、KEdward（App）+ Cobo 官方",
+                "规则：4 分片 3 门限（注：Cobo 官方为必签分片）",
             )
             if zh
             else (
-                "Shares: Investor, Group Finance & KEdward (1 each, App)",
-                "Rule: 2-of-3 threshold (any 2 of 3 shares to sign)",
+                "Shares: Investor, Finance, KEdward (App) + Cobo",
+                "Rule: 3-of-4 threshold (Note: Cobo share mandatory)",
             )
         ),
         accent=PURPLE,
@@ -639,16 +639,16 @@ def build_svg(language: str = "zh") -> str:
                 "Approval Flow: Cobo withdrawal approval (KEdward + Group Finance) before signing",
             )
         ),
-        opt_b_badge=loc("方案 B · MPC 2-of-3 门限多签", "Option B · MPC 2-of-3 Threshold Signing"),
+        opt_b_badge=loc("方案 B · MPC 3-of-4 门限多签", "Option B · MPC 3-of-4 Threshold Signing"),
         opt_b_lines=(
             (
-                "密钥分片：投资人、集团财务、KEdward 各自通过 Cobo App 持有 1 分片",
-                "签名规则：3 分片 2 门限，任意 2 方协同签名即可完成提币授权",
+                "密钥分片：投资人、集团财务、KEdward（Cobo App 各 1 分片）+ Cobo 官方（1 分片）",
+                "签名规则：4 分片 3 门限（注：Cobo 官方分片为必签项，另需任意 2 方协同签名）",
             )
             if zh
             else (
-                "Key Shares: Investor, Group Finance & KEdward hold 1 share each via Cobo App",
-                "Threshold Rule: 2-of-3 threshold (any 2 of 3 key shares required to sign)",
+                "Key Shares: Investor, Finance & KEdward (1 each via App) + Cobo Managed (1)",
+                "Rule: 3-of-4 threshold (Note: Cobo share is mandatory + any 2 other shares)",
             )
         ),
         accent=AMBER,
