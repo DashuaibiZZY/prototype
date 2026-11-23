@@ -47,7 +47,7 @@ flowchart TB
             subgraph UV["<div style='width:460px;text-align:left;line-height:1.4'><b>Cobo 热钱包 Vault</b><br/><span style='font-size:12px;color:#235DB3'>独立 Vault 权限边界</span></div>"]
                 direction TB
                 DEP["<b>Cobo 充值地址</b><br/><span style='color:#465D72'>每位用户独立分配 · 统一归集到热钱包</span>"]
-                HOT["<b>Cobo 热钱包</b><br/><span style='color:#465D72'>归集到账 · 日常出款（独立 Vault）</span>"]
+                HOT["<b>Cobo 热钱包</b><br/><span style='color:#465D72'>归集到账 · 日常出款（独立 Vault）</span><br/><span style='color:#235DB3'>提币密钥多签（MPC 2-of-2）：自托管服务器 TSS Node（1 分片）+ Cobo 官方托管（1 分片）</span>"]
             end
 
             subgraph USER_BOTTOM[" "]
@@ -66,7 +66,8 @@ flowchart TB
                         U1 ~~~ U2 ~~~ U3 ~~~ UU
                     end
                     U_NOTE["<div style='text-align:left;line-height:1.55'><span style='color:#465D72'><b>说明：</b>专用存储平台用户充值资金中，超出充提底仓需求<br/>的部分，定期从 Cobo 热钱包转入温钱包</span></div>"]
-                    GRP_U_W ~~~ U_NOTE
+                    U_MPC["<div style='text-align:left;line-height:1.55'><b>提币密钥多签方案（可选方案 A / B）</b><br/><span style='color:#63478A'>方案 A（MPC 2-of-2 + Cobo 审批流）：投资人（Cobo App，1 分片）+ Cobo 官方（1 分片）；经 KEdward + 集团财务审批后签名</span><br/><span style='color:#63478A'>方案 B（MPC 2-of-3 门限多签）：投资人、集团财务、KEdward 各持 1 分片（Cobo App），任意 2 方协同签名生效</span></div>"]
+                    GRP_U_W ~~~ U_NOTE ~~~ U_MPC
                 end
             end
 
@@ -110,7 +111,9 @@ flowchart TB
                     GRP_F_W ~~~ F_NOTE
                 end
 
-                GRP_S ~~~ GRP_F
+                REV_MPC["<div style='text-align:left;line-height:1.55'><b>提币密钥多签方案（MPC 2-of-2）</b><br/><span style='color:#1B7471'>双分片协同签名：KEdward 通过 Cobo App 持有（1 分片）+ Cobo 官方托管（1 分片）</span></div>"]
+
+                GRP_S ~~~ GRP_F ~~~ REV_MPC
             end
 
             %% 独立 Vault 4：平台资产底仓 Vault（平台资产底仓储备）
@@ -130,6 +133,10 @@ flowchart TB
                     N_NOTE["<div style='text-align:left;line-height:1.55'><span style='color:#465D72'><b>说明：</b>专用存储平台自有资产，直接入温钱包，<br/>不先充 Cobo 热钱包；Cobo 热钱包充提不足时再划拨补足</span></div>"]
                     GRP_N_W ~~~ N_NOTE
                 end
+
+                RES_MPC["<div style='text-align:left;line-height:1.55'><b>提币密钥多签方案（可选方案 A / B）</b><br/><span style='color:#B4690E'>方案 A（MPC 2-of-2 + Cobo 审批流）：投资人（Cobo App，1 分片）+ Cobo 官方托管（1 分片）；经 KEdward + 集团财务审批后签名</span><br/><span style='color:#B4690E'>方案 B（MPC 2-of-3 门限多签）：投资人、集团财务、KEdward 各持 1 分片（Cobo App），任意 2 方协同签名生效</span></div>"]
+
+                GRP_N ~~~ RES_MPC
             end
 
             VAULT_REV ~~~ VAULT_RES
