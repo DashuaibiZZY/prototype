@@ -664,6 +664,106 @@
     </div>
 </main>
 
+<!-- VIP 等级费率表弹窗（点击「等级费率表」打开） -->
+<div id="vip-fee-modal" class="hidden fixed inset-0 z-[2000] bg-black/60 backdrop-blur-[2px] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="vip-fee-modal-title">
+    <div class="bg-white w-full max-w-[600px] max-h-[88vh] overflow-y-auto rounded-xl shadow-2xl border border-gray-100">
+        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
+            <h2 id="vip-fee-modal-title" class="text-[15px] font-black tracking-tight text-gray-900">ForX 合约交易 VIP 费率表</h2>
+            <button type="button" id="vip-fee-modal-close" class="w-7 h-7 rounded-md flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer" aria-label="关闭弹窗">✕</button>
+        </div>
+
+        <div class="p-6 space-y-6">
+            <!-- 过去 14 天交易量（未登录态隐藏） -->
+            <div id="vip-modal-14d-row" class="pb-4 border-b border-gray-100 flex justify-between items-center gap-4">
+                <span class="text-[11px] font-bold text-gray-500">过去 14 天交易量</span>
+                <span id="vip-modal-14d-val" class="text-[14px] font-black font-mono text-gray-900 shrink-0">$38,500,000.00</span>
+            </div>
+
+            <!-- 1. VIP 阶梯费率表 -->
+            <div>
+                <h4 class="text-[12px] font-black text-gray-900 mb-2.5">VIP 阶梯费率</h4>
+                <div class="border border-gray-100 rounded-lg overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                                <th class="px-4 py-2.5 border-b border-gray-100">VIP 等级</th>
+                                <th class="px-4 py-2.5 border-b border-gray-100">14天交易量门槛 (USD)</th>
+                                <th class="px-4 py-2.5 border-b border-gray-100">Maker 费率</th>
+                                <th class="px-4 py-2.5 border-b border-gray-100 text-right">Taker 费率</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vip-modal-tier-tbody" class="text-[11px] font-bold text-gray-700"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 2. 特定交易对费率表 -->
+            <div>
+                <h4 class="text-[12px] font-black text-gray-900 mb-2.5">特定交易对费率</h4>
+                <div class="border border-gray-100 rounded-lg overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                                <th class="px-4 py-2.5 border-b border-gray-100">交易对</th>
+                                <th class="px-4 py-2.5 border-b border-gray-100 text-right">Maker 费率</th>
+                                <th class="px-4 py-2.5 border-b border-gray-100 text-right">Taker 费率</th>
+                            </tr>
+                        </thead>
+                        <tbody id="special-pair-fee-tbody" class="divide-y divide-gray-100 text-[11px] font-bold text-gray-700"></tbody>
+                    </table>
+                    <div class="px-4 py-2.5 bg-gray-50/70 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
+                        <span id="special-pair-fee-meta" class="font-medium">共 4 条 · 每页 5 条</span>
+                        <div class="flex items-center gap-2">
+                            <button type="button" id="special-pair-prev" class="w-6 h-6 rounded border border-gray-200 bg-white flex items-center justify-center text-gray-400 disabled:opacity-40 disabled:cursor-not-allowed hover:text-gray-900 hover:border-gray-300 transition-colors" aria-label="上一页">&lsaquo;</button>
+                            <span id="special-pair-page-info" class="font-mono font-bold text-gray-700 min-w-[34px] text-center">1 / 1</span>
+                            <button type="button" id="special-pair-next" class="w-6 h-6 rounded border border-gray-200 bg-white flex items-center justify-center text-gray-400 disabled:opacity-40 disabled:cursor-not-allowed hover:text-gray-900 hover:border-gray-300 transition-colors" aria-label="下一页">&rsaquo;</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. VIP 专属权益 -->
+            <div>
+                <h4 class="text-[12px] font-black text-gray-900 mb-2.5">VIP 专属权益</h4>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="border border-gray-100 rounded-lg p-3 bg-white">
+                        <div class="text-sm mb-1.5 leading-none">📊</div>
+                        <p class="text-[11px] font-black text-gray-900">VIP 资讯研报</p>
+                        <p class="text-[10px] text-gray-500 mt-1 leading-relaxed">更早洞察、更优决策</p>
+                    </div>
+                    <div class="border border-gray-100 rounded-lg p-3 bg-white">
+                        <div class="text-sm mb-1.5 leading-none">🎁</div>
+                        <p class="text-[11px] font-black text-gray-900">VIP 礼物</p>
+                        <p class="text-[10px] text-gray-500 mt-1 leading-relaxed">尊享欢迎礼、节日定制礼物以及专属实物周边</p>
+                    </div>
+                    <div class="border border-gray-100 rounded-lg p-3 bg-white">
+                        <div class="text-sm mb-1.5 leading-none">🎫</div>
+                        <p class="text-[11px] font-black text-gray-900">VIP 会场</p>
+                        <p class="text-[10px] text-gray-500 mt-1 leading-relaxed">享优先线下会场专席机会</p>
+                    </div>
+                    <div class="border border-dashed border-gray-200 rounded-lg p-3 bg-white">
+                        <div class="text-sm mb-1.5 leading-none text-amber-500">✦</div>
+                        <p class="text-[11px] font-black text-gray-900">VIP 空投权益</p>
+                        <p class="text-[10px] text-gray-500 mt-1 leading-relaxed">优先获取 ForX 专属 NFT 与资产空投资格</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. 等级补充说明 -->
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <h4 class="text-[11px] font-black text-gray-600 mb-2">等级补充说明</h4>
+                <ul class="text-[10px] text-gray-500 space-y-1.5 list-disc list-inside leading-relaxed">
+                    <li>VIP等级根据用户近14天合约交易量进行计算，达到对应等级门槛后，系统将在T+1日自动升级对应VIP等级。</li>
+                    <li>平台会定期更新用户VIP等级，具体更新时间以系统计算结果为准。</li>
+                    <li>VIP等级更新后，新产生的合约交易将按对应等级费率计算手续费。</li>
+                    <li>VIP等级会根据用户近14天合约交易量重新匹配，若交易量不满足当前等级要求，系统将在T+1日内按平台规则调整至对应等级。</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="shared/forx-vip-tier-api.js"></script>
 <script>
 /* ==================== 状态数据集（供原型状态切换器驱动） ==================== */
 const FUND_BILLS_DATA = [
@@ -765,13 +865,13 @@ const DEMO_STATES = {
     },
     'custom-expiry': {
         inherit: 'logged-vip',
-        navVip: '费率优惠',
-        vip: { mode: 'custom', title: '运营定制费率生效中', validUntil: '2026-10-20', vol14d: '$38,500,000.00', maker: '0.008%', taker: '0.020%' },
+        navVip: '专享费率',
+        vip: { mode: 'custom', title: '专享费率生效中', validUntil: '2026-10-20', vol14d: '$38,500,000.00', maker: '0.008%', taker: '0.020%' },
     },
     'custom-permanent': {
         inherit: 'logged-vip',
-        navVip: '费率优惠',
-        vip: { mode: 'custom', title: '运营定制费率生效中', validUntil: null, vol14d: '$38,500,000.00', maker: '0.008%', taker: '0.020%' },
+        navVip: '专享费率',
+        vip: { mode: 'custom', title: '专享费率生效中', validUntil: null, vol14d: '$38,500,000.00', maker: '0.008%', taker: '0.020%' },
     },
     'logged-empty': {
         inherit: 'logged-vip',
@@ -892,14 +992,10 @@ function buildVipPromoBannerHtml(vip) {
         : '';
 
     const badgeBlock = isCustom
-        ? `<div class="flex items-center gap-2">
-                <span class="px-2 py-0.5 rounded bg-purple-500/20 border border-purple-300/40 text-purple-200 text-[10px] font-black tracking-wider">VIP 专属费率优惠</span>
-                <span class="text-[10px] font-bold text-amber-300/80">定向尊享通道</span>
-           </div>
-           <div class="mt-1 flex items-baseline gap-2.5">
-                <span class="text-[20px] font-black tracking-tight vip-gold-text">${vip.title}</span>
-           </div>
-           ${validUntilText}`
+        ? `<div class="flex flex-col justify-center">
+                <span class="text-[20px] leading-tight font-black tracking-tight vip-gold-text">${vip.title}</span>
+                ${validUntilText}
+           </div>`
         : `<div class="flex flex-col justify-center">
                 <span class="text-[22px] leading-none font-black italic tracking-tight vip-gold-text">${vip.level}</span>
                 <span class="text-[10px] font-semibold text-amber-100/70 mt-1.5">阶梯费率 · 专属研报 · 优先空投</span>
@@ -949,7 +1045,7 @@ function buildVipPromoBannerHtml(vip) {
             </div>
 
             <div class="shrink-0">
-                <button type="button" class="vip-cta-btn px-4 py-2.5 rounded-lg text-[12px] inline-flex items-center gap-1.5 cursor-pointer">
+                <button type="button" data-open-vip-modal class="vip-cta-btn px-4 py-2.5 rounded-lg text-[12px] inline-flex items-center gap-1.5 cursor-pointer">
                     <span>等级费率表</span>
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
                 </button>
@@ -1194,12 +1290,132 @@ document.querySelectorAll('[data-trading-tab]').forEach(btn => {
     btn.addEventListener('click', () => setTradingSubTab(btn.dataset.tradingTab));
 });
 
-// 初始化默认态（支持 #funding / #trading 锚点直达）
+/* ==================== VIP 等级费率表弹窗 & 特定交易对费率 ==================== */
+const DEFAULT_VIP_TIERS = [
+    { level: 0, name: 'VIP 0', threshold: '< $5M', maker: '0.015%', taker: '0.045%' },
+    { level: 1, name: 'VIP 1', threshold: '≥ $5M 且 < $20M', maker: '0.012%', taker: '0.040%' },
+    { level: 2, name: 'VIP 2', threshold: '≥ $20M 且 < $100M', maker: '0.010%', taker: '0.034%' },
+    { level: 3, name: 'VIP 3', threshold: '≥ $100M 且 < $300M', maker: '0.008%', taker: '0.030%' },
+    { level: 4, name: 'VIP 4', threshold: '≥ $300M 且 < $800M', maker: '0.005%', taker: '0.025%' },
+    { level: 5, name: 'VIP 5', threshold: '≥ $800M', maker: '0.000%', taker: '0.020%' },
+];
+
+const SPECIAL_PAIR_FEES = [
+    { pair: 'BTCUSDC', maker: '0.0200%', taker: '0.0500%' },
+    { pair: 'ETHUSDC', maker: '0.0200%', taker: '0.0500%' },
+    { pair: 'BCHUSDC', maker: '0.0200%', taker: '0.0500%' },
+    { pair: 'LTCUSDC', maker: '0.0200%', taker: '0.0500%' },
+];
+const SPECIAL_PAIR_PAGE_SIZE = 5;
+let specialPairPage = 1;
+
+function renderSpecialPairFeeTable() {
+    const total = SPECIAL_PAIR_FEES.length;
+    const totalPages = Math.max(1, Math.ceil(total / SPECIAL_PAIR_PAGE_SIZE));
+    specialPairPage = Math.min(Math.max(1, specialPairPage), totalPages);
+    const start = (specialPairPage - 1) * SPECIAL_PAIR_PAGE_SIZE;
+    const rows = SPECIAL_PAIR_FEES.slice(start, start + SPECIAL_PAIR_PAGE_SIZE);
+
+    const tbody = document.getElementById('special-pair-fee-tbody');
+    tbody.innerHTML = rows.map(r => `
+        <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-4 py-3 font-black text-gray-900 font-mono">${r.pair}</td>
+            <td class="px-4 py-3 text-right font-mono text-gray-700">${r.maker}</td>
+            <td class="px-4 py-3 text-right font-mono text-gray-700">${r.taker}</td>
+        </tr>`).join('');
+
+    document.getElementById('special-pair-fee-meta').textContent = `共 ${total} 条 · 每页 ${SPECIAL_PAIR_PAGE_SIZE} 条`;
+    document.getElementById('special-pair-page-info').textContent = `${specialPairPage} / ${totalPages}`;
+    document.getElementById('special-pair-prev').disabled = specialPairPage <= 1;
+    document.getElementById('special-pair-next').disabled = specialPairPage >= totalPages;
+}
+
+function renderVipTierTable(data) {
+    const tbody = document.getElementById('vip-modal-tier-tbody');
+    const isGuest = !!data.guest;
+    const isCustom = data.vip?.mode === 'custom';
+    const currentLevel = (isGuest || isCustom)
+        ? null
+        : (data.vip?.level === 'VIP 0' ? 0 : 2);
+
+    // 若后台已保存自定义 VIP 阶梯配置（≥2 档），优先走动态接口渲染；否则展示完整默认阶梯表
+    let useApiTiers = false;
+    if (window.ForxVipTierApi) {
+        const published = ForxVipTierApi.getPublishedTiers();
+        if (published && published.length > 1) {
+            useApiTiers = true;
+            ForxVipTierApi.renderFeeTableBody(tbody, {
+                currentLevel,
+                guest: isGuest || isCustom,
+            });
+        }
+    }
+    if (!useApiTiers) {
+        tbody.innerHTML = DEFAULT_VIP_TIERS.map(t => {
+            const isCurrent = currentLevel !== null && t.level === currentLevel;
+            const trClass = isCurrent ? 'bg-amber-50/70' : 'hover:bg-gray-50';
+            const tdClass = isCurrent ? 'font-black text-amber-700' : '';
+            const currentBadge = isCurrent ? '<span class="ml-1.5 px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[9px] font-black">当前</span>' : '';
+            return `
+                <tr class="${trClass}">
+                    <td class="px-4 py-2.5 border-b border-gray-50 ${tdClass}">${t.name}${currentBadge}</td>
+                    <td class="px-4 py-2.5 border-b border-gray-50 ${tdClass}">${t.threshold}</td>
+                    <td class="px-4 py-2.5 border-b border-gray-50 font-mono ${tdClass}">${t.maker}</td>
+                    <td class="px-4 py-2.5 border-b border-gray-50 text-right font-mono ${tdClass}">${t.taker}</td>
+                </tr>`;
+        }).join('');
+    }
+}
+
+function openVipFeeModal() {
+    const data = resolveState(uiState.demoKey);
+    const modal = document.getElementById('vip-fee-modal');
+    const volRow = document.getElementById('vip-modal-14d-row');
+    const volVal = document.getElementById('vip-modal-14d-val');
+
+    volRow.classList.toggle('hidden', !!data.guest);
+    volVal.textContent = data.vip?.vol14d || '$0.00';
+
+    renderVipTierTable(data);
+    specialPairPage = 1;
+    renderSpecialPairFeeTable();
+
+    modal.classList.remove('hidden');
+}
+
+function closeVipFeeModal() {
+    document.getElementById('vip-fee-modal').classList.add('hidden');
+}
+
+// 事件委托：资产总览与交易账户两个 VIP 横幅上的「等级费率表」按钮均可打开
+document.addEventListener('click', e => {
+    if (e.target.closest('[data-open-vip-modal]')) {
+        openVipFeeModal();
+    }
+});
+
+document.getElementById('vip-fee-modal-close').addEventListener('click', closeVipFeeModal);
+document.getElementById('vip-fee-modal').addEventListener('click', e => {
+    if (e.target.id === 'vip-fee-modal') closeVipFeeModal();
+});
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeVipFeeModal();
+});
+document.getElementById('special-pair-prev').addEventListener('click', () => {
+    if (specialPairPage > 1) { specialPairPage--; renderSpecialPairFeeTable(); }
+});
+document.getElementById('special-pair-next').addEventListener('click', () => {
+    const totalPages = Math.max(1, Math.ceil(SPECIAL_PAIR_FEES.length / SPECIAL_PAIR_PAGE_SIZE));
+    if (specialPairPage < totalPages) { specialPairPage++; renderSpecialPairFeeTable(); }
+});
+
+// 初始化默认态（支持 #funding / #trading / #custom-expiry / #vip-modal 锚点直达）
 const initHash = (window.location.hash || '').replace('#', '');
-applyDemoState('logged-vip');
+applyDemoState(initHash === 'custom-expiry' ? 'custom-expiry' : 'logged-vip');
 setMainView(['overview', 'funding', 'trading'].includes(initHash) ? initHash : 'overview');
 setFundingSubTab('tokens');
 setTradingSubTab('assets');
+if (initHash === 'vip-modal') openVipFeeModal();
 </script>
 
 </body>
