@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        body { font-family: 'Inter', sans-serif; color: #111827; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; color: #111827; }
         body { background: #e5e7eb; margin: 0; padding: 32px 24px 64px; }
         .gallery-header { max-width: 1240px; margin: 0 auto 28px; }
         .gallery-header h1 { font-size: 22px; font-weight: 900; letter-spacing: -0.02em; }
@@ -19,7 +19,7 @@
         .web-frame {
             width: 100%; background: #fff; border: 1px solid #d1d5db; border-radius: 12px;
             box-shadow: 0 20px 50px -12px rgba(0,0,0,0.12); overflow: hidden; position: relative;
-            min-height: 720px;
+            min-height: 700px;
         }
         .web-chrome {
             height: 36px; background: #f9fafb; border-bottom: 1px solid #e5e7eb;
@@ -28,47 +28,184 @@
         .web-chrome .dot { width: 10px; height: 10px; border-radius: 50%; }
         .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; backdrop-filter: blur(4px); }
 
-        .stats-card { background: white; border: 1px solid #f1f1f1; border-radius: 2px; }
-        .tab-active { color: #000; border-bottom: 2px solid #000; font-weight: 800; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .input-row { background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 6px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
-        .input-row:hover { background: #f3f4f6; }
-        .btn-step { background: #f1f1f1; color: #111827; border-radius: 6px; width: 100%; text-align: left; padding: 12px; transition: all 0.2s; border: 1px solid transparent; }
-        .btn-step:hover { border-color: #d1d5db; background: #fff; }
-
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .dashed-hint { border-bottom: 1px dashed #9ca3af; cursor: help; }
-        .tab-active { color: #000; border-bottom: 2px solid #000; font-weight: 900; }
         .copy-icon-btn { color: #9ca3af; padding: 2px; flex-shrink: 0; border: none; background: transparent; cursor: pointer; line-height: 0; }
         .copy-icon-btn:hover { color: #2563eb; }
+
+        /* 顶部主 Tab（资产总览 / 资金账户 / 交易账户） */
+        .main-tab-btn {
+            position: relative;
+            padding: 10px 4px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #6b7280;
+            transition: color 0.15s ease;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+        }
+        .main-tab-btn:hover { color: #111827; }
+        .main-tab-btn.is-active {
+            color: #111827;
+            font-weight: 900;
+        }
+        .main-tab-btn.is-active::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -1px;
+            height: 2.5px;
+            background: #111827;
+            border-radius: 999px;
+        }
+
+        /* 区块数据卡片 */
+        .hero-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(17, 24, 39, 0.03);
+        }
+
+        /* VIP 广告风横幅（与常规白色数据卡片形成明显视觉区隔） */
+        .vip-promo-banner {
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+            background: linear-gradient(102deg, #0b1020 0%, #171b2e 42%, #291f10 82%, #3a290f 100%);
+            border: 1px solid rgba(245, 196, 81, 0.34);
+            box-shadow: 0 10px 26px -10px rgba(17, 24, 39, 0.45), inset 0 1px 0 rgba(255, 224, 138, 0.18);
+        }
+        .vip-promo-banner::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 86% 15%, rgba(251, 191, 36, 0.24), transparent 46%),
+                radial-gradient(circle at 12% 95%, rgba(59, 130, 246, 0.16), transparent 44%),
+                repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.018) 0px, rgba(255, 255, 255, 0.018) 8px, transparent 8px, transparent 16px);
+            pointer-events: none;
+        }
+        .vip-gold-text {
+            background: linear-gradient(90deg, #fde68a 0%, #f59e0b 55%, #fef08a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .vip-cta-btn {
+            background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);
+            color: #111827;
+            font-weight: 900;
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+            transition: transform 0.15s ease, filter 0.15s ease;
+        }
+        .vip-cta-btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+
+        /* 交易账户折线图 3 指标切换 Tab */
+        .chart-metric-tab {
+            position: relative;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #6b7280;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border: 1px solid transparent;
+            background: transparent;
+        }
+        .chart-metric-tab:hover { color: #111827; background: #f3f4f6; }
+        .chart-metric-tab.is-active {
+            color: #111827;
+            font-weight: 900;
+            background: #f3f4f6;
+            border-color: #e5e7eb;
+        }
+
+        /* 底部子 Tab */
+        .sub-tab-btn {
+            position: relative;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: #6b7280;
+            cursor: pointer;
+            flex-shrink: 0;
+            border: none;
+            background: transparent;
+            padding: 0 2px;
+            transition: color 0.15s ease;
+        }
+        .sub-tab-btn:hover { color: #111827; }
+        .sub-tab-btn.is-active {
+            color: #111827;
+            font-weight: 900;
+        }
+        .sub-tab-btn.is-active::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 2px;
+            background: #111827;
+        }
+
+        /* 体验金子项缩进（对齐合约交易页样式） */
+        .trial-sub-box {
+            margin-top: 6px;
+            margin-left: 4px;
+            padding-left: 12px;
+            border-left: 2px solid #e5e7eb;
+        }
+
+        /* 周期按钮 */
+        .period-btn {
+            padding: 3px 10px;
+            font-size: 10px;
+            font-weight: 800;
+            border-radius: 4px;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .period-btn:hover { color: #111827; }
+        .period-btn.is-active {
+            background: #ffffff;
+            color: #111827;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+        }
     </style>
 </head>
 <body>
 
 <div class="gallery-header">
-    <h1>Web 投资组合 · 全状态平铺原型</h1>
-    <p>桌面端采用<strong>纵向全宽画框</strong>平铺：每个画框含浏览器条 + 完整页面视口。含未登录占位态与已登录默认态，供 UI 对照。</p>
+    <h1>Web 投资组合 · 全状态平铺原型（三账户视图改版）</h1>
+    <p>顶部升级为 <strong>资产总览 / 资金账户 / 交易账户</strong> 三大核心视图，最右侧保留「待处理(5) / 划转 / 提现 / 充值」快捷操作；每个画框均支持实时点击切换顶栏 Tab、折线图维度（账户价值 / 盈亏 / 交易量）、周期（7D / 14D / 30D）、底部列表 Tab 及 VIP 等级费率弹窗。</p>
 </div>
 
 <div class="proto-grid" id="proto-grid"></div>
 
 <template id="tpl-portfolio-base">
 <div class="flex flex-col min-h-0 portfolio-page-root">
-<!-- 1. 導航欄（对齐合约交易页元素，无设置图标） -->
-<nav class="h-10 border-b border-gray-100 flex items-center px-4 justify-between shrink-0">
+<!-- 1. 顶部全局导航栏 -->
+<nav class="h-10 border-b border-gray-100 flex items-center px-4 justify-between shrink-0 bg-white">
     <div class="flex items-center space-x-6">
         <span class="font-black text-lg tracking-tighter cursor-pointer">ForX</span>
-        <div class="flex space-x-5 text-[12px] font-medium">
+        <div class="flex space-x-7 text-[12px] font-medium">
             <a href="合约交易.html" class="text-gray-400 hover:text-black">交易</a>
-            <a href="投资组合.html" class="text-black font-bold">投資組合</a>
+            <a href="投资组合.html" class="text-black font-bold">投资组合</a>
             <a href="活动中心.html" class="text-gray-400 hover:text-black relative">
-                熱門活動
-                <span class="absolute -top-1 -right-5 bg-red-500 text-white px-1 text-[8px] rounded-sm scale-90 leading-tight">HOT</span>
+                热门活动
+                <span class="absolute -top-1.5 -right-5 bg-red-500 text-white px-1 text-[8px] rounded-sm scale-90 leading-tight">HOT</span>
             </a>
-            <a href="积分.html" class="text-gray-400 hover:text-black">積分</a>
+            <a href="积分.html" class="text-gray-400 hover:text-black">积分</a>
             <a href="邀请返佣.html" class="text-gray-400 hover:text-black relative">
-                邀請返佣
-                <span class="absolute -top-1 -right-5 bg-red-500 text-white px-1 text-[8px] rounded-sm scale-90">40%</span>
+                邀请返佣
+                <span class="absolute -top-1.5 -right-5 bg-red-500 text-white px-1 text-[8px] rounded-sm scale-90">40%</span>
             </a>
         </div>
         <div class="relative group h-full flex items-center">
@@ -84,14 +221,14 @@
                     <a href="排行榜.html" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 font-bold transition-colors">排行榜</a>
                     <a href="代理中心.html" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 font-bold transition-colors">代理中心</a>
                     <a href="风险基金.html" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 font-bold transition-colors">风险保障基金</a>
-                    <a href="#" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 transition-colors">文檔</a>
+                    <a href="#" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 transition-colors">文档</a>
                     <a href="#" class="block px-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-50 transition-colors">公告</a>
                 </div>
             </div>
         </div>
     </div>
     <div class="flex items-center space-x-3">
-        <button class="flex items-center border border-gray-200 rounded px-1.5 py-0.5 text-gray-400 hover:text-black hover:border-gray-400 transition-colors" title="切換模式" type="button">
+        <button class="flex items-center border border-gray-200 rounded px-1.5 py-0.5 text-gray-400 hover:text-black hover:border-gray-400 transition-colors" title="切换模式" type="button">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                 <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round"/>
             </svg>
@@ -118,750 +255,631 @@
                 <div class="bg-white border border-gray-100 rounded-sm py-1 shadow-xl min-w-[100px] overflow-hidden">
                     <a href="#" class="block px-3 py-1.5 text-[11px] text-gray-400 hover:text-black hover:bg-gray-50 font-bold transition-colors">English</a>
                     <a href="#" class="block px-3 py-1.5 text-[11px] text-black font-black bg-gray-50">简体中文</a>
-                    <a href="#" class="block px-3 py-1.5 text-[11px] text-gray-400 hover:text-black hover:bg-gray-50 font-bold transition-colors">繁体中文</a>
-                    <a href="#" class="block px-3 py-1.5 text-[11px] text-gray-400 hover:text-black hover:bg-gray-50 font-bold transition-colors">日本语</a>
+                    <a href="#" class="block px-3 py-1.5 text-[11px] text-gray-400 hover:text-black hover:bg-gray-50 font-bold transition-colors">繁體中文</a>
                 </div>
             </div>
         </div>
 
-        <button id="btn-connect-wallet" data-portfolio-nav-connect type="button"
-                class="bg-black text-white px-4 py-1.5 rounded-sm text-[11px] font-bold hover:bg-gray-800 transition">
+        <button data-portfolio-nav-connect type="button"
+                class="bg-black text-white px-4 py-1 rounded text-[11px] font-bold hover:bg-gray-800 transition-all">
             连接钱包
         </button>
 
-        <div id="user-account-wrapper" data-portfolio-nav-user class="hidden relative group h-12 flex items-center">
-            <button class="bg-gray-50 px-3 py-1.5 rounded-sm flex items-center space-x-2 border border-gray-100 hover:bg-gray-100 transition">
-                <div class="w-3 h-3 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
-                <span id="nav-login-label" class="text-[11px] font-black text-gray-900">0xd593...2Dd2</span>
-                <svg class="w-3 h-3 text-gray-400 group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="3"/></svg>
+        <div data-portfolio-nav-user class="hidden relative group h-10 flex items-center">
+            <button type="button" class="flex items-center space-x-2 bg-gray-50 border border-gray-200 px-3 py-1 rounded text-[11px] font-bold text-gray-800 hover:border-black transition-all">
+                <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                <span class="font-mono">0x71C...3A92</span>
+                <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2.5"/></svg>
             </button>
-
-            <!-- 下拉菜单（丰富版） -->
-            <div class="absolute top-full right-0 hidden group-hover:block pt-2 z-[110]">
-                <div class="bg-white border border-gray-100 rounded-sm shadow-2xl p-4 min-w-[280px] space-y-4">
-                    <!-- UID -->
-                    <div class="flex items-center justify-between pb-2 border-b border-gray-50 gap-2">
-                        <div class="flex items-center space-x-2 min-w-0">
-                            <div class="w-8 h-8 bg-blue-600 rounded-sm flex items-center justify-center text-white font-black text-[10px] shrink-0">FX</div>
-                            <span class="text-[10px] text-gray-400">UID: <strong id="menu-uid" class="text-gray-900">123456</strong></span>
-                        </div>
-                        <button type="button" id="btn-copy-uid" class="copy-icon-btn" onclick="copyMenuField('uid')" title="复制 UID" aria-label="复制 UID">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                        </button>
-                    </div>
-
-                    <!-- 绑定信息（与 App 一致：钱包登录仅地址；邮箱登录展示邮箱 + Privy 钱包，不可交叉绑定） -->
-                    <div class="space-y-2 text-[11px]">
-                        <div id="menu-email-row" class="hidden flex justify-between items-center gap-2">
-                            <span class="text-gray-400 shrink-0">邮箱</span>
-                            <div class="flex items-center gap-1 min-w-0 justify-end">
-                                <span id="menu-email-status" class="font-bold text-gray-900 truncate"></span>
-                                <button type="button" id="btn-copy-email" class="copy-icon-btn" onclick="copyMenuField('email')" title="复制邮箱" aria-label="复制邮箱">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="menu-wallet-row" class="flex justify-between items-center gap-2">
-                            <span class="text-gray-400 shrink-0" id="menu-wallet-label">钱包</span>
-                            <div class="flex items-center gap-1 min-w-0 justify-end">
-                                <span id="menu-wallet-status" class="font-bold text-gray-900 truncate text-right"></span>
-                                <button type="button" id="btn-copy-wallet" class="copy-icon-btn" onclick="copyMenuField('wallet')" title="复制钱包地址" aria-label="复制钱包地址">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="menu-ga-row" class="hidden flex justify-between items-center">
-                            <span class="text-gray-400">身份验证器</span>
-                            <div id="menu-ga-action" class="text-right"></div>
+            <div class="absolute top-full right-0 hidden group-hover:block pt-1 z-[150]">
+                <div class="bg-white border border-gray-200 rounded-md shadow-2xl w-64 py-2 text-[11px]">
+                    <div class="px-4 py-2 border-b border-gray-50">
+                        <div class="flex justify-between items-center text-gray-400 text-[10px]">
+                            <span>用户 UID</span>
+                            <span class="font-mono text-gray-700">8829401</span>
                         </div>
                     </div>
-
-                    <!-- 总资产 -->
-                    <div class="bg-gray-50 p-3 rounded-sm border border-gray-100">
-                        <div class="flex justify-between items-center">
-                            <span class="text-[10px] text-gray-400 uppercase">总资产价值</span>
-                            <span class="text-xl font-black text-gray-900">$12,450.50</span>
-                        </div>
+                    <div class="px-4 py-2 hover:bg-gray-50 flex justify-between items-center cursor-pointer">
+                        <span class="text-gray-600 font-medium">VIP 等级</span>
+                        <span class="bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded font-black text-[10px]">VIP 2</span>
                     </div>
-
-                    <!-- 操作按钮 -->
-                    <div class="grid grid-cols-3 gap-2">
-                        <button onclick="openModal('deposit')" class="py-2 bg-blue-600 text-white text-[10px] font-black uppercase rounded-sm">充值</button>
-                        <button onclick="openModal('withdraw')" class="py-2 border border-gray-200 text-[10px] font-black uppercase rounded-sm">提现</button>
-                        <button onclick="openTransferModal()" class="py-2 bg-gray-900 text-white text-[10px] font-black uppercase rounded-sm">划转</button>
+                    <div class="px-4 py-2 hover:bg-gray-50 flex justify-between items-center cursor-pointer">
+                        <span class="text-gray-600 font-medium">资产总览</span>
+                        <span class="font-black text-gray-900">$101,151.49</span>
                     </div>
-
-                    <button type="button" id="menu-export-wallet-row" class="hidden w-full flex items-center justify-between px-2 py-2.5 text-[11px] font-bold text-gray-700 hover:text-black hover:bg-gray-50 transition rounded-sm border border-gray-100" onclick="openExportWalletEntry()">
-                        <span>导出邮箱钱包</span>
-                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                    </button>
-
-                    <a href="API管理.html" class="w-full flex items-center justify-between px-2 py-2.5 text-[11px] font-bold text-gray-700 hover:text-black hover:bg-gray-50 transition rounded-sm border border-gray-100">
-                        <span>API 管理</span>
-                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                    </a>
-
-                    <!-- 退出登录 -->
-                    <button onclick="logout()" class="w-full flex items-center justify-between px-2 py-2 text-[11px] font-bold text-red-400 hover:text-red-600 hover:bg-red-50 transition rounded-sm">
-                        <span>退出登录</span>
-                        <svg class="w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                    </button>
+                    <div class="border-t border-gray-100 my-1"></div>
+                    <div class="px-4 py-2 hover:bg-red-50 text-red-500 font-bold cursor-pointer flex items-center justify-between">
+                        <span>断开连接</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-width="2"/></svg>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </nav>
 
-<main class="flex-1 overflow-y-auto bg-white">
-    <div class="max-w-[1400px] mx-auto p-6 space-y-6">
-
-        <!-- 區塊一：資產權益與操作中心 -->
-        <div class="stats-card p-6 border-t-[4px] border-t-blue-600 shadow-lg bg-white">
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <!-- 總權益 -->
-                <div class="space-y-1">
-                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">總淨資產價值</p>
-                    <div class="flex items-baseline space-x-3">
-                        <span class="text-3xl font-black text-gray-900" data-portfolio-equity-total>12,450.50 <small class="text-sm font-bold text-gray-400 uppercase">USDT</small></span>
-                        <span class="text-[12px] font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-sm" data-portfolio-equity-pnl>今日盈虧 +420.15 (+3.42%)</span>
-                    </div>
-                </div>
-                <!-- 操作按鈕組（未登录时隐藏，连接钱包见顶部导航栏） -->
-                <div class="flex items-center space-x-2" data-portfolio-actions-logged>
-                    <button type="button" class="px-5 py-2.5 bg-orange-500 text-white rounded-sm font-black text-[11px] hover:bg-orange-600 transition uppercase tracking-widest flex items-center gap-1.5 shadow-sm shadow-orange-500/25">
-                        待处理<span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-black leading-none ring-2 ring-white/90">5</span>
-                    </button>
-                    <button onclick="openTransferModal()" class="px-6 py-2.5 bg-gray-900 text-white rounded-sm font-black text-[11px] hover:bg-black transition uppercase tracking-widest">劃轉</button>
-                    <button onclick="openModal('withdraw')" class="px-6 py-2.5 border border-gray-200 rounded-sm font-black text-[11px] hover:bg-gray-50 transition uppercase tracking-widest">提現</button>
-                    <button onclick="openModal('deposit')" class="px-6 py-2.5 bg-blue-600 text-white rounded-sm font-black text-[11px] hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition uppercase tracking-widest">充值</button>
-                </div>
+<!-- 2. 页面主体 -->
+<main class="flex-1 bg-[#f8f9fb]">
+    <!-- 顶部三级主 Tab + 右侧快捷操作按钮 -->
+    <div class="bg-white border-b border-gray-200">
+        <div class="max-w-[1360px] mx-auto px-6 flex flex-wrap items-center justify-between gap-4">
+            <!-- 左侧三个主 Tab -->
+            <div class="flex items-center space-x-8" role="tablist" data-portfolio-main-tabs>
+                <button type="button" class="main-tab-btn is-active" data-main-tab="overview">资产总览</button>
+                <button type="button" class="main-tab-btn" data-main-tab="funding">资金账户</button>
+                <button type="button" class="main-tab-btn" data-main-tab="trading">交易账户</button>
             </div>
-
-            <!-- 帳戶分類餘額 (一行式設計) -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 pt-6 border-t border-gray-50">
-                <div class="flex items-center justify-between px-4 py-3 bg-gray-50/50 rounded-sm">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-black text-[10px]">F</div>
-                        <div>
-                            <p class="text-[10px] font-black text-gray-400 uppercase">資金帳戶</p>
-                            <p class="text-sm font-black text-gray-800" data-portfolio-funding-total>2,450.50 <small class="text-[10px] font-medium text-gray-400 uppercase">USDT</small></p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-[9px] font-bold text-gray-400 uppercase">可用餘額</p>
-                        <p class="text-[12px] font-black text-gray-900" data-portfolio-funding-available>2,450.50</p>
-                    </div>
-                </div>
-                <div class="flex items-center justify-between px-4 py-3 bg-blue-50/20 rounded-sm border border-blue-50">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-black text-[10px]">T</div>
-                        <div>
-                            <p class="text-[10px] font-black text-blue-600 uppercase">交易帳戶</p>
-                            <p class="text-sm font-black text-gray-800" data-portfolio-trade-total>10,000.00 <small class="text-[10px] font-medium text-gray-400 uppercase">USDT</small></p>
-                        </div>
-                    </div>
-                    <div class="flex space-x-6">
-                        <div class="text-right">
-                            <p class="text-[9px] font-bold text-gray-400 uppercase">保證金餘額</p>
-                            <p class="text-[12px] font-black text-blue-600" data-portfolio-trade-margin>10,000.00</p>
-                        </div>
-                    </div>
-                </div>
+            <!-- 最右侧快捷操作按钮（未登录时隐藏） -->
+            <div class="flex items-center space-x-2 py-2" data-portfolio-actions-logged>
+                <button type="button" class="px-4 py-2 bg-orange-500 text-white rounded text-[11px] font-black hover:bg-orange-600 transition flex items-center gap-1.5 shadow-sm shadow-orange-500/20">
+                    待处理<span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-black leading-none ring-2 ring-white/90">5</span>
+                </button>
+                <button type="button" class="px-5 py-2 bg-gray-900 text-white rounded text-[11px] font-black hover:bg-black transition">划转</button>
+                <button type="button" class="px-5 py-2 border border-gray-200 bg-white text-gray-800 rounded text-[11px] font-black hover:bg-gray-50 transition">提现</button>
+                <button type="button" class="px-5 py-2 bg-blue-600 text-white rounded text-[11px] font-black hover:bg-blue-700 shadow-sm shadow-blue-600/20 transition">充值</button>
             </div>
         </div>
+    </div>
 
-        <!-- 二欄布局容器 -->
-        <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+    <div class="max-w-[1360px] mx-auto px-6 py-5 space-y-5">
 
-            <!-- 區塊二：VIP 權益卡片 -->
-            <div class="xl:col-span-4 space-y-6">
-                <div class="bg-gradient-to-br from-gray-900 to-black rounded-sm p-6 text-white shadow-xl relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-yellow-500/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-                    <div class="relative z-10">
-                        <div class="flex justify-between items-center mb-8">
-                            <div class="flex items-center space-x-2" data-portfolio-vip-level-wrap>
-                                <span class="text-2xl">👑</span>
-                                <h3 class="text-xl font-black italic tracking-tighter text-yellow-500" data-portfolio-vip-level>VIP 2</h3>
-                            </div>
-                            <div class="hidden items-center space-x-2" data-portfolio-vip-custom-wrap>
-                                <span class="text-[10px] font-black uppercase tracking-widest text-purple-300 border border-purple-400/40 px-2 py-1 rounded-sm">費率優惠</span>
-                            </div>
-                            <button data-portfolio-vip-fee-btn onclick="void(0)" class="text-[10px] font-black text-gray-400 border border-gray-700 px-2 py-1 rounded-sm hover:text-yellow-500 hover:border-yellow-500 transition-colors uppercase">等級費率表</button>
+        <!-- ================================================================ -->
+        <!-- 视图一：资产总览 (overview)                                       -->
+        <!-- ================================================================ -->
+        <section class="space-y-5" data-view-panel="overview">
+            <!-- 顶部大的信息横条（左：总资产价值+今日盈亏+资产组合 / 右：周期绩效分析 账户价值 折线图） -->
+            <div class="hero-card grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+                <!-- 左侧 -->
+                <div class="lg:col-span-5 p-6 lg:border-r border-gray-100 flex flex-col justify-between gap-6">
+                    <div>
+                        <p class="text-[12px] font-bold text-gray-500 mb-1.5">总资产价值</p>
+                        <div class="text-[32px] leading-tight font-black font-mono text-gray-900 tracking-tight" data-overview-total>$101,151.49</div>
+                        <div class="mt-2.5 flex items-center gap-2 text-[12px]">
+                            <span class="text-gray-500 font-semibold">今日盈亏</span>
+                            <span class="font-mono font-bold text-gray-800" data-overview-pnl>0.00</span>
+                            <span class="font-mono font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded text-[11px]" data-overview-pnl-pct>0.00%</span>
                         </div>
-                        <div class="space-y-6">
-                            <div>
-                                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">过去 14 天交易量</p>
-                                <p class="text-2xl font-black font-mono" data-portfolio-vip-14d>$38,500,000.00</p>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4 py-4 border-y border-white/10" data-portfolio-vip-fees>
-                                <div><p class="text-[9px] text-gray-500 font-bold uppercase">Maker 費率</p><p class="text-sm font-black text-green-400" data-portfolio-vip-maker>0.010%</p></div>
-                                <div><p class="text-[9px] text-gray-500 font-bold uppercase">Taker 費率</p><p class="text-sm font-black text-green-400" data-portfolio-vip-taker>0.034%</p></div>
-                            </div>
-                            <p class="hidden text-[9px] text-gray-400 font-bold mt-1 leading-relaxed" data-portfolio-vip-valid-until></p>
-                            <div class="pt-2" data-portfolio-vip-progress>
-                                <div class="flex justify-between items-end mb-2">
-                                    <p class="text-[9px] text-gray-500 font-bold uppercase">升級進度 <span class="text-white ml-1">18%</span></p>
-                                    <p class="text-[9px] text-gray-500 font-bold">下一等級: <span class="text-white">VIP 3</span></p>
+                    </div>
+
+                    <div class="pt-5 border-t border-gray-100">
+                        <p class="text-[12px] font-extrabold text-gray-900 mb-3">资产组合</p>
+                        <div class="space-y-2.5">
+                            <div class="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-gray-50 hover:bg-gray-100/80 transition cursor-pointer" data-jump-tab="funding">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                                    <span class="text-[12px] font-bold text-gray-700">资金账户</span>
                                 </div>
-                                <div class="w-full h-1 bg-gray-800 rounded-full overflow-hidden">
-                                    <div class="bg-yellow-500 h-full" style="width: 18%"></div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[13px] font-black font-mono text-gray-900" data-overview-funding>$0.00</span>
+                                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                                 </div>
-                                <p class="text-[9px] text-gray-500 mt-3 italic">距下一等級還差 <span class="text-white font-bold font-mono">$61,500,000.00</span></p>
+                            </div>
+                            <div class="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-blue-50/50 border border-blue-100/70 hover:bg-blue-50 transition cursor-pointer" data-jump-tab="trading">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                                    <span class="text-[12px] font-bold text-gray-900">合约账户</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[13px] font-black font-mono text-gray-900" data-overview-perp>$101,151.49</span>
+                                    <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- 區塊三：合約帳戶表現 Dashboard -->
-            <!-- 區塊三：合約帳戶表現 Dashboard -->
-            <div class="xl:col-span-8 stats-card bg-white overflow-hidden flex flex-col border-none shadow-xl">
-
-                <div class="grid grid-cols-1 lg:grid-cols-12 flex-1">
-
-                    <!-- 左側：實時風險與累積數據 (不隨日期切換) -->
-                    <div class="lg:col-span-4 bg-gray-50/50 border-r border-gray-100 p-6 space-y-8 shrink-0">
+                <!-- 右侧：周期绩效分析 · 账户价值 · 折线图 -->
+                <div class="lg:col-span-7 p-6 flex flex-col relative" data-chart-box="overview">
+                    <div class="hidden absolute inset-0 z-10 flex items-center justify-center bg-white/90" data-guest-chart-overlay>
+                        <p class="text-[13px] font-bold text-gray-400">请先连接钱包</p>
+                    </div>
+                    <div class="flex items-start justify-between gap-4 mb-4">
                         <div>
-                            <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-4">賬戶實時風險</p>
-                            <div class="space-y-5">
-                                <div>
-                                    <p class="text-[9px] text-gray-400 font-bold uppercase mb-1">维持保證金比例</p>
-                                    <p class="text-2xl font-black text-blue-600" data-portfolio-margin-ratio>0.00%</p>
-                                </div>
-                                <div class="space-y-3">
-                                    <div class="flex justify-between border-b border-gray-200/30 pb-2">
-                                        <span class="text-[10px] text-gray-400 font-bold uppercase">未實現盈虧</span>
-                                        <span class="text-[11px] font-black text-gray-800" data-portfolio-unrealized-pnl>0.00 <small class="text-gray-400">USDT</small></span>
-                                    </div>
-                                    <div class="flex justify-between border-b border-gray-200/30 pb-2">
-                                        <span class="text-[10px] text-gray-400 font-bold uppercase">維持保證金</span>
-                                        <span class="text-[11px] font-black text-gray-800" data-portfolio-maint-margin>0.00 <small class="text-gray-400">USDT</small></span>
-                                    </div>
-                                </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                                <h3 class="text-[13px] font-black text-gray-900">周期绩效分析</h3>
+                            </div>
+                            <div class="mt-2 flex items-baseline gap-2.5">
+                                <span class="text-[12px] font-bold text-gray-500">账户价值</span>
+                                <span class="text-[18px] font-black font-mono text-gray-900" data-overview-chart-val>$101,151.49</span>
                             </div>
                         </div>
-
-                        <div class="pt-6 border-t border-gray-200/50">
-                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">累積統計</p>
-                            <div>
-                                <p class="text-[9px] text-gray-400 font-bold uppercase mb-1">總交易量 (Lifetime)</p>
-                                <p class="text-lg font-black text-gray-900 font-mono" data-portfolio-lifetime-volume>$138,500,000.00</p>
-                            </div>
+                        <div class="flex bg-gray-100 p-0.5 rounded-md" data-period-group="overview">
+                            <button type="button" class="period-btn is-active" data-period="7D">7D</button>
+                            <button type="button" class="period-btn" data-period="14D">14D</button>
+                            <button type="button" class="period-btn" data-period="30D">30D</button>
                         </div>
                     </div>
 
-                    <!-- 右側：週期分析與三色走勢圖 -->
-                    <div class="lg:col-span-8 p-6 flex flex-col relative" data-portfolio-chart-panel>
-                        <div class="hidden absolute inset-0 z-10 flex items-center justify-center bg-white" data-portfolio-guest-hint>
-                            <p class="text-[13px] font-bold text-gray-400">請先連接錢包</p>
-                        </div>
-
-                        <!-- 頂部：標題、圖例與切換 -->
-                        <div class="flex justify-between items-start mb-8">
-                            <div class="space-y-4">
-                                <div class="flex items-center space-x-2">
-                                    <span class="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
-                                    <h3 class="text-[11px] font-black text-gray-900 uppercase tracking-widest">週期績效分析</h3>
-                                </div>
-                                <!-- 圖例 Legend -->
-                                <div class="flex items-center space-x-4">
-                                    <div class="flex items-center space-x-1.5">
-                                        <span class="w-2 h-0.5 bg-blue-600"></span>
-                                        <span class="text-[9px] font-black text-gray-400 uppercase">帳戶價值</span>
-                                    </div>
-                                    <div class="flex items-center space-x-1.5">
-                                        <span class="w-2 h-0.5 bg-green-500"></span>
-                                        <span class="text-[9px] font-black text-gray-400 uppercase">盈虧</span>
-                                    </div>
-                                    <div class="flex items-center space-x-1.5">
-                                        <span class="w-2 h-0.5 border-t border-dashed border-purple-500"></span>
-                                        <span class="text-[9px] font-black text-gray-400 uppercase">交易量</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="flex bg-gray-100 p-0.5 rounded-sm">
-                                <button class="px-4 py-1 text-[9px] font-black rounded-sm bg-white shadow-sm transition-all">7D</button>
-                                <button class="px-4 py-1 text-[9px] font-black text-gray-400 hover:text-black transition-all">14D</button>
-                                <button class="px-4 py-1 text-[9px] font-black text-gray-400 hover:text-black transition-all">30D</button>
-                            </div>
-                        </div>
-
-                        <!-- 週期動態數據 -->
-                        <div class="grid grid-cols-3 gap-4 mb-8">
-                            <div class="space-y-1">
-                                <p class="text-[9px] text-gray-400 font-bold uppercase">帳戶價值</p>
-                                <p class="text-xl font-black text-gray-900 font-mono">10,000.00 <small class="text-[10px] text-gray-300">USDT</small></p>
-                            </div>
-                            <div class="space-y-1 border-x border-gray-100 px-4">
-                                <p class="text-[9px] text-gray-400 font-bold uppercase">盈虧</p>
-                                <p class="text-xl font-black text-green-500 font-mono">+240.00 <small class="text-[10px] opacity-50">USDT</small></p>
-                            </div>
-                            <div class="space-y-1 text-right">
-                                <p class="text-[9px] text-gray-400 font-bold uppercase">交易量</p>
-                                <p class="text-xl font-black text-purple-600 font-mono">2.4M <small class="text-[10px] opacity-50">USDT</small></p>
-                            </div>
-                        </div>
-
-                        <!-- 三色折線圖區域 -->
-                        <div class="flex-1 min-h-[180px] relative mt-2">
-                            <svg class="w-full h-full" viewBox="0 0 600 120" preserveAspectRatio="none">
-                                <!-- 盈虧區域背景 (綠色) -->
-                                <defs>
-                                    <linearGradient id="pnlAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stop-color="#10b981" stop-opacity="0.1" />
-                                        <stop offset="100%" stop-color="#10b981" stop-opacity="0" />
-                                    </linearGradient>
-                                </defs>
-                                <path d="M0,100 L100,80 L200,85 L300,30 L400,50 L500,10 L600,20 L600,120 L0,120 Z" fill="url(#pnlAreaGradient)" />
-
-                                <!-- 1. 交易量走勢 (紫色虛線/細線) -->
-                                <polyline fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="4,2" points="0,110 50,40 120,90 200,20 350,80 480,30 600,60" />
-
-                                <!-- 2. 盈虧走勢 (綠色) -->
-                                <polyline fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="0,100 100,80 200,85 300,30 400,50 500,10 600,20" />
-
-                                <!-- 3. 帳戶價值走勢 (藍色主線) -->
-                                <polyline fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="0,90 150,100 300,70 450,85 600,40" />
-                            </svg>
-
-                            <!-- 時間座標軸 -->
-                            <div class="flex justify-between mt-4 text-[8px] font-bold text-gray-300 uppercase tracking-tighter">
-                                <span>6 Days Ago</span>
-                                <span>4 Days Ago</span>
-                                <span>2 Days Ago</span>
-                                <span class="text-blue-600">Today</span>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="flex-1 min-h-[168px] flex flex-col justify-between" data-chart-canvas="overview"></div>
                 </div>
             </div>
-        </div>
 
-        <!-- 下半区 -->
-        <div class="flex-1 flex overflow-hidden">
-            <!-- 左侧：数据表格区 -->
-            <div class="flex-1 flex flex-col border-r border-gray-100 bg-white overflow-hidden">
-                <!-- 主标签栏（持仓/委托/历史...） -->
-                <div class="h-8 border-b border-gray-50 flex items-center px-4 space-x-5 text-[10px] font-bold text-gray-400 overflow-x-auto scrollbar-hide shrink-0">
-                    <span onclick="switchDataTab('pos')" id="tab-data-pos" class="tab-active cursor-pointer h-8 flex items-center shrink-0">當前持倉 (1)</span>
-                    <span onclick="switchDataTab('order')" id="tab-data-order" class="cursor-pointer h-8 flex items-center shrink-0">當前委託 (1)</span>
-                    <span onclick="switchDataTab('hist-order')" id="tab-data-hist-order" class="cursor-pointer h-8 flex items-center shrink-0">歷史委託</span>
-                    <span onclick="switchDataTab('hist-trade')" id="tab-data-hist-trade" class="cursor-pointer h-8 flex items-center shrink-0">歷史成交</span>
-                    <span onclick="switchDataTab('hist-pos')" id="tab-data-hist-pos" class="cursor-pointer h-8 flex items-center shrink-0">歷史持倉</span>
-                    <span onclick="switchDataTab('asset-log')" id="tab-data-asset-log" class="cursor-pointer h-8 flex items-center shrink-0">資金流水</span>
-                    <span onclick="switchDataTab('funding-fee')" id="tab-data-funding-fee" class="cursor-pointer h-8 flex items-center shrink-0">資金費用</span>
-                    <span onclick="switchDataTab('deposit-withdraw')" id="tab-data-deposit-withdraw" class="cursor-pointer h-8 flex items-center shrink-0">充提記錄</span>
-                </div>
+            <!-- 中间：VIP 信息横条（广告/权益横幅风格，视觉区隔明显） -->
+            <div data-vip-banner-slot></div>
 
-                <!-- 当前委托/历史委托 子标签（切换基础单/止盈止损单） -->
-                <div id="order-subtabs" class="flex space-x-4 px-4 py-2 border-b border-gray-50 bg-white text-[10px] font-bold hidden shrink-0">
-                    <button id="subtab-order-base" onclick="switchOrderSubTab('base')" class="tab-active cursor-pointer pb-1">基礎單 (1)</button>
-                    <button id="subtab-order-tpsl" onclick="switchOrderSubTab('tpsl')" class="cursor-pointer pb-1 text-gray-400 hover:text-black">止盈止損單 (2)</button>
+            <!-- 下方：代币列表 -->
+            <div class="hero-card overflow-hidden">
+                <div class="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+                    <h3 class="text-[14px] font-black text-gray-900">代币</h3>
+                    <span class="text-[11px] font-semibold text-gray-400" data-overview-token-count>共 2 项资产</span>
                 </div>
-
-                <!-- 历史委托筛选栏（基础单/止盈止损单共用容器，由JS控制内部显示） -->
-                <div id="hist-order-filters" class="px-4 py-2 border-b border-gray-50 flex flex-wrap items-center space-x-2 text-[9px] font-bold hidden shrink-0">
-                    <!-- 快捷时间按钮组 -->
-                    <button class="px-2 py-1 rounded-sm bg-gray-900 text-white">近1日</button>
-                    <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近7日</button>
-                    <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近30日</button>
-                    <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近90日</button>
-                    <span class="text-gray-300">|</span>
-                    <!-- 自定义日期 -->
-                    <div class="relative">
-                        <button onclick="toggleDatePicker('hist-order-date')" class="flex items-center space-x-1 border border-gray-200 px-2 py-1 rounded-sm hover:border-black">
-                            <span>2026-06-14</span>
-                            <span class="text-gray-300">-</span>
-                            <span>2026-06-15</span>
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        </button>
-                        <div id="hist-order-date-picker" class="absolute top-full mt-1 left-0 bg-white border border-gray-200 shadow-lg p-3 rounded-sm hidden z-50">
-                            <div class="flex space-x-2 items-center">
-                                <input type="date" class="border border-gray-200 px-2 py-1 text-[10px]"/>
-                                <span class="text-gray-400">至</span>
-                                <input type="date" class="border border-gray-200 px-2 py-1 text-[10px]"/>
-                                <button class="px-2 py-1 bg-black text-white rounded-sm text-[9px]">確定</button>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- 合约 -->
-                    <select class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]">
-                        <option>合約</option>
-                        <option>BTCUSDT</option>
-                        <option>BNBUSDT</option>
-                    </select>
-                    <!-- 基础单专属：订单类型、方向 -->
-                    <span id="hist-order-extra-filters" class="flex items-center space-x-2">
-                <select id="hist-order-type-filter" class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]">
-                    <option>訂單類型</option>
-                    <option>全部</option>
-                    <option>限價委託</option>
-                    <option>市價委託</option>
-                    <option>限價止損</option>
-                    <option>市價止損</option>
-                    <option>限價止盈</option>
-                    <option>市價止盈</option>
-                    <option>強平委託</option>
-                </select>
-                <select id="hist-order-dir-filter" class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]">
-                    <option>方向</option>
-                    <option>全部</option>
-                    <option>買入</option>
-                    <option>賣出</option>
-                </select>
-            </span>
-                    <!-- 状态多选 -->
-                    <div class="relative">
-                        <button onclick="toggleMultiSelect('hist-order-status-dropdown')" class="border border-gray-200 px-2 py-1 rounded-sm flex items-center space-x-1">
-                            <span>狀態</span>
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
-                        </button>
-                        <div id="hist-order-status-dropdown" class="absolute top-full mt-1 bg-white border border-gray-200 shadow-lg p-3 rounded-sm hidden z-50 text-[10px] space-y-1">
-                            <label class="flex items-center space-x-1"><input type="checkbox" checked> 完全成交</label>
-                            <label class="flex items-center space-x-1"><input type="checkbox"> 部分成交</label>
-                            <label class="flex items-center space-x-1"><input type="checkbox"> 已取消</label>
-                            <label class="flex items-center space-x-1"><input type="checkbox"> 已過期</label>
-                        </div>
-                    </div>
-                    <button class="px-3 py-1 bg-black text-white rounded-sm">查詢</button>
-                    <button class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm">重置</button>
-                </div>
-
-                <!-- 历史成交筛选栏 -->
-                <div id="hist-trade-filters" class="px-4 py-2 border-b border-gray-50 flex flex-wrap items-center space-x-2 text-[9px] font-bold hidden shrink-0">
-                    <button class="px-2 py-1 rounded-sm bg-gray-900 text-white">近1日</button>
-                    <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近7日</button>
-                    <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近30日</button>
-                    <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近90日</button>
-                    <span class="text-gray-300">|</span>
-                    <div class="relative">
-                        <button onclick="toggleDatePicker('hist-trade-date')" class="flex items-center space-x-1 border border-gray-200 px-2 py-1 rounded-sm">
-                            <span>2026-06-14</span><span>-</span><span>2026-06-15</span>
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        </button>
-                        <div id="hist-trade-date-picker" class="absolute top-full mt-1 left-0 bg-white border border-gray-200 shadow-lg p-3 rounded-sm hidden z-50">
-                            <div class="flex space-x-2"><input type="date" class="border px-2 py-1 text-[10px]"/><span>至</span><input type="date" class="border px-2 py-1 text-[10px]"/><button class="px-2 py-1 bg-black text-white text-[9px]">確定</button></div>
-                        </div>
-                    </div>
-                    <select class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]"><option>合約</option><option>BNBUSDT</option></select>
-                    <select class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]"><option>方向</option><option>全部</option><option>買入</option><option>賣出</option></select>
-                    <button class="px-3 py-1 bg-black text-white rounded-sm">查詢</button>
-                    <button class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm">重置</button>
-                </div>
-
-                <!-- 历史持仓筛选栏 -->
-                <div id="hist-pos-filters" class="px-4 py-2 border-b border-gray-50 flex flex-wrap items-center space-x-2 text-[9px] font-bold hidden shrink-0">
-                    <button class="px-2 py-1 rounded-sm bg-gray-900 text-white">近1日</button>
-                    <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近7日</button>
-                    <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近30日</button>
-                    <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近90日</button>
-                    <span class="text-gray-300">|</span>
-                    <div class="relative">
-                        <button onclick="toggleDatePicker('hist-pos-date')" class="flex items-center space-x-1 border border-gray-200 px-2 py-1 rounded-sm">
-                            <span>2026-06-14</span><span>-</span><span>2026-06-15</span>
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        </button>
-                        <div id="hist-pos-date-picker" class="absolute top-full mt-1 left-0 bg-white border border-gray-200 shadow-lg p-3 rounded-sm hidden z-50">
-                            <div class="flex space-x-2"><input type="date" class="border px-2 py-1 text-[10px]"/><span>至</span><input type="date" class="border px-2 py-1 text-[10px]"/><button class="px-2 py-1 bg-black text-white text-[9px]">確定</button></div>
-                        </div>
-                    </div>
-                    <select class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]"><option>合約</option><option>BTCUSDT</option></select>
-                    <select class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]"><option>倉位模式</option><option>全部</option><option>逐倉</option><option>全倉</option></select>
-                    <div class="relative">
-                        <button onclick="toggleMultiSelect('hist-pos-status-dropdown')" class="border border-gray-200 px-2 py-1 rounded-sm flex items-center space-x-1">
-                            <span>狀態</span>
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
-                        </button>
-                        <div id="hist-pos-status-dropdown" class="absolute top-full mt-1 bg-white border border-gray-200 shadow-lg p-3 rounded-sm hidden z-50 text-[10px] space-y-1">
-                            <label class="flex items-center space-x-1"><input type="checkbox"> 全部平倉</label>
-                            <label class="flex items-center space-x-1"><input type="checkbox"> 部分平倉</label>
-                        </div>
-                    </div>
-                    <button class="px-3 py-1 bg-black text-white rounded-sm">查詢</button>
-                    <button class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm">重置</button>
-                </div>
-
-                <!-- 资金流水筛选栏 -->
-                <div id="asset-log-filters" class="px-4 py-2 border-b border-gray-50 flex flex-wrap items-center space-x-2 text-[9px] font-bold hidden shrink-0">
-                    <button class="px-2 py-1 rounded-sm bg-gray-900 text-white">近1日</button>
-                    <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近7日</button>
-                    <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近30日</button>
-                    <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近90日</button>
-                    <span class="text-gray-300">|</span>
-                    <div class="relative">
-                        <button onclick="toggleDatePicker('asset-log-date')" class="flex items-center space-x-1 border border-gray-200 px-2 py-1 rounded-sm">
-                            <span>2026-06-14</span><span>-</span><span>2026-06-15</span>
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        </button>
-                        <div id="asset-log-date-picker" class="absolute top-full mt-1 left-0 bg-white border border-gray-200 shadow-lg p-3 rounded-sm hidden z-50">
-                            <div class="flex space-x-2"><input type="date" class="border px-2 py-1 text-[10px]"/><span>至</span><input type="date" class="border px-2 py-1 text-[10px]"/><button class="px-2 py-1 bg-black text-white text-[9px]">確定</button></div>
-                        </div>
-                    </div>
-                    <select class="border border-gray-200 rounded-sm px-1 py-1 bg-white text-[10px]">
-                        <option>類型</option>
-                        <option>全部</option>
-                        <option>轉帳</option>
-                        <option>已實現盈虧</option>
-                        <option>手續費</option>
-                        <option>資金費用</option>
-                        <option>爆倉清算</option>
-                        <option>邀請返佣</option>
-                        <option>體驗金入帳</option>
-                        <option>體驗金回收</option>
-                    </select>
-                    <button class="px-3 py-1 bg-black text-white rounded-sm">查詢</button>
-                    <button class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm">重置</button>
-                </div>
-
-                <div id="funding-fee-filters" class="px-4 py-2 border-b border-gray-50 flex flex-wrap items-center space-x-2 text-[9px] font-bold hidden shrink-0">
-                    <button class="px-2 py-1 rounded-sm bg-gray-900 text-white">近1日</button>
-                    <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近7日</button>
-                    <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近30日</button>
-                    <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近90日</button>
-                    <span class="text-gray-300">|</span>
-                    <div class="relative">
-                        <button onclick="toggleDatePicker('funding-fee-date-picker')" class="flex items-center space-x-1 border border-gray-200 px-2 py-1 rounded-sm">
-                            <span>2026-06-14</span><span>-</span><span>2026-06-15</span>
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        </button>
-                        <div id="funding-fee-date-picker" class="absolute top-full mt-1 left-0 bg-white border border-gray-200 shadow-lg p-3 rounded-sm hidden z-50">
-                            <div class="flex space-x-2"><input type="date" class="border px-2 py-1 text-[10px]"/><span>至</span><input type="date" class="border px-2 py-1 text-[10px]"/><button class="px-2 py-1 bg-black text-white text-[9px]">確定</button></div>
-                        </div>
-                    </div>
-                    <button class="px-3 py-1 bg-black text-white rounded-sm">查詢</button>
-                    <button class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm">重置</button>
-                </div>
-
-                <div id="deposit-withdraw-filters" class="px-4 py-2 border-b border-gray-50 flex flex-wrap items-center space-x-2 text-[9px] font-bold hidden shrink-0">
-                    <button class="px-2 py-1 rounded-sm bg-gray-900 text-white">近1日</button>
-                    <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近7日</button>
-                    <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近30日</button>
-                    <button class="px-2 py-1 rounded-sm text-gray-400 hover:bg-gray-100">近90日</button>
-                    <span class="text-gray-300">|</span>
-                    <div class="relative">
-                        <button onclick="toggleDatePicker('deposit-withdraw-date-picker')" class="flex items-center space-x-1 border border-gray-200 px-2 py-1 rounded-sm">
-                            <span>2026-06-14</span><span>-</span><span>2026-06-15</span>
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        </button>
-                        <div id="deposit-withdraw-date-picker" class="absolute top-full mt-1 left-0 bg-white border border-gray-200 shadow-lg p-3 rounded-sm hidden z-50">
-                            <div class="flex space-x-2"><input type="date" class="border px-2 py-1 text-[10px]"/><span>至</span><input type="date" class="border px-2 py-1 text-[10px]"/><button class="px-2 py-1 bg-black text-white text-[9px]">確定</button></div>
-                        </div>
-                    </div>
-                    <button class="px-3 py-1 bg-black text-white rounded-sm">查詢</button>
-                    <button class="px-3 py-1 border border-gray-200 text-gray-400 rounded-sm">重置</button>
-                </div>
-
-                <!-- 充提记录 Tab：Gary 原型占位 -->
-                <div id="deposit-withdraw-placeholder" data-portfolio-deposit-placeholder class="hidden flex-1 flex items-center justify-center px-6 py-16">
-                    <p class="text-[11px] text-gray-400 text-center leading-relaxed">这部分原型请查看 Gary 输出的为准。</p>
-                </div>
-                <!-- 非充提 Tab：跳转合约交易页说明 -->
-                <div id="data-referral-hint" data-portfolio-referral-hint class="flex-1 flex items-center justify-center px-6 py-16">
-                    <p class="text-[11px] text-gray-400 text-center leading-relaxed">
-                        相关原型内容请查看<a href="合约交易.html" class="text-blue-600 hover:underline font-bold">合约交易页</a>下方的持仓&amp;流水管理
-                    </p>
-                </div>
-                <!-- 充提记录 Tab：数据表格 -->
-                <div class="flex-1 overflow-auto hidden" id="data-table-wrap" data-portfolio-data-table>
-                    <table class="w-full text-left text-[9px] border-collapse min-w-[1000px]">
-                        <thead class="bg-gray-50 sticky top-0 text-gray-400 border-b border-gray-100 z-10">
-                        <tr id="data-header">
-                            <!-- 动态由JS生成 -->
-                        </tr>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50/80 border-b border-gray-100 text-[11px] font-bold text-gray-400">
+                                <th class="px-5 py-3">名称</th>
+                                <th class="px-5 py-3 text-right">数量</th>
+                                <th class="px-5 py-3 text-right">资产价值</th>
+                            </tr>
                         </thead>
-                        <tbody id="data-body" class="divide-y divide-gray-50">
-                        <!-- 动态由JS生成 -->
-                        </tbody>
+                        <tbody class="divide-y divide-gray-100 text-[12px]" data-overview-token-tbody></tbody>
                     </table>
                 </div>
             </div>
-        </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- 视图二：资金账户 (funding)                                        -->
+        <!-- ================================================================ -->
+        <section class="space-y-5 hidden" data-view-panel="funding">
+            <!-- 顶部大的信息横条（左：账户权益 / 右：账户价值 折线图） -->
+            <div class="hero-card grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+                <!-- 左侧 -->
+                <div class="lg:col-span-5 p-6 lg:border-r border-gray-100 flex flex-col justify-center">
+                    <p class="text-[12px] font-bold text-gray-500 mb-2">账户权益</p>
+                    <div class="text-[34px] leading-tight font-black font-mono text-gray-900 tracking-tight" data-funding-equity>$0.00</div>
+                    <p class="text-[11px] text-gray-400 mt-3 leading-relaxed">用于充值、提现及向合约交易账户划转资金</p>
+                </div>
+
+                <!-- 右侧：账户价值 + 折线图 -->
+                <div class="lg:col-span-7 p-6 flex flex-col relative" data-chart-box="funding">
+                    <div class="hidden absolute inset-0 z-10 flex items-center justify-center bg-white/90" data-guest-chart-overlay>
+                        <p class="text-[13px] font-bold text-gray-400">请先连接钱包</p>
+                    </div>
+                    <div class="flex items-start justify-between gap-4 mb-4">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                                <h3 class="text-[13px] font-black text-gray-900">账户价值</h3>
+                            </div>
+                            <p class="text-[18px] font-black font-mono text-gray-900 mt-1.5" data-funding-chart-val>$0.00</p>
+                        </div>
+                        <div class="flex bg-gray-100 p-0.5 rounded-md" data-period-group="funding">
+                            <button type="button" class="period-btn is-active" data-period="7D">7D</button>
+                            <button type="button" class="period-btn" data-period="14D">14D</button>
+                            <button type="button" class="period-btn" data-period="30D">30D</button>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-h-[156px] flex flex-col justify-between" data-chart-canvas="funding"></div>
+                </div>
+            </div>
+
+            <!-- 下方：代币列表 / 充提记录 / 资金账单 切换 -->
+            <div class="hero-card overflow-hidden">
+                <div class="px-5 border-b border-gray-100 flex items-center space-x-6 overflow-x-auto scrollbar-hide" data-funding-subtabs>
+                    <button type="button" class="sub-tab-btn is-active" data-funding-tab="tokens">代币列表</button>
+                    <button type="button" class="sub-tab-btn" data-funding-tab="deposit-withdraw">充提记录</button>
+                    <button type="button" class="sub-tab-btn" data-funding-tab="fund-bill">资金账单</button>
+                </div>
+
+                <!-- 资金账户 · 代币列表 -->
+                <div data-funding-panel="tokens">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50/80 border-b border-gray-100 text-[11px] font-bold text-gray-400">
+                                    <th class="px-5 py-3">名称</th>
+                                    <th class="px-5 py-3 text-right">数量</th>
+                                    <th class="px-5 py-3 text-right">资产价值</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 text-[12px]" data-funding-token-tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 资金账户 · 充提记录（沿用此前 Gary 原型占位） -->
+                <div class="hidden py-16 px-6 text-center" data-funding-panel="deposit-withdraw">
+                    <p class="text-[12px] text-gray-400 leading-relaxed">这部分原型请查看 Gary 输出的为准。</p>
+                </div>
+
+                <!-- 资金账户 · 资金账单（沿用此前资金账单筛选栏与表格） -->
+                <div class="hidden" data-funding-panel="fund-bill">
+                    <div class="px-5 py-3 border-b border-gray-100 flex flex-wrap items-center gap-2 text-[10px] font-bold bg-gray-50/40" data-fund-bill-filters>
+                        <button type="button" class="px-2.5 py-1 rounded bg-gray-900 text-white" data-bill-period="1">近1日</button>
+                        <button type="button" class="px-2.5 py-1 rounded text-gray-500 hover:bg-gray-100" data-bill-period="7">近7日</button>
+                        <button type="button" class="px-2.5 py-1 rounded text-gray-500 hover:bg-gray-100" data-bill-period="30">近30日</button>
+                        <button type="button" class="px-2.5 py-1 rounded text-gray-500 hover:bg-gray-100" data-bill-period="90">近90日</button>
+                        <span class="text-gray-300">|</span>
+                        <span class="inline-flex items-center gap-1.5 border border-gray-200 bg-white px-2.5 py-1 rounded text-gray-700 font-mono">
+                            <span>2026-06-14</span>
+                            <span class="text-gray-300">-</span>
+                            <span>2026-06-15</span>
+                        </span>
+                        <select class="border border-gray-200 rounded px-2 py-1 bg-white text-[11px] text-gray-700 font-bold" data-fund-bill-type-select>
+                            <option value="ALL">全部账单主类型</option>
+                            <option value="充值">充值</option>
+                            <option value="提币">提币</option>
+                            <option value="转入">转入</option>
+                            <option value="转出">转出</option>
+                            <option value="空投奖励">空投奖励</option>
+                            <option value="返佣">返佣</option>
+                        </select>
+                        <button type="button" class="px-3 py-1 bg-black text-white rounded" data-fund-bill-query>查询</button>
+                        <button type="button" class="px-3 py-1 border border-gray-200 bg-white text-gray-500 rounded hover:text-gray-900" data-fund-bill-reset>重置</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50/80 border-b border-gray-100 text-[11px] font-bold text-gray-400">
+                                    <th class="px-5 py-3">时间</th>
+                                    <th class="px-5 py-3">币种</th>
+                                    <th class="px-5 py-3">账单主类型</th>
+                                    <th class="px-5 py-3 text-right">数量</th>
+                                    <th class="px-5 py-3 text-right">账户余额</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 text-[12px]" data-fund-bill-tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- 视图三：交易账户 (trading)                                        -->
+        <!-- ================================================================ -->
+        <section class="space-y-5 hidden" data-view-panel="trading">
+            <!-- 顶部大的信息横条（左：账户权益/可用保证金/未实现盈亏/累计交易量/体验金余额；右：账户价值/盈亏/交易量 3-Tab 折线图） -->
+            <div class="hero-card grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+                <!-- 左侧 -->
+                <div class="lg:col-span-5 p-6 lg:border-r border-gray-100 space-y-4">
+                    <div class="pb-3.5 border-b border-gray-100">
+                        <p class="text-[12px] font-bold text-gray-500 mb-1">账户权益</p>
+                        <div class="text-[30px] leading-tight font-black font-mono text-gray-900 tracking-tight" data-trading-equity>$0.00</div>
+                    </div>
+
+                    <div class="space-y-2.5 text-[12px]">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-500 font-semibold">可用保证金</span>
+                            <span class="font-mono font-bold text-gray-900" data-trading-avail-margin>$0.00</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-500 font-semibold">未实现盈亏</span>
+                            <span class="font-mono font-bold text-gray-900" data-trading-upnl>$0.00</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-500 font-semibold">累计交易量</span>
+                            <span class="font-mono font-bold text-gray-900" data-trading-volume>$0.00</span>
+                        </div>
+
+                        <div class="pt-2.5 border-t border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-700 font-bold">体验金余额</span>
+                                <span class="font-mono font-black text-gray-900" data-trading-trial-total>0.00 <span class="text-[11px] font-bold text-gray-400">USDC</span></span>
+                            </div>
+                            <div class="trial-sub-box space-y-1.5 text-[11px]">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-400 font-semibold">待使用</span>
+                                    <span class="font-mono font-bold text-gray-700" data-trading-trial-unused>0.00 <span class="text-gray-400">USDC</span></span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-400 font-semibold">使用中</span>
+                                    <span class="font-mono font-bold text-gray-700" data-trading-trial-inuse>0.00 <span class="text-gray-400">USDC</span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧：账户价值 / 盈亏 / 交易量 3 个 Tab + 折线图 -->
+                <div class="lg:col-span-7 p-6 flex flex-col relative" data-chart-box="trading">
+                    <div class="hidden absolute inset-0 z-10 flex items-center justify-center bg-white/90" data-guest-chart-overlay>
+                        <p class="text-[13px] font-bold text-gray-400">请先连接钱包</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                        <!-- 3 个切换 Tab -->
+                        <div class="flex items-center gap-1.5" data-trading-metric-tabs>
+                            <button type="button" class="chart-metric-tab is-active" data-chart-metric="equity">账户价值</button>
+                            <button type="button" class="chart-metric-tab" data-chart-metric="pnl">盈亏</button>
+                            <button type="button" class="chart-metric-tab" data-chart-metric="volume">交易量</button>
+                        </div>
+                        <div class="flex bg-gray-100 p-0.5 rounded-md" data-period-group="trading">
+                            <button type="button" class="period-btn is-active" data-period="7D">7D</button>
+                            <button type="button" class="period-btn" data-period="14D">14D</button>
+                            <button type="button" class="period-btn" data-period="30D">30D</button>
+                        </div>
+                    </div>
+
+                    <!-- 当前指标数值摘要 -->
+                    <div class="mb-3 flex items-baseline gap-2.5">
+                        <span class="text-[11px] font-bold text-gray-400" data-trading-metric-label>账户价值</span>
+                        <span class="text-[20px] font-black font-mono text-gray-900" data-trading-metric-val>$0.00</span>
+                    </div>
+
+                    <!-- 折线图 -->
+                    <div class="flex-1 min-h-[168px] flex flex-col justify-between" data-chart-canvas="trading"></div>
+                </div>
+            </div>
+
+            <!-- 中间：VIP 信息横条（与资产总览一致的广告风横幅） -->
+            <div data-vip-banner-slot></div>
+
+            <!-- 下方：7 个交易数据 Tab -->
+            <div class="hero-card overflow-hidden">
+                <div class="px-5 border-b border-gray-100 flex items-center space-x-6 overflow-x-auto scrollbar-hide" data-trading-subtabs>
+                    <button type="button" class="sub-tab-btn is-active" data-trading-tab="pos">当前持仓(0)</button>
+                    <button type="button" class="sub-tab-btn" data-trading-tab="order">当前委托(0)</button>
+                    <button type="button" class="sub-tab-btn" data-trading-tab="hist-order">历史委托</button>
+                    <button type="button" class="sub-tab-btn" data-trading-tab="hist-trade">历史成交</button>
+                    <button type="button" class="sub-tab-btn" data-trading-tab="hist-pos">历史持仓</button>
+                    <button type="button" class="sub-tab-btn" data-trading-tab="funding-fee">资金费用</button>
+                    <button type="button" class="sub-tab-btn" data-trading-tab="deposit-withdraw">充提记录</button>
+                </div>
+
+                <!-- 非充提 Tab：沿用此前合约交易页引导说明 -->
+                <div class="py-16 px-6 text-center" data-trading-panel="referral">
+                    <p class="text-[12px] text-gray-400 leading-relaxed">
+                        相关原型内容请查看
+                        <a href="合约交易.html" class="text-blue-600 font-bold hover:underline">合约交易页</a>
+                        下方的持仓&amp;流水管理
+                    </p>
+                </div>
+
+                <!-- 充提记录 Tab：沿用此前 Gary 原型占位 -->
+                <div class="hidden py-16 px-6 text-center" data-trading-panel="deposit-withdraw">
+                    <p class="text-[12px] text-gray-400 leading-relaxed">这部分原型请查看 Gary 输出的为准。</p>
+                </div>
+            </div>
+        </section>
+
     </div>
 </main>
 </div>
 </template>
 
-
-<script src="shared/forx-vip-tier-api.js?v=20260919-vip-config-v2"></script>
+<script src="shared/forx-vip-tier-api.js"></script>
 <script>
+let FRAME_UID = 0;
+
 function webChrome() {
-    return `<div class="web-chrome">
-        <span class="dot bg-red-400"></span>
-        <span class="dot bg-yellow-400"></span>
-        <span class="dot bg-green-400"></span>
-        <span class="text-[10px] text-gray-400 font-medium ml-2">forx.finance / 投資組合</span>
+    return `<div class="web-chrome"><span class="dot bg-red-400"></span><span class="dot bg-yellow-400"></span><span class="dot bg-green-400"></span><span class="ml-2 text-[10px] font-mono text-gray-400">forx.exchange/portfolio</span></div>`;
+}
+
+/* ==================== 共享数据模型 ==================== */
+const OVERVIEW_TOKENS = [
+    { symbol: 'USDC', name: 'USD Coin', iconBg: 'bg-blue-600', qty: '101,151.49', value: '$101,151.49' },
+    { symbol: 'USD1', name: 'World Liberty Financial USD', iconBg: 'bg-amber-600', qty: '0.00', value: '$0.00' },
+];
+
+const FUNDING_TOKENS = [
+    { symbol: 'USDC', name: 'USD Coin', iconBg: 'bg-blue-600', qty: '0.00', value: '$0.00' },
+    { symbol: 'USD1', name: 'World Liberty Financial USD', iconBg: 'bg-amber-600', qty: '0.00', value: '$0.00' },
+];
+
+const FUND_BILLS = [
+    { time: '2026-06-15 10:30:00', coin: 'USDC', mainType: '充值', qty: '+1,000.00 USDC', qtyClass: 'text-emerald-600', accountBalance: '13,845.32 USDC' },
+    { time: '2026-06-14 16:20:00', coin: 'USDC', mainType: '转入', qty: '+500.00 USDC', qtyClass: 'text-emerald-600', accountBalance: '12,845.32 USDC' },
+    { time: '2026-06-14 09:15:00', coin: 'USDC', mainType: '转出', qty: '-200.00 USDC', qtyClass: 'text-red-500', accountBalance: '12,345.32 USDC' },
+    { time: '2026-06-13 18:00:00', coin: 'USDC', mainType: '提币', qty: '-800.00 USDC', qtyClass: 'text-red-500', accountBalance: '12,545.32 USDC' },
+    { time: '2026-06-12 21:30:19', coin: 'USDC', mainType: '返佣', qty: '+12.80 USDC', qtyClass: 'text-emerald-600', accountBalance: '13,332.52 USDC' },
+    { time: '2026-06-12 08:00:00', coin: 'USDC', mainType: '空投奖励', qty: '+50.00 USDC', qtyClass: 'text-emerald-600', accountBalance: '13,319.72 USDC' },
+];
+
+const CHART_SERIES = {
+    overview: {
+        '7D':  { value: '$101,151.49', color: '#2563eb', points: '0,92 100,88 200,82 300,70 400,66 500,52 600,40', labels: ['6天前', '4天前', '2天前', '今日'] },
+        '14D': { value: '$101,151.49', color: '#2563eb', points: '0,104 100,96 200,88 300,92 400,72 500,58 600,40', labels: ['14天前', '10天前', '5天前', '今日'] },
+        '30D': { value: '$101,151.49', color: '#2563eb', points: '0,108 100,100 200,90 300,78 400,82 500,54 600,40', labels: ['30天前', '20天前', '10天前', '今日'] },
+    },
+    funding: {
+        '7D':  { value: '$0.00', color: '#2563eb', points: '0,98 100,98 200,98 300,98 400,98 500,98 600,98', labels: ['6天前', '4天前', '2天前', '今日'] },
+        '14D': { value: '$0.00', color: '#2563eb', points: '0,88 120,88 240,98 360,98 480,98 600,98', labels: ['14天前', '10天前', '5天前', '今日'] },
+        '30D': { value: '$0.00', color: '#2563eb', points: '0,76 120,86 240,92 360,98 480,98 600,98', labels: ['30天前', '20天前', '10天前', '今日'] },
+    },
+    trading: {
+        equity: {
+            label: '账户价值',
+            color: '#2563eb',
+            '7D':  { value: '$0.00', points: '0,96 100,94 200,96 300,90 400,94 500,96 600,96', labels: ['6天前', '4天前', '2天前', '今日'] },
+            '14D': { value: '$0.00', points: '0,84 120,88 240,78 360,90 480,96 600,96', labels: ['14天前', '10天前', '5天前', '今日'] },
+            '30D': { value: '$0.00', points: '0,70 120,76 240,64 360,82 480,92 600,96', labels: ['30天前', '20天前', '10天前', '今日'] },
+        },
+        pnl: {
+            label: '盈亏',
+            color: '#10b981',
+            '7D':  { value: '$0.00', points: '0,96 100,82 200,88 300,56 400,70 500,88 600,96', labels: ['6天前', '4天前', '2天前', '今日'] },
+            '14D': { value: '+$240.00', points: '0,102 120,90 240,76 360,52 480,60 600,36', labels: ['14天前', '10天前', '5天前', '今日'] },
+            '30D': { value: '+$1,280.40', points: '0,106 120,94 240,72 360,62 480,42 600,26', labels: ['30天前', '20天前', '10天前', '今日'] },
+        },
+        volume: {
+            label: '交易量',
+            color: '#7c3aed',
+            '7D':  { value: '$0.00', points: '0,102 100,66 200,86 300,48 400,74 500,92 600,102', labels: ['6天前', '4天前', '2天前', '今日'] },
+            '14D': { value: '$2,400,000.00', points: '0,100 120,58 240,78 360,34 480,52 600,44', labels: ['14天前', '10天前', '5天前', '今日'] },
+            '30D': { value: '$8,920,000.00', points: '0,104 120,64 240,54 360,28 480,46 600,30', labels: ['30天前', '20天前', '10天前', '今日'] },
+        }
+    }
+};
+
+/* ==================== SVG 折线图渲染 ==================== */
+function renderLineChartSvg(cfg, gradId) {
+    const pts = cfg.points.split(' ').map(p => p.split(',').map(Number));
+    const firstX = pts[0][0];
+    const last = pts[pts.length - 1];
+    const areaPath = `M${pts.map(p => p.join(',')).join(' L')} L${last[0]},120 L${firstX},120 Z`;
+    return `
+        <div class="flex-1 relative min-h-[132px]">
+            <svg class="w-full h-full overflow-visible" viewBox="0 0 608 124" preserveAspectRatio="none">
+                <defs>
+                    <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="${cfg.color}" stop-opacity="0.18"/>
+                        <stop offset="100%" stop-color="${cfg.color}" stop-opacity="0"/>
+                    </linearGradient>
+                </defs>
+                <!-- 水平参考虚线 -->
+                <line x1="0" y1="24" x2="600" y2="24" stroke="#f3f4f6" stroke-width="1" stroke-dasharray="3,3"/>
+                <line x1="0" y1="62" x2="600" y2="62" stroke="#f3f4f6" stroke-width="1" stroke-dasharray="3,3"/>
+                <line x1="0" y1="100" x2="600" y2="100" stroke="#f3f4f6" stroke-width="1" stroke-dasharray="3,3"/>
+                <!-- 渐变填充区 -->
+                <path d="${areaPath}" fill="url(#${gradId})"/>
+                <!-- 折线主路径 -->
+                <polyline fill="none" stroke="${cfg.color}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" points="${cfg.points}"/>
+            </svg>
+            <span class="pointer-events-none absolute w-2.5 h-2.5 rounded-full bg-white border-[2.5px] shadow-sm" style="left: ${(last[0] / 608) * 100}%; top: ${(last[1] / 124) * 100}%; transform: translate(-50%, -50%); border-color: ${cfg.color};"></span>
+        </div>
+        <div class="flex justify-between pt-2.5 border-t border-gray-100 text-[10px] font-semibold text-gray-400">
+            ${cfg.labels.map((lb, i) => `<span class="${i === cfg.labels.length - 1 ? 'text-gray-700 font-bold' : ''}">${lb}</span>`).join('')}
+        </div>`;
+}
+
+/* ==================== VIP 广告风横幅 HTML ==================== */
+function buildVipPromoBannerHtml(opts = {}) {
+    const guest = !!opts.guest;
+    const customFee = !!opts.customFee;
+    const maker = guest ? '--' : (customFee ? (opts.customMaker || '0.008%') : '0.010%');
+    const taker = guest ? '--' : (customFee ? (opts.customTaker || '0.020%') : '0.034%');
+    const vol14d = guest ? '--' : '$38,500,000.00';
+    const validUntilText = (customFee && opts.customValidUntil)
+        ? `<p class="text-[10px] text-amber-200/80 font-semibold mt-1">费率有效期至 ${opts.customValidUntil} 24:00 (UTC+8)</p>`
+        : '';
+
+    const badgeBlock = customFee
+        ? `<div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-purple-500/20 border border-purple-300/40 text-purple-200 text-[10px] font-black tracking-wider">VIP 专属费率优惠</span>
+                <span class="text-[10px] font-bold text-amber-300/80">定向尊享通道</span>
+           </div>
+           <div class="mt-1 flex items-baseline gap-2.5">
+                <span class="text-[20px] font-black tracking-tight vip-gold-text">运营定制费率生效中</span>
+           </div>
+           ${validUntilText}`
+        : `<div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-amber-400/20 border border-amber-300/40 text-amber-300 text-[10px] font-black tracking-wider uppercase">VIP PRIVILEGE</span>
+                <span class="text-[10px] font-semibold text-amber-100/70">阶梯费率 · 专属研报 · 优先空投</span>
+           </div>
+           <div class="mt-1 flex items-center gap-2.5">
+                <span class="text-[22px] font-black italic tracking-tight vip-gold-text">${guest ? 'VIP --' : 'VIP 2'}</span>
+                <span class="text-[11px] font-semibold text-gray-300">${guest ? '连接钱包解锁您的专属交易费率与 VIP 权益' : '当前享 VIP 2 合约手续费折扣与专属礼遇'}</span>
+           </div>`;
+
+    const progressBlock = (!guest && !customFee)
+        ? `<div class="hidden xl:flex flex-col justify-center min-w-[205px] pl-6 border-l border-white/10">
+                <div class="flex items-center justify-between text-[10px] font-bold mb-1.5">
+                    <span class="text-gray-400">升级至 <span class="text-amber-300">VIP 3</span></span>
+                    <span class="text-white font-mono">18%</span>
+                </div>
+                <div class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full bg-gradient-to-r from-amber-500 to-yellow-300" style="width: 18%"></div>
+                </div>
+                <p class="text-[10px] text-gray-400 mt-1.5">还差 <span class="text-white font-mono font-bold">$61,500,000.00</span></p>
+           </div>`
+        : '';
+
+    return `
+    <div class="vip-promo-banner px-6 py-4 text-white">
+        <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+            <!-- 左侧：皇冠图标 + VIP 推广主标题 -->
+            <div class="flex items-center gap-4 min-w-0">
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-300/25 to-amber-600/10 border border-amber-400/40 flex items-center justify-center shrink-0 shadow-inner">
+                    <svg class="w-6 h-6 text-amber-300" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M5 16L3 6l5.5 4L12 4l3.5 6L21 6l-2 10H5zm0 2h14v2H5v-2z"/>
+                    </svg>
+                </div>
+                <div class="min-w-0">${badgeBlock}</div>
+            </div>
+
+            <!-- 中间：交易量 & 费率 & 升级进度 -->
+            <div class="flex flex-wrap items-center gap-6 lg:gap-0">
+                <div class="lg:px-6 lg:border-l lg:border-white/10">
+                    <p class="text-[10px] text-gray-400 font-semibold">过去 14 天交易量</p>
+                    <p class="text-[15px] font-black font-mono text-white mt-0.5">${vol14d}</p>
+                </div>
+                <div class="lg:px-6 lg:border-l lg:border-white/10 flex items-center gap-5">
+                    <div>
+                        <p class="text-[10px] text-gray-400 font-semibold">Maker 费率</p>
+                        <p class="text-[15px] font-black font-mono text-emerald-400 mt-0.5">${maker}</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-gray-400 font-semibold">Taker 费率</p>
+                        <p class="text-[15px] font-black font-mono text-emerald-400 mt-0.5">${taker}</p>
+                    </div>
+                </div>
+                ${progressBlock}
+            </div>
+
+            <!-- 右侧：广告感金橙 CTA 按钮 -->
+            <div class="shrink-0">
+                <button type="button" data-portfolio-vip-fee-btn class="vip-cta-btn px-4 py-2.5 rounded-lg text-[12px] inline-flex items-center gap-1.5 cursor-pointer">
+                    <span>等级费率表</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                </button>
+            </div>
+        </div>
     </div>`;
 }
 
-function clonePortfolioBase() {
-    const tpl = document.getElementById('tpl-portfolio-base');
-    return tpl.content.querySelector('.portfolio-page-root').cloneNode(true);
-}
-
-function q(root, sel) { return root.querySelector(sel); }
-
-function applyGuestState(root) {
-    q(root, '[data-portfolio-nav-connect]')?.classList.remove('hidden');
-    q(root, '[data-portfolio-nav-user]')?.classList.add('hidden');
-    q(root, '[data-portfolio-actions-logged]')?.classList.add('hidden');
-    const total = q(root, '[data-portfolio-equity-total]');
-    if (total) total.textContent = '--';
-    const pnl = q(root, '[data-portfolio-equity-pnl]');
-    if (pnl) pnl.classList.add('hidden');
-    const setText = (sel, text) => { const el = q(root, sel); if (el) el.textContent = text; };
-    const setHtml = (sel, html) => { const el = q(root, sel); if (el) el.innerHTML = html; };
-    setHtml('[data-portfolio-funding-total]', '-- <small class="text-[10px] font-medium text-gray-400 uppercase">USDT</small>');
-    setText('[data-portfolio-funding-available]', '--');
-    setHtml('[data-portfolio-trade-total]', '-- <small class="text-[10px] font-medium text-gray-400 uppercase">USDT</small>');
-    setText('[data-portfolio-trade-margin]', '--');
-    setText('[data-portfolio-vip-level]', '--');
-    setText('[data-portfolio-vip-14d]', '--');
-    setText('[data-portfolio-vip-maker]', '--');
-    setText('[data-portfolio-vip-taker]', '--');
-    setText('[data-portfolio-margin-ratio]', '--');
-    setText('[data-portfolio-unrealized-pnl]', '--');
-    setText('[data-portfolio-maint-margin]', '--');
-    setText('[data-portfolio-lifetime-volume]', '--');
-    const marginRatio = q(root, '[data-portfolio-margin-ratio]');
-    if (marginRatio) marginRatio.className = 'text-2xl font-black text-gray-400';
-    root.dataset.guest = 'true';
-    q(root, '[data-portfolio-vip-progress]')?.classList.add('hidden');
-    setCustomFeeValidUntil(root, null);
-    const feeBtn = q(root, '[data-portfolio-vip-fee-btn]');
-    if (feeBtn) feeBtn.className = 'text-[10px] font-black text-gray-400 border border-gray-700 px-2 py-1 rounded-sm hover:text-yellow-500 hover:border-yellow-500 transition-colors uppercase cursor-pointer';
-    q(root, '[data-portfolio-chart-panel]')?.classList.add('opacity-30');
-    q(root, '[data-portfolio-guest-hint]')?.classList.remove('hidden');
-    q(root, '[data-portfolio-referral-hint]')?.classList.remove('hidden');
-    q(root, '[data-portfolio-data-table]')?.classList.add('hidden');
-}
-
-function setCustomFeeValidUntil(root, dateStr) {
-    const el = q(root, '[data-portfolio-vip-valid-until]');
-    if (!el) return;
-    if (dateStr) {
-        el.textContent = '費率有效期至 ' + dateStr + ' 24:00 (UTC+8)';
-        el.classList.remove('hidden');
-    } else {
-        el.textContent = '';
-        el.classList.add('hidden');
+/* ==================== 代币表格 & 资金账单渲染 ==================== */
+function renderTokenRows(tokens, guest) {
+    if (guest) {
+        return `<tr><td colspan="3" class="px-5 py-12 text-center text-[12px] text-gray-400 font-medium">请先连接钱包查看代币资产</td></tr>`;
     }
+    return tokens.map(t => `
+        <tr class="hover:bg-gray-50/80 transition-colors">
+            <td class="px-5 py-3.5">
+                <div class="flex items-center gap-3">
+                    <span class="w-7 h-7 rounded-full ${t.iconBg} text-white font-black text-[10px] flex items-center justify-center shrink-0">${t.symbol.slice(0, 2)}</span>
+                    <div>
+                        <div class="font-black text-gray-900 text-[12px]">${t.symbol}</div>
+                        <div class="text-[10px] text-gray-400">${t.name}</div>
+                    </div>
+                </div>
+            </td>
+            <td class="px-5 py-3.5 text-right font-mono font-bold text-gray-900">${t.qty}</td>
+            <td class="px-5 py-3.5 text-right font-mono font-black text-gray-900">${t.value}</td>
+        </tr>`).join('');
 }
 
-function applyCustomFeeState(root, opts) {
-    root.dataset.feeProfile = 'custom';
-    q(root, '[data-portfolio-vip-level-wrap]')?.classList.add('hidden');
-    q(root, '[data-portfolio-vip-custom-wrap]')?.classList.remove('hidden');
-    q(root, '[data-portfolio-vip-custom-wrap]')?.classList.add('flex');
-    q(root, '[data-portfolio-vip-progress]')?.classList.add('hidden');
-    const maker = opts.customMaker || '0.020%';
-    const taker = opts.customTaker || '0.080%';
-    const setText = (sel, text) => { const el = q(root, sel); if (el) el.textContent = text; };
-    setText('[data-portfolio-vip-maker]', maker);
-    setText('[data-portfolio-vip-taker]', taker);
-    setCustomFeeValidUntil(root, opts.customValidUntil || null);
-}
-
-function applyLoggedInState(root, opts = {}) {
-    root.dataset.feeProfile = 'vip';
-    root.dataset.guest = 'false';
-    q(root, '[data-portfolio-nav-connect]')?.classList.add('hidden');
-    q(root, '[data-portfolio-nav-user]')?.classList.remove('hidden');
-    q(root, '[data-portfolio-actions-logged]')?.classList.remove('hidden');
-    const total = q(root, '[data-portfolio-equity-total]');
-    if (total) total.innerHTML = '12,450.50 <small class="text-sm font-bold text-gray-400 uppercase">USDT</small>';
-    const pnl = q(root, '[data-portfolio-equity-pnl]');
-    if (pnl) {
-        pnl.classList.remove('hidden');
-        pnl.textContent = '今日盈虧 +420.15 (+3.42%)';
-        pnl.className = 'text-[12px] font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-sm';
+function renderFundBillRows(rows, guest) {
+    if (guest) {
+        return `<tr><td colspan="5" class="px-5 py-12 text-center text-[12px] text-gray-400 font-medium">请先连接钱包查看资金账单</td></tr>`;
     }
-    const marginRatio = q(root, '[data-portfolio-margin-ratio]');
-    if (marginRatio) {
-        marginRatio.textContent = '0.00%';
-        marginRatio.className = 'text-2xl font-black text-blue-600';
+    if (!rows.length) {
+        return `<tr><td colspan="5" class="px-5 py-12 text-center text-[12px] text-gray-400 font-medium">暂无符合条件的资金账单</td></tr>`;
     }
-    const unrealized = q(root, '[data-portfolio-unrealized-pnl]');
-    if (unrealized) unrealized.innerHTML = '0.00 <small class="text-gray-400">USDT</small>';
-    const maintMargin = q(root, '[data-portfolio-maint-margin]');
-    if (maintMargin) maintMargin.innerHTML = '0.00 <small class="text-gray-400">USDT</small>';
-    const lifetime = q(root, '[data-portfolio-lifetime-volume]');
-    if (lifetime) lifetime.textContent = '$138,500,000.00';
-    q(root, '[data-portfolio-vip-progress]')?.classList.remove('hidden');
-    q(root, '[data-portfolio-vip-level-wrap]')?.classList.remove('hidden');
-    const customWrap = q(root, '[data-portfolio-vip-custom-wrap]');
-    if (customWrap) { customWrap.classList.add('hidden'); customWrap.classList.remove('flex'); }
-    setCustomFeeValidUntil(root, null);
-    const feeBtn = q(root, '[data-portfolio-vip-fee-btn]');
-    if (feeBtn) feeBtn.className = 'text-[10px] font-black text-gray-400 border border-gray-700 px-2 py-1 rounded-sm hover:text-yellow-500 hover:border-yellow-500 transition-colors uppercase cursor-pointer';
-    q(root, '[data-portfolio-chart-panel]')?.classList.remove('opacity-30');
-    q(root, '[data-portfolio-guest-hint]')?.classList.add('hidden');
-    const label = q(root, '#nav-login-label');
-    if (label && opts.email) label.textContent = opts.email;
-    const emailRow = q(root, '#menu-email-row');
-    const gaRow = q(root, '#menu-ga-row');
-    const exportRow = q(root, '#menu-export-wallet-row');
-    if (opts.email) {
-        emailRow?.classList.remove('hidden');
-        gaRow?.classList.remove('hidden');
-        exportRow?.classList.remove('hidden');
-        const es = q(root, '#menu-email-status');
-        if (es) es.textContent = opts.email;
-        const ws = q(root, '#menu-wallet-status');
-        if (ws) ws.textContent = '0x8b2e...4f1a';
-    } else {
-        emailRow?.classList.add('hidden');
-        gaRow?.classList.add('hidden');
-        exportRow?.classList.add('hidden');
-    }
-    if (opts.depositTab) {
-        q(root, '[data-portfolio-referral-hint]')?.classList.add('hidden');
-        q(root, '[data-portfolio-data-table]')?.classList.add('hidden');
-        q(root, '#deposit-withdraw-filters')?.classList.add('hidden');
-        q(root, '[data-portfolio-deposit-placeholder]')?.classList.remove('hidden');
-        root.querySelectorAll('[id^="tab-data-"]').forEach(el => {
-            el.classList.remove('tab-active');
-            el.classList.add('text-gray-400');
-        });
-        const dw = q(root, '#tab-data-deposit-withdraw');
-        if (dw) { dw.classList.add('tab-active'); dw.classList.remove('text-gray-400'); }
-    }
-    if (opts.customFee) applyCustomFeeState(root, opts);
+    return rows.map(r => `
+        <tr class="hover:bg-gray-50/80 transition-colors">
+            <td class="px-5 py-3 font-mono text-gray-500 whitespace-nowrap">${r.time}</td>
+            <td class="px-5 py-3 font-bold text-gray-900">${r.coin}</td>
+            <td class="px-5 py-3"><span class="px-2 py-0.5 rounded bg-gray-100 text-gray-700 text-[11px] font-bold">${r.mainType}</span></td>
+            <td class="px-5 py-3 text-right font-mono font-bold ${r.qtyClass} whitespace-nowrap">${r.qty}</td>
+            <td class="px-5 py-3 text-right font-mono font-bold text-gray-900 whitespace-nowrap">${r.accountBalance}</td>
+        </tr>`).join('');
 }
 
-function buildFrame(innerHtml) {
-    return `<div class="web-frame">${webChrome()}<div class="flex flex-col min-h-[700px] relative">${innerHtml}</div></div>`;
-}
-
-function renderPortfolio(opts = {}) {
-    const root = clonePortfolioBase();
-    if (opts.guest) applyGuestState(root);
-    else applyLoggedInState(root, opts);
-    const overlay = buildVipModalHtml({ guest: opts.guest, visible: !!opts.vipModal });
-    return buildFrame(root.outerHTML + overlay);
-}
-
+/* ==================== VIP 弹窗 HTML ==================== */
 function buildVipBenefitsHtml() {
     return `
         <div class="mt-6">
             <h4 class="text-[10px] font-black uppercase text-gray-500 mb-3 tracking-wider">VIP 专属权益</h4>
             <div class="grid grid-cols-2 gap-3">
-                <div class="border border-gray-100 rounded-sm p-3 bg-white">
+                <div class="border border-gray-100 rounded p-3 bg-white">
                     <div class="text-sm mb-1.5 leading-none">📊</div>
                     <p class="text-[11px] font-black text-gray-900">VIP 资讯研报</p>
                     <p class="text-[10px] text-gray-500 mt-1 leading-relaxed">更早洞察、更优决策</p>
                 </div>
-                <div class="border border-gray-100 rounded-sm p-3 bg-white">
+                <div class="border border-gray-100 rounded p-3 bg-white">
                     <div class="text-sm mb-1.5 leading-none">🎁</div>
                     <p class="text-[11px] font-black text-gray-900">VIP 礼物</p>
                     <p class="text-[10px] text-gray-500 mt-1 leading-relaxed">尊享欢迎礼、节日定制礼物以及专属实物周边</p>
                 </div>
-                <div class="border border-gray-100 rounded-sm p-3 bg-white">
+                <div class="border border-gray-100 rounded p-3 bg-white">
                     <div class="text-sm mb-1.5 leading-none">🎫</div>
                     <p class="text-[11px] font-black text-gray-900">VIP 会场</p>
                     <p class="text-[10px] text-gray-500 mt-1 leading-relaxed">享优先线下会场专席机会</p>
                 </div>
-                <div class="border border-dashed border-gray-200 rounded-sm p-3 bg-white">
+                <div class="border border-dashed border-gray-200 rounded p-3 bg-white">
                     <div class="text-sm mb-1.5 leading-none text-amber-500">✦</div>
                     <p class="text-[11px] font-black text-gray-900">VIP 空投权益</p>
                     <p class="text-[10px] text-gray-500 mt-1 leading-relaxed">优先获取 ForX 专属 NFT 与资产空投资格</p>
@@ -874,11 +892,11 @@ function buildVipModalHtml(opts = {}) {
     const guest = !!opts.guest;
     const display = opts.visible ? 'flex' : 'none';
     const volRowClass = guest ? 'hidden' : '';
-    return `<!-- VIP 費率詳情彈窗 -->
+    return `
 <div class="modal-overlay portfolio-vip-modal" data-vip-modal-guest="${guest}" style="display: ${display}; background: rgba(0,0,0,0.6); z-index: 2000; position: absolute; inset: 0; align-items: center; justify-content: center;">
-    <div class="bg-white w-[560px] max-h-[90vh] overflow-y-auto rounded-lg shadow-2xl border border-gray-100 animate-in zoom-in duration-200">
+    <div class="bg-white w-[560px] max-h-[90vh] overflow-y-auto rounded-lg shadow-2xl border border-gray-100">
         <div class="p-6 border-b border-gray-50 flex justify-between items-center sticky top-0 bg-white z-10">
-            <h2 class="text-base font-black uppercase tracking-tight italic">ForX 合約交易 VIP 費率表</h2>
+            <h2 class="text-base font-black uppercase tracking-tight italic">ForX 合约交易 VIP 费率表</h2>
             <span class="cursor-pointer text-gray-400 text-xl hover:text-black" onclick="this.closest('.portfolio-vip-modal').style.display='none'">✕</span>
         </div>
         <div class="p-6">
@@ -889,22 +907,22 @@ function buildVipModalHtml(opts = {}) {
             <table class="w-full text-left border-collapse">
                 <thead>
                 <tr class="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-wider">
-                    <th class="px-4 py-3 border-b border-gray-100">VIP 等級</th>
-                    <th class="px-4 py-3 border-b border-gray-100">14天交易量門檻 (USD)</th>
-                    <th class="px-4 py-3 border-b border-gray-100">Maker 費率</th>
-                    <th class="px-4 py-3 border-b border-gray-100 text-right">Taker 費率</th>
+                    <th class="px-4 py-3 border-b border-gray-100">VIP 等级</th>
+                    <th class="px-4 py-3 border-b border-gray-100">14天交易量门槛 (USD)</th>
+                    <th class="px-4 py-3 border-b border-gray-100">Maker 费率</th>
+                    <th class="px-4 py-3 border-b border-gray-100 text-right">Taker 费率</th>
                 </tr>
                 </thead>
                 <tbody class="text-[11px] font-bold text-gray-700" data-vip-tier-tbody></tbody>
             </table>
             ${buildVipBenefitsHtml()}
-            <div class="mt-6 bg-gray-50 p-4 rounded-sm border border-gray-100">
-                <h4 class="text-[10px] font-black uppercase text-gray-500 mb-2">等級補充說明</h4>
+            <div class="mt-6 bg-gray-50 p-4 rounded border border-gray-100">
+                <h4 class="text-[10px] font-black uppercase text-gray-500 mb-2">等级补充说明</h4>
                 <ul class="text-[10px] text-gray-500 space-y-1.5 list-disc list-inside leading-relaxed">
-                    <li>VIP等級根據用戶近14天合約交易量進行計算，達到對應等級門檻後，系統將在T+1日自動升級對應VIP等級。</li>
-                    <li>平台會定期更新用戶VIP等級，具體更新時間以系統計算結果為準。</li>
-                    <li>VIP等級更新後，新產生的合約交易將按對應等級費率計算手續費。</li>
-                    <li>VIP等級會根據用戶近14天合約交易量重新匹配，若交易量不滿足當前等級要求，系統將在T+1日內按平台規則調整至對應等級。</li>
+                    <li>VIP等级根据用户近14天合约交易量进行计算，达到对应等级门槛后，系统将在T+1日自动升级对应VIP等级。</li>
+                    <li>平台会定期更新用户VIP等级，具体更新时间以系统计算结果为准。</li>
+                    <li>VIP等级更新后，新产生的合约交易将按对应等级费率计算手续费。</li>
+                    <li>VIP等级会根据用户近14天合约交易量重新匹配，若交易量不满足当前等级要求，系统将在T+1日内按平台规则调整至对应等级。</li>
                 </ul>
             </div>
         </div>
@@ -912,73 +930,294 @@ function buildVipModalHtml(opts = {}) {
 </div>`;
 }
 
+/* ==================== 交互状态切换（按单画框隔离作用域） ==================== */
+function setMainView(root, view) {
+    root.dataset.activeView = view;
+    root.querySelectorAll('[data-main-tab]').forEach(btn => {
+        btn.classList.toggle('is-active', btn.dataset.mainTab === view);
+    });
+    root.querySelectorAll('[data-view-panel]').forEach(panel => {
+        panel.classList.toggle('hidden', panel.dataset.viewPanel !== view);
+    });
+}
+
+function setFundingSubTab(root, tab) {
+    root.querySelectorAll('[data-funding-tab]').forEach(btn => {
+        btn.classList.toggle('is-active', btn.dataset.fundingTab === tab);
+    });
+    root.querySelectorAll('[data-funding-panel]').forEach(panel => {
+        panel.classList.toggle('hidden', panel.dataset.fundingPanel !== tab);
+    });
+}
+
+function setTradingSubTab(root, tab) {
+    root.querySelectorAll('[data-trading-tab]').forEach(btn => {
+        btn.classList.toggle('is-active', btn.dataset.tradingTab === tab);
+    });
+    const isDeposit = tab === 'deposit-withdraw';
+    root.querySelector('[data-trading-panel="referral"]')?.classList.toggle('hidden', isDeposit);
+    root.querySelector('[data-trading-panel="deposit-withdraw"]')?.classList.toggle('hidden', !isDeposit);
+}
+
+function updateChart(root, scope) {
+    const uid = root.dataset.frameUid;
+    const guest = root.dataset.guest === 'true';
+    const periodGroup = root.querySelector(`[data-period-group="${scope}"]`);
+    const activePeriod = periodGroup?.querySelector('.period-btn.is-active')?.dataset.period || '7D';
+    const canvas = root.querySelector(`[data-chart-canvas="${scope}"]`);
+    if (!canvas) return;
+
+    if (scope === 'overview') {
+        const cfg = CHART_SERIES.overview[activePeriod];
+        const valEl = root.querySelector('[data-overview-chart-val]');
+        if (valEl) valEl.textContent = guest ? '--' : cfg.value;
+        canvas.innerHTML = renderLineChartSvg(cfg, `grad-${uid}-ov-${activePeriod}`);
+    } else if (scope === 'funding') {
+        const cfg = CHART_SERIES.funding[activePeriod];
+        const valEl = root.querySelector('[data-funding-chart-val]');
+        if (valEl) valEl.textContent = guest ? '--' : cfg.value;
+        canvas.innerHTML = renderLineChartSvg(cfg, `grad-${uid}-fd-${activePeriod}`);
+    } else if (scope === 'trading') {
+        const metric = root.querySelector('[data-trading-metric-tabs] .chart-metric-tab.is-active')?.dataset.chartMetric || 'equity';
+        const mGroup = CHART_SERIES.trading[metric];
+        const cfg = { ...mGroup[activePeriod], color: mGroup.color };
+        const lbEl = root.querySelector('[data-trading-metric-label]');
+        const valEl = root.querySelector('[data-trading-metric-val]');
+        if (lbEl) lbEl.textContent = mGroup.label;
+        if (valEl) {
+            valEl.textContent = guest ? '--' : cfg.value;
+            valEl.className = 'text-[20px] font-black font-mono ' + (
+                guest ? 'text-gray-400' :
+                metric === 'pnl' && cfg.value.startsWith('+') ? 'text-emerald-600' :
+                metric === 'volume' ? 'text-purple-700' : 'text-gray-900'
+            );
+        }
+        canvas.innerHTML = renderLineChartSvg(cfg, `grad-${uid}-tr-${metric}-${activePeriod}`);
+    }
+}
+
+/* ==================== 构建并装配单个画框 ==================== */
+function renderPortfolioPanel(opts = {}) {
+    const uid = ++FRAME_UID;
+    const tpl = document.getElementById('tpl-portfolio-base');
+    const frag = tpl.content.cloneNode(true);
+    const root = frag.querySelector('.portfolio-page-root');
+    const guest = !!opts.guest;
+    const initialView = opts.view || 'overview';
+    const initialFundingTab = opts.fundingTab || 'tokens';
+    const initialTradingTab = opts.tradingTab || 'pos';
+    const initialTradingMetric = opts.tradingMetric || 'equity';
+
+    root.dataset.frameUid = String(uid);
+    root.dataset.guest = guest ? 'true' : 'false';
+    root.dataset.feeProfile = opts.customFee ? 'custom' : 'vip';
+
+    // 导航栏与顶部操作按钮
+    root.querySelector('[data-portfolio-nav-connect]')?.classList.toggle('hidden', !guest);
+    root.querySelector('[data-portfolio-nav-user]')?.classList.toggle('hidden', guest);
+    root.querySelector('[data-portfolio-actions-logged]')?.classList.toggle('hidden', guest);
+
+    // 注入两处 VIP 广告风横幅（资产总览 + 交易账户）
+    const vipBannerHtml = buildVipPromoBannerHtml(opts);
+    root.querySelectorAll('[data-vip-banner-slot]').forEach(slot => {
+        slot.innerHTML = vipBannerHtml;
+    });
+
+    // 未登录态占位处理
+    if (guest) {
+        const setTxt = (sel, txt) => { const el = root.querySelector(sel); if (el) el.textContent = txt; };
+        setTxt('[data-overview-total]', '--');
+        setTxt('[data-overview-pnl]', '--');
+        setTxt('[data-overview-pnl-pct]', '--');
+        setTxt('[data-overview-funding]', '--');
+        setTxt('[data-overview-perp]', '--');
+        setTxt('[data-overview-token-count]', '--');
+        setTxt('[data-funding-equity]', '--');
+        setTxt('[data-trading-equity]', '--');
+        setTxt('[data-trading-avail-margin]', '--');
+        setTxt('[data-trading-upnl]', '--');
+        setTxt('[data-trading-volume]', '--');
+        setTxt('[data-trading-trial-total]', '-- USDC');
+        setTxt('[data-trading-trial-unused]', '-- USDC');
+        setTxt('[data-trading-trial-inuse]', '-- USDC');
+        root.querySelectorAll('[data-guest-chart-overlay]').forEach(el => el.classList.remove('hidden'));
+    }
+
+    // 渲染代币表格与资金账单
+    const ovTbody = root.querySelector('[data-overview-token-tbody]');
+    if (ovTbody) ovTbody.innerHTML = renderTokenRows(OVERVIEW_TOKENS, guest);
+    const fdTbody = root.querySelector('[data-funding-token-tbody]');
+    if (fdTbody) fdTbody.innerHTML = renderTokenRows(FUNDING_TOKENS, guest);
+    const billTbody = root.querySelector('[data-fund-bill-tbody]');
+    if (billTbody) billTbody.innerHTML = renderFundBillRows(FUND_BILLS, guest);
+
+    // 设置初始视图、子 Tab、交易图指标
+    setMainView(root, initialView);
+    setFundingSubTab(root, initialFundingTab);
+    setTradingSubTab(root, initialTradingTab);
+    root.querySelectorAll('[data-trading-metric-tabs] [data-chart-metric]').forEach(btn => {
+        btn.classList.toggle('is-active', btn.dataset.chartMetric === initialTradingMetric);
+    });
+
+    // 渲染 3 个区域的折线图
+    updateChart(root, 'overview');
+    updateChart(root, 'funding');
+    updateChart(root, 'trading');
+
+    // 组装外层画框
+    const frame = document.createElement('div');
+    frame.className = 'web-frame';
+    frame.innerHTML = `${webChrome()}<div class="flex flex-col min-h-[680px] relative" data-frame-body></div>`;
+    const body = frame.querySelector('[data-frame-body]');
+    body.appendChild(root);
+    body.insertAdjacentHTML('beforeend', buildVipModalHtml({ guest, visible: !!opts.vipModal }));
+
+    // 绑定所有画框内交互事件
+    wireFrameInteractions(frame, root);
+
+    // 若初始展开 VIP 弹窗则填充费率表
+    if (opts.vipModal) {
+        openPortfolioVipModal(frame, guest);
+    }
+
+    return frame;
+}
+
+function wireFrameInteractions(frame, root) {
+    // 1. 顶部三个主 Tab 切换
+    root.querySelectorAll('[data-main-tab]').forEach(btn => {
+        btn.addEventListener('click', () => setMainView(root, btn.dataset.mainTab));
+    });
+
+    // 资产总览中「资产组合」快捷跳转
+    root.querySelectorAll('[data-jump-tab]').forEach(row => {
+        row.addEventListener('click', () => setMainView(root, row.dataset.jumpTab));
+    });
+
+    // 2. 周期按钮切换（7D / 14D / 30D）
+    root.querySelectorAll('[data-period-group]').forEach(group => {
+        const scope = group.dataset.periodGroup;
+        group.querySelectorAll('[data-period]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                group.querySelectorAll('[data-period]').forEach(b => b.classList.remove('is-active'));
+                btn.classList.add('is-active');
+                updateChart(root, scope);
+            });
+        });
+    });
+
+    // 3. 交易账户折线图 3 指标切换（账户价值 / 盈亏 / 交易量）
+    root.querySelectorAll('[data-trading-metric-tabs] [data-chart-metric]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            root.querySelectorAll('[data-trading-metric-tabs] [data-chart-metric]').forEach(b => b.classList.remove('is-active'));
+            btn.classList.add('is-active');
+            updateChart(root, 'trading');
+        });
+    });
+
+    // 4. 资金账户底部 3 Tab 切换（代币列表 / 充提记录 / 资金账单）
+    root.querySelectorAll('[data-funding-tab]').forEach(btn => {
+        btn.addEventListener('click', () => setFundingSubTab(root, btn.dataset.fundingTab));
+    });
+
+    // 5. 资金账单筛选栏交互
+    const billFilters = root.querySelector('[data-fund-bill-filters]');
+    if (billFilters) {
+        const select = billFilters.querySelector('[data-fund-bill-type-select]');
+        const tbody = root.querySelector('[data-fund-bill-tbody]');
+        const guest = root.dataset.guest === 'true';
+        const applyBillFilter = () => {
+            if (!tbody) return;
+            const val = select ? select.value : 'ALL';
+            const list = val === 'ALL' ? FUND_BILLS : FUND_BILLS.filter(r => r.mainType === val);
+            tbody.innerHTML = renderFundBillRows(list, guest);
+        };
+        billFilters.querySelectorAll('[data-bill-period]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                billFilters.querySelectorAll('[data-bill-period]').forEach(b => {
+                    b.classList.remove('bg-gray-900', 'text-white');
+                    b.classList.add('text-gray-500');
+                });
+                btn.classList.add('bg-gray-900', 'text-white');
+                btn.classList.remove('text-gray-500');
+            });
+        });
+        select?.addEventListener('change', applyBillFilter);
+        billFilters.querySelector('[data-fund-bill-query]')?.addEventListener('click', applyBillFilter);
+        billFilters.querySelector('[data-fund-bill-reset]')?.addEventListener('click', () => {
+            if (select) select.value = 'ALL';
+            applyBillFilter();
+        });
+    }
+
+    // 6. 交易账户底部 7 Tab 切换
+    root.querySelectorAll('[data-trading-tab]').forEach(btn => {
+        btn.addEventListener('click', () => setTradingSubTab(root, btn.dataset.tradingTab));
+    });
+
+    // 7. VIP 广告横幅「等级费率表」按钮打开弹窗
+    root.querySelectorAll('[data-portfolio-vip-fee-btn]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            openPortfolioVipModal(frame, root.dataset.guest === 'true');
+        });
+    });
+}
+
 function openPortfolioVipModal(frame, guest) {
     if (!frame) return;
     const root = frame.querySelector('.portfolio-page-root');
     const customFee = root?.dataset.feeProfile === 'custom';
-    let modal = frame.querySelector('.portfolio-vip-modal');
-    if (!modal) {
-        const host = frame.querySelector('.flex.flex-col.min-h-\\[700px\\]') || frame.querySelector('.flex.flex-col');
-        if (host) host.insertAdjacentHTML('beforeend', buildVipModalHtml({ guest, visible: false }));
-        modal = frame.querySelector('.portfolio-vip-modal');
-    }
+    const modal = frame.querySelector('.portfolio-vip-modal');
     if (!modal) return;
     const volRow = modal.querySelector('[data-vip-14d-row]');
     if (volRow) volRow.classList.toggle('hidden', guest);
     modal.style.display = 'flex';
     if (window.ForxVipTierApi) {
         ForxVipTierApi.fetchVipTierTable().then(function () {
-            ForxVipTierApi.renderFeeTableBody(modal.querySelector('[data-vip-tier-tbody]'), { currentLevel: guest || customFee ? null : 2, guest: guest || customFee });
+            ForxVipTierApi.renderFeeTableBody(modal.querySelector('[data-vip-tier-tbody]'), {
+                currentLevel: guest || customFee ? null : 2,
+                guest: guest || customFee
+            });
         });
     }
 }
 
-function wirePortfolioVipButtons() {
-    document.querySelectorAll('[data-portfolio-vip-fee-btn]').forEach(btn => {
-        btn.onclick = () => {
-            const frame = btn.closest('.web-frame');
-            const root = btn.closest('.portfolio-page-root');
-            const guest = root?.dataset.guest === 'true';
-            openPortfolioVipModal(frame, guest);
-        };
-    });
-}
-
+/* ==================== 平铺原型画框配置 ==================== */
 const STATES = [
     {
-        title: '① 未登录 · 默认',
-        desc: '总净资产为 --；顶部导航栏「连接钱包」；VIP 区可点击「等級費率表」查看弹窗（无14天交易量、不标记档位）',
-        render: () => renderPortfolio({ guest: true })
+        title: '① 已登录 · 资产总览（默认视图）',
+        desc: '顶部「资产总览 / 资金账户 / 交易账户」+ 右侧「待处理(5) / 划转 / 提现 / 充值」；信息横条左总资产价值与资产组合、右周期绩效分析账户价值折线图；中间暗金广告风 VIP 权益横幅；下方代币列表',
+        opts: { guest: false, view: 'overview' }
     },
     {
-        title: '①b 未登录 · VIP 费率弹窗',
-        desc: '未登录点击「等級費率表」：弹窗不展示过去14天交易量，费率表不高亮用户档位',
-        render: () => renderPortfolio({ guest: true, vipModal: true })
+        title: '② 已登录 · 资金账户',
+        desc: '信息横条左「账户权益 $0.00」、右「账户价值」折线图；下方支持「代币列表 / 充提记录 / 资金账单」切换（可点击体验）',
+        opts: { guest: false, view: 'funding', fundingTab: 'tokens' }
     },
     {
-        title: '② 已登录 · 钱包用户默认',
-        desc: '完整投资组合页：资产看板 + VIP 权益 + 合约表现仪表盘 + 底部数据标签（默认引导至合约交易页）',
-        render: () => renderPortfolio({ guest: false })
+        title: '②b 已登录 · 资金账户（资金账单 Tab）',
+        desc: '资金账户底部切换至「资金账单」，沿用此前资金账单筛选栏（时间快捷/日期/账单主类型）与明细表',
+        opts: { guest: false, view: 'funding', fundingTab: 'fund-bill' }
     },
     {
-        title: '②b 已登录 · 运营自定义费率（有有效期）',
-        desc: '自定义 Maker/Taker；Maker/Taker 下方展示「費率有效期至 YYYY-MM-DD 24:00 (UTC+8)」',
-        render: () => renderPortfolio({ guest: false, customFee: true, customMaker: '0.008%', customTaker: '0.020%', customValidUntil: '2026-10-20' })
+        title: '③ 已登录 · 交易账户',
+        desc: '信息横条左「账户权益 / 可用保证金 / 未实现盈亏 / 累计交易量 / 体验金余额（待使用、使用中）」、右「账户价值 / 盈亏 / 交易量」3-Tab 折线图；中间 VIP 权益横幅；下方 7 个交易数据 Tab',
+        opts: { guest: false, view: 'trading', tradingTab: 'pos', tradingMetric: 'equity' }
     },
     {
-        title: '②c 已登录 · 运营自定义费率（永久）',
-        desc: '运营配置未填写有效期天数时，不展示费率到期文案',
-        render: () => renderPortfolio({ guest: false, customFee: true, customMaker: '0.008%', customTaker: '0.020%' })
+        title: '④ 未登录 · 默认占位态（资产总览）',
+        desc: '顶部导航栏显示「连接钱包」，隐藏右侧操作按钮；资产金额展示 --，图表蒙层提示「请先连接钱包」，VIP 横幅仍可点击查看费率表',
+        opts: { guest: true, view: 'overview' }
     },
     {
-        title: '③ 已登录 · 充提记录 Tab',
-        desc: '底部切换到「充提記錄」标签，展示 Gary 原型占位说明（不展示表格与筛选）',
-        render: () => renderPortfolio({ guest: false, depositTab: true })
+        title: '⑤ 已登录 · 运营自定义费率（VIP 横幅变体）',
+        desc: '运营配置自定义 Maker/Taker 费率与有效期时，VIP 横幅自动展示「运营定制费率生效中」与「费率有效期至 YYYY-MM-DD 24:00 (UTC+8)」',
+        opts: { guest: false, view: 'overview', customFee: true, customMaker: '0.008%', customTaker: '0.020%', customValidUntil: '2026-10-20' }
     },
     {
-        title: '④ 已登录 · VIP 费率弹窗',
-        desc: '点击「等級費率表」打开 VIP 费率详情弹窗（含专属权益与当前档位标记）',
-        render: () => renderPortfolio({ guest: false, vipModal: true })
+        title: '⑥ 已登录 · VIP 等级费率弹窗',
+        desc: '点击 VIP 横幅右侧「等级费率表」按钮打开弹窗（含过去 14 天交易量、当前档位高亮与 VIP 专属权益）',
+        opts: { guest: false, view: 'overview', vipModal: true }
     }
 ];
 
@@ -986,12 +1225,13 @@ const grid = document.getElementById('proto-grid');
 STATES.forEach(state => {
     const panel = document.createElement('div');
     panel.className = 'proto-panel';
-    panel.innerHTML = `
-        <div class="proto-label">${state.title}<span class="desc">${state.desc}</span></div>
-        ${state.render()}`;
+    const label = document.createElement('div');
+    label.className = 'proto-label';
+    label.innerHTML = `${state.title}<span class="desc">${state.desc}</span>`;
+    panel.appendChild(label);
+    panel.appendChild(renderPortfolioPanel(state.opts));
     grid.appendChild(panel);
 });
-wirePortfolioVipButtons();
 </script>
 
 </body>
