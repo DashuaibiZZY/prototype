@@ -772,15 +772,16 @@
                     <button type="button" class="sub-tab-btn" data-trading-tab="funding-fee">资金费用</button>
                 </div>
 
-                <!-- 合约账户 · 资产列表（与资产总览/资金账户结构一致） -->
+                <!-- 合约账户 · 资产列表 -->
                 <div data-trading-panel="assets">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-gray-50/80 border-b border-gray-100 text-[11px] font-bold text-gray-400">
                                     <th class="px-5 py-3">名称</th>
-                                    <th class="px-5 py-3 text-right">数量</th>
-                                    <th class="px-5 py-3 text-right">资产价值</th>
+                                    <th class="px-5 py-3 text-right">余额</th>
+                                    <th class="px-5 py-3 text-right">未实现盈亏</th>
+                                    <th class="px-5 py-3 text-right">权益</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 text-[12px]" id="trading-token-tbody"></tbody>
@@ -960,8 +961,8 @@ const DEMO_STATES = {
             { symbol: 'USD1', name: 'World Liberty Financial USD', iconBg: 'bg-amber-600', qty: '0.00', valueUsd: 0 },
         ],
         tradingTokens: [
-            { symbol: 'USDC', name: 'USD Coin', iconBg: 'bg-blue-600', qty: '101,151.49', valueUsd: 101151.49 },
-            { symbol: 'USD1', name: 'World Liberty Financial USD', iconBg: 'bg-amber-600', qty: '0.00', valueUsd: 0 },
+            { symbol: 'USDC', name: 'USD Coin', iconBg: 'bg-blue-600', balanceUsd: 101151.49, upnlUsd: 0, equityUsd: 101151.49 },
+            { symbol: 'USD1', name: 'World Liberty Financial USD', iconBg: 'bg-amber-600', balanceUsd: 0, upnlUsd: 0, equityUsd: 0 },
         ],
         fundBills: FUND_BILLS_DATA,
         vip: { mode: 'vip', level: 'VIP 2', vol14d: '$38,500,000.00', maker: '0.010%', taker: '0.034%', nextLevel: 'VIP 3', pct: 18, gap: '$61,500,000.00' },
@@ -1059,8 +1060,8 @@ const DEMO_STATES = {
             { symbol: 'USD1', name: 'World Liberty Financial USD', iconBg: 'bg-amber-600', qty: '0.00', valueUsd: 0 },
         ],
         tradingTokens: [
-            { symbol: 'USDC', name: 'USD Coin', iconBg: 'bg-blue-600', qty: '0.00', valueUsd: 0 },
-            { symbol: 'USD1', name: 'World Liberty Financial USD', iconBg: 'bg-amber-600', qty: '0.00', valueUsd: 0 },
+            { symbol: 'USDC', name: 'USD Coin', iconBg: 'bg-blue-600', balanceUsd: 0, upnlUsd: 0, equityUsd: 0 },
+            { symbol: 'USD1', name: 'World Liberty Financial USD', iconBg: 'bg-amber-600', balanceUsd: 0, upnlUsd: 0, equityUsd: 0 },
         ],
         fundBills: [],
         vip: { mode: 'vip', level: 'VIP 0', vol14d: '$0.00', maker: '0.020%', taker: '0.050%', nextLevel: 'VIP 1', pct: 0, gap: '$5,000,000.00' },
@@ -1235,6 +1236,30 @@ function renderTokenRows(tokens, guest) {
         </tr>`).join('');
 }
 
+function renderTradingTokenRows(tokens, guest) {
+    if (guest) {
+        return `<tr><td colspan="4" class="px-5 py-12 text-center text-[12px] text-gray-400 font-medium">请先连接钱包查看资产列表</td></tr>`;
+    }
+    return tokens.map(t => {
+        const upnlClass = t.upnlUsd > 0 ? 'text-emerald-600' : (t.upnlUsd < 0 ? 'text-red-500' : 'text-gray-900');
+        return `
+        <tr class="hover:bg-gray-50/80 transition-colors">
+            <td class="px-5 py-3.5">
+                <div class="flex items-center gap-3">
+                    <span class="w-7 h-7 rounded-full ${t.iconBg} text-white font-black text-[10px] flex items-center justify-center shrink-0">${t.symbol.slice(0, 2)}</span>
+                    <div>
+                        <div class="font-black text-gray-900 text-[12px]">${t.symbol}</div>
+                        <div class="text-[10px] text-gray-400">${t.name}</div>
+                    </div>
+                </div>
+            </td>
+            <td class="px-5 py-3.5 text-right font-mono font-bold text-gray-900">${formatValuation(t.balanceUsd)}</td>
+            <td class="px-5 py-3.5 text-right font-mono font-bold ${upnlClass}">${formatValuation(t.upnlUsd, { signed: true })}</td>
+            <td class="px-5 py-3.5 text-right font-mono font-black text-gray-900">${formatValuation(t.equityUsd)}</td>
+        </tr>`;
+    }).join('');
+}
+
 function renderFundBillRows(rows, guest) {
     if (guest) {
         return `<tr><td colspan="5" class="px-5 py-12 text-center text-[12px] text-gray-400 font-medium">请先连接钱包查看资金账单</td></tr>`;
@@ -1353,7 +1378,7 @@ function applyDemoState(key) {
     // 表格与折线图
     document.getElementById('overview-token-tbody').innerHTML = renderTokenRows(data.overviewTokens, data.guest);
     document.getElementById('funding-token-tbody').innerHTML = renderTokenRows(data.fundingTokens, data.guest);
-    document.getElementById('trading-token-tbody').innerHTML = renderTokenRows(data.tradingTokens, data.guest);
+    document.getElementById('trading-token-tbody').innerHTML = renderTradingTokenRows(data.tradingTokens, data.guest);
     renderFundBillTable();
     renderChart('overview');
     renderChart('funding');
