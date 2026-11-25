@@ -553,6 +553,10 @@
                     <div class="pb-3.5 border-b border-gray-100">
                         <p class="min-h-[28px] flex items-center text-[12px] font-bold text-gray-500 mb-1.5">账户权益</p>
                         <div class="text-[30px] leading-tight font-black font-mono text-gray-900 tracking-tight" id="trading-equity">$0.00</div>
+                        <div class="mt-2 flex items-center gap-1.5 text-[11px]">
+                            <span class="text-gray-500 font-semibold">今日已实现盈亏</span>
+                            <span class="font-mono font-bold text-emerald-600" id="trading-today-realized-pnl">+12.23</span>
+                        </div>
                     </div>
 
                     <div class="space-y-2.5 text-[12px]">
@@ -785,6 +789,7 @@ const DEMO_STATES = {
         overviewPerp: '$101,151.49',
         fundingEquity: '$0.00',
         tradingEquity: '$0.00',
+        tradingTodayRealizedPnl: '+12.23',
         tradingAvailMargin: '$0.00',
         tradingUpnl: '$0.00',
         tradingVolume: '$0.00',
@@ -848,6 +853,7 @@ const DEMO_STATES = {
         overviewPerp: '--',
         fundingEquity: '--',
         tradingEquity: '--',
+        tradingTodayRealizedPnl: '--',
         tradingAvailMargin: '--',
         tradingUpnl: '--',
         tradingVolume: '--',
@@ -882,6 +888,7 @@ const DEMO_STATES = {
         overviewPerp: '$0.00',
         fundingEquity: '$0.00',
         tradingEquity: '$0.00',
+        tradingTodayRealizedPnl: '0.00',
         tradingAvailMargin: '$0.00',
         tradingUpnl: '$0.00',
         tradingVolume: '$0.00',
@@ -1159,6 +1166,14 @@ function applyDemoState(key) {
 
     // 交易账户数值
     document.getElementById('trading-equity').textContent = data.tradingEquity;
+    const todayRpnlEl = document.getElementById('trading-today-realized-pnl');
+    const todayRpnl = data.tradingTodayRealizedPnl ?? '--';
+    todayRpnlEl.textContent = todayRpnl;
+    todayRpnlEl.className = 'font-mono font-bold ' + (
+        data.guest ? 'text-gray-400' :
+        todayRpnl.startsWith('+') ? 'text-emerald-600' :
+        todayRpnl.startsWith('-') ? 'text-red-500' : 'text-gray-600'
+    );
     document.getElementById('trading-avail-margin').textContent = data.tradingAvailMargin;
     document.getElementById('trading-upnl').textContent = data.tradingUpnl;
     document.getElementById('trading-volume').textContent = data.tradingVolume;
