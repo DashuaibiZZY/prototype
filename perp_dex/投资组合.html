@@ -188,6 +188,76 @@
             color: #111827;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
         }
+
+        /* 估值单位下拉触发箭头与弹层 */
+        .unit-chevron-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            color: #6b7280;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+        .unit-chevron-btn:hover,
+        .unit-chevron-btn[aria-expanded="true"] {
+            background: #f3f4f6;
+            color: #111827;
+        }
+        .unit-chevron-icon {
+            transition: transform 0.18s ease;
+        }
+        .unit-chevron-btn[aria-expanded="true"] .unit-chevron-icon {
+            transform: rotate(180deg);
+        }
+        .unit-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            min-width: 152px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            box-shadow: 0 14px 32px -8px rgba(17, 24, 39, 0.16);
+            padding: 4px 0;
+            z-index: 60;
+        }
+        .unit-option {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #374151;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            transition: background-color 0.12s ease, color 0.12s ease;
+        }
+        .unit-option:hover {
+            background: #f9fafb;
+            color: #111827;
+        }
+        .unit-option.is-active {
+            color: #111827;
+            font-weight: 800;
+            background: #f3f4f6;
+        }
+        .unit-option .unit-check {
+            opacity: 0;
+            color: #2563eb;
+        }
+        .unit-option.is-active .unit-check {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -346,13 +416,35 @@
         <!-- 视图一：资产总览 (overview)                                       -->
         <!-- ================================================================ -->
         <section class="space-y-5" data-view-panel="overview">
-            <!-- 顶部大的信息横条（左：总资产价值+今日盈亏+资产组合 / 右：周期绩效分析 账户价值 折线图） -->
-            <div class="hero-card grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+            <!-- 顶部大的信息横条（左：总资产价值+今日盈亏+资产组合 / 右：账户价值 折线图） -->
+            <div class="hero-card grid grid-cols-1 lg:grid-cols-12">
                 <!-- 左侧 -->
                 <div class="lg:col-span-5 p-6 lg:border-r border-gray-100 flex flex-col justify-between gap-6">
                     <div>
                         <p class="text-[12px] font-bold text-gray-500 mb-1.5">总资产价值</p>
-                        <div class="text-[32px] leading-tight font-black font-mono text-gray-900 tracking-tight" id="overview-total">$101,151.49</div>
+                        <div class="inline-flex items-center gap-1.5 relative" data-unit-dropdown="overview">
+                            <div class="text-[32px] leading-tight font-black font-mono text-gray-900 tracking-tight" id="overview-total">$101,151.49</div>
+                            <button type="button" class="unit-chevron-btn" data-unit-toggle aria-haspopup="listbox" aria-expanded="false" title="切换估值单位">
+                                <svg class="w-4 h-4 unit-chevron-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/>
+                                </svg>
+                            </button>
+                            <div class="unit-dropdown-menu hidden" data-unit-menu role="listbox">
+                                <div class="px-3 py-1.5 text-[11px] font-bold text-gray-400 border-b border-gray-100">估值单位</div>
+                                <button type="button" class="unit-option is-active" data-unit-option="USD">
+                                    <span>USD 美元</span>
+                                    <svg class="w-3.5 h-3.5 unit-check" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                </button>
+                                <button type="button" class="unit-option" data-unit-option="USDC">
+                                    <span>USD Coin</span>
+                                    <svg class="w-3.5 h-3.5 unit-check" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                </button>
+                                <button type="button" class="unit-option" data-unit-option="JPY">
+                                    <span>JPY 日元</span>
+                                    <svg class="w-3.5 h-3.5 unit-check" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                </button>
+                            </div>
+                        </div>
                         <div class="mt-2.5 flex items-center gap-2 text-[12px]">
                             <span class="text-gray-500 font-semibold">今日盈亏</span>
                             <span class="font-mono font-bold text-gray-800" id="overview-pnl">0.00</span>
@@ -440,11 +532,33 @@
         <!-- ================================================================ -->
         <section class="space-y-5 hidden" data-view-panel="funding">
             <!-- 顶部大的信息横条（左：账户权益 / 右：账户价值 折线图） -->
-            <div class="hero-card grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+            <div class="hero-card grid grid-cols-1 lg:grid-cols-12">
                 <!-- 左侧 -->
                 <div class="lg:col-span-5 p-6 lg:border-r border-gray-100 flex flex-col justify-start">
                     <p class="h-5 flex items-center text-[13px] font-bold text-gray-500 mb-1.5">账户权益</p>
-                    <div class="text-[34px] leading-tight font-black font-mono text-gray-900 tracking-tight" id="funding-equity">$0.00</div>
+                    <div class="inline-flex items-center gap-1.5 relative self-start" data-unit-dropdown="funding">
+                        <div class="text-[34px] leading-tight font-black font-mono text-gray-900 tracking-tight" id="funding-equity">$0.00</div>
+                        <button type="button" class="unit-chevron-btn" data-unit-toggle aria-haspopup="listbox" aria-expanded="false" title="切换估值单位">
+                            <svg class="w-4 h-4 unit-chevron-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/>
+                            </svg>
+                        </button>
+                        <div class="unit-dropdown-menu hidden" data-unit-menu role="listbox">
+                            <div class="px-3 py-1.5 text-[11px] font-bold text-gray-400 border-b border-gray-100">估值单位</div>
+                            <button type="button" class="unit-option is-active" data-unit-option="USD">
+                                <span>USD 美元</span>
+                                <svg class="w-3.5 h-3.5 unit-check" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                            </button>
+                            <button type="button" class="unit-option" data-unit-option="USDC">
+                                <span>USD Coin</span>
+                                <svg class="w-3.5 h-3.5 unit-check" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                            </button>
+                            <button type="button" class="unit-option" data-unit-option="JPY">
+                                <span>JPY 日元</span>
+                                <svg class="w-3.5 h-3.5 unit-check" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 右侧：账户价值 + 折线图 -->
@@ -547,12 +661,34 @@
         <!-- ================================================================ -->
         <section class="space-y-5 hidden" data-view-panel="trading">
             <!-- 顶部大的信息横条（左：账户权益/可用保证金/未实现盈亏/累计交易量/体验金余额；右：账户价值/盈亏/交易量 3-Tab 折线图） -->
-            <div class="hero-card grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+            <div class="hero-card grid grid-cols-1 lg:grid-cols-12">
                 <!-- 左侧 -->
                 <div class="lg:col-span-5 p-6 lg:border-r border-gray-100 space-y-4">
                     <div class="pb-3.5 border-b border-gray-100">
                         <p class="min-h-[28px] flex items-center text-[12px] font-bold text-gray-500 mb-1.5">账户权益</p>
-                        <div class="text-[30px] leading-tight font-black font-mono text-gray-900 tracking-tight" id="trading-equity">$0.00</div>
+                        <div class="inline-flex items-center gap-1.5 relative" data-unit-dropdown="trading">
+                            <div class="text-[30px] leading-tight font-black font-mono text-gray-900 tracking-tight" id="trading-equity">$0.00</div>
+                            <button type="button" class="unit-chevron-btn" data-unit-toggle aria-haspopup="listbox" aria-expanded="false" title="切换估值单位">
+                                <svg class="w-4 h-4 unit-chevron-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/>
+                                </svg>
+                            </button>
+                            <div class="unit-dropdown-menu hidden" data-unit-menu role="listbox">
+                                <div class="px-3 py-1.5 text-[11px] font-bold text-gray-400 border-b border-gray-100">估值单位</div>
+                                <button type="button" class="unit-option is-active" data-unit-option="USD">
+                                    <span>USD 美元</span>
+                                    <svg class="w-3.5 h-3.5 unit-check" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                </button>
+                                <button type="button" class="unit-option" data-unit-option="USDC">
+                                    <span>USD Coin</span>
+                                    <svg class="w-3.5 h-3.5 unit-check" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                </button>
+                                <button type="button" class="unit-option" data-unit-option="JPY">
+                                    <span>JPY 日元</span>
+                                    <svg class="w-3.5 h-3.5 unit-check" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                </button>
+                            </div>
+                        </div>
                         <div class="mt-2 flex items-center gap-1.5 text-[11px]">
                             <span class="text-gray-500 font-semibold">今日已实现盈亏</span>
                             <span class="font-mono font-bold text-emerald-600" id="trading-today-realized-pnl">+12.23</span>
@@ -777,68 +913,87 @@ const FUND_BILLS_DATA = [
     { time: '2026-06-12 08:00:00', coin: 'USDC', mainType: '空投奖励', qty: '+50.00 USDC', qtyClass: 'text-emerald-600', accountBalance: '13,319.72 USDC' },
 ];
 
+/* ==================== 估值单位配置（三视图全局联动，体验金除外） ==================== */
+const VALUATION_UNITS = {
+    USD:  { code: 'USD',  label: 'USD 美元',  rate: 1,     prefix: '$', suffix: '',      decimals: 2 },
+    USDC: { code: 'USDC', label: 'USD Coin', rate: 1,     prefix: '',  suffix: ' USDC', decimals: 2 },
+    JPY:  { code: 'JPY',  label: 'JPY 日元',  rate: 154.5, prefix: '¥', suffix: '',      decimals: 2 },
+};
+
+function formatValuation(usdVal, { signed = false } = {}) {
+    if (usdVal === null || usdVal === undefined) return '--';
+    const u = VALUATION_UNITS[uiState.valuationUnit] || VALUATION_UNITS.USD;
+    const val = Number(usdVal) * u.rate;
+    const absStr = Math.abs(val).toLocaleString('en-US', {
+        minimumFractionDigits: u.decimals,
+        maximumFractionDigits: u.decimals,
+    });
+    const sign = val < 0 ? '-' : (signed && val > 0 ? '+' : '');
+    return `${sign}${u.prefix}${absStr}${u.suffix}`;
+}
+
 const DEMO_STATES = {
     'logged-vip': {
         guest: false,
         pendingCount: '5',
         navVip: 'VIP 2',
-        overviewTotal: '$101,151.49',
-        overviewPnl: '0.00',
+        overviewTotalUsd: 101151.49,
+        overviewPnlUsd: 0,
         overviewPnlPct: '0.00%',
-        overviewFunding: '$0.00',
-        overviewPerp: '$101,151.49',
-        fundingEquity: '$0.00',
-        tradingEquity: '$0.00',
-        tradingTodayRealizedPnl: '+12.23',
-        tradingAvailMargin: '$0.00',
-        tradingUpnl: '$0.00',
-        tradingVolume: '$0.00',
+        overviewFundingUsd: 0,
+        overviewPerpUsd: 101151.49,
+        fundingEquityUsd: 0,
+        tradingEquityUsd: 0,
+        tradingTodayRealizedPnlUsd: 12.23,
+        tradingAvailMarginUsd: 0,
+        tradingUpnlUsd: 0,
+        tradingVolumeUsd: 0,
         trialTotal: '0.00',
         trialUnused: '0.00',
         trialInuse: '0.00',
         overviewTokens: [
-            { symbol: 'USDC', name: 'USD Coin', iconBg: 'bg-blue-600', qty: '101,151.49', value: '$101,151.49' },
-            { symbol: 'USD1', name: 'World Liberty Financial USD', iconBg: 'bg-amber-600', qty: '0.00', value: '$0.00' },
+            { symbol: 'USDC', name: 'USD Coin', iconBg: 'bg-blue-600', qty: '101,151.49', valueUsd: 101151.49 },
+            { symbol: 'USD1', name: 'World Liberty Financial USD', iconBg: 'bg-amber-600', qty: '0.00', valueUsd: 0 },
         ],
         fundingTokens: [
-            { symbol: 'USDC', name: 'USD Coin', iconBg: 'bg-blue-600', qty: '0.00', value: '$0.00' },
-            { symbol: 'USD1', name: 'World Liberty Financial USD', iconBg: 'bg-amber-600', qty: '0.00', value: '$0.00' },
+            { symbol: 'USDC', name: 'USD Coin', iconBg: 'bg-blue-600', qty: '0.00', valueUsd: 0 },
+            { symbol: 'USD1', name: 'World Liberty Financial USD', iconBg: 'bg-amber-600', qty: '0.00', valueUsd: 0 },
         ],
         tradingTokens: [
-            { symbol: 'USDC', name: 'USD Coin', iconBg: 'bg-blue-600', qty: '101,151.49', value: '$101,151.49' },
-            { symbol: 'USD1', name: 'World Liberty Financial USD', iconBg: 'bg-amber-600', qty: '0.00', value: '$0.00' },
+            { symbol: 'USDC', name: 'USD Coin', iconBg: 'bg-blue-600', qty: '101,151.49', valueUsd: 101151.49 },
+            { symbol: 'USD1', name: 'World Liberty Financial USD', iconBg: 'bg-amber-600', qty: '0.00', valueUsd: 0 },
         ],
         fundBills: FUND_BILLS_DATA,
         vip: { mode: 'vip', level: 'VIP 2', vol14d: '$38,500,000.00', maker: '0.010%', taker: '0.034%', nextLevel: 'VIP 3', pct: 18, gap: '$61,500,000.00' },
         charts: {
             overview: {
-                '7D':  { value: '$101,151.49', color: '#2563eb', points: '0,92 100,88 200,82 300,70 400,66 500,52 600,40', labels: ['6天前', '4天前', '2天前', '今日'] },
-                '14D': { value: '$101,151.49', color: '#2563eb', points: '0,104 100,96 200,88 300,92 400,72 500,58 600,40', labels: ['14天前', '10天前', '5天前', '今日'] },
-                '30D': { value: '$101,151.49', color: '#2563eb', points: '0,108 100,100 200,90 300,78 400,82 500,54 600,40', labels: ['30天前', '20天前', '10天前', '今日'] },
+                '7D':  { valueUsd: 101151.49, color: '#2563eb', points: '0,92 100,88 200,82 300,70 400,66 500,52 600,40', labels: ['6天前', '4天前', '2天前', '今日'] },
+                '14D': { valueUsd: 101151.49, color: '#2563eb', points: '0,104 100,96 200,88 300,92 400,72 500,58 600,40', labels: ['14天前', '10天前', '5天前', '今日'] },
+                '30D': { valueUsd: 101151.49, color: '#2563eb', points: '0,108 100,100 200,90 300,78 400,82 500,54 600,40', labels: ['30天前', '20天前', '10天前', '今日'] },
             },
             funding: {
-                '7D':  { value: '$0.00', color: '#2563eb', points: '0,98 100,98 200,98 300,98 400,98 500,98 600,98', labels: ['6天前', '4天前', '2天前', '今日'] },
-                '14D': { value: '$0.00', color: '#2563eb', points: '0,88 120,88 240,98 360,98 480,98 600,98', labels: ['14天前', '10天前', '5天前', '今日'] },
-                '30D': { value: '$0.00', color: '#2563eb', points: '0,76 120,86 240,92 360,98 480,98 600,98', labels: ['30天前', '20天前', '10天前', '今日'] },
+                '7D':  { valueUsd: 0, color: '#2563eb', points: '0,98 100,98 200,98 300,98 400,98 500,98 600,98', labels: ['6天前', '4天前', '2天前', '今日'] },
+                '14D': { valueUsd: 0, color: '#2563eb', points: '0,88 120,88 240,98 360,98 480,98 600,98', labels: ['14天前', '10天前', '5天前', '今日'] },
+                '30D': { valueUsd: 0, color: '#2563eb', points: '0,76 120,86 240,92 360,98 480,98 600,98', labels: ['30天前', '20天前', '10天前', '今日'] },
             },
             trading: {
                 equity: {
                     label: '账户价值', color: '#2563eb',
-                    '7D':  { value: '$0.00', points: '0,96 100,94 200,96 300,90 400,94 500,96 600,96', labels: ['6天前', '4天前', '2天前', '今日'] },
-                    '14D': { value: '$0.00', points: '0,84 120,88 240,78 360,90 480,96 600,96', labels: ['14天前', '10天前', '5天前', '今日'] },
-                    '30D': { value: '$0.00', points: '0,70 120,76 240,64 360,82 480,92 600,96', labels: ['30天前', '20天前', '10天前', '今日'] },
+                    '7D':  { valueUsd: 0, points: '0,96 100,94 200,96 300,90 400,94 500,96 600,96', labels: ['6天前', '4天前', '2天前', '今日'] },
+                    '14D': { valueUsd: 0, points: '0,84 120,88 240,78 360,90 480,96 600,96', labels: ['14天前', '10天前', '5天前', '今日'] },
+                    '30D': { valueUsd: 0, points: '0,70 120,76 240,64 360,82 480,92 600,96', labels: ['30天前', '20天前', '10天前', '今日'] },
                 },
                 pnl: {
-                    label: '盈亏', color: '#10b981',
-                    '7D':  { value: '$0.00', points: '0,96 100,82 200,88 300,56 400,70 500,88 600,96', labels: ['6天前', '4天前', '2天前', '今日'] },
-                    '14D': { value: '+$240.00', points: '0,102 120,90 240,76 360,52 480,60 600,36', labels: ['14天前', '10天前', '5天前', '今日'] },
-                    '30D': { value: '+$1,280.40', points: '0,106 120,94 240,72 360,62 480,42 600,26', labels: ['30天前', '20天前', '10天前', '今日'] },
+                    label: '盈亏', color: '#10b981', signed: true,
+                    '7D':  { valueUsd: 0, points: '0,96 100,82 200,88 300,56 400,70 500,88 600,96', labels: ['6天前', '4天前', '2天前', '今日'] },
+                    '14D': { valueUsd: 240, points: '0,102 120,90 240,76 360,52 480,60 600,36', labels: ['14天前', '10天前', '5天前', '今日'] },
+                    '30D': { valueUsd: 1280.4, points: '0,106 120,94 240,72 360,62 480,42 600,26', labels: ['30天前', '20天前', '10天前', '今日'] },
                 },
                 volume: {
                     label: '交易量', color: '#7c3aed',
-                    '7D':  { value: '$0.00', points: '0,102 100,66 200,86 300,48 400,74 500,92 600,102', labels: ['6天前', '4天前', '2天前', '今日'] },
-                    '14D': { value: '$2,400,000.00', points: '0,100 120,58 240,78 360,34 480,52 600,44', labels: ['14天前', '10天前', '5天前', '今日'] },
-                    '30D': { value: '$8,920,000.00', points: '0,104 120,64 240,54 360,28 480,46 600,30', labels: ['30天前', '20天前', '10天前', '今日'] },
+                    '7D':  { valueUsd: 0, points: '0,102 100,66 200,86 300,48 400,74 500,92 600,102', labels: ['6天前', '4天前', '2天前', '今日'] },
+                    '14D': { valueUsd: 2400000, points: '0,100 120,58 240,78 360,34 480,52 600,44', labels: ['14天前', '10天前', '5天前', '今日'] },
+                    '30D': { valueUsd: 8920000, points: '0,104 120,64 240,54 360,28 480,46 600,30', labels: ['30天前', '20天前', '10天前', '今日'] },
                 },
             },
         },
@@ -846,17 +1001,17 @@ const DEMO_STATES = {
     'guest': {
         guest: true,
         navVip: '--',
-        overviewTotal: '--',
-        overviewPnl: '--',
+        overviewTotalUsd: null,
+        overviewPnlUsd: null,
         overviewPnlPct: '--',
-        overviewFunding: '--',
-        overviewPerp: '--',
-        fundingEquity: '--',
-        tradingEquity: '--',
-        tradingTodayRealizedPnl: '--',
-        tradingAvailMargin: '--',
-        tradingUpnl: '--',
-        tradingVolume: '--',
+        overviewFundingUsd: null,
+        overviewPerpUsd: null,
+        fundingEquityUsd: null,
+        tradingEquityUsd: null,
+        tradingTodayRealizedPnlUsd: null,
+        tradingAvailMarginUsd: null,
+        tradingUpnlUsd: null,
+        tradingVolumeUsd: null,
         trialTotal: '--',
         trialUnused: '--',
         trialInuse: '--',
@@ -881,63 +1036,63 @@ const DEMO_STATES = {
         inherit: 'logged-vip',
         pendingCount: '0',
         navVip: 'VIP 0',
-        overviewTotal: '$0.00',
-        overviewPnl: '0.00',
+        overviewTotalUsd: 0,
+        overviewPnlUsd: 0,
         overviewPnlPct: '0.00%',
-        overviewFunding: '$0.00',
-        overviewPerp: '$0.00',
-        fundingEquity: '$0.00',
-        tradingEquity: '$0.00',
-        tradingTodayRealizedPnl: '0.00',
-        tradingAvailMargin: '$0.00',
-        tradingUpnl: '$0.00',
-        tradingVolume: '$0.00',
+        overviewFundingUsd: 0,
+        overviewPerpUsd: 0,
+        fundingEquityUsd: 0,
+        tradingEquityUsd: 0,
+        tradingTodayRealizedPnlUsd: 0,
+        tradingAvailMarginUsd: 0,
+        tradingUpnlUsd: 0,
+        tradingVolumeUsd: 0,
         trialTotal: '0.00',
         trialUnused: '0.00',
         trialInuse: '0.00',
         overviewTokens: [
-            { symbol: 'USDC', name: 'USD Coin', iconBg: 'bg-blue-600', qty: '0.00', value: '$0.00' },
-            { symbol: 'USD1', name: 'World Liberty Financial USD', iconBg: 'bg-amber-600', qty: '0.00', value: '$0.00' },
+            { symbol: 'USDC', name: 'USD Coin', iconBg: 'bg-blue-600', qty: '0.00', valueUsd: 0 },
+            { symbol: 'USD1', name: 'World Liberty Financial USD', iconBg: 'bg-amber-600', qty: '0.00', valueUsd: 0 },
         ],
         fundingTokens: [
-            { symbol: 'USDC', name: 'USD Coin', iconBg: 'bg-blue-600', qty: '0.00', value: '$0.00' },
-            { symbol: 'USD1', name: 'World Liberty Financial USD', iconBg: 'bg-amber-600', qty: '0.00', value: '$0.00' },
+            { symbol: 'USDC', name: 'USD Coin', iconBg: 'bg-blue-600', qty: '0.00', valueUsd: 0 },
+            { symbol: 'USD1', name: 'World Liberty Financial USD', iconBg: 'bg-amber-600', qty: '0.00', valueUsd: 0 },
         ],
         tradingTokens: [
-            { symbol: 'USDC', name: 'USD Coin', iconBg: 'bg-blue-600', qty: '0.00', value: '$0.00' },
-            { symbol: 'USD1', name: 'World Liberty Financial USD', iconBg: 'bg-amber-600', qty: '0.00', value: '$0.00' },
+            { symbol: 'USDC', name: 'USD Coin', iconBg: 'bg-blue-600', qty: '0.00', valueUsd: 0 },
+            { symbol: 'USD1', name: 'World Liberty Financial USD', iconBg: 'bg-amber-600', qty: '0.00', valueUsd: 0 },
         ],
         fundBills: [],
         vip: { mode: 'vip', level: 'VIP 0', vol14d: '$0.00', maker: '0.020%', taker: '0.050%', nextLevel: 'VIP 1', pct: 0, gap: '$5,000,000.00' },
         charts: {
             overview: {
-                '7D':  { value: '$0.00', color: '#2563eb', points: '0,98 150,98 300,98 450,98 600,98', labels: ['6天前', '4天前', '2天前', '今日'] },
-                '14D': { value: '$0.00', color: '#2563eb', points: '0,98 150,98 300,98 450,98 600,98', labels: ['14天前', '10天前', '5天前', '今日'] },
-                '30D': { value: '$0.00', color: '#2563eb', points: '0,98 150,98 300,98 450,98 600,98', labels: ['30天前', '20天前', '10天前', '今日'] },
+                '7D':  { valueUsd: 0, color: '#2563eb', points: '0,98 150,98 300,98 450,98 600,98', labels: ['6天前', '4天前', '2天前', '今日'] },
+                '14D': { valueUsd: 0, color: '#2563eb', points: '0,98 150,98 300,98 450,98 600,98', labels: ['14天前', '10天前', '5天前', '今日'] },
+                '30D': { valueUsd: 0, color: '#2563eb', points: '0,98 150,98 300,98 450,98 600,98', labels: ['30天前', '20天前', '10天前', '今日'] },
             },
             funding: {
-                '7D':  { value: '$0.00', color: '#2563eb', points: '0,98 150,98 300,98 450,98 600,98', labels: ['6天前', '4天前', '2天前', '今日'] },
-                '14D': { value: '$0.00', color: '#2563eb', points: '0,98 150,98 300,98 450,98 600,98', labels: ['14天前', '10天前', '5天前', '今日'] },
-                '30D': { value: '$0.00', color: '#2563eb', points: '0,98 150,98 300,98 450,98 600,98', labels: ['30天前', '20天前', '10天前', '今日'] },
+                '7D':  { valueUsd: 0, color: '#2563eb', points: '0,98 150,98 300,98 450,98 600,98', labels: ['6天前', '4天前', '2天前', '今日'] },
+                '14D': { valueUsd: 0, color: '#2563eb', points: '0,98 150,98 300,98 450,98 600,98', labels: ['14天前', '10天前', '5天前', '今日'] },
+                '30D': { valueUsd: 0, color: '#2563eb', points: '0,98 150,98 300,98 450,98 600,98', labels: ['30天前', '20天前', '10天前', '今日'] },
             },
             trading: {
                 equity: {
                     label: '账户价值', color: '#2563eb',
-                    '7D':  { value: '$0.00', points: '0,98 150,98 300,98 450,98 600,98', labels: ['6天前', '4天前', '2天前', '今日'] },
-                    '14D': { value: '$0.00', points: '0,98 150,98 300,98 450,98 600,98', labels: ['14天前', '10天前', '5天前', '今日'] },
-                    '30D': { value: '$0.00', points: '0,98 150,98 300,98 450,98 600,98', labels: ['30天前', '20天前', '10天前', '今日'] },
+                    '7D':  { valueUsd: 0, points: '0,98 150,98 300,98 450,98 600,98', labels: ['6天前', '4天前', '2天前', '今日'] },
+                    '14D': { valueUsd: 0, points: '0,98 150,98 300,98 450,98 600,98', labels: ['14天前', '10天前', '5天前', '今日'] },
+                    '30D': { valueUsd: 0, points: '0,98 150,98 300,98 450,98 600,98', labels: ['30天前', '20天前', '10天前', '今日'] },
                 },
                 pnl: {
-                    label: '盈亏', color: '#10b981',
-                    '7D':  { value: '$0.00', points: '0,98 150,98 300,98 450,98 600,98', labels: ['6天前', '4天前', '2天前', '今日'] },
-                    '14D': { value: '$0.00', points: '0,98 150,98 300,98 450,98 600,98', labels: ['14天前', '10天前', '5天前', '今日'] },
-                    '30D': { value: '$0.00', points: '0,98 150,98 300,98 450,98 600,98', labels: ['30天前', '20天前', '10天前', '今日'] },
+                    label: '盈亏', color: '#10b981', signed: true,
+                    '7D':  { valueUsd: 0, points: '0,98 150,98 300,98 450,98 600,98', labels: ['6天前', '4天前', '2天前', '今日'] },
+                    '14D': { valueUsd: 0, points: '0,98 150,98 300,98 450,98 600,98', labels: ['14天前', '10天前', '5天前', '今日'] },
+                    '30D': { valueUsd: 0, points: '0,98 150,98 300,98 450,98 600,98', labels: ['30天前', '20天前', '10天前', '今日'] },
                 },
                 volume: {
                     label: '交易量', color: '#7c3aed',
-                    '7D':  { value: '$0.00', points: '0,98 150,98 300,98 450,98 600,98', labels: ['6天前', '4天前', '2天前', '今日'] },
-                    '14D': { value: '$0.00', points: '0,98 150,98 300,98 450,98 600,98', labels: ['14天前', '10天前', '5天前', '今日'] },
-                    '30D': { value: '$0.00', points: '0,98 150,98 300,98 450,98 600,98', labels: ['30天前', '20天前', '10天前', '今日'] },
+                    '7D':  { valueUsd: 0, points: '0,98 150,98 300,98 450,98 600,98', labels: ['6天前', '4天前', '2天前', '今日'] },
+                    '14D': { valueUsd: 0, points: '0,98 150,98 300,98 450,98 600,98', labels: ['14天前', '10天前', '5天前', '今日'] },
+                    '30D': { valueUsd: 0, points: '0,98 150,98 300,98 450,98 600,98', labels: ['30天前', '20天前', '10天前', '今日'] },
                 },
             },
         },
@@ -953,6 +1108,7 @@ function resolveState(key) {
 /* ==================== 当前页面交互态 ==================== */
 const uiState = {
     demoKey: 'logged-vip',
+    valuationUnit: 'USD',
     mainView: 'overview',
     fundingTab: 'tokens',
     tradingTab: 'assets',
@@ -1075,7 +1231,7 @@ function renderTokenRows(tokens, guest) {
                 </div>
             </td>
             <td class="px-5 py-3.5 text-right font-mono font-bold text-gray-900">${t.qty}</td>
-            <td class="px-5 py-3.5 text-right font-mono font-black text-gray-900">${t.value}</td>
+            <td class="px-5 py-3.5 text-right font-mono font-black text-gray-900">${formatValuation(t.valueUsd)}</td>
         </tr>`).join('');
 }
 
@@ -1103,11 +1259,11 @@ function renderChart(scope) {
 
     if (scope === 'overview') {
         const cfg = chartSource.overview[period];
-        document.getElementById('overview-chart-val').textContent = data.guest ? '--' : cfg.value;
+        document.getElementById('overview-chart-val').textContent = data.guest ? '--' : formatValuation(cfg.valueUsd);
         document.getElementById('chart-canvas-overview').innerHTML = renderLineChartSvg(cfg, `grad-ov-${period}`);
     } else if (scope === 'funding') {
         const cfg = chartSource.funding[period];
-        document.getElementById('funding-chart-val').textContent = data.guest ? '--' : cfg.value;
+        document.getElementById('funding-chart-val').textContent = data.guest ? '--' : formatValuation(cfg.valueUsd);
         document.getElementById('chart-canvas-funding').innerHTML = renderLineChartSvg(cfg, `grad-fd-${period}`);
     } else if (scope === 'trading') {
         const metric = uiState.tradingMetric;
@@ -1115,10 +1271,12 @@ function renderChart(scope) {
         const cfg = { ...mGroup[period], color: mGroup.color };
         document.getElementById('trading-metric-label').textContent = mGroup.label;
         const valEl = document.getElementById('trading-metric-val');
-        valEl.textContent = data.guest ? '--' : cfg.value;
+        const formattedVal = data.guest ? '--' : formatValuation(cfg.valueUsd, { signed: !!mGroup.signed });
+        valEl.textContent = formattedVal;
         valEl.className = 'text-[20px] font-black font-mono ' + (
             data.guest ? 'text-gray-400' :
-            metric === 'pnl' && cfg.value.startsWith('+') ? 'text-emerald-600' :
+            metric === 'pnl' && cfg.valueUsd > 0 ? 'text-emerald-600' :
+            metric === 'pnl' && cfg.valueUsd < 0 ? 'text-red-500' :
             metric === 'volume' ? 'text-purple-700' : 'text-gray-900'
         );
         document.getElementById('chart-canvas-trading').innerHTML = renderLineChartSvg(cfg, `grad-tr-${metric}-${period}`);
@@ -1148,35 +1306,35 @@ function applyDemoState(key) {
     document.getElementById('nav-user-menu').classList.toggle('hidden', data.guest);
     document.getElementById('top-action-buttons').classList.toggle('hidden', data.guest);
     document.getElementById('nav-menu-vip').textContent = data.navVip;
-    document.getElementById('nav-menu-total').textContent = data.overviewTotal;
+    document.getElementById('nav-menu-total').textContent = formatValuation(data.overviewTotalUsd);
     if (data.pendingCount !== undefined) {
         document.getElementById('pending-count-badge').textContent = data.pendingCount;
     }
 
-    // 资产总览数值
-    document.getElementById('overview-total').textContent = data.overviewTotal;
-    document.getElementById('overview-pnl').textContent = data.overviewPnl;
+    // 资产总览数值（跟随估值单位联动）
+    document.getElementById('overview-total').textContent = formatValuation(data.overviewTotalUsd);
+    document.getElementById('overview-pnl').textContent = formatValuation(data.overviewPnlUsd, { signed: true });
     document.getElementById('overview-pnl-pct').textContent = data.overviewPnlPct;
-    document.getElementById('overview-funding').textContent = data.overviewFunding;
-    document.getElementById('overview-perp').textContent = data.overviewPerp;
+    document.getElementById('overview-funding').textContent = formatValuation(data.overviewFundingUsd);
+    document.getElementById('overview-perp').textContent = formatValuation(data.overviewPerpUsd);
     document.getElementById('overview-token-count').textContent = data.guest ? '--' : `共 ${data.overviewTokens.length} 项资产`;
 
-    // 资金账户数值
-    document.getElementById('funding-equity').textContent = data.fundingEquity;
+    // 资金账户数值（跟随估值单位联动）
+    document.getElementById('funding-equity').textContent = formatValuation(data.fundingEquityUsd);
 
-    // 交易账户数值
-    document.getElementById('trading-equity').textContent = data.tradingEquity;
+    // 交易账户数值（跟随估值单位联动；体验金固定为 USDC 不受估值单位影响）
+    document.getElementById('trading-equity').textContent = formatValuation(data.tradingEquityUsd);
     const todayRpnlEl = document.getElementById('trading-today-realized-pnl');
-    const todayRpnl = data.tradingTodayRealizedPnl ?? '--';
-    todayRpnlEl.textContent = todayRpnl;
+    const todayRpnlText = formatValuation(data.tradingTodayRealizedPnlUsd, { signed: true });
+    todayRpnlEl.textContent = todayRpnlText;
     todayRpnlEl.className = 'font-mono font-bold ' + (
         data.guest ? 'text-gray-400' :
-        todayRpnl.startsWith('+') ? 'text-emerald-600' :
-        todayRpnl.startsWith('-') ? 'text-red-500' : 'text-gray-600'
+        data.tradingTodayRealizedPnlUsd > 0 ? 'text-emerald-600' :
+        data.tradingTodayRealizedPnlUsd < 0 ? 'text-red-500' : 'text-gray-600'
     );
-    document.getElementById('trading-avail-margin').textContent = data.tradingAvailMargin;
-    document.getElementById('trading-upnl').textContent = data.tradingUpnl;
-    document.getElementById('trading-volume').textContent = data.tradingVolume;
+    document.getElementById('trading-avail-margin').textContent = formatValuation(data.tradingAvailMarginUsd);
+    document.getElementById('trading-upnl').textContent = formatValuation(data.tradingUpnlUsd);
+    document.getElementById('trading-volume').textContent = formatValuation(data.tradingVolumeUsd);
     document.getElementById('trading-trial-total').innerHTML = `${data.trialTotal} <span class="text-[11px] font-bold text-gray-400">USDC</span>`;
     document.getElementById('trading-trial-unused').innerHTML = `${data.trialUnused} <span class="text-gray-400">USDC</span>`;
     document.getElementById('trading-trial-inuse').innerHTML = `${data.trialInuse} <span class="text-gray-400">USDC</span>`;
@@ -1202,7 +1360,26 @@ function applyDemoState(key) {
     renderChart('trading');
 }
 
+/* ==================== 估值单位下拉与三视图全局联动 ==================== */
+function closeAllUnitDropdowns() {
+    document.querySelectorAll('[data-unit-dropdown]').forEach(wrap => {
+        wrap.querySelector('[data-unit-menu]')?.classList.add('hidden');
+        wrap.querySelector('[data-unit-toggle]')?.setAttribute('aria-expanded', 'false');
+    });
+}
+
+function setValuationUnit(unitCode) {
+    if (!VALUATION_UNITS[unitCode]) return;
+    uiState.valuationUnit = unitCode;
+    document.querySelectorAll('[data-unit-option]').forEach(opt => {
+        opt.classList.toggle('is-active', opt.dataset.unitOption === unitCode);
+    });
+    closeAllUnitDropdowns();
+    applyDemoState(uiState.demoKey);
+}
+
 function setMainView(view) {
+    closeAllUnitDropdowns();
     uiState.mainView = view;
     document.querySelectorAll('[data-main-tab]').forEach(btn => {
         btn.classList.toggle('is-active', btn.dataset.mainTab === view);
@@ -1400,8 +1577,31 @@ function closeVipFeeModal() {
     document.getElementById('vip-fee-modal').classList.add('hidden');
 }
 
-// 事件委托：资产总览与交易账户两个 VIP 横幅上的「等级费率表」按钮均可打开
+// 估值单位下拉事件绑定（3 处互相同步联动）
+document.querySelectorAll('[data-unit-dropdown]').forEach(wrap => {
+    const toggleBtn = wrap.querySelector('[data-unit-toggle]');
+    const menu = wrap.querySelector('[data-unit-menu]');
+    toggleBtn?.addEventListener('click', e => {
+        e.stopPropagation();
+        const willOpen = menu.classList.contains('hidden');
+        closeAllUnitDropdowns();
+        if (willOpen) {
+            menu.classList.remove('hidden');
+            toggleBtn.setAttribute('aria-expanded', 'true');
+        }
+    });
+    wrap.querySelectorAll('[data-unit-option]').forEach(opt => {
+        opt.addEventListener('click', e => {
+            e.stopPropagation();
+            setValuationUnit(opt.dataset.unitOption);
+        });
+    });
+});
+
 document.addEventListener('click', e => {
+    if (!e.target.closest('[data-unit-dropdown]')) {
+        closeAllUnitDropdowns();
+    }
     if (e.target.closest('[data-open-vip-modal]')) {
         openVipFeeModal();
     }
@@ -1412,7 +1612,10 @@ document.getElementById('vip-fee-modal').addEventListener('click', e => {
     if (e.target.id === 'vip-fee-modal') closeVipFeeModal();
 });
 document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeVipFeeModal();
+    if (e.key === 'Escape') {
+        closeVipFeeModal();
+        closeAllUnitDropdowns();
+    }
 });
 document.getElementById('special-pair-prev').addEventListener('click', () => {
     if (specialPairPage > 1) { specialPairPage--; renderSpecialPairFeeTable(); }
