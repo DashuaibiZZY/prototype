@@ -104,6 +104,69 @@
             background: #f59e0b;
             flex-shrink: 0;
         }
+        .unit-chevron-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            color: #6b7280;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            margin-left: 4px;
+            flex-shrink: 0;
+        }
+        .unit-chevron-btn[aria-expanded="true"] {
+            background: #f3f4f6;
+            color: #111827;
+        }
+        .unit-chevron-icon {
+            transition: transform 0.18s ease;
+        }
+        .unit-chevron-btn[aria-expanded="true"] .unit-chevron-icon {
+            transform: rotate(180deg);
+        }
+        .unit-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            min-width: 168px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            box-shadow: 0 14px 32px -8px rgba(17, 24, 39, 0.16);
+            padding: 4px 0;
+            z-index: 80;
+        }
+        .unit-option {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+        }
+        .unit-option.is-active {
+            color: #111827;
+            font-weight: 800;
+            background: #f3f4f6;
+        }
+        .unit-option .unit-check {
+            opacity: 0;
+            color: #2563eb;
+        }
+        .unit-option.is-active .unit-check {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -175,14 +238,28 @@
                 </div>
 
                 <div class="mt-1.5 flex items-center justify-between gap-3">
-                    <div class="flex items-baseline">
-                        <span class="text-[31px] leading-none font-bold text-[#111827] tracking-tight tabular-nums" data-mask-val="0.00">0.00</span>
-                        <button type="button" onclick="showToast('当前计价单位：USDC')" class="inline-flex items-center ml-1.5 text-[13px] font-medium text-[#111827] leading-none">
-                            <span>USDC</span>
-                            <svg class="w-2.5 h-2.5 ml-1 text-[#111827]" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-                                <path d="M2.5 4.2h7L6 8.2 2.5 4.2z"/>
+                    <div class="inline-flex items-baseline gap-0.5 relative" data-unit-dropdown>
+                        <span id="hero-equity" class="text-[31px] leading-none font-bold text-[#111827] tracking-tight tabular-nums" data-mask-val="$0.00">$0.00</span>
+                        <button type="button" class="unit-chevron-btn" data-unit-toggle aria-haspopup="listbox" aria-expanded="false" title="切换估值单位">
+                            <svg class="w-4 h-4 unit-chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M6 9l6 6 6-6"/>
                             </svg>
                         </button>
+                        <div class="unit-dropdown-menu hidden" data-unit-menu role="listbox">
+                            <div class="px-3 py-1.5 text-[11px] font-bold text-[#9ca3af] border-b border-[#f3f4f6]">估值单位</div>
+                            <button type="button" class="unit-option is-active" data-unit-option="USD">
+                                <span>USD 美元</span>
+                                <svg class="w-3.5 h-3.5 unit-check" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                            </button>
+                            <button type="button" class="unit-option" data-unit-option="USDC">
+                                <span>USD Coin</span>
+                                <svg class="w-3.5 h-3.5 unit-check" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                            </button>
+                            <button type="button" class="unit-option" data-unit-option="JPY">
+                                <span>JPY 日元</span>
+                                <svg class="w-3.5 h-3.5 unit-check" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                            </button>
+                        </div>
                     </div>
                     <!-- 右侧趋势参考紫线 -->
                     <svg class="w-[128px] h-[22px] shrink-0" viewBox="0 0 128 22" fill="none" aria-hidden="true">
@@ -192,7 +269,7 @@
 
                 <a href="交易流水頁面.html" class="mt-2 inline-flex items-center gap-1 text-[12px] leading-snug">
                     <span class="text-[#8c929c]">今日已实现盈亏</span>
-                    <span class="text-[#4b5563] font-medium tabular-nums" data-mask-val="0.00">0.00</span>
+                    <span id="today-pnl" class="text-[#4b5563] font-medium tabular-nums" data-mask-val="+$12.23">+$12.23</span>
                     <svg class="w-3 h-3 text-[#4b5563]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M9 6l6 6-6 6"/>
                     </svg>
@@ -202,12 +279,12 @@
             <!-- 2 列保证金 & 未实现盈亏 -->
             <section class="px-4 mt-5 grid grid-cols-2 gap-4">
                 <div>
-                    <p class="text-[11px] text-[#8c929c] leading-tight">可用保证金 USDC</p>
-                    <p class="mt-1.5 text-[14px] font-semibold text-[#111827] tabular-nums" data-mask-val="0.00">0.00</p>
+                    <p class="text-[11px] text-[#8c929c] leading-tight">可用保证金</p>
+                    <p id="avail-margin" class="mt-1.5 text-[14px] font-semibold text-[#111827] tabular-nums" data-mask-val="$0.00">$0.00</p>
                 </div>
                 <div>
-                    <p class="text-[11px] text-[#8c929c] leading-tight">未实现盈亏 USDC</p>
-                    <p class="mt-1.5 text-[14px] font-semibold text-[#18b888] tabular-nums" data-mask-val="0.00">0.00</p>
+                    <p class="text-[11px] text-[#8c929c] leading-tight">未实现盈亏</p>
+                    <p id="trading-upnl" class="mt-1.5 text-[14px] font-semibold text-[#18b888] tabular-nums" data-mask-val="$0.00">$0.00</p>
                 </div>
             </section>
 
@@ -242,20 +319,20 @@
                         <div class="flex items-start justify-between gap-3">
                             <dt class="text-[11px] text-[#8c929c] leading-tight shrink-0 pt-0.5">余额</dt>
                             <dd class="text-right min-w-0 flex-1">
-                                <div class="text-[13px] font-semibold text-[#111827] tabular-nums break-all leading-snug" data-mask-val="101,151.49">101,151.49</div>
-                                <span class="balance-trial-tag justify-end" title="余额中含体验金，固定 USDC 计价">
+                                <div id="usdc-balance" class="text-[13px] font-semibold text-[#111827] tabular-nums break-all leading-snug" data-mask-val="$101,151.49">$101,151.49</div>
+                                <span class="balance-trial-tag justify-end" title="余额中含体验金，随估值单位展示">
                                     <span class="balance-trial-dot" aria-hidden="true"></span>
-                                    <span data-mask-val="含体验金 1,250.00">含体验金 1,250.00</span>
+                                    <span id="usdc-trial-tag" data-mask-val="含体验金 $1,250.00">含体验金 $1,250.00</span>
                                 </span>
                             </dd>
                         </div>
                         <div class="flex items-start justify-between gap-3">
                             <dt class="text-[11px] text-[#8c929c] leading-tight shrink-0 pt-0.5">未实现盈亏</dt>
-                            <dd class="text-[13px] font-semibold text-[#18b888] tabular-nums text-right break-all leading-snug min-w-0" data-mask-val="0.00">0.00</dd>
+                            <dd id="usdc-upnl" class="text-[13px] font-semibold text-[#18b888] tabular-nums text-right break-all leading-snug min-w-0" data-mask-val="$0.00">$0.00</dd>
                         </div>
                         <div class="flex items-start justify-between gap-3">
                             <dt class="text-[11px] text-[#8c929c] leading-tight shrink-0 pt-0.5">权益</dt>
-                            <dd class="text-[13px] font-bold text-[#111827] tabular-nums text-right break-all leading-snug min-w-0" data-mask-val="101,151.49">101,151.49</dd>
+                            <dd id="usdc-equity" class="text-[13px] font-bold text-[#111827] tabular-nums text-right break-all leading-snug min-w-0" data-mask-val="$101,151.49">$101,151.49</dd>
                         </div>
                     </dl>
                 </div>
@@ -268,15 +345,15 @@
                     <dl class="mt-3 pt-2.5 border-t border-[#eef0f3] space-y-2.5">
                         <div class="flex items-start justify-between gap-3">
                             <dt class="text-[11px] text-[#8c929c] leading-tight shrink-0 pt-0.5">余额</dt>
-                            <dd class="text-[13px] font-semibold text-[#111827] tabular-nums text-right break-all leading-snug min-w-0" data-mask-val="0.00">0.00</dd>
+                            <dd id="usd1-balance" class="text-[13px] font-semibold text-[#111827] tabular-nums text-right break-all leading-snug min-w-0" data-mask-val="$0.00">$0.00</dd>
                         </div>
                         <div class="flex items-start justify-between gap-3">
                             <dt class="text-[11px] text-[#8c929c] leading-tight shrink-0 pt-0.5">未实现盈亏</dt>
-                            <dd class="text-[13px] font-semibold text-[#18b888] tabular-nums text-right break-all leading-snug min-w-0" data-mask-val="0.00">0.00</dd>
+                            <dd id="usd1-upnl" class="text-[13px] font-semibold text-[#18b888] tabular-nums text-right break-all leading-snug min-w-0" data-mask-val="$0.00">$0.00</dd>
                         </div>
                         <div class="flex items-start justify-between gap-3">
                             <dt class="text-[11px] text-[#8c929c] leading-tight shrink-0 pt-0.5">权益</dt>
-                            <dd class="text-[13px] font-bold text-[#111827] tabular-nums text-right break-all leading-snug min-w-0" data-mask-val="0.00">0.00</dd>
+                            <dd id="usd1-equity" class="text-[13px] font-bold text-[#111827] tabular-nums text-right break-all leading-snug min-w-0" data-mask-val="$0.00">$0.00</dd>
                         </div>
                     </dl>
                 </div>
@@ -338,8 +415,64 @@
 
 <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs font-semibold px-4 py-2 rounded-full opacity-0 pointer-events-none transition-opacity z-50"></div>
 
+<script src="../shared/forx-valuation-unit.js"></script>
 <script>
 let isMasked = false;
+
+const APP_DEMO = {
+    equityUsd: 0,
+    todayPnlUsd: 12.23,
+    availMarginUsd: 0,
+    upnlUsd: 0,
+    usdc: { balanceUsd: 101151.49, trialUsd: 1250, upnlUsd: 0, equityUsd: 101151.49 },
+    usd1: { balanceUsd: 0, upnlUsd: 0, equityUsd: 0 },
+};
+
+const uiState = { valuationUnit: 'USD' };
+
+function setDisplayed(el, text) {
+    if (!el) return;
+    el.dataset.maskVal = text;
+    if (!isMasked) el.textContent = text;
+}
+
+function applyValuationDisplay() {
+    const u = uiState.valuationUnit;
+    const FV = (usd, opts) => ForxValuationUnit.formatValuation(usd, u, opts);
+
+    setDisplayed(document.getElementById('hero-equity'), FV(APP_DEMO.equityUsd));
+    setDisplayed(document.getElementById('today-pnl'), FV(APP_DEMO.todayPnlUsd, { signed: true }));
+    setDisplayed(document.getElementById('avail-margin'), FV(APP_DEMO.availMarginUsd));
+    setDisplayed(document.getElementById('trading-upnl'), FV(APP_DEMO.upnlUsd));
+    setDisplayed(document.getElementById('usdc-balance'), FV(APP_DEMO.usdc.balanceUsd));
+    setDisplayed(document.getElementById('usdc-upnl'), FV(APP_DEMO.usdc.upnlUsd));
+    setDisplayed(document.getElementById('usdc-equity'), FV(APP_DEMO.usdc.equityUsd));
+    setDisplayed(document.getElementById('usd1-balance'), FV(APP_DEMO.usd1.balanceUsd));
+    setDisplayed(document.getElementById('usd1-upnl'), FV(APP_DEMO.usd1.upnlUsd));
+    setDisplayed(document.getElementById('usd1-equity'), FV(APP_DEMO.usd1.equityUsd));
+
+    const trialLabel = ForxValuationUnit.formatTrialTagLabel(APP_DEMO.usdc.trialUsd, u);
+    const trialEl = document.getElementById('usdc-trial-tag');
+    if (trialEl && trialLabel) setDisplayed(trialEl, trialLabel);
+
+    document.querySelectorAll('[data-unit-option]').forEach(opt => {
+        opt.classList.toggle('is-active', opt.dataset.unitOption === u);
+    });
+}
+
+function closeUnitDropdown() {
+    const wrap = document.querySelector('[data-unit-dropdown]');
+    wrap?.querySelector('[data-unit-menu]')?.classList.add('hidden');
+    wrap?.querySelector('[data-unit-toggle]')?.setAttribute('aria-expanded', 'false');
+}
+
+function setValuationUnit(unitCode) {
+    if (!ForxValuationUnit.VALUATION_UNITS[unitCode]) return;
+    uiState.valuationUnit = unitCode;
+    closeUnitDropdown();
+    applyValuationDisplay();
+    showToast(`估值单位：${ForxValuationUnit.VALUATION_UNITS[unitCode].label}`);
+}
 
 function toggleEye() {
     isMasked = !isMasked;
@@ -377,6 +510,40 @@ function showToast(msg) {
     clearTimeout(window._toastTimer);
     window._toastTimer = setTimeout(() => t.classList.add('opacity-0'), 1800);
 }
+
+(function initValuationUnit() {
+    const params = new URLSearchParams(window.location.search);
+    const fromQuery = params.get('unit');
+    if (fromQuery && ForxValuationUnit.VALUATION_UNITS[fromQuery.toUpperCase()]) {
+        uiState.valuationUnit = fromQuery.toUpperCase();
+    }
+    applyValuationDisplay();
+
+    const wrap = document.querySelector('[data-unit-dropdown]');
+    const toggleBtn = wrap?.querySelector('[data-unit-toggle]');
+    const menu = wrap?.querySelector('[data-unit-menu]');
+    toggleBtn?.addEventListener('click', e => {
+        e.stopPropagation();
+        const willOpen = menu.classList.contains('hidden');
+        closeUnitDropdown();
+        if (willOpen) {
+            menu.classList.remove('hidden');
+            toggleBtn.setAttribute('aria-expanded', 'true');
+        }
+    });
+    wrap?.querySelectorAll('[data-unit-option]').forEach(opt => {
+        opt.addEventListener('click', e => {
+            e.stopPropagation();
+            setValuationUnit(opt.dataset.unitOption);
+        });
+    });
+    document.addEventListener('click', e => {
+        if (!e.target.closest('[data-unit-dropdown]')) closeUnitDropdown();
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeUnitDropdown();
+    });
+})();
 </script>
 </body>
 </html>
