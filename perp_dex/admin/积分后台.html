@@ -190,18 +190,16 @@
 
             <div id="weekly-manual-trim-card" class="card p-6 space-y-4">
                 <div>
-                    <h3 class="font-bold text-slate-800">运营周积分手动删减数量</h3>
-                    <p class="text-xs text-slate-400 mt-1"><b>无需审核，保存即生效</b>。用于在周结算前从当周可瓜分总池中扣减指定积分（须小于等于「本周总池」）。</p>
+                    <h3 class="font-bold text-slate-800">运营周积分手动删减</h3>
+                    <p class="text-xs text-slate-400 mt-1">周结算前从可瓜分总池扣减积分；须 ≤ 本周总池，保存即生效、无需审核。</p>
                 </div>
                 <div class="max-w-md space-y-2">
-                    <label class="block text-xs font-bold text-slate-500 uppercase" for="weeklyManualTrimInput">运营周积分手动删减数量</label>
-                    <input id="weeklyManualTrimInput" type="number" min="0" step="1" value="0" class="w-full border border-slate-200 rounded-lg p-3 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/30" oninput="onWeeklyManualTrimInput()" placeholder="0">
-                    <p id="weeklyManualTrimHint" class="text-[11px] text-slate-500">当前本周总池：<span id="weeklyManualTrimPoolRef" class="font-mono font-bold text-slate-700">—</span> 积分；删减值须 <b>小于等于</b> 总池。</p>
+                    <input id="weeklyManualTrimInput" type="number" min="0" step="1" value="0" aria-label="删减积分数量" class="w-full border border-slate-200 rounded-lg p-3 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/30" oninput="onWeeklyManualTrimInput()" placeholder="删减积分">
+                    <p id="weeklyManualTrimPoolLine" class="text-[11px] text-slate-500">当前本周总池：<span id="weeklyManualTrimPoolRef" class="font-mono font-bold text-slate-700">—</span> 积分</p>
                     <p id="weeklyManualTrimError" class="hidden text-[11px] font-semibold text-red-600"></p>
-                    <p id="weeklyManualTrimSaved" class="hidden text-[11px] font-semibold text-emerald-700"></p>
                 </div>
                 <div class="pt-2 border-t border-slate-100">
-                    <button type="button" id="btn-weekly-manual-trim-save" onclick="saveWeeklyManualTrim()" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700">保存</button>
+                    <button type="button" id="btn-weekly-manual-trim-save" onclick="openWeeklyManualTrimConfirmModal()" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700">保存</button>
                 </div>
             </div>
         </div>
@@ -548,6 +546,31 @@
         <div class="p-5 bg-slate-50 flex gap-3 shrink-0">
             <button type="button" onclick="cancelPointsProgramToggle()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold">取消</button>
             <button type="button" id="btn-points-program-confirm" onclick="confirmPointsProgramToggle()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">确认提交审批</button>
+        </div>
+    </div>
+</div>
+
+<!-- 运营周积分手动删减 · 保存确认 -->
+<div id="modal-weekly-manual-trim-confirm" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-[420px] overflow-hidden flex flex-col">
+        <div class="px-6 py-5 border-b shrink-0">
+            <h3 class="text-lg font-bold text-slate-900">确认保存删减</h3>
+            <p class="text-xs text-slate-400 mt-1">请核对下列数值，确认后立即写入配置</p>
+        </div>
+        <div class="p-6 space-y-3 text-sm">
+            <div class="flex justify-between gap-4">
+                <span class="text-slate-500">删减积分</span>
+                <span id="weeklyTrimConfirmAmount" class="font-mono font-black text-slate-900">—</span>
+            </div>
+            <div class="flex justify-between gap-4">
+                <span class="text-slate-500">当前本周总池</span>
+                <span id="weeklyTrimConfirmPool" class="font-mono font-bold text-slate-800">—</span>
+            </div>
+            <p id="weeklyTrimConfirmError" class="hidden text-[11px] font-semibold text-red-600"></p>
+        </div>
+        <div class="p-5 bg-slate-50 flex gap-3 shrink-0">
+            <button type="button" id="btn-weekly-trim-confirm-cancel" onclick="closeWeeklyManualTrimConfirmModal()" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">取消</button>
+            <button type="button" id="btn-weekly-trim-confirm-save" onclick="confirmWeeklyManualTrimSave()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">确认保存</button>
         </div>
     </div>
 </div>
@@ -1381,37 +1404,51 @@
         }
     }
 
-    function validateWeeklyManualTrimValue(trimVal, showInline) {
-        var errEl = document.getElementById('weeklyManualTrimError');
+    function weeklyManualTrimValidationMessage(trimVal) {
         var pool = getWeeklyPoolValueFromDom();
-        var msg = '';
-
-        if (trimVal === '' || trimVal === null || trimVal === undefined) {
-            msg = '请填写删减数量';
-        } else if (!Number.isFinite(trimVal) || trimVal < 0 || !Number.isInteger(trimVal)) {
-            msg = '删减数量须为非负整数';
-        } else if (!pool || pool <= 0) {
-            msg = '请先配置有效的本周总池（积分）';
-        } else if (trimVal > pool) {
-            msg = '删减数量须小于等于本周总池（' + Number(pool).toLocaleString() + '）';
+        if (trimVal === '' || trimVal === null || trimVal === undefined || Number.isNaN(trimVal)) {
+            return '请填写删减数量';
         }
-
-        if (errEl) {
-            if (msg && showInline !== false) {
-                errEl.textContent = msg;
-                errEl.classList.remove('hidden');
-            } else {
-                errEl.classList.add('hidden');
-                errEl.textContent = '';
-            }
+        if (!Number.isFinite(trimVal) || trimVal < 0 || !Number.isInteger(trimVal)) {
+            return '删减数量须为非负整数';
         }
-        return !msg;
+        if (!pool || pool <= 0) {
+            return '请先配置有效的本周总池（积分）';
+        }
+        if (trimVal > pool) {
+            return '删减数量不得超过本周总池（' + Number(pool).toLocaleString() + '）';
+        }
+        return '';
+    }
+
+    function setWeeklyManualTrimInlineError(msg) {
+        var errEl = document.getElementById('weeklyManualTrimError');
+        if (!errEl) return;
+        if (msg) {
+            errEl.textContent = msg;
+            errEl.classList.remove('hidden');
+        } else {
+            errEl.classList.add('hidden');
+            errEl.textContent = '';
+        }
+    }
+
+    function showWeeklyManualTrimToast(msg) {
+        var el = document.getElementById('weekly-manual-trim-toast');
+        if (!el) return;
+        el.textContent = msg;
+        el.classList.remove('hidden');
+        clearTimeout(showWeeklyManualTrimToast._t);
+        showWeeklyManualTrimToast._t = setTimeout(function () { el.classList.add('hidden'); }, 2400);
     }
 
     function onWeeklyManualTrimInput() {
-        validateWeeklyManualTrimValue(Number(document.getElementById('weeklyManualTrimInput').value), true);
-        var savedEl = document.getElementById('weeklyManualTrimSaved');
-        if (savedEl) savedEl.classList.add('hidden');
+        setWeeklyManualTrimInlineError('');
+        var modalErr = document.getElementById('weeklyTrimConfirmError');
+        if (modalErr) {
+            modalErr.classList.add('hidden');
+            modalErr.textContent = '';
+        }
     }
 
     window.onWeeklyManualTrimInput = onWeeklyManualTrimInput;
@@ -1421,19 +1458,48 @@
         if (!input) return;
         input.value = loadWeeklyManualTrim();
         refreshWeeklyManualTrimPoolRef();
-        validateWeeklyManualTrimValue(Number(input.value), false);
-        var savedEl = document.getElementById('weeklyManualTrimSaved');
-        if (savedEl) {
-            savedEl.classList.add('hidden');
-            savedEl.textContent = '';
-        }
+        setWeeklyManualTrimInlineError('');
     }
 
-    window.saveWeeklyManualTrim = function () {
+    window.openWeeklyManualTrimConfirmModal = function () {
         var input = document.getElementById('weeklyManualTrimInput');
         if (!input) return;
         var trimVal = Number(input.value);
-        if (!validateWeeklyManualTrimValue(trimVal, true)) return;
+        var pool = getWeeklyPoolValueFromDom();
+        document.getElementById('weeklyTrimConfirmAmount').textContent = Number.isFinite(trimVal)
+            ? Number(trimVal).toLocaleString() + ' 积分'
+            : '—';
+        document.getElementById('weeklyTrimConfirmPool').textContent = pool > 0
+            ? Number(pool).toLocaleString() + ' 积分'
+            : '—';
+        var modalErr = document.getElementById('weeklyTrimConfirmError');
+        if (modalErr) {
+            modalErr.classList.add('hidden');
+            modalErr.textContent = '';
+        }
+        setWeeklyManualTrimInlineError('');
+        document.getElementById('modal-weekly-manual-trim-confirm').classList.remove('hidden');
+    };
+
+    window.closeWeeklyManualTrimConfirmModal = function () {
+        document.getElementById('modal-weekly-manual-trim-confirm')?.classList.add('hidden');
+    };
+
+    window.confirmWeeklyManualTrimSave = function () {
+        var input = document.getElementById('weeklyManualTrimInput');
+        if (!input) return;
+        var trimVal = Number(input.value);
+        var msg = weeklyManualTrimValidationMessage(trimVal);
+        var modalErr = document.getElementById('weeklyTrimConfirmError');
+        if (msg) {
+            if (modalErr) {
+                modalErr.textContent = msg;
+                modalErr.classList.remove('hidden');
+            }
+            setWeeklyManualTrimInlineError(msg);
+            closeWeeklyManualTrimConfirmModal();
+            return;
+        }
 
         try {
             localStorage.setItem(WEEKLY_MANUAL_TRIM_STORAGE_KEY, String(Math.floor(trimVal)));
@@ -1441,12 +1507,9 @@
             alert('保存失败（原型 localStorage）');
             return;
         }
-        var savedEl = document.getElementById('weeklyManualTrimSaved');
-        if (savedEl) {
-            savedEl.textContent = '已保存：运营周积分手动删减 ' + Number(trimVal).toLocaleString() + ' 积分（无需审核，立即生效）';
-            savedEl.classList.remove('hidden');
-        }
-        validateWeeklyManualTrimValue(trimVal, false);
+        closeWeeklyManualTrimConfirmModal();
+        setWeeklyManualTrimInlineError('');
+        showWeeklyManualTrimToast('已保存删减 ' + Number(trimVal).toLocaleString() + ' 积分');
     };
 
     (function bindWeeklyPoolTrimSync() {
@@ -1454,10 +1517,17 @@
         if (poolInput) {
             poolInput.addEventListener('input', function () {
                 refreshWeeklyManualTrimPoolRef();
-                var trimInput = document.getElementById('weeklyManualTrimInput');
-                if (trimInput) validateWeeklyManualTrimValue(Number(trimInput.value), true);
             });
         }
+        var trimModal = document.getElementById('modal-weekly-manual-trim-confirm');
+        if (trimModal) {
+            trimModal.addEventListener('click', function (e) {
+                if (e.target.id === 'modal-weekly-manual-trim-confirm') closeWeeklyManualTrimConfirmModal();
+            });
+        }
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeWeeklyManualTrimConfirmModal();
+        });
     })();
 
     function renderPoolConfigAdminUI() {
@@ -2160,6 +2230,8 @@
         approvalRoles: ['risk', 'boss']
     });
 </script>
+<div id="weekly-manual-trim-toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-lg text-sm font-bold shadow-xl z-[60] hidden" role="status" aria-live="polite"></div>
+
 <script src="admin-permission-registry.js"></script>
 <script src="admin-permission-store.js"></script>
 <script src="admin-permissions.js"></script>
@@ -2198,6 +2270,11 @@
     }
     window.addEventListener('hashchange', applyPointsHash);
     applyPointsHash();
+    if (new URLSearchParams(location.search).get('trimModal') === '1') {
+        setTimeout(function () {
+            if (typeof openWeeklyManualTrimConfirmModal === 'function') openWeeklyManualTrimConfirmModal();
+        }, 350);
+    }
 </script>
 </body>
 </html>
