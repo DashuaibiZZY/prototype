@@ -10,6 +10,12 @@
             ]
         },
         {
+            title: '平台配置',
+            items: [
+                { key: 'platform-fiat-rate', label: '法币汇率配置', href: '法币汇率配置.html' }
+            ]
+        },
+        {
             title: '邀请返佣',
             items: [
                 { key: 'invite-rebate', label: '邀请返佣管理', href: '邀请返佣后台.html' }
