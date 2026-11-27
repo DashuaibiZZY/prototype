@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForX Admin - 法币汇率配置</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+        .sidebar-item-active { background: #1e293b; color: #fff; border-left: 4px solid #3b82f6; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+        .input-label { display: block; font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.05em; }
+        .field-input { width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px; font-size: 12px; outline: none; }
+        .field-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15); }
+        .hint-box { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; padding: 10px 12px; font-size: 11px; color: #64748b; line-height: 1.65; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-[12px]">
+
+<aside id="admin-sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0"></aside>
+
+<main class="flex-1 flex flex-col overflow-hidden">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+        <div>
+            <nav class="flex items-center gap-1.5 text-[10px] text-slate-400 font-semibold mb-0.5" aria-label="面包屑">
+                <span>平台配置</span>
+                <span class="text-slate-300">/</span>
+                <span class="text-slate-600">法币汇率配置</span>
+            </nav>
+            <h1 class="text-xl font-bold text-slate-800">法币汇率配置</h1>
+            <p class="text-xs text-slate-400 mt-0.5">维护链上可充值币种相对法币的 CoinGecko 报价映射</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-sm text-slate-500">Platform_Ops</span>
+            <div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">PO</div>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8 space-y-5">
+        <section class="hint-box">
+            <p><strong>币种选项</strong>：仅包含可通过 <strong>Cobo</strong> 直接链上充值入账的代币（与 App 充值原型一致：USDC / USDT / BTC / ETH / XRP）。</p>
+            <p class="mt-1.5"><strong>目标法币币种</strong>：仅大写英文字母（如 USD、CNY、JPY）。「最新价格」为原型演示数据，线上由行情服务拉取 CoinGecko。</p>
+        </section>
+
+        <section class="card overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex flex-wrap justify-between items-center gap-3 bg-slate-50/40">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-800">法币汇率列表</h2>
+                    <p id="fiat-rate-count" class="text-[10px] text-slate-400 font-bold mt-0.5">共 0 条</p>
+                </div>
+                <button type="button" id="btn-fiat-rate-add" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 shadow-sm">
+                    新增法币汇率
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left min-w-[520px]">
+                    <thead class="bg-slate-50 text-slate-500 font-black text-[10px] uppercase border-b border-slate-100">
+                    <tr>
+                        <th class="px-6 py-4">币种</th>
+                        <th class="px-6 py-4">目标法币币种</th>
+                        <th class="px-6 py-4 text-right">最新价格</th>
+                    </tr>
+                    </thead>
+                    <tbody id="fiat-rate-tbody" class="divide-y divide-slate-50 text-slate-700"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</main>
+
+<!-- 新增法币汇率 -->
+<div id="modal-fiat-rate-add" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-[480px] overflow-hidden flex flex-col" role="dialog" aria-labelledby="fiat-modal-title">
+        <div class="px-6 py-5 border-b border-slate-100 shrink-0">
+            <h3 id="fiat-modal-title" class="text-lg font-bold text-slate-900">新增法币汇率</h3>
+            <p class="text-xs text-slate-400 mt-1">配置 CoinGecko 币种 ID 与 vs_currencies，用于法币估值换算</p>
+        </div>
+        <div class="p-6 space-y-4">
+            <div>
+                <label class="input-label" for="fiat-form-coin">币种</label>
+                <select id="fiat-form-coin" class="field-input bg-white font-semibold text-slate-800"></select>
+            </div>
+            <div>
+                <label class="input-label" for="fiat-form-target">目标法币币种</label>
+                <input id="fiat-form-target" type="text" maxlength="8" placeholder="如 USD、CNY、JPY" class="field-input font-mono uppercase" autocomplete="off" />
+                <p id="fiat-form-target-err" class="hidden mt-1.5 text-[11px] font-semibold text-red-600"></p>
+            </div>
+            <div>
+                <label class="input-label" for="fiat-form-coingecko-id">coingecko_ids</label>
+                <input id="fiat-form-coingecko-id" type="text" placeholder="如 bitcoin、ethereum" class="field-input font-mono" />
+            </div>
+            <div>
+                <label class="input-label" for="fiat-form-coingecko-vs">coingecko_vs_currencies</label>
+                <input id="fiat-form-coingecko-vs" type="text" placeholder="如 usd、cny" class="field-input font-mono" />
+            </div>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex gap-3 shrink-0">
+            <button type="button" id="btn-fiat-rate-cancel" class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-white">取消</button>
+            <button type="button" id="btn-fiat-rate-confirm" class="flex-1 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-slate-800">确认</button>
+        </div>
+    </div>
+</div>
+
+<div id="fiat-rate-toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-lg text-sm font-bold shadow-xl z-[60] hidden"></div>
+
+<script src="admin-fiat-rate-page.js?v=20261127-fiat-rate"></script>
+<script src="admin-sidebar.js"></script>
+<script>
+    initAdminSidebar('platform-fiat-rate', '登录身份: 平台配置运营');
+    initFiatRateAdmin();
+
+    // 原型演示：URL ?modal=1 自动打开新增弹窗（便于截图）
+    if (new URLSearchParams(location.search).get('modal') === '1') {
+        setTimeout(function () { document.getElementById('btn-fiat-rate-add').click(); }, 200);
+    }
+</script>
+</body>
+</html>
